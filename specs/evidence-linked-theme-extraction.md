@@ -199,7 +199,7 @@ as a verified original quotation (RC §2, RG §2).
 **R5.1** **Pointer selection is the default.** The model returns stable element
 identifiers assigned in R4.1; code resolves them to canonical offsets and slices
 the text. The model never returns character offsets and never returns the quoted
-text as authoritative. *(chosen)*
+text as authoritative. *(chosen; RC §3, RX §3)*
 
 RG §3 rejects pointer selection on the grounds that language models cannot
 reliably compute character offsets in long contexts. That objection is
@@ -296,8 +296,9 @@ score as a calibrated signal paired with human spot-checks, never a verdict
 report judge-to-human agreement, and set a pre-registered agreement floor before
 use. Mitigate known judge biases — position, verbosity, self-preference — with
 cross-family judges and order-swapping. Expect κ in the 0.3–0.6 range for
-subjective coding and do not over-promise agreement *(RC §7)*. The floor value
-itself is covered by R13.
+subjective coding and do not over-promise agreement *(RC §7)*. The floor is
+pre-registered before **production** use; its numeric value is set from pilot
+calibration by V6, so R13.1 defers the number, not the requirement to have one.
 
 **R8.5** A judge may reject or flag an assignment. A judge may never modify
 evidence, promote an invalid span, or alter a theme definition (`A §563`, Core
@@ -344,6 +345,19 @@ analysis is kept strictly separate from prospective fixed-codebook evaluation
 **R9.7** Taxonomy *content* is out of scope for this spec. It is produced by the
 approval process in R9.3 and recorded in a decision record, never invented here
 (`CLAUDE.md` lists the final taxonomy as deliberately unresolved).
+
+**R9.8** **Classification is staged.** For the pilot, assign verified spans to
+themes by open-weight model classification against the frozen codebook, with
+typed multi-label output and bounded validation retries. A supervised fine-tuned
+encoder classifier is adopted **only** once adjudicated label volume justifies
+training one, evidenced against the same benchmark. RG §4 proposes the fine-tuned
+encoder as the production target directly; that is **rejected as premature** —
+it presumes a labeled corpus that does not exist, and R12.2 establishes the pilot
+cannot produce one at sufficient scale. *(chosen: RC §4, RX §4; rejected: RG §4)*
+
+**R9.9** One quote may support several themes as separate assignment rows sharing
+its quote identifier, never as copied quotes. Preserve contradictory claims and
+document-specific framing rather than forcing a firm-level consensus (`A §594`).
 
 ### R10 — Discovery paradigm *(amends `A §452`)*
 
