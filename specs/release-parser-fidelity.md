@@ -126,9 +126,11 @@ stay in their own class.
 
 ### Storage and provenance
 
-`source.html` holds the exhibit's bytes exactly as EDGAR served them, with no
-re-encoding, newline normalization, or trimming. `manifest.toml` holds one
-`[[fixtures]]` entry per fixture:
+`source.html` holds the response body exactly as EDGAR served it. That means
+after any Content-Encoding (such as gzip) is decoded, and before any charset
+decoding. There is no re-encoding, newline normalization, or trimming. `sha256`
+is computed over these same bytes. `manifest.toml` holds one `[[fixtures]]`
+entry per fixture:
 
 | Field | Content |
 | --- | --- |
@@ -247,15 +249,30 @@ Block `id`s are unique within the file.
 
 ### Matching space
 
-`m(s)` normalizes to NFKC, then deletes every whitespace character (`str.isspace`)
-and every Unicode format character (category `Cf`, such as soft hyphens and
-zero-width spaces). Case is kept. All matching, in both the validator and the
-scorer, is exact substring search in this space. Nothing in Stage 1 scoring is
-fuzzy.
+The **primary space** `m(s)` normalizes to NFKC, then deletes every whitespace
+character (`str.isspace`) and every Unicode format character (category `Cf`, such
+as soft hyphens and zero-width spaces). Case is kept.
 
-Ignoring whitespace is deliberate. Browsers and the candidates disagree on
-spacing between inline tags. Scoring on that difference would mix R3.5's
-text-fidelity question into V2's structural one.
+The **fallback space** `m2(s)` normalizes to NFKD, drops combining marks
+(category `Mn`), and keeps only letters and digits (categories `L*` and `N*`).
+Case is kept.
+- It applies only to text-block anchors (`start`, `end`, `after`) that the
+  primary space misses.
+- A fallback match counts only if the anchor's `m2` form occurs exactly once in
+  the document and exactly once in the candidate's text.
+- Table cells and header texts are matched in the primary space only. In a space
+  of only letters and digits, adjacent numbers run together, and short numeric
+  texts would match almost anywhere.
+
+All matching, in both the validator and the scorer, is exact substring search in
+one of these spaces. Nothing in Stage 1 scoring is fuzzy.
+
+Both spaces keep R3.5's text-fidelity question out of V2's structural one.
+Browsers and the candidates disagree on spacing between inline tags. A candidate
+may also fold typography, such as curly quotes, dashes, and accents (edgartools,
+for one, depends on `unidecode`). Without the fallback, a folded anchor would be
+scored as dropped content. Anchors found only in the fallback space count as
+found and are reported separately as altered.
 
 ### Validator
 
@@ -275,6 +292,8 @@ which is independent of every candidate. It takes all text outside `<head>`,
     `after`, the combined `start` + `after` must occur exactly once instead;
   - every header text occurs at least once;
   - an unanchorable block's `start` (plus `after`, if given) occurs at least twice;
+  - a warning, not an error, when a text-block anchor is not unique in the
+    fallback space, because the fallback could not then rescue it;
   - page artifacts are exempt.
 - **Anchor length:** anchors meet the guideline minimum.
 - **Order:** a warning, not an error, when a block's `end` precedes its `start`.
@@ -305,11 +324,20 @@ All code lives in `expirements/parser-fidelity/`.
   Container nodes contribute no text beyond their children's. If a candidate
   exposes a table as a grid, the table element's text is that grid read row by
   row, header rows (including column labels) first, and the cells are recorded
-  too. Otherwise the text is exactly as the candidate emits it. Dumps carry no
-  run metadata.
+  too. Otherwise the text is exactly as the candidate emits it. Cell text is the
+  text the candidate extracted, never a converted value such as a parsed number.
+  If a candidate exposes only converted values, the table is built from them and
+  the V2 record says so. Dumps carry no run metadata.
 - **Type mapping.** Each adapter maps the library's public element types to the
-  common types. Mappings are fixed before any fixture is scored and are
-  published in the V2 record.
+  common types. Mappings are published in the V2 record.
+- **Freeze.** Adapter, control, and walker source files are frozen, with their
+  sha256s recorded, before their first run on any fixture. All debugging happens
+  on the development set.
+  - After the freeze, a change is allowed only to fix a crash or a network-guard
+    trip caused by adapter code. It may never alter a type mapping or a walker
+    rule.
+  - The V2 record lists each such change with its diff, or states that none
+    followed the freeze.
 - **Network guard.** Before the candidate is imported, the harness replaces
   socket connection with a function that raises. A tripped guard voids the run.
 - **Determinism.** Each candidate runs twice per fixture, in separate processes
@@ -318,8 +346,8 @@ All code lives in `expirements/parser-fidelity/`.
   `p`, `div`, `li`, `table`/`tr`/`td`/`th`, `br`) plus generic EDGAR idioms
   written down before development begins. For example, a short block whose text
   is entirely bold or underlined is a heading. It is developed only on the
-  development set, and no rule may name or target a fixture. Its source sha256 is
-  recorded in the V2 record before any fixture is scored.
+  development set, no rule may name or target a fixture, and it is frozen under
+  the rule above.
 - **Control.** `BeautifulSoup(html, "lxml").get_text("\n", strip=True)`, with
   each non-empty line as a `paragraph`. The control is scored and reported like
   any candidate, but it can never be selected.
@@ -328,10 +356,14 @@ All code lives in `expirements/parser-fidelity/`.
 
 ### Scoring mechanics
 
-The scorer joins a dump's element texts in order, after applying `m()`, and
+The scorer joins a dump's element texts in order, in each matching space, and
 records where each element starts.
-- An anchor is **found** when it occurs in the joined text. Its position is its
-  first occurrence. A second occurrence marks it **duplicated**.
+- An anchor is **found** when it occurs in the primary-space text. Its position
+  is its first occurrence, and a second occurrence marks it **duplicated**.
+- A text-block anchor the primary space misses is still found, and marked
+  **altered**, when it matches under the fallback rule.
+- Positions are compared as (element index, offset within the element), mapped
+  back from whichever space found the match.
 - An anchor's **elements** are the elements its match overlaps.
 - A block with `after` is matched as the single string `start` + `after`, and
   its `end` is taken to be its `start`. Only the block's own portion of the match
@@ -347,7 +379,7 @@ and denominators over the class's two fixtures.
 
 | Metric | Definition |
 | --- | --- |
-| Block coverage | Gold blocks found ÷ gold blocks. A text block counts as found when both `start` and `end` are found. A table counts as found when all three cells are. |
+| Block coverage | Gold blocks found ÷ gold blocks. A text block counts as found when both `start` and `end` are found, altered anchors included. A table counts as found when all three cells are. |
 | Footnote merging | Found footnotes that have an anchor in an element also holding an anchor of a gold heading, paragraph, or list item ÷ found footnotes |
 | Reading order | The gold sequence lists each text block whose `start` is found, and each found table cell in the order corner, right, below. Corruption is the share of adjacent pairs in that sequence whose positions are reversed in the joined text. |
 | Header loss | The mean of whichever sub-rates have a nonzero denominator in the class. **Section:** found headings whose home element is not typed `heading`, or also holds another gold block's anchor ÷ found headings. **Table:** header texts of found tables that are absent from the union of `table`-typed elements holding any of that table's cells ÷ header texts of found tables. |
@@ -359,6 +391,9 @@ out of place, such as all tables appended at the end.
 ### Diagnostics
 
 These are reported for every candidate but not ranked:
+- **Altered anchors:** text-block anchors found only in the fallback space,
+  reported prominently for each candidate and class. They are flagged for Stage
+  3's R3.5 check.
 - **Split rate:** text blocks whose `start` and `end` fall in different elements,
   or whose anchor straddles an element boundary.
 - **Other merges:** merges that don't involve footnotes, meaning elements holding
@@ -483,7 +518,8 @@ development-set fetches, the register's policy check, and V1.
 - **Saving.** Only 200 responses with the expected content type are saved. An
   SEC block or rate-limit page is a failure, not an exhibit, whatever its status.
   Every saved response records its URL, UTC retrieval time, status, content type,
-  byte count, and sha256. Responses are saved to gitignored `data/raw/`. Approved
+  byte count, and sha256, with the bytes defined as under Storage and provenance.
+  Responses are saved to gitignored `data/raw/`. Approved
   fixtures are then copied byte-for-byte into `tests/fixtures/` with their
   retrieval metadata, so the class tests ran on exactly the committed bytes and
   no fixture is fetched twice.
@@ -499,7 +535,7 @@ development-set fetches, the register's policy check, and V1.
     diagnostics;
   - the selection rule applied step by step;
   - the control check;
-  - residual failures (for Stage 3);
+  - residual failures and altered anchors (for Stage 3);
   - element types and nesting observed in the gold (for Stage 2): heading and
     list depths, where footnotes sit, and tables inside lists or tables;
   - limitations:
@@ -558,7 +594,8 @@ development-set fetches, the register's policy check, and V1.
 3. The V1 record gives the concrete type of every enumerated path and states
    whether R14.5's cast is required or vacuous (V1).
 4. A harness check script confirms that:
-   - every file under `tests/fixtures/releases/` appears in the manifest;
+   - each fixture directory holds exactly `source.html` and `gold.toml` and has
+     a manifest entry, and each manifest entry has a directory;
    - each `source.html` matches its sha256 and is at most 1 MiB;
    - `.gitattributes` marks `source.html` files `-text`;
    - every `source_id` resolves to a register entry with a recorded
