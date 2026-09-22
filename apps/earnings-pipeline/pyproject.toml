@@ -1,0 +1,28 @@
+[project]
+name = "earnings-pipeline"
+version = "0.1.0"
+description = "Earnings pipeline application"
+authors = [
+    { name = "Lowell Mason", email = "mason.lowell@mac.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "earnings-core",
+    "earnings-ingestion",
+    "earnings-themes",
+    "pydantic-settings",             # import pydantic_settings
+    "polars",
+    "duckdb",
+    "pyarrow",
+    "typer",
+    "rich",
+]
+
+[project.optional-dependencies]
+orchestration = [
+    "langgraph",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.15,<0.13.0"]
+build-backend = "uv_build"

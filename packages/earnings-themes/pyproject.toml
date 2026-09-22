@@ -1,13 +1,54 @@
 [project]
 name = "earnings-themes"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
+description = "Earnings themes package"
 authors = [
     { name = "Lowell Mason", email = "mason.lowell@mac.com" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "earnings-core",
+    "pydantic",
+    "polars",
+]
+
+[project.optional-dependencies]
+
+# Typed extraction framework, including offline/test-model workflows.
+extraction = [
+    "pydantic-ai-slim",              # import pydantic_ai
+]
+
+# Select only the provider adapters being implemented.
+openai = [
+    "pydantic-ai-slim[openai]",
+]
+
+anthropic = [
+    "pydantic-ai-slim[anthropic]",
+]
+
+# Direct Jev adapter for fixed-codebook coding and support decisions.
+jev = [
+    "typesafe-sdk",                  # import typesafe_sdk
+]
+
+# Local embedding and clustering experiments.
+embeddings = [
+    "numpy",
+    "sentence-transformers",         # import sentence_transformers
+    "scikit-learn",                  # import sklearn
+]
+
+# Candidate localization only; final quotes still require exact spans.
+fuzzy-localization = [
+    "rapidfuzz",
+]
+
+# Alternative Jev integration when LangChain interoperability is needed.
+jev-langchain = [
+    "langchain-typesafe",            # import langchain_typesafe
+]
 
 [build-system]
 requires = ["uv_build>=0.12.15,<0.13.0"]

@@ -1,11 +1,35 @@
 # Virtual workspace root: intentionally has no [project] table.
 # The `earnings-themes` distribution name belongs to packages/earnings-themes;
 # a root [project] with that name would collide (uv requires unique member names).
+# `[tool.uv] package = false` does NOT avoid this: uv enforces name uniqueness for
+# non-package members too. Only the absence of [project] removes the root from the
+# member set.
 # Application CLI entry points belong in apps/earnings-pipeline, not here.
 
 [tool.uv.workspace]
 members = [
-    "packages/earnings-ingestion",
     "packages/earnings-core",
+    "packages/earnings-ingestion",
     "packages/earnings-themes",
+    "apps/earnings-pipeline",
 ]
+
+[tool.uv.sources]
+earnings-core = { workspace = true }
+earnings-ingestion = { workspace = true }
+earnings-themes = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "ruff",
+]
+
+[tool.ruff]
+# Ruff governs Python source only. Ruff >=0.16 formats Python code blocks embedded
+# in Markdown; this repo's Markdown is documentation and quoted third-party review
+# material (specs/earning-themes-review-*.md, docs/*.md) that CLAUDE.md requires be
+# preserved verbatim. Formatting those blocks would rewrite supplied text.
+extend-exclude = ["*.md"]

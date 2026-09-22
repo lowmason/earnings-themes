@@ -1,9 +1,27 @@
 # Optional JEV shadow-decision integration
 
-**Status:** Proposed implementation specification; design approved in the
-brainstorming dialogue, written specification awaiting final review.
+**Status:** Retained proposal for an optional layer. **Superseded on the
+required-path question** by `specs/evidence-linked-theme-extraction.md` R14.3,
+which declined to adopt JEV in the required path: it is closed, hosted,
+waitlisted, and billable; it cannot extract spans or generate text, so it cannot
+satisfy that spec's R5 or R7; and its published accuracy is measured as agreement
+with other models rather than against ground truth.
 
-**As of:** 2026-09-22.
+That supersession is narrow. It reaches the adoption question only. The contracts,
+provenance, status semantics, replay identity, and budget rules below were never
+in conflict with the superseding spec and remain the design of record for this
+layer if it is ever authorized.
+
+Two gates now stand ahead of implementation that did not exist when this was
+written: explicit paid-inference authorization, and the paired R8.2 baseline
+comparison required by §15 criterion 17. That second gate obliges a run to make
+the comparison *computable*; it does not oblige JEV to win it, and a result
+favoring the open-weight baseline is a valid outcome that would close this
+proposal rather than advance it. Until both gates are satisfied, this is a
+proposal on file, not queued work.
+
+**As of:** 2026-09-22. Status amended 2026-09-22 following
+`specs/evidence-linked-theme-extraction.md` R14.3.
 
 ## 1. Decision
 
@@ -1210,6 +1228,21 @@ The initial integration is complete only when all of the following are true:
     interface.
 16. Documentation states that no quality threshold, production promotion, live
     benchmark, or earnings-domain performance claim has been established.
+17. Every claim-support observation carries a paired baseline score from the
+    open-weight entailment scorer named in `specs/evidence-linked-theme-extraction.md`
+    R8.2, computed over the identical target span and claim and recorded as its own
+    observation with separate model identity, parameters, and provenance. Shadow
+    completion does not require JEV to beat that baseline; it requires the
+    comparison to be computable from the run's own artifacts.
+
+Criterion 17 exists because `specs/evidence-linked-theme-extraction.md` R14.3
+permits this layer only as an option "benchmarked against R8.2". A shadow run
+that cannot produce that comparison cannot inform the decision it exists to
+inform. This is a descriptive, same-corpus, offline comparison between two
+backends on fixture evidence — not the production-quality benchmark excluded in
+§4, and not evidence of earnings-domain performance. R8.2 also makes the
+open-weight scorer this integration's incumbent rather than a deferred
+alternative; §16 is amended accordingly.
 
 Application tests and any optional live smoke test must be reported separately.
 A successful offline fixture run must not be described as a full-corpus or live
@@ -1225,7 +1258,8 @@ After this slice exists, separate design work may consider:
 - candidate extraction or deterministic window coding;
 - a production codebook and change/backfill policy;
 - pipeline orchestration, checkpointing, and operator-facing commands;
-- additional providers or local baselines; and
+- additional providers, and baselines beyond the R8.2 scorer already required
+  by §15 criterion 17; and
 - carefully scoped ingestion applications.
 
 Each follow-on must preserve the evidence, cost, rights, time, and missingness

@@ -818,6 +818,10 @@ when implementing adapters. OSHA access remains unverified here. No live pipelin
 complete membership download, current provider capability or evaluation result
 is established by this instructions file.
 
+Before modifying files, read the applicable AGENTS.md files along their
+directory paths. Package instructions supplement the repository-wide rules.
+For cross-package changes, read the instructions for every affected package.
+
 [^ingestion-spec]: Supplied `earnings-ingestion.md`, especially sections 1-5 on universe definition, free sources, employment, establishments, and linked outputs.
 [^theme-spec]: Supplied `earnings-themes.md`, “Learning path: agentic Python for earnings themes with exact quotes,” dated 2026-09-21; Stages 0-7 and “Habits for every stage.” Its linked SDK/framework claims are dated source material, not fresh verification in this revision.
 

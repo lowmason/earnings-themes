@@ -1,13 +1,14 @@
 [project]
 name = "earnings-core"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
+description = "Earnings core package"
 authors = [
     { name = "Lowell Mason", email = "mason.lowell@mac.com" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "pydantic",
+]
 
 [build-system]
 requires = ["uv_build>=0.12.15,<0.13.0"]
