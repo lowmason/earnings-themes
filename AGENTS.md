@@ -834,4 +834,4 @@ For cross-package changes, read the instructions for every affected package.
 [^naics]: U.S. Census Bureau, “North American Industry Classification System,” including reference files and concordances. `https://www.census.gov/naics/`
 [^indices]: S&P Dow Jones Indices, S&P 500 and Dow Jones Industrial Average index pages. `https://www.spglobal.com/spdji/en/indices/equity/sp-500/` and `https://www.spglobal.com/spdji/en/indices/equity/dow-jones-industrial-average/`
 [^sp-rights]: S&P Dow Jones Indices, “Legal Disclaimers.” `https://www.spglobal.com/spdji/en/disclaimers/`
-[^uv]: Astral, uv documentation, “Locking and syncing.” `https://docs.astral.sh/uv/concepts/projects/sync/
+[^uv]: Astral, uv documentation, “Locking and syncing.” `https://docs.astral.sh/uv/concepts/projects/sync/`
