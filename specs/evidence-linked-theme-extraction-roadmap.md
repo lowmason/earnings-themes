@@ -5,7 +5,8 @@
 > this document wholesale.
 
 Source spec: `specs/evidence-linked-theme-extraction.md`. Derived 2026-09-22
-from `main` at `bdcf0a4`.
+from `main` at `bdcf0a4`; notes reconciled the same day after instruction-only
+edits (no stage shipped).
 
 ## Gap analysis
 
@@ -31,7 +32,7 @@ V6 as written); **D2** — the user is the sole annotator (R12.6, R8.4);
 | R3.1 | missing | none found¹ | |
 | R3.2 | missing | none found¹ | Python `str` indices are already code points; the hazard is the browser boundary (R7) |
 | R3.3 | missing | none found¹ | |
-| R3.4 | missing | none found¹ | Amends A §563; `AGENTS.md:588-592` not yet pointed at the spec |
+| R3.4 | missing | none found¹ | Amends A §563; `AGENTS.md:592` points at the spec |
 | R3.5 | missing | none found¹ | |
 | R4.1 | missing | none found¹ | Open → V2 |
 | R4.2 | missing | none found¹ | |
@@ -60,7 +61,7 @@ V6 as written); **D2** — the user is the sole annotator (R12.6, R8.4);
 | R9.7 | missing | `codebooks/` empty | No invented taxonomy (compliant); decision-record mechanism absent |
 | R9.8 | missing | none found¹ | |
 | R9.9 | missing | none found¹ | |
-| R10.1 | missing | none found¹ | Amends A §452; `AGENTS.md:475` still states the whole-document default |
+| R10.1 | missing | none found¹ | Amends A §452; `AGENTS.md:478` points at the spec |
 | R10.2 | missing | none found¹ | |
 | R10.3 | missing | none found¹ | |
 | R11.1 | missing | none found¹ | |
@@ -70,7 +71,7 @@ V6 as written); **D2** — the user is the sole annotator (R12.6, R8.4);
 | R11.5 | missing | none found¹ | |
 | R11.6 | missing | none found¹ | |
 | R12.1 | missing | none found¹ | |
-| R12.2 | missing | none found¹ | Amends A §728; `AGENTS.md:744` still adopts the prior plan |
+| R12.2 | missing | none found¹ | Amends A §728; `AGENTS.md:748` points at the spec |
 | R12.3 | missing | none found¹ | |
 | R12.4 | missing | none found¹ | |
 | R12.5 | missing | none found¹ | |

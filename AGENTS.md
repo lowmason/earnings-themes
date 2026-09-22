@@ -475,7 +475,7 @@ where it must choose which filing to fetch. Do not use a multi-agent debate to
 verify quotes. Begin with whole in-scope releases/transcripts when they fit the
 configured context budget; section long filings with retained offsets. Do not
 introduce RAG or a vector database merely to extract a known document. Record
-partial coverage explicitly instead of silently truncating input.[^theme-spec]
+partial coverage explicitly instead of silently truncating input.[^theme-spec] **Amended:** `specs/evidence-linked-theme-extraction.md` R10.1 inverts the whole-document default above. Exhaustive structure-aware traversal is the default; whole-document processing is a measured ablation.
 
 ### Ingestion-to-extraction contract
 
@@ -589,7 +589,7 @@ Version a boilerplate policy for safe-harbor language, non-GAAP disclaimers and
 other repetitive text. The source asks for a rule but does not choose one: the
 proposed default is to tag these spans and exclude them from headline prevalence,
 while retaining them for audit and separately requested analyses. Apply the same
-policy across comparison periods, and do not delete text or invalidate offsets.
+policy across comparison periods, and do not delete text or invalidate offsets. **Amended:** `specs/evidence-linked-theme-extraction.md` R3.4 supplies the mechanism: overlay masks computed against the canonical text, never deleting or rewriting it.
 
 ### Codebooks and cross-document themes
 
@@ -745,7 +745,7 @@ Follow Stage 6's evaluation plan: hand-code **20-40 documents** with themes and
 supporting spans, establish train/dev/test splits before optimization, and
 calibrate the support judge against **50 human labels**. Keep related copies or
 sections together to prevent leakage; record the split rule and corpus IDs.
-These are evaluation targets from the source, not a claim that a gold set exists.
+These are evaluation targets from the source, not a claim that a gold set exists. **Amended:** `specs/evidence-linked-theme-extraction.md` R12.2 demotes the 20-40 hand-coded documents to a feasibility pilot, not a validation set.
 Keep test labels out of prompts, codebook discovery, model selection and DSPy
 compilation. Evaluate the frozen selected configuration on the held-out test once;
 subsequent test-guided changes require a new evaluation protocol.[^theme-spec]
