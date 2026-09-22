@@ -1,0 +1,91 @@
+# ---------------------------------------------------------------------------
+# earnings-themes
+#
+# Tracked deliberately -- do NOT add these here:
+#   uv.lock                       one reviewed workspace lockfile (AGENTS.md)
+#   config/ prompts/ codebooks/   versioned settings, prompts, codebooks
+#   tests/fixtures/               small, redistributable fixtures only
+#
+# ORDERING MATTERS: git applies the LAST matching pattern. The credentials
+# block is deliberately last so no later negation can re-admit a secret.
+# ---------------------------------------------------------------------------
+
+# --- Data artifacts --------------------------------------------------------
+# AGENTS.md layout: data/{raw,canonical,processed,runs} are ignored by Git.
+# Use `data/*` rather than `data/` so a directory skeleton can be re-admitted
+# later with a negation, e.g. !data/raw/.gitkeep
+data/*
+
+# Large downloads and generated outputs wherever they land.
+*.parquet
+*.arrow
+*.feather
+*.duckdb
+*.duckdb.wal
+*.sqlite
+*.sqlite3
+*.zip
+*.gz
+*.tar
+*.warc
+
+# Small, redistributable fixtures are the documented exception.
+!tests/fixtures/**
+
+# --- Logs, traces, run outputs ---------------------------------------------
+# AGENTS.md: keep secrets and restricted full text out of logs/traces.
+*.log
+logs/
+traces/
+
+# --- Python ----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# --- Environments ----------------------------------------------------------
+.venv/
+venv/
+env/
+
+# --- Tooling caches --------------------------------------------------------
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+.pytype/
+.dmypy.json
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.hypothesis/
+.ipynb_checkpoints/
+
+# --- Editors and OS --------------------------------------------------------
+.DS_Store
+.AppleDouble
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# --- Credentials and contact configuration ---------------------------------
+# MUST REMAIN THE LAST BLOCK. AGENTS.md: the SEC User-Agent contact is
+# "configured outside committed code"; keep credentials, secrets, and contact
+# config out of Git. These rules override the fixture negation above.
+.env
+.env.*
+!.env.example
+config/**/*.local.*
+config/secrets/
+.secrets/
+secrets.toml
+credentials.json
+service-account*.json
+*.pem
+*.key
+*.p12

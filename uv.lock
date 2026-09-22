@@ -1,0 +1,25 @@
+version = 1
+revision = 3
+requires-python = ">=3.14"
+
+[manifest]
+members = [
+    "earnings-core",
+    "earnings-ingestion",
+    "earnings-themes",
+]
+
+[[package]]
+name = "earnings-core"
+version = "0.1.0"
+source = { editable = "packages/earnings-core" }
+
+[[package]]
+name = "earnings-ingestion"
+version = "0.1.0"
+source = { editable = "packages/earnings-ingestion" }
+
+[[package]]
+name = "earnings-themes"
+version = "0.1.0"
+source = { editable = "packages/earnings-themes" }

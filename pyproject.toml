@@ -1,0 +1,11 @@
+# Virtual workspace root: intentionally has no [project] table.
+# The `earnings-themes` distribution name belongs to packages/earnings-themes;
+# a root [project] with that name would collide (uv requires unique member names).
+# Application CLI entry points belong in apps/earnings-pipeline, not here.
+
+[tool.uv.workspace]
+members = [
+    "packages/earnings-ingestion",
+    "packages/earnings-core",
+    "packages/earnings-themes",
+]
