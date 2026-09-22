@@ -104,7 +104,7 @@ V6 as written); **D2** — the user is the sole annotator (R12.6, R8.4);
 | `extraction`/`openai`/`anthropic` extras | in-code-but-not-in-spec | `packages/earnings-themes/pyproject.toml:19,23-28` | Spec names no framework (A §664 proposes PydanticAI); hosted SDKs serve only R14.2/R5.3 — flag, not defect |
 | `embeddings` extra | in-code-but-not-in-spec | `packages/earnings-themes/pyproject.toml:39` | Sits on the themes package; R9.5 places clustering outside the pipeline |
 | `entity-matching` extra | in-code-but-not-in-spec | `packages/earnings-ingestion/pyproject.toml:25` | Serves company enrichment, out of this spec's scope (A §429) |
-| Dev tooling | in-code-but-not-in-spec | `pyproject.toml:22-35` | `dev` group and Ruff config exist; no pytest config, `live` marker, or import mode (A §193); `CLAUDE.md` still calls the group missing |
+| Dev tooling | in-code-but-not-in-spec | `pyproject.toml:22-35` | `dev` group and Ruff config exist; no pytest config, `live` marker, or import mode (A §193) |
 
 Totals: 78 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
 0 implemented-differently · 0 out-of-repo.

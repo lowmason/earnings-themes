@@ -4,24 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Document status — read before trusting any file here
 
-This repo is documentation-first: ~1,600 lines of instructions, ~10 lines of scaffold code.
+This repo is documentation-first: ~3,500 lines of instructions, ~10 lines of scaffold code.
 Not all of it is binding.
 
 | File | Status |
 | --- | --- |
-| `AGENTS.md` (832 lines) | **Binding working instructions.** Read it before any non-trivial change. Everything below is a summary, not a replacement. |
+| `AGENTS.md` (837 lines) | **Binding working instructions.** Read it before any non-trivial change. Everything below is a summary, not a replacement. |
 | `docs/earnings-ingestion.md`, `docs/earnings-themes.md` | Supplied source design notes. **Preserve them**; do not rewrite a learning exercise into a mandatory production dependency. |
-| `AGENTS-jev-addendum.md`, `specs/jev-integration-spec.md` | **Proposals awaiting a decision.** Jev/TypeSafe is not an adopted dependency. Values like `backend = "disabled"` or `model = "jev-1.13.0"` are sketches, not settings. |
+| `specs/evidence-linked-theme-extraction.md` | **The synthesized theme-extraction spec.** Amends `AGENTS.md` at three points and governs on each: R3.4 (boilerplate as overlay masks over canonical text), R10.1 (exhaustive structure-aware traversal replaces the whole-document default), and R12.2 (20-40 hand-coded documents are a feasibility pilot, not a validation set). `AGENTS.md` carries an inline **Amended:** pointer at each. Supersedes the Jev documents on the required-path question (R14.3). |
+| `specs/evidence-linked-theme-extraction-roadmap.md` | **Live staged roadmap** for that spec. Resume it via the `derive-roadmap` skill's reconcile step and route each unticked stage per its ROUTING line; never plan it wholesale. |
+| `AGENTS-jev-addendum.md`, `specs/jev-integration-spec.md` | **Superseded on the required-path question** by the spec's R14.3; retained only as a proposal for an optional, separately authorized layer. Jev/TypeSafe is not an adopted dependency. Values like `backend = "disabled"` or `model = "jev-1.13.0"` are sketches, not settings. |
 
 **Not summarized below — go to `AGENTS.md` directly** for: §Source strategy (per-field source table), §Domain rules (membership/identifiers, industry classification, subsidiaries, employment, locations), §Shared data contracts and provenance (the dataset/grain table), §Models, orchestration, caching, and cost, §Tests and acceptance criteria (incl. the evaluation metric table), and §Delivery milestones.
 
 `AGENTS.md` itself labels its layout, schemas, and defaults as *proposed monorepo conventions* — inspect the real repo before adopting them.
 
-**Deliberately unresolved — do not silently pick one** (AGENTS.md §"Source basis and unresolved choices"): the production provider/model, the final theme taxonomy, non-exactness quality thresholds, and an approved inference budget. Record these in config or a decision record; do not invent agreement.
+**Deliberately unresolved — do not silently pick one** (AGENTS.md §"Source basis and unresolved choices"): the production provider/model, the final theme taxonomy, and non-exactness quality thresholds. Record these in config or a decision record; do not invent agreement. The fourth such choice, an approved inference budget, is now recorded by `specs/evidence-linked-theme-extraction.md` R14.2: **$100, for the optional hosted-ceiling ablation only**, not prompt-optimizer compiles or any other billable call. The required path needs no billable inference: R14.1 limits it to open-weight, self-hosted models, which narrows the model choice without making it.
 
 ## Current state: pre-implementation scaffold
 
-Packages contain only `hello()` stubs; no domain code exists yet. `data/` is gitignored and empty; `apps/`, `config/`, `prompts/`, `codebooks/`, `expirements/`, `tests/*` are empty directories. Git is on `main` with a single root commit (`Initial setup`) tracking 23 files: docs, package scaffolds, the `pyproject.toml`s, and `uv.lock`. `origin` is set to https://github.com/lowmason/earnings-themes, which is **public** — treat anything committed here as publicly visible.
+Packages and `apps/earnings-pipeline` contain only `hello()` stubs; no domain code exists yet. `data/` is gitignored and empty; `config/`, `prompts/`, `codebooks/`, `expirements/`, `tests/*` are empty directories. As of `711ba11` (7 commits on `main`), git tracks 28 files: docs, specs, package and app scaffolds, the `pyproject.toml`s, and `uv.lock`. `origin` is set to https://github.com/lowmason/earnings-themes, which is **public** — treat anything committed here as publicly visible.
 
 ### Workspace root is virtual — do not add `[project]` to it
 
@@ -35,11 +37,12 @@ non-package members too. Only the absence of `[project]` removes the root from t
 
 Application CLI entry points belong in `apps/earnings-pipeline`, never in the root.
 
-Verified working from a clean state:
+Verified working from a clean state at the root commit; lock and sync counts refreshed at
+`bdcf0a4` via `uv lock --check` and `uv sync --dry-run`:
 
 ```
-$ uv lock                              # Resolved 3 packages
-$ uv sync --locked --all-packages      # Installed earnings-{core,ingestion,themes}
+$ uv lock                              # Resolved 140 packages
+$ uv sync --locked --all-packages      # 40 packages incl. earnings-{core,ingestion,pipeline,themes}; dev group synced by default
 $ uv run --locked python -c "import earnings_themes; print(earnings_themes.__file__)"
 .../packages/earnings-themes/src/earnings_themes/__init__.py
 ```
@@ -47,7 +50,7 @@ $ uv run --locked python -c "import earnings_themes; print(earnings_themes.__fil
 ### Commands (from AGENTS.md §"Setup and checks")
 
 ```bash
-uv sync --locked --all-packages --group dev     # --group dev NOT yet configured
+uv sync --locked --all-packages --group dev
 uv run --locked ruff check .
 uv run --locked ruff format --check .
 uv run --locked --all-packages pytest packages apps tests -m "not live"
@@ -55,10 +58,13 @@ uv run --locked --all-packages pytest packages apps tests -m "not live"
 uv run --locked --all-packages pytest path/to/test_x.py::test_name -m "not live"
 ```
 
-Verified: `uv lock` and `uv sync --locked --all-packages`. **Not yet working** — still to be
-configured: a root `[dependency-groups] dev` with Ruff + pytest, shared Ruff/pytest config, a
-registered `live` marker, and pytest import-mode config so same-named test modules across
-members don't collide. Environment: uv 0.12.15, Python 3.14.7, `requires-python = ">=3.14"`.
+Verified: `uv lock` and `uv sync --locked --all-packages`. Configured: a root
+`[dependency-groups] dev` (pytest, pytest-asyncio, pytest-cov, ruff) and
+`[tool.ruff] extend-exclude = ["*.md"]`, which keeps Ruff from reformatting code blocks in the
+preserved Markdown. **Not yet configured:** pytest. There is no registered `live` marker, no
+import mode to keep same-named test modules across members from colliding, and no `testpaths`.
+Environment: uv 0.12.15, Python 3.14.0 (uv-managed; Homebrew's `python3` is 3.14.7),
+`requires-python = ">=3.14"`.
 
 ## Architecture
 
@@ -114,6 +120,7 @@ Default tests make **no network and no billable calls** — saved fixtures and f
 ## Gotchas
 
 - `AGENTS.md` cites the source notes as root-level `earnings-ingestion.md` / `earnings-themes.md`; they actually live in `docs/`.
+- `AGENTS.md` is cited by line number (`A §n`, `AGENTS.md:n`) throughout `specs/evidence-linked-theme-extraction.md` and its roadmap; the highest cited line is 780 (§Delivery milestones). Inserting or deleting any line before the end of the cited content silently breaks those citations: append to an existing line instead, as the three **Amended:** pointers do.
 - The directory is `expirements/` (sic). `AGENTS.md` calls it `experiments/`. Reuse the existing one rather than creating a second.
 - `.gitignore` ends with the credentials block, and it **must stay last**. Git applies the *last* matching pattern, so the `!tests/fixtures/**` negation above it would otherwise un-ignore `tests/fixtures/{.env,*.pem,credentials.json}`. Add new negations above that block, never below. (`data/*` is deliberately not `data/`, so a `!data/raw/.gitkeep` skeleton stays possible. `uv.lock` is tracked and must stay tracked — AGENTS.md requires one reviewed workspace lockfile. `.venv/` is also self-ignored by a uv-generated `.venv/.gitignore`.)
 - The root-level `src/earnings_themes/` orphan from `uv init` has been deleted. The package lives at `packages/earnings-themes/`; do not recreate a root-level `src/` or import from one.
