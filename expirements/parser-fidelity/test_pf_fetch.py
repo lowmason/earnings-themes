@@ -83,6 +83,19 @@ def test_user_agent_is_the_identity():
     assert seen == [IDENTITY]
 
 
+def test_redirect_hops_are_spaced_and_counted():
+    def handler(request):
+        if request.url.path == "/old":
+            return httpx.Response(301, headers={"Location": "https://www.sec.gov/new"})
+        return httpx.Response(200, text="ok")
+
+    fetcher, clock = make_fetcher(handler)
+    response = fetcher.get("https://www.sec.gov/old")
+    assert str(response.url) == "https://www.sec.gov/new"
+    assert fetcher.throttle.count == 2
+    assert clock.sleeps == [pytest.approx(0.5)]
+
+
 def test_429_honours_retry_after_then_succeeds():
     responses = [
         httpx.Response(429, headers={"Retry-After": "7"}),

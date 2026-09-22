@@ -167,7 +167,12 @@ class EdgarFetcher:
             timeout=TIMEOUT,
             follow_redirects=True,
             transport=transport,
+            event_hooks={"request": [self._before_request]},
         )
+
+    def _before_request(self, request: httpx.Request) -> None:
+        """httpx calls this for every request it sends, redirect hops included."""
+        self.throttle.acquire()
 
     def close(self) -> None:
         self._client.close()
@@ -175,7 +180,6 @@ class EdgarFetcher:
     def get(self, url: str) -> httpx.Response:
         forbidden = 0
         for attempt in range(1, MAX_ATTEMPTS + 1):
-            self.throttle.acquire()
             try:
                 response = self._client.get(url)
             except httpx.TransportError as exc:
