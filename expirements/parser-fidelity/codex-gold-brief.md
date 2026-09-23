@@ -23,6 +23,8 @@ narrow what `AGENTS.md` would otherwise let you do.
 
 ## Limits
 
+- If `gold.toml` already has a `[[blocks]]` entry, or a `.codex.toml` snapshot for
+  this fixture exists in `data/runs/parser-fidelity/gold-drafts/`, stop and report.
 - Read nothing else in the repository: not the rest of that spec, nothing under
   `expirements/parser-fidelity/` (you only run the validator), nothing under
   `docs/`, and no other fixture's files.

@@ -31,7 +31,7 @@ Taken with the user on 2026-09-22.
 | F6 | The selection rule is fixed before any measurement. Each candidate is judged on its worst class, and metrics are compared in priority order: coverage, footnote merging, reading order, header loss. Values within 1/n count as tied. Remaining ties break on dependency footprint, then license, then maintenance. |
 | F7 | Three eligibility gates apply before ranking. A candidate must install into the workspace lock on Python 3.14 without a downgrade, produce deterministic output, and use no network while parsing. |
 | F8 | The decision is recorded as an ADR under `docs/adr/`, because A §153 places decision records in `docs/`. Measurements go under `docs/verification/`. The harness lives in `expirements/parser-fidelity/`, the repository's existing (misspelled) experiments directory. |
-| F9 | Taken 2026-09-23; amends D2 for Stage 1 gold only. Codex drafts each fixture's gold from the browser's rendered text, under `expirements/parser-fidelity/codex-gold-brief.md`, and the user verifies every block against the rendering: boundaries, types, levels, order, anchors, and table cells. Codex leaves the header blank, so a draft fails the validator until the user fills it in; that is the sign-off. The verified file is the gold. Its `annotator` reads "Lowell Mason (verified a Codex draft)", and `marked_from` stays "browser rendering", the source of both the draft and the check. Codex sees only the Gold annotation section, the validator, and the rendered text, never a candidate's code, rules, or output. Each draft is kept, uncommitted, so V2 can report how many blocks verification changed. D2 still governs Stages 6 and 11. |
+| F9 | Taken 2026-09-23; amends D2 for Stage 1 gold only. Codex drafts each fixture's gold from the browser's rendered text, under `expirements/parser-fidelity/codex-gold-brief.md`, and the user verifies every block against the rendering: boundaries, types, levels, order, anchors, and table cells. The user may mark any fixture by hand instead. Codex leaves the header blank, so a draft fails the validator until the user fills it in; that is the sign-off. The verified file is the gold. Its `annotator` reads "Lowell Mason (verified a Codex draft)", and `marked_from` stays "browser rendering", the source of both the draft and the check. Codex sees only the Gold annotation section, the validator, and the rendered text, never a candidate's code, rules, or output. Each draft is kept, uncommitted, so V2 can report how many blocks verification changed. D2 still governs Stages 6 and 11. |
 
 ## Scope
 
@@ -540,7 +540,7 @@ development-set fetches, the register's policy check, and V1.
   - element types and nesting observed in the gold (for Stage 2): heading and
     list depths, where footnotes sit, and tables inside lists or tables;
   - limitations:
-    - only eight fixtures and one annotator, who verified Codex drafts rather than marking from scratch (F9);
+    - only eight fixtures and one annotator, who verified Codex drafts where a fixture was not marked by hand (F9);
     - the gold was marked from a browser rendering;
     - coverage checks a block's ends, not its middle;
     - text fidelity is not measured here (R3.5, Stage 3);
