@@ -36,7 +36,7 @@ TOP_KEYS = frozenset(
     }
 )
 TEXT_KEYS = frozenset({"id", "type", "level", "start", "end", "after", "unanchorable"})
-TABLE_KEYS = frozenset({"id", "type", "headers", "cells"})
+TABLE_KEYS = frozenset({"id", "type", "headers", "cells", "unanchorable"})
 ARTIFACT_KEYS = frozenset({"id", "type", "start"})
 CELL_KEYS = frozenset({"role", "text", "row_header", "col_header"})
 MIN_ANCHOR_WORDS = 4
@@ -203,6 +203,8 @@ def _check_table(block: dict) -> list[str]:
     headers = block.get("headers")
     if not isinstance(headers, list) or not all(_nonempty_str(h) for h in headers):
         errors.append("headers must be an array of non-empty strings")
+    if "unanchorable" in block and not isinstance(block["unanchorable"], bool):
+        errors.append("unanchorable must be true or false")
     cells = block.get("cells")
     if not isinstance(cells, list) or len(cells) != 3:
         return errors + ["cells must hold exactly three cells"]
@@ -242,10 +244,27 @@ def check_anchors(gold: dict, source: SourceText) -> tuple[list[str], list[str],
         if kind == "page_artifact":
             continue
         if kind == "table":
-            for cell in block["cells"]:
-                errors += _unique(
-                    source, f"block {block_id}: cell {cell['role']}", cell["text"]
-                )
+            if block.get("unanchorable"):
+                # Its values recur elsewhere, so no L of unique cells exists; like an
+                # unanchorable text block, it must show that at least one cell repeats.
+                unanchorable += 1
+                counts = [
+                    source.count(primary_space(c["text"])) for c in block["cells"]
+                ]
+                errors += [
+                    f"block {block_id}: cell {c['role']}: not found{_case_hint(source, c['text'])}"
+                    for c, n in zip(block["cells"], counts, strict=True)
+                    if n == 0
+                ]
+                if max(counts) < 2:
+                    errors.append(
+                        f"block {block_id}: unanchorable table must have a cell that occurs at least twice"
+                    )
+            else:
+                for cell in block["cells"]:
+                    errors += _unique(
+                        source, f"block {block_id}: cell {cell['role']}", cell["text"]
+                    )
             for header in block["headers"]:
                 if source.count(primary_space(header)) == 0:
                     errors.append(

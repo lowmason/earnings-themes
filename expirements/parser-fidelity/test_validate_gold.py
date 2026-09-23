@@ -118,6 +118,41 @@ def test_a_clean_draft_fails_only_on_the_header(tmp_path):
     assert sorted(errors) == sorted(HEADER_ERRORS)
 
 
+FLAGGED_TABLE = GOOD_BLOCKS.replace(
+    'type = "table"\n', 'type = "table"\nunanchorable = true\n'
+)
+
+
+def test_a_table_whose_values_recur_can_be_marked_unanchorable(tmp_path):
+    folder = fixture(tmp_path, GOOD_BLOCKS)
+    # A later table repeats the corner value, so no L of unique cells exists.
+    (folder / "source.html").write_text(
+        SOURCE.replace(
+            "</body>", "<table><tr><td>Restated</td><td>4,321</td></tr></table></body>"
+        ),
+        encoding="utf-8",
+    )
+    errors = validate_fixture(folder).errors
+    assert any("t001: cell corner: occurs 2 times" in e for e in errors)
+    (folder / "gold.toml").write_text(HEADER + FLAGGED_TABLE, encoding="utf-8")
+    report = validate_fixture(folder)
+    assert report.errors == []
+    assert report.unanchorable == 1
+
+
+def test_an_unanchorable_table_must_have_a_repeated_cell(tmp_path):
+    errors = validate_fixture(fixture(tmp_path, FLAGGED_TABLE)).errors
+    assert errors == [
+        "block t001: unanchorable table must have a cell that occurs at least twice"
+    ]
+
+
+def test_unanchorable_on_a_table_must_be_true_or_false(tmp_path):
+    blocks = FLAGGED_TABLE.replace("unanchorable = true", 'unanchorable = "yes"')
+    errors = validate_fixture(fixture(tmp_path, blocks)).errors
+    assert "block t001: unanchorable must be true or false" in errors
+
+
 def test_table_needs_one_cell_per_role(tmp_path):
     blocks = GOOD_BLOCKS.replace('role = "right"', 'role = "corner"')
     errors = validate_fixture(fixture(tmp_path, blocks)).errors
