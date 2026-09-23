@@ -4,7 +4,7 @@ Every network call in Stage 1 goes through this module: one identity, one thrott
 (request starts at least 0.5 s apart, at most ``max_requests`` per run), explicit
 timeouts, bounded retries with exponential backoff and jitter, ``Retry-After``
 honoured, and a stop on a 403 that persists. Only 200 responses of the expected
-content type are saved; an SEC block or rate-limit page is a failure. The identity
+content type are saved; an SEC block or rate-limit page stops the run. The identity
 is sent as the User-Agent and never written to disk.
 """
 
@@ -223,7 +223,9 @@ class EdgarFetcher:
         if media_type == "text/html" and any(
             marker in body[:20000].lower() for marker in _BLOCK_MARKERS
         ):
-            raise UnexpectedResponse(f"SEC block or rate-limit page for {url}")
+            raise LivePolicyStop(
+                f"SEC block or rate-limit page for {url}; stopping without changing identity"
+            )
         saved = SavedResponse(
             url=str(response.url),
             retrieved_at=self._now().strftime("%Y-%m-%dT%H:%M:%SZ"),

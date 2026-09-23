@@ -159,11 +159,6 @@ def test_fetch_and_save_writes_decoded_bytes_and_metadata(tmp_path):
     "response",
     [
         httpx.Response(200, headers={"Content-Type": "application/json"}, text="{}"),
-        httpx.Response(
-            200,
-            headers={"Content-Type": "text/html"},
-            text="Your Request Originates from an Undeclared Automated Tool",
-        ),
         httpx.Response(404, headers={"Content-Type": "text/html"}, text="missing"),
     ],
 )
@@ -171,6 +166,19 @@ def test_unexpected_responses_are_not_saved(tmp_path, response):
     fetcher, _ = make_fetcher(lambda request: response)
     dest = tmp_path / "source.html"
     with pytest.raises(UnexpectedResponse):
+        fetcher.fetch_and_save("https://www.sec.gov/x.htm", dest, {"text/html"})
+    assert not dest.exists()
+
+
+def test_a_block_page_served_with_200_stops_the_run(tmp_path):
+    block = httpx.Response(
+        200,
+        headers={"Content-Type": "text/html"},
+        text="Your Request Originates from an Undeclared Automated Tool",
+    )
+    fetcher, _ = make_fetcher(lambda request: block)
+    dest = tmp_path / "source.html"
+    with pytest.raises(LivePolicyStop, match="block or rate-limit page"):
         fetcher.fetch_and_save("https://www.sec.gov/x.htm", dest, {"text/html"})
     assert not dest.exists()
 
