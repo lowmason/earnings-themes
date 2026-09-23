@@ -41,7 +41,10 @@ failure-class coverage becomes an **observed report over the frozen manifest**: 
 class absent from the 40 selected events is reported as a coverage gap and is
 never repaired by reselecting. R12.5's curated hard negatives move to fixtures
 held outside the pilot manifest, exercised by contract tests rather than by event
-selection.
+selection. Widened at review the same day: hard-negative claims drawn from
+confusable periods, issuers, and sections of the frozen pilot documents are also
+annotated with the gold set and scored with the pilot metrics, which changes no
+pilot row.
 
 Counting note: `P` counts **issuer-events** and targets exactly 40 (`P-C5`),
 while R12.2 counts hand-coded documents or bundles at 20–40. The two are
@@ -103,8 +106,8 @@ exceed the event count. Never treat the two numbers as the same quantity.
 | R12.1 | missing | none found¹ | |
 | R12.2 | missing | none found¹ | Amends A §728; `AGENTS.md:748` points at the spec |
 | R12.3 | missing | none found¹ | |
-| R12.4 | missing | none found¹ | |
-| R12.5 | missing | none found¹ | |
+| R12.4 | missing | none found¹ | Reframed by D4: observed coverage over the frozen pilot manifest |
+| R12.5 | missing | none found¹ | Reframed by D4: out-of-manifest fixtures plus hard-negative claims in pilot documents |
 | R12.6 | missing | none found¹ | Single annotator (D2): agreement not measurable — see Completion |
 | R12.7 | missing | none found¹ | |
 | R12.8 | missing | none found¹ | |
@@ -212,10 +215,10 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
 - [ ] Stage 6: Pilot codebook, split, and gold-set protocol
       Objective: Take the frozen pilot manifest as given, split it by issuer and time, approve codebook v0, and validate annotations, so hand-coding runs while Stages 7–10 are built.
       Spec: R9.2, R9.7, R12.1–R12.6; R13.1 (release-identification labels); D2, D4; P-C5, P-C7.
-      Gap closed: R9.2, R9.7, R12.1, R12.3, R12.4 (as observed coverage, D4), R12.5 (as out-of-manifest fixtures, D4); R12.6 (limitation, D2).
+      Gap closed: R9.2, R9.7, R12.1, R12.3, R12.4 (acquisition-outcome classes as observed coverage, D4), R12.5 (out-of-manifest fixtures and in-document hard-negative claims, D4); R12.6 (limitation, D2).
       Consumes: the frozen Stage 5 pilot manifest — this stage no longer selects the sample; Stage 3 canonical documents (gold spans bind to that canonicalization version); Stage 5 event bundles, issuer and fiscal-period identity, and processing states.
-      Produces: a codebook contract with R9.2's fields; codebook v0 drafted from training-partition bundles only and approved in a decision record; a gold-annotation contract and validator; an issuer-and-time split over the frozen manifest; an observed failure-class coverage report over that manifest; curated hard negatives held as fixtures outside the manifest. Gold spans name their canonical version; a later version re-anchors them before reuse, never mutates them.
-      Exit: a test places each bundle, with all copies and revisions, in exactly one issuer-and-time split (R12.1/R12.3); the coverage report states the observed count of no-theme, unavailable, restricted, and parser-failure bundles in the frozen manifest, and a missing class is reported as a coverage gap, never repaired by reselecting (R12.4, D4); a test shows the split and the report changing no row of the pilot manifest (P-C7); curated hard negatives exist as fixtures outside the pilot manifest (R12.5, D4); codebook v0's decision record names its training-partition discovery corpus (R9.2/R9.7); annotations on at least three bundles, including release-identification labels, pass the validator; the single-annotator limitation is recorded (R12.6, D2).
+      Produces: a codebook contract with R9.2's fields; codebook v0 drafted from training-partition bundles only and approved in a decision record; a gold-annotation contract and validator, the contract also carrying hard-negative claims drawn from confusable periods, issuers, and sections of the frozen pilot documents (R12.5, D4); an issuer-and-time split over the frozen manifest; an observed failure-class coverage report over that manifest; curated hard negatives held as fixtures outside the manifest. Gold spans name their canonical version; a later version re-anchors them before reuse, never mutates them.
+      Exit: a test places each bundle, with all copies and revisions, in exactly one issuer-and-time split (R12.1/R12.3); the coverage report states the observed count of unavailable, restricted, and parser-failure bundles in the frozen manifest, and a missing class is reported as a coverage gap, never repaired by reselecting; the no-theme count joins the report at Stage 11, once annotation is complete (R12.4, D4); a test shows the split and the report changing no row of the pilot manifest (P-C7); curated hard negatives exist as fixtures outside the pilot manifest, and the annotation validator accepts hard-negative claims (R12.5, D4); codebook v0's decision record names its training-partition discovery corpus (R9.2/R9.7); annotations on at least three bundles, including release-identification labels, pass the validator; the single-annotator limitation is recorded (R12.6, D2).
       ROUTING: brainstorming
 
 - [ ] Stage 7: Evidence selection and verification
@@ -256,11 +259,11 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
 
 - [ ] Stage 11: Feasibility pilot and threshold calibration
       Objective: Run the pipeline against the hand-coded pilot, calibrate the judge, and gate the metrics the pilot can estimate.
-      Spec: R8.2, R8.4, R8.6, R12.2, R12.7, R12.8, R12.10, R13.1, R13.3, V6; D1, D2.
-      Gap closed: R8.2, R8.4, R8.6, R12.2, R12.7, R12.8, R12.10; R13.1/V6 (per D1).
+      Spec: R8.2, R8.4, R8.6, R12.2, R12.4, R12.5, R12.7, R12.8, R12.10, R13.1, R13.3, V6; D1, D2, D4.
+      Gap closed: R8.2, R8.4, R8.6, R12.2, R12.7, R12.8, R12.10; R13.1/V6 (per D1); R12.4 (no-theme count) and R12.5 (hard-negative scoring), per D4.
       Consumes: the frozen Stage 5 pilot manifest, split by Stage 6 and fully annotated by the user; at least 50 user support labels on Stage 8 outputs (D2); the Stage 10 pipeline.
       Produces: implementations of every R13.1 metric plus retention, stability, and AUC-ROC; a pilot report with issuer- or event-level uncertainty; a judge-calibration report with its pre-registered floor; the V6 decision record of gates.
-      Exit: the pilot report gives every R13.1 metric's observed distribution with event-level intervals, labeled feasibility-only (R12.2/R12.7); the V6 record gates only pilot-estimable metrics, marks rare-theme recall, sector prevalence, and source-selection bias descriptive-only, and is committed before any configuration comparison (V6/R13.1, D1); judge agreement with the user's labels is reported against its pre-registered floor, with AUC-ROC for both scorers (R8.4/R8.6/R8.2); a reject-everything configuration fails the suite (R12.8); k-run stability is computed with replay bypassed (R12.10).
+      Exit: the pilot report gives every R13.1 metric's observed distribution with event-level intervals, labeled feasibility-only (R12.2/R12.7); the V6 record gates only pilot-estimable metrics, marks rare-theme recall, sector prevalence, and source-selection bias descriptive-only, and is committed before any configuration comparison (V6/R13.1, D1); judge agreement with the user's labels is reported against its pre-registered floor, with AUC-ROC for both scorers (R8.4/R8.6/R8.2); a reject-everything configuration fails the suite (R12.8); k-run stability is computed with replay bypassed (R12.10); the D4 coverage report gains the observed no-theme count over the fully annotated manifest (R12.4, D4); pilot metrics include the annotated hard-negative claims (R12.5, D4).
       ROUTING: brainstorming
 
 - [ ] Stage 12: Inductive and hybrid codebook
