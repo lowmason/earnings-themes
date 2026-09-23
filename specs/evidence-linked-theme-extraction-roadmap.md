@@ -84,7 +84,7 @@ V6 as written); **D2** — the user is the sole annotator (R12.6, R8.4);
 | R13.2 | missing | none found¹ | Binding with R6.1 |
 | R13.3 | missing | none found¹ | Held-out result is feasibility-level (D1) |
 | R14.1 | missing | none found¹ | Required dependencies carry no provider SDK (compliant surface); no fake adapter or replay |
-| R14.2 | missing | none found¹ | Optional Stage 14 (D3) |
+| R14.2 | missing | none found¹ | Optional Stage 16 (D3) |
 | R14.3 | implemented-as-specified | `packages/earnings-themes/pyproject.toml:33,50` (optional extras only); `AGENTS-jev-addendum.md:4-14`; `specs/jev-integration-spec.md:3-24` | Benchmark-against-R8.2 clause applies only under separate authorization |
 | R14.4 | implemented-as-specified | `apps/earnings-pipeline/pyproject.toml:23` (`langgraph` optional only); no optimizer or multi-agent dependency declared | Standing constraint; "usable without frameworks" becomes testable once domain code exists |
 | R14.5 | missing | `uv.lock`: edgartools 5.58.0 depends on `pandas` | V1 very likely non-vacuous |
@@ -138,7 +138,7 @@ Totals: 78 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Exit: every Stage 1 fixture canonicalizes offline and passes the Stage 2 validator (R3.1/R4.1); a test shows no narrative element contains table-cell text (R4.2); a test shows OCR-derived text flagged and never verified as an original quotation (R4.3); V9 normalization and financial-abbreviation/decimal splitting cases pass; an R3.5 fidelity report on a sample covers all six named categories (R3.5).
       ROUTING: brainstorming
 
-- [ ] Stage 4: Acquisition and event resolution
+- [ ] Stage 5: Acquisition and event resolution
       Objective: Acquire earnings events from EDGAR under the shared access policy, recording a processing state for every expected document.
       Spec: R1.1–R1.5, R14.5; A §391–427.
       Gap closed: R1.1, R1.2, R1.3, R1.4, R1.5, R14.5.
@@ -147,92 +147,92 @@ Totals: 78 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Exit: offline replay of saved EDGAR responses identifies the fixture issuers' releases, including a narrative-only release and alternative exhibit numbering (R1.1/R1.2); tests hold concurrent workers at or below 2 req/s and stop on a persistent 403 (R1.3); event records keep each R1.5 time field separate with unknowns preserved (R1.5); the state table represents every R1.4 state from fixtures (R1.4); library output is Polars at the boundary, or V1's vacuity is recorded (R14.5).
       ROUTING: brainstorming
 
-- [ ] Stage 5: Pilot codebook and gold-set protocol
-      Objective: Fix the pilot sample, its issuer-and-time split, an approved codebook v0, and annotation tooling, so hand-coding runs while Stages 6–9 are built.
+- [ ] Stage 6: Pilot codebook and gold-set protocol
+      Objective: Fix the pilot sample, its issuer-and-time split, an approved codebook v0, and annotation tooling, so hand-coding runs while Stages 7–10 are built.
       Spec: R9.2, R9.7, R12.1–R12.6; R13.1 (release-identification labels); D2.
       Gap closed: R9.2, R9.7, R12.1, R12.3, R12.4, R12.5; R12.6 (limitation, D2).
-      Consumes: Stage 3 canonical documents (gold spans bind to that canonicalization version); Stage 4 event bundles, issuer and fiscal-period identity, processing states.
+      Consumes: Stage 3 canonical documents (gold spans bind to that canonicalization version); Stage 5 event bundles, issuer and fiscal-period identity, processing states.
       Produces: a codebook contract with R9.2's fields; codebook v0 drafted from training-partition bundles only and approved in a decision record; a gold-annotation contract and validator; a 20–40 event-bundle pilot manifest with its split. Gold spans name their canonical version; a later version re-anchors them before reuse, never mutates them.
       Exit: a test places each bundle, with all copies and revisions, in exactly one issuer-and-time split (R12.1/R12.3); the manifest holds no-theme, unavailable, restricted, and parser-failure bundles plus curated hard negatives (R12.4/R12.5); codebook v0's decision record names its training-partition discovery corpus (R9.2/R9.7); annotations on at least three bundles, including release-identification labels, pass the validator; the single-annotator limitation is recorded (R12.6, D2).
       ROUTING: brainstorming
 
-- [ ] Stage 6: Evidence selection and verification
+- [ ] Stage 7: Evidence selection and verification
       Objective: Extract quote-claim candidates by pointer selection over every analysis-eligible element, keeping only code-verified spans.
       Spec: R5.1, R6.1 (before storage), R6.2, R10.1, R10.2, R14.1, R14.6, R14.7, V11.
       Gap closed: R5.1, R6.2, R10.1 (default path), R10.2, R14.1, R14.6; R14.7/V11 (tool-call and verification-bypass cases).
-      Consumes: Stage 2 validator and locators; Stage 3 canonical fixtures only — not Stage 4.
+      Consumes: Stage 2 validator and locators; Stage 3 canonical fixtures only — not Stage 5.
       Produces: a themes extractor visiting every eligible element; a model-adapter interface with a fake adapter, response replay, and an R14.6-keyed cache; one open-weight local adapter behind the `live` marker, its weight license recorded; an auditable rejection record.
       Exit: offline fake-model runs over Stage 3 fixtures retain only R6.1-valid quotes, and every rejection records a reason after bounded retries (R5.1/R6.2); a coverage test shows every eligible element visited and no top-k discovery path (R10.1/R10.2); a test shows changing any R14.6 key component misses the cache (R14.6); the default suite makes no network or billable call (R14.1); the V11 fixture triggers no tool call and cannot bypass R6.1 (R14.7/V11).
       ROUTING: brainstorming
 
-- [ ] Stage 7: Semantic support assessment
+- [ ] Stage 8: Semantic support assessment
       Objective: Judge whether each verified span supports its claim under the theme definition, as signals that can only reject or flag.
       Spec: R8.1–R8.6, V4; R6.1 (before support judgment).
       Gap closed: R8.1, R8.3, R8.5, V4; R8.2 (primary scorer; alternative wired).
-      Consumes: Stage 6 verified quote-claim pairs.
+      Consumes: Stage 7 verified quote-claim pairs.
       Produces: a support assessor pairing an open-weight entailment score (primary) with a model-judge signal using order-swapping and cross-family judges; RG §3's alternative behind the same interface; AUC-ROC and accepted-claim precision computation; a V4 decision record with checkpoint identity in the manifest.
       Exit: the V4 record confirms the primary scorer's weight license and a self-hosted run with no API call (V4/R8.2); fixture pairs misattributed to a competitor, a prior period, or a negation are rejected or flagged (R8.1); scores persist as versioned signals, never verdicts (R8.3); a judge output editing evidence or promoting an invalid span is refused (R8.5).
       ROUTING: brainstorming
 
-- [ ] Stage 8: Deductive coding
+- [ ] Stage 9: Deductive coding
       Objective: Assign verified, supported spans to themes of a frozen approved codebook as versioned multi-label rows, routing non-matches to a novelty queue.
       Spec: R9.1 (deductive), R9.3, R9.4, R9.6, R9.8, R9.9, R14.7, V11.
       Gap closed: R9.1 (deductive), R9.3 (queue), R9.4, R9.6, R9.8, R9.9; R14.7/V11 (codebook case).
-      Consumes: Stage 5 codebook contract and approved v0; Stage 6 verified spans; Stage 7 support decisions.
+      Consumes: Stage 6 codebook contract and approved v0; Stage 7 verified spans; Stage 8 support decisions.
       Produces: an open-weight classifier emitting typed multi-label output with bounded retries against a frozen codebook version; assignment rows carrying codebook identifier and version; a novelty queue for human adjudication.
       Exit: fake-model replay exercises typed multi-label output with bounded retries against frozen v0 (R9.1/R9.8); one quote supporting two themes yields two rows sharing its quote identifier (R9.9); an unmatched candidate enters the novelty queue and no new theme identifier appears (R9.3); rows carry codebook identifier and version, and a mixed-version comparison is refused (R9.6); cluster labels and sentiment never populate theme fields (R9.4); the V11 fixture leaves the codebook unchanged (R14.7/V11).
       ROUTING: writing-plans
 
-- [ ] Stage 9: Coverage-aware aggregation and cited export (theme vertical slice)
+- [ ] Stage 10: Coverage-aware aggregation and cited export (theme vertical slice)
       Objective: Produce analytical rows, coverage-aware prevalence, and a source-linked report that carry one release end to end.
       Spec: R2.3, R3.4 (headline exclusion), R6.1 (before export), R7.1, R7.2, R11.1–R11.6, V5, V8, V10.
       Gap closed: R2.3, R3.4, R7.1, R7.2, R11.1, R11.2, R11.3, R11.4, R11.5; R11.6 (release roles); V5, V8, V10.
-      Consumes: Stage 3 canonical documents and masks; Stage 4 processing-state table; Stages 6–8 verified, supported, coded assignments.
+      Consumes: Stage 3 canonical documents and masks; Stage 5 processing-state table; Stages 7–9 verified, supported, coded assignments.
       Produces: Polars/Parquet rows at the R11.1 grain; prevalence tables printing numerator, denominator, unit, and restrictions; passage links paired with immutable snapshots; a cited report; the V8 offline end-to-end test.
       Exit: V8 passes with no network or credentials, from raw fixture to cited report (V8/R11.1); V10 reproduces hand-computed numerators and denominators across unavailable, restricted, failed, and no-theme documents, and reports missing-transcript coverage (V10/R11.2/R11.3/R2.3); a test shows masked spans absent from headline prevalence yet present in audit output (R3.4); tests show a disclosure's copies counted once and issuers weighted equally (R11.5/R11.4); release rows carry `not_applicable` speaker roles (R11.6); V5 records each target browser's highlight behavior, and the snapshot renders the span wherever the link fails (V5/R7.1/R7.2).
       ROUTING: writing-plans
 
-- [ ] Stage 10: Feasibility pilot and threshold calibration
+- [ ] Stage 11: Feasibility pilot and threshold calibration
       Objective: Run the pipeline against the hand-coded pilot, calibrate the judge, and gate the metrics the pilot can estimate.
       Spec: R8.2, R8.4, R8.6, R12.2, R12.7, R12.8, R12.10, R13.1, R13.3, V6; D1, D2.
       Gap closed: R8.2, R8.4, R8.6, R12.2, R12.7, R12.8, R12.10; R13.1/V6 (per D1).
-      Consumes: the Stage 5 manifest fully annotated by the user; at least 50 user support labels on Stage 7 outputs (D2); the Stage 9 pipeline.
+      Consumes: the Stage 6 manifest fully annotated by the user; at least 50 user support labels on Stage 8 outputs (D2); the Stage 10 pipeline.
       Produces: implementations of every R13.1 metric plus retention, stability, and AUC-ROC; a pilot report with issuer- or event-level uncertainty; a judge-calibration report with its pre-registered floor; the V6 decision record of gates.
       Exit: the pilot report gives every R13.1 metric's observed distribution with event-level intervals, labeled feasibility-only (R12.2/R12.7); the V6 record gates only pilot-estimable metrics, marks rare-theme recall, sector prevalence, and source-selection bias descriptive-only, and is committed before any configuration comparison (V6/R13.1, D1); judge agreement with the user's labels is reported against its pre-registered floor, with AUC-ROC for both scorers (R8.4/R8.6/R8.2); a reject-everything configuration fails the suite (R12.8); k-run stability is computed with replay bypassed (R12.10).
       ROUTING: brainstorming
 
-- [ ] Stage 11: Inductive and hybrid codebook
+- [ ] Stage 12: Inductive and hybrid codebook
       Objective: Discover candidate themes offline from training-partition evidence, approve them as a new codebook version, and re-code the declared corpus.
       Spec: R9.1 (inductive, hybrid), R9.3 (approval), R9.5, R10.3, R12.3.
       Gap closed: R9.1, R9.3, R9.5, R10.3; `embeddings` extra row.
-      Consumes: Stage 8 coding and novelty queue; Stage 10 splits and metrics.
+      Consumes: Stage 9 coding and novelty queue; Stage 11 splits and metrics.
       Produces: an offline clustering aid outside the application pipeline; consolidation preserving evidence pointers and contradictory claims; an approval path from candidate codebook to a new frozen version; a hybrid mode; re-coding under the new version.
       Exit: a test shows candidate themes derive from training-partition data only (R12.3); a test shows consolidation keeps every evidence pointer and contradictory claim (R10.3); approval is recorded in a decision record and re-coded rows carry the new version (R9.1/R9.3); an import check shows no clustering dependency reachable from the application pipeline (R9.5, `embeddings` row).
       ROUTING: brainstorming
 
-- [ ] Stage 12: Transcript extension (conditional on V7)
+- [ ] Stage 13: Transcript extension (conditional on V7)
       Objective: Add lawfully usable transcripts with speaker roles, or record that no candidate corpus qualifies.
       Spec: R2.1, R2.2, R4.1 (speaker turns), R11.6, V7; D2.
       Gap closed: R2.1, R2.2, V7; R11.6 (management/analyst split).
-      Consumes: Stages 3 and 4; Stage 9 aggregation; Stage 10 metrics.
+      Consumes: Stages 3 and 5; Stage 10 aggregation; Stage 11 metrics.
       Produces: a V7 record per candidate corpus; if one qualifies, a rights-gated transcript adapter storing locators and local features where terms forbid redistribution, and speaker turns with role and attribution status.
       Exit: V7 records each candidate's license, redistribution terms, and diarization accuracy against a user-labeled sample (V7); if none supports the management/analyst split, R2.2 is recorded as failed and the stage parks; otherwise fixture transcripts yield role-attributed turns, unresolved roles stay `other`/`unknown`, and restricted text is never redistributed (R2.1/R2.2/R11.6).
       ROUTING: brainstorming
 
-- [ ] Stage 13: Configuration comparison and held-out evaluation
+- [ ] Stage 14: Configuration comparison and held-out evaluation
       Objective: Run R12.9's ablations against the V6 gates, freeze one selected configuration, and evaluate it once on the held-out split.
       Spec: R5.2, R10.1 (whole-document arm), R10.2 (retrieval-only arm), R11.5 (dedup arm), R12.9, R13.3; D1.
       Gap closed: R5.2, R12.9, R13.3.
-      Consumes: Stage 10 gates, metrics, and splits; Stage 11 inductive and hybrid codebooks; Stage 12 transcripts if shipped, else that arm is recorded as not run.
+      Consumes: Stage 11 gates, metrics, and splits; Stage 12 inductive and hybrid codebooks; Stage 13 transcripts if shipped, else that arm is recorded as not run.
       Produces: a generate-then-verify comparator; whole-document and retrieval-only modes; an ablation report with quality, latency, tokens, and cost per arm; a selection decision record; one held-out evaluation report.
       Exit: a test shows generate-then-verify rejects every unresolvable candidate and never repairs wording (R5.2); the ablation report covers every available R12.9 arm and adjudicates against V6's gates (R12.9); the selected configuration is frozen by hash and evaluated on the held-out split once, a second run under the same protocol is refused, and the report is labeled feasibility-level (R13.3, D1).
       ROUTING: writing-plans
 
-- [ ] Stage 14: Hosted quality ceiling (optional)
+- [ ] Stage 16: Hosted quality ceiling (optional)
       Objective: Measure a hosted frontier model's quality ceiling on a frozen subset within the $100 authorization.
       Spec: R14.2; D3.
       Gap closed: R14.2.
-      Consumes: Stage 13 frozen configuration; Stage 10 metrics.
+      Consumes: Stage 14 frozen configuration; Stage 11 metrics.
       Produces: a hosted adapter behind per-document and per-run ceilings enforced before dispatch; a ceiling report.
       Exit: an offline budget-exhaustion test yields a visible partial or failed status, never silent truncation; recorded spend stays within $100 with a pricing basis; no required-path module imports the hosted adapter; the report is labeled an ablation ceiling (R14.2).
       ROUTING: writing-plans
@@ -250,7 +250,7 @@ On completion the stamp becomes authoritative:
 > Stage N: COMPLETE (YYYY-MM-DD) — implemented by plan <id> (path).
 > Next: resume the roadmap.
 
-A stage routed straight to writing-plans (Stages 2, 8, 9, 13, 14) has no stage
+A stage routed straight to writing-plans (Stages 2, 9, 10, 14, 16) has no stage
 spec: its plan header carries the Roadmap line directly, and its COMPLETE line
 is appended to the Rollout section of `specs/evidence-linked-theme-extraction.md`,
 which is the stamp a resume reads for those stages.
@@ -271,7 +271,7 @@ live), or conscious deferral with a written why. Deferrals already decided on
   event-level validation set that this roadmap does not build.
 - **R12.6 agreement** (D2) — single annotator; agreement is not measurable and is
   recorded as a limitation, not met.
-- **Stage 12** parks if V7 finds no qualifying corpus; **Stage 14** is optional.
+- **Stage 13** parks if V7 finds no qualifying corpus; **Stage 16** is optional.
 
 Not staged because no requirement asks for them: the learning path's LangGraph,
 DSPy, and CrewAI exercises (R14.4). Out of scope per the spec: importance
