@@ -8,6 +8,15 @@ Source spec: `specs/evidence-linked-theme-extraction.md`. Derived 2026-09-22
 from `main` at `bdcf0a4`; notes reconciled the same day after instruction-only
 edits (no stage shipped).
 
+Amending spec: `specs/point-in-time-djia-cohort.md`, adopted 2026-09-22. It
+inserted Stage 4 (point-in-time DJIA cohort) and Stage 15 (full DJIA
+eight-quarter run), renumbered former Stages 4–13 to 5–14 and former Stage 14 to
+16, and moved pilot-sample selection out of the codebook stage into Stage 5. No
+stage shipped. **`P` cites that spec**: `P-C1`–`P-C7` are its Decisions rows,
+`P-A4`/`P-A5`/`P-A15` its three Acceptance-criteria groups, `P-VF`/`P-VI`/`P-VL`
+its deterministic-fixture, offline-integration, and optional-live verification
+groups, and `P §Section` cites a section by name.
+
 ## Gap analysis
 
 ¹ Searched `packages/*/src`, `apps/*/src`, `tests/{contracts,fixtures,integration}`,
@@ -138,6 +147,15 @@ Totals: 78 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Exit: every Stage 1 fixture canonicalizes offline and passes the Stage 2 validator (R3.1/R4.1); a test shows no narrative element contains table-cell text (R4.2); a test shows OCR-derived text flagged and never verified as an original quotation (R4.3); V9 normalization and financial-abbreviation/decimal splitting cases pass; an R3.5 fidelity report on a sample covers all six named categories (R3.5).
       ROUTING: brainstorming
 
+- [ ] Stage 4: Point-in-time DJIA cohort
+      Objective: Freeze a versioned, point-in-time DJIA universe — security-level membership intervals resolved to issuers and zero-padded CIKs — before any earnings document is acquired.
+      Spec: P-C1, P-C2, P-C3, P-C4, P-C7, P-A4; P §Temporal definitions, §Data contracts (universe definition, membership assertion), §Membership evidence and source rights, §Issuer resolution, §Failure handling, §Verification; A §264 (zero-padded CIK), A §429 (the enrichment boundary this stage does not cross).
+      Gap closed: P-C1, P-C2 (the membership-reference definition only; the event join is Stage 5), P-C3, P-C4, P-C7 (the cohort-before-acquisition half), P-A4; P-VF (interval, resolution, conflict, and cutoff cases), P-VI (its membership-interval and issuer-resolution legs).
+      Consumes: Stage 2 contracts, provenance and hashing primitives, and the root pytest configuration with its registered `live` marker. No parser, canonicalizer, document, or model artifact — the stage is placed after Stage 3 so that acquisition follows it immediately, but Stage 2 is its only hard dependency.
+      Produces: in `earnings-ingestion`, a versioned DJIA universe definition at P's universe grain (`universe_name = "djia"`, `period_end_start = 2024-07-01`, `period_end_stop = 2026-07-01`, `public_information_cutoff = 2026-09-22`, `membership_reference = first_publication_time`); security-level membership assertions at one row per index, security, effective interval, and source-evidence item, with half-open `[effective_from, effective_to)` intervals and a `status` of `supported`, `conflicting`, `ambiguous`, or `withheld`; security-to-issuer mappings carrying 10-character zero-padded CIK evidence; the derived union of candidate issuers over `[2024-07-01, 2026-07-01)`; a membership source register with owner, URL, access method, cost, terms, redistribution status, coverage, update behavior, known limitations, and last verification date; a coverage and conflict report; synthetic redistributable fixtures; version-controlled manual override assertions with evidence, rationale, reviewer, and effective dates; an opt-in `live` source-accessibility and terms check.
+      Exit: every membership interval resolves to a source-evidence row and every resolved CIK is a 10-character zero-padded string (P-A4); fixture tests build intervals from an anchor plus additions and removals, with inclusive starts and exclusive ends, and an open interval carrying no `effective_to` (P-VF); a missing anchor snapshot and conflicting effective dates each refuse to freeze the manifest with the reason recorded, and conflicts persist as separate assertions rather than being merged (P §Failure handling); evidence first published after 2026-09-22 cannot revise the version (P-C4); a test shows no current snapshot silently backdated and no ETF holdings record treated as the official roster; a test shows historical ticker changes and multiple securities preserved, and one issuer's several securities deriving one issuer row (P-VF); source access and redistribution status are recorded for every source, with unclear rights keeping artifacts local; the universe manifest freezes with a version and content hash written atomically, and refuses to freeze on unresolved issuer identity unless the record is explicitly retained as unresolved and excluded with its reason; the default suite makes no network call, uses no proprietary roster, and needs no credentials.
+      ROUTING: writing-plans — `specs/point-in-time-djia-cohort.md` is this stage's spec; it needs no brainstorming pass.
+
 - [ ] Stage 5: Acquisition and event resolution
       Objective: Acquire earnings events from EDGAR under the shared access policy, recording a processing state for every expected document.
       Spec: R1.1–R1.5, R14.5; A §391–427.
@@ -228,6 +246,15 @@ Totals: 78 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Exit: a test shows generate-then-verify rejects every unresolvable candidate and never repairs wording (R5.2); the ablation report covers every available R12.9 arm and adjudicates against V6's gates (R12.9); the selected configuration is frozen by hash and evaluated on the held-out split once, a second run under the same protocol is refused, and the report is labeled feasibility-level (R13.3, D1).
       ROUTING: writing-plans
 
+- [ ] Stage 15: Full DJIA eight-quarter run
+      Objective: Run the configuration frozen by Stage 14 over every eligible event in the complete DJIA manifest, reporting the observed corpus shape rather than forcing it to a target.
+      Spec: P-C6, P-A15; P §Stage 15 — Full DJIA eight-quarter run; R11.1–R11.3 (grain, denominators, coverage), R12.10 (replay bypass), R14.6 (cache keys), R14.1 (no billable call on the required path).
+      Gap closed: P-C6, P-A15.
+      Consumes: the frozen Stage 5 expected-event ledger and eligible-event manifest; the Stage 14 selected configuration, frozen by hash; Stage 11 metrics and the Stage 10 export path; cached pilot artifacts whose R14.6 cache key still matches. It reselects nothing.
+      Produces: analytical outputs over every eligible event at the R11.1 grain, each row carrying universe, corpus, codebook, schema, and run versions; a coverage report giving expected, eligible, acquired, parsed, processed, failed, partial, and completed-no-theme counts by issuer and period; a reconciliation of the observed event count against the approximate `30 × 8` shape that attributes every departure to a membership transition or a missing event.
+      Exit: every expected-event ledger row carries an eligibility and coverage status, and every eligible event a terminal or resumable processing status (P-A15); ineligible and ambiguous rows appear in coverage and status output without being processed as eligible, alongside the failed, unavailable, partial, and completed-no-theme cases; a test shows compatible pilot artifacts reused without producing duplicate accepted rows; a test shows the run performing no reselection, and the reported count is the observed count, never forced to equal `30 × 8` (P-C6); the coverage report names the transitions and missing events behind any departure from that shape.
+      ROUTING: writing-plans — `specs/point-in-time-djia-cohort.md` is this stage's spec; it needs no brainstorming pass.
+
 - [ ] Stage 16: Hosted quality ceiling (optional)
       Objective: Measure a hosted frontier model's quality ceiling on a frozen subset within the $100 authorization.
       Spec: R14.2; D3.
@@ -251,9 +278,12 @@ On completion the stamp becomes authoritative:
 > Next: resume the roadmap.
 
 A stage routed straight to writing-plans (Stages 2, 9, 10, 14, 16) has no stage
-spec: its plan header carries the Roadmap line directly, and its COMPLETE line
-is appended to the Rollout section of `specs/evidence-linked-theme-extraction.md`,
-which is the stamp a resume reads for those stages.
+spec of its own: its plan header carries the Roadmap line directly, and its
+COMPLETE line is appended to the Rollout section of
+`specs/evidence-linked-theme-extraction.md`, which is the stamp a resume reads
+for those stages. Stages 4 and 15 are also routed to writing-plans but do have a
+stage spec — `specs/point-in-time-djia-cohort.md` — so their COMPLETE lines
+follow the normal stamp convention against that file.
 
 ## Completion
 
