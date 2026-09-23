@@ -170,11 +170,12 @@ class Walker:
         elif tag in BLOCK_TAGS:
             self.flush(runs, kind, owner)
             runs.clear()
-            self.walk_block_element(el, child_style(el, style))
+            self.walk_block_element(el, child_style(el, style), kind)
         else:
             self.walk_content(el, child_style(el, style), runs, kind)
 
-    def walk_block_element(self, el: HtmlElement, style: Style) -> None:
+    def walk_block_element(self, el: HtmlElement, style: Style, kind: str) -> None:
+        """A nested block: a plain one keeps the enclosing heading or list-item kind (W6, W7)."""
         tag = el.tag
         if tag in HEADING_TAGS:
             self.walk_block(el, style, f"heading{HEADING_TAGS[tag]}")
@@ -187,7 +188,7 @@ class Walker:
         elif tag == "pre":
             self.walk_pre(el, style)
         elif tag != "hr":
-            self.walk_block(el, style, "block")
+            self.walk_block(el, style, kind)
 
     def walk_list(self, el: HtmlElement, style: Style) -> None:
         parent = self.lists[-1] if self.lists else None

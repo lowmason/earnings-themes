@@ -197,3 +197,16 @@ def test_w5_pre_pieces_keep_inline_styles_and_breaks():
         ("paragraph", "Line one line two"),
         ("paragraph", "Next block"),
     ]
+
+
+def test_w6_w7_plain_nested_blocks_inherit_the_type():
+    elements = parse(
+        "<html><body><h2><div>Outlook for Fiscal 2026</div></h2>"
+        "<ul><li><p>Revenue grew 5 percent</p><p>Margins held</p></li></ul></body></html>"
+    )
+    assert [(e.type, e.text, e.parent, e.level) for e in elements] == [
+        ("heading", "Outlook for Fiscal 2026", None, 2),
+        ("other", "", None, None),
+        ("list_item", "Revenue grew 5 percent", 1, 1),
+        ("list_item", "Margins held", 1, 1),
+    ]
