@@ -15,7 +15,11 @@
       of the pilot" is no longer available, and Stage 6 must instead place any
       fixture event the deterministic selection includes in the training
       partition (moot today: no fixture issuer is a DJIA member). The steps are in
-      specs/plans/completed/2-point-in-time-djia-cohort.md, Task 7. Size:
+      specs/plans/completed/2-point-in-time-djia-cohort.md, Task 7. Stage 1 keeps
+      writing text in the old numbering (its decision record, V2 notes, and plan
+      1's handoff sections), so the line numbers above will drift: re-derive them
+      then, and run a case-insensitive `stage [45]` / `stage4` sweep over
+      everything Stage 1 added after `6021323`. Size:
       quick-fix. Done when: Stage 1 execution is paused or its plan is retired,
       both documents are clean in git status, and the renumbering, including the
       reworded forward constraint, has landed.
