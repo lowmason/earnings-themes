@@ -373,7 +373,7 @@ Outputs:
     `build_space_text(pieces: Sequence[str], space: "primary" | "fallback") -> SpaceText`,
     and `extract_document_text(html: str, joiner: str = "") -> str`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `expirements/parser-fidelity/test_pf_decode.py`:
 
@@ -504,12 +504,12 @@ def test_extract_document_text_recovers_from_an_unclosed_head():
     )
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_pf_decode.py expirements/parser-fidelity/test_pf_text.py --import-mode=prepend -q`
 Expected: 2 collection errors, `ModuleNotFoundError: No module named 'pf_decode'` and `No module named 'pf_space'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 `expirements/parser-fidelity/pf_paths.py`:
 
@@ -852,12 +852,12 @@ def extract_document_text(html: str, joiner: str = "") -> str:
     return joiner.join(parser.parts)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_pf_decode.py expirements/parser-fidelity/test_pf_text.py --import-mode=prepend -q`
 Expected: `18 passed`.
 
-- [ ] **Step 5: Write the harness README**
+- [x] **Step 5: Write the harness README**
 
 `expirements/parser-fidelity/README.md`:
 
@@ -932,7 +932,7 @@ Stage 2.
 - **Outputs.** Everything generated goes to gitignored `data/raw/` and `data/runs/`.
 ````
 
-- [ ] **Step 6: Lint and commit**
+- [x] **Step 6: Lint and commit**
 
 ```bash
 uv run --locked ruff format expirements/parser-fidelity
@@ -973,7 +973,7 @@ git commit -m "feat(parser-fidelity): add decoding, matching spaces, and validat
     - `.close()`;
     - `.throttle`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `expirements/parser-fidelity/test_pf_fetch.py`:
 
@@ -1150,12 +1150,12 @@ def test_only_one_live_process_at_a_time(tmp_path):
         pass
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_pf_fetch.py --import-mode=prepend -q`
 Expected: collection error `ModuleNotFoundError: No module named 'pf_fetch'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 `expirements/parser-fidelity/pf_fetch.py`:
 
@@ -1418,12 +1418,12 @@ def _write_atomic(path: Path, data: bytes) -> None:
     os.replace(tmp, path)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_pf_fetch.py --import-mode=prepend -q`
 Expected: `12 passed`.
 
-- [ ] **Step 5: Lint and commit**
+- [x] **Step 5: Lint and commit**
 
 ```bash
 uv run --locked ruff format expirements/parser-fidelity
@@ -1462,7 +1462,7 @@ nothing. Never write the value into any file, commit, log, or record.
     `reuse_policy` (`url`, `checked_on`, `quote`).
   - `fetch_policy_pages.verify(register_path, pages) -> list[str]`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `expirements/parser-fidelity/test_fetch_policy_pages.py`:
 
@@ -1533,12 +1533,12 @@ def test_verify_reports_missing_pages_wrong_quotes_and_dates(tmp_path):
     assert any("checked_on differs" in p for p in problems)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_fetch_policy_pages.py --import-mode=prepend -q`
 Expected: collection error `ModuleNotFoundError: No module named 'fetch_policy_pages'`.
 
-- [ ] **Step 3: Write the script**
+- [x] **Step 3: Write the script**
 
 `expirements/parser-fidelity/fetch_policy_pages.py`:
 
@@ -1701,17 +1701,17 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_fetch_policy_pages.py --import-mode=prepend -q`
 Expected: `4 passed`.
 
-- [ ] **Step 5: Lock the script**
+- [x] **Step 5: Lock the script**
 
 Run: `uv lock --script expirements/parser-fidelity/fetch_policy_pages.py`
 Expected: `Resolved … packages`, and `expirements/parser-fidelity/fetch_policy_pages.py.lock` now exists.
 
-- [ ] **Step 6: Fetch the SEC policy pages (live, at most 10 requests)**
+- [x] **Step 6: Fetch the SEC policy pages (live, at most 10 requests)**
 
 Run: `uv run --locked --script expirements/parser-fidelity/fetch_policy_pages.py fetch --live`
 
@@ -1729,7 +1729,7 @@ Record N; the Task 22 handoff reports it. If a key prints `no candidate URL answ
 - add its URL as the first entry of that key's tuple in `PAGES`;
 - rerun Step 4 and this step.
 
-- [ ] **Step 7: Write the register from the fetched pages**
+- [x] **Step 7: Write the register from the fetched pages**
 
 Create `docs/source-register.toml` with exactly this content:
 
@@ -1798,12 +1798,12 @@ Then replace every `FILL_*` marker:
 Copy each sentence exactly, and escape any `"` as `\"`. The unfilled template does not
 parse as TOML, so no marker can survive the next step.
 
-- [ ] **Step 8: Verify the register**
+- [x] **Step 8: Verify the register**
 
 Run: `uv run --locked --script expirements/parser-fidelity/fetch_policy_pages.py verify`
 Expected: `register quotes verified`.
 
-- [ ] **Step 9: Lint and commit**
+- [x] **Step 9: Lint and commit**
 
 ```bash
 uv run --locked ruff format expirements/parser-fidelity
@@ -1841,7 +1841,7 @@ git commit -m "docs: add the source register with the verified SEC policy quotes
 The walker (Task 14) imports these helpers, so this module is frozen in Task 15. It
 must not change after discovery either: the manifest records the values it computed.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `expirements/parser-fidelity/test_pf_classes.py`:
 
@@ -1935,12 +1935,12 @@ def test_preformatted_text_fires_when_pre_holds_half_the_characters():
     assert tests.preformatted_text and tests.malformed_layout
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_pf_classes.py --import-mode=prepend -q`
 Expected: collection error `ModuleNotFoundError: No module named 'pf_classes'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 `expirements/parser-fidelity/pf_classes.py`:
 
@@ -2188,12 +2188,12 @@ def run_class_tests(raw: bytes) -> ClassTests:
     )
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_pf_classes.py --import-mode=prepend -q`
 Expected: `9 passed`.
 
-- [ ] **Step 5: Lint and commit**
+- [x] **Step 5: Lint and commit**
 
 ```bash
 uv run --locked ruff format expirements/parser-fidelity
@@ -2230,7 +2230,7 @@ git commit -m "feat(parser-fidelity): add deterministic release class tests"
   - **Python API.** `load_candidates()`, `suggest(candidates)`, and
     `render_shortlist(candidates)`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `expirements/parser-fidelity/test_discover.py`:
 
@@ -2508,12 +2508,12 @@ def test_image_only_exhibits_are_excluded_from_the_shortlist():
     assert "1 have under 500 characters of native text" in shortlist
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_discover.py --import-mode=prepend -q`
 Expected: collection error `ModuleNotFoundError: No module named 'discover'`.
 
-- [ ] **Step 3: Write the script**
+- [x] **Step 3: Write the script**
 
 `expirements/parser-fidelity/discover.py`:
 
@@ -3063,12 +3063,12 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_discover.py --import-mode=prepend -q`
 Expected: `12 passed`.
 
-- [ ] **Step 5: Lock, lint, and commit**
+- [x] **Step 5: Lock, lint, and commit**
 
 ```bash
 uv lock --script expirements/parser-fidelity/discover.py
@@ -3091,7 +3091,7 @@ git commit -m "feat(parser-fidelity): add Item 2.02 exhibit discovery and shortl
   `primary_class`), two or three `[[devset]]` entries, `approved_by`, `approved_on`,
   and `short_classes`.
 
-- [ ] **Step 1: Smoke-test discovery live (at most 20 requests)**
+- [x] **Step 1: Smoke-test discovery live (at most 20 requests)**
 
 Run: `uv run --locked --script expirements/parser-fidelity/discover.py run --live --years 2025 --per-year 1 --max-requests 20`
 
@@ -3114,7 +3114,7 @@ fails, adapt them to the saved response:
 
 Commit any fix with `fix(parser-fidelity): …`.
 
-- [ ] **Step 2: Run the full discovery**
+- [x] **Step 2: Run the full discovery**
 
 Run: `uv run --locked --script expirements/parser-fidelity/discover.py run --live`
 
@@ -3125,7 +3125,7 @@ Saved responses are reused and recorded accessions are skipped, so each rerun on
 continues. Stop rerunning when a run finds nothing new. Each run's request count goes
 into the handoff.
 
-- [ ] **Step 3: Build the shortlist**
+- [x] **Step 3: Build the shortlist**
 
 Run: `uv run --locked --script expirements/parser-fidelity/discover.py shortlist`
 
@@ -3141,7 +3141,7 @@ If a class has fewer than two eligible candidates, apply the spec's contingency:
    class, recorded as a limitation through `short_classes`, and relaxing a shortlist
    preference.
 
-- [ ] **Step 4: Gate A — the user approves the fixtures and the development set**
+- [x] **Step 4: Gate A — the user approves the fixtures and the development set**
 
 Give the user `data/raw/discovery/shortlist.md` and this template for
 `expirements/parser-fidelity/approval.toml`:
@@ -3209,7 +3209,7 @@ The spec's preferences apply:
 Wait for the user to write the file, or to dictate the IDs for you to write verbatim.
 Do not choose fixtures on the user's behalf.
 
-- [ ] **Step 5: Check the approval parses**
+- [x] **Step 5: Check the approval parses**
 
 Run: `uv run --locked --all-packages python -c "import tomllib, pathlib; a = tomllib.loads(pathlib.Path('expirements/parser-fidelity/approval.toml').read_text()); print(len(a['fixtures']), len(a['devset']))"`
 Expected: `8 2` or `8 3`. With a short class, the first number is 7 or fewer.
@@ -3247,7 +3247,7 @@ Task 7 checks the rest.
     - a `[fixtures.class_tests]` table.
   - `data/raw/devset/<id>/source.html` for each development release (never committed).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `expirements/parser-fidelity/test_promote_fixtures.py`:
 
@@ -3399,12 +3399,12 @@ def test_toml_value_escapes_strings():
     )
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_promote_fixtures.py --import-mode=prepend -q`
 Expected: collection error `ModuleNotFoundError: No module named 'pf_toml'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 `expirements/parser-fidelity/pf_toml.py`:
 
@@ -3655,12 +3655,12 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_promote_fixtures.py --import-mode=prepend -q`
 Expected: `6 passed`.
 
-- [ ] **Step 5: Put `.gitattributes` in place before any fixture is staged**
+- [x] **Step 5: Put `.gitattributes` in place before any fixture is staged**
 
 Create `.gitattributes` at the repository root with exactly this line:
 
@@ -3672,7 +3672,7 @@ Git reads attributes when a file is added, so this must exist before Step 7 stag
 sources. With `-text`, Git never rewrites line endings, so each committed sha256 stays
 valid.
 
-- [ ] **Step 6: Promote the approved releases**
+- [x] **Step 6: Promote the approved releases**
 
 Run: `uv run --locked --all-packages python expirements/parser-fidelity/promote_fixtures.py`
 
@@ -3692,7 +3692,7 @@ ls -l tests/fixtures/releases/*/source.html
 
 Expected: every size is at most 1048576 bytes.
 
-- [ ] **Step 7: Lint and commit**
+- [x] **Step 7: Lint and commit**
 
 ```bash
 uv run --locked ruff format expirements/parser-fidelity
@@ -3731,7 +3731,7 @@ Nothing under `data/` may appear.
     `.ascii_only`, and `.ok`. Also `init_skeleton(fixture_dir) -> Path`.
   - **CLI.** `validate_gold.py DIR [DIR ...]` and `validate_gold.py --init DIR`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `expirements/parser-fidelity/test_validate_gold.py`:
 
@@ -3927,12 +3927,12 @@ def test_init_writes_a_skeleton_that_fails_until_filled(tmp_path):
     assert main([str(folder)]) == 1
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_validate_gold.py --import-mode=prepend -q`
 Expected: collection error `ModuleNotFoundError: No module named 'validate_gold'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 `expirements/parser-fidelity/validate_gold.py`:
 
@@ -4315,12 +4315,12 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_validate_gold.py --import-mode=prepend -q`
 Expected: `9 passed`.
 
-- [ ] **Step 5: Lint and commit**
+- [x] **Step 5: Lint and commit**
 
 ```bash
 uv run --locked ruff format expirements/parser-fidelity
@@ -4348,7 +4348,7 @@ git commit -m "feat(parser-fidelity): add the standard-library gold validator"
   - `declared_dependencies(script) -> list[str]`;
   - the CLI, which exits 0 only when there are no problems.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `expirements/parser-fidelity/test_check_fixtures.py`:
 
@@ -4441,12 +4441,12 @@ def test_locks_must_be_committed_for_scripts_with_dependencies(tmp_path):
     assert check_locks(harness, tmp_path) == []
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_check_fixtures.py --import-mode=prepend -q`
 Expected: collection error `ModuleNotFoundError: No module named 'check_fixtures'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 `expirements/parser-fidelity/check_fixtures.py`:
 
@@ -4594,12 +4594,12 @@ if __name__ == "__main__":
     sys.exit(main())
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_check_fixtures.py --import-mode=prepend -q`
 Expected: `5 passed`.
 
-- [ ] **Step 5: Run the check on the real corpus**
+- [x] **Step 5: Run the check on the real corpus**
 
 Run: `uv run --locked --all-packages python expirements/parser-fidelity/check_fixtures.py`
 
@@ -4611,7 +4611,7 @@ Expected, because no gold exists yet: exit 1, with exactly two problems per fixt
 No sha256, attribute, register, or lock problem may appear; if one does, fix it before
 committing.
 
-- [ ] **Step 6: Lint and commit**
+- [x] **Step 6: Lint and commit**
 
 ```bash
 uv run --locked ruff format expirements/parser-fidelity
@@ -4638,7 +4638,7 @@ fixtures` also refuses to run until every gold file validates.
 - Produces: eight `gold.toml` files that pass the validator, and `gold-notes.md`. V2
   (Task 20) reads both.
 
-- [ ] **Step 1: Prepare the skeletons and the notes file**
+- [x] **Step 1: Prepare the skeletons and the notes file**
 
 Run: `uv run --locked --all-packages python expirements/parser-fidelity/validate_gold.py --init tests/fixtures/releases/*/`
 Expected: one `wrote …/gold.toml` line per fixture.
@@ -4663,7 +4663,7 @@ Stage 2 needs, are drawn from these notes. No candidate output is consulted whil
 - Structure the gold schema cannot express:
 ```
 
-- [ ] **Step 2: Hand the marking protocol to the user**
+- [x] **Step 2: Hand the marking protocol to the user**
 
 Tell the user, in these words:
 
@@ -4757,7 +4757,7 @@ Expected: `fixture check passed`. The gate is complete only when that line print
 
 This module shapes every dump, so Task 15 freezes it.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `expirements/parser-fidelity/test_pf_dump.py`:
 
@@ -4895,12 +4895,12 @@ def test_run_adapter_records_a_crash(tmp_path):
     )
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_pf_dump.py --import-mode=prepend -q`
 Expected: collection error `ModuleNotFoundError: No module named 'pf_dump'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 `expirements/parser-fidelity/pf_dump.py`:
 
@@ -5147,12 +5147,12 @@ def run_adapter(
     return code
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_pf_dump.py --import-mode=prepend -q`
 Expected: `7 passed`.
 
-- [ ] **Step 5: Lint and commit**
+- [x] **Step 5: Lint and commit**
 
 ```bash
 uv run --locked ruff format expirements/parser-fidelity
@@ -5184,7 +5184,7 @@ git commit -m "feat(parser-fidelity): add element dumps, network guard, and adap
   - `control.parse(html) -> list[Element]`.
   - Both library adapters take a `--self-check` flag.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `expirements/parser-fidelity/test_adapters.py`:
 
@@ -5333,12 +5333,12 @@ def test_control_emits_one_paragraph_per_line():
     ]
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_adapters.py --import-mode=prepend -q`
 Expected: collection error `ModuleNotFoundError: No module named 'adapter_edgartools'`.
 
-- [ ] **Step 3: Write the three adapters**
+- [x] **Step 3: Write the three adapters**
 
 `expirements/parser-fidelity/control.py`:
 
@@ -5603,12 +5603,12 @@ if __name__ == "__main__":
     raise SystemExit(run_adapter(parse, library="sec-parser"))
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_adapters.py --import-mode=prepend -q`
 Expected: `4 passed`.
 
-- [ ] **Step 5: Lock the three scripts**
+- [x] **Step 5: Lock the three scripts**
 
 ```bash
 uv lock --script expirements/parser-fidelity/control.py
@@ -5630,7 +5630,7 @@ unmeasurable.
   selected.
 - V2 states that it was unmeasurable and that RG §2's claim stays untested.
 
-- [ ] **Step 6: Save the Python 3.14 evidence for sec-parser (P2)**
+- [x] **Step 6: Save the Python 3.14 evidence for sec-parser (P2)**
 
 ```bash
 mkdir -p data/runs/parser-fidelity/evidence
@@ -5642,7 +5642,7 @@ cat data/runs/parser-fidelity/evidence/secparser-py314.txt
 Expected: `No solution found when resolving dependencies`, because `lxml>=5.2.2,<6.0.0`
 has no usable wheels. V2 quotes this file.
 
-- [ ] **Step 7: Run the self-checks**
+- [x] **Step 7: Run the self-checks**
 
 ```bash
 uv run --locked --script expirements/parser-fidelity/adapter_edgartools.py --self-check
@@ -5683,7 +5683,7 @@ Expected: every line ends `exit=0`.
 
 Never run an adapter on `tests/fixtures/` in this task.
 
-- [ ] **Step 9: Lint and commit**
+- [x] **Step 9: Lint and commit**
 
 ```bash
 uv run --locked ruff format expirements/parser-fidelity
@@ -5705,7 +5705,7 @@ git commit -m "feat(parser-fidelity): add the control and the edgartools and sec
   parameters are fixed here: at most 12 words for a styled heading, and at most 4
   characters for a marker.
 
-- [ ] **Step 1: Write the rules file**
+- [x] **Step 1: Write the rules file**
 
 `expirements/parser-fidelity/walker-rules.md`:
 
@@ -5803,7 +5803,7 @@ items by W6 or W7.
 None yet.
 ```
 
-- [ ] **Step 2: Gate C — the user approves the rules**
+- [x] **Step 2: Gate C — the user approves the rules**
 
 Ask the user to review `walker-rules.md`. The rules shape the walker candidate, and the
 spec requires them in writing before development begins. The user may edit any rule or
@@ -5816,7 +5816,7 @@ Status: approved by <user's name> on <YYYY-MM-DD>, before development began.
 
 Use the name and date the user gives.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add expirements/parser-fidelity/walker-rules.md
@@ -5849,7 +5849,7 @@ If the user changed any rule or parameter at gate C, edit the matching test belo
 the matching constant or branch in `walker.py` before Step 1. The tests encode the
 rules as drafted.
 
-- [ ] **Step 1: Write the failing tests (one per rule)**
+- [x] **Step 1: Write the failing tests (one per rule)**
 
 `expirements/parser-fidelity/test_walker.py`:
 
@@ -6009,12 +6009,12 @@ def test_parse_is_deterministic():
     assert parse(html) == parse(html)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_walker.py --import-mode=prepend -q`
 Expected: collection error `ModuleNotFoundError: No module named 'walker'`.
 
-- [ ] **Step 3: Write the walker**
+- [x] **Step 3: Write the walker**
 
 `expirements/parser-fidelity/walker.py`:
 
@@ -6364,12 +6364,12 @@ if __name__ == "__main__":
     raise SystemExit(run_adapter(parse, library="lxml"))
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_walker.py --import-mode=prepend -q`
 Expected: `16 passed`.
 
-- [ ] **Step 5: Lock the script**
+- [x] **Step 5: Lock the script**
 
 Run: `uv lock --script expirements/parser-fidelity/walker.py`
 Expected: `Resolved … packages`.
@@ -6433,7 +6433,7 @@ git commit -m "feat(parser-fidelity): add the bespoke lxml walker"
     - `record(...)`, `verify(harness, freeze_file) -> list[str]`, and `amend(...)`;
     - `ALLOWED_REASONS = ("crash", "network-guard")`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `expirements/parser-fidelity/test_freeze.py`:
 
@@ -6587,12 +6587,12 @@ def test_fixture_runs_refuse_until_freeze_and_gold_are_ready(tmp_path, monkeypat
     assert any("gold.toml is missing" in p for p in problems)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_freeze.py expirements/parser-fidelity/test_run_candidates.py --import-mode=prepend -q`
 Expected: 2 collection errors, `No module named 'freeze'` and `No module named 'run_candidates'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 `expirements/parser-fidelity/freeze.py`:
 
@@ -6956,12 +6956,12 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_freeze.py expirements/parser-fidelity/test_run_candidates.py --import-mode=prepend -q`
 Expected: `10 passed`.
 
-- [ ] **Step 5: Commit the runner and freeze tool**
+- [x] **Step 5: Commit the runner and freeze tool**
 
 ```bash
 uv run --locked ruff format expirements/parser-fidelity
@@ -7027,7 +7027,7 @@ the manifest, not the gold.
     `conclusion(records) -> str`, and `install_transport_throttle(throttle)`;
   - the V1 record.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `expirements/parser-fidelity/test_v1_return_types.py`:
 
@@ -7139,12 +7139,12 @@ def test_transport_throttle_counts_and_caps_requests(monkeypatch):
         transport.handle_request(request)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_v1_return_types.py --import-mode=prepend -q`
 Expected: collection error `ModuleNotFoundError: No module named 'v1_return_types'`.
 
-- [ ] **Step 3: Write the script**
+- [x] **Step 3: Write the script**
 
 The paths in `PATHS` were enumerated from the installed 5.58.0 wheel on 2026-09-22. They
 cover:
@@ -7494,12 +7494,12 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_v1_return_types.py --import-mode=prepend -q`
 Expected: `6 passed`.
 
-- [ ] **Step 5: Lock the script and confirm the paths against the installed source**
+- [x] **Step 5: Lock the script and confirm the paths against the installed source**
 
 ```bash
 uv lock --script expirements/parser-fidelity/v1_return_types.py
@@ -7655,7 +7655,7 @@ The rule is fixed before scoring (F6), so this task and Task 18 are committed be
 Task 19 runs anything on a fixture. If Task 19 exposes a scorer bug, fix it with a
 failing test first, and list the fix in V2.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `expirements/parser-fidelity/test_score.py`:
 
@@ -7873,12 +7873,12 @@ def test_gold_structure_reports_levels_and_footnote_placement():
     assert structure["footnote_placement"] == {"after table": 1}
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_score.py --import-mode=prepend -q`
 Expected: collection error `ModuleNotFoundError: No module named 'score'`.
 
-- [ ] **Step 3: Write the scorer**
+- [x] **Step 3: Write the scorer**
 
 `expirements/parser-fidelity/score.py`:
 
@@ -8429,12 +8429,12 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_score.py --import-mode=prepend -q`
 Expected: `11 passed`.
 
-- [ ] **Step 5: Lint and commit**
+- [x] **Step 5: Lint and commit**
 
 ```bash
 uv run --locked ruff format expirements/parser-fidelity
@@ -8470,7 +8470,7 @@ git commit -m "feat(parser-fidelity): add the V2 scorer"
       `control_check`;
     - `data/runs/parser-fidelity/selection.json` and `selection.md`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `expirements/parser-fidelity/test_lock_gate.py`:
 
@@ -8693,12 +8693,12 @@ def test_control_check_flags_fixtures_that_cannot_discriminate():
     )
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_lock_gate.py expirements/parser-fidelity/test_select_parser.py --import-mode=prepend -q`
 Expected: 2 collection errors, `No module named 'lock_gate'` and `No module named 'select_parser'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 `expirements/parser-fidelity/lock_gate.py`:
 
@@ -9202,12 +9202,12 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_lock_gate.py expirements/parser-fidelity/test_select_parser.py --import-mode=prepend -q`
 Expected: `10 passed`.
 
-- [ ] **Step 5: Lock, lint, and commit, before any scoring**
+- [x] **Step 5: Lock, lint, and commit, before any scoring**
 
 ```bash
 uv lock --script expirements/parser-fidelity/lock_gate.py

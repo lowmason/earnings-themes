@@ -1,0 +1,13 @@
+schema_version = 1
+fixture_id = "0000049071-06-000012_ex-99"
+annotator = ""
+marked_from = "browser rendering"
+browser = ""
+# completed = YYYY-MM-DD   (add when the file is finished)
+
+# One [[blocks]] entry per rendered block, in rendered reading order. Example:
+# [[blocks]]
+# id = "b001"
+# type = "heading"
+# level = 1
+# start = "first words of the block"
