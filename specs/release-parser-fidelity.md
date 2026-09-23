@@ -31,7 +31,7 @@ Taken with the user on 2026-09-22.
 | F6 | The selection rule is fixed before any measurement. Each candidate is judged on its worst class, and metrics are compared in priority order: coverage, footnote merging, reading order, header loss. Values within 1/n count as tied. Remaining ties break on dependency footprint, then license, then maintenance. |
 | F7 | Three eligibility gates apply before ranking. A candidate must install into the workspace lock on Python 3.14 without a downgrade, produce deterministic output, and use no network while parsing. |
 | F8 | The decision is recorded as an ADR under `docs/adr/`, because A §153 places decision records in `docs/`. Measurements go under `docs/verification/`. The harness lives in `expirements/parser-fidelity/`, the repository's existing (misspelled) experiments directory. |
-| F9 | Taken 2026-09-23; amends D2 for Stage 1 gold only. A drafting agent from outside Claude's model family, Codex or Gemini, drafts a fixture's gold from the browser's rendering, in Chrome, under `expirements/parser-fidelity/gold-draft-brief.md`, and the user verifies every block against the rendering: boundaries, types, levels, order, anchors, and table cells. A fixture has at most one drafter, and the user may mark any fixture by hand instead. The agent leaves the header blank, so a draft fails the validator until the user fills it in; that is the sign-off. The verified file is the gold. Its `annotator` reads "Lowell Mason (verified a Codex draft)" or "Lowell Mason (verified a Gemini draft)", and `marked_from` stays "browser rendering", the source of both the draft and the check. The agent sees only the Gold annotation section, the validator, and the rendering (screenshots and the page's rendered text), never the page's HTML structure or a candidate's code, rules, or output. Each draft is kept, uncommitted, so V2 can report which agent drafted each fixture and how many blocks verification changed. D2 still governs Stages 6 and 11. |
+| F9 | Taken 2026-09-23; amends D2 for Stage 1 gold only. Codex drafts each fixture's gold from the browser's rendered text, under `expirements/parser-fidelity/codex-gold-brief.md`, and the user verifies every block against the rendering: boundaries, types, levels, order, anchors, and table cells. Codex leaves the header blank, so a draft fails the validator until the user fills it in; that is the sign-off. The verified file is the gold. Its `annotator` reads "Lowell Mason (verified a Codex draft)", and `marked_from` stays "browser rendering", the source of both the draft and the check. Codex sees only the Gold annotation section, the validator, and the rendered text, never a candidate's code, rules, or output. Each draft is kept, uncommitted, so V2 can report how many blocks verification changed. D2 still governs Stages 6 and 11. |
 
 ## Scope
 
@@ -170,7 +170,7 @@ manifest's `pilot_split` field records this.
 
 The user is the sole annotator (D2). Gold is marked from a browser's rendering
 of `source.html`, never from any candidate's output. No candidate output is
-shown as a pre-draft. **Amended (F9):** Codex or Gemini may draft a fixture's gold from the browser's rendering (screenshots and the page's rendered text), and the user verifies every block against the rendering; the verified file is the gold, and everything below applies to it.
+shown as a pre-draft. **Amended (F9):** Codex drafts the gold from the browser's rendered text and the user verifies every block against the rendering; the verified file is the gold, and everything below applies to it.
 
 ### Guidelines
 
@@ -529,7 +529,7 @@ development-set fetches, the register's policy check, and V1.
 
 - **`docs/verification/V2-parser-fidelity.md`:**
   - the corpus and its class-test values;
-  - the gold protocol, including F9's drafting brief and, per fixture, who drafted it and how many blocks verification changed;
+  - the gold protocol, including F9's Codex brief and, per fixture, how many blocks verification changed;
   - for each candidate: version, interpreter, lock, type mapping, and gate
     results;
   - metric tables by class and candidate, per-fixture detail, and the
@@ -540,7 +540,7 @@ development-set fetches, the register's policy check, and V1.
   - element types and nesting observed in the gold (for Stage 2): heading and
     list depths, where footnotes sit, and tables inside lists or tables;
   - limitations:
-    - only eight fixtures and one annotator, who verified Codex or Gemini drafts where a fixture was not marked by hand (F9);
+    - only eight fixtures and one annotator, who verified Codex drafts rather than marking from scratch (F9);
     - the gold was marked from a browser rendering;
     - coverage checks a block's ends, not its middle;
     - text fidelity is not measured here (R3.5, Stage 3);
