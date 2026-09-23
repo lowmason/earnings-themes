@@ -57,8 +57,13 @@ def fixture_preconditions(fixtures: Path = FIXTURES) -> list[str]:
     return problems
 
 
+# PYTHONHASHSEED is dropped so each run gets default hash randomization. EDGAR_IDENTITY
+# is dropped because parsing needs no identity and candidate output lands in run logs.
+DROPPED_ENV = frozenset({"PYTHONHASHSEED", "EDGAR_IDENTITY"})
+
+
 def child_env() -> dict[str, str]:
-    env = {key: value for key, value in os.environ.items() if key != "PYTHONHASHSEED"}
+    env = {key: value for key, value in os.environ.items() if key not in DROPPED_ENV}
     env["EDGAR_LOCAL_DATA_DIR"] = str(EDGAR_HOME)
     return env
 

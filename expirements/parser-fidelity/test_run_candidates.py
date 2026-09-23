@@ -78,3 +78,8 @@ def test_fixture_runs_refuse_until_freeze_and_gold_are_ready(tmp_path, monkeypat
     problems = run_candidates.fixture_preconditions(tmp_path)
     assert "FROZEN.toml is missing" in problems
     assert any("gold.toml is missing" in p for p in problems)
+
+
+def test_child_env_keeps_the_identity_out_of_candidate_runs(monkeypatch):
+    monkeypatch.setenv("EDGAR_IDENTITY", "Jane Doe research jane@example.org")
+    assert "EDGAR_IDENTITY" not in child_env()
