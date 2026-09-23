@@ -82,6 +82,16 @@ def check_approval(approval: dict, candidates: dict[str, dict]) -> None:
         for cik, n in per_issuer.items()
         if n > 2
     ]
+    listed = {
+        "fixtures": [entry["fixture_id"] for entry in fixtures],
+        "development set": devset,
+    }
+    for where, ids in listed.items():
+        problems += [
+            f"{fid}: listed {n} times in the {where}"
+            for fid, n in sorted(Counter(ids).items())
+            if n > 1
+        ]
     if not 2 <= len(devset) <= 3:
         problems.append(
             f"development set has {len(devset)} releases; approve two or three"

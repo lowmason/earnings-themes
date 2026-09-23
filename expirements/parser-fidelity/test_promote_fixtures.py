@@ -1,5 +1,6 @@
 import hashlib
 import json
+import re
 
 import pytest
 import tomllib
@@ -128,6 +129,28 @@ def test_wrong_class_count_and_mismatched_class_are_rejected(layout):
     assert (
         "class tests do not support primary_class 'clean_html'" not in message
     )  # table-heavy fixtures here are clean
+
+
+@pytest.mark.parametrize(
+    ("replaced", "kept", "where"),
+    [
+        # Same class, so the per-class and per-issuer counts still pass.
+        ("0000000004-25-000004_ex-99-1", "0000000000-25-000000_ex-99-1", "fixtures"),
+        # Still two entries, so the two-or-three count still passes.
+        (
+            "0000000009-25-000009_ex-99-1",
+            "0000000008-25-000008_ex-99-1",
+            "development set",
+        ),
+    ],
+)
+def test_an_id_listed_twice_is_rejected(layout, replaced, kept, where):
+    approval_path = layout[2]
+    approval_path.write_text(approval_path.read_text().replace(replaced, kept))
+    with pytest.raises(
+        PromotionError, match=re.escape(f"{kept}: listed 2 times in the {where}")
+    ):
+        run(layout)
 
 
 def test_tampered_bytes_are_rejected(layout):
