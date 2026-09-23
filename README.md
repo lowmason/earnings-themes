@@ -119,8 +119,18 @@ using those primitives.
 
 ## Current roadmap
 
-The implementation is organized as a staged, evidence-first roadmap. No stage is
-marked complete yet.
+The implementation is organized as a staged, evidence-first roadmap of sixteen
+stages. No stage is complete yet; Stage 1 is in progress.
+
+The roadmap was amended on 2026-09-22 by
+[the point-in-time DJIA cohort specification](specs/point-in-time-djia-cohort.md).
+It inserts **Stage 4: point-in-time DJIA cohort** before any document is
+acquired, moves the 40-event feasibility pilot into **Stage 5** as a
+deterministic selection frozen before any acquisition or parse outcome is known,
+and adds **Stage 15: the full DJIA eight-quarter run** over calendar period ends
+from `2024Q3` through `2026Q2`. The firm universe is the Dow Jones Industrial
+Average resolved point in time, not one current roster: a current list would
+introduce survivorship bias into earlier periods.
 
 The next milestone is **Stage 1: acquisition-library and parser fidelity**. It is
 an investigation, not product code: it will measure candidate HTML parsers on a
@@ -138,6 +148,10 @@ Key planning documents:
   — staged delivery, dependencies, and exit conditions.
 - [Stage 1 parser-fidelity specification](specs/release-parser-fidelity.md)
   — the current milestone's scope and measurement design.
+- [Point-in-time DJIA cohort specification](specs/point-in-time-djia-cohort.md)
+  — the firm universe, event corpus, and deterministic pilot selection; the
+  stage specification for roadmap Stages 4 and 15, and binding on Stage 5's
+  event-eligibility and pilot-selection design.
 - [Earnings-theme learning path](docs/earnings-themes.md) — the original staged
   learning exercise that motivates the extraction track.
 - [Company-ingestion source note](docs/earnings-ingestion.md) — the original
@@ -227,7 +241,10 @@ uv sync --locked --all-packages --extra extraction
 - Only small fixtures with documented redistribution permission belong under
   `tests/fixtures/`.
 - The source register that records access, licensing, and redistribution status
-  is a Stage 1 deliverable; it does not exist yet.
+  for release fixtures is [`docs/source-register.toml`](docs/source-register.toml),
+  a Stage 1 deliverable still in progress. Stage 4 adds a second register for
+  index-membership sources, which does not exist yet. A free or open-source
+  acquisition tool confers no rights to the underlying index data.
 - SEC access requires a descriptive User-Agent with genuine project contact
   information configured outside committed code. The project default is a shared
   maximum of **2 requests per second** across SEC adapters and workers.
