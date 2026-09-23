@@ -130,9 +130,24 @@ exceed the event count. Never treat the two numbers as the same quantity.
 | `embeddings` extra | in-code-but-not-in-spec | `packages/earnings-themes/pyproject.toml:39` | Sits on the themes package; R9.5 places clustering outside the pipeline |
 | `entity-matching` extra | in-code-but-not-in-spec | `packages/earnings-ingestion/pyproject.toml:25` | Serves company enrichment, out of this spec's scope (A §429) |
 | Dev tooling | in-code-but-not-in-spec | `pyproject.toml:22-35` | `dev` group and Ruff config exist; no pytest config, `live` marker, or import mode (A §193) |
+| P-C1 | missing | none found¹ | DJIA resolved point in time, not as one current roster; Stage 4 |
+| P-C2 | missing | none found¹ | Eligibility keyed to `first_publication_time`; defined in Stage 4, joined in Stage 5 |
+| P-C3 | missing | none found¹ | Window `[2024-07-01, 2026-07-01)`; reported fiscal labels stay separate fields |
+| P-C4 | missing | none found¹ | Public-information cutoff `2026-09-22` |
+| P-C5 | missing | none found¹ | Deterministic 40-event pilot; supersedes the codebook stage's former sample choice (D4) |
+| P-C6 | missing | none found¹ | Full eight-quarter run is Stage 15; observed count never forced to `30 × 8` |
+| P-C7 | missing | none found¹ | Cohort-before-acquisition order is binding; split across Stages 4 and 5 |
+| P-A4 | missing | none found¹ | Stage 4 acceptance criteria |
+| P-A5 | missing | none found¹ | Stage 5 acceptance criteria |
+| P-A15 | missing | none found¹ | Stage 15 acceptance criteria |
+| P-VF | missing | none found¹ | 19 deterministic fixture cases; split across Stages 4 and 5 |
+| P-VI | missing | none found¹ | Offline integration replay, anchor evidence through frozen pilot manifest |
+| P-VL | missing | none found¹ | Optional `live` source-accessibility check; never in default CI |
 
-Totals: 78 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
-0 implemented-differently · 0 out-of-repo.
+Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
+0 implemented-differently · 0 out-of-repo. The 91 comprises 78 rows from
+`specs/evidence-linked-theme-extraction.md` and 13 from
+`specs/point-in-time-djia-cohort.md` (the `P-*` rows).
 
 ## Stages
 
@@ -304,8 +319,9 @@ follow the normal stamp convention against that file.
 ## Completion
 
 Retire this roadmap only after a conformance audit of the accumulated system:
-re-run the gap rubric over every row above, with evidence per verdict
-(implementing stage and plan, `> Deviation:` notes, deferred entries). Each
+re-run the gap rubric over every row above — including the 13 `P-*` rows from
+`specs/point-in-time-djia-cohort.md` — with evidence per verdict (implementing
+stage and plan, `> Deviation:` notes, deferred entries). Each
 requirement still unmet exits one of two ways: a new stage (the roadmap stays
 live), or conscious deferral with a written why. Deferrals already decided on
 2026-09-22:
