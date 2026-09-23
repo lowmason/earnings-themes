@@ -66,13 +66,17 @@ header. Apply the section's rules. The points most often missed:
   or outermost list); otherwise omit it.
 - Tables: one `table` block per data table. `headers` lists every header text in
   the grid: column headers at every level, the stub header, and any title or units
-  line inside the grid. Choose the three `cells` from rows with no `$` or
-  parentheses, using values that occur nowhere else. Search the whole table for
-  such an L. If none has three values that occur nowhere else, set
-  `unanchorable = true` on the table, still give its headers and an L, and list it
-  in your report. `row_header` is the row's
-  label; `col_header` is the column's full header stack, top to bottom, joined with
-  spaces. A title outside the grid is a `heading` block before the table.
+  line inside the grid. Choose the three `cells` from values that occur nowhere
+  else in the document. Where the rendered text separates a `$`, `%`, or
+  parenthesis from its number with a tab or a line break, that sign sits in a cell
+  of its own and the value is split across cells: never use it. A sign attached to
+  its number, with nothing or only spaces between them, is part of the value, and
+  a footnote marker such as (a) in a row's label does not rule the row out. Search
+  the whole table for such an L. If none exists, set `unanchorable = true` on the
+  table, still give its headers and an L, and list it in your report. `row_header`
+  is the row's label; `col_header` is the column's full header stack, top to
+  bottom, joined with spaces. A title outside the grid is a `heading` block before
+  the table.
 - Page artifacts (running headers and footers, page numbers): one entry per
   occurrence, with only `start`.
 - IDs: `b001`, `b002`, … for text blocks, `t001`, … for tables, `p001`, … for page
