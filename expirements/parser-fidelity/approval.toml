@@ -1,0 +1,50 @@
+# Stage 1 fixture approval (specs/release-parser-fidelity.md: Selection; decisions F3, F4).
+# Written by the user from data/raw/discovery/shortlist.md. promote_fixtures.py enforces
+# two fixtures per class (one only for a class listed in short_classes), a class-test
+# match for each primary_class, at most two fixtures per issuer, the 1 MiB cap, and a
+# development set of two or three releases disjoint from the fixtures.
+# The user chose every entry below in session; Claude wrote the file from those answers.
+approved_by = "Lowell Mason"
+approved_on = 2026-09-22
+short_classes = []
+
+[[fixtures]]
+fixture_id = "0000315449-18-000009_ex-99-1"  # UQM Technologies, 2018
+primary_class = "clean_html"
+
+[[fixtures]]
+fixture_id = "0000859163-17-000071_ex-99-1"  # AVX Corp, 2017
+primary_class = "clean_html"
+
+[[fixtures]]
+fixture_id = "0000003370-05-000209_ex-99"  # IKON Office Solutions, 2005
+primary_class = "malformed_layout"
+
+[[fixtures]]
+fixture_id = "0000004904-24-000080_ex-99"  # American Electric Power, 2024
+primary_class = "malformed_layout"
+
+[[fixtures]]
+fixture_id = "0000049071-06-000012_ex-99"  # Humana, 2006
+primary_class = "table_heavy"
+
+[[fixtures]]
+fixture_id = "0000068270-05-000104_ex-99"  # Ruby Tuesday, 2005
+primary_class = "table_heavy"
+
+[[fixtures]]
+fixture_id = "0001104659-23-049001_ex-99-1"  # Establishment Labs Holdings, 2023
+primary_class = "narrative_only"
+
+[[fixtures]]
+fixture_id = "0001572910-14-000003_ex-99-1"  # Phillips 66 Partners, 2014
+primary_class = "narrative_only"
+
+[[devset]]
+fixture_id = "0000079958-12-000020_ex-99-1"  # Precision Castparts, 2012
+
+[[devset]]
+fixture_id = "0000019149-11-000022_ex-99-1"  # Champion Industries, 2011
+
+[[devset]]
+fixture_id = "0001045150-09-000060_ex-99-1"  # Tier Technologies, 2009
