@@ -151,3 +151,19 @@ def test_w16_layout_tables_are_walked_cell_by_cell():
 def test_parse_is_deterministic():
     html = "<html><body><h1>T</h1><p>x</p><table><tr><td>a</td><td>1</td></tr><tr><td>b</td><td>2</td></tr></table></body></html>"
     assert parse(html) == parse(html)
+
+
+def test_w11_row_and_row_group_bold_reaches_layout_cells():
+    prose = " ".join(["word"] * 45)
+    html = (
+        "<table><tr style='font-weight:bold'><td>Investor Contacts</td></tr>"
+        f"<tr><td>{prose}</td></tr></table>"
+        "<table><tbody style='font-weight:bold'><tr><td>Media Contacts</td></tr></tbody>"
+        f"<tbody><tr><td>{prose}</td></tr></tbody></table>"
+    )
+    assert kinds(html) == [
+        ("heading", "Investor Contacts"),
+        ("paragraph", prose),
+        ("heading", "Media Contacts"),
+        ("paragraph", prose),
+    ]

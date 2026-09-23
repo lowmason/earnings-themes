@@ -111,6 +111,18 @@ def child_style(el: HtmlElement, style: Style) -> Style:
     return Style(bold, underline, style.sup or tag == "sup", symbol)
 
 
+def cell_style(table: HtmlElement, cell: HtmlElement, style: Style) -> Style:
+    """W11: a cell inherits the styles of the rows and row groups between it and its table."""
+    chain = []
+    node = cell
+    while node is not None and node is not table:
+        chain.append(node)
+        node = node.getparent()
+    for el in reversed(chain):
+        style = child_style(el, style)
+    return style
+
+
 def collapse(text: str) -> str:
     return _WHITESPACE.sub(" ", text).strip()
 
@@ -245,7 +257,7 @@ class Walker:
         else:
             for row in own_rows(table):
                 for cell in own_cells(row):
-                    self.walk_block(cell, child_style(cell, style), "block")
+                    self.walk_block(cell, cell_style(table, cell, style), "block")
 
     def emit_table(self, grid: tuple[Row, ...]) -> None:
         self.elements.append(
