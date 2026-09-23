@@ -111,7 +111,7 @@ Totals: 78 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
 
 ## Stages
 
-- [ ] Stage 1: Acquisition-library and parser fidelity (investigation)
+- [X] Stage 1: Acquisition-library and parser fidelity (investigation)
       Objective: Establish by measurement which parser yields faithful typed elements on real releases, and what the pinned acquisition library returns.
       Spec: V1, V2 (discharging the open markers in R14.5 and R4.1); R1.3 for live fetches; A §242, A §425 for fixtures.
       Gap closed: V1, V2.
