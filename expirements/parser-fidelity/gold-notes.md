@@ -17,6 +17,7 @@ Stage 2 needs, are drawn from these notes. No candidate output is consulted whil
 ## 0000004904-24-000080_ex-99
 
 - Draft:
+- Unanchorable tables in the Codex draft: 5 of 7 (t001–t004, t006). The brief's table rule at the time (cells only from rows with no `$` or parentheses) was stricter than the spec's, so each flag was checked against the spec, with grids built from the page's cells and counts from the validator's text. All 5 stand: none has an L of three unique values that are not split across cells.
 - Browser and version:
 - Validator encoding and basis:
 - `document.characterSet` in the browser (skip if the validator says every byte is ASCII):
@@ -27,6 +28,7 @@ Stage 2 needs, are drawn from these notes. No candidate output is consulted whil
 ## 0000049071-06-000012_ex-99
 
 - Draft:
+- Unanchorable tables in Codex's first draft: 10 of 22. The brief's table rule at the time (cells only from rows with no `$` or parentheses) was stricter than the spec's. Checked against the spec, with grids built from the page's cells and counts from the validator's text, 7 of the 10 have a valid L (t001, t002, t004–t008) and 3 have none (t003, t019, t022). Codex re-drafted Humana under the corrected brief (f61e11e), in the same Codex session as the first draft. The second draft flags only t003, t019 and t022, and every anchored table's L passes the same check.
 - Browser and version:
 - Validator encoding and basis:
 - `document.characterSet` in the browser (skip if the validator says every byte is ASCII):

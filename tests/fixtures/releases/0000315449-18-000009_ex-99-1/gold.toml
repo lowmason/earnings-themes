@@ -1,13 +1,204 @@
 schema_version = 1
 fixture_id = "0000315449-18-000009_ex-99-1"
-annotator = ""
+annotator = "Lowell Mason (verified a Codex draft)"
 marked_from = "browser rendering"
-browser = ""
-# completed = YYYY-MM-DD   (add when the file is finished)
+browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
+completed = 2026-09-23
 
-# One [[blocks]] entry per rendered block, in rendered reading order. Example:
-# [[blocks]]
-# id = "b001"
-# type = "heading"
-# level = 1
-# start = "first words of the block"
+[[blocks]]
+id = "b001"
+type = "page_artifact"
+start = "EX-99.1 2 uqm-20180320ex99186fa44.htm EX-99.1"
+
+[[blocks]]
+id = "b002"
+type = "heading"
+level = 1
+start = "Exhibit 99.1"
+
+[[blocks]]
+id = "b003"
+type = "paragraph"
+start = "For Immediate Release"
+
+[[blocks]]
+id = "b004"
+type = "paragraph"
+start = "For more information contact:"
+
+[[blocks]]
+id = "b005"
+type = "paragraph"
+start = "Shawn Severson"
+
+[[blocks]]
+id = "b006"
+type = "paragraph"
+start = "EnergyTech Investor"
+
+[[blocks]]
+id = "b007"
+type = "paragraph"
+start = "415-233-7094"
+
+[[blocks]]
+id = "b008"
+type = "paragraph"
+start = "or"
+after = "David I. Rosenthal"
+
+[[blocks]]
+id = "b009"
+type = "paragraph"
+start = "David I. Rosenthal"
+
+[[blocks]]
+id = "b010"
+type = "paragraph"
+start = "UQM Technologies, Inc."
+after = "303-682-4900"
+
+[[blocks]]
+id = "b011"
+type = "paragraph"
+start = "303-682-4900"
+
+[[blocks]]
+id = "b012"
+type = "heading"
+level = 1
+start = "UQM Technologies Reports Quarter and"
+end = "Fiscal Year Ended December 31, 2017 Operating Results"
+
+[[blocks]]
+id = "b013"
+type = "paragraph"
+start = "LONGMONT, COLORADO, MARCH 20, 2018 - UQM TECHNOLOGIES, INC."
+end = "related primarily to the PowerPhase Pro® inventory."
+
+[[blocks]]
+id = "b014"
+type = "paragraph"
+start = "For the fiscal year ended December 31, 2017, total revenue grew 38%"
+end = "versus $13.9 million, or $0.29 per common share, for the same period last year."
+
+[[blocks]]
+id = "b015"
+type = "paragraph"
+start = "Joe Mitchell, UQM Technologies’ President and Chief Executive Officer, said,"
+end = "executing on the many opportunities that lie ahead of us.”"
+
+[[blocks]]
+id = "b016"
+type = "paragraph"
+start = "The numbers in this release should be read in conjunction with the Annual Report on Form 10-K."
+
+[[blocks]]
+id = "b017"
+type = "heading"
+level = 2
+start = "Conference Call"
+
+[[blocks]]
+id = "b018"
+type = "paragraph"
+start = "The Company will host a conference call today at 4:30 p.m. Eastern Time"
+end = "click on the Investor tab and select the “Earnings Webcast”."
+
+[[blocks]]
+id = "p001"
+type = "page_artifact"
+start = "UQM TECHNOLOGIES, INC. 4120 SPECIALTY PLACE, LONGMONT, COLORADO 80504 (303) 682-4900 FAX (303) 682-4901"
+
+[[blocks]]
+id = "b019"
+type = "heading"
+level = 2
+start = "About UQM"
+
+[[blocks]]
+id = "b020"
+type = "paragraph"
+start = "UQM Technologies is a developer and manufacturer of power-dense, high-efficiency electric motors"
+end = "For more information, please visit www.uqm.com."
+
+[[blocks]]
+id = "b021"
+type = "paragraph"
+start = "This Release contains statements that constitute “forward-looking statements”"
+end = "available through our website at www.uqm.com or at www.sec.gov."
+
+[[blocks]]
+id = "b022"
+type = "page_artifact"
+start = "Source: UQM Technologies, Inc."
+
+[[blocks]]
+id = "b023"
+type = "page_artifact"
+start = "###Tables Attached###"
+
+[[blocks]]
+id = "p002"
+type = "page_artifact"
+start = "UQM TECHNOLOGIES, INC. 4120 SPECIALTY PLACE, LONGMONT, COLORADO 80504 (303) 682-4900 FAX (303) 682-4901"
+
+[[blocks]]
+id = "t001"
+type = "table"
+headers = [
+  "UQM TECHNOLOGIES, INC. AND SUBSIDIARIES",
+  "Consolidated Condensed Statements of Operations",
+  "(derived from the Company’s Annual Report on Form 10-K)",
+  "Year ended December 31,",
+  "Three months ended March 31,",
+  "Nine months ended December 31,",
+  "2017",
+  "2016",
+  "2016",
+  "2016",
+]
+cells = [
+  { role = "corner", text = "7,162,456", row_header = "Product sales", col_header = "Year ended December 31, 2017" },
+  { role = "right", text = "4,710,654", row_header = "Product sales", col_header = "Year ended December 31, 2016" },
+  { role = "below", text = "616,293", row_header = "Contract services", col_header = "Year ended December 31, 2017" },
+]
+
+[[blocks]]
+id = "p003"
+type = "page_artifact"
+start = "UQM TECHNOLOGIES, INC. 4120 SPECIALTY PLACE, LONGMONT, COLORADO 80504 (303) 682-4900 FAX (303) 682-4901"
+
+# CHECK: The rendered financial grid is drawn with spaces; confirm the table boundary and header stack.
+[[blocks]]
+id = "t002"
+type = "table"
+headers = [
+  "UQM TECHNOLOGIES, INC. AND SUBSIDIARIES",
+  "Consolidated Condensed Balance Sheets",
+  "(derived from the Company’s Annual Report on Form 10-K)",
+  "December 31,",
+  "December 31,",
+  "2017",
+  "2016",
+]
+cells = [
+  { role = "corner", text = "6,309,269", row_header = "Cash and cash equivalents", col_header = "December 31, 2017" },
+  { role = "right", text = "2,100,089", row_header = "Cash and cash equivalents", col_header = "December 31, 2016" },
+  { role = "below", text = "176,193", row_header = "Restricted cash", col_header = "December 31, 2017" },
+]
+
+[[blocks]]
+id = "b030"
+type = "paragraph"
+start = "#End Table"
+
+[[blocks]]
+id = "b031"
+type = "paragraph"
+start = "# End #"
+
+[[blocks]]
+id = "p004"
+type = "page_artifact"
+start = "UQM TECHNOLOGIES, INC. 4120 SPECIALTY PLACE, LONGMONT, COLORADO 80504 (303) 682-4900 FAX (303) 682-4901"

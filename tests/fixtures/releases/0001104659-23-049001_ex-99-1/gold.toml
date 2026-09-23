@@ -1,13 +1,86 @@
 schema_version = 1
 fixture_id = "0001104659-23-049001_ex-99-1"
-annotator = ""
+annotator = "Lowell Mason (verified a Codex draft)"
 marked_from = "browser rendering"
-browser = ""
-# completed = YYYY-MM-DD   (add when the file is finished)
+browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
+completed = 2026-09-23
 
-# One [[blocks]] entry per rendered block, in rendered reading order. Example:
-# [[blocks]]
-# id = "b001"
-# type = "heading"
-# level = 1
-# start = "first words of the block"
+[[blocks]]
+id = "b001"
+type = "page_artifact"
+start = "EX-99.1 2 tm2313518d1_ex99-1.htm EXHIBIT 99.1"
+
+[[blocks]]
+id = "b002"
+type = "heading"
+level = 1
+start = "Exhibit 99.1"
+
+[[blocks]]
+id = "b003"
+type = "heading"
+level = 1
+start = "Establishment Labs Announces Preliminary Unaudited Results for First Quarter 2023"
+
+[[blocks]]
+id = "b004"
+type = "paragraph"
+start = "NEW YORK, N.Y., April 24, 2023 --"
+end = "for the first quarter of 2023."
+
+[[blocks]]
+id = "b005"
+type = "paragraph"
+start = "In the three months ended March 31, 2023,"
+end = "expected to be approximately $184.0 million."
+
+[[blocks]]
+id = "b006"
+type = "paragraph"
+start = "The preliminary revenue results provided"
+end = "audited and are subject to change."
+
+[[blocks]]
+id = "b007"
+type = "heading"
+level = 2
+start = "About Establishment Labs"
+
+[[blocks]]
+id = "b008"
+type = "paragraph"
+start = "Establishment Labs Holdings Inc. is a global"
+end = "additional information at www.establishmentlabs.com."
+
+[[blocks]]
+id = "b009"
+type = "heading"
+level = 2
+start = "Forward-Looking Statements"
+
+[[blocks]]
+id = "b010"
+type = "paragraph"
+start = "This press release contains forward-looking statements"
+end = "to anticipate future results or trends."
+
+[[blocks]]
+id = "b011"
+type = "heading"
+level = 2
+start = "Investor/Media Contact"
+
+[[blocks]]
+id = "b012"
+type = "paragraph"
+start = "Raj Denhoy"
+
+[[blocks]]
+id = "b013"
+type = "paragraph"
+start = "415-828-1044"
+
+[[blocks]]
+id = "b014"
+type = "paragraph"
+start = "rdenhoy@establishmentlabs.com"

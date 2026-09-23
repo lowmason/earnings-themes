@@ -1,27 +1,19 @@
 schema_version = 1
 fixture_id = "0000003370-05-000209_ex-99"
-annotator = ""
+annotator = "Lowell Mason (verified a Codex draft)"
 marked_from = "browser rendering"
-browser = ""
-# completed = YYYY-MM-DD   (add when the file is finished)
+browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
+completed = 2026-09-23
 
-# One [[blocks]] entry per rendered block, in rendered reading order. Example:
-# [[blocks]]
-# id = "b001"
-# type = "heading"
-# level = 1
-# start = "first words of the block"
-
-# CHECK: SEC document metadata line; verify its type and boundary in the browser.
 [[blocks]]
 id = "b001"
-type = "paragraph"
+type = "page_artifact"
 start = "EX-99 2 e99-1v2.htm"
 
-# CHECK: exhibit label; verify its type, level, and boundary in the browser.
 [[blocks]]
 id = "b002"
 type = "heading"
+level = 1
 start = "Exhibit 99.1"
 
 [[blocks]]
@@ -31,7 +23,6 @@ level = 1
 start = "IKON ANNOUNCES FOURTH QUARTER"
 end = "AND FISCAL YEAR 2005 RESULTS"
 
-# CHECK: subtitle; verify that this is a separate level-2 heading.
 [[blocks]]
 id = "b004"
 type = "heading"
@@ -208,16 +199,14 @@ end = "All comparisons to prior year financial results pertain to restated resul
 
 [[blocks]]
 id = "b033"
-type = "paragraph"
+type = "page_artifact"
 start = "(FIKN)"
 
-# CHECK: end separator; verify that it is a separate paragraph rather than a page artifact.
 [[blocks]]
 id = "b034"
-type = "paragraph"
+type = "page_artifact"
 start = "_________________"
 
-# CHECK: table is drawn with spaces; verify its boundary, complete header set, and sample-cell L.
 [[blocks]]
 id = "t001"
 type = "table"
@@ -255,7 +244,6 @@ type = "footnote"
 start = "The calculation of diluted earnings per common share for the fourth quarter"
 end = "the add-back of $1,481 and $2,269, respectively, representing interest expense, net of taxes, associated with such convertible notes."
 
-# CHECK: table is drawn with spaces; verify its boundary, complete header set, and sample-cell L.
 [[blocks]]
 id = "t002"
 type = "table"
@@ -287,7 +275,6 @@ type = "footnote"
 start = "The calculation of diluted earnings per common share for the fiscal 2005"
 end = "the add-back of $7,553 and $9,228, respectively, representing interest expense, net of taxes, associated with such convertible notes."
 
-# CHECK: table is drawn with spaces; verify that the two period sections form one table and that sparse rows make this a valid sample-cell L.
 [[blocks]]
 id = "t003"
 type = "table"
@@ -323,7 +310,6 @@ cells = [
   { role = "below", text = "1,675", row_header = "Stock options", col_header = "Twelve Months Ended September 30, 2005 Diluted" },
 ]
 
-# CHECK: multi-panel table is drawn with spaces; verify the overall boundary, complete header set, and sample-cell L.
 [[blocks]]
 id = "t004"
 type = "table"
@@ -364,7 +350,6 @@ cells = [
   { role = "below", text = "$       (5)(b)", row_header = "Fourth Quarter Fiscal 2004 Selling and administrative expense", col_header = "Adjustments" },
 ]
 
-# CHECK: table is drawn with spaces and has no visible three-cell L free of currency/parenthetical markers; verify boundary, headers, and samples.
 [[blocks]]
 id = "t005"
 type = "table"
@@ -385,7 +370,6 @@ cells = [
   { role = "below", text = "11  (b)", row_header = "Taxes on income", col_header = "Adjustments" },
 ]
 
-# CHECK: table is drawn with spaces; verify its boundary, complete header set, and sample-cell L.
 [[blocks]]
 id = "t006"
 type = "table"
@@ -407,7 +391,6 @@ cells = [
   { role = "below", text = "317.9", row_header = "Finance receivables, net", col_header = "September 30, 2005" },
 ]
 
-# CHECK: table is drawn with spaces and the unique visible sample L uses parenthetical values; verify its boundary, headers, and samples.
 [[blocks]]
 id = "t007"
 type = "table"
