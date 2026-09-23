@@ -445,3 +445,20 @@ the same change.
 No stage is marked complete by adopting this specification. No real DJIA roster,
 event corpus, parser result, or theme result is established until the applicable
 stage runs and its verification evidence is recorded.
+
+## Rollout
+
+This specification is the stage spec for roadmap Stages 4 and 15. Each stage's
+plan copies its own line below into its header, and that stage's COMPLETE stamp
+is appended here:
+
+> Roadmap: specs/evidence-linked-theme-extraction-roadmap.md, Stage 4 — on plan
+> completion, tick the stage and re-validate later stages against what shipped.
+
+> Roadmap: specs/evidence-linked-theme-extraction-roadmap.md, Stage 15 — on plan
+> completion, tick the stage and re-validate later stages against what shipped.
+
+Stage 5 is routed to brainstorming. Its own stage spec carries its Roadmap line
+and must keep this specification's Stage 5 contracts and ordering. The roadmap
+amendment itself was carried out on 2026-09-22 by plan 2
+(`specs/plans/completed/2-point-in-time-djia-cohort.md`); it completed no stage.
