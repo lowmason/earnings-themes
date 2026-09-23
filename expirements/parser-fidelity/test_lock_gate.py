@@ -1,3 +1,5 @@
+import lock_gate
+import pytest
 from lock_gate import add_dependency, locked_versions, lowered_versions, runtime_closure
 
 PYPROJECT = '[project]\nname = "earnings-ingestion"\ndependencies = [\n    "earnings-core",\n    "lxml",\n]\n'
@@ -60,3 +62,16 @@ def test_runtime_closure_follows_requested_extras_only():
         "httpx",
     }
     assert "rapidfuzz" not in closure
+
+
+def test_the_gate_refuses_to_parse_fixtures_before_the_freeze_and_gold(
+    monkeypatch, capsys
+):
+    monkeypatch.setattr(
+        lock_gate, "fixture_preconditions", lambda: ["FROZEN.toml is missing"]
+    )
+    monkeypatch.setattr(
+        lock_gate, "walker_gate", lambda: pytest.fail("a candidate ran on fixtures")
+    )
+    assert lock_gate.main(["walker"]) == 1
+    assert "FROZEN.toml is missing" in capsys.readouterr().err

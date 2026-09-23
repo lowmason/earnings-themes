@@ -31,6 +31,7 @@ import tomllib
 from packaging.requirements import Requirement
 from packaging.version import Version
 from pf_paths import FIXTURES, HARNESS, REPO_ROOT, RUNS
+from run_candidates import fixture_preconditions
 
 INGESTION = "earnings-ingestion"
 INGESTION_PYPROJECT = Path("packages") / "earnings-ingestion" / "pyproject.toml"
@@ -195,6 +196,13 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
     name = args[0]
+    problems = fixture_preconditions()  # P11: every gate parses every fixture
+    if problems:
+        print(
+            "refusing to run the lock gate on fixtures:\n" + "\n".join(problems),
+            file=sys.stderr,
+        )
+        return 1
     result = walker_gate() if name == "walker" else library_gate(name)
     result["passed"] = (
         bool(result["resolved"]) and not result["lowered"] and bool(result["parse_ok"])
