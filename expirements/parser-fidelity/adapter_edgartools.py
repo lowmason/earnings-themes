@@ -108,9 +108,8 @@ def flatten(root: object) -> list[Element]:
     stack: list[tuple[object, int | None]] = [(root, None)]
     while stack:
         node, parent = stack.pop()
-        if isinstance(
-            node, Element
-        ):  # a split leaf's text after one of its nested blocks
+        # A split leaf's text after one of its nested blocks, already typed.
+        if isinstance(node, Element):
             elements.append(node)
             continue
         name = node.type.name
