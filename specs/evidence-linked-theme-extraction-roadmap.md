@@ -28,6 +28,22 @@ Decisions taken by the user on 2026-09-22, resolving the batched questions:
 V6 as written); **D2** — the user is the sole annotator (R12.6, R8.4);
 **D3** — R14.2's hosted ceiling is an optional stage; R5.3/V3 are unstaged.
 
+**D4** — taken 2026-09-22 with the cohort amendment, resolving R12.4/R12.5
+against `P-C7`. R12.4 required the pilot manifest to *hold* unavailable,
+restricted, and parser-failure bundles; `P-C7` forbids selection from depending
+on acquisition, parse, or theme outcomes. Selection stays outcome-blind, and
+failure-class coverage becomes an **observed report over the frozen manifest**: a
+class absent from the 40 selected events is reported as a coverage gap and is
+never repaired by reselecting. R12.5's curated hard negatives move to fixtures
+held outside the pilot manifest, exercised by contract tests rather than by event
+selection.
+
+Counting note: `P` counts **issuer-events** and targets exactly 40 (`P-C5`),
+while R12.2 counts hand-coded documents or bundles at 20–40. The two are
+compatible — 40 sits inside 20–40 — but one event may yield several bundles
+(a release plus its transcript, copies, or revisions), so the bundle count can
+exceed the event count. Never treat the two numbers as the same quantity.
+
 | Req | Verdict | Evidence | Note |
 |---|---|---|---|
 | R1.1 | missing | none found¹ | |
@@ -156,22 +172,22 @@ Totals: 78 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Exit: every membership interval resolves to a source-evidence row and every resolved CIK is a 10-character zero-padded string (P-A4); fixture tests build intervals from an anchor plus additions and removals, with inclusive starts and exclusive ends, and an open interval carrying no `effective_to` (P-VF); a missing anchor snapshot and conflicting effective dates each refuse to freeze the manifest with the reason recorded, and conflicts persist as separate assertions rather than being merged (P §Failure handling); evidence first published after 2026-09-22 cannot revise the version (P-C4); a test shows no current snapshot silently backdated and no ETF holdings record treated as the official roster; a test shows historical ticker changes and multiple securities preserved, and one issuer's several securities deriving one issuer row (P-VF); source access and redistribution status are recorded for every source, with unclear rights keeping artifacts local; the universe manifest freezes with a version and content hash written atomically, and refuses to freeze on unresolved issuer identity unless the record is explicitly retained as unresolved and excluded with its reason; the default suite makes no network call, uses no proprietary roster, and needs no credentials.
       ROUTING: writing-plans — `specs/point-in-time-djia-cohort.md` is this stage's spec; it needs no brainstorming pass.
 
-- [ ] Stage 5: Acquisition and event resolution
-      Objective: Acquire earnings events from EDGAR under the shared access policy, recording a processing state for every expected document.
-      Spec: R1.1–R1.5, R14.5; A §391–427.
-      Gap closed: R1.1, R1.2, R1.3, R1.4, R1.5, R14.5.
-      Consumes: Stage 1 V1 findings; Stage 2 contracts; Stage 3 canonicalizer (content inspection for R1.2/R1.5).
-      Produces: an opt-in live EDGAR adapter behind a shared 2 req/s limiter, User-Agent configured outside Git; immutable raw snapshots with retrieval metadata; release identification and event records with separated time fields; a per-document processing-state table, including expected-but-absent documents with a `missing_reason`; offline replay from saved responses.
-      Exit: offline replay of saved EDGAR responses identifies the fixture issuers' releases, including a narrative-only release and alternative exhibit numbering (R1.1/R1.2); tests hold concurrent workers at or below 2 req/s and stop on a persistent 403 (R1.3); event records keep each R1.5 time field separate with unknowns preserved (R1.5); the state table represents every R1.4 state from fixtures (R1.4); library output is Polars at the boundary, or V1's vacuity is recorded (R14.5).
+- [ ] Stage 5: Event discovery, eligibility, and acquisition
+      Objective: Resolve expected earnings events and their first supported publication, freeze the eligible-event and 40-event pilot manifests, and only then acquire the selected releases from EDGAR.
+      Spec: R1.1–R1.5, R14.5; A §391–427; P-C2, P-C5, P-C7, P-A5; P §Stage 5 — Event discovery, eligibility, and acquisition, §Temporal definitions, §Data contracts (expected event, pilot selection), §Deterministic pilot selection, §Failure handling.
+      Gap closed: R1.1, R1.2, R1.3, R1.4, R1.5, R14.5; P-C2 (the event join), P-C5, P-C7 (the freeze-before-outcomes half), P-A5; P-VF (period-window, eligibility-reason, and selection cases), P-VI.
+      Consumes: the frozen Stage 4 cohort — universe manifest, membership intervals, and security-to-issuer resolution with CIK evidence; Stage 1 V1 findings; Stage 2 contracts; Stage 3 canonicalizer (content inspection for R1.2/R1.5).
+      Produces: an expected issuer-period event ledger over the eight period-end quarters in `[2024-07-01, 2026-07-01)`; release discovery that keeps `period_end`, the issuer's `reported_fiscal_year`/`reported_fiscal_quarter`, `first_publication_time`, `filing_acceptance_time`, and `retrieved_at` as separate fields; a per-event eligibility decision of `eligible`, `ineligible`, or `ambiguous` with its `eligibility_reason`; a frozen eligible-event manifest with a content hash; a frozen 40-event pilot manifest whose rows each record `issuer_coverage`, `membership_boundary`, `quarter_coverage`, or `longitudinal_fill`, plus the selection seed, policy version, and eligible-event manifest hash; an opt-in live EDGAR adapter behind the shared 2 req/s limiter with its User-Agent configured outside Git; immutable raw snapshots with retrieval metadata; a per-document processing-state table including expected-but-absent documents with a `missing_reason`; offline replay from saved responses.
+      Exit: the six-step order in `P §Stage 5` is enforced and tested — both manifests freeze before any acquisition, parse, retention, or theme outcome exists, and a test shows the pilot manifest unchanged after acquisition and parser statuses change (P-C7); a selected event stays selected when acquisition, parsing, extraction, or support assessment fails; releases immediately before and after a membership transition resolve to the correct side, and a same-day transition without sufficient ordering precision stays `ambiguous` with no invented time (P-C2); both period-window boundaries and all three eligibility reasons are covered by fixtures (P-VF); shuffled input order yields a byte-identical pilot manifest that represents every eligible issuer and all eight quarters, and the underfilled, blocked, and mandatory-coverage-overflow cases each stop or mark the pilot as `P §Deterministic pilot selection` requires (P-C5); changing membership evidence, issuer resolution, the event corpus, or the selection policy invalidates the manifest and produces a new version and hash (P-VF); EDGAR acceptance time establishes first publication only when no earlier supported public source exists, and an unknown time stays unknown; offline replay of saved EDGAR responses identifies the fixture issuers' releases, including a narrative-only release and alternative exhibit numbering (R1.1/R1.2); tests hold concurrent workers at or below 2 req/s and stop on a persistent 403 without rotating identity (R1.3); the state table represents every R1.4 state from fixtures (R1.4); library output is Polars at the boundary, or V1's vacuity is recorded (R14.5).
       ROUTING: brainstorming
 
-- [ ] Stage 6: Pilot codebook and gold-set protocol
-      Objective: Fix the pilot sample, its issuer-and-time split, an approved codebook v0, and annotation tooling, so hand-coding runs while Stages 7–10 are built.
-      Spec: R9.2, R9.7, R12.1–R12.6; R13.1 (release-identification labels); D2.
-      Gap closed: R9.2, R9.7, R12.1, R12.3, R12.4, R12.5; R12.6 (limitation, D2).
-      Consumes: Stage 3 canonical documents (gold spans bind to that canonicalization version); Stage 5 event bundles, issuer and fiscal-period identity, processing states.
-      Produces: a codebook contract with R9.2's fields; codebook v0 drafted from training-partition bundles only and approved in a decision record; a gold-annotation contract and validator; a 20–40 event-bundle pilot manifest with its split. Gold spans name their canonical version; a later version re-anchors them before reuse, never mutates them.
-      Exit: a test places each bundle, with all copies and revisions, in exactly one issuer-and-time split (R12.1/R12.3); the manifest holds no-theme, unavailable, restricted, and parser-failure bundles plus curated hard negatives (R12.4/R12.5); codebook v0's decision record names its training-partition discovery corpus (R9.2/R9.7); annotations on at least three bundles, including release-identification labels, pass the validator; the single-annotator limitation is recorded (R12.6, D2).
+- [ ] Stage 6: Pilot codebook, split, and gold-set protocol
+      Objective: Take the frozen pilot manifest as given, split it by issuer and time, approve codebook v0, and validate annotations, so hand-coding runs while Stages 7–10 are built.
+      Spec: R9.2, R9.7, R12.1–R12.6; R13.1 (release-identification labels); D2, D4; P-C5, P-C7.
+      Gap closed: R9.2, R9.7, R12.1, R12.3, R12.4 (as observed coverage, D4), R12.5 (as out-of-manifest fixtures, D4); R12.6 (limitation, D2).
+      Consumes: the frozen Stage 5 pilot manifest — this stage no longer selects the sample; Stage 3 canonical documents (gold spans bind to that canonicalization version); Stage 5 event bundles, issuer and fiscal-period identity, and processing states.
+      Produces: a codebook contract with R9.2's fields; codebook v0 drafted from training-partition bundles only and approved in a decision record; a gold-annotation contract and validator; an issuer-and-time split over the frozen manifest; an observed failure-class coverage report over that manifest; curated hard negatives held as fixtures outside the manifest. Gold spans name their canonical version; a later version re-anchors them before reuse, never mutates them.
+      Exit: a test places each bundle, with all copies and revisions, in exactly one issuer-and-time split (R12.1/R12.3); the coverage report states the observed count of no-theme, unavailable, restricted, and parser-failure bundles in the frozen manifest, and a missing class is reported as a coverage gap, never repaired by reselecting (R12.4, D4); a test shows the split and the report changing no row of the pilot manifest (P-C7); curated hard negatives exist as fixtures outside the pilot manifest (R12.5, D4); codebook v0's decision record names its training-partition discovery corpus (R9.2/R9.7); annotations on at least three bundles, including release-identification labels, pass the validator; the single-annotator limitation is recorded (R12.6, D2).
       ROUTING: brainstorming
 
 - [ ] Stage 7: Evidence selection and verification
@@ -214,7 +230,7 @@ Totals: 78 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Objective: Run the pipeline against the hand-coded pilot, calibrate the judge, and gate the metrics the pilot can estimate.
       Spec: R8.2, R8.4, R8.6, R12.2, R12.7, R12.8, R12.10, R13.1, R13.3, V6; D1, D2.
       Gap closed: R8.2, R8.4, R8.6, R12.2, R12.7, R12.8, R12.10; R13.1/V6 (per D1).
-      Consumes: the Stage 6 manifest fully annotated by the user; at least 50 user support labels on Stage 8 outputs (D2); the Stage 10 pipeline.
+      Consumes: the frozen Stage 5 pilot manifest, split by Stage 6 and fully annotated by the user; at least 50 user support labels on Stage 8 outputs (D2); the Stage 10 pipeline.
       Produces: implementations of every R13.1 metric plus retention, stability, and AUC-ROC; a pilot report with issuer- or event-level uncertainty; a judge-calibration report with its pre-registered floor; the V6 decision record of gates.
       Exit: the pilot report gives every R13.1 metric's observed distribution with event-level intervals, labeled feasibility-only (R12.2/R12.7); the V6 record gates only pilot-estimable metrics, marks rare-theme recall, sector prevalence, and source-selection bias descriptive-only, and is committed before any configuration comparison (V6/R13.1, D1); judge agreement with the user's labels is reported against its pre-registered floor, with AUC-ROC for both scorers (R8.4/R8.6/R8.2); a reject-everything configuration fails the suite (R12.8); k-run stability is computed with replay bypassed (R12.10).
       ROUTING: brainstorming
