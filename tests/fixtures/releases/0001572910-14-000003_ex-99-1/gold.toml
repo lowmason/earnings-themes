@@ -1,0 +1,67 @@
+schema_version = 1
+fixture_id = "0001572910-14-000003_ex-99-1"
+annotator = "Lowell Mason"
+marked_from = "browser rendering"
+browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
+completed = 2026-09-23
+
+[[blocks]]
+id = "b001"
+type = "heading"
+start = "EX-99.1 2 psxp20140122cashreleaseex9.htm EXHIBIT 99.1"
+
+[[blocks]]
+id = "b002"
+type = "heading"
+start = "Exhibit 99.1"
+
+[[blocks]]
+id = "b003"
+type = "heading"
+start = "Phillips 66 Partners Announces 5.8 Percent Increase in"
+end = "Quarterly Cash Distribution"
+
+[[blocks]]
+id = "b004"
+type = "paragraph"
+start = "HOUSTON, Jan. 22, 2014 – Phillips 66 Partners LP (NYSE: PSXP)"
+end = "The distribution is payable Feb. 13, 2014, to unitholders of record as of Feb. 4, 2014."
+
+[[blocks]]
+id = "b005"
+type = "heading"
+start = "About Phillips 66 Partners"
+    
+[[blocks]]
+id = "b006"
+type = "paragraph"
+start = "Phillips 66 Partners is a growth-oriented master limited partnership"
+end = "For more information, visit www.phillips66partners.com."
+
+
+[[blocks]]
+id = "b007"
+type = "page_artifact"
+start = "- # # # -"
+
+[[blocks]]
+id = "b008"
+type = "heading"
+start = "CONTACTS"
+
+[[blocks]]
+id = "b009"
+type = "paragraph"
+start = "Rich Johnson (media)"
+end = "william.steen@p66.com"
+
+[[blocks]]
+id = "b010"
+type = "heading"
+start = "TAX CONSIDERATIONS"
+
+[[blocks]]
+id = "b011"
+type = "paragraph"
+start = "This release is intended to be a qualified notice to nominees"
+end = "on the distributions received by them on behalf of foreign investors."
