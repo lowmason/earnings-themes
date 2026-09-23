@@ -19,7 +19,6 @@ from lxml.html import HtmlElement
 from pf_classes import (
     BARE_PAGE_NUMBER,
     body_of,
-    cell_text,
     is_data_table,
     is_hidden,
     own_cells,
@@ -78,6 +77,7 @@ _DECORATION = re.compile(
 )
 _SYMBOL_FONT = re.compile(r"wingdings|symbol", re.IGNORECASE)
 _WHITESPACE = re.compile(r"\s+")
+_BLANK_LINE = re.compile(r"\n[ \t\r\f\v]*\n")  # W5 splits pre text here
 
 
 @dataclass(frozen=True)
@@ -197,9 +197,14 @@ class Walker:
         self.lists.pop()
 
     def walk_pre(self, el: HtmlElement, style: Style) -> None:
-        text = cell_text(el)
-        for piece in re.split(r"\n[ \t\r\f\v]*\n", text):
-            self.flush([Run(piece, style)], "block", "pre")
+        """W5: split at blank lines; each piece keeps its styled runs for W8-W12."""
+        runs = styled_runs(el, style)
+        text = "".join(run.text for run in runs)
+        gaps = [(gap.start(), gap.end()) for gap in _BLANK_LINE.finditer(text)]
+        starts = [0] + [end for _, end in gaps]
+        ends = [start for start, _ in gaps] + [len(text)]
+        for start, end in zip(starts, ends, strict=True):
+            self.flush(slice_runs(runs, start, end), "block", "pre")
 
     # -- typing ---------------------------------------------------------------
     def flush(self, runs: list[Run], kind: str, source: str) -> None:
@@ -305,6 +310,17 @@ def styled_runs(el: HtmlElement, style: Style) -> list[Run]:
         if child.tail:
             runs.append(Run(child.tail, style))
     return runs
+
+
+def slice_runs(runs: list[Run], start: int, end: int) -> list[Run]:
+    """The runs covering characters [start, end) of their joined text, cut at both ends."""
+    out, offset = [], 0
+    for run in runs:
+        low, high = max(start, offset), min(end, offset + len(run.text))
+        if low < high:
+            out.append(Run(run.text[low - offset : high - offset], run.style))
+        offset += len(run.text)
+    return out
 
 
 def marker_row(

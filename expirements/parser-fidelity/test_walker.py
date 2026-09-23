@@ -182,3 +182,18 @@ def test_w13_symbol_font_and_sup_marker_cells():
         ("footnote", "Excludes the divestiture."),
         ("footnote", "Restated for the split."),
     ]
+
+
+def test_w5_pre_pieces_keep_inline_styles_and_breaks():
+    html = (
+        "<pre><b>SECOND QUARTER RESULTS</b>\n\nRevenue rose five percent.\n\n"
+        "<sup>1</sup> Excludes charges.</pre>"
+        "<pre>Line one<br>line two<br><br>Next block</pre>"
+    )
+    assert kinds(html) == [
+        ("heading", "SECOND QUARTER RESULTS"),
+        ("paragraph", "Revenue rose five percent."),
+        ("footnote", "1 Excludes charges."),
+        ("paragraph", "Line one line two"),
+        ("paragraph", "Next block"),
+    ]
