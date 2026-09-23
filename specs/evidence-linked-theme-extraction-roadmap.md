@@ -136,7 +136,7 @@ exceed the event count. Never treat the two numbers as the same quantity.
 | V11 | missing | none found¹ | |
 | `extraction`/`openai`/`anthropic` extras | in-code-but-not-in-spec | `packages/earnings-themes/pyproject.toml:19,23-28` | Spec names no framework (A §664 proposes PydanticAI); hosted SDKs serve only R14.2/R5.3 — flag, not defect |
 | `embeddings` extra | in-code-but-not-in-spec | `packages/earnings-themes/pyproject.toml:39` | Sits on the themes package; R9.5 places clustering outside the pipeline |
-| `entity-matching` extra | in-code-but-not-in-spec | `packages/earnings-ingestion/pyproject.toml:25` | Serves company enrichment, out of this spec's scope (A §429); Stage 4 may use it only to generate issuer-resolution candidates (P §Issuer resolution) |
+| `entity-matching` extra | in-code-but-not-in-spec | `packages/earnings-ingestion/pyproject.toml:25` | Serves company enrichment, which is out of this spec's scope; Stage 4 may use it only to generate issuer-resolution candidates, since fuzzy similarity is a candidate score, never proof of identity (A §429) |
 | Dev tooling | in-code-but-not-in-spec | `pyproject.toml:22-35` | `dev` group and Ruff config exist; no pytest config, `live` marker, or import mode (A §193) |
 | P-C1 | missing | none found² | DJIA resolved point in time, not as one current roster; Stage 4 |
 | P-C2 | missing | none found² | Eligibility keyed to `first_publication_time`; defined in Stage 4, joined in Stage 5 |
@@ -261,7 +261,7 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Objective: Run the pipeline against the hand-coded pilot, calibrate the judge, and gate the metrics the pilot can estimate.
       Spec: R8.2, R8.4, R8.6, R12.2, R12.4, R12.5, R12.7, R12.8, R12.10, R13.1, R13.3, V6; D1, D2, D4.
       Gap closed: R8.2, R8.4, R8.6, R12.2, R12.7, R12.8, R12.10; R13.1/V6 (per D1); R12.4 (no-theme count) and R12.5 (hard-negative scoring), per D4.
-      Consumes: the frozen Stage 5 pilot manifest, split by Stage 6 and fully annotated by the user; at least 50 user support labels on Stage 8 outputs (D2); the Stage 10 pipeline.
+      Consumes: the frozen Stage 5 pilot manifest, split by Stage 6 and fully annotated by the user; the Stage 6 D4 coverage report; at least 50 user support labels on Stage 8 outputs (D2); the Stage 10 pipeline.
       Produces: implementations of every R13.1 metric plus retention, stability, and AUC-ROC; a pilot report with issuer- or event-level uncertainty; a judge-calibration report with its pre-registered floor; the V6 decision record of gates.
       Exit: the pilot report gives every R13.1 metric's observed distribution with event-level intervals, labeled feasibility-only (R12.2/R12.7); the V6 record gates only pilot-estimable metrics, marks rare-theme recall, sector prevalence, and source-selection bias descriptive-only, and is committed before any configuration comparison (V6/R13.1, D1); judge agreement with the user's labels is reported against its pre-registered floor, with AUC-ROC for both scorers (R8.4/R8.6/R8.2); a reject-everything configuration fails the suite (R12.8); k-run stability is computed with replay bypassed (R12.10); the D4 coverage report gains the observed no-theme count over the fully annotated manifest (R12.4, D4); pilot metrics include the annotated hard-negative claims (R12.5, D4).
       ROUTING: brainstorming
