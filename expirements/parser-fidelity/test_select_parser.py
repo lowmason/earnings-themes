@@ -147,3 +147,8 @@ def test_control_check_flags_fixtures_that_cannot_discriminate():
         {"clean_html": True, "table_heavy": False},
         True,
     )
+
+
+def test_worst_class_ties_use_the_smallest_denominator():
+    data = classes(walker=(pooled((50, 50)), pooled((20, 20))))
+    assert worst_class(data, "walker", "coverage") == (1.0, 20, "table_heavy")

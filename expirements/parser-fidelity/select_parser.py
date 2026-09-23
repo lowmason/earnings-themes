@@ -76,7 +76,11 @@ def worst_class(
             values.append(
                 (rates[metric], by_candidate[candidate]["counts"][metric][1], cls)
             )
-    return WORST[metric](values, key=lambda v: v[0]) if values else None
+    if not values:
+        return None
+    # Classes tied at the worst value: the smallest n, the spec's "smaller of the denominators".
+    worst = WORST[metric](value for value, _, _ in values)
+    return min((v for v in values if v[0] == worst), key=lambda v: (v[1], v[2]))
 
 
 def tie(a: tuple[float, int, str], b: tuple[float, int, str]) -> bool:
