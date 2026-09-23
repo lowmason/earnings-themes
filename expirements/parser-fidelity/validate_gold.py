@@ -111,6 +111,10 @@ def _nonempty_str(value: object) -> bool:
 
 
 def check_schema(gold: dict, fixture_id: str) -> list[str]:
+    return check_header(gold, fixture_id) + check_blocks(gold)
+
+
+def check_header(gold: dict, fixture_id: str) -> list[str]:
     errors = [f"unknown top-level key {key!r}" for key in sorted(set(gold) - TOP_KEYS)]
     errors += [f"missing top-level key {key!r}" for key in sorted(TOP_KEYS - set(gold))]
     if gold.get("schema_version") != 1:
@@ -124,9 +128,14 @@ def check_schema(gold: dict, fixture_id: str) -> list[str]:
         errors.append('marked_from must be "browser rendering"')
     if "completed" in gold and not isinstance(gold["completed"], dt.date):
         errors.append("completed must be a date such as 2026-10-01")
+    return errors
+
+
+def check_blocks(gold: dict) -> list[str]:
     blocks = gold.get("blocks", [])
     if not isinstance(blocks, list) or not blocks:
-        return errors + ["blocks must be a non-empty array of tables"]
+        return ["blocks must be a non-empty array of tables"]
+    errors: list[str] = []
     seen: set[str] = set()
     for position, block in enumerate(blocks, start=1):
         errors += [
@@ -317,8 +326,13 @@ def validate_fixture(fixture_dir: Path) -> Report:
     except tomllib.TOMLDecodeError as exc:
         report.errors.append(f"gold.toml is not valid TOML: {exc}")
         return report
-    report.errors += check_schema(gold, fixture_dir.name)
-    if report.errors:
+    # Anchors are checked whenever the blocks are well formed, so a draft with a blank
+    # header still sees its anchor errors; the header errors keep it failing until the
+    # annotator fills the header in (decision F9).
+    report.errors += check_header(gold, fixture_dir.name)
+    block_errors = check_blocks(gold)
+    report.errors += block_errors
+    if block_errors:
         return report
     errors, warnings, unanchorable = check_anchors(gold, source)
     report.errors += errors

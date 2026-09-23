@@ -56,6 +56,20 @@ end = "completed in the second quarter."
 """
 
 
+# A draft before the annotator signs off (decision F9): header fields blank, no completed.
+DRAFT_HEADER = f"""schema_version = 1
+fixture_id = "{FID}"
+annotator = ""
+marked_from = "browser rendering"
+browser = ""
+"""
+HEADER_ERRORS = [
+    "missing top-level key 'completed'",
+    "annotator must be a non-empty string",
+    "browser must be a non-empty string",
+]
+
+
 def fixture(tmp_path, blocks, header=HEADER):
     folder = tmp_path / FID
     folder.mkdir()
@@ -88,6 +102,20 @@ strat = "typo"
     assert any("duplicate id" in e for e in errors)
     assert any("level must be a positive integer" in e for e in errors)
     assert any("key 'strat' is not allowed" in e for e in errors)
+
+
+def test_anchors_are_checked_before_the_header_is_filled(tmp_path):
+    blocks = GOOD_BLOCKS.replace("today reported", "today announced")
+    errors = validate_fixture(fixture(tmp_path, blocks, header=DRAFT_HEADER)).errors
+    assert all(e in errors for e in HEADER_ERRORS)
+    assert any("b002: start: not found" in e for e in errors)
+
+
+def test_a_clean_draft_fails_only_on_the_header(tmp_path):
+    errors = validate_fixture(
+        fixture(tmp_path, GOOD_BLOCKS, header=DRAFT_HEADER)
+    ).errors
+    assert sorted(errors) == sorted(HEADER_ERRORS)
 
 
 def test_table_needs_one_cell_per_role(tmp_path):
