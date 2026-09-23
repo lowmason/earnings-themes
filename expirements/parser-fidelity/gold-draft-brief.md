@@ -1,4 +1,4 @@
-# Codex brief: draft Stage 1 gold for one fixture
+# Gold draft brief: Stage 1 gold for one fixture (Codex or Gemini)
 
 You are drafting the gold structure for one SEC press-release exhibit. The user,
 Lowell Mason, will then check every block against the page in a browser and
@@ -7,7 +7,8 @@ correct it; the verified file is the gold (decision F9 in
 
 Three document parsers will be scored against this gold, so it must not be shaped
 by them. That is why most of the repository is off-limits below. The limits here
-narrow what `AGENTS.md` would otherwise let you do.
+narrow any project instructions you have loaded, such as `AGENTS.md` or
+`GEMINI.md`.
 
 ## Inputs
 
@@ -32,6 +33,10 @@ narrow what `AGENTS.md` would otherwise let you do.
 
 ## Limits
 
+- Draft only a fixture nobody has marked: if `gold.toml` already has a
+  `[[blocks]]` entry, or a `.codex.toml` or `.gemini.toml` snapshot for this
+  fixture already exists in `data/runs/parser-fidelity/gold-drafts/`, stop and
+  report.
 - Read nothing else in the repository: not the rest of that spec, nothing under
   `expirements/parser-fidelity/` (you only run the validator), nothing under
   `docs/`, and no other fixture's files.
@@ -103,7 +108,8 @@ the header fields (`completed`, `annotator`, `browser`). Warnings may remain.
 ## Finish
 
 1. Copy the finished file, unchanged, to
-   `data/runs/parser-fidelity/gold-drafts/FIXTURE.codex.toml`.
+   `data/runs/parser-fidelity/gold-drafts/FIXTURE.<agent>.toml`, where `<agent>`
+   is `codex` or `gemini`, whichever you are.
 2. Report: entries by type, the number of `# CHECK` flags, any `unanchorable`
    blocks and why, remaining warnings, the validator's final output, every browser
    tool you used, any place where the screenshots and the page text disagreed
