@@ -18,6 +18,7 @@ class NodeType(Enum):
     LIST = auto()
     LIST_ITEM = auto()
     TEXT = auto()
+    CONTAINER = auto()
 
 
 class FakeNode:
@@ -139,4 +140,74 @@ def test_control_emits_one_paragraph_per_line():
         Element("paragraph", "First line", None, None, "line"),
         Element("paragraph", "A", None, None, "line"),
         Element("paragraph", "B", None, None, "line"),
+    ]
+
+
+def fake_table():
+    return FakeNode(
+        "TABLE",
+        "rich-rendered text",
+        headers=[[cell(""), cell("2025")]],
+        rows=[
+            SimpleNamespace(is_header=False, cells=[cell("Net sales"), cell("4,321")])
+        ],
+        footer=[],
+        caption=None,
+    )
+
+
+def item(text, children):
+    """A list item whose text() is what ListItemNode.text() flattens its children to."""
+    return FakeNode("LIST_ITEM", text, children=children)
+
+
+def test_edgartools_nested_list_keeps_its_items_in_order():
+    inner = FakeNode("LIST", children=[item("Inner", [FakeNode("TEXT", "Inner")])])
+    outer = item(
+        "Lead  • Inner  Trail words",
+        [FakeNode("TEXT", "Lead "), inner, FakeNode("TEXT", " Trail words")],
+    )
+    last = item("Costs fell", [FakeNode("TEXT", "Costs fell")])
+    root = FakeNode("DOCUMENT", children=[FakeNode("LIST", children=[outer, last])])
+    elements = adapter_edgartools.flatten(root)
+    validate_elements(elements)
+    assert [(e.type, e.text, e.parent) for e in elements] == [
+        ("other", "", None),
+        ("other", "", 0),
+        ("list_item", "Lead ", 1),
+        ("other", "", 2),
+        ("list_item", "Inner", 3),
+        ("list_item", " Trail words", 1),
+        ("list_item", "Costs fell", 1),
+    ]
+
+
+def test_edgartools_table_inside_a_list_item_keeps_its_grid():
+    summary = FakeNode("PARAGRAPH", "Summary", children=[FakeNode("TEXT", "Summary")])
+    holder = item(
+        "Summary rich", [summary, FakeNode("CONTAINER", children=[fake_table()])]
+    )
+    root = FakeNode("DOCUMENT", children=[FakeNode("LIST", children=[holder])])
+    elements = adapter_edgartools.flatten(root)
+    validate_elements(elements)
+    assert [(e.type, e.text, e.parent) for e in elements] == [
+        ("other", "", None),
+        ("other", "", 0),
+        ("list_item", "Summary", 1),
+        ("other", "", 2),
+        ("table", " 2025\nNet sales 4,321", 3),
+    ]
+
+
+def test_edgartools_list_item_holding_only_a_paragraph_stays_one_item():
+    para = FakeNode(
+        "PARAGRAPH", "Revenue grew", children=[FakeNode("TEXT", "Revenue grew")]
+    )
+    root = FakeNode(
+        "DOCUMENT", children=[FakeNode("LIST", children=[item("Revenue grew", [para])])]
+    )
+    assert [(e.type, e.text) for e in adapter_edgartools.flatten(root)] == [
+        ("other", ""),
+        ("other", ""),
+        ("list_item", "Revenue grew"),
     ]

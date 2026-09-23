@@ -36,6 +36,8 @@ LEAF_NODE_TYPES = {
 FOOTNOTE_SEMANTIC_TYPE = (
     "FOOTNOTE"  # a paragraph carrying SemanticType.FOOTNOTE is a footnote
 )
+# A leaf whose children hold one of these is split around it rather than flattened.
+STRUCTURAL_NODE_TYPES = frozenset({"LIST", "TABLE"})
 
 
 def table_rows(table: object) -> tuple[Row, ...]:
@@ -65,12 +67,52 @@ def leaf_type(node: object) -> str:
     return LEAF_NODE_TYPES[name]
 
 
+def holds_structure(node: object) -> bool:
+    """True when the node is, or contains, a list or table the library exposes as nodes."""
+    stack = [node]
+    while stack:
+        current = stack.pop()
+        if current.type.name in STRUCTURAL_NODE_TYPES:
+            return True
+        stack.extend(current.children)
+    return False
+
+
+def split_children(children: list[object]) -> list[object]:
+    """[text, block, text, ..., text]: each nested list or table between the texts around it.
+
+    A text joins its nodes' non-empty text() with spaces, as ListItemNode.text() does.
+    """
+    pieces: list[object] = []
+    run: list[str] = []
+    for child in children:
+        if holds_structure(child):
+            pieces += [" ".join(run), child]
+            run = []
+        else:
+            text = child.text()
+            if text:
+                run.append(text)
+    return [*pieces, " ".join(run)]
+
+
 def flatten(root: object) -> list[Element]:
-    """Pre-order walk: containers become text-less parents; every other node is a leaf."""
+    """Pre-order walk: containers become text-less parents; every other node is a leaf.
+
+    A leaf's text() would flatten a nested list or table (ListItemNode.text() joins every
+    child), so a leaf that holds one is split: its text before the first nested block is its
+    element, the nested blocks are that element's children, and any later text is a further
+    element of the leaf's type.
+    """
     elements: list[Element] = []
     stack: list[tuple[object, int | None]] = [(root, None)]
     while stack:
         node, parent = stack.pop()
+        if isinstance(
+            node, Element
+        ):  # a split leaf's text after one of its nested blocks
+            elements.append(node)
+            continue
         name = node.type.name
         source_type = type(node).__name__
         if name in CONTAINER_NODE_TYPES:
@@ -87,10 +129,25 @@ def flatten(root: object) -> list[Element]:
                 Element("table", grid_text(rows), parent, None, source_type, rows)
             )
         else:
+            kind = leaf_type(node)
             level = getattr(node, "level", None) if name == "HEADING" else None
-            elements.append(
-                Element(leaf_type(node), node.text() or "", parent, level, source_type)
-            )
+            if not any(holds_structure(child) for child in node.children):
+                elements.append(
+                    Element(kind, node.text() or "", parent, level, source_type)
+                )
+                continue
+            first, *rest = split_children(node.children)
+            elements.append(Element(kind, first, parent, level, source_type))
+            index = len(elements) - 1
+            pending: list[tuple[object, int | None]] = []
+            for piece in rest:
+                if not isinstance(piece, str):
+                    pending.append((piece, index))
+                elif piece:
+                    pending.append(
+                        (Element(kind, piece, parent, level, source_type), None)
+                    )
+            stack.extend(reversed(pending))
     return elements
 
 
