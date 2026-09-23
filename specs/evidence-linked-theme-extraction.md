@@ -634,9 +634,9 @@ pointer evidence, deterministic verification, support assessment, an explicitly
 approved small codebook, and a typed analytical export with source-linked quotes.
 
 **Cohort before corpus.** `specs/point-in-time-djia-cohort.md` places a frozen,
-point-in-time cohort before document acquisition, and freezes the eligible-event
+point-in-time cohort before corpus acquisition, and freezes the eligible-event
 and pilot manifests before any acquisition, parse, retention, or theme outcome is
-known. Do not begin document acquisition until those artifacts can be frozen: a
+known. Do not begin corpus acquisition until those artifacts can be frozen: a
 sample conditioned on what happened to download or parse cleanly cannot support
 the coverage-aware denominators R11.2 and R11.3 require.
 
