@@ -178,7 +178,7 @@ shown as a pre-draft. **Amended (F9):** Codex drafts the gold from the browser's
   block is what a reader sees as one unit. A paragraph broken by a page break is
   one block. Prose inside a layout table is marked as paragraphs, not as a
   table. `[[blocks]]` entries appear in rendered reading order, and that order
-  is the gold reading order.
+  is the gold reading order. An image's alt text, which the browser shows in place of an image file that is not present, is not page text and gets no block.
 - **Types.** `heading`, `paragraph`, `list_item`, `footnote`, `table`, and
   `page_artifact` (running headers and footers, page numbers). Headings and list
   items take an optional `level`, where 1 is the most prominent or outermost.
@@ -208,7 +208,7 @@ shown as a pre-draft. **Amended (F9):** Codex drafts the gold from the browser's
     - `below`: the next body row, same column as `corner`.
   - Choose an L with no spanning cells and no values split across cells (for
     example, a "$" or ")" sitting in its own cell). All three cell texts must be
-    unique in the document.
+    unique in the document. If no such L exists anywhere in the table because its values recur elsewhere, set `unanchorable = true` on the table and still record its headers and an L; like an unanchorable text block, it is counted and reported, never scored.
   - Record each cell's `text`, `row_header`, and `col_header`.
 - **Footnotes.** A footnote is text set apart and tied to a marker (¹, (1), *).
   The marker is excluded from the anchors.
@@ -292,7 +292,7 @@ which is independent of every candidate. It takes all text outside `<head>`,
   - every `start`, `end`, and cell `text` occurs exactly once; for a block with
     `after`, the combined `start` + `after` must occur exactly once instead;
   - every header text occurs at least once;
-  - an unanchorable block's `start` (plus `after`, if given) occurs at least twice;
+  - an unanchorable block's `start` (plus `after`, if given) occurs at least twice; an unanchorable table has at least one cell that occurs at least twice;
   - a warning, not an error, when a text-block anchor is not unique in the
     fallback space, because the fallback could not then rescue it;
   - page artifacts are exempt.

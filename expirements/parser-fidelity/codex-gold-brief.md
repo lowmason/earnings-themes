@@ -48,6 +48,10 @@ header. Apply the section's rules. The points most often missed:
 - Every piece of visible text belongs to exactly one block, including the
   dateline, contact lines, "About …" and safe-harbor paragraphs, and short
   oddities.
+- Text the browser shows only in place of a missing image (an image's alt text,
+  such as a file name) is not page text: give it no block, and list it in your
+  report. You may open `source.html` to confirm that a line the validator can't
+  find is such alt text.
 - A block is what a reader sees as one unit. A paragraph broken by a page break is
   one block. Prose laid out in a table is paragraphs, not a table.
 - `start` is the block's first words and `end` its last, copied exactly from the
@@ -63,7 +67,10 @@ header. Apply the section's rules. The points most often missed:
 - Tables: one `table` block per data table. `headers` lists every header text in
   the grid: column headers at every level, the stub header, and any title or units
   line inside the grid. Choose the three `cells` from rows with no `$` or
-  parentheses, using values that occur nowhere else. `row_header` is the row's
+  parentheses, using values that occur nowhere else. Search the whole table for
+  such an L. If none has three values that occur nowhere else, set
+  `unanchorable = true` on the table, still give its headers and an L, and list it
+  in your report. `row_header` is the row's
   label; `col_header` is the column's full header stack, top to bottom, joined with
   spaces. A title outside the grid is a `heading` block before the table.
 - Page artifacts (running headers and footers, page numbers): one entry per
