@@ -167,3 +167,18 @@ def test_w11_row_and_row_group_bold_reaches_layout_cells():
         ("heading", "Media Contacts"),
         ("paragraph", prose),
     ]
+
+
+def test_w13_symbol_font_and_sup_marker_cells():
+    html = (
+        '<table><tr><td><font face="Wingdings">\xa7</font></td><td>Opened three plants</td></tr>'
+        '<tr><td><font face="Wingdings">\xa7</font></td><td>Cut costs sharply</td></tr></table>'
+        "<table><tr><td><sup>1</sup></td><td>Excludes the divestiture.</td></tr>"
+        "<tr><td><sup>2</sup></td><td>Restated for the split.</td></tr></table>"
+    )
+    assert kinds(html) == [
+        ("list_item", "Opened three plants"),
+        ("list_item", "Cut costs sharply"),
+        ("footnote", "Excludes the divestiture."),
+        ("footnote", "Restated for the split."),
+    ]

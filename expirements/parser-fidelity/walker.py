@@ -247,7 +247,7 @@ class Walker:
             for row in own_rows(table)
             if any(collapse(visible_text(c)) for c in own_cells(row))
         ]
-        marker_rows = [marker_row(row) for row in rows]
+        marker_rows = [marker_row(row, table, style) for row in rows]
         if rows and all(marker_rows):
             for kind, text in marker_rows:
                 self.emit(kind, text, source="marker-table")
@@ -291,16 +291,41 @@ def classify(runs: list[Run], text: str) -> str:
     return "paragraph"
 
 
-def marker_row(row: HtmlElement) -> tuple[str, str] | None:
-    """W13: (type, text) when the row's first non-empty cell holds only a marker."""
-    texts = [collapse(visible_text(cell)) for cell in own_cells(row)]
-    filled = [text for text in texts if text]
-    if len(filled) < 2 or len(filled[0]) > MAX_MARKER_CHARS:
+def styled_runs(el: HtmlElement, style: Style) -> list[Run]:
+    """The visible text of ``el`` as styled runs in document order (W1).
+
+    A <br> is a newline, and nested tables are left out, as in ``pf_classes.cell_text``.
+    """
+    runs = [Run(el.text, style)] if el.text else []
+    for child in el:
+        if child.tag == "br":
+            runs.append(Run("\n", style))
+        elif not is_hidden(child) and child.tag != "table":
+            runs.extend(styled_runs(child, child_style(child, style)))
+        if child.tail:
+            runs.append(Run(child.tail, style))
+    return runs
+
+
+def marker_row(
+    row: HtmlElement, table: HtmlElement, style: Style
+) -> tuple[str, str] | None:
+    """W13: (type, text) when the row's first non-empty cell holds only a marker.
+
+    ``style`` is the table's. A W9 symbol-font run or a W10 leading ``sup`` in the marker
+    cell counts, as well as the marker's text.
+    """
+    cells = own_cells(row)
+    texts = [collapse(visible_text(cell)) for cell in cells]
+    filled = [(cell, text) for cell, text in zip(cells, texts, strict=True) if text]
+    if len(filled) < 2 or len(filled[0][1]) > MAX_MARKER_CHARS:
         return None
-    marker, rest = filled[0], " ".join(filled[1:])
-    if _FOOTNOTE_CELL.match(marker):
+    (marker_cell, marker), rest = filled[0], " ".join(text for _, text in filled[1:])
+    runs = styled_runs(marker_cell, cell_style(table, marker_cell, style))
+    first = next((run for run in runs if run.text.strip()), None)
+    if _FOOTNOTE_CELL.match(marker) or (first is not None and first.style.sup):
         return "footnote", rest
-    if _LIST_CELL.match(marker):
+    if _LIST_CELL.match(marker) or (first is not None and first.style.symbol_font):
         return "list_item", rest
     return None
 
