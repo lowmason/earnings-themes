@@ -1,5 +1,7 @@
 # Point-in-Time DJIA Cohort Amendment Implementation Plan
 
+**Status: COMPLETE (2026-09-22)** — executed via executing-plans; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > **This plan implements no roadmap stage.** It amends the roadmap and its parent
@@ -162,7 +164,8 @@ correctly-numbered file. Old Stages 4–13 become 5–14; old Stage 14 becomes 1
 - Produces: a roadmap whose `- [ ] Stage N:` headings read
   `1,2,3,5,6,7,8,9,10,11,12,13,14,16` — the 4 and 15 gaps Task 2 fills.
 
-- [ ] **Step 1: Create the branch**
+- [x] **Step 1: Create the branch**
+  > Deviation: ran in the `djia-cohort-review-602c04` worktree as `git switch -c cohort-amendment 6021323`; a `git switch` in the main checkout would have moved the live Stage 1 session's branch, and the SHA was pinned because that branch keeps moving.
 
 ```bash
 cd /Users/lowell/Projects/earnings-themes
@@ -172,7 +175,8 @@ git status --short
 
 Expected: `?? specs/plans/` and ` M README.md`, unchanged by the switch.
 
-- [ ] **Step 2: Commit the baseline artifacts**
+- [x] **Step 2: Commit the baseline artifacts**
+  > Deviation: `README.md` and this plan were copied from the main checkout's working tree and `cmp`-verified byte-identical before committing (`7f15065`, `54a6112`); `specs/plans/1-release-parser-fidelity.md` was not staged, as this step says (the task's Files list saying otherwise is a slip).
 
 Two commits, because these are two unrelated pre-existing deliverables. No file
 is edited here.
@@ -201,7 +205,8 @@ follow can be read against it."
 Neither commit changes a byte of content — they only record what was already in
 the working tree.
 
-- [ ] **Step 3: Write the failing check**
+- [x] **Step 3: Write the failing check**
+  > Deviation: the user's commit `46eab85`, made after this plan was written, ticked Stage 1 `[X]`; every checkbox grep in this plan was run as `\[[ xX]\]` so its expected counts held, and the tick was left untouched.
 
 Before editing, confirm the file is in the pre-amendment state.
 
@@ -221,7 +226,7 @@ Expected:
 and the third `grep` prints nothing and exits 1 — Stage 16 does not exist yet.
 That absence is the failing condition this task fixes.
 
-- [ ] **Step 4: Renumber every single-number `Stage N` reference**
+- [x] **Step 4: Renumber every single-number `Stage N` reference**
 
 Descending order matters: each rule's output is higher than every later rule's
 input, so no line is renumbered twice in one pass. Ascending order would cascade
@@ -250,7 +255,7 @@ This is safe against near-misses: `Stage 14` does not contain the substring
 `Stage 2`, `Stage 3`, `Stage 15`, or `Stage 16`. It does **not** touch `R14.2`,
 `A §391–427`, or `V7`, none of which contain the word `Stage`.
 
-- [ ] **Step 5: Fix the four plural-`Stages` references by hand**
+- [x] **Step 5: Fix the four plural-`Stages` references by hand**
 
 `sed` reached none of these. The pattern `Stage 6` does not match the string
 `Stages 6–9` — after `Stage` comes `s`, not a space — so every line using the
@@ -321,7 +326,7 @@ A stage routed straight to writing-plans (Stages 2, 9, 10, 14, 16) has no stage
 > Old 8, 9, 13, 14 → new 9, 10, 14, 16; Stage 2 is unchanged. Task 2 adds the
 > new stages to this list.
 
-- [ ] **Step 6: Verify the renumber**
+- [x] **Step 6: Verify the renumber**
 
 Run:
 
@@ -372,7 +377,7 @@ grep -c "Stage 4\|Stage 15" specs/evidence-linked-theme-extraction-roadmap.md
 
 Expected: `0` — both numbers are vacant until Task 2.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add specs/evidence-linked-theme-extraction-roadmap.md
@@ -399,7 +404,7 @@ routing, and checkbox states are unchanged; no stage is ticked."
   locator defined in the header; Stages 4 and 15 both `ROUTING: writing-plans`
   with `specs/point-in-time-djia-cohort.md` named as their stage spec.
 
-- [ ] **Step 1: Write the failing check**
+- [x] **Step 1: Write the failing check**
 
 Run:
 
@@ -409,7 +414,7 @@ grep -n "^- \[ \] Stage 4:\|^- \[ \] Stage 15:" specs/evidence-linked-theme-extr
 
 Expected: no output, exit status 1.
 
-- [ ] **Step 2: Define the `P` locator in the header**
+- [x] **Step 2: Define the `P` locator in the header**
 
 Replace:
 
@@ -436,7 +441,7 @@ its deterministic-fixture, offline-integration, and optional-live verification
 groups, and `P §Section` cites a section by name.
 ```
 
-- [ ] **Step 3: Insert the Stage 4 entry**
+- [x] **Step 3: Insert the Stage 4 entry**
 
 Insert immediately after the Stage 3 entry's `ROUTING: brainstorming` line and
 its following blank line, so Stage 4 sits between Stage 3 and Stage 5. Match the
@@ -454,7 +459,7 @@ one blank line between entries.
       ROUTING: writing-plans — `specs/point-in-time-djia-cohort.md` is this stage's spec; it needs no brainstorming pass.
 ```
 
-- [ ] **Step 4: Insert the Stage 15 entry**
+- [x] **Step 4: Insert the Stage 15 entry**
 
 Insert between the Stage 14 entry and the Stage 16 entry, same formatting.
 
@@ -469,7 +474,7 @@ Insert between the Stage 14 entry and the Stage 16 entry, same formatting.
       ROUTING: writing-plans — `specs/point-in-time-djia-cohort.md` is this stage's spec; it needs no brainstorming pass.
 ```
 
-- [ ] **Step 5: Add the new stages to the stamp list**
+- [x] **Step 5: Add the new stages to the stamp list**
 
 In the `## Stage-spec stamp` section, replace **the whole four-line paragraph**.
 Its first line already carries Task 1 Step 5's renumbering; the other three are
@@ -497,7 +502,8 @@ stage spec — `specs/point-in-time-djia-cohort.md` — so their COMPLETE lines
 follow the normal stamp convention against that file.
 ```
 
-- [ ] **Step 6: Verify**
+- [x] **Step 6: Verify**
+  > Deviation: `grep -c "^- \[x\]"` is case-sensitive and cannot see the user's `[X]`; verified instead that exactly one stage is ticked, Stage 1, byte-identical to `6021323`.
 
 Run:
 
@@ -519,7 +525,7 @@ grep -c "^- \[x\]" specs/evidence-linked-theme-extraction-roadmap.md
 Expected: `7` routing lines (Stages 2, 4, 9, 10, 14, 15, 16); `P-C6` and `P-A4`
 each appearing in the new entries; `0` ticked stages.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add specs/evidence-linked-theme-extraction-roadmap.md
@@ -560,7 +566,7 @@ curated hard negatives (R12.5) to fixtures held outside it.
   beside D1–D3; every reference to a pilot manifest pointing at Stage 5 as its
   owner.
 
-- [ ] **Step 1: Write the failing check**
+- [x] **Step 1: Write the failing check**
 
 Run:
 
@@ -576,7 +582,7 @@ Expected:
 0
 ```
 
-- [ ] **Step 2: Record D4**
+- [x] **Step 2: Record D4**
 
 Replace:
 
@@ -612,7 +618,7 @@ compatible — 40 sits inside 20–40 — but one event may yield several bundle
 exceed the event count. Never treat the two numbers as the same quantity.
 ```
 
-- [ ] **Step 3: Replace the Stage 5 entry**
+- [x] **Step 3: Replace the Stage 5 entry**
 
 **Bound the replacement precisely.** `ROUTING: brainstorming` is the last line of
 several entries, so "replace the entry" is ambiguous unless you anchor both ends.
@@ -654,7 +660,7 @@ Replace that region with:
 > algorithm, but the acquisition half still carries the open EDGAR-access and
 > source-rights design that the original entry was routed for.
 
-- [ ] **Step 4: Replace the Stage 6 entry**
+- [x] **Step 4: Replace the Stage 6 entry**
 
 Bound it the same way as Step 3: from
 
@@ -678,7 +684,7 @@ Replace that region with:
       ROUTING: brainstorming
 ```
 
-- [ ] **Step 5: Fix the Stage 11 Consumes line**
+- [x] **Step 5: Fix the Stage 11 Consumes line**
 
 Replace:
 
@@ -695,7 +701,7 @@ With:
 > Task 1's `sed` correctly turned `Stage 5 manifest` into `Stage 6 manifest`,
 > but after D4 the manifest is Stage 5's artifact and Stage 6 only splits it.
 
-- [ ] **Step 6: Verify**
+- [x] **Step 6: Verify**
 
 Run:
 
@@ -735,7 +741,7 @@ grep -c "^      ROUTING: " specs/evidence-linked-theme-extraction-roadmap.md
 Expected: `16` and `16`. A count of 15 means a replacement consumed the following
 entry's heading; 17 means a heading was duplicated.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add specs/evidence-linked-theme-extraction-roadmap.md
@@ -767,7 +773,7 @@ requirements absent from that table would escape the conformance audit.
 - Produces: thirteen `P-*` rows and a corrected totals line. Every `Gap closed:`
   key used in Tasks 2 and 3 resolves to a row here.
 
-- [ ] **Step 1: Write the failing check**
+- [x] **Step 1: Write the failing check**
 
 Run:
 
@@ -782,7 +788,7 @@ Expected:
 109:Totals: 78 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
 ```
 
-- [ ] **Step 2: Insert the `P-*` rows**
+- [x] **Step 2: Insert the `P-*` rows**
 
 Insert the rows **directly beneath the `Dev tooling` row with no blank line
 between them** — a blank line ends the Markdown table, and the 13 rows would then
@@ -810,7 +816,7 @@ covered `packages/*/src`, `apps/*/src`, `tests/`, `config/`, `codebooks/`,
 | P-VL | missing | none found¹ | Optional `live` source-accessibility check; never in default CI |
 ```
 
-- [ ] **Step 3: Correct the totals**
+- [x] **Step 3: Correct the totals**
 
 Replace:
 
@@ -828,7 +834,7 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
 `specs/point-in-time-djia-cohort.md` (the `P-*` rows).
 ```
 
-- [ ] **Step 4: Note the cohort deferrals in §Completion**
+- [x] **Step 4: Note the cohort deferrals in §Completion**
 
 The cohort spec defers nothing, but §Completion's audit needs to know the `P-*`
 rows are in scope. Replace:
@@ -848,7 +854,8 @@ re-run the gap rubric over every row above — including the 13 `P-*` rows from
 stage and plan, `> Deviation:` notes, deferred entries). Each
 ```
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
+  > Deviation: `P-[A-Z0-9]*` also matches the `` `P-*` `` wildcard that Steps 3–4 introduce, so the key check used `P-[A-Z0-9][A-Z0-9]*` (exactly the 13 keys); the `sed` range re-triggers on Stage 2's "Dev tooling row" text after its correct first block.
 
 Run:
 
@@ -880,7 +887,7 @@ grep -o "P-[A-Z0-9]*" specs/evidence-linked-theme-extraction-roadmap.md | sort -
 Expected: `P-A15,P-A4,P-A5,P-C1,P-C2,P-C3,P-C4,P-C5,P-C6,P-C7,P-VF,P-VI,P-VL`
 — thirteen keys, no fourteenth, no typo.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add specs/evidence-linked-theme-extraction-roadmap.md
@@ -908,7 +915,7 @@ to 91 missing with the split by source spec stated."
   keeps general company enrichment out, and names the amending spec. It uses
   **no roadmap stage numbers**, so future renumbering cannot invalidate it.
 
-- [ ] **Step 1: Write the failing check**
+- [x] **Step 1: Write the failing check**
 
 Run:
 
@@ -923,7 +930,8 @@ Expected:
 0
 ```
 
-- [ ] **Step 2: Widen the scope sentence**
+- [x] **Step 2: Widen the scope sentence**
+  > Deviation: the Replace block ends mid-line (`of it works.` continued on the same line), so the space after `works.` became a newline instead of leaving a ~113-character line; every later line is byte-identical.
 
 Replace:
 
@@ -950,7 +958,7 @@ design that decides whether any of it works.
 > verification (5), support assessment (6), codebook and coding (7),
 > aggregation (8).
 
-- [ ] **Step 3: Name the amending spec**
+- [x] **Step 3: Name the amending spec**
 
 Insert after the `**This spec supersedes**` paragraph and before the
 `**Naming.**` paragraph:
@@ -968,7 +976,7 @@ Everything here about canonicalization, evidence selection, verification,
 support, coding, and aggregation stands unchanged.
 ```
 
-- [ ] **Step 4: Carve the cohort out of the enrichment exclusion**
+- [x] **Step 4: Carve the cohort out of the enrichment exclusion**
 
 Replace:
 
@@ -993,7 +1001,7 @@ With:
   dependency of theme extraction.
 ```
 
-- [ ] **Step 5: State the ordering constraint in §Rollout**
+- [x] **Step 5: State the ordering constraint in §Rollout**
 
 Insert after the paragraph beginning `The two tracks stay connected` and before
 the paragraph beginning `Three requirements amend binding instructions`:
@@ -1007,7 +1015,8 @@ sample conditioned on what happened to download or parse cleanly cannot support
 the coverage-aware denominators R11.2 and R11.3 require.
 ```
 
-- [ ] **Step 6: Verify**
+- [x] **Step 6: Verify**
+  > Deviation: `In scope by amendment` wraps across two lines in Step 4's own text, so that marker was verified on newline-joined text.
 
 Run:
 
@@ -1036,7 +1045,7 @@ Expected exactly three lines, all of the pre-existing `` `S` Stage n `` form:
 (Line numbers shift by the lines inserted above them; the three `` `S` ``
 citations must be the only matches.)
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add specs/evidence-linked-theme-extraction.md
@@ -1064,7 +1073,7 @@ introduced here, so renumbering cannot invalidate this file."
 - Produces: a README naming the sixteen-stage roadmap, linking the cohort spec,
   and correcting the source-register claim.
 
-- [ ] **Step 1: Write the failing check**
+- [x] **Step 1: Write the failing check**
 
 Run:
 
@@ -1079,7 +1088,8 @@ Expected:
 230:  is a Stage 1 deliverable; it does not exist yet.
 ```
 
-- [ ] **Step 2: Describe the amended roadmap**
+- [x] **Step 2: Describe the amended roadmap**
+  > Deviation: by the user's choice the sentence reads "No stage is complete yet; Stage 1 is in progress.", since the roadmap shows Stage 1 ticked.
 
 Replace:
 
@@ -1105,7 +1115,8 @@ Average resolved point in time, not one current roster: a current list would
 introduce survivorship bias into earlier periods.
 ```
 
-- [ ] **Step 3: Link the cohort spec in the planning-documents list**
+- [x] **Step 3: Link the cohort spec in the planning-documents list**
+  > Deviation: by the user's choice the bullet calls the cohort spec "the stage specification for roadmap Stages 4 and 15, and binding on Stage 5's event-eligibility and pilot-selection design", matching Task 2's stamp paragraph.
 
 Replace:
 
@@ -1124,7 +1135,8 @@ With:
   stage specification for roadmap Stages 4, 5, and 15.
 ```
 
-- [ ] **Step 4: Correct the source-register claim**
+- [x] **Step 4: Correct the source-register claim**
+  > Deviation: by the user's choice the bullet names `docs/source-register.toml` (committed at `411ec1e`, before this plan was finished) as Stage 1's release-fixture register; "Neither exists yet" was false on this base.
 
 Replace:
 
@@ -1142,7 +1154,8 @@ With:
   open-source acquisition tool confers no rights to the underlying index data.
 ```
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
+  > Deviation: `sixteen stages` wraps across lines in Step 2's own text, so it was verified on newline-joined text.
 
 Run:
 
@@ -1156,7 +1169,7 @@ Expected: `2` cohort-spec links; one hit each for `sixteen stages`,
 `Stage 15`, and `index-membership sources`; and the third command printing only
 `Stage 1`, `Stage 2`, `Stage 4`, `Stage 5`, and `Stage 15`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add README.md
@@ -1216,6 +1229,7 @@ grep -rn "stage4_flags" expirements/ tests/ packages/ apps/ 2>/dev/null
   `acquisition_flags` as the manifest field name.
 
 - [ ] **Step 1: Write the failing check**
+  > Skipped: Stage 1 execution is live on `stage-1-release-parser-fidelity` (plan 1 is modified in the main checkout), and `stage4_flags` has reached code (`promote_fixtures.py`, its test, `manifest.toml`), so this plan's hazard clause applies → deferred
 
 Run:
 
@@ -1244,6 +1258,7 @@ and 8 lines from the plan:
 ```
 
 - [ ] **Step 2: Confirm which numbers move in each file**
+  > Skipped: as Step 1 → deferred
 
 Run:
 
@@ -1258,6 +1273,7 @@ change. The plan's lack of any `Stage 5` is what makes its single-rule `sed` saf
 in Step 4.
 
 - [ ] **Step 3: Renumber the Stage 1 spec (descending)**
+  > Skipped: as Step 1 → deferred
 
 Two rules, highest first, so `Stage 4` does not get renumbered twice:
 
@@ -1318,6 +1334,7 @@ Expected: no `stage4_flags`, and the Handoffs rows reading `| 2 |`, `| 3 |`,
 `| 5 |`, `| 6 |`.
 
 - [ ] **Step 4: Renumber the plan's prose references**
+  > Skipped: as Step 1 → deferred
 
 ```bash
 sed -i '' 's/Stage 4/Stage 5/g' specs/plans/1-release-parser-fidelity.md
@@ -1335,6 +1352,7 @@ This `sed` is safe: plan 1 contains no `Stage 5` to collide with, no
 `Stage 40`-style number, and no `Stage 4` inside a longer numeral.
 
 - [ ] **Step 5: Rename the field**
+  > Skipped: as Step 1 → deferred
 
 ```bash
 sed -i '' 's/stage4_flags/acquisition_flags/g' specs/plans/1-release-parser-fidelity.md
@@ -1355,6 +1373,7 @@ Note that `test_stage4_flags` became `test_acquisition_flags` in the same pass �
 the test name is the field name plus the `test_` prefix, so it stays consistent.
 
 - [ ] **Step 6: Check the field's ordering is still stated consistently**
+  > Skipped: as Step 1 → deferred
 
 The field appears in a manifest key list (3246), a tuple of ordered pairs (3590),
 and a class-test value list (9353). Read all three and confirm the rename left
@@ -1370,6 +1389,7 @@ Expected: `acquisition_flags` sits in the same position it occupied before —
 between `redistribution_basis` and `pilot_split` in the key list and the tuple.
 
 - [ ] **Step 7: Commit**
+  > Skipped: as Step 1 → deferred
 
 ```bash
 git add specs/release-parser-fidelity.md specs/plans/1-release-parser-fidelity.md
@@ -1398,7 +1418,7 @@ documents bind. Without a row, the amendment is invisible to a fresh session.
 - Consumes: Tasks 2–6.
 - Produces: a document-status row naming the cohort spec and what it governs.
 
-- [ ] **Step 1: Write the failing check**
+- [x] **Step 1: Write the failing check**
 
 Run:
 
@@ -1413,7 +1433,8 @@ Expected:
 15:| `specs/evidence-linked-theme-extraction-roadmap.md` | **Live staged roadmap** for that spec. Resume it via the `derive-roadmap` skill's reconcile step and route each unticked stage per its ROUTING line; never plan it wholesale. |
 ```
 
-- [ ] **Step 2: Insert the row**
+- [x] **Step 2: Insert the row**
+  > Deviation: by the user's choice the row ends "stage spec for Stages 4 and 15 and binds Stage 5's eligibility and pilot-selection contracts; no stage is complete."; review fix `6e3798d` later replaced "both documents above" with the two documents' names.
 
 Insert immediately after the roadmap row (line 15) so it sits beside the two
 documents it amends:
@@ -1422,7 +1443,8 @@ documents it amends:
 | `specs/point-in-time-djia-cohort.md` | **Amends both documents above** (adopted 2026-09-22, plan 2). Adds Stage 4, a versioned point-in-time DJIA cohort frozen before any document is acquired; moves the 40-event feasibility pilot into Stage 5 as a deterministic selection frozen before any acquisition or parse outcome is known; adds Stage 15, the full eight-quarter run. Governs on the firm universe, the event corpus, and pilot selection. Its window is `[2024-07-01, 2026-07-01)` and its public-information cutoff is `2026-09-22`. It is the stage spec for Stages 4, 5, and 15; no stage is complete. |
 ```
 
-- [ ] **Step 3: Note the cohort carve-out beside the enrichment boundary**
+- [x] **Step 3: Note the cohort carve-out beside the enrichment boundary**
+  > Deviation: review fix `6e3798d` reworded the exception: the cohort spec is the more specific text, and `AGENTS.md` §Domain rules still apply wherever it is silent.
 
 `CLAUDE.md` currently sends readers to `AGENTS.md` for membership. Replace:
 
@@ -1436,7 +1458,7 @@ With:
 **Not summarized below — go to `AGENTS.md` directly** for: §Source strategy (per-field source table), §Domain rules (membership/identifiers, industry classification, subsidiaries, employment, locations), §Shared data contracts and provenance (the dataset/grain table), §Models, orchestration, caching, and cost, §Tests and acceptance criteria (incl. the evaluation metric table), and §Delivery milestones. **Exception:** point-in-time index membership and security-to-issuer-to-CIK resolution are now governed by `specs/point-in-time-djia-cohort.md`, not by `AGENTS.md` §Domain rules. Subsidiaries, employment, locations, and industry classification stay with `AGENTS.md` and out of the theme-extraction path.
 ```
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run:
 
@@ -1460,7 +1482,7 @@ That table has two columns, so a correctly-formed row splits into four fields on
 missing pipe. (Before the insertion this command prints only `14: 4` and `15: 4`.
 The architecture table further down the file has five fields per row; ignore it.)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add CLAUDE.md
@@ -1489,7 +1511,8 @@ a title in the sixteen-stage list.
 - Consumes: Tasks 1–8.
 - Produces: verified consistency, and the completion report's evidence.
 
-- [ ] **Step 1: Assert every stage number is in range**
+- [x] **Step 1: Assert every stage number is in range**
+  > Deviation: run from the worktree, without this block's `cd /Users/lowell/Projects/earnings-themes`, which would have targeted the live Stage 1 checkout.
 
 The exclusion of `` `S` Stage n `` must happen **before** `grep -o` strips the
 surrounding context, or it silently matches nothing.
@@ -1534,7 +1557,8 @@ Stages 1–16. Its job is to catch an out-of-range typo such as `Stage 17` or a
 number left at `Stage 0`. Step 2 is the check that actually fails on a stale
 tree.
 
-- [ ] **Step 2: Assert the roadmap's sixteen titles match the spec's list**
+- [x] **Step 2: Assert the roadmap's sixteen titles match the spec's list**
+  > Deviation: pattern widened to `\[[ xX]\]`; the discrimination claim was re-verified against `6021323` (ok 1–3, then 13 MISMATCH).
 
 Run:
 
@@ -1576,7 +1600,7 @@ pre-amendment roadmap it prints `ok 1`, `ok 2`, `ok 3` and then thirteen
 lines, the amendment landed; if you see any `MISMATCH`, the number it names is the
 entry to fix.
 
-- [ ] **Step 3: Assert the dependency edges are consistent**
+- [x] **Step 3: Assert the dependency edges are consistent**
 
 Run:
 
@@ -1591,7 +1615,8 @@ it appears in — no stage consumes a later one. Two lines deserve a second look
   coupling).
 - Stage 11's `the frozen Stage 5 pilot manifest, split by Stage 6`.
 
-- [ ] **Step 4: Assert nothing was ticked and no stamp was added**
+- [x] **Step 4: Assert nothing was ticked and no stamp was added**
+  > Deviation: exactly one tick, the user's Stage 1 `[X]` from `46eab85`, not 0.
 
 Run:
 
@@ -1604,7 +1629,8 @@ Expected: `0` ticked stages, and no `COMPLETE` stamp in either file (the
 `Stage N: COMPLETE (YYYY-MM-DD)` template text in §Stage-spec stamp is a
 template, not a stamp — it contains `YYYY`, not a year, so it will not match).
 
-- [ ] **Step 5: Confirm no code or dependency changed**
+- [x] **Step 5: Confirm no code or dependency changed**
+  > Deviation: diff base `6021323` (the branch point) instead of `41b7c7c`, because this branch carries Stage 1's commits; `expirements` and `tests` were added to the untouched-paths check.
 
 Run:
 
@@ -1623,7 +1649,8 @@ git diff --stat 41b7c7c..HEAD -- AGENTS.md
 
 Expected: empty.
 
-- [ ] **Step 6: Review the full diff**
+- [x] **Step 6: Review the full diff**
+  > Deviation: five files, not seven: Task 7's two documents were deferred. Review fix `20cd565` later added `specs/point-in-time-djia-cohort.md` (an appended Rollout section).
 
 ```bash
 git diff 41b7c7c..HEAD --stat
@@ -1646,7 +1673,7 @@ insertion counts — those are Task 1's baseline commits of pre-existing
 working-tree content, not amendment edits. To see only the amendment's own diff
 for those two, compare against the baseline commits instead of `41b7c7c`.
 
-- [ ] **Step 7: Commit the sweep evidence**
+- [x] **Step 7: Commit the sweep evidence**
 
 No file changed in this task, so there is nothing to commit unless Steps 1–3
 found a mismatch. If they did, fix it and commit:
@@ -1662,6 +1689,8 @@ instead.
 ---
 
 ## Completion
+
+> Deviation: the whole-plan review (Opus code-reviewer over `54a6112..d59ae5c`) found five plan-origin gaps and several minor ones; fixed in `607bc36` (roadmap gaps), `2dd60d8` (D4 widened by the user's decision), `20cd565` (Rollout stamp lines appended to the cohort spec), `6e3798d` (CLAUDE.md), and `6ab883a` (parent spec), and the Task 9 sweep was re-run clean afterwards; the reviewer's re-check resolved every finding and its two nits were fixed in `03d7666`.
 
 After Task 9 passes, run the **Plan Completion Protocol** from the
 `writing-plans` skill:
