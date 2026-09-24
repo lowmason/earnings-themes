@@ -40,3 +40,14 @@
       scope, and the paragraph is the user's. Size: quick-fix. Done when: the
       README's Stage 1 paragraph describes the harness and fixture corpus as they
       stand, at the latest when Stage 1 completes.
+
+## 3-employment-statistics-coverage — 2026-09-24
+- [ ] Review: the national-total employment comparison in `check_invariants`
+      (scripts/employment_statistics_coverage.py) has no rounding allowance, so
+      annual-average rounding (+46 in 2022, +27 in 2023) makes `run` exit 2 on the
+      2022–2025 files. Kept as-is under the 2026-09-24 ruling (no re-run, no code
+      change); evidence in specs/findings/employment-statistics-coverage.md,
+      section 6. Fix: give that comparison the `cells/2 + 1` employment allowance
+      that `_nested_excess` already applies, plus a fixture test. Size: quick-fix.
+      Done when: `run` on the 2022–2025 files reports no invariant failure and a
+      test pins the allowance.
