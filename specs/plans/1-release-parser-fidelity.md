@@ -6970,7 +6970,7 @@ git add expirements/parser-fidelity/run_candidates.py expirements/parser-fidelit
 git commit -m "feat(parser-fidelity): add the candidate runner, gates, and freeze tool"
 ```
 
-- [ ] **Step 6: Dry-run every candidate on the development set**
+- [x] **Step 6: Dry-run every candidate on the development set**
 
 Run: `uv run --locked --all-packages python expirements/parser-fidelity/run_candidates.py dev`
 
@@ -6983,7 +6983,7 @@ Expected: one line per candidate and development release, each
 - If the library itself is nondeterministic, record it for V2; that candidate will
   fail the determinism gate.
 
-- [ ] **Step 7: Freeze**
+- [x] **Step 7: Freeze**
 
 Every frozen file must be committed and unchanged. Then:
 
