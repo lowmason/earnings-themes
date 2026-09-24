@@ -11,15 +11,27 @@ type = "page_artifact"
 start = "EX-99 3 prbalsheet-0106.htm PRESS RELEASE BALANCE SHEET 1Q06"
 
 [[blocks]]
+id = "b002"
+type = "header"
+level = 1
+start = "RUBY TUESDAY, INC."
+
+[[blocks]]
+id = "b003"
+type = "header"
+level = 2
+start = "Financial Results For the First Quarter"
+end = "of Fiscal Year 2006, (Amounts in thousands)"
+
+[[blocks]]
 id = "t001"
 type = "table"
 headers = [
-    "RUBY TUESDAY, INC.",
-    "Financial Results For the First Quarter of Fiscal Year 2006",
-    "(Amounts in thousands)",
     "CONDENSED BALANCE SHEETS",
-    "August 30, 2005",
-    "May 31, 2005",
+    "August 30,",
+    "May 31,",
+    "2005",
+    "2005"
 ]
 cells = [
     { role = "corner", text = "10,300", row_header = "Accounts and Notes Receivable", col_header = "August 30, 2005" },
