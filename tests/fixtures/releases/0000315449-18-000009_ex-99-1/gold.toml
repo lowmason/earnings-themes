@@ -20,63 +20,69 @@ start = "Exhibit 99.1"
 id = "b003"
 type = "paragraph"
 start = "For Immediate Release"
-end = "For more information contact:"
 
 [[blocks]]
 id = "b004"
-type = "paragraph"
-start = "Shawn Severson"
-end = "415-233-7094"
-
-[[blocks]]
-id = "p001"
-type = "page_artifact"
-start = "or"
+type = "heading"
+level = 2
+start = "For more information contact:"
 
 [[blocks]]
 id = "b005"
 type = "paragraph"
-start = "David I. Rosenthal"
-end = "303-682-4900"
+start = "Shawn Severson EnergyTech Investor"
+end = "EnergyTech Investor 415-233-7094"
 
 [[blocks]]
 id = "b006"
+type = "paragraph"
+start = "or"
+after = "Shawn Severson EnergyTech Investor 415-233-7094"
+
+[[blocks]]
+id = "b007"
+type = "paragraph"
+start = "David I. Rosenthal UQM Technologies, Inc."
+end = "UQM Technologies, Inc. 303-682-4900"
+
+[[blocks]]
+id = "b008"
 type = "heading"
 level = 1
 start = "UQM Technologies Reports Quarter and"
 end = "Fiscal Year Ended December 31, 2017 Operating Results"
 
 [[blocks]]
-id = "b007"
+id = "b009"
 type = "paragraph"
 start = "LONGMONT, COLORADO, MARCH 20, 2018 - UQM TECHNOLOGIES, INC."
 end = "related primarily to the PowerPhase Pro® inventory."
 
 [[blocks]]
-id = "b008"
+id = "b010"
 type = "paragraph"
 start = "For the fiscal year ended December 31, 2017, total revenue grew 38%"
 end = "versus $13.9 million, or $0.29 per common share, for the same period last year."
 
 [[blocks]]
-id = "b009"
+id = "b011"
 type = "paragraph"
 start = "Joe Mitchell, UQM Technologies’ President and Chief Executive Officer, said,"
 end = "executing on the many opportunities that lie ahead of us.”"
 
 [[blocks]]
-id = "b010"
+id = "b012"
 type = "paragraph"
 start = "The numbers in this release should be read in conjunction with the Annual Report on Form 10-K."
 
 [[blocks]]
-id = "b011"
+id = "b013"
 type = "heading"
 level = 2
 start = "Conference Call"
 
 [[blocks]]
-id = "b012"
+id = "b014"
 type = "paragraph"
 start = "The Company will host a conference call today at 4:30 p.m. Eastern Time"
 end = "click on the Investor tab and select the “Earnings Webcast”."
@@ -87,25 +93,25 @@ type = "page_artifact"
 start = "UQM TECHNOLOGIES, INC. 4120 SPECIALTY PLACE, LONGMONT, COLORADO 80504 (303) 682-4900 FAX (303) 682-4901"
 
 [[blocks]]
-id = "b013"
+id = "b015"
 type = "heading"
 level = 2
 start = "About UQM"
 
 [[blocks]]
-id = "b014"
+id = "b016"
 type = "paragraph"
 start = "UQM Technologies is a developer and manufacturer of power-dense, high-efficiency electric motors"
 end = "For more information, please visit www.uqm.com."
 
 [[blocks]]
-id = "b015"
+id = "b017"
 type = "paragraph"
 start = "This Release contains statements that constitute “forward-looking statements”"
 end = "available through our website at www.uqm.com or at www.sec.gov."
 
 [[blocks]]
-id = "b016"
+id = "b018"
 type = "page_artifact"
 start = "Source: UQM Technologies, Inc."
 
@@ -120,7 +126,7 @@ type = "page_artifact"
 start = "UQM TECHNOLOGIES, INC. 4120 SPECIALTY PLACE, LONGMONT, COLORADO 80504 (303) 682-4900 FAX (303) 682-4901"
 
 [[blocks]]
-id = "b017"
+id = "b019"
 type = "heading"
 level = 2
 start = "UQM TECHNOLOGIES, INC. AND SUBSIDIARIES Consolidated Condensed Statements"
@@ -172,16 +178,16 @@ cells = [
 ]
 
 [[blocks]]
-id = "b030"
-type = "paragraph"
+id = "p006"
+type = "page_artifact"
 start = "#End Table"
 
 [[blocks]]
-id = "b031"
-type = "paragraph"
+id = "p007"
+type = "page_artifact"
 start = "# End #"
 
 [[blocks]]
-id = "p006"
+id = "p008"
 type = "page_artifact"
 start = "UQM TECHNOLOGIES, INC. 4120 SPECIALTY PLACE, LONGMONT, COLORADO 80504 (303) 682-4900 FAX (303) 682-4901"
