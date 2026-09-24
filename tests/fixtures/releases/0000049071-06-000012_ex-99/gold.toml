@@ -12,140 +12,89 @@ start = "EX-99 2 pr2-06.htm EARNINGS RELEASE"
 
 [[blocks]]
 id = "b002"
-type = "heading"
-level = 1
-start = "Humana Inc."
+type = "paragraph"
+start = "Humana Inc. 500 West Main Street"
+end = "Louisville, KY 40201-1498 http://www.humana.com"
 
 [[blocks]]
 id = "b003"
-type = "paragraph"
-start = "500 West Main Street"
-
-[[blocks]]
-id = "b004"
-type = "paragraph"
-start = "P.O. Box 1498"
-
-[[blocks]]
-id = "b005"
-type = "paragraph"
-
-[[blocks]]
-id = "b006"
-start = "Louisville, KY 40201-1498"
-
-[[blocks]]
-id = "b007"
-type = "paragraph"
-start = "http://www.humana.com"
-
-[[blocks]]
-id = "b008"
 type = "heading"
-level = 1
+level = 2
 start = "news release"
 after = "For More Information Contact:"
 
 [[blocks]]
-id = "b009"
+id = "b004"
 type = "heading"
-level = 1
+level = 2
 start = "For More Information Contact:"
 
 [[blocks]]
-id = "b010"
+id = "b005"
 type = "paragraph"
-start = "Regina Nethery"
+start = "Regina Nethery Humana Investor Relations"
+end = "(502) 580-3644 E-mail: Rnethery@humana.com"
 
 [[blocks]]
-id = "b011"
+id = "b006"
 type = "paragraph"
-start = "Humana Investor Relations"
+start = "Tom Noland Humana Corporate Communications"
+end = "(502) 580-3674 E-mail: Tnoland@humana.com"
 
 [[blocks]]
-id = "b012"
-type = "paragraph"
-start = "(502) 580-3644"
-
-[[blocks]]
-id = "b013"
-type = "paragraph"
-start = "E-mail: Rnethery@humana.com"
-
-[[blocks]]
-id = "b014"
-type = "paragraph"
-start = "Tom Noland"
-
-[[blocks]]
-id = "b015"
-type = "paragraph"
-start = "Humana Corporate Communications"
-
-[[blocks]]
-id = "b016"
-type = "paragraph"
-start = "(502) 580-3674"
-
-[[blocks]]
-id = "b017"
-type = "paragraph"
-start = "E-mail: Tnoland@humana.com"
-
-[[blocks]]
-id = "b018"
+id = "b007"
 type = "heading"
 level = 1
 start = "Humana Inc. Reports Financial Results for Fourth Quarter"
 end = "And Full Year 2005"
 
 [[blocks]]
-id = "b019"
+id = "b008"
 type = "list_item"
 level = 1
 start = "2005 consolidated revenues of $14.4 billion"
 
 [[blocks]]
-id = "b020"
+id = "b009"
 type = "list_item"
 level = 1
 start = "4Q05 EPS up 34 percent"
 
 [[blocks]]
-id = "b021"
+id = "b010"
 type = "list_item"
 level = 1
 start = "2005 cash flows from operations of more than $625 million"
 
 [[blocks]]
-id = "b022"
+id = "b011"
 type = "list_item"
 level = 1
 start = "Medical membership of 7.1 million at December 31, 2005"
 
 [[blocks]]
-id = "b023"
+id = "b012"
 type = "paragraph"
 start = "LOUISVILLE, KY (February 6, 2006) - Humana Inc."
-end = "quarter ended December 31, 2004 (4Q04), an increase of 34 percent."
+end = "an increase of 34 percent."
 
 [[blocks]]
-id = "b024"
+id = "b013"
 type = "paragraph"
-start = "For the year ended December 31, 2005"
-end = "for the year ended December 31, 2004 (FY04), an increase of 9 percent."
+start = "For the year ended December 31, 2005 (FY05),"
+end = "an increase of 9 percent."
 
 [[blocks]]
-id = "b025"
+id = "b014"
 type = "paragraph"
-start = '"Humana achieved record levels of revenues, net income'
-end = 'We are now superbly positioned to take advantage of this multi-year growth opportunity."'
+start = "\"Humana achieved record levels of revenues"
+end = "take advantage of this multi-year growth opportunity.\""
 
 [[blocks]]
-id = "b026"
+id = "b015"
 type = "paragraph"
 start = "The company also evaluates its earnings performance on a non-GAAP basis. See management's explanation"
-end = "There were no non-GAAP reconciling items for 4Q04 or FY04."
+end = "reconciling items for 4Q04 or FY04."
 
 [[blocks]]
 id = "t001"
@@ -165,7 +114,6 @@ cells = [
   { role = "below", text = "$77,283", row_header = "Non-GAAP results (a)", col_header = "Net Income" },
 ]
 
-# CHECK: Borderless table; title and units are treated as headers inside the grid.
 [[blocks]]
 id = "t002"
 type = "table"
@@ -190,7 +138,6 @@ type = "paragraph"
 start = "The company now expects EPS for the year ending December 31, 2006 (FY06)"
 end = "anticipated stock options comparability restatement for FY05."
 
-# CHECK: Borderless table; no L has three document-unique cells because adjacent FY06E rows contain repeated dashes or repeated values.
 [[blocks]]
 id = "t003"
 type = "table"
@@ -232,7 +179,6 @@ type = "heading"
 level = 2
 start = "Government Segment Results Summary"
 
-# CHECK: Borderless table; title and units are treated as headers inside the grid.
 [[blocks]]
 id = "t004"
 type = "table"
@@ -243,7 +189,6 @@ cells = [
   { role = "below", text = "81.1%", row_header = "Non-GAAP results (a)", col_header = "MER" },
 ]
 
-# CHECK: Borderless table; title and units are treated as headers inside the grid.
 [[blocks]]
 id = "t005"
 type = "table"
@@ -349,7 +294,6 @@ type = "heading"
 level = 2
 start = "Commercial Segment Results Summary"
 
-# CHECK: Borderless table; title and units are treated as headers inside the grid.
 [[blocks]]
 id = "t006"
 type = "table"
@@ -360,7 +304,6 @@ cells = [
   { role = "below", text = "81.9%", row_header = "Non-GAAP results (a)", col_header = "MER" },
 ]
 
-# CHECK: Borderless table; title and units are treated as headers inside the grid.
 [[blocks]]
 id = "t007"
 type = "table"
@@ -380,7 +323,8 @@ after = "Results for the Commercial Segment during 4Q05"
 
 [[blocks]]
 id = "b038"
-type = "paragraph"
+type = "list_item"
+level = 1
 start = "Results for the Commercial Segment during 4Q05"
 end = "the second half of 2005."
 
@@ -393,13 +337,15 @@ after = "Commercial Segment medical membership of 3,170,800"
 
 [[blocks]]
 id = "b040"
-type = "paragraph"
+type = "list_item"
+level = 1
 start = "Commercial Segment medical membership of 3,170,800"
 end = "a decrease in fully-insured accounts."
 
 [[blocks]]
 id = "b041"
-type = "paragraph"
+type = "list_item"
+level = 1
 start = "The company's HumanaOne product demonstrated continued growth"
 end = "during the same period."
 
@@ -412,13 +358,15 @@ after = "Premiums and administrative services fees for the Commercial Segment"
 
 [[blocks]]
 id = "b043"
-type = "paragraph"
+type = "list_item"
+level = 1
 start = "Premiums and administrative services fees for the Commercial Segment"
 end = "declines in at-risk enrollment."
 
 [[blocks]]
 id = "b044"
-type = "paragraph"
+type = "list_item"
+level = 1
 start = "Commercial Segment medical premiums for fully insured groups"
 end = "rise in per-member medical costs."
 
@@ -431,13 +379,15 @@ after = "In 4Q05, the Commercial Segment MER"
 
 [[blocks]]
 id = "b046"
-type = "paragraph"
+type = "list_item"
+level = 1
 start = "In 4Q05, the Commercial Segment MER of 82.9 percent"
 end = "its commercial portfolio."
 
 [[blocks]]
 id = "b047"
-type = "paragraph"
+type = "list_item"
+level = 1
 start = "Per-member medical costs for commercial fully insured group accounts"
 end = "7 to 9 percent for FY06."
 
@@ -450,7 +400,8 @@ after = "The Commercial Segment SG&A expense ratio"
 
 [[blocks]]
 id = "b049"
-type = "paragraph"
+type = "list_item"
+level = 1
 start = "The Commercial Segment SG&A expense ratio of 18.1 percent"
 end = "31 percent in the prior year."
 
@@ -612,56 +563,48 @@ type = "paragraph"
 start = "More information regarding Humana is available to investors"
 end = "including copies of:"
 
-# CHECK: Item appears without a visible bullet.
 [[blocks]]
 id = "b074"
 type = "list_item"
 level = 1
 start = "Annual report to stockholders;"
 
-# CHECK: Item appears without a visible bullet.
 [[blocks]]
 id = "b075"
 type = "list_item"
 level = 1
 start = "Securities and Exchange Commission filings;"
 
-# CHECK: Item appears without a visible bullet.
 [[blocks]]
 id = "b076"
 type = "list_item"
 level = 1
 start = "Most recent investor conference presentation;"
 
-# CHECK: Item appears without a visible bullet.
 [[blocks]]
 id = "b077"
 type = "list_item"
 level = 1
 start = "Quarterly earnings news releases;"
 
-# CHECK: Item appears without a visible bullet.
 [[blocks]]
 id = "b078"
 type = "list_item"
 level = 1
 start = "Replay of most recent earnings release conference call;"
 
-# CHECK: Item appears without a visible bullet.
 [[blocks]]
 id = "b079"
 type = "list_item"
 level = 1
 start = "Calendar of events (includes upcoming earnings conference call dates, times, and access number, as well as planned interaction with research analysts and institutional investors);"
 
-# CHECK: Item appears without a visible bullet.
 [[blocks]]
 id = "b080"
 type = "list_item"
 level = 1
 start = "Corporate Governance information."
 
-# CHECK: The second and third lines may be subtitles rather than part of the principal heading.
 [[blocks]]
 id = "b081"
 type = "heading"
@@ -849,7 +792,6 @@ id = "p001"
 type = "page_artifact"
 start = "Humana Inc."
 
-# CHECK: Borderless schedule; units and row-group labels are treated as headers inside the grid.
 [[blocks]]
 id = "t009"
 type = "table"
@@ -860,7 +802,6 @@ cells = [
   { role = "below", text = "1,171.0", row_header = "ASO", col_header = "December 31, 2005" },
 ]
 
-# CHECK: Borderless schedule; units and row-group labels are treated as headers inside the grid.
 [[blocks]]
 id = "t010"
 type = "table"
@@ -871,7 +812,6 @@ cells = [
   { role = "below", text = "496.0", row_header = "Dental-ASO", col_header = "December 31, 2005" },
 ]
 
-# CHECK: Borderless schedule; period spans and row-group labels are treated as headers inside the grid.
 [[blocks]]
 id = "t011"
 type = "table"
@@ -882,7 +822,6 @@ cells = [
   { role = "below", text = "101,149", row_header = "Specialty", col_header = "Three months ended December 31, 2005" },
 ]
 
-# CHECK: Borderless schedule; period spans are treated as headers inside the grid.
 [[blocks]]
 id = "t012"
 type = "table"
@@ -894,15 +833,9 @@ cells = [
 ]
 
 [[blocks]]
-id = "p002"
-type = "page_artifact"
-start = "Humana Inc."
-
-# CHECK: Borderless statement; title, units, period spans, and section labels are treated as headers inside the grid.
-[[blocks]]
 id = "t013"
 type = "table"
-headers = ["Dollars in thousands, except per share results", "Three months ended", "Twelve months ended", "December 31,", "December 31,", "Consolidated Statements of Income", "2005 (a)", "2004", "2005 (a)", "2004", "Revenues:", "Operating expenses:", "Operating Results by Segment", "Pretax income", "Key Ratios", "Medical expense ratio", "Selling, general, and administrative expense ratio"]
+headers = ["Humana Inc.", "Dollars in thousands, except per share results", "Three months ended", "Twelve months ended", "December 31,", "December 31,", "Consolidated Statements of Income", "2005 (a)", "2004", "2005 (a)", "2004", "Revenues:", "Operating expenses:", "Operating Results by Segment", "Pretax income", "Key Ratios", "Medical expense ratio", "Selling, general, and administrative expense ratio"]
 cells = [
   { role = "corner", text = "42,856", row_header = "Investment income", col_header = "Three months ended December 31, 2005 (a)" },
   { role = "right", text = "31,375", row_header = "Investment income", col_header = "Three months ended December 31, 2004" },
@@ -916,15 +849,9 @@ start = "The company also evaluates its earnings performance on a non-GAAP basis
 end = "more fully within this news release."
 
 [[blocks]]
-id = "p003"
-type = "page_artifact"
-start = "Humana Inc."
-
-# CHECK: Borderless statement; title, units, period spans, and section labels are treated as headers inside the grid.
-[[blocks]]
 id = "t014"
 type = "table"
-headers = ["Dollars in thousands", "December 31,", "September 30,", "December 31,", "Consolidated Balance Sheets", "2005", "2005", "2004", "Assets", "Current assets:", "Receivables, net:", "Other assets:", "Liabilities and Stockholders' Equity", "Current liabilities:", "Commitments and contingencies", "Stockholders' equity:"]
+headers = ["Humana Inc.", "Dollars in thousands", "December 31,", "September 30,", "December 31,", "Consolidated Balance Sheets", "2005", "2005", "2004", "Assets", "Current assets:", "Receivables, net:", "Other assets:", "Liabilities and Stockholders' Equity", "Current liabilities:", "Commitments and contingencies", "Stockholders' equity:"]
 cells = [
   { role = "corner", text = "560,550", row_header = "Trade accounts payable and accrued expenses", col_header = "December 31, 2005" },
   { role = "right", text = "509,438", row_header = "Trade accounts payable and accrued expenses", col_header = "September 30, 2005" },
@@ -932,15 +859,9 @@ cells = [
 ]
 
 [[blocks]]
-id = "p004"
-type = "page_artifact"
-start = "Humana Inc."
-
-# CHECK: Borderless statement; title, units, period spans, and section labels are treated as headers inside the grid.
-[[blocks]]
 id = "t015"
 type = "table"
-headers = ["Dollars in thousands", "Three months ended", "Twelve months ended", "December 31,", "December 31,", "Consolidated Statements of Cash Flows", "2005 (a)", "2004", "2005 (a)", "2004 (a)", "Cash flows from operating activities", "Adjustments to reconcile net income to net cash (used in) provided by operating activities:", "Changes in operating assets and liabilities excluding the effects of acquisitions:", "Cash flows from investing activities", "Cash flows from financing activities"]
+headers = ["Humana Inc.", "Dollars in thousands", "Three months ended", "Twelve months ended", "December 31,", "December 31,", "Consolidated Statements of Cash Flows", "2005 (a)", "2004", "2005 (a)", "2004 (a)", "Cash flows from operating activities", "Adjustments to reconcile net income to net cash (used in) provided by operating activities:", "Changes in operating assets and liabilities excluding the effects of acquisitions:", "Cash flows from investing activities", "Cash flows from financing activities"]
 cells = [
   { role = "corner", text = "33,727", row_header = "Depreciation and amortization", col_header = "Three months ended December 31, 2005 (a)" },
   { role = "right", text = "33,077", row_header = "Depreciation and amortization", col_header = "Three months ended December 31, 2004" },
@@ -954,15 +875,9 @@ start = "Refer to the \"Cash Flows from Operations\" section within this news re
 end = "for an evaluation of operating cash flows on a non-GAAP basis."
 
 [[blocks]]
-id = "p005"
-type = "page_artifact"
-start = "Humana Inc."
-
-# CHECK: Borderless schedule with stacked multi-level headers.
-[[blocks]]
 id = "t016"
 type = "table"
-headers = ["Percentage of Ending Membership Under Capitation Arrangements", "Commercial Segment", "Government Segment", "Consol.", "Fully", "Total", "Medicare", "TRICARE", "Total", "Total", "Insured", "ASO", "Segment", "Advantage", "Medicaid", "TRICARE", "ASO", "Segment", "Medical", "December 31, 2005", "December 31, 2004"]
+headers = ["Humana Inc.", "Percentage of Ending Membership Under Capitation Arrangements", "Commercial Segment", "Government Segment", "Consol.", "Fully", "Total", "Medicare", "TRICARE", "Total", "Total", "Insured", "ASO", "Segment", "Advantage", "Medicaid", "TRICARE", "ASO", "Segment", "Medical", "December 31, 2005", "December 31, 2004"]
 cells = [
   { role = "corner", text = "41.3%", row_header = "Risk-sharing B", col_header = "Government Segment Medicare Advantage" },
   { role = "right", text = "59.9%", row_header = "Risk-sharing B", col_header = "Government Segment Medicaid" },
@@ -982,36 +897,23 @@ start = "In some circumstances, we contract with physicians under risk-sharing a
 end = "whether positive or negative."
 
 [[blocks]]
-id = "p006"
-type = "page_artifact"
-start = "Humana Inc."
-
-[[blocks]]
-id = "p007"
-type = "page_artifact"
-start = "Dollars in thousands"
-
-[[blocks]]
-id = "p008"
-type = "page_artifact"
-start = "Medical Claim Reserves - Details and Statistics"
-
-[[blocks]]
-id = "b118"
-type = "heading"
-level = 2
-start = "Change in medical and other expenses payable:"
-
-[[blocks]]
-id = "b119"
-type = "paragraph"
-start = "The change in medical and other expenses payable is summarized as follows:"
-
-# CHECK: Borderless schedule with period headers split across visible lines.
-[[blocks]]
 id = "t017"
 type = "table"
-headers = ["For the Twelve", "For the Twelve", "Months Ended", "Months Ended", "December 31, 2005", "December 31, 2004", "Incurred related to:", "Paid related to:"]
+headers = [
+  "Humana Inc.", 
+  "Dollars in thousands", 
+  "Medical Claim Reserves - Details and Statistics", 
+  "Change in medical and other expenses payable:", 
+  "The change in medical and other expenses payable is summarized as follows:",
+  "For the Twelve", 
+  "For the Twelve", 
+  "Months Ended", 
+  "Months Ended", 
+  "December 31, 2005", 
+  "December 31, 2004", 
+  "Incurred related to:", 
+  "Paid related to:"
+]
 cells = [
   { role = "corner", text = "11,765,662", row_header = "Current year", col_header = "For the Twelve Months Ended December 31, 2005" },
   { role = "right", text = "10,763,105", row_header = "Current year", col_header = "For the Twelve Months Ended December 31, 2004" },
@@ -1020,7 +922,7 @@ cells = [
 
 [[blocks]]
 id = "b120"
-type = "paragraph"
+type = "footnote"
 start = "The impact of any change in \"incurred related to prior years\" claims"
 end = "unpaid claims liability in each period."
 
@@ -1031,31 +933,20 @@ start = "Changes in estimates of TRICARE incurred claims for prior years"
 end = "change in estimates of incurred related to prior years is substantially reduced, whether positive or negative."
 
 [[blocks]]
-id = "p009"
-type = "page_artifact"
-start = "Humana Inc."
-
-[[blocks]]
-id = "p010"
-type = "page_artifact"
-start = "Dollars in thousands"
-
-[[blocks]]
-id = "p011"
-type = "page_artifact"
-start = "Medical Claim Reserves - Details and Statistics"
-
-[[blocks]]
-id = "b122"
-type = "heading"
-level = 2
-start = "Medical and Other Expenses Payable Detail:"
-
-# CHECK: Borderless schedule; the letter column has no visible header.
-[[blocks]]
 id = "t018"
 type = "table"
-headers = ["December 31,", "September 30,", "December 31,", "2005", "2005", "2004"]
+headers = [
+  "Humana Inc.",
+  "Dollars in thousands",
+  "Medical Claim Reserves - Details and Statistics",
+  "Medical and Other Expenses Payable Detail:",
+  "December 31,", 
+  "September 30,", 
+  "December 31,", 
+  "2005", 
+  "2005", 
+  "2004"
+]
 cells = [
   { role = "corner", text = "$1,125,205", row_header = "A IBNR and other medical expenses payable", col_header = "December 31, 2005" },
   { role = "right", text = "$1,101,066", row_header = "A IBNR and other medical expenses payable", col_header = "September 30, 2005" },
@@ -1099,38 +990,21 @@ start = "The balance due to our pharmacy benefit administrator"
 end = "bi-weekly payments and the month-end cutoff."
 
 [[blocks]]
-id = "p012"
-type = "page_artifact"
-start = "Humana Inc."
-
-[[blocks]]
-id = "p013"
-type = "page_artifact"
-start = "Dollars in thousands"
-
-[[blocks]]
-id = "p014"
-type = "page_artifact"
-start = "Medical Claim Reserves - Details and Statistics"
-
-[[blocks]]
-id = "b129"
-type = "heading"
-level = 2
-start = "Receipt Cycle Time:"
-
-[[blocks]]
-id = "b130"
-type = "paragraph"
-start = "The receipt cycle time measures the average length"
-end = "Below is a summary:"
-
-# CHECK: Borderless schedule; title is treated as a header inside the grid. No L has three document-unique decimal values.
-[[blocks]]
 id = "t019"
 type = "table"
 unanchorable = true
-headers = ["Average Number of Days from Incurred Date to Receipt Date (a)", "2005", "2004", "Change", "% Change"]
+headers = [
+  "Humana Inc.",
+  "Dollars in thousands",
+  "Medical Claim Reserves - Details and Statistics",
+  "Receipt Cycle Time:",
+  "The receipt cycle time measures the average length of time between when a claim was initially incurred and when the claim form was received. Below is a summary:",
+  "Average Number of Days from Incurred Date to Receipt Date (a)", 
+  "2005", 
+  "2004", 
+  "Change", 
+  "% Change"
+]
 cells = [
   { role = "corner", text = "16.6", row_header = "1st Quarter Average", col_header = "2005" },
   { role = "right", text = "17.4", row_header = "1st Quarter Average", col_header = "2004" },
@@ -1143,22 +1017,21 @@ type = "footnote"
 start = "Receipt cycle time data for our largest claim processing platforms representing approximately 90% of our fully insured claims volume."
 
 [[blocks]]
-id = "b132"
-type = "heading"
-level = 2
-start = "Unprocessed Claim Inventories:"
-
-[[blocks]]
-id = "b133"
-type = "paragraph"
-start = "The estimated valuation and number of claims on hand"
-end = "that are yet to be processed are as follows:"
-
-# CHECK: Borderless schedule with column headers split into visible fragments.
-[[blocks]]
 id = "t020"
 type = "table"
-headers = ["Estimated", "Number", "Valuation", "Claim Item", "of Days", "Date", "(000)", "Counts", "On Hand"]
+headers = [
+  "Unprocessed Claim Inventories:",
+  "The estimated valuation and number of claims on hand that are yet to be processed are as follows:",
+  "Estimated", 
+  "Number", 
+  "Valuation", 
+  "Claim Item", 
+  "of Days", 
+  "Date", 
+  "(000)",
+  "Counts",
+  "On Hand"
+]
 cells = [
   { role = "corner", text = "$109,700", row_header = "12/31/2003", col_header = "Estimated Valuation (000)" },
   { role = "right", text = "443,000", row_header = "12/31/2003", col_header = "Number Claim Item Counts" },
@@ -1166,32 +1039,31 @@ cells = [
 ]
 
 [[blocks]]
-id = "p015"
-type = "page_artifact"
-start = "Humana Inc."
-
-[[blocks]]
-id = "p016"
-type = "page_artifact"
-start = "Medical Claim Reserves - Details and Statistics"
-
-[[blocks]]
-id = "b134"
-type = "heading"
-level = 2
-start = "Days in Claims Payable (Quarterly):"
-
-[[blocks]]
-id = "b135"
-type = "paragraph"
-start = "A common metric for monitoring medical claim reserve levels"
-end = "this metric excluding capitation expenses."
-
-# CHECK: Borderless schedule with column headers split into visible fragments.
-[[blocks]]
 id = "t021"
 type = "table"
-headers = ["Days", "DCP", "in Claims", "Annual", "Excluding", "Annual", "Quarter Ended", "Payable (DCP)", "Change", "% Change", "Capitation", "Change", "% Change"]
+headers = [
+  "Humana Inc.",
+  "Medical Claim Reserves - Details and Statistics",
+  "Days in Claims Payable (Quarterly):",
+  "A common metric for monitoring medical claim reserve levels relative to the medical claim expenses is", 
+  "days in claims payable, or DCP, which represents the medical claim liabilities at the end of the period", 
+  "divided by average medical expenses per day in the quarterly period. Since we have some providers under", 
+  "capitation payment arrangements (which do not require a medical claim IBNR reserve), we have also", 
+  "summarized this metric excluding capitation expenses.",
+  "Days", 
+  "DCP", 
+  "in Claims", 
+  "Annual", 
+  "Excluding", 
+  "Annual", 
+  "Quarter Ended", 
+  "Payable (DCP)", 
+  "Change", 
+  "% Change", 
+  "Capitation", 
+  "Change", 
+  "% Change"
+]
 cells = [
   { role = "corner", text = "6.5%", row_header = "3/31/2005", col_header = "Days in Claims Payable (DCP) Annual % Change" },
   { role = "right", text = "56.1", row_header = "3/31/2005", col_header = "DCP Excluding Capitation" },
@@ -1204,7 +1076,6 @@ type = "paragraph"
 start = "This metric fluctuates due to all of the issues reviewed above"
 end = "An annual recap follows:"
 
-# CHECK: Borderless recap; no L has three document-unique short decimal values.
 [[blocks]]
 id = "t022"
 type = "table"
