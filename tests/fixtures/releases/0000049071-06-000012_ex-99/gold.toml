@@ -788,14 +788,9 @@ level = 1
 start = "Statistical Schedules and Supplementary Information"
 
 [[blocks]]
-id = "p001"
-type = "page_artifact"
-start = "Humana Inc."
-
-[[blocks]]
 id = "t009"
 type = "table"
-headers = ["In thousands", "December 31,", "Percent", "Ending Medical Membership", "2005", "2004", "Difference", "Change", "Commercial:", "Government:"]
+headers = ["Humana Inc.", "In thousands", "December 31,", "Percent", "Ending Medical Membership", "2005", "2004", "Difference", "Change", "Commercial:", "Government:"]
 cells = [
   { role = "corner", text = "1,999.8", row_header = "Fully insured", col_header = "December 31, 2005" },
   { role = "right", text = "2,286.5", row_header = "Fully insured", col_header = "December 31, 2004" },
@@ -897,6 +892,11 @@ start = "In some circumstances, we contract with physicians under risk-sharing a
 end = "we process substantially all of the claims under these arrangements."
 
 [[blocks]]
+id = "b118"
+type = "paragraph"
+start = "The change in medical and other expenses payable is summarized as follows:"
+
+[[blocks]]
 id = "t017"
 type = "table"
 headers = [
@@ -904,7 +904,6 @@ headers = [
   "Dollars in thousands", 
   "Medical Claim Reserves - Details and Statistics", 
   "Change in medical and other expenses payable:", 
-  "The change in medical and other expenses payable is summarized as follows:",
   "For the Twelve", 
   "For the Twelve", 
   "Months Ended", 
@@ -948,9 +947,9 @@ headers = [
   "2004"
 ]
 cells = [
-  { role = "corner", text = "$1,125,205", row_header = "A IBNR and other medical expenses payable", col_header = "December 31, 2005" },
-  { role = "right", text = "$1,101,066", row_header = "A IBNR and other medical expenses payable", col_header = "September 30, 2005" },
-  { role = "below", text = "409,413", row_header = "B TRICARE IBNR", col_header = "December 31, 2005" },
+  { role = "corner", text = "$1,125,205", row_header = "A", col_header = "December 31, 2005" },
+  { role = "right", text = "$1,101,066", row_header = "A", col_header = "September 30, 2005" },
+  { role = "below", text = "409,413", row_header = "B", col_header = "December 31, 2005" },
 ]
 
 [[blocks]]
@@ -990,6 +989,12 @@ start = "The balance due to our pharmacy benefit administrator"
 end = "bi-weekly payments and the month-end cutoff."
 
 [[blocks]]
+id = "b129"
+type = "paragraph"
+start = "The receipt cycle time measures the average length of time"
+end = "when the claim form was received. Below is a summary:"
+
+[[blocks]]
 id = "t019"
 type = "table"
 unanchorable = true
@@ -998,7 +1003,6 @@ headers = [
   "Dollars in thousands",
   "Medical Claim Reserves - Details and Statistics",
   "Receipt Cycle Time:",
-  "The receipt cycle time measures the average length of time between when a claim was initially incurred and when the claim form was received. Below is a summary:",
   "Average Number of Days from Incurred Date to Receipt Date (a)", 
   "2005", 
   "2004", 
@@ -1017,11 +1021,15 @@ type = "footnote"
 start = "Receipt cycle time data for our largest claim processing platforms representing approximately 90% of our fully insured claims volume."
 
 [[blocks]]
+id = "b132"
+type = "paragraph"
+start = "The estimated valuation and number of claims on hand that are yet to be processed are as follows:"
+
+[[blocks]]
 id = "t020"
 type = "table"
 headers = [
   "Unprocessed Claim Inventories:",
-  "The estimated valuation and number of claims on hand that are yet to be processed are as follows:",
   "Estimated", 
   "Number", 
   "Valuation", 
@@ -1034,9 +1042,15 @@ headers = [
 ]
 cells = [
   { role = "corner", text = "$109,700", row_header = "12/31/2003", col_header = "Estimated Valuation (000)" },
-  { role = "right", text = "443,000", row_header = "12/31/2003", col_header = "Number Claim Item Counts" },
+  { role = "right", text = "443,000", row_header = "12/31/2003", col_header = "Claim Item Counts" },
   { role = "below", text = "$94,800", row_header = "3/31/2004", col_header = "Estimated Valuation (000)" },
 ]
+
+[[blocks]]
+id = "b133"
+type = "paragraph"
+start = "A common metric for monitoring medical claim reserve levels"
+end = "we have also summarized this metric excluding capitation expenses."
 
 [[blocks]]
 id = "t021"
@@ -1045,11 +1059,6 @@ headers = [
   "Humana Inc.",
   "Medical Claim Reserves - Details and Statistics",
   "Days in Claims Payable (Quarterly):",
-  "A common metric for monitoring medical claim reserve levels relative to the medical claim expenses is", 
-  "days in claims payable, or DCP, which represents the medical claim liabilities at the end of the period", 
-  "divided by average medical expenses per day in the quarterly period. Since we have some providers under", 
-  "capitation payment arrangements (which do not require a medical claim IBNR reserve), we have also", 
-  "summarized this metric excluding capitation expenses.",
   "Days", 
   "DCP", 
   "in Claims", 
@@ -1065,9 +1074,9 @@ headers = [
   "% Change"
 ]
 cells = [
-  { role = "corner", text = "6.5%", row_header = "3/31/2005", col_header = "Days in Claims Payable (DCP) Annual % Change" },
+  { role = "corner", text = "6.5%", row_header = "3/31/2005", col_header = "Days in Claims Payable (DCP)" },
   { role = "right", text = "56.1", row_header = "3/31/2005", col_header = "DCP Excluding Capitation" },
-  { role = "below", text = "11.4%", row_header = "6/30/2005", col_header = "Days in Claims Payable (DCP) Annual % Change" },
+  { role = "below", text = "11.4%", row_header = "6/30/2005", col_header = "Days in Claims Payable (DCP)" },
 ]
 
 [[blocks]]

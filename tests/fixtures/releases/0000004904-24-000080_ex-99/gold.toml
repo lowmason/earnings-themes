@@ -342,8 +342,9 @@ end = "section at https://www.aep.com/investors/."
 
 [[blocks]]
 id = "b042"
-type = "paragraph"
+type = "page_artifact"
 start = "---"
+after = "This report made by American"
 
 [[blocks]]
 id = "b043"
