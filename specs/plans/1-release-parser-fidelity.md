@@ -9235,7 +9235,7 @@ passed`), and Tasks 15, 17, and 18 are committed.
   `scores/scores.json`, `scores/metrics.md`, `selection.json`, and `selection.md`.
   Task 20 reads them.
 
-- [ ] **Step 1: Verify the preconditions**
+- [x] **Step 1: Verify the preconditions**
 
 ```bash
 uv run --locked --all-packages python expirements/parser-fidelity/check_fixtures.py
@@ -9244,7 +9244,7 @@ uv run --locked --all-packages python expirements/parser-fidelity/freeze.py veri
 
 Expected: `fixture check passed` and `freeze verified`.
 
-- [ ] **Step 2: Run every candidate twice on every fixture**
+- [x] **Step 2: Run every candidate twice on every fixture**
 
 Run: `uv run --locked --all-packages python expirements/parser-fidelity/run_candidates.py fixtures`
 
@@ -9260,7 +9260,7 @@ Nonzero statuses are results, not errors, with one exception:
   then rerun that candidate with `--candidates <name>`.
 - **A library crash, guard trip, or nondeterminism** stays as measured.
 
-- [ ] **Step 3: Run the lock gates**
+- [x] **Step 3: Run the lock gates**
 
 ```bash
 uv run --locked --script expirements/parser-fidelity/lock_gate.py edgartools
@@ -9277,7 +9277,7 @@ Expected: each prints its JSON result, and all three have `"passed"`.
   `git status --short uv.lock packages/`.
   Expected: no output.
 
-- [ ] **Step 4: Score**
+- [x] **Step 4: Score**
 
 Run: `uv run --locked --all-packages python expirements/parser-fidelity/score.py`
 Expected: `wrote …/scores/scores.json and …/scores/metrics.md`.
@@ -9287,7 +9287,7 @@ Open `metrics.md` and check it:
 - every class has a row for every candidate;
 - every ranked metric has a value or `n/a` with a reason.
 
-- [ ] **Step 5: Apply the selection rule**
+- [x] **Step 5: Apply the selection rule**
 
 Run: `uv run --locked --all-packages python expirements/parser-fidelity/select_parser.py`
 
@@ -9315,7 +9315,7 @@ Expected: the step-by-step trace and an `**Outcome:**` line. Then:
   residual failures, altered anchors), and Stage 4 (the V1 record, `stage4_flags`)
   consume.
 
-- [ ] **Step 1: Write the V2 record**
+- [x] **Step 1: Write the V2 record**
 
 Create `docs/verification/V2-parser-fidelity.md` from this template. Replace every
 `_(` instruction with the named content, copying generated tables verbatim:
@@ -9481,7 +9481,7 @@ grep -n "_(" docs/verification/V2-parser-fidelity.md
 
 Expected: no output.
 
-- [ ] **Step 2: Scaffold the ADR**
+- [x] **Step 2: Scaffold the ADR**
 
 With `<X>` as the selected parser (`edgartools`, `sec-parser`, or `the bespoke lxml
 walker`), run:
@@ -9493,7 +9493,7 @@ python3 ~/.claude/skills/design-architecture/scripts/new_adr.py "Use <X> as the 
 Expected: `docs/adr/0001-use-…-as-the-base-parser-for-release-canonicalization.md`
 is created.
 
-- [ ] **Step 3: Fill in the ADR**
+- [x] **Step 3: Fill in the ADR**
 
 Fill every section of the scaffold, keeping its headings:
 
@@ -9527,7 +9527,7 @@ Fill every section of the scaffold, keeping its headings:
   - name what would trigger a superseding ADR, such as a larger validation set
     (R12.2) or a candidate release that clears the lock gate.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Before committing anything public, check that the identity leaked nowhere. This lists
 file names only, never the value:
