@@ -442,8 +442,8 @@ start = "Represents the impact of AEP's recently announced workforce reduction"
 [[blocks]]
 id = "b051"
 type = "footnote"
-unanchorable = true
 start = "Represents the impact of the Federal EPA Revised Coal Combustion Residuals Rule"
+after = "7"
 
 [[blocks]]
 id = "p008"
@@ -459,8 +459,8 @@ end = "expected sale of the Competitive Contracted Renewable Portfolio and other
 [[blocks]]
 id = "b053"
 type = "footnote"
-unanchorable = true
 start = "Represents the impact of recent legislation in Texas regarding recovery of certain employee incentives"
+after = "8"
 
 [[blocks]]
 id = "p009"
@@ -500,8 +500,8 @@ start = "Includes off-system sales, municipalities and cooperatives, unit power 
 [[blocks]]
 id = "b055"
 type = "footnote"
-unanchorable = true
 start = "Represents energy delivered to distribution customers"
+after = "9"
 
 [[blocks]]
 id = "p010"
@@ -560,8 +560,8 @@ start = "Excluding tax related adjustments, all items presented in the table are
 [[blocks]]
 id = "b058"
 type = "footnote"
-unanchorable = true
 start = "Represents the impact of mark-to-market economic hedging activities"
+after = "10"
 
 [[blocks]]
 id = "p011"
@@ -623,8 +623,8 @@ end = "the loss on the sale of the Competitive Contracted Renewable Portfolio an
 [[blocks]]
 id = "b068"
 type = "footnote"
-unanchorable = true
 start = "Represents the impact of recent legislation in Texas regarding recovery of certain employee incentives"
+after = "11"
 
 [[blocks]]
 id = "p012"
@@ -664,8 +664,8 @@ start = "Includes off-system sales, municipalities and cooperatives, unit power 
 [[blocks]]
 id = "b070"
 type = "footnote"
-unanchorable = true
 start = "Represents energy delivered to distribution customers"
+after = "12"
 
 [[blocks]]
 id = "p013"
