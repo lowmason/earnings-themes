@@ -4704,7 +4704,7 @@ fixture cannot be marked faithfully against the validator's text.
   `pf_decode.py` with a failing test first, before the Task 15 freeze, record the
   change for V2, and revalidate every gold file already marked.
 
-- [ ] **Step 3: Commit each fixture's gold as it validates**
+- [x] **Step 3: Commit each fixture's gold as it validates**
 
 For each fixture the user reports complete:
 
@@ -4719,7 +4719,7 @@ git add tests/fixtures/releases/<id>/gold.toml expirements/parser-fidelity/gold-
 git commit -m "test(fixtures): add gold structure for <id>"
 ```
 
-- [ ] **Step 4: Confirm the gate is complete**
+- [x] **Step 4: Confirm the gate is complete**
 
 Run: `uv run --locked --all-packages python expirements/parser-fidelity/check_fixtures.py`
 Expected: `fixture check passed`. The gate is complete only when that line prints; Task
