@@ -190,7 +190,7 @@ id = "b026"
 type = "heading"
 level = 2
 start = "SUMMARY OF RESULTS BY SEGMENT"
-end = "$ in millions"
+end = "SEGMENT $ in millions"
 
 [[blocks]]
 id = "t002"
@@ -306,7 +306,7 @@ start = "AEP’s quarterly discussion with financial"
 end = "download at http://www.aep.com/webcasts."
 
 [[blocks]]
-id = "b036"
+id = "b037"
 type = "paragraph"
 start = "AEP’s earnings are prepared in"
 end = "company’s employee incentive compensation plans."

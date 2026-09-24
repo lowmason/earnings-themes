@@ -90,11 +90,16 @@ start = "Please visit our website"
 end = "our website at www.avx.com."
 
 [[blocks]]
+id = "b015"
+type = "heading"
+level = 1
+start = "AVX CORPORATION"
+end = "Consolidated Condensed Statements of Income"
+
+[[blocks]]
 id = "t001"
 type = "table"
 headers = [
-  "AVX CORPORATION",
-  "Consolidated Condensed Statements of Income",
   "(unaudited)",
   "(in thousands, except per share data)",
   "Three Months Ended",
