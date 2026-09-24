@@ -151,19 +151,5 @@ start = "Contact:"
 [[blocks]]
 id = "b018"
 type = "paragraph"
-start = "AVX Corporation, Fountain Inn"
-
-[[blocks]]
-id = "b019"
-type = "paragraph"
-start = "Kurt Cummings"
-
-[[blocks]]
-id = "b020"
-type = "paragraph"
-start = "864-967-9303"
-
-[[blocks]]
-id = "b021"
-type = "paragraph"
-start = "investor.relations@avx.com"
+start = "AVX Corporation, Fountain Inn, South Carolina"
+end = "investor.relations@avx.com"

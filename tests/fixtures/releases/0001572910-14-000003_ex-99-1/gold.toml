@@ -85,17 +85,12 @@ start = "william.steen@p66.com"
 
 [[blocks]]
 id = "b015"
-type = "paragraph"
-start = ""
-
-[[blocks]]
-id = "b016"
 type = "heading"
 level = 2
 start = "TAX CONSIDERATIONS"
 
 [[blocks]]
-id = "b017"
+id = "b016"
 type = "paragraph"
 start = "This release is intended to be a qualified notice to nominees"
 end = "on the distributions received by them on behalf of foreign investors."

@@ -98,12 +98,17 @@ start = "Strong data processing load in"
 end = "industry-leading transmission system"
 
 [[blocks]]
+id = "b017"
+type = "heading"
+level = 2
+start = "AMERICAN ELECTRIC POWER"
+end = "Preliminary, unaudited results"
+
+[[blocks]]
 id = "t001"
 type = "table"
 unanchorable = true
 headers = [
-  "AMERICAN ELECTRIC POWER",
-  "Preliminary, unaudited results",
   "Second Quarter ended June 30,",
   "Year-to-date ended June 30,",
   "2024",
@@ -123,65 +128,65 @@ cells = [
 ]
 
 [[blocks]]
-id = "b017"
+id = "b018"
 type = "footnote"
 start = "EPS based on 529 million"
 end = "515 million shares YTD 2023."
 
 [[blocks]]
-id = "b018"
+id = "b019"
 type = "paragraph"
 start = "COLUMBUS, Ohio, July 30, 2024"
 end = "or $1.13 per share in second-quarter 2023."
 
 [[blocks]]
-id = "p001"
+id = "p002"
 type = "page_artifact"
 start = "1"
 
 [[blocks]]
-id = "b019"
+id = "b020"
 type = "paragraph"
 start = "Operating earnings is a non-GAAP"
 end = "quarter and year to date is included in the tables at the end of this news release."
 
 [[blocks]]
-id = "b020"
+id = "b021"
 type = "paragraph"
 start = "\"AEP’s investments in a modern,"
 end = "interim chief executive officer and president."
 
 [[blocks]]
-id = "b021"
+id = "b022"
 type = "paragraph"
 start = "“We’re seeing unprecedented growth in"
 end = "provide benefits to all customers,” Fowke said."
 
 [[blocks]]
-id = "b022"
+id = "b023"
 type = "paragraph"
 start = "“To help meet the growing"
 end = "affordable local energy resource for customers."
 
 [[blocks]]
-id = "b023"
+id = "b024"
 type = "paragraph"
 start = "“As part of our efforts"
 end = 'deliver for our customers," Fowke said.'
 
 [[blocks]]
-id = "b024"
+id = "b025"
 type = "paragraph"
 start = "“I’m proud of what our"
 end = 'stakeholders," Fowke added.'
 
 [[blocks]]
-id = "p002"
+id = "p003"
 type = "page_artifact"
 start = "2"
 
 [[blocks]]
-id = "b025"
+id = "b026"
 type = "heading"
 level = 2
 start = "SUMMARY OF RESULTS BY SEGMENT"
@@ -199,6 +204,18 @@ headers = [
   "YTD 24",
   "YTD 23",
   "Variance",
+]
+cells = [
+  { role = "corner", text = "65.7", row_header = "Vertically Integrated Utilities (a)", col_header = "GAAP Earnings 2Q 24" },
+  { role = "right", text = "278.1", row_header = "Vertically Integrated Utilities (a)", col_header = "GAAP Earnings 2Q 23" },
+  { role = "below", text = "146.8", row_header = "Transmission & Distribution Utilities (b)", col_header = "GAAP Earnings 2Q 24" },
+]
+
+[[blocks]]
+id = "t003"
+type = "table"
+unanchorable = true
+headers = [
   "Operating Earnings (non-GAAP)",
   "2Q 24",
   "2Q 23",
@@ -208,9 +225,9 @@ headers = [
   "Variance",
 ]
 cells = [
-  { role = "corner", text = "65.7", row_header = "Vertically Integrated Utilities (a)", col_header = "GAAP Earnings 2Q 24" },
-  { role = "right", text = "278.1", row_header = "Vertically Integrated Utilities (a)", col_header = "GAAP Earnings 2Q 23" },
-  { role = "below", text = "146.8", row_header = "Transmission & Distribution Utilities (b)", col_header = "GAAP Earnings 2Q 24" },
+  { role = "corner", text = "244.8", row_header = "Vertically Integrated Utilities (a)", col_header = "Operating Earnings (non-GAAP) 2Q 24" },
+  { role = "right", text = "260.4", row_header = "Vertically Integrated Utilities (a)", col_header = "Operating Earnings (non-GAAP) 2Q 23" },
+  { role = "below", text = "215.3", row_header = "Transmission & Distribution Utilities (b)", col_header = "Operating Earnings (non-GAAP) 2Q 24" },
 ]
 
 [[blocks]]
@@ -266,7 +283,7 @@ type = "page_artifact"
 start = "3"
 
 [[blocks]]
-id = "t003"
+id = "t004"
 type = "table"
 unanchorable = true
 headers = ["2024 EPS Guidance Reconciliation"]
@@ -345,7 +362,7 @@ type = "page_artifact"
 start = "6"
 
 [[blocks]]
-id = "t004"
+id = "t005"
 type = "table"
 unanchorable = true
 headers = [
@@ -451,7 +468,7 @@ type = "page_artifact"
 start = "8"
 
 [[blocks]]
-id = "t005"
+id = "t006"
 type = "table"
 headers = [
   "American Electric Power",
@@ -492,7 +509,7 @@ type = "page_artifact"
 start = "9"
 
 [[blocks]]
-id = "t006"
+id = "t007"
 type = "table"
 unanchorable = true
 headers = [
@@ -615,7 +632,7 @@ type = "page_artifact"
 start = "11"
 
 [[blocks]]
-id = "t007"
+id = "t008"
 type = "table"
 headers = [
   "American Electric Power",

@@ -894,7 +894,7 @@ end = "services rendered to their HMO membership."
 id = "b117"
 type = "footnote"
 start = "In some circumstances, we contract with physicians under risk-sharing arrangements"
-end = "whether positive or negative."
+end = "we process substantially all of the claims under these arrangements."
 
 [[blocks]]
 id = "t017"
