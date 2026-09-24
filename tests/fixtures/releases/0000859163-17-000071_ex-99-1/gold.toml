@@ -110,9 +110,9 @@ headers = [
   "2017"
 ]
 cells = [
-  { role = "corner", text = "327,461", row_header = "Net sales", col_header = "Three Months Ended September 30, 2016" },
-  { role = "right", text = "352,693", row_header = "Net sales", col_header = "Three Months Ended September 30, 2017" },
-  { role = "below", text = "252,869", row_header = "Cost of sales", col_header = "Three Months Ended September 30, 2016" },
+  { role = "corner", text = "252,869", row_header = "Cost of sales", col_header = "Three Months Ended September 30, 2016" },
+  { role = "right", text = "275,420", row_header = "Cost of sales", col_header = "Three Months Ended September 30, 2017" },
+  { role = "below", text = "12,793", row_header = "Intellectual property damages award", col_header = "Three Months Ended September 30, 2016" },
 ]
 
 [[blocks]]
@@ -132,9 +132,9 @@ headers = [
   "2017",
 ]
 cells = [
-  { role = "corner", text = "578,634", row_header = "Cash and cash equivalents", col_header = "March 31, 2017" },
-  { role = "right", text = "618,789", row_header = "Cash and cash equivalents", col_header = "September 30, 2017" },
-  { role = "below", text = "528,748", row_header = "Short-term investments in securities", col_header = "March 31, 2017" },
+  { role = "corner", text = "528,748", row_header = "Short-term investments in securities", col_header = "March 31, 2017" },
+  { role = "right", text = "546,625", row_header = "Short-term investments in securities", col_header = "September 30, 2017" },
+  { role = "below", text = "186,804", row_header = "Accounts receivable, net", col_header = "March 31, 2017" },
 ]
 
 [[blocks]]
