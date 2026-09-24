@@ -94,20 +94,16 @@ id = "b015"
 type = "heading"
 level = 1
 start = "AVX CORPORATION Consolidated Condensed Statements"
-end = "(unaudited) (in thousands, except per share data)"
+end = "unaudited in thousands, except per share data"
 
 [[blocks]]
 id = "t001"
 type = "table"
 headers = [
-  "Three Months Ended",
-  "Six Months Ended",
-  "September 30,",
-  "September 30,",
-  "2016",
-  "2017",
-  "2016",
-  "2017",
+  "Three Months Ended September 30, 2016",
+  "Three Months Ended September 30, 2017",
+  "Six Months Ended September 30, 2016",
+  "Six Months Ended September 30, 2017"
 ]
 cells = [
   { role = "corner", text = "327,461", row_header = "Net sales", col_header = "Three Months Ended September 30, 2016" },
@@ -120,16 +116,14 @@ id = "b016"
 type = "heading"
 level = 1
 start = "AVX CORPORATION Consolidated Condensed Balance"
-end = "(unaudited) (in thousands)"
+end = "unaudited in thousands"
 
 [[blocks]]
 id = "t002"
 type = "table"
 headers = [
-  "March 31,",
-  "September 30,",
-  "2017",
-  "2017",
+  "March 31, 2017",
+  "September 30, 2017"
 ]
 cells = [
   { role = "corner", text = "578,634", row_header = "Cash and cash equivalents", col_header = "March 31, 2017" },
