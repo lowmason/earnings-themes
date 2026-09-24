@@ -93,7 +93,7 @@ end = "our website at www.avx.com."
 id = "b015"
 type = "heading"
 level = 1
-start = "AVX CORPORATION"
+start = "AVX CORPORATION Consolidated Condensed Statements"
 end = "Consolidated Condensed Statements of Income"
 
 [[blocks]]
@@ -118,11 +118,16 @@ cells = [
 ]
 
 [[blocks]]
+id = "b016"
+type = "heading"
+level = 1
+start = "AVX CORPORATION Consolidated Condensed Balance"
+end = "Consolidated Condensed Balance Sheets"
+
+[[blocks]]
 id = "t002"
 type = "table"
 headers = [
-  "AVX CORPORATION",
-  "Consolidated Condensed Balance Sheets",
   "(unaudited)",
   "(in thousands)",
   "March 31,",
@@ -137,7 +142,7 @@ cells = [
 ]
 
 [[blocks]]
-id = "b015"
+id = "b017"
 type = "paragraph"
 start = 'This Press Release contains "forward-looking" information within the meaning'
 end = "prediction of actual results or developments."
@@ -149,12 +154,12 @@ start = "Any forward-looking statements by the Company are intended to speak"
 end = "defined in those statutes."
 
 [[blocks]]
-id = "b017"
+id = "b018"
 type = "heading"
 start = "Contact:"
 
 [[blocks]]
-id = "b018"
+id = "b019"
 type = "paragraph"
 start = "AVX Corporation, Fountain Inn, South Carolina"
 end = "investor.relations@avx.com"
