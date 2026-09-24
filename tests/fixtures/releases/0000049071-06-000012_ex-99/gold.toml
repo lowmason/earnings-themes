@@ -1073,10 +1073,10 @@ headers = [
   "Change", 
   "% Change"
 ]
-cells = [
-  { role = "corner", text = "6.5%", row_header = "3/31/2005", col_header = "Days in Claims Payable (DCP)" },
+cells = [  
+  { role = "corner", text = "6.5%", row_header = "3/31/2005", col_header = "% Change" },
   { role = "right", text = "56.1", row_header = "3/31/2005", col_header = "DCP Excluding Capitation" },
-  { role = "below", text = "11.4%", row_header = "6/30/2005", col_header = "Days in Claims Payable (DCP)" },
+  { role = "below", text = "11.4%", row_header = "6/30/2005", col_header = "% Change" },
 ]
 
 [[blocks]]
