@@ -37,7 +37,7 @@ end = "EnergyTech Investor 415-233-7094"
 id = "b006"
 type = "paragraph"
 start = "or"
-after = "Shawn Severson EnergyTech Investor 415-233-7094"
+after = "David I. Rosenthal UQM Technologies, Inc."
 
 [[blocks]]
 id = "b007"
@@ -156,7 +156,7 @@ type = "page_artifact"
 start = "UQM TECHNOLOGIES, INC. 4120 SPECIALTY PLACE, LONGMONT, COLORADO 80504 (303) 682-4900 FAX (303) 682-4901"
 
 [[blocks]]
-id = "b018"
+id = "b020"
 type = "heading"
 level = 2
 start = "UQM TECHNOLOGIES, INC. AND SUBSIDIARIES Consolidated Condensed Balance"
