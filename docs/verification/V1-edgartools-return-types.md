@@ -185,3 +185,7 @@ pyarrow table and `polars.from_pandas` for the pandas frames. A test shows that 
 pandas or pyarrow object crosses the boundary. The family (b) paths, which fetch exhibit
 bytes, HTML, and text, return only built-in types and edgartools' own objects, so they
 need no cast.
+
+One family (b) result matters to Stage 5 beyond R14.5. `Attachment.download()` is
+declared `Optional[Union[str, bytes]]`, but it returned `builtins.str` on all eight
+filings. It does not hand back an exhibit's bytes as served, before charset decoding.
