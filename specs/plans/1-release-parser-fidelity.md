@@ -7524,7 +7524,7 @@ Then read these files under the printed directory for public paths in families
 Add a `PathSpec` for each missing path and rerun Step 4. Missing paths are ones that
 list an issuer's filings, return attachments or exhibit content, or extract tables.
 
-- [ ] **Step 6: Run V1 live**
+- [x] **Step 6: Run V1 live**
 
 Run: `uv run --locked --script expirements/parser-fidelity/v1_return_types.py --live`
 
@@ -7534,7 +7534,7 @@ throttle`, the wrapper missed edgartools' HTTP client, and the run does not coun
 Inspect how `edgar.httpclient` builds its transport, route it through the throttle,
 add a test, and rerun.
 
-- [ ] **Step 7: Write the V1 record**
+- [x] **Step 7: Write the V1 record**
 
 Create `docs/verification/V1-edgartools-return-types.md` from this template. Replace
 every `_(replace with …)_` instruction with the named content:
@@ -7604,7 +7604,7 @@ grep -n "_(" docs/verification/V1-edgartools-return-types.md
 
 Expected: no output.
 
-- [ ] **Step 8: Lint and commit**
+- [x] **Step 8: Lint and commit**
 
 Before committing anything public, check that the identity leaked nowhere. This lists
 file names only, never the value:
