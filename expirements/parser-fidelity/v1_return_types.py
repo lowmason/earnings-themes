@@ -15,6 +15,8 @@ Rate limit: edgartools 5.58.0 reads EDGAR_RATE_LIMIT_PER_SEC at import (httpclie
 default 9) into a per-process pyrate-limiter bucket, which allows two back-to-back
 requests and counts nothing. This script sets it to 2 and also routes every httpx
 transport request through the fetcher's throttle (0.5 s spacing, request cap, count).
+The same wrapper applies the live-fetch policy's stops: a 403 that persists, a 429, or
+the request cap stops the run (TransportGuard).
 A fresh EDGAR_LOCAL_DATA_DIR per run keeps edgartools' HTTP cache from hiding requests.
 """
 
@@ -31,9 +33,11 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 
 import annotationlib
+import httpx
 import tomllib
 from pf_fetch import (
     DEFAULT_MAX_REQUESTS,
+    FORBIDDEN_LIMIT,
     LiveLock,
     LivePolicyStop,
     Throttle,
@@ -216,27 +220,76 @@ PATHS = [
 ]  # fmt: skip
 
 
-def install_transport_throttle(throttle: Throttle) -> None:
-    """Route every sync and async httpx transport request through the fetcher's throttle."""
-    import httpx
+@dataclass
+class TransportGuard:
+    """The live-fetch policy's stops for edgartools' own client (spec: Live-fetch policy).
 
+    A 403 that persists (FORBIDDEN_LIMIT of them in the run), a 429, or the request cap
+    stops the run. The stop is sticky: edgartools may catch the raised stop inside a
+    path, so every later request raises before it reaches the throttle, and main checks
+    ``stop_reason`` once the paths return.
+    """
+
+    throttle: Throttle
+    forbidden: int = 0
+    stop_reason: str | None = None
+
+    def before(self) -> None:
+        if self.stop_reason is not None:
+            raise LivePolicyStop(self.stop_reason)
+        try:
+            self.throttle.acquire()
+        except LivePolicyStop as exc:
+            self.stop_reason = str(exc)
+            raise
+
+    def after(self, request: httpx.Request, response: httpx.Response) -> None:
+        if response.status_code == 403:
+            self.forbidden += 1
+            if self.forbidden >= FORBIDDEN_LIMIT:
+                self.stop_reason = (
+                    f"403 persisted ({self.forbidden} in this run, the last for "
+                    f"{request.url}); stopping without changing identity"
+                )
+        elif response.status_code == 429:
+            self.stop_reason = f"429 for {request.url}; stopping to back off"
+        if self.stop_reason is not None:
+            raise LivePolicyStop(self.stop_reason)
+
+
+def install_transport_throttle(throttle: Throttle) -> TransportGuard:
+    """Route every sync and async httpx transport request through the throttle and a guard."""
+    guard = TransportGuard(throttle)
     sync_send = httpx.HTTPTransport.handle_request
     async_send = httpx.AsyncHTTPTransport.handle_async_request
 
     def handle_request(
         self: httpx.HTTPTransport, request: httpx.Request
     ) -> httpx.Response:
-        throttle.acquire()
-        return sync_send(self, request)
+        guard.before()
+        response = sync_send(self, request)
+        try:
+            guard.after(request, response)
+        except LivePolicyStop:
+            response.close()
+            raise
+        return response
 
     async def handle_async_request(
         self: httpx.AsyncHTTPTransport, request: httpx.Request
     ) -> httpx.Response:
-        throttle.acquire()
-        return await async_send(self, request)
+        guard.before()
+        response = await async_send(self, request)
+        try:
+            guard.after(request, response)
+        except LivePolicyStop:
+            await response.aclose()
+            raise
+        return response
 
     httpx.HTTPTransport.handle_request = handle_request
     httpx.AsyncHTTPTransport.handle_async_request = handle_async_request
+    return guard
 
 
 def run_paths(fixtures: list[dict]) -> list[dict]:
@@ -340,13 +393,19 @@ def main(argv: list[str] | None = None) -> int:
     os.environ["EDGAR_RATE_LIMIT_PER_SEC"] = "2"
     os.environ["EDGAR_LOCAL_DATA_DIR"] = str(RUNS / f"edgar-home-v1-{stamp}")
     throttle = Throttle(max_requests=args.max_requests)
+    guard = install_transport_throttle(throttle)
     out = RUNS / "v1"
     try:
         with LiveLock(LIVE_LOCK):
-            install_transport_throttle(throttle)
             records = run_paths(fixtures)
     except LivePolicyStop as exc:
         print(f"STOPPED: {exc}; requests made: {throttle.count}", file=sys.stderr)
+        return 1
+    if guard.stop_reason is not None:  # a stop that edgartools caught inside a path
+        print(
+            f"STOPPED: {guard.stop_reason}; requests made: {throttle.count}",
+            file=sys.stderr,
+        )
         return 1
     if throttle.count == 0:
         print(
