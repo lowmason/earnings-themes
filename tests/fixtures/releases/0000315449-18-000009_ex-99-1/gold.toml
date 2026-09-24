@@ -112,7 +112,8 @@ end = "available through our website at www.uqm.com or at www.sec.gov."
 
 [[blocks]]
 id = "b018"
-type = "page_artifact"
+type = "heading"
+level = 2
 start = "Source: UQM Technologies, Inc."
 
 [[blocks]]
@@ -128,7 +129,7 @@ start = "UQM TECHNOLOGIES, INC. 4120 SPECIALTY PLACE, LONGMONT, COLORADO 80504 (
 [[blocks]]
 id = "b019"
 type = "heading"
-level = 2
+level = 3
 start = "UQM TECHNOLOGIES, INC. AND SUBSIDIARIES Consolidated Condensed Statements"
 end = "Operations (derived from the Company’s Annual Report on Form 10-K)"
 
@@ -145,9 +146,9 @@ headers = [
   "2016",
 ]
 cells = [
-  { role = "corner", text = "7,162,456", row_header = "Product sales", col_header = "Year ended December 31, 2017" },
-  { role = "right", text = "4,710,654", row_header = "Product sales", col_header = "Year ended December 31, 2016" },
-  { role = "below", text = "616,293", row_header = "Contract services", col_header = "Year ended December 31, 2017" },
+  { role = "corner", text = "4,368,093", row_header = "Costs of product sales", col_header = "Year ended December 31, 2017" },
+  { role = "right", text = "10,336,136", row_header = "Costs of product sales", col_header = "Year ended December 31, 2016" },
+  { role = "below", text = "285,095", row_header = "Costs of contract services", col_header = "Year ended December 31, 2017" },
 ]
 
 [[blocks]]
@@ -158,7 +159,7 @@ start = "UQM TECHNOLOGIES, INC. 4120 SPECIALTY PLACE, LONGMONT, COLORADO 80504 (
 [[blocks]]
 id = "b020"
 type = "heading"
-level = 2
+level = 3
 start = "UQM TECHNOLOGIES, INC. AND SUBSIDIARIES Consolidated Condensed Balance"
 end = "Sheets (derived from the Company’s Annual Report on Form 10-K)"
 
@@ -172,9 +173,9 @@ headers = [
   "2016",
 ]
 cells = [
-  { role = "corner", text = "6,309,269", row_header = "Cash and cash equivalents", col_header = "December 31, 2017" },
-  { role = "right", text = "2,100,089", row_header = "Cash and cash equivalents", col_header = "December 31, 2016" },
-  { role = "below", text = "176,193", row_header = "Restricted cash", col_header = "December 31, 2017" },
+  { role = "corner", text = "2,341,360", row_header = "Inventories, net", col_header = "December 31, 2017" },
+  { role = "right", text = "1,749,735", row_header = "Inventories, net", col_header = "December 31, 2016" },
+  { role = "below", text = "233,566", row_header = "Prepaid expenses and other current assets", col_header = "December 31, 2017" },
 ]
 
 [[blocks]]
