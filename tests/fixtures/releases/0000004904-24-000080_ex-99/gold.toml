@@ -190,13 +190,13 @@ id = "b026"
 type = "heading"
 level = 2
 start = "SUMMARY OF RESULTS BY SEGMENT"
+end = "$ in millions"
 
 [[blocks]]
 id = "t002"
 type = "table"
 unanchorable = true
 headers = [
-  "$ in millions",
   "GAAP Earnings",
   "2Q 24",
   "2Q 23",
@@ -231,54 +231,54 @@ cells = [
 ]
 
 [[blocks]]
-id = "b026"
+id = "b027"
 type = "footnote"
 start = "A full reconciliation of GAAP earnings with operating earnings"
 end = "operating earnings is included in tables at the end of this news release."
 
 [[blocks]]
-id = "b027"
+id = "b028"
 type = "footnote"
 start = "a. Includes AEP Generating Co., Appalachian"
 end = "Southwestern Electric Power and Wheeling Power"
 
 [[blocks]]
-id = "b028"
+id = "b029"
 type = "footnote"
 start = "b. Includes Ohio Power and AEP Texas"
 
 [[blocks]]
-id = "b029"
+id = "b030"
 type = "footnote"
 start = "c. Includes wholly-owned transmission-only subsidiaries and"
 end = "transmission-only joint ventures"
 
 [[blocks]]
-id = "b030"
+id = "b031"
 type = "footnote"
 start = "d. Includes AEP OnSite Partners, AEP"
 end = "activities in ERCOT, PJM and MISO"
 
 [[blocks]]
-id = "b031"
+id = "b032"
 type = "heading"
 level = 2
 start = "EARNINGS GUIDANCE"
 
 [[blocks]]
-id = "b032"
+id = "b033"
 type = "paragraph"
 start = "AEP management reaffirms its 2024"
 end = "corresponding GAAP equivalent for 2024 earnings guidance."
 
 [[blocks]]
-id = "b033"
+id = "b034"
 type = "paragraph"
 start = "Reflecting special items recorded through"
 end = "full reconciliation of 2024 earnings guidance."
 
 [[blocks]]
-id = "p003"
+id = "p004"
 type = "page_artifact"
 start = "3"
 
@@ -294,13 +294,13 @@ cells = [
 ]
 
 [[blocks]]
-id = "b034"
+id = "b035"
 type = "heading"
 level = 2
 start = "WEBCAST"
 
 [[blocks]]
-id = "b035"
+id = "b036"
 type = "paragraph"
 start = "AEP’s quarterly discussion with financial"
 end = "download at http://www.aep.com/webcasts."
@@ -312,52 +312,52 @@ start = "AEP’s earnings are prepared in"
 end = "company’s employee incentive compensation plans."
 
 [[blocks]]
-id = "b037"
+id = "b038"
 type = "heading"
 level = 2
 start = "ABOUT AEP"
 
 [[blocks]]
-id = "b038"
+id = "b039"
 type = "paragraph"
 start = "At American Electric Power, based"
 end = "For more information, visit aep.com."
 
 [[blocks]]
-id = "p004"
+id = "p005"
 type = "page_artifact"
 start = "4"
 
 [[blocks]]
-id = "b039"
+id = "b040"
 type = "heading"
 level = 2
 start = "WEBSITE DISCLOSURE"
 
 [[blocks]]
-id = "b040"
+id = "b041"
 type = "paragraph"
 start = "AEP may use its website"
 end = "section at https://www.aep.com/investors/."
 
 [[blocks]]
-id = "b041"
+id = "b042"
 type = "paragraph"
 start = "---"
 
 [[blocks]]
-id = "b042"
+id = "b043"
 type = "paragraph"
 start = "This report made by American"
 end = "work force and key personnel."
 
 [[blocks]]
-id = "p005"
+id = "p006"
 type = "page_artifact"
 start = "5"
 
 [[blocks]]
-id = "p006"
+id = "p007"
 type = "page_artifact"
 start = "6"
 
@@ -399,71 +399,71 @@ cells = [
 ]
 
 [[blocks]]
-id = "b043"
+id = "b044"
 type = "footnote"
 unanchorable = true
 start = "Per share amounts are divided by Weighted Average Common Shares Outstanding – Basic"
 
 [[blocks]]
-id = "b044"
+id = "b045"
 type = "footnote"
 unanchorable = true
 start = "Excluding tax related adjustments, all items presented in the table are tax adjusted at the statutory rate unless otherwise noted"
 
 [[blocks]]
-id = "b045"
+id = "b046"
 type = "footnote"
 unanchorable = true
 start = "Represents the impact of mark-to-market economic hedging activities"
 
 [[blocks]]
-id = "b046"
+id = "b047"
 type = "footnote"
 unanchorable = true
 start = "Represents a provision for revenue refunds on certain capitalized costs associated with the Turk Plant"
 
 [[blocks]]
-id = "b047"
-type = "footnote"
-start = "Represents the impact of the remeasurement of excess accumulated deferred income taxes in Michigan"
-
-[[blocks]]
 id = "b048"
 type = "footnote"
-unanchorable = true
-start = "Represents the loss on the expected sale of AEP OnSite Partners"
+start = "Represents the impact of the remeasurement of excess accumulated deferred income taxes in Michigan"
 
 [[blocks]]
 id = "b049"
 type = "footnote"
 unanchorable = true
-start = "Represents the impact of AEP's recently announced workforce reduction"
+start = "Represents the loss on the expected sale of AEP OnSite Partners"
 
 [[blocks]]
 id = "b050"
 type = "footnote"
 unanchorable = true
+start = "Represents the impact of AEP's recently announced workforce reduction"
+
+[[blocks]]
+id = "b051"
+type = "footnote"
+unanchorable = true
 start = "Represents the impact of the Federal EPA Revised Coal Combustion Residuals Rule"
 
 [[blocks]]
-id = "p007"
+id = "p008"
 type = "page_artifact"
 start = "7"
 
 [[blocks]]
-id = "b051"
+id = "b052"
 type = "footnote"
 start = "Represents an adjustment to the loss on the expected sale of the Competitive Contracted Renewable Portfolio"
 end = "expected sale of the Competitive Contracted Renewable Portfolio and other related third-party transaction costs"
 
 [[blocks]]
-id = "b052"
+id = "b053"
 type = "footnote"
 unanchorable = true
 start = "Represents the impact of recent legislation in Texas regarding recovery of certain employee incentives"
 
 [[blocks]]
-id = "p008"
+id = "p009"
 type = "page_artifact"
 start = "8"
 
@@ -492,19 +492,19 @@ cells = [
 ]
 
 [[blocks]]
-id = "b053"
+id = "b054"
 type = "footnote"
 unanchorable = true
 start = "Includes off-system sales, municipalities and cooperatives, unit power and other wholesale customers"
 
 [[blocks]]
-id = "b054"
+id = "b055"
 type = "footnote"
 unanchorable = true
 start = "Represents energy delivered to distribution customers"
 
 [[blocks]]
-id = "p009"
+id = "p010"
 type = "page_artifact"
 start = "9"
 
@@ -546,88 +546,88 @@ cells = [
 ]
 
 [[blocks]]
-id = "b055"
+id = "b056"
 type = "footnote"
 unanchorable = true
 start = "Per share amounts are divided by Weighted Average Common Shares Outstanding – Basic"
 
 [[blocks]]
-id = "b056"
+id = "b057"
 type = "footnote"
 unanchorable = true
 start = "Excluding tax related adjustments, all items presented in the table are tax adjusted at the statutory rate unless otherwise noted"
 
 [[blocks]]
-id = "b057"
+id = "b058"
 type = "footnote"
 unanchorable = true
 start = "Represents the impact of mark-to-market economic hedging activities"
 
 [[blocks]]
-id = "p010"
+id = "p011"
 type = "page_artifact"
 start = "10"
 
 [[blocks]]
-id = "b058"
+id = "b059"
 type = "footnote"
 start = "Represents the impact of the remeasurement of excess accumulated deferred income taxes in Arkansas and Michigan"
 
 [[blocks]]
-id = "b059"
+id = "b060"
 type = "footnote"
 start = "Represents the impact of receiving"
 end = "activity related to prior periods"
 
 [[blocks]]
-id = "b060"
+id = "b061"
 type = "footnote"
 start = "Represents the impact of a"
 end = "approved settlement agreement in April 2024"
 
 [[blocks]]
-id = "b061"
+id = "b062"
 type = "footnote"
 unanchorable = true
 start = "Represents a provision for revenue refunds on certain capitalized costs associated with the Turk Plant"
 
 [[blocks]]
-id = "b062"
+id = "b063"
 type = "footnote"
 unanchorable = true
 start = "Represents the loss on the expected sale of AEP OnSite Partners"
 
 [[blocks]]
-id = "b063"
+id = "b064"
 type = "footnote"
 start = "Represents the impact of AEP's recently announced workforce reduction program"
 
 [[blocks]]
-id = "b064"
+id = "b065"
 type = "footnote"
 unanchorable = true
 start = "Represents the impact of the Federal EPA Revised Coal Combustion Residuals Rule"
 
 [[blocks]]
-id = "b065"
+id = "b066"
 type = "footnote"
 start = "Represents an adjustment to the loss on the expected sale of the Kentucky Operations"
 end = "Kentucky Operations which was terminated in April 2023 and other related third-party transaction costs"
 
 [[blocks]]
-id = "b066"
+id = "b067"
 type = "footnote"
 start = "Represents the loss on the sale of the Competitive Contracted Renewable Portfolio"
 end = "the loss on the sale of the Competitive Contracted Renewable Portfolio and other related third-party transaction costs"
 
 [[blocks]]
-id = "b067"
+id = "b068"
 type = "footnote"
 unanchorable = true
 start = "Represents the impact of recent legislation in Texas regarding recovery of certain employee incentives"
 
 [[blocks]]
-id = "p011"
+id = "p012"
 type = "page_artifact"
 start = "11"
 
@@ -656,18 +656,18 @@ cells = [
 ]
 
 [[blocks]]
-id = "b068"
+id = "b069"
 type = "footnote"
 unanchorable = true
 start = "Includes off-system sales, municipalities and cooperatives, unit power and other wholesale customers"
 
 [[blocks]]
-id = "b069"
+id = "b070"
 type = "footnote"
 unanchorable = true
 start = "Represents energy delivered to distribution customers"
 
 [[blocks]]
-id = "p012"
+id = "p013"
 type = "page_artifact"
 start = "12"
