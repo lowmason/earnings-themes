@@ -81,7 +81,7 @@ We will use the bespoke lxml walker as the base parser for release canonicalizat
   - **Deterministic and offline.** It produced identical output on both runs of all
     eight fixtures, with no network access.
   - **Fast.** Each fixture parsed in at most 0.023 s; edgartools took 0.36-0.93 s.
-  - **Table grids.** It exposes table grids, and its cell association beats
+  - **Table grids.** It exposes table grids, and its cell association matches or beats
     edgartools':
 
     | Class | Walker | edgartools |
@@ -99,8 +99,8 @@ We will use the bespoke lxml walker as the base parser for release canonicalizat
       in tables that pass the class tests' data-table definition, such as contact
       blocks and Humana's earnings guidance. The rest come from Humana's HTML tables
       that each hold several visible tables.
-    - **Header lost:** 37 headings. 25 are typed as paragraphs by W11's bold or
-      underline test, and 12 sit inside table elements. All 112 header texts of IKON's
+    - **Header lost:** 37 headings. 25 fail W11's bold-or-underline test and fall
+      through to `paragraph` (W12), and 12 sit inside table elements. All 112 header texts of IKON's
       `<pre>` tables are lost too; no candidate exposes those tables.
     - No block is missed or misordered, and no anchor is altered.
   - **Known gaps.** The development set left eight documented gaps. The rules as
