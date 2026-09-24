@@ -87,4 +87,27 @@ items by W6 or W7.
 
 ## Known gaps
 
-None yet.
+- A paragraph that a page break interrupts is two blocks, one on each side of the
+  break, so it is emitted as two paragraphs (seen in the development releases
+  0000079958-12-000020_ex-99-1 and 0001045150-09-000060_ex-99-1)
+- A "Page N of M" footer is a `paragraph`: W8's bare page-number pattern has no
+  "of M" form (seen in the development release 0001045150-09-000060_ex-99-1)
+- The EDGAR filing header line at the top of the page ("EX-99.1 2 <file>.htm PRESS
+  RELEASE") is a `paragraph` (seen in the development releases
+  0000019149-11-000022_ex-99-1, 0000079958-12-000020_ex-99-1 and
+  0001045150-09-000060_ex-99-1)
+- A centred "##" mark closing a section is a `paragraph` (seen in the development
+  release 0000079958-12-000020_ex-99-1)
+- A title or exhibit label set apart only by position, alignment, or capitals, with
+  no bold or underline, is a `paragraph`: the centred release title and the
+  right-aligned "Exhibit 99.1" (seen in the development release
+  0000019149-11-000022_ex-99-1), and "EXHIBIT 99.1" above the address block (seen in
+  the development release 0001045150-09-000060_ex-99-1)
+- A heading whose text runs over two lines, each line its own block, is emitted as
+  two headings: "PRECISION CASTPARTS CORP. REPORTS" and "FISCAL 2013, FIRST QUARTER
+  RESULTS" (seen in the development release 0000079958-12-000020_ex-99-1)
+- A second set of column headers partway down a data table is not flagged as header
+  rows, because W15 flags only `thead` rows, all-`th` rows, and leading rows (seen in
+  both data tables of the development release 0000079958-12-000020_ex-99-1)
+- A footnote set as the last row of a data table stays in the table's grid (seen in
+  both data tables of the development release 0000079958-12-000020_ex-99-1)

@@ -5659,7 +5659,7 @@ did not see. Add it to the mapping by the library's documented meaning, add it t
 test in Step 1, and record the addition for V2. The mapping may still change here,
 before the freeze.
 
-- [ ] **Step 8: Smoke-run every adapter on the development set only**
+- [x] **Step 8: Smoke-run every adapter on the development set only**
 
 For each development release, and for each of `control.py`, `adapter_edgartools.py`,
 and `adapter_secparser.py`:
@@ -6374,7 +6374,7 @@ Expected: `16 passed`.
 Run: `uv lock --script expirements/parser-fidelity/walker.py`
 Expected: `Resolved … packages`.
 
-- [ ] **Step 6: Develop on the development set**
+- [x] **Step 6: Develop on the development set**
 
 Run the walker on each development release, print its dump, and compare the dump
 with the release's browser rendering:
@@ -6394,7 +6394,7 @@ For each mismatch with the rendering, decide:
   `- <pattern> (seen in the development release <id>)`, and leave it unhandled.
   Never add, remove, or retune a rule, and never name or target a fixture.
 
-- [ ] **Step 7: Lint and commit**
+- [x] **Step 7: Lint and commit**
 
 ```bash
 uv run --locked ruff format expirements/parser-fidelity
