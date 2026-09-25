@@ -12,7 +12,9 @@ This record discharges V1, the open marker in R14.5 of
 - Date (UTC): 2026-09-24
 - Library: edgartools 5.58.0, pinned in `expirements/parser-fidelity/v1_return_types.py.lock`;
   Python 3.14.0
-- Filings: the eight fixture filings listed in `tests/fixtures/releases/manifest.toml`
+- Filings: round 1's eight fixture filings, listed in `tests/fixtures/releases/manifest.toml`
+  at `6021323`. Round 2 replaced the fixtures (`d6d3356`), and V1 was not re-run against
+  them; see V2, "Deviations from the plan".
 - Live requests: 28
 - Script: `expirements/parser-fidelity/v1_return_types.py` at commit `9fce0b2`
 
