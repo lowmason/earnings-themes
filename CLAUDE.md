@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Document status — read before trusting any file here
 
-This repo is documentation-first: ~3,500 lines of instructions, ~10 lines of scaffold code.
+This repo is documentation-first: its only working code is the Stage 1 investigation harness in `expirements/parser-fidelity/`, its packages are still `hello()` scaffolds, and the rest is instructions.
 Not all of it is binding.
 
 | File | Status |
