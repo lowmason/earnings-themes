@@ -16,11 +16,6 @@ type = "paragraph"
 start = "Exhibit 99.1"
 
 [[blocks]]
-id = "p002"
-type = "page_artifact"
-start = "Ball Logo"
-
-[[blocks]]
 id = "b002"
 type = "heading"
 level = 1
