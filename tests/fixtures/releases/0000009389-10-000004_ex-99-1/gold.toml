@@ -3,6 +3,7 @@ fixture_id = "0000009389-10-000004_ex-99-1"
 annotator = "Lowell Mason (verified a Codex draft)"
 marked_from = "browser rendering"
 browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
+completed = 2026-09-25
 
 [[blocks]]
 id = "p001"
@@ -29,7 +30,7 @@ start = "News Release"
 id = "b003"
 type = "paragraph"
 start = "For Immediate Release"
-after = "Investor Contact: Ann T. Scott"
+end = "Release http://www.ball.com"
 
 [[blocks]]
 id = "b004"
@@ -426,7 +427,6 @@ id = "b042"
 type = "heading"
 level = 1
 start = "Business Consolidation Activities and Other Significant Items"
-end = "and Other Significant Items 2009"
 
 [[blocks]]
 id = "b043"
@@ -524,9 +524,9 @@ headers = [
   "2008",
 ]
 cells = [
-  { role = "corner", text = "80.3", row_header = "Net earnings before above transactions", col_header = "Three months ended December 31, 2009" },
-  { role = "right", text = "53.4", row_header = "Net earnings before above transactions", col_header = "Three months ended December 31, 2008" },
-  { role = "below", text = "0.84", row_header = "Per diluted share before above transactions", col_header = "Three months ended December 31, 2009" },
+  { role = "corner", text = "(1.3)", row_header = "Business consolidation costs, net of tax", col_header = "Three months ended December 31, 2009" },
+  { role = "right", text = "19.6", row_header = "Business consolidation costs, net of tax", col_header = "Three months ended December 31, 2008" },
+  { role = "below", text = "0.3", row_header = "(Gain) loss on dispositions, net of tax", col_header = "Three months ended December 31, 2009" },
 ]
 
 [[blocks]]
