@@ -1,8 +1,8 @@
 # 0001. Use the bespoke lxml walker as the base parser for release canonicalization
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-09-25
-- **Deciders:**
+- **Deciders:** Lowell Mason
 - **Blast radius:** `earnings-ingestion` (the Stage 3 canonicalizer) and every
   canonical document version.
 
