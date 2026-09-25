@@ -3,13 +3,13 @@ fixture_id = "0000706863-16-000110_ex-99-1"
 annotator = "Lowell Mason (verified a Codex draft)"
 marked_from = "browser rendering"
 browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
+completed = 2026-09-25
 
 [[blocks]]
 id = "b001"
-type = "paragraph"
+type = "page_artifact"
 start = "EX-99.1 2 exhibit9912ndqtr2016earnin.htm EXHIBIT 99.1"
 
-# CHECK: Exhibit label's type and prominence need browser verification.
 [[blocks]]
 id = "b002"
 type = "heading"
@@ -30,7 +30,6 @@ id = "b005"
 type = "paragraph"
 start = "(802) 888-6600"
 
-# CHECK: The second title line may instead be a separate subtitle block.
 [[blocks]]
 id = "b006"
 type = "heading"
