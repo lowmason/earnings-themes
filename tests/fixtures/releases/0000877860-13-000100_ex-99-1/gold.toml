@@ -3,13 +3,13 @@ fixture_id = "0000877860-13-000100_ex-99-1"
 annotator = "Lowell Mason (verified a Codex draft)"
 marked_from = "browser rendering"
 browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
+completed = 2026-09-25 
 
 [[blocks]]
 id = "p001"
 type = "page_artifact"
 start = "EX-99.1 2 item991-2013q3earningspres.htm THIRD QUARTER EARNINGS PRESS RELEASE, DATED SEPTEMBER 30, 2013"
 
-# CHECK: exhibit label; heading status and prominence require browser verification.
 [[blocks]]
 id = "b001"
 type = "heading"
@@ -33,7 +33,6 @@ level = 1
 start = "NHI Reports 17.2% Increase in Third Quarter Normalized FFO"
 after = "-Increases 2013 Normalized FFO Guidance-"
 
-# CHECK: subtitle; verify that it is visually a separate level-2 heading.
 [[blocks]]
 id = "b005"
 type = "heading"
@@ -101,7 +100,6 @@ type = "paragraph"
 start = "FFO, as defined by NAREIT, for the nine months ended September 30, 2013"
 end = "Net income for the nine months ended September 30, 2013 includes a gain $19,370,000 on the sale of real estate."
 
-# CHECK: repeated exhibit label at a page boundary; treated as a running page artifact.
 [[blocks]]
 id = "p002"
 type = "page_artifact"
@@ -125,7 +123,6 @@ type = "paragraph"
 start = "The Company currently forecasts Normalized FFO for 2013 from $3.53 to $3.55"
 end = "is set forth and reconciled below:"
 
-# CHECK: verify the visible grid boundaries; no valid unique three-cell L exists.
 [[blocks]]
 id = "t001"
 type = "table"
@@ -193,14 +190,13 @@ id = "b025"
 type = "heading"
 level = 2
 start = "Reconciliation of Funds From Operations and Normalized Funds From Operations"
+end = "Normalized Funds From Operations (in thousands, except share and per share amounts)"
 
-# CHECK: the browser copy renders the grid with line breaks rather than tabs; verify the grid, headers, and L.
 [[blocks]]
 id = "t002"
 type = "table"
 unanchorable = true
 headers = [
-  "(in thousands, except share and per share amounts)",
   "Three Months Ended",
   "Nine Months Ended",
   "September 30,",
@@ -251,14 +247,13 @@ id = "b028"
 type = "heading"
 level = 2
 start = "Reconciliation of Funds Available for Distribution and Normalized Funds Available for Distribution"
+end = "Normalized Funds Available for Distribution (in thousands, except share and per share amounts)"
 
-# CHECK: the browser copy renders the grid with line breaks rather than tabs; verify the grid, headers, and L.
 [[blocks]]
 id = "t003"
 type = "table"
 unanchorable = true
 headers = [
-  "(in thousands, except share and per share amounts)",
   "Three Months Ended",
   "Nine Months Ended",
   "September 30,",
@@ -308,14 +303,12 @@ start = "November 4, 2013"
 id = "b031"
 type = "heading"
 level = 2
-start = "Condensed Statements of Income"
+start = "Condensed Statements of Income (in thousands, except share and per share amounts)"
 
-# CHECK: the browser copy renders the grid with line breaks rather than tabs; verify the grid and headers.
 [[blocks]]
 id = "t004"
 type = "table"
 headers = [
-  "(in thousands, except share and per share amounts)",
   "Three Months Ended",
   "Nine Months Ended",
   "September 30,",
@@ -358,14 +351,12 @@ start = "November 4, 2013"
 id = "b032"
 type = "heading"
 level = 2
-start = "Selected Balance Sheet Data"
+start = "Selected Balance Sheet Data (in thousands)"
 
-# CHECK: the browser copy renders the grid with line breaks rather than tabs; verify the grid and headers.
 [[blocks]]
 id = "t005"
 type = "table"
 headers = [
-  "(in thousands)",
   "September 30, 2013",
   "December 31, 2012",
   "(unaudited)",
