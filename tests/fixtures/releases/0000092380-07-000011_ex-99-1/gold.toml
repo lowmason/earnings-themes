@@ -162,7 +162,7 @@ id = "b024"
 type = "heading"
 level = 2
 start = "SOUTHWEST AIRLINES CO. CONDENSED CONSOLIDATED STATEMENT OF INCOME"
-end = "(in millions, except per share amounts) (unaudited)"
+end = "STATEMENT OF INCOME (in millions, except per share amounts) (unaudited)"
 
 [[blocks]]
 id = "t001"
@@ -191,7 +191,7 @@ id = "b025"
 type = "heading"
 level = 2
 start = "SOUTHWEST AIRLINES CO. RECONCILIATION OF REPORTED AMOUNTS TO ECONOMIC RESULTS (SEE NOTE)"
-end = "(in millions, except per share amounts) (unaudited)"
+end = "ECONOMIC RESULTS (SEE NOTE) (in millions, except per share amounts) (unaudited)"
 
 [[blocks]]
 id = "t002"
