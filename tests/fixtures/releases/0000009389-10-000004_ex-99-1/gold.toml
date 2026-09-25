@@ -421,8 +421,8 @@ start = "Unaudited Notes to Condensed Financials (December 2009)"
 id = "b042"
 type = "heading"
 level = 1
-start = "Business Consolidation Activities and"
-end = "Activities and Other Significant Items"
+start = "Business Consolidation Activities and Other Significant Items"
+after = "2009 In the first quarter, a restructuring charge"
 
 [[blocks]]
 id = "b043"
@@ -520,9 +520,9 @@ headers = [
   "2008",
 ]
 cells = [
-  { role = "corner", text = "20.4", row_header = "Business consolidation costs, net of tax", col_header = "Year ended December 31, 2009" },
-  { role = "right", text = "34.9", row_header = "Business consolidation costs, net of tax", col_header = "Year ended December 31, 2008" },
-  { role = "below", text = "(30.4)", row_header = "(Gain) loss on dispositions, net of tax", col_header = "Year ended December 31, 2009" },
+  { role = "corner", text = "80.3", row_header = "Net earnings before above transactions", col_header = "Three months ended December 31, 2009" },
+  { role = "right", text = "53.4", row_header = "Net earnings before above transactions", col_header = "Three months ended December 31, 2008" },
+  { role = "below", text = "0.84", row_header = "Per diluted share before above transactions", col_header = "Three months ended December 31, 2009" },
 ]
 
 [[blocks]]
