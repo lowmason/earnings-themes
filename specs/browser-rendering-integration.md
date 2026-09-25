@@ -1,8 +1,8 @@
 # Browser rendering integration across Stages 2, 3, and 10
 
-Status: Proposed for written-spec review
+Status: Approved
 
-Approved design direction: 2026-09-24
+Approved: 2026-09-24
 
 ## Purpose
 
