@@ -43,6 +43,23 @@ def test_not_live_deselects_live_tests(tmp_path: Path) -> None:
     assert "1 passed, 1 deselected" in result.stdout
 
 
+def test_a_bare_run_deselects_live_tests(tmp_path: Path) -> None:
+    (tmp_path / "test_marks.py").write_text(
+        "import pytest\n"
+        "\n"
+        "def test_offline():\n"
+        "    pass\n"
+        "\n"
+        "@pytest.mark.live\n"
+        "def test_online():\n"
+        "    raise AssertionError('a live test ran by default')\n",
+        encoding="utf-8",
+    )
+    result = run_pytest(str(tmp_path), "-q")
+    assert result.returncode == 0, result.stdout
+    assert "1 passed, 1 deselected" in result.stdout
+
+
 def test_unregistered_marker_is_an_error(tmp_path: Path) -> None:
     (tmp_path / "test_typo.py").write_text(
         "import pytest\n\n@pytest.mark.lvie\ndef test_typo():\n    pass\n",
