@@ -470,7 +470,7 @@ cells = [
   { role = "below", text = "15,978", row_header = "Change in operating assets and liabilities", col_header = "3 Months Ended Sept 30, 2009" },
 ]
 
-# CHECK: The rendered copy has no tab separators; verify the visual grid and header scope.[[blocks]]
+[[blocks]]
 id = "t006"
 type = "table"
 unanchorable = true
