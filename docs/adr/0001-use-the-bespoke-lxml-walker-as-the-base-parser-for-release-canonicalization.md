@@ -41,6 +41,12 @@ finished its second measurement:
   - The walker was developed on three separate development releases.
   - Every candidate was frozen at `616721a` before any candidate ran on a fixture, and
     stayed frozen through both rounds.
+  - In round 2 Claude also proposed the fixture-selection method, which the user chose,
+    and had named Pharmacyclics to the user before that rule was fixed. At the user's
+    request it supplied FMC t005's L, pointed to Codex's anchor for Ball b042, and set
+    out the spec's options for other gold questions. It defined the two sensitivity
+    readings before scoring. V2's "Claude's part" and "How blind the choice was" record
+    each.
 - **Eligibility gates** (F7):
   - **Lock:** the candidate resolves into the workspace lock on Python 3.14 without
     lowering a locked version, and parses every fixture.

@@ -56,8 +56,9 @@ commit `8bda724`, with ADR corrections at `2d1db04`. Its outputs are archived in
 Both rounds end at the typing of narrative-release headings: round 1 through its reading
 outside the rule, round 2 through the rule itself.
 
-**How the replacements were chosen.** The user decided the scope, the supply and the
-method.
+**How the replacements were chosen.** The user decided the scope and the supply. At the
+user's request, Claude proposed the method, including the filing years, and the user
+chose it.
 
 - **Scope.** All eight fixtures.
 - **Supply.** A new live discovery run over filing years 2007, 2010, 2013, 2016, 2019
@@ -159,8 +160,8 @@ thresholds, and R13.1 is untouched.
   - **What Codex saw.** With the user's approval, Claude read the eight Codex session
     logs afterwards. `data/runs/parser-fidelity/round2-analysis/codex_reads_summary.md`
     summarizes them, and `codex_sessions.md` lists every command. In every run, Codex:
-    - read the spec's Gold annotation section, its fixture's rendered text, `gold.toml`
-      and snapshot, and ran the validator;
+    - read the spec's Gold annotation section, its fixture's rendered text and
+      `gold.toml`, and ran the validator;
     - read no candidate code, `walker-rules.md`, candidate output, validator source, or
       other fixture's files;
     - wrote nothing outside its own `gold.toml` and snapshot, and made no network call
@@ -190,9 +191,9 @@ thresholds, and R13.1 is untouched.
     are Codex's.
 - **Commits.**
   - The user committed the eight drafts, with the empty `gold-notes.md` sections, at
-    `368c2f6`. They differ from the kept snapshots only in header lines, so
-    `git diff 368c2f6 02e3e3f -- tests/fixtures/releases` shows exactly the user's
-    verification edits.
+    `368c2f6`. They differ from the kept snapshots only in header lines, some of which
+    the user had already filled in. So `git diff 368c2f6 02e3e3f -- tests/fixtures/releases`
+    shows every block edit the user made in verification.
   - The user then committed the verified files in 29 further commits, through
     `02e3e3f`. Claude checked the committed files whenever the user asked (see
     "Claude's part").
@@ -239,7 +240,8 @@ thresholds, and R13.1 is untouched.
       gate-B checks. The times in them are the user's.
   - **Before scoring,** it defined the two sensitivity readings in "Selection rule,
     applied".
-  - **Fixture choice.** See "How blind the choice was".
+  - **Fixture choice.** It proposed the method that chose the round-2 fixtures. See "How
+    the replacements were chosen" and "How blind the choice was".
 - **Gold exceptions.** Seven scored blocks depart from a spec rule. Each is recorded in
   `gold-notes.md` (`808f0e4`), committed before any candidate ran:
   - **Ball t005.** Every cell of its L is split from a `$` cell. No L in the table meets
@@ -930,7 +932,8 @@ From `gold-notes.md`:
 - **Fixture choice.** Only five of the eight fixtures were chosen blind. See "Round 1
   and the replacement fixtures".
 - **Authorship.** Claude wrote the walker, the other adapters, the harness and the
-  scorer, and answered the user's gold questions listed in "Gold protocol". The user
+  scorer. It also proposed the round-2 fixture method, answered the user's gold
+  questions listed in "Gold protocol", and defined the sensitivity readings. The user
   approved the walker's rules, the fixtures, the selection rule and every gold block.
 - **Unanchorable blocks.** 27 blocks are unanchorable, so they are never scored.
 
@@ -953,8 +956,9 @@ Round 1:
 Round 2:
 
 - **The replacement rule.** The plan's gate A has the user pick fixtures from a
-  shortlist. In round 2, with the user's consent, a rule chose them instead, and the
-  rule and its discovery command were committed (`cf2a31a`) before the live run.
+  shortlist. In round 2 a rule chose them instead: Claude proposed it and the user
+  chose it. With the user's consent, the rule and its discovery command were committed
+  (`cf2a31a`) before the live run.
 - **`approval.toml`.** With the user's consent, Claude filled it in from the rule's
   output, and the user signed it.
 - **AMC.** The user replaced it with the table-heavy spare before gate B.
