@@ -9547,7 +9547,7 @@ git commit -m "docs(verification): record V2 parser fidelity and propose ADR 000
 
 ### Task 21: Gate D — the user accepts the decision
 
-- [ ] **Step 1: Present the decision**
+- [x] **Step 1: Present the decision**
 
 Give the user:
 
@@ -9560,7 +9560,7 @@ eligible candidate, or an unresolved tie). Each is the user's decision. If they 
 fixtures, return to gate A for the replacements (Tasks 6, 7, 10), then rerun Task 19
 and redo Task 20.
 
-- [ ] **Step 2: Record the acceptance**
+- [x] **Step 2: Record the acceptance**
 
 When the user accepts, edit the ADR:
 
