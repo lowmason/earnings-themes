@@ -9581,7 +9581,7 @@ git commit -m "docs(adr): accept ADR 0001, the release base parser"
 **Files:**
 - Modify: `CLAUDE.md` (the "Current state" section only)
 
-- [ ] **Step 1: Run every check**
+- [x] **Step 1: Run every check**
 
 ```bash
 uv run --locked --all-packages python expirements/parser-fidelity/check_fixtures.py
@@ -9607,7 +9607,7 @@ Expected, in order:
 8. no output;
 9. no output: the identity appears in no file.
 
-- [ ] **Step 2: Refresh CLAUDE.md "Current state"**
+- [x] **Step 2: Refresh CLAUDE.md "Current state"**
 
 In `CLAUDE.md`, update the "Current state: pre-implementation scaffold" section to say
 that:
