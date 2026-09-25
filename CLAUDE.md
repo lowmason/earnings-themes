@@ -22,9 +22,17 @@ Not all of it is binding.
 
 **Deliberately unresolved — do not silently pick one** (AGENTS.md §"Source basis and unresolved choices"): the production provider/model, the final theme taxonomy, and non-exactness quality thresholds. Record these in config or a decision record; do not invent agreement. The fourth such choice, an approved inference budget, is now recorded by `specs/evidence-linked-theme-extraction.md` R14.2: **$100, for the optional hosted-ceiling ablation only**, not prompt-optimizer compiles or any other billable call. The required path needs no billable inference: R14.1 limits it to open-weight, self-hosted models, which narrows the model choice without making it.
 
-## Current state: pre-implementation scaffold
+## Current state: Stage 1 complete, packages still scaffold
 
-Packages and `apps/earnings-pipeline` contain only `hello()` stubs; no domain code exists yet. `data/` is gitignored and empty; `config/`, `prompts/`, `codebooks/`, `expirements/`, `tests/*` are empty directories. As of `711ba11` (7 commits on `main`), git tracks 28 files: docs, specs, package and app scaffolds, the `pyproject.toml`s, and `uv.lock`. `origin` is set to https://github.com/lowmason/earnings-themes, which is **public** — treat anything committed here as publicly visible.
+Stage 1 of the roadmap (release parser fidelity, `specs/release-parser-fidelity.md`) is done:
+
+- `tests/fixtures/releases/` holds the eight Stage 1 fixtures, each `source.html` with its `gold.toml`, and `manifest.toml`.
+- `docs/source-register.toml` is the source register (AGENTS.md §242), with the `sec-edgar` entry that the fixture manifest cites; `fetch_policy_pages.py verify` checks its quotes against saved pages.
+- `expirements/parser-fidelity/` holds the Stage 1 harness: fetcher, discovery, class tests, candidate adapters, the walker, the control, the gold validator, the scorer, the selection rule, the V1 script and the fixture check. Its tests run with `uv run --locked --all-packages pytest expirements/parser-fidelity --import-mode=prepend -q`.
+- `docs/verification/` holds V1 (edgartools return types) and V2 (release parser fidelity).
+- `docs/adr/0001-use-the-bespoke-lxml-walker-as-the-base-parser-for-release-canonicalization.md` records the base parser: the bespoke lxml walker, accepted 2026-09-25. Its measured code stays frozen in the harness until Stage 3 moves it into `earnings-ingestion`.
+
+Packages and `apps/earnings-pipeline` still contain only `hello()` stubs, and pytest configuration is still Stage 2's (see "Commands" below). `data/` is gitignored and holds only local, uncommitted material: fetched pages under `data/raw/` and Stage 1 run outputs under `data/runs/`; `config/`, `prompts/`, `codebooks/`, `tests/contracts/` and `tests/integration/` are empty directories. `origin` is set to https://github.com/lowmason/earnings-themes, which is **public** — treat anything committed here as publicly visible.
 
 ### Workspace root is virtual — do not add `[project]` to it
 
