@@ -3,7 +3,7 @@ fixture_id = "0000877860-13-000100_ex-99-1"
 annotator = "Lowell Mason (verified a Codex draft)"
 marked_from = "browser rendering"
 browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
-completed = 2026-09-25 
+completed = 2026-09-25
 
 [[blocks]]
 id = "p001"
@@ -365,4 +365,4 @@ cells = [
   { role = "corner", text = "7,450", row_header = "Cash and cash equivalents", col_header = "September 30, 2013 (unaudited)" },
   { role = "right", text = "9,172", row_header = "Cash and cash equivalents", col_header = "December 31, 2012" },
   { role = "below", text = "13,577", row_header = "Marketable securities", col_header = "September 30, 2013 (unaudited)" },
-]
+] 
