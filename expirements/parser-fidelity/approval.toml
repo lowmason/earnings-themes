@@ -1,50 +1,63 @@
-# Stage 1 fixture approval (specs/release-parser-fidelity.md: Selection; decisions F3, F4).
-# Written by the user from data/raw/discovery/shortlist.md. promote_fixtures.py enforces
-# two fixtures per class (one only for a class listed in short_classes), a class-test
-# match for each primary_class, at most two fixtures per issuer, the 1 MiB cap, and a
+# Stage 1 fixture approval, round 2 (specs/release-parser-fidelity.md: Selection;
+# decisions F3, F4). Written by round2_fixtures.py from discover.suggest() over the
+# round-2 pool, a rule fixed before the round-2 discovery run; the user signs it with
+# approved_by. promote_fixtures.py enforces two fixtures per class, a class-test match
+# for each primary_class, at most two fixtures per issuer, the 1 MiB cap, and a
 # development set of two or three releases disjoint from the fixtures.
-# The user chose every entry below in session; Claude wrote the file from those answers.
+#
+# One change to the rule's output, decided by the user before promotion: the rule's
+# second table_heavy pick, 0001104659-24-081453_ex-99-1 (AMC Entertainment Holdings,
+# 2024), is not a press release. It is a pro forma financial overview, filed with a
+# refinancing 8-K that also lists Item 2.02, and discovery took it as the filing's only
+# EX-99 exhibit. The user rejected it, and the table_heavy spare replaces it.
 approved_by = "Lowell Mason"
-approved_on = 2026-09-22
+approved_on = 2026-09-25
 short_classes = []
 
 [[fixtures]]
-fixture_id = "0000315449-18-000009_ex-99-1"  # UQM Technologies, 2018
+fixture_id = "0000007332-09-000032_ex-99"  # SOUTHWESTERN ENERGY CO, 2009
 primary_class = "clean_html"
 
 [[fixtures]]
-fixture_id = "0000859163-17-000071_ex-99-1"  # AVX Corp, 2017
+fixture_id = "0000037785-14-000003_ex-99-1"  # FMC CORP, 2014
 primary_class = "clean_html"
 
 [[fixtures]]
-fixture_id = "0000003370-05-000209_ex-99"  # IKON Office Solutions, 2005
+fixture_id = "0000009389-10-000004_ex-99-1"  # BALL CORP, 2010
 primary_class = "malformed_layout"
 
 [[fixtures]]
-fixture_id = "0000004904-24-000080_ex-99"  # American Electric Power, 2024
+fixture_id = "0000010795-22-000014_ex-99-1"  # BECTON DICKINSON & CO, 2022
 primary_class = "malformed_layout"
 
 [[fixtures]]
-fixture_id = "0000049071-06-000012_ex-99"  # Humana, 2006
+fixture_id = "0000092380-07-000011_ex-99-1"  # SOUTHWEST AIRLINES CO, 2007
 primary_class = "table_heavy"
 
 [[fixtures]]
-fixture_id = "0000068270-05-000104_ex-99"  # Ruby Tuesday, 2005
+fixture_id = "0000877860-13-000100_ex-99-1"  # NATIONAL HEALTH INVESTORS INC, 2013 (spare, replaces AMC)
 primary_class = "table_heavy"
 
 [[fixtures]]
-fixture_id = "0001104659-23-049001_ex-99-1"  # Establishment Labs Holdings, 2023
+fixture_id = "0000706863-16-000110_ex-99-1"  # UNION BANKSHARES INC, 2016
 primary_class = "narrative_only"
 
 [[fixtures]]
-fixture_id = "0001572910-14-000003_ex-99-1"  # Phillips 66 Partners, 2014
+fixture_id = "0000949699-08-000023_ex-99-1"  # PHARMACYCLICS INC, 2008
 primary_class = "narrative_only"
 
 [[devset]]
-fixture_id = "0000079958-12-000020_ex-99-1"  # Precision Castparts, 2012
+fixture_id = "0000079958-12-000020_ex-99-1"  # PRECISION CASTPARTS CORP, 2012
 
 [[devset]]
-fixture_id = "0000019149-11-000022_ex-99-1"  # Champion Industries, 2011
+fixture_id = "0000019149-11-000022_ex-99-1"  # CHAMPION INDUSTRIES INC, 2011
 
 [[devset]]
-fixture_id = "0001045150-09-000060_ex-99-1"  # Tier Technologies, 2009
+fixture_id = "0001045150-09-000060_ex-99-1"  # TIER TECHNOLOGIES INC, 2009
+
+# Spares, fixed with the fixtures: each replaces a fixture of its class rejected at
+# gate B.
+# spare, clean_html: "0000310354-05-000071_ex-99"  # STANDEX INTERNATIONAL CORP/DE/, 2005
+# spare, malformed_layout: "0000038725-06-000003_ex-99"  # FRANKLIN ELECTRIC CO INC, 2006
+# spare, table_heavy: "0000877860-13-000100_ex-99-1"  # NATIONAL HEALTH INVESTORS INC, 2013 (used: replaces AMC)
+# spare, narrative_only: "0000731802-25-000053_ex-99-1"  # ATMOS ENERGY CORP, 2025
