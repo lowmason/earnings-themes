@@ -9,17 +9,16 @@ id = "p001"
 type = "page_artifact"
 start = "EX-99 2 exhibit991.htm SWN Q3 2009 EARNINGS RELEASE"
 
-# CHECK: Verify whether the NEWS RELEASE label is a heading or a page artifact.
 [[blocks]]
 id = "b001"
 type = "heading"
+level = 1
 start = "NEWS RELEASE"
 
-# CHECK: Verify that the second line is part of this heading rather than a subtitle.
 [[blocks]]
 id = "b002"
 type = "heading"
-level = 1
+level = 2
 start = "SOUTHWESTERN ENERGY ANNOUNCES THIRD QUARTER 2009 RESULTS"
 end = "AND UPDATES FOURTH QUARTER PRODUCTION GUIDANCE"
 
@@ -98,7 +97,6 @@ type = "paragraph"
 start = "As a result of the repairs, the company is now able"
 end = "Southwestern’s production guidance for the remainder of 2009 is shown below:"
 
-# CHECK: The rendered copy has no tab separators; verify the visual grid and header scope.
 [[blocks]]
 id = "t001"
 type = "table"
@@ -289,7 +287,6 @@ id = "p007"
 type = "page_artifact"
 start = "- MORE -"
 
-# CHECK: The rendered copy has no tab separators; verify the visual grid and header scope.
 [[blocks]]
 id = "t002"
 type = "table"
@@ -310,22 +307,22 @@ cells = [
 
 [[blocks]]
 id = "b038"
-type = "paragraph"
+type = "footnote"
 start = "Note: Results as of September 30, 2009."
 
 [[blocks]]
 id = "b039"
-type = "paragraph"
+type = "footnote"
 start = "SW – Slickwater fluids"
 
 [[blocks]]
 id = "b040"
-type = "paragraph"
+type = "footnote"
 start = "XL – Crosslinked gel fluids"
 
 [[blocks]]
 id = "b041"
-type = "paragraph"
+type = "footnote"
 start = "Hy-RHy – Hybrid or Reverse Hybrid method (combination slickwater/crosslinked gel fluid system)"
 
 [[blocks]]
@@ -421,7 +418,6 @@ id = "p010"
 type = "page_artifact"
 start = "- MORE -"
 
-# CHECK: The rendered copy has no tab separators; verify the visual grid and header scope.
 [[blocks]]
 id = "t003"
 type = "table"
@@ -440,7 +436,6 @@ cells = [
   { role = "below", text = "364,829", row_header = "Net income attributable to Southwestern Energy, excluding impairment of natural gas and oil properties", col_header = "9 Months Ended Sept 30, 2009" },
 ]
 
-# CHECK: The rendered copy has no tab separators; verify the visual grid and header scope.
 [[blocks]]
 id = "t004"
 type = "table"
@@ -458,7 +453,6 @@ cells = [
   { role = "below", text = "$ 1.06", row_header = "Net income per share attributable to Southwestern Energy stockholders, excluding impairment of natural gas and oil properties", col_header = "9 Months Ended Sept 30, 2009" },
 ]
 
-# CHECK: The rendered copy has no tab separators; verify the visual grid and header scope.
 [[blocks]]
 id = "t005"
 type = "table"
@@ -476,8 +470,7 @@ cells = [
   { role = "below", text = "15,978", row_header = "Change in operating assets and liabilities", col_header = "3 Months Ended Sept 30, 2009" },
 ]
 
-# CHECK: The rendered copy has no tab separators; verify the visual grid and header scope.
-[[blocks]]
+# CHECK: The rendered copy has no tab separators; verify the visual grid and header scope.[[blocks]]
 id = "t006"
 type = "table"
 unanchorable = true
@@ -495,7 +488,6 @@ cells = [
   { role = "below", text = "1,029,624", row_header = "Net cash provided by operating activities before changes in operating assets and liabilities", col_header = "9 Months Ended Sept 30, 2009" },
 ]
 
-# CHECK: The rendered copy has no tab separators; verify the visual grid and header scope.
 [[blocks]]
 id = "t007"
 type = "table"
@@ -588,13 +580,11 @@ type = "heading"
 level = 2
 start = "Financial Summary Follows"
 
-# CHECK: End mark; verify that this is a page artifact and a separate block.
 [[blocks]]
 id = "p013"
 type = "page_artifact"
 start = "# # #"
 
-# CHECK: Verify this title is outside the table grid and that level 2 reflects its visual prominence.
 [[blocks]]
 id = "b067"
 type = "heading"
@@ -607,11 +597,11 @@ type = "page_artifact"
 start = "Page 1 of 5"
 
 [[blocks]]
-id = "p015"
-type = "page_artifact"
+id = "b068"
+type = "heading"
+level = 2
 start = "Southwestern Energy Company and Subsidiaries"
 
-# CHECK: The rendered copy has no tab separators; verify the visual grid and header scope.
 [[blocks]]
 id = "t008"
 type = "table"
@@ -635,9 +625,8 @@ cells = [
   { role = "below", text = "93.0", row_header = "Gas volumes gathered (Bcf)", col_header = "Three Months Periods Ended September 30 2009" },
 ]
 
-# CHECK: Verify this title is outside the table grid and that level 2 reflects its visual prominence.
 [[blocks]]
-id = "b068"
+id = "b069"
 type = "heading"
 level = 2
 start = "STATEMENTS OF OPERATIONS (Unaudited)"
@@ -648,11 +637,11 @@ type = "page_artifact"
 start = "Page 2 of 5"
 
 [[blocks]]
-id = "p017"
-type = "page_artifact"
+id = "b070"
+type = "heading"
+level = 2
 start = "Southwestern Energy Company and Subsidiaries"
 
-# CHECK: The rendered copy has no tab separators; verify the visual grid and header scope.
 [[blocks]]
 id = "t009"
 type = "table"
@@ -678,9 +667,8 @@ cells = [
   { role = "below", text = "1,805", row_header = "Oil sales", col_header = "Three Months Periods Ended September 30 2009" },
 ]
 
-# CHECK: Verify this title is outside the table grid and that level 2 reflects its visual prominence.
 [[blocks]]
-id = "b069"
+id = "b071"
 type = "heading"
 level = 2
 start = "BALANCE SHEETS (Unaudited)"
@@ -692,7 +680,8 @@ start = "Page 3 of 5"
 
 [[blocks]]
 id = "p019"
-type = "page_artifact"
+type = "heading"
+level = 2
 start = "Southwestern Energy Company and Subsidiaries"
 
 # CHECK: The rendered copy has no tab separators; verify the visual grid and header scope.
@@ -715,14 +704,13 @@ cells = [
 ]
 
 [[blocks]]
-id = "b070"
+id = "b071"
 type = "footnote"
 start = "Current Liabilities include $1.2 million in 2009"
 end = "$61.2 million in 2008 of Senior Notes."
 
-# CHECK: Verify this title is outside the table grid and that level 2 reflects its visual prominence.
 [[blocks]]
-id = "b071"
+id = "b073"
 type = "heading"
 level = 2
 start = "STATEMENTS OF CASH FLOWS (Unaudited)"
@@ -733,8 +721,9 @@ type = "page_artifact"
 start = "Page 4 of 5"
 
 [[blocks]]
-id = "p021"
-type = "page_artifact"
+id = "b074"
+type = "heading"
+level = 2
 start = "Southwestern Energy Company and Subsidiaries"
 
 # CHECK: The rendered copy has no tab separators; verify the visual grid and header scope.
@@ -759,14 +748,14 @@ cells = [
 ]
 
 [[blocks]]
-id = "b072"
+id = "b075"
 type = "footnote"
 start = "Cash and cash equivalents at the beginning of the year for 2008"
 end = "include $1.1 million classified as “held for sale.”"
 
 # CHECK: Verify this title is outside the table grid and that level 2 reflects its visual prominence.
 [[blocks]]
-id = "b073"
+id = "b076"
 type = "heading"
 level = 2
 start = "SEGMENT INFORMATION (Unaudited)"
@@ -777,11 +766,11 @@ type = "page_artifact"
 start = "Page 5 of 5"
 
 [[blocks]]
-id = "p023"
-type = "page_artifact"
+id = "b077"
+type = "heading"
+level = 2
 start = "Southwestern Energy Company and Subsidiaries"
 
-# CHECK: The rendered copy has no tab separators; verify the visual grid and header scope.
 [[blocks]]
 id = "t012"
 type = "table"
@@ -804,13 +793,13 @@ cells = [
 ]
 
 [[blocks]]
-id = "b074"
+id = "b078"
 type = "footnote"
 start = "The nine-month period ended September 30, 2008 includes operating results"
 end = "as a result, we no longer have any natural distribution operations."
 
 [[blocks]]
-id = "b075"
+id = "b079"
 type = "footnote"
 start = "Capital investments include reductions of $4.2 million and $12.4 million"
 end = "relating to the change in accrued expenditures between periods."
