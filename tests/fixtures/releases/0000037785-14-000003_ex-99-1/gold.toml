@@ -3,6 +3,7 @@ fixture_id = "0000037785-14-000003_ex-99-1"
 annotator = "Lowell Mason (verified a Codex draft)"
 marked_from = "browser rendering"
 browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
+completed = 2026-09-25
 
 [[blocks]]
 id = "b001"
@@ -451,7 +452,6 @@ cells = [
 id = "b058"
 type = "page_artifact"
 start = "___________________"
-unanchorable = true
 
 [[blocks]]
 id = "b059"
@@ -502,7 +502,6 @@ cells = [
 id = "b063"
 type = "page_artifact"
 start = "____________________"
-unanchorable = true
 
 [[blocks]]
 id = "b064"
@@ -607,7 +606,6 @@ cells = [
 id = "b077"
 type = "page_artifact"
 start = "___________________"
-unanchorable = true
 
 [[blocks]]
 id = "b078"
@@ -638,16 +636,15 @@ headers = [
   "Income from continuing operations before income taxes",
 ]
 cells = [
-  { role = "corner", text = "492.4", row_header = "FMC Agricultural Solutions", col_header = "Three Months Ended December 31 2012" },
-  { role = "right", text = "2,145.7", row_header = "FMC Agricultural Solutions", col_header = "Twelve Months Ended December 31 2013" },
-  { role = "below", text = "168.1", row_header = "FMC Health and Nutrition", col_header = "Three Months Ended December 31 2012" },
+  { role = "corner", text = "110.3", row_header = "FMC Agricultural Solutions", col_header = "Three Months Ended December 31 2012" },
+  { role = "right", text = "539.0", row_header = "FMC Agricultural Solutions", col_header = "Twelve Months Ended December 31 2013" },
+  { role = "below", text = "35.6", row_header = "FMC Health and Nutrition", col_header = "Three Months Ended December 31 2012" },
 ]
 
 [[blocks]]
 id = "b080"
 type = "page_artifact"
 start = "____________________"
-unanchorable = true
 
 [[blocks]]
 id = "b081"
