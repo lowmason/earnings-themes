@@ -55,17 +55,6 @@
       README's Stage 1 paragraph describes the harness and fixture corpus as they
       stand, at the latest when Stage 1 completes. → done in plan 1
 
-## 3-employment-statistics-coverage — 2026-09-24
-- [ ] Review: the national-total employment comparison in `check_invariants`
-      (scripts/employment_statistics_coverage.py) has no rounding allowance, so
-      annual-average rounding (+46 in 2022, +27 in 2023) makes `run` exit 2 on the
-      2022–2025 files. Kept as-is under the 2026-09-24 ruling (no re-run, no code
-      change); evidence in specs/findings/employment-statistics-coverage.md,
-      section 6. Fix: give that comparison the `cells/2 + 1` employment allowance
-      that `_nested_excess` already applies, plus a fixture test. Size: quick-fix.
-      Done when: `run` on the 2022–2025 files reports no invariant failure and a
-      test pins the allowance.
-
 ## 1-release-parser-fidelity — 2026-09-25
 - [ ] Carry V2's findings into Stage 3: V2's "Residual failures (for Stage 3)"
       and "Findings for Stage 3" (`docs/verification/V2-parser-fidelity.md`) and
