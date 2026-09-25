@@ -591,17 +591,12 @@ id = "b067"
 type = "heading"
 level = 2
 start = "OPERATING STATISTICS (Unaudited)"
+end = "STATISTICS (Unaudited) Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "p014"
 type = "page_artifact"
 start = "Page 1 of 5"
-
-[[blocks]]
-id = "b068"
-type = "heading"
-level = 2
-start = "Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "t008"
@@ -631,7 +626,7 @@ id = "b069"
 type = "heading"
 level = 2
 start = "STATEMENTS OF OPERATIONS (Unaudited)"
-end = "Southwestern Energy Company and Subsidiaries"
+end = "OPERATIONS (Unaudited) Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "p016"
@@ -668,7 +663,7 @@ id = "b070"
 type = "heading"
 level = 2
 start = "BALANCE SHEETS (Unaudited)"
-end = "Southwestern Energy Company and Subsidiaries"
+end = "SHEETS (Unaudited) Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "p018"
@@ -704,7 +699,7 @@ id = "b073"
 type = "heading"
 level = 2
 start = "STATEMENTS OF CASH FLOWS (Unaudited)"
-end = "Southwestern Energy Company and Subsidiaries"
+end = "FLOWS (Unaudited) Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "p020"
@@ -738,11 +733,11 @@ start = "Cash and cash equivalents at the beginning of the year for 2008"
 end = "include $1.1 million classified as “held for sale.”"
 
 [[blocks]]
-id = "b073"
+id = "b074"
 type = "heading"
 level = 2
 start = "SEGMENT INFORMATION (Unaudited)"
-end = "Southwestern Energy Company and Subsidiaries"
+end = "INFORMATION (Unaudited) Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "p022"
@@ -771,13 +766,13 @@ cells = [
 ]
 
 [[blocks]]
-id = "b074"
+id = "b075"
 type = "footnote"
 start = "The nine-month period ended September 30, 2008 includes operating results"
 end = "as a result, we no longer have any natural distribution operations."
 
 [[blocks]]
-id = "b075"
+id = "b076"
 type = "footnote"
 start = "Capital investments include reductions of $4.2 million and $12.4 million"
 end = "relating to the change in accrued expenditures between periods."
