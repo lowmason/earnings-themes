@@ -22,6 +22,17 @@ Stages 2, 3 and 5 now name the Stage 1 records they consume. Stage 1's fixture
 gold was drafted by Codex under the Stage 1 spec's F9 and verified block by block
 by the user, rather than hand-marked as its Produces line says.
 
+Reconciled 2026-09-25 after Stage 2 shipped (plan 3): Stage 2 is ticked, and
+Stages 3, 4, 7, 10 and 13 now name the Stage 2 contracts they consume and cite
+plan 3's Handoffs (`specs/plans/completed/3-core-evidence-spine.md`, §Handoffs).
+Stages 3 and 10 also cite `specs/browser-rendering-integration.md`, now that plan
+3 has closed the deferred reminder that carried it. Stage 2's element IDs are
+derived from type and span (plan 3, D-1): stable across producers, but a moved
+span is a new ID. Its pytest configuration deselects `live` tests unless
+`-m live` is passed. Five of plan 3's deferred items (`specs/deferred_items.md`,
+`3-core-evidence-spine`) close at the latest when Stage 3, 4 or 7 first relies on
+the code they name.
+
 ## Gap analysis
 
 ¹ Searched `packages/*/src`, `apps/*/src`, `tests/{contracts,fixtures,integration}`,
@@ -181,7 +192,7 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Exit: the decision record reports reading-order corruption, footnote merging, and header loss for every candidate on every class (V2); V1 lists the concrete return type of each exhibit and table path (V1); every committed fixture has a source-register entry recording its redistribution basis.
       ROUTING: brainstorming
 
-- [ ] Stage 2: Core evidence spine
+- [x] Stage 2: Core evidence spine
       Objective: Give `earnings-core` the contracts and exactness validator that every later stage builds on.
       Spec: R3.1–R3.4 (contracts), R4.1 (element contract), R5.4, R5.5, R6.1, R13.2, V9; A §193.
       Gap closed: R3.2, R3.3, R5.4, R5.5, R6.1, R13.2; V9 (all cases except normalization and sentence splitting); Dev tooling row.
@@ -192,9 +203,9 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
 
 - [ ] Stage 3: Structure-aware canonicalization
       Objective: Turn saved release bytes into hashed, versioned canonical documents with typed elements, quarantined table cells, and boilerplate masks.
-      Spec: R3.1, R3.4 (versioned policy), R3.5, R4.1–R4.3, V9; A §498–516.
+      Spec: R3.1, R3.4 (versioned policy), R3.5, R4.1–R4.3, V9; A §498–516; `specs/browser-rendering-integration.md` (B1–B5, B7–B9, and its Stage 3 sections).
       Gap closed: R3.1, R3.5, R4.1, R4.2, R4.3; V9 (normalization, sentence splitting).
-      Consumes: Stage 1 parser decision (ADR 0001), V2's residual failures and findings for Stage 3, and the fixtures with their gold; Stage 2 contracts and validator.
+      Consumes: Stage 1 parser decision (ADR 0001), V2's residual failures and findings for Stage 3, and the fixtures with their gold; Stage 2's `earnings_core` contracts and checks (`CanonicalDocument`, `DocumentElement` with `TableCellContext`, `OverlayMask` via `apply_masks`, `validate_elements`) and plan 3's handoffs to Stage 3 (`specs/plans/completed/3-core-evidence-spine.md` §Handoffs): rerun the two-parser element contract with the ported walker and the DOM/layout extractor, alignment-failure reasons, table grids, version naming, the boilerplate policy, page artifacts, and UTF-16 conversion at the browser boundary.
       Produces: an ingestion canonicalizer from saved bytes plus metadata to a canonical document version, with no network client; table cells stored as cell evidence with header context; OCR-derived elements flagged; masks from a versioned boilerplate policy; a repeatable R3.5 fidelity check.
       Exit: every Stage 1 fixture canonicalizes offline and passes the Stage 2 validator (R3.1/R4.1); a test shows no narrative element contains table-cell text (R4.2); a test shows OCR-derived text flagged and never verified as an original quotation (R4.3); V9 normalization and financial-abbreviation/decimal splitting cases pass; an R3.5 fidelity report on a sample covers all six named categories (R3.5).
       ROUTING: brainstorming
@@ -203,7 +214,7 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Objective: Freeze a versioned, point-in-time DJIA universe — security-level membership intervals resolved to issuers and zero-padded CIKs — before any earnings document is acquired.
       Spec: P-C1, P-C2, P-C3, P-C4, P-C7, P-A4; P §Temporal definitions, §Data contracts (universe definition, membership assertion), §Membership evidence and source rights, §Issuer resolution, §Failure handling, §Verification; A §249–269 (index membership and identifiers, including the zero-padded CIK at A §264), A §429 (entity-resolution rules this stage follows).
       Gap closed: P-C1, P-C2 (the membership-reference definition only; the event join is Stage 5), P-C3, P-C4, P-C7 (the cohort-before-acquisition half), P-A4; P-VF (interval, resolution, conflict, and cutoff cases), P-VI (its membership-interval and issuer-resolution legs), P-VL.
-      Consumes: Stage 2 contracts, provenance and hashing primitives, and the root pytest configuration with its registered `live` marker. No parser, canonicalizer, document, or model artifact — the stage is placed after Stage 3 so that acquisition follows it immediately, but Stage 2 is its only hard dependency.
+      Consumes: Stage 2's provenance primitives `sha256_hex` and `ArtifactRef` (content hash, media type, portable `storage_ref`, and `RightsStatus` with its `rights_basis`), and the root pytest configuration, whose registered `live` marker is deselected unless `-m live` is passed. Retrieval metadata (source URL, `retrieved_at`, request parameters) is not in core: this stage defines it at its own grain or proposes a core schema bump (plan 3 §Handoffs). No parser, canonicalizer, document, or model artifact — the stage is placed after Stage 3 so that acquisition follows it immediately, but Stage 2 is its only hard dependency.
       Produces: in `earnings-ingestion`, a versioned DJIA universe definition at P's universe grain (`universe_name = "djia"`, `period_end_start = 2024-07-01`, `period_end_stop = 2026-07-01`, `public_information_cutoff = 2026-09-22`, `membership_reference = first_publication_time`); security-level membership assertions at one row per index, security, effective interval, and source-evidence item, with half-open `[effective_from, effective_to)` intervals and a `status` of `supported`, `conflicting`, `ambiguous`, or `withheld`; security-to-issuer mappings carrying 10-character zero-padded CIK evidence; the derived union of candidate issuers over every membership interval that overlaps the eligible-publication range, `2024-07-01` through the `2026-09-22` cutoff (membership is judged at `first_publication_time`, so an issuer added after `2026-07-01` can still carry an eligible event); a membership source register with owner, URL, access method, cost, terms, redistribution status, coverage, update behavior, known limitations, and last verification date; a coverage and conflict report; synthetic redistributable fixtures; version-controlled manual override assertions with evidence, rationale, reviewer, and effective dates; an opt-in `live` verification that checks source accessibility and current terms, parses the dated evidence behind the real manifest, and reconciles official changes against the corroborating snapshot, recording retrieval metadata under the shared rate and identification policies (P-VL).
       Exit: every membership interval resolves to a source-evidence row and every resolved CIK is a 10-character zero-padded string (P-A4); fixture tests build intervals from an anchor plus additions and removals, with inclusive starts and exclusive ends, and an open interval carrying no `effective_to` (P-VF); a missing anchor snapshot refuses to freeze the manifest with the reason recorded, and conflicting effective dates persist as separate assertions rather than being merged and hold the freeze until a recorded review resolves them (P §Failure handling); the coverage and conflict report lists every interval conflict and coverage gap (P-A4); evidence first published after 2026-09-22 cannot revise the version (P-C4); a test shows no current snapshot silently backdated and no ETF holdings record treated as the official roster; a test shows historical ticker changes and multiple securities preserved, and one issuer's several securities deriving one issuer row (P-VF); source access and redistribution status are recorded for every source, with unclear rights keeping artifacts local; the universe manifest freezes with a version and content hash written atomically, and refuses to freeze on unresolved issuer identity unless the record is explicitly retained as unresolved and excluded with its reason; the default suite makes no network call, uses no proprietary roster, and needs no credentials, while the `live` verification runs only when opted in and records its result with retrieval metadata (P-VL).
       ROUTING: writing-plans — `specs/point-in-time-djia-cohort.md` is this stage's spec; it needs no brainstorming pass.
@@ -230,8 +241,8 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Objective: Extract quote-claim candidates by pointer selection over every analysis-eligible element, keeping only code-verified spans.
       Spec: R5.1, R6.1 (before storage), R6.2, R10.1, R10.2, R14.1, R14.6, R14.7, V11.
       Gap closed: R5.1, R6.2, R10.1 (default path), R10.2, R14.1, R14.6; R14.7/V11 (tool-call and verification-bypass cases).
-      Consumes: Stage 2 validator and locators; Stage 3 canonical fixtures only — not Stage 5.
-      Produces: a themes extractor visiting every eligible element; a model-adapter interface with a fake adapter, response replay, and an R14.6-keyed cache; one open-weight local adapter behind the `live` marker, its weight license recorded; an auditable rejection record.
+      Consumes: Stage 2's checks from the `earnings_core` root (plan 3 §Handoffs): `resolve_pointer` for pointers, `parse_span_candidate` then `validate_span`, `validate_elements` once per document, `TextChunk` conversion before storage, `make_locator` for repeated text, `Rejection`, and `VALIDATOR_VERSION` in the R14.6 key, with a stored `VerifiedSpan` re-run through `validate_span` at each later R6.1 gate, since the type alone is not proof; Stage 3 canonical fixtures only — not Stage 5.
+      Produces: a themes extractor visiting every eligible element; a model-adapter interface with a fake adapter, response replay, and an R14.6-keyed cache; one open-weight local adapter behind the `live` marker, its weight license recorded; stored, auditable rejections built on Stage 2's `Rejection` (R6.2).
       Exit: offline fake-model runs over Stage 3 fixtures retain only R6.1-valid quotes, and every rejection records a reason after bounded retries (R5.1/R6.2); a coverage test shows every eligible element visited and no top-k discovery path (R10.1/R10.2); a test shows changing any R14.6 key component misses the cache (R14.6); the default suite makes no network or billable call (R14.1); the V11 fixture triggers no tool call and cannot bypass R6.1 (R14.7/V11).
       ROUTING: brainstorming
 
@@ -255,9 +266,9 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
 
 - [ ] Stage 10: Coverage-aware aggregation and cited export (theme vertical slice)
       Objective: Produce analytical rows, coverage-aware prevalence, and a source-linked report that carry one release end to end.
-      Spec: R2.3, R3.4 (headline exclusion), R6.1 (before export), R7.1, R7.2, R11.1–R11.6, V5, V8, V10.
+      Spec: R2.3, R3.4 (headline exclusion), R6.1 (before export), R7.1, R7.2, R11.1–R11.6, V5, V8, V10; `specs/browser-rendering-integration.md` (B1, B5, B6, and its Stage 10 sections).
       Gap closed: R2.3, R3.4, R7.1, R7.2, R11.1, R11.2, R11.3, R11.4, R11.5; R11.6 (release roles); V5, V8, V10.
-      Consumes: Stage 3 canonical documents and masks; Stage 5 processing-state table; Stages 7–9 verified, supported, coded assignments.
+      Consumes: Stage 3 canonical documents and masks; Stage 5 processing-state table; Stages 7–9 verified, supported, coded assignments; Stage 2's `VerifiedSpan` offsets and `make_locator` context for every highlight, `MaskedDocument.masks_overlapping` for the headline exclusion, and `RightsStatus` with `rights_basis` for retaining or exporting rendered artifacts, with offsets converted to UTF-16 only at the browser boundary, a stored `VerifiedSpan` re-run through `validate_span` before export, and no quote verified from rendered output (plan 3 §Handoffs; B6).
       Produces: Polars/Parquet rows at the R11.1 grain; prevalence tables printing numerator, denominator, unit, and restrictions; passage links paired with immutable snapshots; a cited report; the V8 offline end-to-end test.
       Exit: V8 passes with no network or credentials, from raw fixture to cited report (V8/R11.1); V10 reproduces hand-computed numerators and denominators across unavailable, restricted, failed, and no-theme documents, and reports missing-transcript coverage (V10/R11.2/R11.3/R2.3); a test shows masked spans absent from headline prevalence yet present in audit output (R3.4); tests show a disclosure's copies counted once and issuers weighted equally (R11.5/R11.4); release rows carry `not_applicable` speaker roles (R11.6); V5 records each target browser's highlight behavior, and the snapshot renders the span wherever the link fails (V5/R7.1/R7.2).
       ROUTING: writing-plans
@@ -284,7 +295,7 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Objective: Add lawfully usable transcripts with speaker roles, or record that no candidate corpus qualifies.
       Spec: R2.1, R2.2, R4.1 (speaker turns), R11.6, V7; D2.
       Gap closed: R2.1, R2.2, V7; R11.6 (management/analyst split).
-      Consumes: Stages 3 and 5; Stage 10 aggregation; Stage 11 metrics.
+      Consumes: Stages 3 and 5; Stage 10 aggregation; Stage 11 metrics; Stage 2's `speaker_turn` element type and `crosses_speaker_turn` check, with no speaker role, name, or attribution status yet — adding them is a schema bump (plan 3 §Handoffs).
       Produces: a V7 record per candidate corpus; if one qualifies, a rights-gated transcript adapter storing locators and local features where terms forbid redistribution, and speaker turns with role and attribution status.
       Exit: V7 records each candidate's license, redistribution terms, and diarization accuracy against a user-labeled sample (V7); if none supports the management/analyst split, R2.2 is recorded as failed and the stage parks; otherwise fixture transcripts yield role-attributed turns, unresolved roles stay `other`/`unknown`, and restricted text is never redistributed (R2.1/R2.2/R11.6).
       ROUTING: brainstorming
