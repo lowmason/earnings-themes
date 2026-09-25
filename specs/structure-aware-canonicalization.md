@@ -45,7 +45,7 @@ design and approved with it.
 | SC11 | *(design)* Normalization N1 is NFC, deletion of named invisible characters, and whitespace collapse. It never applies NFKC and never folds dashes, minus signs, or quotes. |
 | SC12 | *(design)* `walker-1` emits no `section` elements. |
 | SC13 | *(design)* An alignment failure is an ingestion status carrying an existing core reason. Core gains no alignment reason. |
-| SC14 | *(design)* Plan B never changes canonical text. Its comparison evaluates element streams over `walker-1`'s text, so any promotion it supports keeps that text. |
+| SC14 | *(design, surfaced at spec review)* Plan B never changes canonical text. Its comparison evaluates element streams over `walker-1`'s text, so any promotion it supports keeps that text. This narrows the browser spec's outcome 3, "a new primary canonicalization policy", to a new element stream over `walker-1`'s text. A policy that changes canonical text would need its own comparison, outside Stage 3. |
 
 ## Scope
 
@@ -87,10 +87,11 @@ Facts that shape the design:
 - **Walker output.** The walker emits typed blocks with collapsed text, not offsets.
   Stage 3 must build the canonical text and assign every span.
 - **Encoding.** All eight fixtures are pure ASCII.
-- **Superscripts.** Six fixtures hold 49 `<sup>` runs, all of three kinds:
+- **Superscripts.** Six fixtures hold 49 `<sup>` runs:
   - ordinal suffixes, such as "1st";
   - parenthesized markers, such as "(1)" and "(a)";
-  - "®".
+  - "®";
+  - two empty runs, in Southwestern Energy.
 
   None is a bare digit.
 - **`<pre>`.** One fixture, Pharmacyclics, draws its two data tables in `<pre>`. They
@@ -468,9 +469,19 @@ Kept out of core:
    Then score the projection with the frozen `score.py`:
    - **Regressions:** no ranked metric may be worse than the frozen walker's in any
      class, compared on exact counts.
+     - C1 is the exception, because R4.2 requires it: a regression it causes is
+       accepted with its reason recorded, since R4.2 outranks a ranked metric.
+     - A regression caused by C2–C5 is resolved at the review gate.
    - **Changes:** every change is listed by fixture and block.
    - **Page artifacts:** typing is reported against the gold's 97 `page_artifact`
-     blocks, as found and as typed.
+     blocks. Their anchors need not be unique, so they are counted per anchor text,
+     as a multiset. For each distinct anchor, the report gives:
+     - the number of gold blocks with that anchor;
+     - the number of canonical blocks whose text begins with it;
+     - how many of those are typed `page_artifact`.
+
+     Page artifacts that match no gold anchor are listed. No gold block is ever
+     placed at a first match.
 
    These are development-set numbers.
 3. **Golden master.** The canonical fixtures regenerate byte for byte.
@@ -616,6 +627,13 @@ Plan B never changes canonical text:
 - **Markers.** Browser checks are opt-in, under a new `browser` marker. Plan B
   registers it in the root pytest configuration and deselects it by default beside
   `live`, as `-m "not live and not browser"`.
+- **The documented command.** pytest keeps the last `-m` it is given, so the
+  documented default command, with its `-m "not live"`, would override that setting
+  and select the browser checks.
+  - Plan B changes the documented command to `-m "not live and not browser"`
+    wherever it appears: `CLAUDE.md`, `README.md`, and `AGENTS.md` line 206.
+    `AGENTS.md` is edited in place, because it is cited by line number.
+  - Every browser check also skips visibly when the pinned binaries are absent.
 - **Network guard.** A synthetic page that requests an external image, stylesheet, and
   script shows every request blocked and recorded. An inline script that would
   rewrite text never runs, and its text is absent from the capture.
@@ -710,6 +728,15 @@ requires.
   and the consequence for the canonicalization version.
 - **Condition for promotion.** Outcome 2 or 3 requires repairing at least one targeted
   class with no regression.
+- **Cost of promotion.** Any promotion makes a browser capture an input to
+  canonicalization for every document the new version covers, including Stage 5's
+  and Stage 15's releases. `layout-1`'s geometry also needs the pinned platform and
+  font set.
+  - ADR 0002 weighs that cost beside the metrics.
+  - It states how the promoted canonicalizer receives each document's capture.
+  - The promoted canonicalizer fails explicitly without a capture. It never falls
+    back to `walker-1` under the new version's name (the browser spec's
+    §Reproducibility and failure handling).
 - **After promotion.** The fixtures are re-canonicalized under the new version before
   Stage 6 annotation. `walker-1` documents and fixtures are never rewritten.
 
@@ -748,10 +775,10 @@ Stop and report if any of these fails:
 | --- | --- | --- |
 | Unicode | gold anchors and table header texts | Non-ASCII characters in the references, found identically in the canonical text, and the manifest's U+FFFD count. The fixtures are pure ASCII, so the report says "no instances in sample" and cites V9's synthetic cases. |
 | Numeric signs | gold anchors | Figures with a sign (parentheses, a leading hyphen, en dash, or minus sign, or a plus) found with the sign intact. |
-| Scale | gold anchors and table header texts | Scale phrases ("in millions", "in thousands", "in billions", "except per share") found in the canonical text. |
-| Superscripts | `<sup>` runs read by `html.parser` from `source.html` | Each run located in the canonical text and classed as an ordinal suffix, a parenthesized marker, a symbol, or bare digits. A bare-digit run joined to a number, such as "million" plus a raised "1", is a fidelity hazard. The fixtures have none, so it is tested synthetically and watched on the pilot releases. |
-| Footnotes | gold footnote blocks | Footnotes typed `footnote`, against footnotes merged into another element. |
-| Table headings | gold table header texts | Header texts found among the table's header cells, or only in its text, since C1 tables have no cells. |
+| Scale | gold anchors and table header texts | Scale phrases ("in millions", "in thousands", "in billions", "except per share"), counted per phrase: occurrences in the references against occurrences in the canonical text. |
+| Superscripts | `<sup>` runs read by `html.parser` from `source.html` | Each run is located in the canonical text by the fewest surrounding words of source text that make its occurrence unique, as `make_locator` grows context (D-4). A run that no context singles out is reported as unlocatable, never placed at a first match. Each located run is classed as an ordinal suffix, a parenthesized marker, a symbol, empty, or bare digits. A bare-digit run joined to a number, such as "million" plus a raised "1", is a fidelity hazard. The fixtures have none, so it is tested synthetically and watched on the pilot releases. |
+| Footnotes | gold footnote blocks | The frozen scorer's footnote-merging count on the item-2 projection: footnotes typed `footnote`, against footnotes merged into another element. |
+| Table headings | gold table header texts | The frozen scorer's table-header count on the item-2 projection. It locates gold tables by their anchors, and an unanchorable gold table is counted as unlocated, as in V2. For each located table, the report adds whether each found header text sits in a header cell; C1 tables have none. |
 
 The report is built in two legs:
 - **Plan A** commits it as `docs/verification/R3.5-text-fidelity.md`.
@@ -839,8 +866,8 @@ limitation of `walker-1`, or needs no action.
 ### Plan A — the roadmap's Stage 3 Exit
 
 1. The ported walker equals the frozen walker (§Verification (plan A), item 1).
-   `walker-1`'s re-score shows no regression on exact counts, and page-artifact typing
-   is reported (item 2).
+   `walker-1`'s re-score shows no regression on exact counts, apart from any recorded
+   C1 regression, and page-artifact typing is reported (item 2).
 2. Every Stage 1 fixture canonicalizes offline and passes `validate_elements`, and the
    canonical fixtures regenerate byte for byte (R3.1, R4.1).
 3. The R4.2 test passes with its positive controls.
@@ -869,8 +896,9 @@ limitation of `walker-1`, or needs no action.
    version.
 8. The R3.5 report is final.
 9. The AST scan and the runtime boundary checks pass.
-10. The default suite needs no browser and makes no network request. Browser checks run
-    only with `-m browser` and record the exact environment.
+10. The default suite, run by the updated documented command, needs no browser and
+    makes no network request. Browser checks run only with `-m browser`, skip visibly
+    without the pinned binaries, and record the exact environment.
 
 ## Handoffs to later stages
 
