@@ -1,0 +1,561 @@
+schema_version = 1
+fixture_id = "0000009389-10-000004_ex-99-1"
+annotator = "Lowell Mason (verified a Codex draft)"
+marked_from = "browser rendering"
+browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
+completed = 2026-09-25
+
+[[blocks]]
+id = "p001"
+type = "page_artifact"
+start = "EX-99.1 2 exhibit-991.htm EXHIBIT 99.1"
+
+[[blocks]]
+id = "b001"
+type = "paragraph"
+start = "Exhibit 99.1"
+
+[[blocks]]
+id = "b002"
+type = "heading"
+level = 1
+start = "News Release"
+
+[[blocks]]
+id = "b003"
+type = "paragraph"
+start = "For Immediate Release"
+end = "Release http://www.ball.com"
+
+[[blocks]]
+id = "b004"
+type = "paragraph"
+start = "Investor Contact: Ann T. Scott"
+end = "303-460-3537, ascott@ball.com"
+
+[[blocks]]
+id = "b005"
+type = "paragraph"
+start = "Media Contact: Scott McCarty"
+end = "303-460-2103, smccarty@ball.com"
+
+[[blocks]]
+id = "b006"
+type = "heading"
+level = 1
+start = "Strong Fourth Quarter Drives Ball’s 2009 Results"
+
+[[blocks]]
+id = "b007"
+type = "paragraph"
+start = "BROOMFIELD, Colo., Jan. 28, 2010—Ball Corporation"
+end = "sales of $7.56 billion in 2008."
+
+[[blocks]]
+id = "b008"
+type = "paragraph"
+start = "Fourth quarter 2009 net earnings were"
+end = "sales of $1.73 billion, in the fourth quarter of 2008."
+
+[[blocks]]
+id = "b009"
+type = "paragraph"
+start = "“On a comparable basis, our diluted earnings"
+end = "were accretive to earnings in the quarter.”"
+
+[[blocks]]
+id = "b010"
+type = "paragraph"
+start = "Full-year 2009 and 2008 results include"
+end = "that accompany this news release."
+
+[[blocks]]
+id = "b011"
+type = "paragraph"
+start = "“Prior cost-cutting actions from the rationalization program"
+end = "continuing to build momentum in our company.”"
+
+[[blocks]]
+id = "p003"
+type = "page_artifact"
+start = "- more -"
+
+[[blocks]]
+id = "p004"
+type = "page_artifact"
+start = "Ball Corporation 10 Longs Peak Drive · P.O. Box 5000 · Broomfield, CO 80021"
+
+[[blocks]]
+id = "p005"
+type = "page_artifact"
+start = "Ball Corp - 2"
+
+[[blocks]]
+id = "b013"
+type = "heading"
+level = 2
+start = "Metal Beverage Packaging, Americas & Asia"
+
+[[blocks]]
+id = "b014"
+type = "paragraph"
+start = "Metal beverage packaging, Americas and Asia, comparable segment"
+end = "on sales of $684.7 million in 2008."
+
+[[blocks]]
+id = "b015"
+type = "paragraph"
+start = "Cost savings from prior plant rationalizations, the positive impact"
+end = "began supplying cans to customers."
+
+[[blocks]]
+id = "b016"
+type = "heading"
+level = 2
+start = "Metal Beverage Packaging, Europe"
+
+[[blocks]]
+id = "b017"
+type = "paragraph"
+start = "Metal beverage packaging, Europe, segment results in 2009"
+end = "sales of $380.8 million in the fourth quarter of 2008."
+
+[[blocks]]
+id = "b018"
+type = "paragraph"
+start = "Better results in the quarter were due largely"
+end = "balance regional supply with customer demand."
+
+[[blocks]]
+id = "b019"
+type = "heading"
+level = 2
+start = "Metal Food & Household Products Packaging, Americas"
+
+[[blocks]]
+id = "b020"
+type = "paragraph"
+start = "Metal food and household products packaging, Americas, comparable segment"
+end = "recorded in the fourth quarter of 2008."
+
+[[blocks]]
+id = "b021"
+type = "paragraph"
+start = "Exceptional plant performance, metal inventory holding gains"
+end = "contributed to improved full-year results."
+
+[[blocks]]
+id = "p006"
+type = "page_artifact"
+start = "- more -"
+
+[[blocks]]
+id = "p007"
+type = "page_artifact"
+start = "Ball Corporation 10 Longs Peak Drive · P.O. Box 5000 · Broomfield, CO 80021"
+
+[[blocks]]
+id = "p008"
+type = "page_artifact"
+start = "Ball Corp - 3"
+
+[[blocks]]
+id = "b022"
+type = "heading"
+level = 2
+start = "Plastic Packaging, Americas"
+
+[[blocks]]
+id = "b023"
+type = "paragraph"
+start = "Plastic packaging, Americas, comparable segment results for 2009"
+end = "in the fourth quarter of 2008 on sales of $161.4 million."
+
+[[blocks]]
+id = "b024"
+type = "paragraph"
+start = "The segment managed flat operating earnings in the quarter"
+end = "business into larger manufacturing facilities."
+
+[[blocks]]
+id = "b025"
+type = "heading"
+level = 2
+start = "Aerospace and Technologies"
+
+[[blocks]]
+id = "b026"
+type = "paragraph"
+start = "Aerospace and technologies comparable segment results were operating earnings"
+end = "Backlog at the close of the year was $517.8 million."
+
+[[blocks]]
+id = "b027"
+type = "paragraph"
+start = "Pressure on the U.S. federal budget has continued"
+end = "contributed to second half results."
+
+[[blocks]]
+id = "b028"
+type = "heading"
+level = 2
+start = "Outlook"
+
+[[blocks]]
+id = "b029"
+type = "paragraph"
+start = "“We were pleased with our strong finish in 2009,”"
+end = "earnings to be above those of 2009.”"
+
+[[blocks]]
+id = "b030"
+type = "paragraph"
+start = "In 2009, Ball generated $373 million in free cash flow"
+end = "capital spending of approximately $235 million."
+
+[[blocks]]
+id = "b031"
+type = "paragraph"
+start = "“After making a nearly $600 million acquisition, our net debt"
+end = "were better than at the start of 2009.”"
+
+[[blocks]]
+id = "p009"
+type = "page_artifact"
+start = "- more -"
+
+[[blocks]]
+id = "p010"
+type = "page_artifact"
+start = "Ball Corporation 10 Longs Peak Drive · P.O. Box 5000 · Broomfield, CO 80021"
+
+[[blocks]]
+id = "p011"
+type = "page_artifact"
+start = "Ball Corp - 4"
+
+[[blocks]]
+id = "b032"
+type = "paragraph"
+start = "Ball Corporation is a supplier of high-quality metal and plastic packaging"
+end = "reported 2009 sales of more than $7.3 billion."
+
+[[blocks]]
+id = "b033"
+type = "heading"
+level = 2
+start = "Conference Call Details"
+
+[[blocks]]
+id = "b034"
+type = "paragraph"
+start = "Ball Corporation (NYSE: BLL) will hold its regular quarterly conference call"
+end = "http://phx.corporate-ir.net/phoenix.zhtml?p=irol-eventDetails&c=115234&eventID=2639669."
+
+[[blocks]]
+id = "b035"
+type = "paragraph"
+start = "For those unable to listen to the live call"
+end = "in the investors section under “presentations.”"
+
+[[blocks]]
+id = "b036"
+type = "heading"
+level = 2
+start = "Forward-Looking Statements"
+
+[[blocks]]
+id = "b037"
+type = "paragraph"
+start = "This release contains “forward-looking” statements concerning future events"
+end = "due to statutory audits or other effects."
+
+[[blocks]]
+id = "p012"
+type = "page_artifact"
+start = "# # #"
+
+[[blocks]]
+id = "p013"
+type = "page_artifact"
+start = "Ball Corporation 10 Longs Peak Drive · P.O. Box 5000 · Broomfield, CO 80021"
+
+[[blocks]]
+id = "p014"
+type = "page_artifact"
+start = "Condensed Financials (December 2009)"
+
+[[blocks]]
+id = "b038"
+type = "heading"
+level = 1
+start = "Unaudited Statements of Consolidated Earnings"
+
+[[blocks]]
+id = "t001"
+type = "table"
+headers = [
+  "Three months ended",
+  "Year ended",
+  "December 31,",
+  "December 31,",
+  "($ in millions, except per share amounts)",
+  "2009",
+  "2008",
+  "2009",
+  "2008",
+  "Costs and expenses",
+  "Earnings per share (Note 2):",
+  "Weighted average shares outstanding (000s):",
+]
+cells = [
+  { role = "corner", text = "93,851", row_header = "Basic", col_header = "Three months ended December 31, 2009" },
+  { role = "right", text = "94,022", row_header = "Basic", col_header = "Three months ended December 31, 2008" },
+  { role = "below", text = "95,285", row_header = "Diluted", col_header = "Three months ended December 31, 2009" },
+]
+
+[[blocks]]
+id = "p015"
+type = "page_artifact"
+start = "Condensed Financials (December 2009)"
+
+[[blocks]]
+id = "b039"
+type = "heading"
+level = 1
+start = "Unaudited Statements of Consolidated Cash Flows"
+
+[[blocks]]
+id = "t002"
+type = "table"
+headers = [
+  "Three months ended",
+  "Year ended",
+  "December 31,",
+  "December 31,",
+  "($ in millions)",
+  "2009",
+  "2008",
+  "2009",
+  "2008",
+  "Cash Flows From Operating Activities:",
+  "Cash Flows From Investing Activities:",
+  "Cash Flows From Financing Activities:",
+]
+cells = [
+  { role = "corner", text = "13.5", row_header = "Change in cash", col_header = "Three months ended December 31, 2008" },
+  { role = "right", text = "83.2", row_header = "Change in cash", col_header = "Year ended December 31, 2009" },
+  { role = "below", text = "113.9", row_header = "Cash–beginning of period", col_header = "Three months ended December 31, 2008" },
+]
+
+[[blocks]]
+id = "p016"
+type = "page_artifact"
+start = "Condensed Financials (December 2009)"
+
+[[blocks]]
+id = "b040"
+type = "heading"
+level = 1
+start = "Unaudited Consolidated Balance Sheets"
+
+[[blocks]]
+id = "t003"
+type = "table"
+headers = [
+  "December 31,",
+  "December 31,",
+  "($ in millions)",
+  "2009",
+  "2008",
+  "Assets",
+  "Current assets",
+  "Liabilities and Shareholders’ Equity",
+  "Current liabilities",
+]
+cells = [
+  { role = "corner", text = "548.2", row_header = "Receivables, net", col_header = "December 31, 2009" },
+  { role = "right", text = "507.9", row_header = "Receivables, net", col_header = "December 31, 2008" },
+  { role = "below", text = "944.2", row_header = "Inventories, net", col_header = "December 31, 2009" },
+]
+
+[[blocks]]
+id = "p017"
+type = "page_artifact"
+start = "Unaudited Notes to Condensed Financials (December 2009)"
+
+[[blocks]]
+id = "b041"
+type = "heading"
+level = 1
+start = "Business Segment Information"
+
+[[blocks]]
+id = "t004"
+type = "table"
+headers = [
+  "Three months ended",
+  "Year ended",
+  "December 31,",
+  "December 31,",
+  "($ in millions)",
+  "2009",
+  "2008",
+  "2009",
+  "2008",
+  "Sales–",
+  "Earnings before interest and taxes–",
+]
+cells = [
+  { role = "corner", text = "1,739.5", row_header = "Metal beverage packaging, Europe", col_header = "Year ended December 31, 2009" },
+  { role = "right", text = "1,868.7", row_header = "Metal beverage packaging, Europe", col_header = "Year ended December 31, 2008" },
+  { role = "below", text = "1,392.9", row_header = "Metal food & household packaging, Americas", col_header = "Year ended December 31, 2009" },
+]
+
+[[blocks]]
+id = "p018"
+type = "page_artifact"
+start = "Unaudited Notes to Condensed Financials (December 2009)"
+
+[[blocks]]
+id = "b042"
+type = "heading"
+level = 1
+start = "Business Consolidation Activities and Other Significant Items"
+after = "2009 In the first quarter, a restructuring charge"
+
+[[blocks]]
+id = "b043"
+type = "heading"
+level = 2
+start = "2009"
+after = "In the first quarter, a restructuring charge"
+
+[[blocks]]
+id = "b044"
+type = "paragraph"
+start = "In the first quarter, a restructuring charge"
+end = "closure of a North American metal beverage plant."
+
+[[blocks]]
+id = "b045"
+type = "paragraph"
+start = "In the second quarter the following significant activities occurred:"
+
+[[blocks]]
+id = "b046"
+type = "list_item"
+level = 1
+start = "The company recorded restructuring charges of $16.2 million"
+end = "related to previously closed and sold facilities."
+
+[[blocks]]
+id = "b047"
+type = "list_item"
+level = 1
+start = "The company sold a portion of its interest in DigitalGlobe"
+end = "was recorded in corporate costs."
+
+[[blocks]]
+id = "b048"
+type = "list_item"
+level = 1
+start = "The company recorded $2.9 million ($1.8 million after tax)"
+end = "acquisition discussed in Note 3."
+
+[[blocks]]
+id = "b049"
+type = "paragraph"
+start = "In the third quarter, restructuring charges of $13.6 million"
+end = "of acquisition transaction costs were recorded."
+
+[[blocks]]
+id = "b050"
+type = "paragraph"
+start = "In October the company sold a plastic pail manufacturing plant"
+end = "related to the sale."
+
+[[blocks]]
+id = "b051"
+type = "paragraph"
+start = "Also in the fourth quarter, a gain of $2.1 million"
+end = "further details on Ball’s acquisitions."
+
+[[blocks]]
+id = "b052"
+type = "heading"
+level = 2
+start = "2008"
+after = "On October 30, 2008, the company announced"
+
+[[blocks]]
+id = "b053"
+type = "paragraph"
+start = "On October 30, 2008, the company announced the closure"
+end = "upon final disposition of the assets."
+
+[[blocks]]
+id = "b054"
+type = "paragraph"
+start = "In prior quarters, charges totaling $20.6 million"
+end = "a gain of $7.1 million ($4.4 million after tax)."
+
+[[blocks]]
+id = "b055"
+type = "paragraph"
+start = "A summary of the effects of the above transactions on after-tax earnings follows:"
+
+[[blocks]]
+id = "t005"
+type = "table"
+headers = [
+  "Three months ended",
+  "Year ended",
+  "December 31,",
+  "December 31,",
+  "($ in millions, except per share amounts)",
+  "2009",
+  "2008",
+  "2009",
+  "2008",
+]
+cells = [
+  { role = "corner", text = "80.3", row_header = "Net earnings before above transactions", col_header = "Three months ended December 31, 2009" },
+  { role = "right", text = "53.4", row_header = "Net earnings before above transactions", col_header = "Three months ended December 31, 2008" },
+  { role = "below", text = "0.84", row_header = "Per diluted share before above transactions", col_header = "Three months ended December 31, 2009" },
+]
+
+[[blocks]]
+id = "p019"
+type = "page_artifact"
+start = "Unaudited Notes to Condensed Financials (December 2009)"
+
+[[blocks]]
+id = "b056"
+type = "heading"
+level = 1
+start = "Business Consolidation Activities and Other Significant Items (cont’d)"
+
+[[blocks]]
+id = "b057"
+type = "paragraph"
+start = "Ball’s management segregates the above items to evaluate"
+end = "financial measures calculated in accordance with U.S. GAAP."
+
+[[blocks]]
+id = "b058"
+type = "heading"
+level = 1
+start = "Acquisitions"
+
+[[blocks]]
+id = "b059"
+type = "paragraph"
+start = "On October 1, 2009, the company acquired four plants"
+end = "10 billion easy-open ends annually."
+
+[[blocks]]
+id = "b060"
+type = "paragraph"
+start = "Ball announced on November 9, 2009, that it agreed"
+end = "approximately $90 million in cash and assumed debt. The transaction is expected to close in 2010, subject to customary regulatory approvals."

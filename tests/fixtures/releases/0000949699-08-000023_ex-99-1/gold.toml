@@ -1,0 +1,218 @@
+schema_version = 1
+fixture_id = "0000949699-08-000023_ex-99-1"
+annotator = "Lowell Mason (verified a Codex draft)"
+marked_from = "browser rendering"
+browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
+completed = 2026-09-25 
+
+[[blocks]]
+id = "b001"
+type = "page_artifact"
+start = "EX-99.1 3 exh99-1.htm PRESS RELEASE"
+
+[[blocks]]
+id = "b002"
+type = "heading"
+start = "EXHIBIT 99.1"
+
+[[blocks]]
+id = "b003"
+type = "heading"
+start = "Contacts:"
+
+[[blocks]]
+id = "b004"
+type = "paragraph"
+start = "Leiv Lea Pharmacyclics, Inc."
+end = "Pharmacyclics, Inc. (408) 774-0330"
+
+[[blocks]]
+id = "b005"
+type = "paragraph"
+start = "Carolyn Wang WeissComm Partners"
+end = "WeissComm Partners (415) 946-1065"
+
+[[blocks]]
+id = "b006"
+type = "heading"
+level = 1
+start = "PHARMACYCLICS REPORTS FOURTH QUARTER AND FISCAL 2008 FINANCIAL RESULTS"
+
+[[blocks]]
+id = "b007"
+type = "heading"
+level = 2
+start = "- Company to Host Conference Call at 4:30 p.m. EST Today -"
+
+[[blocks]]
+id = "b008"
+type = "paragraph"
+start = "SUNNYVALE, CA, August 14, 2008"
+end = "or $0.27 per share, for the fourth quarter of fiscal 2007."
+
+[[blocks]]
+id = "b009"
+type = "paragraph"
+start = "Total operating expenses were $4.8 million"
+end = "due to the completion of preclinical activities."
+
+[[blocks]]
+id = "b010"
+type = "paragraph"
+start = "Pharmacyclics also reported financial results"
+end = "per share, for fiscal year 2007."
+
+[[blocks]]
+id = "b011"
+type = "paragraph"
+start = "As of June 30, 2008, the company"
+end = "marketable securities as of June 30, 2007."
+
+[[blocks]]
+id = "b012"
+type = "heading"
+start = "Fiscal 2009 Guidance"
+
+[[blocks]]
+id = "b013"
+type = "paragraph"
+start = "Pharmacyclics projects total operating expenses, excluding share-based compensation"
+end = "and share-based compensation expense."
+
+[[blocks]]
+id = "b014"
+type = "paragraph"
+start = '"We continue to advance our pipeline'
+end = 'as we progress with their development."'
+
+[[blocks]]
+id = "b015"
+type = "heading"
+start = "Recent and Upcoming Milestones"
+
+[[blocks]]
+id = "b016"
+type = "list_item"
+level = 1
+start = "Initiated a multicenter Phase 2 trial"
+end = "PCI-24781, in hematologic malignancies."
+
+[[blocks]]
+id = "b017"
+type = "list_item"
+level = 1
+start = "Announced final data from a Phase 1/2 study"
+end = "an approved antibody-targeted radiation therapy."
+
+[[blocks]]
+id = "b018"
+type = "list_item"
+level = 1
+start = "Announced results from a preclinical study evaluating"
+end = "inflammation and induced regression of disease."
+
+[[blocks]]
+id = "b019"
+type = "list_item"
+level = 1
+start = "Filed an investigational new drug (IND) application"
+end = "and as an anti-cancer agent."
+
+[[blocks]]
+id = "b020"
+type = "list_item"
+level = 1
+start = "Plan to complete enrollment and evaluation"
+end = "PCI-27483, in the fourth quarter of calendar 2008."
+
+[[blocks]]
+id = "b021"
+type = "list_item"
+level = 1
+start = "Plan to initiate a Phase 1 trial"
+end = "using a novel pharmacodynamic biomarker."
+
+[[blocks]]
+id = "b022"
+type = "list_item"
+level = 1
+start = "Plans are underway to design and conduct"
+end = "the first half of calendar 2009."
+
+[[blocks]]
+id = "b023"
+type = "heading"
+start = "Conference Call and Webcast Details"
+
+[[blocks]]
+id = "b024"
+type = "paragraph"
+start = "The Company will hold a conference call"
+end = "company's website for one month."
+
+[[blocks]]
+id = "b025"
+type = "heading"
+start = "About Pharmacyclics"
+
+[[blocks]]
+id = "b026"
+type = "paragraph"
+start = "Pharmacyclics is a pharmaceutical company developing"
+end = "registered trademarks of Pharmacyclics, Inc."
+
+[[blocks]]
+id = "b027"
+type = "paragraph"
+start = "NOTE: Other than statements of historical fact"
+end = "future events or otherwise."
+
+[[blocks]]
+id = "b028"
+type = "page_artifact"
+start = "---FINANCIALS ATTACHED---"
+
+[[blocks]]
+id = "b029"
+type = "heading"
+start = "Pharmacyclics, Inc. (a development stage enterprise)"
+end = "Condensed Statements of Operations (unaudited) (in thousands, except per share data)"
+
+[[blocks]]
+id = "t001"
+type = "table"
+headers = [
+  "Three Months Ended",
+  "Twelve Months Ended",
+  "June 30,",
+  "June 30,",
+  "2008",
+  "2007",
+  "2008",
+  "2007",
+]
+cells = [
+  { role = "corner", text = "3,358", row_header = "Research and development", col_header = "Three Months Ended June 30, 2008" },
+  { role = "right", text = "5,558", row_header = "Research and development", col_header = "Three Months Ended June 30, 2007" },
+  { role = "below", text = "1,409", row_header = "General and administrative", col_header = "Three Months Ended June 30, 2008" },
+]
+
+[[blocks]]
+id = "b033"
+type = "heading"
+start = "Condensed Balance Sheets (unaudited, in thousands)"
+
+[[blocks]]
+id = "t002"
+type = "table"
+headers = ["June 30,", "June 30,", "2008", "2007"]
+cells = [
+  { role = "corner", text = "17,156", row_header = "Total current assets", col_header = "June 30, 2008" },
+  { role = "right", text = "39,723", row_header = "Total current assets", col_header = "June 30, 2007" },
+  { role = "below", text = "688", row_header = "Property and equipment, net", col_header = "June 30, 2008" },
+]
+
+[[blocks]]
+id = "b035"
+type = "page_artifact"
+start = "###"

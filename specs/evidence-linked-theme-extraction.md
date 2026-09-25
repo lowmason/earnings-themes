@@ -5,11 +5,12 @@
 
 This specification defines the method for extracting decision-useful themes from
 firms' earnings disclosures with every theme bound to an exact, locatable span of
-source text. It covers seven stages — acquisition and event resolution,
-structure-aware canonicalization, evidence selection, deterministic span
-verification, semantic support assessment, codebook construction and coding, and
-coverage-aware aggregation — plus the evaluation design that decides whether any
-of it works. Theme *importance ranking* is deliberately excluded and belongs to a
+source text. It covers eight stages — point-in-time cohort selection, acquisition
+and event resolution, structure-aware canonicalization, evidence selection,
+deterministic span verification, semantic support assessment, codebook
+construction and coding, and coverage-aware aggregation — plus the evaluation
+design that decides whether any of it works.
+Theme *importance ranking* is deliberately excluded and belongs to a
 successor spec (see Out of scope). The required path uses free-to-access data and
 open-weight, self-hosted models; no billable inference is required to run, test,
 or reproduce any requirement here.
@@ -51,6 +52,17 @@ on these three points, this spec governs:
 **This spec supersedes** `AGENTS-jev-addendum.md` and
 `specs/jev-integration-spec.md` on the required-path question only (R14.3). Those
 documents remain as proposals for an optional, separately-authorized layer.
+
+**This spec is amended by** `specs/point-in-time-djia-cohort.md`. That
+specification defines the firm universe and event corpus this one consumes: a
+versioned, point-in-time DJIA cohort frozen before any document is acquired; a
+40-event feasibility pilot selected deterministically from frozen event metadata
+rather than chosen during codebook construction; and a later full run over the
+eight calendar period-end quarters in `[2024-07-01, 2026-07-01)` under a
+`2026-09-22` public-information cutoff. Where the two conflict on the firm
+universe, the event corpus, or how the pilot sample is chosen, it governs.
+Everything here about canonicalization, evidence selection, verification,
+support, coding, and aggregation stands unchanged.
 
 **Naming.** Filed as `evidence-linked-theme-extraction.md` rather than
 `earning-themes.md` to avoid sitting one character from `docs/earnings-themes.md`.
@@ -596,10 +608,15 @@ bullet here.
   before implementation.** R11 delivers the coverage-aware prevalence such a spec
   would consume.
 - **Theme taxonomy content** — produced by R9.3's approval process (R9.7).
-- **Company enrichment** — membership, identifiers, subsidiaries, employment,
-  locations, industry classification. These supply optional dated context through
-  joins, never evidence for words absent from a document (`A §445`). `AGENTS.md`
-  governs them unchanged.
+- **Company enrichment** — subsidiaries, employment, locations, industry
+  classification, and identifier enrichment beyond what the cohort needs. These
+  supply optional dated context through joins, never evidence for words absent
+  from a document (`A §445`). `AGENTS.md` governs them unchanged. **In scope by
+  amendment:** point-in-time index membership and the
+  security-to-issuer-to-CIK resolution the cohort depends on, per
+  `specs/point-in-time-djia-cohort.md`. That carve-out is narrow — GICS, SIC, and
+  NAICS never alter cohort eligibility, and no enrichment dataset becomes a
+  dependency of theme extraction.
 - **Numeric acceptance gates** — R13.1, deferred to V6 by user decision.
 - **Prompt-optimizer compilation** — outside the R14.2 authorization; requires
   separate approval and a gold set that does not yet exist.
@@ -615,6 +632,13 @@ enrichment before the theme vertical slice runs (`A §780`). The slice that prov
 this spec is one earnings release passing through acquisition, canonicalization,
 pointer evidence, deterministic verification, support assessment, an explicitly
 approved small codebook, and a typed analytical export with source-linked quotes.
+
+**Cohort before corpus.** `specs/point-in-time-djia-cohort.md` places a frozen,
+point-in-time cohort before corpus acquisition, and freezes the eligible-event
+and pilot manifests before any acquisition, parse, retention, or theme outcome is
+known. Do not begin corpus acquisition until those artifacts can be frozen: a
+sample conditioned on what happened to download or parse cleanly cannot support
+the coverage-aware denominators R11.2 and R11.3 require.
 
 Three requirements amend binding instructions (R3.4, R10.1, R12.2). `AGENTS.md`
 should be updated to point at this spec at those three sections rather than left

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Document status — read before trusting any file here
 
-This repo is documentation-first: ~3,500 lines of instructions, ~10 lines of scaffold code.
+This repo is documentation-first: its only working code is the Stage 1 investigation harness in `expirements/parser-fidelity/`, its packages are still `hello()` scaffolds, and the rest is instructions.
 Not all of it is binding.
 
 | File | Status |
@@ -13,17 +13,26 @@ Not all of it is binding.
 | `docs/earnings-ingestion.md`, `docs/earnings-themes.md` | Supplied source design notes. **Preserve them**; do not rewrite a learning exercise into a mandatory production dependency. |
 | `specs/evidence-linked-theme-extraction.md` | **The synthesized theme-extraction spec.** Amends `AGENTS.md` at three points and governs on each: R3.4 (boilerplate as overlay masks over canonical text), R10.1 (exhaustive structure-aware traversal replaces the whole-document default), and R12.2 (20-40 hand-coded documents are a feasibility pilot, not a validation set). `AGENTS.md` carries an inline **Amended:** pointer at each. Supersedes the Jev documents on the required-path question (R14.3). |
 | `specs/evidence-linked-theme-extraction-roadmap.md` | **Live staged roadmap** for that spec. Resume it via the `derive-roadmap` skill's reconcile step and route each unticked stage per its ROUTING line; never plan it wholesale. |
+| `specs/point-in-time-djia-cohort.md` | **Amends the theme-extraction spec and its roadmap** (adopted 2026-09-22, plan 2). Adds Stage 4, a versioned point-in-time DJIA cohort frozen before any document is acquired; moves the 40-event feasibility pilot into Stage 5 as a deterministic selection frozen before any acquisition or parse outcome is known; adds Stage 15, the full eight-quarter run. Governs on the firm universe, the event corpus, and pilot selection. Its window is `[2024-07-01, 2026-07-01)` and its public-information cutoff is `2026-09-22`. It is the stage spec for Stages 4 and 15 and binds Stage 5's eligibility and pilot-selection contracts; no stage is complete. |
 | `AGENTS-jev-addendum.md`, `specs/jev-integration-spec.md` | **Superseded on the required-path question** by the spec's R14.3; retained only as a proposal for an optional, separately authorized layer. Jev/TypeSafe is not an adopted dependency. Values like `backend = "disabled"` or `model = "jev-1.13.0"` are sketches, not settings. |
 
-**Not summarized below — go to `AGENTS.md` directly** for: §Source strategy (per-field source table), §Domain rules (membership/identifiers, industry classification, subsidiaries, employment, locations), §Shared data contracts and provenance (the dataset/grain table), §Models, orchestration, caching, and cost, §Tests and acceptance criteria (incl. the evaluation metric table), and §Delivery milestones.
+**Not summarized below — go to `AGENTS.md` directly** for: §Source strategy (per-field source table), §Domain rules (membership/identifiers, industry classification, subsidiaries, employment, locations), §Shared data contracts and provenance (the dataset/grain table), §Models, orchestration, caching, and cost, §Tests and acceptance criteria (incl. the evaluation metric table), and §Delivery milestones. **Exception:** for the DJIA cohort, point-in-time index membership and security-to-issuer-to-CIK resolution are specified by `specs/point-in-time-djia-cohort.md`, which is consistent with and more specific than `AGENTS.md` §Domain rules; those rules still apply wherever the cohort spec is silent. Subsidiaries, employment, locations, and industry classification stay with `AGENTS.md` and out of the theme-extraction path.
 
 `AGENTS.md` itself labels its layout, schemas, and defaults as *proposed monorepo conventions* — inspect the real repo before adopting them.
 
 **Deliberately unresolved — do not silently pick one** (AGENTS.md §"Source basis and unresolved choices"): the production provider/model, the final theme taxonomy, and non-exactness quality thresholds. Record these in config or a decision record; do not invent agreement. The fourth such choice, an approved inference budget, is now recorded by `specs/evidence-linked-theme-extraction.md` R14.2: **$100, for the optional hosted-ceiling ablation only**, not prompt-optimizer compiles or any other billable call. The required path needs no billable inference: R14.1 limits it to open-weight, self-hosted models, which narrows the model choice without making it.
 
-## Current state: pre-implementation scaffold
+## Current state: Stage 1 complete, packages still scaffold
 
-Packages and `apps/earnings-pipeline` contain only `hello()` stubs; no domain code exists yet. `data/` is gitignored and empty; `config/`, `prompts/`, `codebooks/`, `expirements/`, `tests/*` are empty directories. As of `711ba11` (7 commits on `main`), git tracks 28 files: docs, specs, package and app scaffolds, the `pyproject.toml`s, and `uv.lock`. `origin` is set to https://github.com/lowmason/earnings-themes, which is **public** — treat anything committed here as publicly visible.
+Stage 1 of the roadmap (release parser fidelity, `specs/release-parser-fidelity.md`) is done:
+
+- `tests/fixtures/releases/` holds the eight Stage 1 fixtures, each `source.html` with its `gold.toml`, and `manifest.toml`.
+- `docs/source-register.toml` is the source register (AGENTS.md §242), with the `sec-edgar` entry that the fixture manifest cites; `fetch_policy_pages.py verify` checks its quotes against saved pages.
+- `expirements/parser-fidelity/` holds the Stage 1 harness: fetcher, discovery, class tests, candidate adapters, the walker, the control, the gold validator, the scorer, the selection rule, the V1 script and the fixture check. Its tests run with `uv run --locked --all-packages pytest expirements/parser-fidelity --import-mode=prepend -q`.
+- `docs/verification/` holds V1 (edgartools return types) and V2 (release parser fidelity).
+- `docs/adr/0001-use-the-bespoke-lxml-walker-as-the-base-parser-for-release-canonicalization.md` records the base parser: the bespoke lxml walker, accepted 2026-09-25. Its measured code stays frozen in the harness until Stage 3 moves it into `earnings-ingestion`.
+
+Packages and `apps/earnings-pipeline` still contain only `hello()` stubs, and pytest configuration is still Stage 2's (see "Commands" below). `data/` is gitignored and holds only local, uncommitted material: fetched pages under `data/raw/` and Stage 1 run outputs under `data/runs/`; `config/`, `prompts/`, `codebooks/`, `tests/contracts/` and `tests/integration/` are empty directories. `origin` is set to https://github.com/lowmason/earnings-themes, which is **public** — treat anything committed here as publicly visible.
 
 ### Workspace root is virtual — do not add `[project]` to it
 

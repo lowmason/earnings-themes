@@ -1,0 +1,798 @@
+schema_version = 1
+fixture_id = "0000007332-09-000032_ex-99"
+annotator = "Lowell Mason (verified a Codex draft)"
+marked_from = "browser rendering"
+browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
+completed = 2026-09-24
+
+[[blocks]]
+id = "p001"
+type = "page_artifact"
+start = "EX-99 2 exhibit991.htm SWN Q3 2009 EARNINGS RELEASE"
+
+[[blocks]]
+id = "b001"
+type = "heading"
+level = 1
+start = "NEWS RELEASE"
+
+[[blocks]]
+id = "b002"
+type = "heading"
+level = 2
+start = "SOUTHWESTERN ENERGY ANNOUNCES THIRD QUARTER 2009 RESULTS"
+end = "AND UPDATES FOURTH QUARTER PRODUCTION GUIDANCE"
+
+[[blocks]]
+id = "b003"
+type = "paragraph"
+start = "Houston, Texas – October 29, 2009...Southwestern Energy Company"
+end = "results for the third quarter of 2009. Highlights include:"
+
+[[blocks]]
+id = "b004"
+type = "list_item"
+level = 1
+start = "Natural gas and crude oil production of 73.2 Bcfe"
+end = "up 38% over the same period in 2008"
+
+[[blocks]]
+id = "b005"
+type = "list_item"
+level = 1
+start = "Net cash provided by operating activities before changes in operating assets and liabilities of $331.8 million"
+end = "up from $312.1 million in the same period in 2008"
+
+[[blocks]]
+id = "b006"
+type = "list_item"
+level = 1
+start = "Net earnings of $118.3 million"
+end = "compared to $218.2 million in the same period in 2008"
+
+[[blocks]]
+id = "b007"
+type = "list_item"
+level = 1
+start = "Revised fourth quarter 2009 production guidance range to 86-89 Bcfe"
+end = "up 12% from midpoints of previous guidance"
+
+[[blocks]]
+id = "b008"
+type = "paragraph"
+start = "For the third quarter of 2009, Southwestern reported net income"
+end = "up from $312.1 million for the same period in 2008."
+
+[[blocks]]
+id = "b009"
+type = "paragraph"
+start = "“We had a solid quarter despite depressed natural gas prices"
+end = "will create tremendous value for Southwestern Energy and its shareholders.”"
+
+[[blocks]]
+id = "p002"
+type = "page_artifact"
+start = "- MORE -"
+
+[[blocks]]
+id = "b010"
+type = "heading"
+level = 2
+start = "Third Quarter 2009 Financial Results"
+
+[[blocks]]
+id = "b011"
+type = "paragraph"
+start = "E&P Segment - Operating income from the company’s E&P segment"
+end = "partially offset by a 38% increase in production volumes."
+
+[[blocks]]
+id = "b012"
+type = "paragraph"
+start = "Gas and oil production totaled 73.2 Bcfe in the third quarter"
+end = "was also placed back into service in October after this shut down."
+
+[[blocks]]
+id = "b013"
+type = "paragraph"
+start = "As a result of the repairs, the company is now able"
+end = "Southwestern’s production guidance for the remainder of 2009 is shown below:"
+
+[[blocks]]
+id = "t001"
+type = "table"
+headers = [
+  "1st Quarter",
+  "2nd Quarter",
+  "3rd Quarter",
+  "4th Quarter",
+  "Full-Year 2009",
+  "Actual",
+  "Actual",
+  "Actual",
+  "Estimate",
+  "Estimate",
+]
+cells = [
+  { role = "corner", text = "60 - 61", row_header = "Previous Guidance (Bcfe)", col_header = "1st Quarter Actual" },
+  { role = "right", text = "70 - 71", row_header = "Previous Guidance (Bcfe)", col_header = "2nd Quarter Actual" },
+  { role = "below", text = "63.9", row_header = "Revised Guidance (Bcfe)", col_header = "1st Quarter Actual" },
+]
+
+[[blocks]]
+id = "b014"
+type = "paragraph"
+start = "Including the effect of hedges, Southwestern’s average realized gas price"
+end = "at a weighted average floor price of $8.41 per Mcf."
+
+[[blocks]]
+id = "b015"
+type = "paragraph"
+start = "Disregarding the impact of commodity price hedges"
+end = "and fuel charges which range from 0.25 to 2.25%."
+
+[[blocks]]
+id = "p003"
+type = "page_artifact"
+start = "- MORE -"
+
+[[blocks]]
+id = "b016"
+type = "paragraph"
+start = "Lease operating expenses per unit of production for the company’s E&P segment"
+end = "on the cost of compressor fuel in the third quarter of 2009."
+
+[[blocks]]
+id = "b017"
+type = "paragraph"
+start = "General and administrative expenses per unit of production were $0.38 per Mcfe"
+end = "partially offset by the effects of the company’s increased production volumes."
+
+[[blocks]]
+id = "b018"
+type = "paragraph"
+start = "Taxes other than income taxes per unit of production were $0.10 per Mcfe"
+end = "that result from the mix of the company’s production volumes."
+
+[[blocks]]
+id = "b019"
+type = "paragraph"
+start = "The company’s full cost pool amortization rate decreased to $1.43 per Mcfe"
+end = "the variability of each of the factors discussed above, as well as other factors."
+
+[[blocks]]
+id = "b020"
+type = "paragraph"
+start = "Midstream Services - Operating income for the company’s midstream services segment, which is comprised of natural gas gathering and marketing activities, was $25.1 million for the three months ended September 30, 2009"
+end = "as reserves related to the company’s Fayetteville Shale play are developed and production increases."
+
+[[blocks]]
+id = "p004"
+type = "page_artifact"
+start = "- MORE -"
+
+[[blocks]]
+id = "b021"
+type = "heading"
+level = 2
+start = "First Nine Months of 2009 Financial Results"
+
+[[blocks]]
+id = "b022"
+type = "paragraph"
+start = "For the first nine months of 2009, Southwestern reported a net loss"
+end = "partially offset by significant growth in production volumes."
+
+[[blocks]]
+id = "b023"
+type = "paragraph"
+start = "Net cash provided by operating activities before changes in operating assets and liabilities (a non-GAAP measure; see reconciliation below), was $1.03 billion"
+end = "up 16% from $884.1 million for the same period in 2008."
+
+[[blocks]]
+id = "b024"
+type = "paragraph"
+start = "E&P Segment - Excluding the non-cash ceiling test impairment"
+end = "operating costs and expenses which were partially offset by higher production."
+
+[[blocks]]
+id = "b025"
+type = "paragraph"
+start = "Gas and oil production was 211.4 Bcfe in the first nine months of 2009"
+end = "up from 90.4 Bcf in the first nine months of 2008."
+
+[[blocks]]
+id = "b026"
+type = "paragraph"
+start = "Southwestern’s average realized gas price was $5.31 per Mcf"
+end = "compared to approximately $0.90 per Mcf lower than NYMEX spot prices during the first nine months of 2008."
+
+[[blocks]]
+id = "b027"
+type = "paragraph"
+start = "Lease operating expenses for the company’s E&P segment were $0.76 per Mcfe"
+end = "on the cost of compressor fuel in the first nine months of 2009."
+
+[[blocks]]
+id = "b028"
+type = "paragraph"
+start = "General and administrative expenses were $0.34 per Mcfe in the first nine months of 2009"
+end = "Southwestern added 227 new employees during the first nine months of 2009."
+
+[[blocks]]
+id = "p005"
+type = "page_artifact"
+start = "- MORE -"
+
+[[blocks]]
+id = "b029"
+type = "paragraph"
+start = "Taxes other than income taxes were $0.10 per Mcfe during the first nine months of 2009"
+end = "due to lower commodity prices and the change in the mix of the company’s production volumes."
+
+[[blocks]]
+id = "b030"
+type = "paragraph"
+start = "The company’s full cost pool amortization rate decreased to $1.56 per Mcfe"
+end = "as the proceeds were credited to the full cost pool."
+
+[[blocks]]
+id = "b031"
+type = "paragraph"
+start = "Midstream Services - Operating income for the company’s midstream activities was $80.3 million"
+end = "increased gathering revenues and an increase in the margin from gas marketing activities related to the Fayetteville Shale play, partially offset by increased operating costs and expenses."
+
+[[blocks]]
+id = "b032"
+type = "paragraph"
+start = "Capital Investments - In the first nine months of 2009"
+end = "its total capital investments for the full year of 2009 to be approximately $1.8 billion."
+
+[[blocks]]
+id = "b033"
+type = "heading"
+level = 2
+start = "E&P Operations Review"
+
+[[blocks]]
+id = "b034"
+type = "paragraph"
+start = "Fayetteville Shale Play - For the first nine months of 2009"
+end = "all of which were horizontal wells fracture stimulated using slickwater."
+
+[[blocks]]
+id = "b035"
+type = "paragraph"
+start = "At October 24, 2009, the company’s gross production rate"
+end = "from the company’s operated wells in the Fayetteville Shale play area through October 24, 2009."
+
+[[blocks]]
+id = "p006"
+type = "page_artifact"
+start = "- MORE -"
+
+[[blocks]]
+id = "b036"
+type = "paragraph"
+start = "During the third quarter of 2009, the company’s horizontal wells"
+end = "its gross well count in the play during 2009 to be approximately 550 wells (80% operated)."
+
+[[blocks]]
+id = "b037"
+type = "paragraph"
+start = "Since 2007, improvements in the company’s completion practices and longer lateral lengths"
+end = "Results from the company’s drilling activities from 2007 through 2009, by quarter, are shown below."
+
+[[blocks]]
+id = "p007"
+type = "page_artifact"
+start = "- MORE -"
+
+[[blocks]]
+id = "t002"
+type = "table"
+headers = [
+  "Time Frame",
+  "Wells Placed on Production",
+  "Average IP Rate (Mcf/d)",
+  "30th-Day Avg Rate (# of wells)",
+  "60th-Day Avg Rate (# of wells)",
+  "Average Lateral Length",
+  "Completion Method SW/XL/Hy-RHy",
+]
+cells = [
+  { role = "corner", text = "1,261", row_header = "1st Qtr 2007", col_header = "Average IP Rate (Mcf/d)" },
+  { role = "right", text = "1,066 (58)", row_header = "1st Qtr 2007", col_header = "30th-Day Avg Rate (# of wells)" },
+  { role = "below", text = "1,497", row_header = "2nd Qtr 2007", col_header = "Average IP Rate (Mcf/d)" },
+]
+
+[[blocks]]
+id = "b038"
+type = "footnote"
+start = "Note: Results as of September 30, 2009."
+
+[[blocks]]
+id = "b039"
+type = "footnote"
+start = "SW – Slickwater fluids"
+
+[[blocks]]
+id = "b040"
+type = "footnote"
+start = "XL – Crosslinked gel fluids"
+
+[[blocks]]
+id = "b041"
+type = "footnote"
+start = "Hy-RHy – Hybrid or Reverse Hybrid method (combination slickwater/crosslinked gel fluid system)"
+
+[[blocks]]
+id = "b042"
+type = "footnote"
+start = "The significant increase in the average initial production rate for the fourth quarter of 2008"
+end = "wells placed on production during March 2009 had average initial production rates of 3,353 Mcf per day."
+
+[[blocks]]
+id = "b043"
+type = "paragraph"
+start = "In 2008, the company developed a 4-square mile area"
+end = "testing eight different pilot areas with well spacings that will range from 300 to 600 feet apart."
+
+[[blocks]]
+id = "b044"
+type = "paragraph"
+start = "The graph below provides normalized average daily production data through September 30, 2009"
+end = "are shown solely for reference purposes and are not intended to be projections of the performance of the company’s wells."
+
+[[blocks]]
+id = "p008"
+type = "page_artifact"
+start = "- MORE -"
+
+[[blocks]]
+id = "b045"
+type = "paragraph"
+start = "At September 30, 2009, Southwestern held approximately 879,000 net acres"
+end = "including 125,372 net acres in the traditional Fairway portion of the Arkoma Basin)."
+
+[[blocks]]
+id = "b046"
+type = "paragraph"
+start = "East Texas - In the second quarter of 2008"
+end = "Southwestern has approximately 32,800 net acres it believes is prospective for the Haynesville/Bossier Shale."
+
+[[blocks]]
+id = "b047"
+type = "paragraph"
+start = "Southwestern participated in drilling 33 wells in East Texas during the first nine months of 2009"
+end = "compared to 24.1 Bcfe for the first nine months of 2008."
+
+[[blocks]]
+id = "p009"
+type = "page_artifact"
+start = "- MORE -"
+
+[[blocks]]
+id = "b048"
+type = "paragraph"
+start = "Conventional Arkoma Program - (Outside the Fayetteville Shale play area)"
+end = "compared to 18.6 Bcf for the first nine months of 2008."
+
+[[blocks]]
+id = "b049"
+type = "paragraph"
+start = "New Ventures - At September 30, 2009"
+end = "under which it believes the Marcellus Shale is prospective."
+
+[[blocks]]
+id = "b050"
+type = "heading"
+level = 2
+start = "Explanation and Reconciliation of Non-GAAP Financial Measures"
+
+[[blocks]]
+id = "b051"
+type = "paragraph"
+start = "We report our financial results in accordance with accounting principles generally accepted"
+end = "between current results and the results of our peers and of prior periods."
+
+[[blocks]]
+id = "b052"
+type = "paragraph"
+start = "One such non-GAAP financial measure is net cash provided by operating activities"
+end = "changes in operating assets and liabilities may not relate to the period in which the operating activities occurred."
+
+[[blocks]]
+id = "b053"
+type = "paragraph"
+start = "Additional non-GAAP financial measures we may present from time to time"
+end = "These adjusted amounts are not a measure of financial performance under GAAP."
+
+[[blocks]]
+id = "b054"
+type = "paragraph"
+start = "See the reconciliations below of GAAP financial measures to non-GAAP financial measures"
+end = "as a substitute for the Company's reported results prepared in accordance with GAAP."
+
+[[blocks]]
+id = "p010"
+type = "page_artifact"
+start = "- MORE -"
+
+[[blocks]]
+id = "t003"
+type = "table"
+unanchorable = true
+headers = [
+  "9 Months Ended Sept 30,",
+  "2009",
+  "2008",
+  "(in thousands)",
+  "Net income (loss) attributable to Southwestern Energy:",
+  "Add back:",
+]
+cells = [
+  { role = "corner", text = "558,305", row_header = "Impairment of natural gas and oil properties (net of taxes)", col_header = "9 Months Ended Sept 30, 2009" },
+  { role = "right", text = "--", row_header = "Impairment of natural gas and oil properties (net of taxes)", col_header = "9 Months Ended Sept 30, 2008" },
+  { role = "below", text = "364,829", row_header = "Net income attributable to Southwestern Energy, excluding impairment of natural gas and oil properties", col_header = "9 Months Ended Sept 30, 2009" },
+]
+
+[[blocks]]
+id = "t004"
+type = "table"
+unanchorable = true
+headers = [
+  "9 Months Ended Sept 30,",
+  "2009",
+  "2008",
+  "Diluted earnings per share:",
+  "Add back:",
+]
+cells = [
+  { role = "corner", text = "1.62", row_header = "Impairment of natural gas and oil properties (net of taxes)", col_header = "9 Months Ended Sept 30, 2009" },
+  { role = "right", text = "--", row_header = "Impairment of natural gas and oil properties (net of taxes)", col_header = "9 Months Ended Sept 30, 2008" },
+  { role = "below", text = "$ 1.06", row_header = "Net income per share attributable to Southwestern Energy stockholders, excluding impairment of natural gas and oil properties", col_header = "9 Months Ended Sept 30, 2009" },
+]
+
+[[blocks]]
+id = "t005"
+type = "table"
+headers = [
+  "3 Months Ended Sept 30,",
+  "2009",
+  "2008",
+  "(in thousands)",
+  "Cash flow from operating activities:",
+  "Add back (deduct):",
+]
+cells = [
+  { role = "corner", text = "315,795", row_header = "Net cash provided by operating activities", col_header = "3 Months Ended Sept 30, 2009" },
+  { role = "right", text = "378,455", row_header = "Net cash provided by operating activities", col_header = "3 Months Ended Sept 30, 2008" },
+  { role = "below", text = "15,978", row_header = "Change in operating assets and liabilities", col_header = "3 Months Ended Sept 30, 2009" },
+]
+
+[[blocks]]
+id = "t006"
+type = "table"
+unanchorable = true
+headers = [
+  "9 Months Ended Sept 30,",
+  "2009",
+  "2008",
+  "(in thousands)",
+  "Cash flow from operating activities:",
+  "Add back (deduct):",
+]
+cells = [
+  { role = "corner", text = "40,098", row_header = "Change in operating assets and liabilities", col_header = "9 Months Ended Sept 30, 2009" },
+  { role = "right", text = "(82,621)", row_header = "Change in operating assets and liabilities", col_header = "9 Months Ended Sept 30, 2008" },
+  { role = "below", text = "1,029,624", row_header = "Net cash provided by operating activities before changes in operating assets and liabilities", col_header = "9 Months Ended Sept 30, 2009" },
+]
+
+[[blocks]]
+id = "t007"
+type = "table"
+unanchorable = true
+headers = [
+  "9 Months Ended Sept 30,",
+  "2009",
+  "2008",
+  "(in thousands)",
+  "E&P segment operating income:",
+  "Add back:",
+]
+cells = [
+  { role = "corner", text = "907,812", row_header = "Impairment of natural gas and oil properties", col_header = "9 Months Ended Sept 30, 2009" },
+  { role = "right", text = "--", row_header = "Impairment of natural gas and oil properties", col_header = "9 Months Ended Sept 30, 2008" },
+  { role = "below", text = "526,390", row_header = "E&P segment operating income, excluding impairment of natural gas and oil properties", col_header = "9 Months Ended Sept 30, 2009" },
+]
+
+[[blocks]]
+id = "p011"
+type = "page_artifact"
+start = "- MORE -"
+
+[[blocks]]
+id = "b055"
+type = "paragraph"
+start = "Southwestern will host a teleconference call on Friday, October 30, 2009"
+end = "The teleconference can also be heard “live” on the Internet at http://www.swn.com."
+
+[[blocks]]
+id = "b056"
+type = "paragraph"
+start = "Southwestern Energy Company is an integrated company whose wholly-owned subsidiaries"
+end = "Additional information on the company can be found on the Internet at http://www.swn.com."
+
+[[blocks]]
+id = "b057"
+type = "heading"
+start = "Contacts:"
+
+[[blocks]]
+id = "b058"
+type = "paragraph"
+start = "Greg D. Kerley"
+
+[[blocks]]
+id = "b059"
+type = "paragraph"
+start = "Brad D. Sylvester, CFA"
+
+[[blocks]]
+id = "b060"
+type = "paragraph"
+start = "Executive Vice President"
+
+[[blocks]]
+id = "b061"
+type = "paragraph"
+start = "Vice President, Investor Relations"
+
+[[blocks]]
+id = "b062"
+type = "paragraph"
+start = "and Chief Financial Officer"
+
+[[blocks]]
+id = "b063"
+type = "paragraph"
+start = "(281) 618-4897"
+
+[[blocks]]
+id = "b064"
+type = "paragraph"
+start = "(281) 618-4803"
+
+[[blocks]]
+id = "b065"
+type = "paragraph"
+start = "All statements, other than historical financial information, may be deemed to be forward-looking statements"
+end = "whether as a result of new information, future events or otherwise."
+
+[[blocks]]
+id = "p012"
+type = "page_artifact"
+start = "- MORE -"
+
+[[blocks]]
+id = "b066"
+type = "heading"
+level = 2
+start = "Financial Summary Follows"
+
+[[blocks]]
+id = "p013"
+type = "page_artifact"
+start = "# # #"
+
+[[blocks]]
+id = "b067"
+type = "heading"
+level = 2
+start = "OPERATING STATISTICS (Unaudited)"
+
+[[blocks]]
+id = "p014"
+type = "page_artifact"
+start = "Page 1 of 5"
+
+[[blocks]]
+id = "p015"
+type = "page_artifact"
+start = "Southwestern Energy Company and Subsidiaries"
+
+[[blocks]]
+id = "t008"
+type = "table"
+headers = [
+  "Three Months",
+  "Nine Months",
+  "Periods Ended September 30",
+  "2009",
+  "2008",
+  "2009",
+  "2008",
+  "Exploration & Production",
+  "Production",
+  "Commodity Prices",
+  "Operating Expenses per Mcfe",
+  "Midstream",
+]
+cells = [
+  { role = "corner", text = "98.3", row_header = "Gas volumes marketed (Bcf)", col_header = "Three Months Periods Ended September 30 2009" },
+  { role = "right", text = "71.6", row_header = "Gas volumes marketed (Bcf)", col_header = "Three Months Periods Ended September 30 2008" },
+  { role = "below", text = "93.0", row_header = "Gas volumes gathered (Bcf)", col_header = "Three Months Periods Ended September 30 2009" },
+]
+
+[[blocks]]
+id = "b069"
+type = "heading"
+level = 2
+start = "STATEMENTS OF OPERATIONS (Unaudited)"
+
+[[blocks]]
+id = "p016"
+type = "page_artifact"
+start = "Page 2 of 5"
+
+[[blocks]]
+id = "p017"
+type = "page_artifact"
+start = "Southwestern Energy Company and Subsidiaries"
+
+[[blocks]]
+id = "t009"
+type = "table"
+headers = [
+  "Three Months",
+  "Nine Months",
+  "Periods Ended September 30",
+  "2009",
+  "2008",
+  "2009",
+  "2008",
+  "(in thousands except share/per share amounts)",
+  "Operating Revenues",
+  "Operating Costs and Expenses",
+  "Interest Expense",
+  "Provision (Benefit) for Income Taxes",
+  "Earnings Per Share",
+  "Weighted Average Common Shares Outstanding",
+]
+cells = [
+  { role = "corner", text = "113,642", row_header = "Gas marketing", col_header = "Three Months Periods Ended September 30 2009" },
+  { role = "right", text = "226,889", row_header = "Gas marketing", col_header = "Three Months Periods Ended September 30 2008" },
+  { role = "below", text = "1,805", row_header = "Oil sales", col_header = "Three Months Periods Ended September 30 2009" },
+]
+
+[[blocks]]
+id = "b070"
+type = "heading"
+level = 2
+start = "BALANCE SHEETS (Unaudited)"
+
+[[blocks]]
+id = "p018"
+type = "page_artifact"
+start = "Page 3 of 5"
+
+[[blocks]]
+id = "p019"
+type = "page_artifact"
+start = "Southwestern Energy Company and Subsidiaries"
+
+[[blocks]]
+id = "t010"
+type = "table"
+headers = [
+  "September 30",
+  "2009",
+  "2008",
+  "(in thousands)",
+  "ASSETS",
+  "LIABILITIES AND EQUITY",
+  "Equity",
+]
+cells = [
+  { role = "corner", text = "$ 533,836", row_header = "Current Assets", col_header = "September 30 2009" },
+  { role = "right", text = "$ 886,490", row_header = "Current Assets", col_header = "September 30 2008" },
+  { role = "below", text = "6,709,592", row_header = "Property and Equipment", col_header = "September 30 2009" },
+]
+
+[[blocks]]
+id = "b071"
+type = "footnote"
+start = "Current Liabilities include $1.2 million in 2009"
+end = "$61.2 million in 2008 of Senior Notes."
+
+[[blocks]]
+id = "b073"
+type = "heading"
+level = 2
+start = "STATEMENTS OF CASH FLOWS (Unaudited)"
+
+[[blocks]]
+id = "p020"
+type = "page_artifact"
+start = "Page 4 of 5"
+
+[[blocks]]
+id = "p021"
+type = "page_artifact"
+start = "Southwestern Energy Company and Subsidiaries"
+
+[[blocks]]
+id = "t011"
+type = "table"
+headers = [
+  "Nine Months",
+  "Periods Ended September 30",
+  "2009",
+  "2008",
+  "(in thousands)",
+  "Cash Flows From Operating Activities",
+  "Adjustments to reconcile net income to net cash provided by operating activities:",
+  "Cash Flows From Investing Activities",
+  "Cash Flows From Financing Activities",
+]
+cells = [
+  { role = "corner", text = "(60,600)", row_header = "Payments on short-term debt", col_header = "Nine Months Periods Ended September 30 2009" },
+  { role = "right", text = "(600)", row_header = "Payments on short-term debt", col_header = "Nine Months Periods Ended September 30 2008" },
+  { role = "below", text = "(879,400)", row_header = "Payments on revolving long-term debt", col_header = "Nine Months Periods Ended September 30 2009" },
+]
+
+[[blocks]]
+id = "b072"
+type = "footnote"
+start = "Cash and cash equivalents at the beginning of the year for 2008"
+end = "include $1.1 million classified as “held for sale.”"
+
+[[blocks]]
+id = "b074"
+type = "heading"
+level = 2
+start = "SEGMENT INFORMATION (Unaudited)"
+
+[[blocks]]
+id = "p022"
+type = "page_artifact"
+start = "Page 5 of 5"
+
+[[blocks]]
+id = "p023"
+type = "page_artifact"
+start = "Southwestern Energy Company and Subsidiaries"
+
+[[blocks]]
+id = "t012"
+type = "table"
+headers = [
+  "Exploration & Production",
+  "Midstream Services",
+  "Other(1)",
+  "Eliminations",
+  "Total",
+  "(in thousands)",
+  "Quarter Ending September 30, 2009",
+  "Quarter Ending September 30, 2008",
+  "Nine Months Ending September 30, 2009",
+  "Nine Months Ending September 30, 2008",
+]
+cells = [
+  { role = "corner", text = "55,584", row_header = "Operating expenses", col_header = "Quarter Ending September 30, 2009 Exploration & Production" },
+  { role = "right", text = "17,828", row_header = "Operating expenses", col_header = "Quarter Ending September 30, 2009 Midstream Services" },
+  { role = "below", text = "27,638", row_header = "General & administrative expenses", col_header = "Quarter Ending September 30, 2009 Exploration & Production" },
+]
+
+[[blocks]]
+id = "b075"
+type = "footnote"
+start = "The nine-month period ended September 30, 2008 includes operating results"
+end = "as a result, we no longer have any natural distribution operations."
+
+[[blocks]]
+id = "b076"
+type = "footnote"
+start = "Capital investments include reductions of $4.2 million and $12.4 million"
+end = "relating to the change in accrued expenditures between periods."
