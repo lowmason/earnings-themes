@@ -6,7 +6,7 @@ browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
 
 [[blocks]]
 id = "b001"
-type = "heading"
+type = "page_artifact"
 start = "EX-99.1 2 ex99-1.htm EXHIBIT 99.1 1Q07 FINANCIAL RESULTS"
 
 [[blocks]]
@@ -157,13 +157,16 @@ type = "page_artifact"
 start = "/more"
 
 [[blocks]]
+id = "b024"
+type = "heading"
+level = 2
+start = "SOUTHWEST AIRLINES CO. CONDENSED CONSOLIDATED STATEMENT OF INCOME"
+end = "(in millions, except per share amounts) (unaudited)"
+
+[[blocks]]
 id = "t001"
 type = "table"
 headers = [
-  "SOUTHWEST AIRLINES CO.",
-  "CONDENSED CONSOLIDATED STATEMENT OF INCOME",
-  "(in millions, except per share amounts)",
-  "(unaudited)",
   "Three months ended",
   "March 31,",
   "Percent",
@@ -183,14 +186,17 @@ type = "page_artifact"
 start = "/more"
 
 [[blocks]]
+id = "b025"
+type = "heading"
+level = 2
+start = "SOUTHWEST AIRLINES CO. RECONCILIATION OF REPORTED AMOUNTS TO ECONOMIC RESULTS (SEE NOTE)"
+end = "(in millions, except per share amounts) (unaudited)"
+
+[[blocks]]
 id = "t002"
 type = "table"
 unanchorable = true
 headers = [
-  "SOUTHWEST AIRLINES CO.",
-  "RECONCILIATION OF REPORTED AMOUNTS TO ECONOMIC RESULTS (SEE NOTE)",
-  "(in millions, except per share amounts)",
-  "(unaudited)",
   "Three Months Ended",
   "March 31,",
   "Percent",
@@ -205,18 +211,18 @@ cells = [
 ]
 
 [[blocks]]
-id = "b024"
+id = "b026"
 type = "heading"
 start = "Note regarding use of economic (non-GAAP) financial measures"
 
 [[blocks]]
-id = "b025"
+id = "b027"
 type = "paragraph"
 start = "The economic (non-GAAP) items and results referred to in this news release"
 end = "as defined in SFAS 133."
 
 [[blocks]]
-id = "b026"
+id = "b028"
 type = "paragraph"
 start = "The Company's management utilizes both the GAAP and the economic results"
 end = "excluding the unrealized impact of hedges that will settle in future periods."
@@ -227,12 +233,16 @@ type = "page_artifact"
 start = "/more"
 
 [[blocks]]
+id = "b029"
+type = "heading"
+level = 2
+start = "SOUTHWEST AIRLINES CO. COMPARATIVE CONSOLIDATED OPERATING STATISTICS"
+end = "COMPARATIVE CONSOLIDATED OPERATING STATISTICS (unaudited)"
+
+[[blocks]]
 id = "t003"
 type = "table"
 headers = [
-  "SOUTHWEST AIRLINES CO.",
-  "COMPARATIVE CONSOLIDATED OPERATING STATISTICS",
-  "(unaudited)",
   "Three months ended",
   "March 31,",
   "2007",
@@ -251,13 +261,16 @@ type = "page_artifact"
 start = "/more"
 
 [[blocks]]
+id = "b030"
+type = "heading"
+level = 2
+start = "SOUTHWEST AIRLINES CO. CONDENSED CONSOLIDATED BALANCE SHEET"
+end = "CONDENSED CONSOLIDATED BALANCE SHEET (in millions) (unaudited)"
+
+[[blocks]]
 id = "t004"
 type = "table"
 headers = [
-  "SOUTHWEST AIRLINES CO.",
-  "CONDENSED CONSOLIDATED BALANCE SHEET",
-  "(in millions)",
-  "(unaudited)",
   "March 31,",
   "December 31,",
   "2007",
@@ -275,14 +288,17 @@ type = "page_artifact"
 start = "/more"
 
 [[blocks]]
+id = "b031"
+type = "heading"
+level = 2
+start = "SOUTHWEST AIRLINES CO. CONDENSED CONSOLIDATED STATEMENT OF CASH FLOWS"
+end = "CONDENSED CONSOLIDATED STATEMENT OF CASH FLOWS (in millions) (unaudited)"
+
+[[blocks]]
 id = "t005"
 type = "table"
 unanchorable = true
 headers = [
-  "SOUTHWEST AIRLINES CO.",
-  "CONDENSED CONSOLIDATED STATEMENT OF CASH FLOWS",
-  "(in millions)",
-  "(unaudited)",
   "Three months ended",
   "March 31,",
   "2007",
@@ -300,12 +316,16 @@ type = "page_artifact"
 start = "/more"
 
 [[blocks]]
+id = "b032"
+type = "heading"
+level = 2
+start = "SOUTHWEST AIRLINES CO. 737-700 DELIVERY SCHEDULE"
+
+[[blocks]]
 id = "t006"
 type = "table"
 unanchorable = true
 headers = [
-  "SOUTHWEST AIRLINES CO.",
-  "737-700 DELIVERY SCHEDULE",
   "The Boeing Company",
   "Purchase",
   "Previously",
@@ -322,18 +342,17 @@ cells = [
 ]
 
 [[blocks]]
-id = "b027"
+id = "b033"
 type = "footnote"
 start = "Intend to lease two previously owned 737-700 aircraft"
 
 [[blocks]]
-id = "b028"
+id = "b034"
 type = "footnote"
 start = "2007 delivery dates: eight in first quarter, eleven in second quarter, eleven"
 end = "in third quarter and nine in fourth quarter."
 
-# CHECK: The final *** may be an end mark or a dangling footnote marker; confirm its type and boundary in the browser.
 [[blocks]]
-id = "b029"
-type = "paragraph"
+id = "b035"
+type = "page_artifact"
 start = "***"
