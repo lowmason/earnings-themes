@@ -624,6 +624,9 @@ development-set fetches, the register's policy check, and V1.
 > Roadmap: specs/evidence-linked-theme-extraction-roadmap.md, Stage 1 — on plan
 > completion, tick the stage and re-validate later stages against what shipped.
 
+> Stage 1: COMPLETE (2026-09-25) — implemented by plan 1 (specs/plans/completed/1-release-parser-fidelity.md).
+> Next: resume the roadmap.
+
 On completion, also refresh the "Current state" section of `CLAUDE.md`: the
 fixtures, source register, harness, and records now exist. In the handoff, state
 which commands ran, including every live run and its request count. Also state

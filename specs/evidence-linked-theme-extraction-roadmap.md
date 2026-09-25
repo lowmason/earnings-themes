@@ -17,6 +17,11 @@ stage shipped. **`P` cites that spec**: `P-C1`–`P-C7` are its Decisions rows,
 its deterministic-fixture, offline-integration, and optional-live verification
 groups, and `P §Section` cites a section by name.
 
+Reconciled 2026-09-25 after Stage 1 shipped (plan 1): Stage 1 is ticked, and
+Stages 2, 3 and 5 now name the Stage 1 records they consume. Stage 1's fixture
+gold was drafted by Codex under the Stage 1 spec's F9 and verified block by block
+by the user, rather than hand-marked as its Produces line says.
+
 ## Gap analysis
 
 ¹ Searched `packages/*/src`, `apps/*/src`, `tests/{contracts,fixtures,integration}`,
@@ -167,7 +172,7 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
 
 ## Stages
 
-- [ ] Stage 1: Acquisition-library and parser fidelity (investigation)
+- [x] Stage 1: Acquisition-library and parser fidelity (investigation)
       Objective: Establish by measurement which parser yields faithful typed elements on real releases, and what the pinned acquisition library returns.
       Spec: V1, V2 (discharging the open markers in R14.5 and R4.1); R1.3 for live fetches; A §242, A §425 for fixtures.
       Gap closed: V1, V2.
@@ -180,7 +185,7 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Objective: Give `earnings-core` the contracts and exactness validator that every later stage builds on.
       Spec: R3.1–R3.4 (contracts), R4.1 (element contract), R5.4, R5.5, R6.1, R13.2, V9; A §193.
       Gap closed: R3.2, R3.3, R5.4, R5.5, R6.1, R13.2; V9 (all cases except normalization and sentence splitting); Dev tooling row.
-      Consumes: Stage 1 decision record (element types and nesting observed on fixtures).
+      Consumes: Stage 1's decision record, ADR 0001, and V2's element types and nesting observed in the fixtures' gold.
       Produces: `earnings-core` contracts for a hashed, versioned canonical document, typed elements with stable IDs and code-point spans, overlay masks, and prefix/suffix span locators; an R6.1 validator with no tolerance parameter; root pytest configuration with a registered `live` marker and collision-safe test imports.
       Exit: `uv run --locked --all-packages pytest packages apps tests -m "not live"` passes the Stage 2 V9 cases, each failure class rejected with a recorded reason (R3.2/R3.3/R5.4/R5.5/R6.1/R13.2); a test shows applying a mask leaves the canonical hash unchanged; the pytest configuration registers `live` (Dev tooling row).
       ROUTING: writing-plans
@@ -189,7 +194,7 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Objective: Turn saved release bytes into hashed, versioned canonical documents with typed elements, quarantined table cells, and boilerplate masks.
       Spec: R3.1, R3.4 (versioned policy), R3.5, R4.1–R4.3, V9; A §498–516.
       Gap closed: R3.1, R3.5, R4.1, R4.2, R4.3; V9 (normalization, sentence splitting).
-      Consumes: Stage 1 parser decision and fixtures; Stage 2 contracts and validator.
+      Consumes: Stage 1 parser decision (ADR 0001), V2's residual failures and findings for Stage 3, and the fixtures with their gold; Stage 2 contracts and validator.
       Produces: an ingestion canonicalizer from saved bytes plus metadata to a canonical document version, with no network client; table cells stored as cell evidence with header context; OCR-derived elements flagged; masks from a versioned boilerplate policy; a repeatable R3.5 fidelity check.
       Exit: every Stage 1 fixture canonicalizes offline and passes the Stage 2 validator (R3.1/R4.1); a test shows no narrative element contains table-cell text (R4.2); a test shows OCR-derived text flagged and never verified as an original quotation (R4.3); V9 normalization and financial-abbreviation/decimal splitting cases pass; an R3.5 fidelity report on a sample covers all six named categories (R3.5).
       ROUTING: brainstorming
@@ -207,7 +212,7 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Objective: Resolve expected earnings events and their first supported publication, freeze the eligible-event and 40-event pilot manifests, and only then acquire the selected releases from EDGAR.
       Spec: R1.1–R1.5, R14.5; A §391–427; P-C2, P-C5, P-C7, P-A5; P §Stage 5 — Event discovery, eligibility, and acquisition, §Temporal definitions, §Data contracts (expected event, pilot selection), §Deterministic pilot selection, §Failure handling.
       Gap closed: R1.1, R1.2, R1.3, R1.4, R1.5, R14.5; P-C2 (the event join), P-C5, P-C7 (the freeze-before-outcomes half), P-A5; P-VF (period-window, eligibility-reason, and selection cases), P-VI.
-      Consumes: the frozen Stage 4 cohort — universe manifest, membership intervals, and security-to-issuer resolution with CIK evidence; Stage 1 V1 findings; Stage 2 contracts; Stage 3 canonicalizer (content inspection for R1.2/R1.5).
+      Consumes: the frozen Stage 4 cohort — universe manifest, membership intervals, and security-to-issuer resolution with CIK evidence; Stage 1 V1 findings and V2's finding for Stage 5 (a filing's only EX-99 is not necessarily its press release); Stage 2 contracts; Stage 3 canonicalizer (content inspection for R1.2/R1.5).
       Produces: an expected issuer-period event ledger over the eight period-end quarters in `[2024-07-01, 2026-07-01)`; release discovery that keeps `period_end`, the issuer's `reported_fiscal_year`/`reported_fiscal_quarter`, `first_publication_time`, `filing_acceptance_time`, and `retrieved_at` as separate fields; a per-event eligibility decision of `eligible`, `ineligible`, or `ambiguous` with its `eligibility_reason`; a frozen eligible-event manifest with a content hash; a frozen 40-event pilot manifest whose rows each record `issuer_coverage`, `membership_boundary`, `quarter_coverage`, or `longitudinal_fill`, plus the selection seed, policy version, and eligible-event manifest hash; an opt-in live EDGAR adapter behind the shared 2 req/s limiter with its User-Agent configured outside Git; immutable raw snapshots with retrieval metadata; a per-document processing-state table including expected-but-absent documents with a `missing_reason`; offline replay from saved responses.
       Exit: the six-step order in `P §Stage 5` is enforced and tested — both manifests freeze before any acquisition, parse, retention, or theme outcome exists, and a test shows the pilot manifest unchanged after acquisition and parser statuses change (P-C7); a selected event stays selected when acquisition, parsing, extraction, or support assessment fails; releases immediately before and after a membership transition resolve to the correct side, and a same-day transition without sufficient ordering precision stays `ambiguous` with no invented time (P-C2); an issuer with several securities yields one expected event per period (P-VF); both period-window boundaries and all three eligibility reasons are covered by fixtures (P-VF); shuffled input order yields a byte-identical pilot manifest that represents every eligible issuer and all eight quarters, and the underfilled, blocked, and mandatory-coverage-overflow cases each stop or mark the pilot as `P §Deterministic pilot selection` requires (P-C5); with at least 40 eligible events the pilot holds exactly 40, every row records its `selection_reason`, and fixtures cover the membership-boundary and repeated-issuer reasons (P-VF); changing membership evidence, issuer resolution, the event corpus, or the selection policy invalidates the manifest and produces a new version and hash (P-VF); freezing the eligible-event manifest refuses unresolved issuer identity or event eligibility unless the record is retained as unresolved and excluded with its reason (P §Failure handling); event records keep `period_end`, the reported fiscal labels, `first_publication_time`, `filing_acceptance_time`, and `retrieved_at` as separate fields, and EDGAR acceptance time establishes first publication only when no earlier supported public source exists, with an unknown time staying unknown (R1.5, P-A5); offline replay of saved EDGAR responses identifies the fixture issuers' releases, including a narrative-only release and alternative exhibit numbering (R1.1/R1.2); tests hold concurrent workers at or below 2 req/s and stop on a persistent 403 without rotating identity (R1.3); the state table represents every R1.4 state from fixtures (R1.4); library output is Polars at the boundary, or V1's vacuity is recorded (R14.5).
       ROUTING: brainstorming
