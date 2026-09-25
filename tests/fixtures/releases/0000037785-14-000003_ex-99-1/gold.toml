@@ -6,10 +6,9 @@ browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
 
 [[blocks]]
 id = "b001"
-type = "paragraph"
+type = "page_artifact"
 start = "EX-99.1 2 fmcex99112312013.htm PRESS RELEASE"
 
-# CHECK: The "Exhibit 99.1" label may be a heading or paragraph; its level is unclear.
 [[blocks]]
 id = "b002"
 type = "heading"
@@ -27,10 +26,9 @@ type = "paragraph"
 start = "1735 Market Street Philadelphia,"
 end = "Philadelphia, PA 19103 USA"
 
-# CHECK: "News Release" may be a heading or a short letterhead label; its level is unclear.
 [[blocks]]
 id = "b005"
-type = "heading"
+type = "paragraph"
 start = "News Release"
 
 [[blocks]]
@@ -371,10 +369,9 @@ id = "p010"
 type = "page_artifact"
 start = "Page 6/ FMC Corporation Announces Fourth Quarter Results"
 
-# CHECK: This repeated-star end mark may be a paragraph or a page artifact.
 [[blocks]]
 id = "b052"
-type = "paragraph"
+type = "page_artifact"
 start = "*****    *****    *****    *****    *****    *****    *****    *****    *****    *****"
 
 [[blocks]]
@@ -389,19 +386,22 @@ type = "paragraph"
 start = "Safe Harbor Statement under the Private Securities Act of 1995:"
 end = "Historical information is not necessarily indicative of future performance."
 
-# CHECK: This hash end mark may be a paragraph or a page artifact.
 [[blocks]]
 id = "b055"
-type = "paragraph"
+type = "page_artifact"
 start = "# # #"
+
+[[blocks]]
+id = "b056"
+type = "heading"
+level = 2
+start = "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES CONDENSED CONSOLIDATED STATEMENTS OF OPERATIONS"
+end = "CONDENSED CONSOLIDATED STATEMENTS OF OPERATIONS (Unaudited, in millions, except per share amounts)"
 
 [[blocks]]
 id = "t001"
 type = "table"
 headers = [
-  "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES",
-  "CONDENSED CONSOLIDATED STATEMENTS OF OPERATIONS",
-  "(Unaudited, in millions, except per share amounts)",
   "Three Months Ended",
   "Twelve Months Ended",
   "December 31",
@@ -422,12 +422,16 @@ cells = [
 ]
 
 [[blocks]]
+id = "b057"
+type = "heading"
+level = 2
+start = "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES SCHEDULE OF ADJUSTED EARNINGS FROM CONTINUING OPERATIONS (NON-GAAP)(2)"
+end = "SCHEDULE OF ADJUSTED EARNINGS FROM CONTINUING OPERATIONS (NON-GAAP)(2) (Unaudited, in millions, except per share amounts)"
+
+[[blocks]]
 id = "t002"
 type = "table"
 headers = [
-  "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES",
-  "SCHEDULE OF ADJUSTED EARNINGS FROM CONTINUING OPERATIONS (NON-GAAP)(2)",
-  "(Unaudited, in millions, except per share amounts)",
   "Three Months Ended",
   "Twelve Months Ended",
   "December 31",
@@ -443,42 +447,42 @@ cells = [
   { role = "below", text = "1,345.6", row_header = "Gross margin", col_header = "Twelve Months Ended December 31 2013" },
 ]
 
-# CHECK: This underscore separator may be a paragraph or a page artifact.
 [[blocks]]
-id = "b056"
-type = "paragraph"
+id = "b058"
+type = "page_artifact"
 start = "___________________"
 unanchorable = true
 
 [[blocks]]
-id = "b057"
+id = "b059"
 type = "footnote"
 start = "Referred to as Adjusted Operating Profit."
 unanchorable = true
 
 [[blocks]]
-id = "b058"
+id = "b060"
 type = "footnote"
 start = "The Company believes that the Non-GAAP financial measure"
 end = "is not in accordance with GAAP."
 
 [[blocks]]
-id = "b059"
+id = "b061"
 type = "paragraph"
 start = "Please see the reconciliation of"
 end = "Non-GAAP financial measures to GAAP financial results."
+
+[[blocks]]
+id = "b062"
+type = "heading"
+level = 2
+start = "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES RECONCILIATION OF NON-GAAP FINANCIAL MEASURES RECONCILIATION OF NET INCOME ATTRIBUTABLE TO FMC STOCKHOLDERS (GAAP)"
+end = "TO ADJUSTED AFTER-TAX EARNINGS FROM CONTINUING OPERATIONS, ATTRIBUTABLE TO FMC STOCKHOLDERS (NON-GAAP) (Unaudited, in millions, except per share amounts)"
 
 [[blocks]]
 id = "t003"
 type = "table"
 unanchorable = true
 headers = [
-  "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES",
-  "RECONCILIATION OF NON-GAAP FINANCIAL MEASURES",
-  "RECONCILIATION OF NET INCOME ATTRIBUTABLE TO FMC STOCKHOLDERS (GAAP)",
-  "TO ADJUSTED AFTER-TAX EARNINGS FROM CONTINUING OPERATIONS,",
-  "ATTRIBUTABLE TO FMC STOCKHOLDERS (NON-GAAP)",
-  "(Unaudited, in millions, except per share amounts)",
   "Three Months Ended",
   "Twelve Months Ended",
   "December 31",
@@ -494,98 +498,96 @@ cells = [
   { role = "below", text = "0.07", row_header = "Acquisition related charges per diluted share, before tax", col_header = "Twelve Months Ended December 31 2013" },
 ]
 
-# CHECK: This underscore separator may be a paragraph or a page artifact.
 [[blocks]]
-id = "b060"
-type = "paragraph"
+id = "b063"
+type = "page_artifact"
 start = "____________________"
 unanchorable = true
 
 [[blocks]]
-id = "b061"
+id = "b064"
 type = "footnote"
 start = "Discontinued operations for all periods presented"
 end = "to sell FMC Peroxygens for $200 million."
 
-# CHECK: This dated subtitle may be a separate footnote block or part of the following paragraph.
 [[blocks]]
-id = "b062"
+id = "b065"
 type = "footnote"
 start = "Three Months Ended December 31, 2013:"
 after = "Restructuring and other charges (income) for the three months ended December 31, 2013, represents"
 
 [[blocks]]
-id = "b063"
+id = "b066"
 type = "footnote"
 start = "Restructuring and other charges (income) for the three months ended December 31, 2013, represents"
 end = "net miscellaneous charges of $0.6 million."
 
-# CHECK: This dated subtitle may be a separate footnote block or part of the following paragraph.
 [[blocks]]
-id = "b064"
+id = "b067"
 type = "footnote"
 start = "Three Months Ended December 31, 2012:"
 after = "Restructuring and other charges (income) for the three months ended December 31, 2012, primarily included"
 
 [[blocks]]
-id = "b065"
+id = "b068"
 type = "footnote"
 start = "Restructuring and other charges (income) for the three months ended December 31, 2012, primarily included"
 end = "net miscellaneous charges of $2.8 million."
 
-# CHECK: This dated subtitle may be a separate footnote block or part of the following paragraph.
 [[blocks]]
-id = "b066"
+id = "b069"
 type = "footnote"
 start = "Twelve Months Ended December 31, 2013:"
 after = "Restructuring and other charges (income) for the twelve months ended December 31, 2013, include"
 
 [[blocks]]
-id = "b067"
+id = "b070"
 type = "footnote"
 start = "Restructuring and other charges (income) for the twelve months ended December 31, 2013, include"
 end = "include net miscellaneous charges of $0.5 million."
 
-# CHECK: This dated subtitle may be a separate footnote block or part of the following paragraph.
 [[blocks]]
-id = "b068"
+id = "b071"
 type = "footnote"
 start = "Twelve Months Ended December 31, 2012:"
 after = "Restructuring and other charges (income) for the twelve months ended December 31, 2012, primarily include"
 
 [[blocks]]
-id = "b069"
+id = "b072"
 type = "footnote"
 start = "Restructuring and other charges (income) for the twelve months ended December 31, 2012, primarily include"
 end = "include net miscellaneous charges of $4.0 million."
 
 [[blocks]]
-id = "b070"
+id = "b073"
 type = "footnote"
 start = "Our non-operating pension and postretirement costs are defined"
 end = "employment benefits provided to active employees."
 
 [[blocks]]
-id = "b071"
+id = "b074"
 type = "footnote"
 start = "Charges related to the expensing of the inventory fair value step-up"
 end = 'included in "Selling, general and administrative expenses".'
 
 [[blocks]]
-id = "b072"
+id = "b075"
 type = "footnote"
 start = "The tax charges in the three and twelve months ended December 31, 2013"
 end = "state net operating losses expected to be recoverable in future years."
+
+[[blocks]]
+id = "b076"
+type = "heading"
+level = 2
+start = "RECONCILIATION OF NET INCOME (GAAP) TO ADJUSTED EARNINGS FROM CONTINUING OPERATIONS, BEFORE INTEREST AND INCOME TAXES"
+end = "BEFORE INTEREST AND INCOME TAXES (NON-GAAP) (Unaudited, in millions, except per share amounts)"
 
 [[blocks]]
 id = "t004"
 type = "table"
 unanchorable = true
 headers = [
-  "RECONCILIATION OF NET INCOME (GAAP) TO",
-  "ADJUSTED EARNINGS FROM CONTINUING OPERATIONS, BEFORE INTEREST AND INCOME TAXES",
-  "(NON-GAAP)",
-  "(Unaudited, in millions, except per share amounts)",
   "Three Months Ended",
   "Twelve Months Ended",
   "December 31",
@@ -601,26 +603,29 @@ cells = [
   { role = "below", text = "0.6", row_header = "Restructuring and other charges (income)", col_header = "Three Months Ended December 31 2013" },
 ]
 
-# CHECK: This underscore separator may be a paragraph or a page artifact.
 [[blocks]]
-id = "b073"
-type = "paragraph"
+id = "b077"
+type = "page_artifact"
 start = "___________________"
 unanchorable = true
 
 [[blocks]]
-id = "b074"
+id = "b078"
 type = "footnote"
 start = "Referred to as Adjusted Operating Profit."
 after = "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES INDUSTRY SEGMENT DATA"
 
 [[blocks]]
+id = "b079"
+type = "heading"
+level = 2
+start = "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES INDUSTRY SEGMENT DATA"
+end = "INDUSTRY SEGMENT DATA (Unaudited, in millions)"
+
+[[blocks]]
 id = "t005"
 type = "table"
 headers = [
-  "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES",
-  "INDUSTRY SEGMENT DATA",
-  "(Unaudited, in millions)",
   "Three Months Ended",
   "Twelve Months Ended",
   "December 31",
@@ -638,63 +643,63 @@ cells = [
   { role = "below", text = "168.1", row_header = "FMC Health and Nutrition", col_header = "Three Months Ended December 31 2012" },
 ]
 
-# CHECK: This underscore separator may be a paragraph or a page artifact.
 [[blocks]]
-id = "b075"
-type = "paragraph"
+id = "b080"
+type = "page_artifact"
 start = "____________________"
 unanchorable = true
 
-# CHECK: This dated subtitle may be a separate footnote block or part of a four-period footnote.
 [[blocks]]
-id = "b076"
+id = "b081"
 type = "footnote"
 start = "Three Months Ended December 31, 2013: Amounts related"
 end = "Corporate charges of $3.6 million."
 
-# CHECK: This dated subtitle may be a separate footnote block or part of a four-period footnote.
 [[blocks]]
-id = "b077"
+id = "b082"
 type = "footnote"
 start = "Three Months Ended December 31, 2012: Amounts related"
 end = "Corporate charges of $2.3 million."
 
-# CHECK: This dated subtitle may be a separate footnote block or part of a four-period footnote.
 [[blocks]]
-id = "b078"
+id = "b083"
 type = "footnote"
 start = "Twelve Months Ended December 31, 2013: Amounts related"
 end = "Corporate charges of $7.9 million."
 
-# CHECK: This dated subtitle may be a separate footnote block or part of a four-period footnote.
 [[blocks]]
-id = "b079"
+id = "b084"
 type = "footnote"
 start = "Twelve Months Ended December 31, 2012: Amounts related"
 end = "Corporate charges of $5.3 million."
 
 [[blocks]]
-id = "b080"
+id = "b085"
 type = "footnote"
 start = 'See Note (c) to the schedule “Reconciliation of Net Income Attributable to FMC Stockholders (GAAP) to Adjusted After-Tax Earnings from Continuing Operations, Attributable to FMC Stockholders (Non-GAAP)” for further details on the components that make up this line item.'
 
 [[blocks]]
-id = "b081"
+id = "b086"
 type = "footnote"
 start = 'See Note (d) to the schedule “Reconciliation of Net Income Attributable to FMC Stockholders (GAAP) to Adjusted After-Tax Earnings from Continuing Operations, Attributable to FMC Stockholders (Non-GAAP)” for further details on the components that make up this line item.'
 
 [[blocks]]
-id = "b082"
+id = "b087"
 type = "footnote"
 start = 'See Note (a) to the schedule “Reconciliation of Net Income Attributable to FMC Stockholders (GAAP) to Adjusted After-Tax Earnings from Continuing Operations, Attributable to FMC Stockholders (Non-GAAP)” for further details on the components that make up this line item.'
+
+[[blocks]]
+id = "b088"
+type = "heading"
+level = 2
+start = "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES CONDENSED CONSOLIDATED BALANCE SHEETS"
+end = "SUBSIDIARIES CONDENSED CONSOLIDATED BALANCE SHEETS (Unaudited, in millions)"
+
 
 [[blocks]]
 id = "t006"
 type = "table"
 headers = [
-  "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES",
-  "CONDENSED CONSOLIDATED BALANCE SHEETS",
-  "(Unaudited, in millions)",
   "December 31, 2013",
   "December 31, 2012",
 ]
@@ -705,12 +710,16 @@ cells = [
 ]
 
 [[blocks]]
+id = "b089"
+type = "heading"
+level = 2
+start = "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES CONDENSED CONSOLIDATED STATEMENTS OF CASH FLOWS"
+end = "CONDENSED CONSOLIDATED STATEMENTS OF CASH FLOWS (Unaudited, in millions)"
+
+[[blocks]]
 id = "t007"
 type = "table"
 headers = [
-  "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES",
-  "CONDENSED CONSOLIDATED STATEMENTS OF CASH FLOWS",
-  "(Unaudited, in millions)",
   "Year ended December 31",
   "2013",
   "2012",
