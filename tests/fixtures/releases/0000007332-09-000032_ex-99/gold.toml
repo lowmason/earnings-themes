@@ -591,12 +591,16 @@ id = "b067"
 type = "heading"
 level = 2
 start = "OPERATING STATISTICS (Unaudited)"
-end = "Page 1 of 5 Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "p014"
 type = "page_artifact"
 start = "Page 1 of 5"
+
+[[blocks]]
+id = "p015"
+type = "page_artifact"
+start = "Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "t008"
@@ -626,12 +630,16 @@ id = "b069"
 type = "heading"
 level = 2
 start = "STATEMENTS OF OPERATIONS (Unaudited)"
-end = "Page 2 of 5 Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "p016"
 type = "page_artifact"
 start = "Page 2 of 5"
+
+[[blocks]]
+id = "p017"
+type = "page_artifact"
+start = "Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "t009"
@@ -663,12 +671,16 @@ id = "b070"
 type = "heading"
 level = 2
 start = "BALANCE SHEETS (Unaudited)"
-end = "Page 3 of 5 Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "p018"
 type = "page_artifact"
 start = "Page 3 of 5"
+
+[[blocks]]
+id = "p019"
+type = "page_artifact"
+start = "Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "t010"
@@ -699,12 +711,16 @@ id = "b073"
 type = "heading"
 level = 2
 start = "STATEMENTS OF CASH FLOWS (Unaudited)"
-end = "Page 4 of 5 Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "p020"
 type = "page_artifact"
 start = "Page 4 of 5"
+
+[[blocks]]
+id = "p021"
+type = "page_artifact"
+start = "Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "t011"
@@ -737,12 +753,16 @@ id = "b074"
 type = "heading"
 level = 2
 start = "SEGMENT INFORMATION (Unaudited)"
-end = "Page 5 of 5 Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "p022"
 type = "page_artifact"
 start = "Page 5 of 5"
+
+[[blocks]]
+id = "p023"
+type = "page_artifact"
+start = "Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "t012"
