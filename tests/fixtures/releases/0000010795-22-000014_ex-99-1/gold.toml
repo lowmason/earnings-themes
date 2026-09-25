@@ -434,7 +434,7 @@ start = "BD is one of the largest global medical technology companies"
 end = "please visit bd.com or connect with us on LinkedIn at www.linkedin.com/company/bd1/ and Twitter @BDandCo."
 
 [[blocks]]
-id = "p001"
+id = "p002"
 type = "page_artifact"
 start = "***"
 
@@ -445,12 +445,16 @@ start = "This press release contains certain estimates and other forward-looking
 end = "after the date hereof except as required by applicable laws or regulations."
 
 [[blocks]]
+id = "b063"
+type = "heading"
+level = 2
+start = "BECTON DICKINSON AND COMPANY CONDENSED CONSOLIDATED INCOME STATEMENTS"
+end = "(Unaudited; Amounts in millions, except share and per share data)"
+
+[[blocks]]
 id = "t004"
 type = "table"
 headers = [
-  "BECTON DICKINSON AND COMPANY",
-  "CONDENSED CONSOLIDATED INCOME STATEMENTS",
-  "(Unaudited; Amounts in millions, except share and per share data)",
   "Three Months Ended December 31,",
   "2021",
   "2020",
@@ -465,17 +469,21 @@ cells = [
 ]
 
 [[blocks]]
-id = "p002"
+id = "p003"
 type = "page_artifact"
 start = "Page 1"
+
+[[blocks]]
+id = "b064"
+type = "heading"
+level = 2
+start = "BECTON DICKINSON AND COMPANY CONDENSED CONSOLIDATED BALANCE SHEETS"
+end = "(Amounts in millions)"
 
 [[blocks]]
 id = "t005"
 type = "table"
 headers = [
-  "BECTON DICKINSON AND COMPANY",
-  "CONDENSED CONSOLIDATED BALANCE SHEETS",
-  "(Amounts in millions)",
   "December 31, 2021",
   "September 30, 2021",
   "(Unaudited)",
@@ -489,17 +497,21 @@ cells = [
 ]
 
 [[blocks]]
-id = "p003"
+id = "p004"
 type = "page_artifact"
 start = "Page 2"
+
+[[blocks]]
+id = "b065"
+type = "heading"
+level = 2
+start = "BECTON DICKINSON AND COMPANY CONDENSED CONSOLIDATED STATEMENTS OF CASH FLOWS"
+end = "CASH FLOWS (Unaudited; Amounts in millions)"
 
 [[blocks]]
 id = "t006"
 type = "table"
 headers = [
-  "BECTON DICKINSON AND COMPANY",
-  "CONDENSED CONSOLIDATED STATEMENTS OF CASH FLOWS",
-  "(Unaudited; Amounts in millions)",
   "Three Months Ended December 31,",
   "2021",
   "2020",
@@ -514,19 +526,21 @@ cells = [
 ]
 
 [[blocks]]
-id = "p004"
+id = "p005"
 type = "page_artifact"
 start = "Page 3"
+
+[[blocks]]
+id = "b066"
+type = "heading"
+level = 2
+start = "BECTON DICKINSON AND COMPANY SUPPLEMENTAL REVENUE INFORMATION REVENUES BY BUSINESS SEGMENTS AND UNITS - UNITED STATES"
+end = "REVENUES BY BUSINESS SEGMENTS AND UNITS - UNITED STATES Three Months Ended December 31, (Unaudited; Amounts in millions)"
 
 [[blocks]]
 id = "t007"
 type = "table"
 headers = [
-  "BECTON DICKINSON AND COMPANY",
-  "SUPPLEMENTAL REVENUE INFORMATION",
-  "REVENUES BY BUSINESS SEGMENTS AND UNITS - UNITED STATES",
-  "Three Months Ended December 31,",
-  "(Unaudited; Amounts in millions)",
   "A",
   "B",
   "C=(A-B)/B",
@@ -544,19 +558,21 @@ cells = [
 ]
 
 [[blocks]]
-id = "p005"
+id = "p006"
 type = "page_artifact"
 start = "Page 4"
+
+[[blocks]]
+id = "b067"
+type = "heading"
+level = 2
+start = "BECTON DICKINSON AND COMPANY SUPPLEMENTAL REVENUE INFORMATION REVENUES BY BUSINESS SEGMENTS AND UNITS - INTERNATIONAL"
+end = "REVENUES BY BUSINESS SEGMENTS AND UNITS - INTERNATIONAL Three Months Ended December 31, (continued) (Unaudited; Amounts in millions)"
 
 [[blocks]]
 id = "t008"
 type = "table"
 headers = [
-  "BECTON DICKINSON AND COMPANY",
-  "SUPPLEMENTAL REVENUE INFORMATION",
-  "REVENUES BY BUSINESS SEGMENTS AND UNITS - INTERNATIONAL",
-  "Three Months Ended December 31, (continued)",
-  "(Unaudited; Amounts in millions)",
   "D=(A-B)/B",
   "E=(A-B-C)/B",
   "A",
@@ -579,20 +595,22 @@ cells = [
 ]
 
 [[blocks]]
-id = "p006"
+id = "p007"
 type = "page_artifact"
 start = "Page 5"
+
+[[blocks]]
+id = "b068"
+type = "heading"
+level = 2
+start = "BECTON DICKINSON AND COMPANY SUPPLEMENTAL REVENUE INFORMATION REVENUES BY BUSINESS SEGMENTS AND UNITS - TOTAL"
+end = "REVENUES BY BUSINESS SEGMENTS AND UNITS - TOTAL Three Months Ended December 31, (continued) (Unaudited; Amounts in millions)"
 
 [[blocks]]
 id = "t009"
 type = "table"
 unanchorable = true
 headers = [
-  "BECTON DICKINSON AND COMPANY",
-  "SUPPLEMENTAL REVENUE INFORMATION",
-  "REVENUES BY BUSINESS SEGMENTS AND UNITS - TOTAL",
-  "Three Months Ended December 31, (continued)",
-  "(Unaudited; Amounts in millions)",
   "D=(A-B)/B",
   "E=(A-B-C)/B",
   "A",
@@ -615,20 +633,22 @@ cells = [
 ]
 
 [[blocks]]
-id = "p007"
+id = "p008"
 type = "page_artifact"
 start = "Page 6"
+
+[[blocks]]
+id = "b069"
+type = "heading"
+level = 2
+start = "BECTON DICKINSON AND COMPANY SUPPLEMENTAL REVENUE INFORMATION RECONCILIATION OF REPORTED REVENUE CHANGE TO BASE REVENUE CHANGE"
+end = "RECONCILIATION OF REPORTED REVENUE CHANGE TO BASE REVENUE CHANGE Three Months Ended December 31, (Unaudited; Amounts in millions)"
 
 [[blocks]]
 id = "t010"
 type = "table"
 unanchorable = true
 headers = [
-  "BECTON DICKINSON AND COMPANY",
-  "SUPPLEMENTAL REVENUE INFORMATION",
-  "RECONCILIATION OF REPORTED REVENUE CHANGE TO BASE REVENUE CHANGE",
-  "Three Months Ended December 31,",
-  "(Unaudited; Amounts in millions)",
   "D=(A-B)/B",
   "E=(A-B-C)/B",
   "A",
@@ -648,19 +668,22 @@ cells = [
 ]
 
 [[blocks]]
-id = "p008"
+id = "p009"
 type = "page_artifact"
 start = "Page 7"
+
+[[blocks]]
+id = "b070"
+type = "heading"
+level = 2
+start = "BECTON DICKINSON AND COMPANY SUPPLEMENTAL REVENUE INFORMATION RECONCILIATION OF REPORTED DILUTED EPS TO ADJUSTED DILUTED EPS"
+end = "RECONCILIATION OF REPORTED DILUTED EPS TO ADJUSTED DILUTED EPS Three Months Ended December 31, (Unaudited)"
 
 [[blocks]]
 id = "t011"
 type = "table"
 unanchorable = true
 headers = [
-  "BECTON DICKINSON AND COMPANY",
-  "SUPPLEMENTAL INFORMATION",
-  "RECONCILIATION OF REPORTED DILUTED EPS TO ADJUSTED DILUTED EPS",
-  "(Unaudited)",
   "Three Months Ended December 31,",
   "2021",
   "2020",
@@ -677,52 +700,55 @@ cells = [
 ]
 
 [[blocks]]
-id = "b063"
+id = "b071"
 type = "footnote"
 unanchorable = true
 start = "Includes amortization and other adjustments related to the purchase accounting for acquisitions impacting identified intangible assets and valuation of fixed assets and debt."
 
 [[blocks]]
-id = "b064"
+id = "b072"
 type = "footnote"
 unanchorable = true
 start = "Represents amounts associated with integration and restructuring activities resulting from acquisitions, as well as simplification and other cost saving initiatives."
 
 [[blocks]]
-id = "b065"
+id = "b073"
 type = "footnote"
 unanchorable = true
 start = "Represents costs recorded to Other operating expense, net which were incurred for consulting, legal, tax and other advisory services associated with the planned spin-off of BD's Diabetes Care business."
 
 [[blocks]]
-id = "b066"
+id = "b074"
 type = "footnote"
 start = "Represents costs required to develop processes and systems to comply with regulations such as the European Union Medical Device Regulation"
 end = 'European Union Medical Device Regulation ("EUMDR") and General Data Protection Regulation ("GDPR").'
 
 [[blocks]]
-id = "b067"
+id = "b075"
 type = "footnote"
 start = "The current-period amount includes unrealized losses recorded within Other income, net relating to certain investments."
 
 [[blocks]]
-id = "b068"
+id = "b076"
 type = "footnote"
 start = "Represents the dilutive impact of convertible preferred shares outstanding"
 end = "at December 31, 2020 were 299,107."
 
 [[blocks]]
-id = "p008"
+id = "p010"
 type = "page_artifact"
 start = "Page 8"
+
+[[blocks]]
+id = "b077"
+type = "heading"
+level = 2
+start = "BECTON DICKINSON AND COMPANY SUPPLEMENTAL INFORMATION FY 2022 OUTLOOK RECONCILIATION"
 
 [[blocks]]
 id = "t012"
 type = "table"
 headers = [
-  "BECTON DICKINSON AND COMPANY",
-  "SUPPLEMENTAL INFORMATION",
-  "FY 2022 OUTLOOK RECONCILIATION",
   "Full Year FY2021",
   "Full Year FY2022 Outlook",
   "($ in millions)",
@@ -751,45 +777,45 @@ cells = [
 ]
 
 [[blocks]]
-id = "b069"
+id = "b078"
 type = "paragraph"
 start = "Note - Base Business Revenues denotes total revenues less estimated revenues for COVID-19 only diagnostic testing"
 
 [[blocks]]
-id = "b070"
+id = "b079"
 type = "footnote"
 unanchorable = true
 start = "Includes amortization and other adjustments related to the purchase accounting for acquisitions impacting identified intangible assets and valuation of fixed assets and debt."
 
 [[blocks]]
-id = "b071"
+id = "b080"
 type = "footnote"
 unanchorable = true
 start = "Represents amounts associated with integration and restructuring activities resulting from acquisitions, as well as simplification and other cost saving initiatives."
 
 [[blocks]]
-id = "b072"
+id = "b081"
 type = "footnote"
 unanchorable = true
 start = "Represents costs recorded to Other operating expense, net which were incurred for consulting, legal, tax and other advisory services associated with the planned spin-off of BD's Diabetes Care business."
 
 [[blocks]]
-id = "b073"
+id = "b082"
 type = "footnote"
 start = "Includes gains of $158 million on sale-leaseback transactions"
 end = "estimate of future product remediation costs."
 
 [[blocks]]
-id = "b074"
+id = "b083"
 type = "footnote"
 start = "Represents costs required to develop processes and systems to comply with regulations such as the EUMDR and GDPR."
 
 [[blocks]]
-id = "b075"
+id = "b084"
 type = "footnote"
 start = "Includes unrealized gains recorded within Other (expense) income, net relating to certain investments."
 
 [[blocks]]
-id = "p009"
+id = "p012"
 type = "page_artifact"
 start = "Page 9"
