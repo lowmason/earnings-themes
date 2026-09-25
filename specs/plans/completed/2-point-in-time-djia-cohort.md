@@ -90,7 +90,7 @@ Re-run this before Task 1 and read the result, rather than trusting the numbers
 here:
 
 ```bash
-cd /Users/lowell/Projects/earnings-themes
+cd "$(git rev-parse --show-toplevel)"
 git branch --show-current
 git log --oneline -5
 git status --short
@@ -168,7 +168,7 @@ correctly-numbered file. Old Stages 4–13 become 5–14; old Stage 14 becomes 1
   > Deviation: ran in the `djia-cohort-review-602c04` worktree as `git switch -c cohort-amendment 6021323`; a `git switch` in the main checkout would have moved the live Stage 1 session's branch, and the SHA was pinned because that branch keeps moving.
 
 ```bash
-cd /Users/lowell/Projects/earnings-themes
+cd "$(git rev-parse --show-toplevel)"
 git switch -c cohort-amendment
 git status --short
 ```
@@ -1512,7 +1512,7 @@ a title in the sixteen-stage list.
 - Produces: verified consistency, and the completion report's evidence.
 
 - [x] **Step 1: Assert every stage number is in range**
-  > Deviation: run from the worktree, without this block's `cd /Users/lowell/Projects/earnings-themes`, which would have targeted the live Stage 1 checkout.
+  > Deviation: run from the worktree, skipping this block's `cd`, which then named the main checkout's absolute path and would have targeted the live Stage 1 checkout.
 
 The exclusion of `` `S` Stage n `` must happen **before** `grep -o` strips the
 surrounding context, or it silently matches nothing.
@@ -1520,7 +1520,7 @@ surrounding context, or it silently matches nothing.
 Run:
 
 ```bash
-cd /Users/lowell/Projects/earnings-themes
+cd "$(git rev-parse --show-toplevel)"
 grep -rn "Stage [0-9]" \
   specs/evidence-linked-theme-extraction-roadmap.md \
   specs/evidence-linked-theme-extraction.md \
