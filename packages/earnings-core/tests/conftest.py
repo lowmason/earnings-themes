@@ -10,6 +10,8 @@ from dataclasses import dataclass
 import pytest
 from earnings_core.documents import CanonicalDocument
 from earnings_core.elements import DocumentElement, ElementType
+from earnings_core.evidence import SpanCandidate
+from earnings_core.locators import make_locator
 from earnings_core.spans import TextSpan
 
 EURO = "\u20ac"
@@ -58,6 +60,33 @@ class Sample:
         """The smallest element that contains ``span``."""
         holders = [element for element in self.elements if element.span.contains(span)]
         return min(holders, key=lambda element: element.span.length)
+
+    def candidate(
+        self, needle: str, occurrence: int = 0, **changes: object
+    ) -> SpanCandidate:
+        """A valid candidate for one occurrence of ``needle``, with ``changes`` applied.
+
+        It is attributed to the innermost element holding it, and carries the context
+        ``make_locator`` chooses.
+        """
+        span = self.span_of(needle, occurrence)
+        locator = make_locator(self.document, span)
+        fields: dict[str, object] = {
+            "doc_id": self.document.doc_id,
+            "canonical_hash": self.document.canonical_hash,
+            "start": span.start,
+            "end": span.end,
+            "quote_text": needle,
+            "element_id": self.innermost(span).element_id,
+            "prefix": locator.prefix,
+            "suffix": locator.suffix,
+        }
+        fields.update(changes)
+        return SpanCandidate(**fields)
+
+    def raw(self, needle: str, occurrence: int = 0, **changes: object) -> dict:
+        """That valid candidate as a decoded JSON object, with ``changes`` applied."""
+        return {**self.candidate(needle, occurrence).model_dump(), **changes}
 
 
 def build_sample() -> Sample:
