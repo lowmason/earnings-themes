@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Document status — read before trusting any file here
 
-This repo is documentation-first: its only working code is the Stage 1 investigation harness in `expirements/parser-fidelity/`, its packages are still `hello()` scaffolds, and the rest is instructions.
+This repo is documentation-first: its working code is the Stage 1 investigation harness in `expirements/parser-fidelity/` and the Stage 2 contracts in `packages/earnings-core`; the other packages are still `hello()` scaffolds, and the rest is instructions.
 Not all of it is binding.
 
 | File | Status |
@@ -22,7 +22,7 @@ Not all of it is binding.
 
 **Deliberately unresolved — do not silently pick one** (AGENTS.md §"Source basis and unresolved choices"): the production provider/model, the final theme taxonomy, and non-exactness quality thresholds. Record these in config or a decision record; do not invent agreement. The fourth such choice, an approved inference budget, is now recorded by `specs/evidence-linked-theme-extraction.md` R14.2: **$100, for the optional hosted-ceiling ablation only**, not prompt-optimizer compiles or any other billable call. The required path needs no billable inference: R14.1 limits it to open-weight, self-hosted models, which narrows the model choice without making it.
 
-## Current state: Stage 1 complete, packages still scaffold
+## Current state: Stages 1 and 2 complete; three packages still scaffold
 
 Stage 1 of the roadmap (release parser fidelity, `specs/release-parser-fidelity.md`) is done:
 
@@ -32,7 +32,13 @@ Stage 1 of the roadmap (release parser fidelity, `specs/release-parser-fidelity.
 - `docs/verification/` holds V1 (edgartools return types) and V2 (release parser fidelity).
 - `docs/adr/0001-use-the-bespoke-lxml-walker-as-the-base-parser-for-release-canonicalization.md` records the base parser: the bespoke lxml walker, accepted 2026-09-25. Its measured code stays frozen in the harness until Stage 3 moves it into `earnings-ingestion`.
 
-Packages and `apps/earnings-pipeline` still contain only `hello()` stubs, and pytest configuration is still Stage 2's (see "Commands" below). `data/` is gitignored and holds only local, uncommitted material: fetched pages under `data/raw/` and Stage 1 run outputs under `data/runs/`; `config/`, `prompts/`, `codebooks/`, `tests/contracts/` and `tests/integration/` are empty directories. `origin` is set to https://github.com/lowmason/earnings-themes, which is **public** — treat anything committed here as publicly visible.
+Stage 2 of the roadmap (core evidence spine, plan 3, `specs/plans/completed/3-core-evidence-spine.md`) is done:
+
+- `packages/earnings-core` holds the shared contracts, schema version 1: `TextSpan`, `CanonicalDocument`, `DocumentElement`, `ArtifactRef`, `OverlayMask`, `SpanLocator` and `TextChunk`, with the exactness checks `validate_span` and `validate_elements`. Every refusal is a `Rejection` carrying a `RejectionReason`. `docs/data-dictionary.md` documents every field, and `tests/contracts/test_data_dictionary.py` fails if the two drift apart.
+- IDs are derived: `doc_id` is `<source_document_id>@<canonicalization_version>#<first 16 hex of the canonical hash>`, and `element_id` is `<type>-<start>-<end>`.
+- The root `pyproject.toml` configures pytest (see "Commands" below).
+
+`earnings-ingestion`, `earnings-themes` and `apps/earnings-pipeline` still contain only `hello()` stubs. `data/` is gitignored and holds only local, uncommitted material: fetched pages under `data/raw/` and Stage 1 run outputs under `data/runs/`; `config/`, `prompts/`, `codebooks/` and `tests/integration/` are empty directories. `origin` is set to https://github.com/lowmason/earnings-themes, which is **public** — treat anything committed here as publicly visible.
 
 ### Workspace root is virtual — do not add `[project]` to it
 
@@ -70,8 +76,10 @@ uv run --locked --all-packages pytest path/to/test_x.py::test_name -m "not live"
 Verified: `uv lock` and `uv sync --locked --all-packages`. Configured: a root
 `[dependency-groups] dev` (pytest, pytest-asyncio, pytest-cov, ruff) and
 `[tool.ruff] extend-exclude = ["*.md"]`, which keeps Ruff from reformatting code blocks in the
-preserved Markdown. **Not yet configured:** pytest. There is no registered `live` marker, no
-import mode to keep same-named test modules across members from colliding, and no `testpaths`.
+preserved Markdown. Stage 2 added `[tool.pytest]`: `--import-mode=importlib`, so members may
+repeat a test module's name; `strict = true`; a registered `live` marker; and
+`testpaths = ["packages", "apps", "tests"]`. The frozen Stage 1 harness still needs
+`--import-mode=prepend`, which its own command passes.
 Environment: uv 0.12.15, Python 3.14.0 (uv-managed; Homebrew's `python3` is 3.14.7),
 `requires-python = ">=3.14"`.
 
