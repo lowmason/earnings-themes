@@ -47,13 +47,13 @@
       cannot absorb. Size: quick-fix. Done when: Stage 1 execution is complete and
       the field is renamed in documents, code, test, and manifest in one change,
       or the user records a decision to keep `stage4_flags`. → done in plan 1 (`d3df93c`)
-- [ ] README Stage 1 status is stale on this base (plan 2 whole-plan review,
+- [x] README Stage 1 status is stale on this base (plan 2 whole-plan review,
       Minor): `README.md:140-141` says the investigation harness and fixture
       corpus "have not been created yet", but `expirements/parser-fidelity/` and
       `tests/fixtures/releases/` exist since the Stage 1 commits. Outside plan 2's
       scope, and the paragraph is the user's. Size: quick-fix. Done when: the
       README's Stage 1 paragraph describes the harness and fixture corpus as they
-      stand, at the latest when Stage 1 completes.
+      stand, at the latest when Stage 1 completes. → done in plan 1
 
 ## 3-employment-statistics-coverage — 2026-09-24
 - [ ] Review: the national-total employment comparison in `check_invariants`

@@ -3,11 +3,12 @@
 Evidence-linked research infrastructure for company data and earnings themes.
 
 > [!IMPORTANT]
-> **Project status (2026-09-22): design and workspace scaffold.** The `uv`
-> workspace, package boundaries, dependency groups, specifications, and staged
-> roadmap exist. The Python packages still contain placeholder APIs; there is no
-> operational pipeline, command-line interface, test suite, approved theme
-> codebook, or published dataset yet.
+> **Project status (2026-09-25): Stage 1 complete; packages still scaffold.** The
+> `uv` workspace, package boundaries, dependency groups, specifications, and staged
+> roadmap exist, and Stage 1's parser investigation is finished. The Python
+> packages still contain placeholder APIs; there is no operational pipeline,
+> command-line interface, package test suite, approved theme codebook, or published
+> dataset yet.
 
 ## Purpose
 
@@ -98,8 +99,10 @@ claim; support is assessed separately.
 | `packages/earnings-ingestion/` | Source adapters, raw snapshots, deterministic parsing, canonicalization, and entity resolution | Scaffold only |
 | `packages/earnings-themes/` | Quote-claim extraction, exact-span verification, support assessment, codebooks, and evaluation | Scaffold only |
 | `apps/earnings-pipeline/` | Thin application layer for configuration, stage coordination, checkpoints, and reporting | Scaffold only |
-| `docs/` | Source notes and, as the project develops, methodology, source registers, verification reports, and decisions | Source notes present |
+| `docs/` | Source notes and, as the project develops, methodology, source registers, verification reports, and decisions | Source notes, the release source register, verification records V1 and V2, and ADR 0001 |
 | `specs/` | Binding and exploratory system specifications, reviews, and the staged implementation roadmap | Present |
+| `expirements/parser-fidelity/` | Stage 1's investigation harness: parser candidates, scorer, and selection rule | Complete; a record, not product code |
+| `tests/fixtures/releases/` | Stage 1's eight release fixtures, with gold annotations and a provenance manifest | Present |
 
 The intended dependency direction is:
 
@@ -120,7 +123,7 @@ using those primitives.
 ## Current roadmap
 
 The implementation is organized as a staged, evidence-first roadmap of sixteen
-stages. No stage is complete yet; Stage 1 is in progress.
+stages. Stage 1 is complete; Stage 2 is next.
 
 The roadmap was amended on 2026-09-22 by
 [the point-in-time DJIA cohort specification](specs/point-in-time-djia-cohort.md).
@@ -132,13 +135,29 @@ from `2024Q3` through `2026Q2`. The firm universe is the Dow Jones Industrial
 Average resolved point in time, not one current roster: a current list would
 introduce survivorship bias into earlier periods.
 
-The next milestone is **Stage 1: acquisition-library and parser fidelity**. It is
-an investigation, not product code: it will measure candidate HTML parsers on a
-small, provenance-recorded earnings-release fixture corpus and record the actual
-return types of the pinned EDGAR acquisition library. Its result will be a parser
-decision that later canonicalization work can safely build on.
-The investigation harness and fixture corpus have not been created yet, so Stage
-1 does not currently have a runnable command.
+**Stage 1: acquisition-library and parser fidelity** is complete. It was an
+investigation, not product code. It measured three candidate HTML parsers and a
+plain-text control on eight provenance-recorded earnings-release fixtures, two for
+each of four release classes, and recorded the actual return types of the pinned
+EDGAR acquisition library, edgartools 5.58.0.
+[ADR 0001](docs/adr/0001-use-the-bespoke-lxml-walker-as-the-base-parser-for-release-canonicalization.md)
+selects a bespoke lxml walker as the base parser for canonicalization. The two
+eligible parsers tied on coverage, footnote merging, and reading order, so header
+loss decided. On those three metrics the walker beat the plain-text control in no
+class, so the fixtures are flagged as unable to discriminate there; the decision
+was accepted with that caveat. The measurements are in
+[V2](docs/verification/V2-parser-fidelity.md) and the return types in
+[V1](docs/verification/V1-edgartools-return-types.md). The harness is in
+`expirements/parser-fidelity/`, and the fixtures, with their gold annotations, are
+in `tests/fixtures/releases/`. The harness's offline tests run with:
+
+```bash
+uv run --locked --all-packages pytest expirements/parser-fidelity --import-mode=prepend -q
+```
+
+The next milestone is **Stage 2: core evidence spine**, which gives
+`earnings-core` the contracts and exactness validator that every later stage
+builds on.
 
 Key planning documents:
 
@@ -147,7 +166,7 @@ Key planning documents:
 - [Implementation roadmap](specs/evidence-linked-theme-extraction-roadmap.md)
   — staged delivery, dependencies, and exit conditions.
 - [Stage 1 parser-fidelity specification](specs/release-parser-fidelity.md)
-  — the current milestone's scope and measurement design.
+  — Stage 1's scope and measurement design.
 - [Point-in-time DJIA cohort specification](specs/point-in-time-djia-cohort.md)
   — the firm universe, event corpus, and deterministic pilot selection; the
   stage specification for roadmap Stages 4 and 15, and binding on Stage 5's
@@ -242,7 +261,7 @@ uv sync --locked --all-packages --extra extraction
   `tests/fixtures/`.
 - The source register that records access, licensing, and redistribution status
   for release fixtures is [`docs/source-register.toml`](docs/source-register.toml),
-  a Stage 1 deliverable still in progress. Stage 4 adds a second register for
+  a Stage 1 deliverable. Stage 4 adds a second register for
   index-membership sources, which does not exist yet. A free or open-source
   acquisition tool confers no rights to the underlying index data.
 - SEC access requires a descriptive User-Agent with genuine project contact
