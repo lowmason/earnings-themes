@@ -1,5 +1,7 @@
 # Release Parser Fidelity (Stage 1) Implementation Plan
 
+**Status: COMPLETE (2026-09-25)** — executed via executing-plans; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > Roadmap: specs/evidence-linked-theme-extraction-roadmap.md, Stage 1 — on plan
@@ -1712,6 +1714,7 @@ Run: `uv lock --script expirements/parser-fidelity/fetch_policy_pages.py`
 Expected: `Resolved … packages`, and `expirements/parser-fidelity/fetch_policy_pages.py.lock` now exists.
 
 - [x] **Step 6: Fetch the SEC policy pages (live, at most 10 requests)**
+  > Deviation: the fetch sent 4 requests but the client counted 2, because redirect hops were neither spaced nor counted; `c9fda04` then moved the throttle into an httpx request hook, so every hop is both.
 
 Run: `uv run --locked --script expirements/parser-fidelity/fetch_policy_pages.py fetch --live`
 
@@ -1730,6 +1733,7 @@ Record N; the Task 22 handoff reports it. If a key prints `no candidate URL answ
 - rerun Step 4 and this step.
 
 - [x] **Step 7: Write the register from the fetched pages**
+  > Deviation: the register's quotes were trimmed to the policy pages' own sentences, without a heading or the sample-header table.
 
 Create `docs/source-register.toml` with exactly this content:
 
@@ -3115,6 +3119,7 @@ fails, adapt them to the saved response:
 Commit any fix with `fix(parser-fidelity): …`.
 
 - [x] **Step 2: Run the full discovery**
+  > Deviation: the default sample held only one clean table-heavy candidate, so the plan's contingency sample (filing years 2006, 2009, 2012, 2015, 2018, 2021 and 2024) ran before any fixture was chosen; the user approved this at gate A. Round 2 ran a third discovery, over 2007, 2010, 2013, 2016, 2019 and 2022, for its replacement rule.
 
 Run: `uv run --locked --script expirements/parser-fidelity/discover.py run --live`
 
@@ -3126,6 +3131,7 @@ continues. Stop rerunning when a run finds nothing new. Each run's request count
 into the handoff.
 
 - [x] **Step 3: Build the shortlist**
+  > Deviation: not rebuilt in round 2, where a rule chose the fixtures (see Step 4).
 
 Run: `uv run --locked --script expirements/parser-fidelity/discover.py shortlist`
 
@@ -3142,6 +3148,8 @@ If a class has fewer than two eligible candidates, apply the spec's contingency:
    preference.
 
 - [x] **Step 4: Gate A — the user approves the fixtures and the development set**
+  > Deviation: the user also approved three changes of order here: fixture-independent work (Tasks 8, 9 Steps 1–4, 11, 12 Steps 1–7, 13's draft, 15 Steps 1–5, 16 Steps 1–5, 17 and 18) ran alongside the gates; the encoding check moved ahead of the freeze; and a whole-branch code review ran before the freeze.
+  > Deviation: in round 2 a rule chose the fixtures instead of the user picking from a shortlist. Claude proposed it, the user chose it, and it was committed with its discovery command (`cf2a31a`) before the live run; Claude filled `approval.toml` from its output, the user signed it, and AMC, not a press release, gave way to the table-heavy spare before gate B.
 
 Give the user `data/raw/discovery/shortlist.md` and this template for
 `expirements/parser-fidelity/approval.toml`:
@@ -4600,6 +4608,7 @@ Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_che
 Expected: `5 passed`.
 
 - [x] **Step 5: Run the check on the real corpus**
+  > Deviation: it printed one problem per fixture, not two. `check_fixtures.py` validates gold only when `gold.toml` exists, so the "gold.toml is missing" line cannot print; the "holds ['source.html']" line reports the missing gold instead.
 
 Run: `uv run --locked --all-packages python expirements/parser-fidelity/check_fixtures.py`
 
@@ -4664,6 +4673,7 @@ Stage 2 needs, are drawn from these notes. No candidate output is consulted whil
 ```
 
 - [x] **Step 2: Hand the marking protocol to the user**
+  > Deviation: under F9 (`dfcd414`, amending D2 for Stage 1 gold), Codex drafted each fixture's gold from the browser's rendered text and the user verified every block. During round 1's gate B, before the freeze, the spec, the Codex brief and the validator were revised (`3e9a8ec`, `980beb9`, `a02d176`, `0c97ca3`, `f61e11e`).
 
 Tell the user, in these words:
 
@@ -4705,6 +4715,7 @@ fixture cannot be marked faithfully against the validator's text.
   change for V2, and revalidate every gold file already marked.
 
 - [x] **Step 3: Commit each fixture's gold as it validates**
+  > Deviation: in round 2 the user committed the drafts and the verified gold (`368c2f6` and 29 further commits, through `02e3e3f`), and `gold-notes.md` once, at `808f0e4`, which closed gate B, instead of one commit per validated fixture with its notes.
 
 For each fixture the user reports complete:
 
@@ -5339,6 +5350,7 @@ Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_ada
 Expected: collection error `ModuleNotFoundError: No module named 'adapter_edgartools'`.
 
 - [x] **Step 3: Write the three adapters**
+  > Deviation: this code imports each library inside `parse()`, where the runner's timer runs, so the measured runtime includes the import for edgartools, sec-parser and the control but not the walker; P16 defines runtime without imports (found by the final review; V2 qualifies the ADR's speed claim).
 
 `expirements/parser-fidelity/control.py`:
 
@@ -5660,6 +5672,7 @@ test in Step 1, and record the addition for V2. The mapping may still change her
 before the freeze.
 
 - [x] **Step 8: Smoke-run every adapter on the development set only**
+  > Deviation: the loop prints `exit=$?` after `$(basename …)` on the same line, so it always prints 0; each run's exit code was captured directly after it instead, and all were 0.
 
 For each development release, and for each of `control.py`, `adapter_edgartools.py`,
 and `adapter_secparser.py`:
@@ -6015,6 +6028,7 @@ Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_wal
 Expected: collection error `ModuleNotFoundError: No module named 'walker'`.
 
 - [x] **Step 3: Write the walker**
+  > Deviation: the walker imports lxml when its module loads, before the network guard is installed, whereas the spec installs the guard before the candidate is imported. Its parsing runs under the guard, and importing lxml under the guard trips nothing (`data/runs/parser-fidelity/evidence/walker-import-guard.txt`).
 
 `expirements/parser-fidelity/walker.py`:
 
@@ -6984,6 +6998,7 @@ Expected: one line per candidate and development release, each
   fail the determinism gate.
 
 - [x] **Step 7: Freeze**
+  > Deviation: held, as agreed at gate A, until the encoding check was done and the pre-freeze review's fixes to the walker, the edgartools adapter, the harness and the selection rule had landed (V2, "Changes before the freeze"). The sources were frozen at `616721a`, recorded at `cec29b7`.
 
 Every frozen file must be committed and unchanged. Then:
 
@@ -7525,6 +7540,7 @@ Add a `PathSpec` for each missing path and rerun Step 4. Missing paths are ones 
 list an issuer's filings, return attachments or exhibit content, or extract tables.
 
 - [x] **Step 6: Run V1 live**
+  > Deviation: `9fce0b2` first added the live-fetch policy's stops to `v1_return_types.py`: a persistent 403, a 429 and the request cap. V1 ran on 2026-09-24 against round 1's fixture filings and, by the user's decision at plan completion, was not re-run on round 2's.
 
 Run: `uv run --locked --script expirements/parser-fidelity/v1_return_types.py --live`
 
@@ -8699,6 +8715,8 @@ Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_loc
 Expected: 2 collection errors, `No module named 'lock_gate'` and `No module named 'select_parser'`.
 
 - [x] **Step 3: Write the implementation**
+  > Deviation: before any scoring, `9a75074` made tied worst classes use the smallest denominator, as the user decided in the pre-freeze review.
+  > Deviation: `lock_gate.parse_fixtures` passes the whole environment, `EDGAR_IDENTITY` included, to the adapters, unlike the candidate runner (`f2a644e`); adapter output is not logged there and no file holds the identity (found by the final review).
 
 `expirements/parser-fidelity/lock_gate.py`:
 
@@ -9316,6 +9334,7 @@ Expected: the step-by-step trace and an `**Outcome:**` line. Then:
   consume.
 
 - [x] **Step 1: Write the V2 record**
+  > Deviation: V2 adds sections to this template, which its "Deviations from the plan" lists. It was written for round 1 (`8bda724`) and redone on round 2's fixtures (`d656262`), when ADR 0001 was rewritten too.
 
 Create `docs/verification/V2-parser-fidelity.md` from this template. Replace every
 `_(` instruction with the named content, copying generated tables verbatim:
@@ -9548,6 +9567,7 @@ git commit -m "docs(verification): record V2 parser fidelity and propose ADR 000
 ### Task 21: Gate D — the user accepts the decision
 
 - [x] **Step 1: Present the decision**
+  > Deviation: at round 1's gate D the user answered the control check's flag by replacing all eight fixtures. Tasks 6, 7, 10, 19 and 20 then ran again on the replacement fixtures, and round 1's outputs were archived under `data/runs/parser-fidelity/round1/`; the flag recurred, and the user accepted it on 2026-09-25.
 
 Give the user:
 
@@ -9608,6 +9628,7 @@ Expected, in order:
 9. no output: the identity appears in no file.
 
 - [x] **Step 2: Refresh CLAUDE.md "Current state"**
+  > Deviation: at plan completion the user also had line 7, in the document-status section, corrected (`d77fc24`).
 
 In `CLAUDE.md`, update the "Current state: pre-implementation scaffold" section to say
 that:
@@ -9628,7 +9649,8 @@ git add CLAUDE.md
 git commit -m "docs: refresh CLAUDE.md current state after Stage 1"
 ```
 
-- [ ] **Step 3: Write the handoff**
+- [x] **Step 3: Write the handoff**
+  > Deviation: the handoff could not state that no model was called. The harness, the candidates and the default tests call none, but under F9 Codex drafted the gold in 16 runs, and Claude subagents ran the reviews.
 
 Report to the user:
 
