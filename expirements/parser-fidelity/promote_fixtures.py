@@ -154,7 +154,7 @@ def manifest_entry(record: dict, primary_class: str, meta: dict) -> list[str]:
         ("sha256", meta["sha256"]),
         ("source_id", SOURCE_ID),
         ("redistribution_basis", REDISTRIBUTION_BASIS),
-        ("stage4_flags", flags),
+        ("acquisition_flags", flags),
         ("pilot_split", PILOT_SPLIT),
     ]
     lines = ["[[fixtures]]"] + [f"{key} = {toml_value(value)}" for key, value in fields]

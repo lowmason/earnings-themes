@@ -2985,7 +2985,7 @@ def render_shortlist(candidates: list[Candidate]) -> str:
         )
         lines += [f"## {cls} ({len(pool)} eligible)", ""]
         lines.append(
-            "| | fixture_id | issuer | year | agent | exhibit | data share | malformed | stage 4 |"
+            "| | fixture_id | issuer | year | agent | exhibit | data share | malformed | acquisition flags |"
         )
         lines.append("|---|---|---|---|---|---|---|---|---|")
         picks = {c.fixture_id for c in suggested[cls]}
@@ -3202,7 +3202,7 @@ The spec's preferences apply:
 - a mix of filer agents and years;
 - no issuer with more than two fixtures;
 - where possible, a narrative-only release and a release filed under an exhibit number
-  other than EX-99.1, for Stage 4;
+  other than EX-99.1, for Stage 5;
 - clean fixtures trip no malformed-layout test, and table-heavy and narrative-only
   fixtures should trip none either.
 
@@ -3243,7 +3243,7 @@ Task 7 checks the rest.
       `items`, `filing_date`;
     - `exhibit_type`, `exhibit_filename`, `url`, `retrieved_at`, `http_status`,
       `content_type`, `bytes`, `sha256`;
-    - `source_id`, `redistribution_basis`, `stage4_flags`, `pilot_split`;
+    - `source_id`, `redistribution_basis`, `acquisition_flags`, `pilot_split`;
     - a `[fixtures.class_tests]` table.
   - `data/raw/devset/<id>/source.html` for each development release (never committed).
 
@@ -3356,11 +3356,11 @@ def test_promote_is_idempotent(layout):
     assert run(layout) == run(layout)
 
 
-def test_stage4_flags(layout):
+def test_acquisition_flags(layout):
     root = layout[0]
     run(layout)
     flags = {
-        e["primary_class"]: e["stage4_flags"]
+        e["primary_class"]: e["acquisition_flags"]
         for e in tomllib.loads((root / "fixtures" / "manifest.toml").read_text())[
             "fixtures"
         ]
@@ -3587,7 +3587,7 @@ def manifest_entry(record: dict, primary_class: str, meta: dict) -> list[str]:
         ("sha256", meta["sha256"]),
         ("source_id", SOURCE_ID),
         ("redistribution_basis", REDISTRIBUTION_BASIS),
-        ("stage4_flags", flags),
+        ("acquisition_flags", flags),
         ("pilot_split", PILOT_SPLIT),
     ]
     lines = ["[[fixtures]]"] + [f"{key} = {toml_value(value)}" for key, value in fields]
@@ -7590,7 +7590,7 @@ _(replace with the table from `data/runs/parser-fidelity/v1/v1-results.md`)_
 _(replace with one bullet per path whose observed type differs from its declaration or
 that has no declaration, naming both types)_
 
-## For Stage 4
+## For Stage 5
 
 _(replace with the paths that return a foreign dataframe and the cast R14.5 requires at
 the ingestion boundary, or with "None: R14.5 is vacuous")_
@@ -9312,7 +9312,7 @@ Expected: the step-by-step trace and an `**Outcome:**` line. Then:
 - Consumes: every Task 19 output, `approval.toml`, `gold-notes.md`, `FROZEN.toml`,
   and `data/runs/parser-fidelity/evidence/secparser-py314.txt`.
 - Produces: the records that Stage 2 (element types and nesting), Stage 3 (ADR 0001,
-  residual failures, altered anchors), and Stage 4 (the V1 record, `stage4_flags`)
+  residual failures, altered anchors), and Stage 5 (the V1 record, `acquisition_flags`)
   consume.
 
 - [x] **Step 1: Write the V2 record**
@@ -9350,7 +9350,7 @@ _(replace with a table with one row per fixture:)_
 - `data_table_share`
 - `pre_share`
 - each malformed-layout test value
-- `stage4_flags`
+- `acquisition_flags`
 
 These class-test values only sort fixtures into classes. They are not quality
 thresholds, and R13.1 is untouched.

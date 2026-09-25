@@ -103,11 +103,11 @@ def test_promote_is_idempotent(layout):
     assert run(layout) == run(layout)
 
 
-def test_stage4_flags(layout):
+def test_acquisition_flags(layout):
     root = layout[0]
     run(layout)
     flags = {
-        e["primary_class"]: e["stage4_flags"]
+        e["primary_class"]: e["acquisition_flags"]
         for e in tomllib.loads((root / "fixtures" / "manifest.toml").read_text())[
             "fixtures"
         ]

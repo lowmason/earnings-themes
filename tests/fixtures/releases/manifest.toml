@@ -21,7 +21,7 @@ bytes = 213887
 sha256 = "c109b57161b8cf3d949b8727dae0f2dccfc25eddefefda5e6deb3bbee3035d0e"
 source_id = "sec-edgar"
 redistribution_basis = "docs/source-register.toml entry sec-edgar: the SEC's quoted website reuse policy. That policy does not address issuers' copyright in their filings; the register draws no conclusion about it."
-stage4_flags = ["alternative_exhibit_numbering"]
+acquisition_flags = ["alternative_exhibit_numbering"]
 pilot_split = "train_or_exclude"
 
 [fixtures.class_tests]
@@ -62,7 +62,7 @@ bytes = 477997
 sha256 = "5adc7a9ecdd6975fbfcaf2d99c43cbb9bb32447c3295136964701d5ddbb40986"
 source_id = "sec-edgar"
 redistribution_basis = "docs/source-register.toml entry sec-edgar: the SEC's quoted website reuse policy. That policy does not address issuers' copyright in their filings; the register draws no conclusion about it."
-stage4_flags = []
+acquisition_flags = []
 pilot_split = "train_or_exclude"
 
 [fixtures.class_tests]
@@ -103,7 +103,7 @@ bytes = 509858
 sha256 = "c216d0c2cf60ec1b309c8630fe0fac81a340b23074ec7cc315352f4f7e80c0bd"
 source_id = "sec-edgar"
 redistribution_basis = "docs/source-register.toml entry sec-edgar: the SEC's quoted website reuse policy. That policy does not address issuers' copyright in their filings; the register draws no conclusion about it."
-stage4_flags = []
+acquisition_flags = []
 pilot_split = "train_or_exclude"
 
 [fixtures.class_tests]
@@ -144,7 +144,7 @@ bytes = 483337
 sha256 = "a1ca73362d00568c7ef87dcdd61dab0abe9f473e1e0c40042ef7dcdc96dc6bf9"
 source_id = "sec-edgar"
 redistribution_basis = "docs/source-register.toml entry sec-edgar: the SEC's quoted website reuse policy. That policy does not address issuers' copyright in their filings; the register draws no conclusion about it."
-stage4_flags = []
+acquisition_flags = []
 pilot_split = "train_or_exclude"
 
 [fixtures.class_tests]
@@ -185,7 +185,7 @@ bytes = 473486
 sha256 = "45f28cc4d52192639343ce458558c60cd6a04d82259054a0717ef6e652d4fbbc"
 source_id = "sec-edgar"
 redistribution_basis = "docs/source-register.toml entry sec-edgar: the SEC's quoted website reuse policy. That policy does not address issuers' copyright in their filings; the register draws no conclusion about it."
-stage4_flags = []
+acquisition_flags = []
 pilot_split = "train_or_exclude"
 
 [fixtures.class_tests]
@@ -226,7 +226,7 @@ bytes = 21130
 sha256 = "3720502194cf0d17cc748aa89e9f148e850673b3bfe2bd73b1f7f9ca263f06a8"
 source_id = "sec-edgar"
 redistribution_basis = "docs/source-register.toml entry sec-edgar: the SEC's quoted website reuse policy. That policy does not address issuers' copyright in their filings; the register draws no conclusion about it."
-stage4_flags = ["narrative_only_release"]
+acquisition_flags = ["narrative_only_release"]
 pilot_split = "train_or_exclude"
 
 [fixtures.class_tests]
@@ -267,7 +267,7 @@ bytes = 344043
 sha256 = "f1a22d5a656fb69b00d17ef43a309c0d75e6c3981e28fb3b119c6d740a1a1f50"
 source_id = "sec-edgar"
 redistribution_basis = "docs/source-register.toml entry sec-edgar: the SEC's quoted website reuse policy. That policy does not address issuers' copyright in their filings; the register draws no conclusion about it."
-stage4_flags = []
+acquisition_flags = []
 pilot_split = "train_or_exclude"
 
 [fixtures.class_tests]
@@ -308,7 +308,7 @@ bytes = 14007
 sha256 = "c760a279908df5b4747d190190531ae75e81ac4955ba0732b96fb7c172f5f081"
 source_id = "sec-edgar"
 redistribution_basis = "docs/source-register.toml entry sec-edgar: the SEC's quoted website reuse policy. That policy does not address issuers' copyright in their filings; the register draws no conclusion about it."
-stage4_flags = ["narrative_only_release"]
+acquisition_flags = ["narrative_only_release"]
 pilot_split = "train_or_exclude"
 
 [fixtures.class_tests]

@@ -465,7 +465,7 @@ def render_shortlist(candidates: list[Candidate]) -> str:
         )
         lines += [f"## {cls} ({len(pool)} eligible)", ""]
         lines.append(
-            "| | fixture_id | issuer | year | agent | exhibit | data share | malformed | stage 4 |"
+            "| | fixture_id | issuer | year | agent | exhibit | data share | malformed | acquisition flags |"
         )
         lines.append("|---|---|---|---|---|---|---|---|---|")
         picks = {c.fixture_id for c in suggested[cls]}

@@ -119,7 +119,7 @@ stay in their own class.
      and plain-text exhibits are not HTML, so both are excluded.
    - A mix of filer agents and years.
    - No issuer contributes more than two fixtures.
-   - Issuers that also exercise Stage 4's cases: a narrative-only release, and a
+   - Issuers that also exercise Stage 5's cases: a narrative-only release, and a
      release filed under an exhibit number other than EX-99.1.
 3. The user approves eight fixtures. The user also approves two or three further
    releases as the bespoke walker's **development set**. Development releases
@@ -145,7 +145,7 @@ entry per fixture:
 | `http_status`, `content_type`, `bytes`, `sha256` | From the saved response |
 | `source_id` | Register key: `sec-edgar` |
 | `redistribution_basis` | Why this file may be committed, citing the register entry |
-| `stage4_flags` | Any of `narrative_only_release`, `alternative_exhibit_numbering` |
+| `acquisition_flags` | Any of `narrative_only_release`, `alternative_exhibit_numbering` |
 | `pilot_split` | `train_or_exclude` |
 
 ### Source register
@@ -162,9 +162,13 @@ no conclusion about it.
 
 ### Forward constraint
 
-The annotator reads every fixture closely. Stage 5 must therefore place fixture
-events in the training partition or leave them out of the pilot (R12.3). The
-manifest's `pilot_split` field records this.
+The annotator reads every fixture closely. Stage 6 must therefore place any fixture
+event that the pilot selection includes in the training partition (R12.3). Leaving
+it out of the pilot is not available: the cohort amendment freezes the pilot
+selection before acquisition, and a selected event stays selected
+(`specs/point-in-time-djia-cohort.md`, C7 and Failure handling). The manifest's
+`pilot_split` field records this; its value `train_or_exclude` means training if
+the selection includes the event, and outside the pilot otherwise.
 
 ## Gold annotation
 
@@ -472,7 +476,7 @@ Stage 3 either compensates for each one or records it as a limitation.
 
 - **Paths.** The paths are enumerated from the installed 5.58.0 source, not
   recalled from memory. There are three families:
-  - (a) listing an issuer's filings (Stage 4, R1.1);
+  - (a) listing an issuer's filings (Stage 5, R1.1);
   - (b) going from a filing to its attachments, then to exhibit bytes, HTML, or
     text, including the 8-K and press-release convenience objects;
   - (c) extracting tables from an exhibit.
@@ -612,8 +616,8 @@ development-set fetches, the register's policy check, and V1.
 | --- | --- |
 | 2 | Element types and nesting observed in the gold |
 | 3 | ADR 0001, the residual failures, and the fixtures with their gold; R3.5 remains open |
-| 4 | The V1 record; the manifest's `stage4_flags` |
-| 5 | `pilot_split = "train_or_exclude"` on every fixture event |
+| 5 | The V1 record; the manifest's `acquisition_flags` |
+| 6 | `pilot_split = "train_or_exclude"` on every fixture event |
 
 ## Rollout
 

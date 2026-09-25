@@ -112,7 +112,7 @@ The user approved these fixtures on 2026-09-25 (`approved_on` in
 `expirements/parser-fidelity/approval.toml`). The development set is unchanged from
 round 1, which the user approved on 2026-09-22.
 
-| `fixture_id` | `primary_class` | issuer | filing date | exhibit | bytes | `data_table_share` | `pre_share` | positioned text | layout-table prose (longest layout cell, words) | page-break debris (styling; bare page-number blocks) | preformatted text | `stage4_flags` |
+| `fixture_id` | `primary_class` | issuer | filing date | exhibit | bytes | `data_table_share` | `pre_share` | positioned text | layout-table prose (longest layout cell, words) | page-break debris (styling; bare page-number blocks) | preformatted text | `acquisition_flags` |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | `0000007332-09-000032_ex-99` | `clean_html` | SOUTHWESTERN ENERGY CO | 2009-10-29 | EX-99 | 213,887 | 0.2805 | 0.0 | no | no (0) | no (no; 0) | no | `alternative_exhibit_numbering` |
 | `0000009389-10-000004_ex-99-1` | `malformed_layout` | BALL CORP | 2010-01-28 | EX-99.1 | 477,997 | 0.3036 | 0.0 | no | no (9) | yes (yes; 2) | no | none |
@@ -129,6 +129,11 @@ and at least one bare page-number block.
 
 These class-test values only sort fixtures into classes. They are not quality
 thresholds, and R13.1 is untouched.
+
+The last column's field was `stage4_flags` in the manifest as scored (`d6d3356`). At
+Stage 1's close it was renamed `acquisition_flags`, when the Stage 1 documents took up
+the cohort amendment's numbering, under which acquisition is Stage 5. No score reads
+it.
 
 ## Gold protocol
 
