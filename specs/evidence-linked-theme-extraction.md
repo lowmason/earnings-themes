@@ -648,3 +648,6 @@ wrong default.
 For instruction-only changes downstream, state that application tests and live
 extraction were not run. Never claim a full-universe run or a completed stage from
 a fixture (`A §769`).
+
+> Stage 2: COMPLETE (2026-09-25) — implemented by plan 3 (specs/plans/completed/3-core-evidence-spine.md).
+> Next: resume the roadmap.

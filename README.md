@@ -3,12 +3,12 @@
 Evidence-linked research infrastructure for company data and earnings themes.
 
 > [!IMPORTANT]
-> **Project status (2026-09-25): Stage 1 complete; packages still scaffold.** The
-> `uv` workspace, package boundaries, dependency groups, specifications, and staged
-> roadmap exist, and Stage 1's parser investigation is finished. The Python
-> packages still contain placeholder APIs; there is no operational pipeline,
-> command-line interface, package test suite, approved theme codebook, or published
-> dataset yet.
+> **Project status (2026-09-25): Stages 1 and 2 complete.** The `uv` workspace,
+> package boundaries, specifications, and staged roadmap exist; Stage 1's parser
+> investigation is finished; and `earnings-core` holds the shared evidence contracts
+> and exactness checks, with an offline test suite. The other packages still contain
+> placeholder APIs; there is no operational pipeline, command-line interface,
+> approved theme codebook, or published dataset yet.
 
 ## Purpose
 
@@ -95,11 +95,11 @@ claim; support is assessed separately.
 
 | Path | Responsibility | Current state |
 | --- | --- | --- |
-| `packages/earnings-core/` | Shared contracts, identifiers, hashes, provenance, and pure span helpers | Scaffold only |
+| `packages/earnings-core/` | Shared contracts, identifiers, hashes, provenance, and pure span helpers | Stage 2 contracts and exactness checks (schema v1) |
 | `packages/earnings-ingestion/` | Source adapters, raw snapshots, deterministic parsing, canonicalization, and entity resolution | Scaffold only |
 | `packages/earnings-themes/` | Quote-claim extraction, exact-span verification, support assessment, codebooks, and evaluation | Scaffold only |
 | `apps/earnings-pipeline/` | Thin application layer for configuration, stage coordination, checkpoints, and reporting | Scaffold only |
-| `docs/` | Source notes and, as the project develops, methodology, source registers, verification reports, and decisions | Source notes, the release source register, verification records V1 and V2, and ADR 0001 |
+| `docs/` | Source notes and, as the project develops, methodology, source registers, verification reports, and decisions | Source notes, the release source register, verification records V1 and V2, ADR 0001, and the `earnings-core` data dictionary |
 | `specs/` | Binding and exploratory system specifications, reviews, and the staged implementation roadmap | Present |
 | `expirements/parser-fidelity/` | Stage 1's investigation harness: parser candidates, scorer, and selection rule | Complete; a record, not product code |
 | `tests/fixtures/releases/` | Stage 1's eight release fixtures, with gold annotations and a provenance manifest | Present |
@@ -123,7 +123,7 @@ using those primitives.
 ## Current roadmap
 
 The implementation is organized as a staged, evidence-first roadmap of sixteen
-stages. Stage 1 is complete; Stage 2 is next.
+stages. Stages 1 and 2 are complete; Stage 3 is next.
 
 The roadmap was amended on 2026-09-22 by
 [the point-in-time DJIA cohort specification](specs/point-in-time-djia-cohort.md).
@@ -155,9 +155,12 @@ in `tests/fixtures/releases/`. The harness's offline tests run with:
 uv run --locked --all-packages pytest expirements/parser-fidelity --import-mode=prepend -q
 ```
 
-The next milestone is **Stage 2: core evidence spine**, which gives
-`earnings-core` the contracts and exactness validator that every later stage
-builds on.
+**Stage 2: core evidence spine** is complete. `earnings-core` now holds the
+contracts every later stage builds on: hashed, versioned canonical documents;
+typed elements with derived IDs and code-point spans; overlay masks; span
+locators; and an exactness validator with no tolerance. The
+[data dictionary](docs/data-dictionary.md) documents every field. The next
+milestone is **Stage 3: structure-aware canonicalization**.
 
 Key planning documents:
 
@@ -208,25 +211,25 @@ The required workspace contains four installable distributions:
 uv run python -c "import earnings_core, earnings_ingestion, earnings_themes, earnings_pipeline"
 ```
 
-These imports currently expose only placeholder package functions. They are a
-workspace smoke check, not proof that the research pipeline exists.
+`earnings_core` exposes the Stage 2 contracts; the other three still expose only
+placeholder functions. The import is a workspace smoke check, not proof that the
+research pipeline exists.
 
 ### Development checks
 
-Run the checks that are currently configured:
+Run the configured checks:
 
 ```bash
 uv run --locked ruff check .
 uv run --locked ruff format --check .
-```
-
-There is no test suite or CI configuration yet. Stage 2 of the roadmap adds the
-root pytest configuration, offline contract tests, and the `live` marker. Once
-those paths exist, the intended default test command is:
-
-```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live"
 ```
+
+The root `pyproject.toml` configures pytest. Test modules are imported by path,
+so members may reuse a module name; unknown markers and configuration keys are
+errors; and a test that needs the network, credentials, or a billable service
+carries the `live` marker and runs only with `-m live`. The Stage 1 harness keeps
+its own command, given under "Current roadmap". There is no CI configuration yet.
 
 Default tests must not make network requests or billable model calls.
 

@@ -2,7 +2,7 @@
 
 ## browser-rendering-integration — 2026-09-24
 
-- [ ] When Stage 1 is ticked complete in
+- [x] When Stage 1 is ticked complete in
       `specs/evidence-linked-theme-extraction-roadmap.md`, surface the approved
       `specs/browser-rendering-integration.md` design before Stage 2 planning.
       Stage 2 plans only the browser-neutral core contracts and tests; Stage 3
@@ -12,7 +12,7 @@
       browser automation to Stage 1 or make it a dependency of `earnings-core`
       or `earnings-themes`. Size: cross-stage planning reminder. Done when the
       Stage 2 plan incorporates its assigned contract work and leaves explicit
-      handoffs for the Stage 3 brainstorming pass and Stage 10 plan.
+      handoffs for the Stage 3 brainstorming pass and Stage 10 plan. → done in plan 3 (specs/plans/completed/3-core-evidence-spine.md)
 
 ## 2-point-in-time-djia-cohort — 2026-09-22
 - [x] Renumber the two Stage 1 documents for the cohort amendment (plan 2 Task 7,
@@ -55,17 +55,6 @@
       README's Stage 1 paragraph describes the harness and fixture corpus as they
       stand, at the latest when Stage 1 completes. → done in plan 1
 
-## 3-employment-statistics-coverage — 2026-09-24
-- [ ] Review: the national-total employment comparison in `check_invariants`
-      (scripts/employment_statistics_coverage.py) has no rounding allowance, so
-      annual-average rounding (+46 in 2022, +27 in 2023) makes `run` exit 2 on the
-      2022–2025 files. Kept as-is under the 2026-09-24 ruling (no re-run, no code
-      change); evidence in specs/findings/employment-statistics-coverage.md,
-      section 6. Fix: give that comparison the `cells/2 + 1` employment allowance
-      that `_nested_excess` already applies, plus a fixture test. Size: quick-fix.
-      Done when: `run` on the 2022–2025 files reports no invariant failure and a
-      test pins the allowance.
-
 ## 1-release-parser-fidelity — 2026-09-25
 - [ ] Carry V2's findings into Stage 3: V2's "Residual failures (for Stage 3)"
       and "Findings for Stage 3" (`docs/verification/V2-parser-fidelity.md`) and
@@ -106,3 +95,90 @@
       Fix: pass the runner's scrubbed environment, with a test that the identity
       is absent. Size: quick-fix. Revisit if: the lock gate runs again, such as
       to re-check a sec-parser release under ADR 0001.
+
+## 3-core-evidence-spine — 2026-09-25
+- [ ] Accept a stored `VerifiedSpan` in `validate_span` (final review, Important
+      #2; the user chose a handoff note and deferred this): `VerifiedSpan` in
+      `packages/earnings-core/src/earnings_core/evidence.py` validates only
+      `start < end`, so a `model_copy(update=...)` or a JSON round trip can
+      carry any `quote_text`. `validate_span` is typed to take a
+      `SpanCandidate`, yet at runtime it already rejects a tampered copy with
+      `quote_text_mismatch`, because both records share `_EvidenceFields`. Plan
+      3's roadmap reconcile tells Stages 7 and 10 to re-run `validate_span` on
+      stored spans at every R6.1 gate, and Stage 7 owns the verification stage
+      (D-20). Fix: type the parameter to accept either record, or add a named
+      re-verification helper, with a test that a round-tripped `VerifiedSpan`
+      re-verifies and a tampered copy is rejected. Size: quick-fix. Done when:
+      that API and its test land, at the latest when Stage 7 first stores
+      `VerifiedSpan`s.
+- [ ] Report every crossing in `validate_elements` (final review, Minor;
+      deferred by the user): `_crossings` in
+      `packages/earnings-core/src/earnings_core/structure.py` never pushes an
+      element it has reported, so a later crossing against that element goes
+      unreported. With A=[0,10), B=[5,15) and C=[12,20), B is reported against A
+      but not against C. The set is still refused, but D-8 promises every
+      structural problem at once. Size: quick-fix. Done when: that case reports
+      both crossings, with a test.
+- [ ] Prefer the genuine element in `resolve_pointer` (final review, Minor;
+      deferred by the user): `resolve_pointer` in
+      `packages/earnings-core/src/earnings_core/structure.py` returns
+      `wrong_document` for the first element whose ID matches, while
+      `validate_span`'s `_element` skips elements of another version. Under D-1
+      an unchanged region keeps its `element_id` across versions, so for a
+      mixed-version element list the outcome depends on list order. Size:
+      quick-fix. Done when: `resolve_pointer` resolves the genuine element
+      wherever it sits in the list, with a test that lists the stale element
+      first.
+- [ ] Recheck construction-only invariants in `validate_elements` (final review,
+      Minor; deferred by the user): `validate_elements` in
+      `packages/earnings-core/src/earnings_core/structure.py` recomputes hashes
+      and derived IDs (D-7) but not a level on a non-leveled type, table-cell
+      context present exactly on `table_cell` elements, or self-parenting, so a
+      `model_copy`'d cell stripped of its context passes. The `ContractModel`
+      docstring in `packages/earnings-core/src/earnings_core/_model.py` says the
+      validators recheck every stored invariant. Size: quick-fix. Done when:
+      `_own_problems` rechecks all three with tests, or that docstring is
+      narrowed to hashes and derived IDs.
+- [ ] Close D-12's portability gaps in `ArtifactRef.storage_ref` (final review,
+      Minor; deferred by the user): the check in
+      `packages/earnings-core/src/earnings_core/artifacts.py` is a
+      case-sensitive prefix test, so `FILE:///Users/...`, `File:/...`,
+      `C:/Users/...` and `../...` all pass, short of D-12's aim of never
+      publishing a home directory from this public repository. Size: quick-fix.
+      Done when: `storage_ref` refuses a `file:` scheme in any case, a
+      drive-letter path, and a `..` segment, with tests, before Stage 4 persists
+      its first `ArtifactRef`.
+- [ ] Validate `MaskedDocument` itself (final review, Minor; deferred by the
+      user): `MaskedDocument` in
+      `packages/earnings-core/src/earnings_core/masks.py` has no validator, so
+      building one directly bypasses the checks in `apply_masks`: document
+      match, bounds, and one policy version (D-18). Size: quick-fix. Done when:
+      a `model_validator` on `MaskedDocument` enforces those checks and
+      `apply_masks` relies on it, with a test that a directly built bad set is
+      refused, at the latest when Stage 3 first builds `MaskedDocument`s.
+- [ ] Reject, don't raise, on unvalidated offsets (final review, Minor; deferred
+      by the user): given a candidate built by `model_copy` with a float offset,
+      `validate_span` in `packages/earnings-core/src/earnings_core/evidence.py`
+      raises `TypeError` at the slice, and a bool offset whose slice matches
+      raises a `ValidationError` when it builds the `TextSpan`. The checks are
+      meant never to raise on bad evidence (R6.2). `parse_span_candidate`
+      refuses both offsets, so only code that skips it can get there. Size:
+      quick-fix. Done when: `validate_span` returns `malformed_record` for a
+      non-integer or bool offset on an unvalidated candidate, with a test.
+- [ ] Give `Rejection` a structured subject (final review, recommendation;
+      deferred by the user): `Rejection` in
+      `packages/earnings-core/src/earnings_core/rejections.py` names what it
+      refused only in its `detail` prose, with no `doc_id`, candidate, or
+      element reference, so Stage 7 must pair each rejection with its candidate
+      to keep R6.2's audit trail. Size: design. Done when: Stage 7's
+      rejection-store design records whether `Rejection` gains structured
+      subject fields (a schema bump with a data-dictionary update) or the store
+      pairs each rejection with its candidate.
+- [ ] Check import boundaries statically as well (final review, recommendation;
+      deferred by the user): the three
+      `packages/*/tests/test_import_boundaries.py` files inspect `sys.modules`
+      after a top-level import, so an import inside a function escapes them.
+      Size: quick-fix. Done when: an AST scan of each package's `src/` refuses
+      sibling-package and browser imports alongside the runtime check, at the
+      latest when Stage 3 adds the `browser-capture` extra to
+      `earnings-ingestion` (B3).
