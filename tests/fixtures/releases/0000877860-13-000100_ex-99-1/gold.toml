@@ -362,7 +362,7 @@ headers = [
   "(unaudited)",
 ]
 cells = [
-  { role = "corner", text = "59,367", row_header = "Mortgage and other notes receivable, net", col_header = "September 30, 2013 (unaudited)" },
-  { role = "right", text = "84,250", row_header = "Mortgage and other notes receivable, net", col_header = "December 31, 2012" },
-  { role = "below", text = "38,132", row_header = "Investment in preferred stock, at cost", col_header = "September 30, 2013 (unaudited)" },
+  { role = "corner", text = "7,450", row_header = "Cash and cash equivalents", col_header = "September 30, 2013 (unaudited)" },
+  { role = "right", text = "9,172", row_header = "Cash and cash equivalents", col_header = "December 31, 2012" },
+  { role = "below", text = "13,577", row_header = "Marketable securities", col_header = "September 30, 2013 (unaudited)" },
 ]
