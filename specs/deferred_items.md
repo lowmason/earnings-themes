@@ -1,5 +1,19 @@
 # Deferred items
 
+## browser-rendering-integration — 2026-09-24
+
+- [ ] When Stage 1 is ticked complete in
+      `specs/evidence-linked-theme-extraction-roadmap.md`, surface the approved
+      `specs/browser-rendering-integration.md` design before Stage 2 planning.
+      Stage 2 plans only the browser-neutral core contracts and tests; Stage 3
+      owns Selenium capture, rendered-text calibration, DOM/layout extraction,
+      and the diagnostic-first promotion decision; Stage 10 consumes the public
+      renderer and canonical-span artifacts for cited evidence views. Do not add
+      browser automation to Stage 1 or make it a dependency of `earnings-core`
+      or `earnings-themes`. Size: cross-stage planning reminder. Done when the
+      Stage 2 plan incorporates its assigned contract work and leaves explicit
+      handoffs for the Stage 3 brainstorming pass and Stage 10 plan.
+
 ## 2-point-in-time-djia-cohort — 2026-09-22
 - [ ] Renumber the two Stage 1 documents for the cohort amendment (plan 2 Task 7,
       skipped): `specs/release-parser-fidelity.md` still calls acquisition Stage 4
