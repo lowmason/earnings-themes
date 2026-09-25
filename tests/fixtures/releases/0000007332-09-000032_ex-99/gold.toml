@@ -3,6 +3,7 @@ fixture_id = "0000007332-09-000032_ex-99"
 annotator = "Lowell Mason (verified a Codex draft)"
 marked_from = "browser rendering"
 browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
+completed = 2026-09-24
 
 [[blocks]]
 id = "p001"
@@ -630,17 +631,12 @@ id = "b069"
 type = "heading"
 level = 2
 start = "STATEMENTS OF OPERATIONS (Unaudited)"
+end = "Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "p016"
 type = "page_artifact"
 start = "Page 2 of 5"
-
-[[blocks]]
-id = "b070"
-type = "heading"
-level = 2
-start = "Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "t009"
@@ -668,23 +664,17 @@ cells = [
 ]
 
 [[blocks]]
-id = "b071"
+id = "b070"
 type = "heading"
 level = 2
 start = "BALANCE SHEETS (Unaudited)"
+end = "Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "p018"
 type = "page_artifact"
 start = "Page 3 of 5"
 
-[[blocks]]
-id = "p019"
-type = "heading"
-level = 2
-start = "Southwestern Energy Company and Subsidiaries"
-
-# CHECK: The rendered copy has no tab separators; verify the visual grid and header scope.
 [[blocks]]
 id = "t010"
 type = "table"
@@ -714,19 +704,13 @@ id = "b073"
 type = "heading"
 level = 2
 start = "STATEMENTS OF CASH FLOWS (Unaudited)"
+end = "Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "p020"
 type = "page_artifact"
 start = "Page 4 of 5"
 
-[[blocks]]
-id = "b074"
-type = "heading"
-level = 2
-start = "Southwestern Energy Company and Subsidiaries"
-
-# CHECK: The rendered copy has no tab separators; verify the visual grid and header scope.
 [[blocks]]
 id = "t011"
 type = "table"
@@ -748,28 +732,22 @@ cells = [
 ]
 
 [[blocks]]
-id = "b075"
+id = "b072"
 type = "footnote"
 start = "Cash and cash equivalents at the beginning of the year for 2008"
 end = "include $1.1 million classified as “held for sale.”"
 
-# CHECK: Verify this title is outside the table grid and that level 2 reflects its visual prominence.
 [[blocks]]
-id = "b076"
+id = "b073"
 type = "heading"
 level = 2
 start = "SEGMENT INFORMATION (Unaudited)"
+end = "Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "p022"
 type = "page_artifact"
 start = "Page 5 of 5"
-
-[[blocks]]
-id = "b077"
-type = "heading"
-level = 2
-start = "Southwestern Energy Company and Subsidiaries"
 
 [[blocks]]
 id = "t012"
@@ -793,13 +771,13 @@ cells = [
 ]
 
 [[blocks]]
-id = "b078"
+id = "b074"
 type = "footnote"
 start = "The nine-month period ended September 30, 2008 includes operating results"
 end = "as a result, we no longer have any natural distribution operations."
 
 [[blocks]]
-id = "b079"
+id = "b075"
 type = "footnote"
 start = "Capital investments include reductions of $4.2 million and $12.4 million"
 end = "relating to the change in accrued expenditures between periods."
