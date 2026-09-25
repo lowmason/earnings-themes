@@ -189,8 +189,8 @@ start = "November 4, 2013"
 id = "b025"
 type = "heading"
 level = 2
-start = "Reconciliation of Funds From Operations and Normalized Funds From Operations"
-end = "Normalized Funds From Operations (in thousands, except share and per share amounts)"
+start = "Reconciliation of Funds From Operations and Normalized Funds From Operations(1)(2)"
+end = "Normalized Funds From Operations(1)(2) (in thousands, except share and per share amounts)"
 
 [[blocks]]
 id = "t002"
@@ -246,8 +246,8 @@ start = "November 4, 2013"
 id = "b028"
 type = "heading"
 level = 2
-start = "Reconciliation of Funds Available for Distribution and Normalized Funds Available for Distribution"
-end = "Normalized Funds Available for Distribution (in thousands, except share and per share amounts)"
+start = "Reconciliation of Funds Available for Distribution and Normalized Funds Available for Distribution(1)(2)"
+end = "Normalized Funds Available for Distribution(1)(2) (in thousands, except share and per share amounts)"
 
 [[blocks]]
 id = "t003"
@@ -327,9 +327,9 @@ headers = [
   "Diluted:",
 ]
 cells = [
-  { role = "corner", text = "28,817", row_header = "Rental income", col_header = "Three Months Ended September 30, 2013" },
-  { role = "right", text = "21,116", row_header = "Rental income", col_header = "Three Months Ended September 30, 2012" },
-  { role = "below", text = "1,936", row_header = "Interest income from mortgage and other notes", col_header = "Three Months Ended September 30, 2013" },
+  { role = "corner", text = "1,936", row_header = "Interest income from mortgage and other notes", col_header = "Three Months Ended September 30, 2013" },
+  { role = "right", text = "1,879", row_header = "Interest income from mortgage and other notes", col_header = "Three Months Ended September 30, 2012" },
+  { role = "below", text = "1,040", row_header = "Investment income and other", col_header = "Three Months Ended September 30, 2013" },
 ]
 
 [[blocks]]
@@ -362,7 +362,7 @@ headers = [
   "(unaudited)",
 ]
 cells = [
-  { role = "corner", text = "767,408", row_header = "Real estate properties, net", col_header = "September 30, 2013 (unaudited)" },
-  { role = "right", text = "535,390", row_header = "Real estate properties, net", col_header = "December 31, 2012" },
-  { role = "below", text = "59,367", row_header = "Mortgage and other notes receivable, net", col_header = "September 30, 2013 (unaudited)" },
+  { role = "corner", text = "59,367", row_header = "Mortgage and other notes receivable, net", col_header = "September 30, 2013 (unaudited)" },
+  { role = "right", text = "84,250", row_header = "Mortgage and other notes receivable, net", col_header = "December 31, 2012" },
+  { role = "below", text = "38,132", row_header = "Investment in preferred stock, at cost", col_header = "September 30, 2013 (unaudited)" },
 ]
