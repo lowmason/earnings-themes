@@ -3,156 +3,155 @@ fixture_id = "0000010795-22-000014_ex-99-1"
 annotator = "Lowell Mason (verified a Codex draft)"
 marked_from = "browser rendering"
 browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
+completed = 2026-09-25
+
+[[blocks]]
+id = "p001"
+type = "page_artifact"
+start = "EX-99.1 2 ex99112312021.htm EX-99.1"
 
 [[blocks]]
 id = "b001"
 type = "paragraph"
-start = "EX-99.1 2 ex99112312021.htm EX-99.1"
-
-# CHECK: confirm the Exhibit 99.1 label is a level-2 heading
-[[blocks]]
-id = "b002"
-type = "heading"
-level = 2
 start = "Exhibit 99.1"
 
 [[blocks]]
-id = "b003"
+id = "b002"
 type = "paragraph"
 start = "1 Becton Drive Franklin Lakes, NJ"
 end = "Franklin Lakes, NJ 07417 www.bd.com"
 
 [[blocks]]
-id = "b004"
+id = "b003"
 type = "heading"
 start = "Contact:"
 
 [[blocks]]
-id = "b005"
+id = "b004"
 type = "paragraph"
 start = "Investors: Francesca DeMartino, SVP, Head of Investor Relations - 201-847-5743"
 
 [[blocks]]
-id = "b006"
+id = "b005"
 type = "paragraph"
 start = "Media: Troy Kirkpatrick, VP, Public Relations - 858-617-2361"
 
 [[blocks]]
-id = "b007"
+id = "b006"
 type = "heading"
 level = 1
 start = "BD REPORTS FIRST QUARTER FISCAL 2022 FINANCIAL RESULTS"
 
 [[blocks]]
-id = "b008"
+id = "b007"
 type = "list_item"
 level = 1
 start = "Revenue of $5.0 billion declined"
 end = "on currency-neutral basis, due to a decline in worldwide COVID-only testing revenues to $185 million from $866 million in the prior year"
 
 [[blocks]]
-id = "b009"
+id = "b008"
 type = "list_item"
 level = 1
 start = "Revenue driven by growth of 8.1%"
 end = "8.3% currency-neutral, in base revenues"
 
 [[blocks]]
-id = "b010"
+id = "b009"
 type = "list_item"
 level = 1
 start = "GAAP diluted EPS of $2.28; adjusted diluted EPS of $3.64"
 
 [[blocks]]
-id = "b011"
+id = "b010"
 type = "list_item"
 level = 1
 start = "Company raises full year revenue and EPS guidance"
 
 [[blocks]]
-id = "b012"
+id = "b011"
 type = "paragraph"
 start = "FRANKLIN LAKES, NJ (Feb. 3, 2022) -"
 end = "which ended December 31, 2021."
 
 [[blocks]]
-id = "b013"
+id = "b012"
 type = "paragraph"
 start = "“Our first quarter results reflect continued execution"
 end = "long-term growth and value for all our stakeholders.”"
 
 [[blocks]]
-id = "b014"
+id = "b013"
 type = "heading"
 level = 2
 start = "Recent Business Highlights"
 
 [[blocks]]
-id = "b015"
+id = "b014"
 type = "paragraph"
 start = "BD continues to advance its innovation-driven growth strategy, tuck-in M&A and ESG initiatives. Recent highlights include:"
 
 [[blocks]]
-id = "b016"
+id = "b015"
 type = "list_item"
 level = 1
 start = "New BD innovation in flow cytometry:"
 end = "from immunology and genomics research to cell-based therapeutics."
 
 [[blocks]]
-id = "b017"
+id = "b016"
 type = "list_item"
 level = 1
 start = "BD Kiestra™ IdentifA: Received 510(k) clearance"
 end = "identification testing using smart connected robotics."
 
 [[blocks]]
-id = "b018"
+id = "b017"
 type = "list_item"
 level = 1
 start = "BD COR™ MX: Received CE Mark"
 end = "molecular diagnostic platform for core labs."
 
 [[blocks]]
-id = "b019"
+id = "b018"
 type = "list_item"
 level = 1
 start = "BD Veritor™ At-Home COVID-19 Test: New distribution and retail partners announced."
 
 [[blocks]]
-id = "b020"
+id = "b019"
 type = "list_item"
 level = 1
 start = "Completed the acquisitions of Scanwell Health Inc.,"
 end = "expand from cancer discovery and diagnosis into post-treatment monitoring."
 
 [[blocks]]
-id = "b021"
+id = "b020"
 type = "list_item"
 level = 1
 start = "Released its inaugural Global Inclusion, Diversity and Equity (ID&E) report, highlighting the progress BD is making toward its ESG strategy."
 
 [[blocks]]
-id = "b022"
+id = "b021"
 type = "list_item"
 level = 1
 start = "Published its 2021 Cybersecurity Annual report, the only MedTech company to do so."
 
 [[blocks]]
-id = "b023"
+id = "b022"
 type = "list_item"
 level = 1
 start = "Named One of America's Most Just Companies in the annual JUST 100 Ranking."
 
 [[blocks]]
-id = "b024"
+id = "b023"
 type = "list_item"
 level = 1
 start = "Included in the 2022 Bloomberg Gender-Equality Index (GEI)"
 end = "on the organization’s Corporate Equality Index (CEI)."
 
 [[blocks]]
-id = "b025"
+id = "b024"
 type = "heading"
 level = 2
 start = "First Quarter Fiscal 2022 Operating Results"
@@ -176,13 +175,13 @@ cells = [
 ]
 
 [[blocks]]
-id = "b026"
+id = "b025"
 type = "footnote"
 start = "Represents a non-GAAP financial measure; refer to reconciliations of non-GAAP financial measures included in the attached financial tables. Base revenues denotes"
 end = "Base revenues denotes total revenues less estimated revenues for COVID-19 only diagnostic testing."
 
 [[blocks]]
-id = "b027"
+id = "b026"
 type = "heading"
 level = 2
 start = "Geographic Results"
@@ -206,19 +205,19 @@ cells = [
 ]
 
 [[blocks]]
-id = "b028"
+id = "b027"
 type = "footnote"
 start = "Represents a non-GAAP financial measure; refer to reconciliations of non-GAAP financial measures included in the attached financial tables."
 after = "Segment Results"
 
 [[blocks]]
-id = "b029"
+id = "b028"
 type = "heading"
 level = 2
 start = "Segment Results"
 
 [[blocks]]
-id = "b030"
+id = "b029"
 type = "paragraph"
 start = "First fiscal quarter revenue growth across the segments was driven by strong base business performance."
 
@@ -241,207 +240,206 @@ cells = [
 ]
 
 [[blocks]]
-id = "b031"
+id = "b030"
 type = "footnote"
 start = "Represents a non-GAAP financial measure; refer to reconciliations of non-GAAP financial measures included in the attached financial tables."
 after = "The BD Medical segment includes"
 
 [[blocks]]
-id = "b032"
+id = "b031"
 type = "paragraph"
 start = "The BD Medical segment includes the Medication Delivery Solutions"
 end = "driven by strong performance in MDS and PS."
 
 [[blocks]]
-id = "b033"
+id = "b032"
 type = "list_item"
 level = 1
 start = "MDS performance reflects strong growth in the U.S., particularly catheters and vascular care products."
 
 [[blocks]]
-id = "b034"
+id = "b033"
 type = "list_item"
 level = 1
 start = "MMS performance reflects the anticipated decline in the infusion business"
 end = "offset by strong demand in the dispensing platform."
 
 [[blocks]]
-id = "b035"
+id = "b034"
 type = "list_item"
 level = 1
 start = "PS performance reflects continued strong demand for pre-fillable devices enabled by capacity expansion."
 
 [[blocks]]
-id = "b036"
+id = "b035"
 type = "list_item"
 level = 1
 start = "DC performance reflects category leadership aided by the timing of certain customer orders in the U.S."
 
 [[blocks]]
-id = "b037"
+id = "b036"
 type = "paragraph"
 start = "The BD Life Sciences segment includes the Integrated Diagnostic Solutions"
 end = "17.2% on a currency-neutral basis."
 
 [[blocks]]
-id = "b038"
+id = "b037"
 type = "list_item"
 level = 1
 start = "IDS performance reflects a decline in COVID-only testing revenues"
 end = "demand for combination flu/COVID-19 diagnostic tests."
 
 [[blocks]]
-id = "b039"
+id = "b038"
 type = "list_item"
 level = 1
 start = "BDB performance reflects continued strong demand for research solutions driven by the recovery in lab activity and continued COVID-19 research."
 
 [[blocks]]
-id = "b040"
+id = "b039"
 type = "paragraph"
 start = "The BD Interventional segment includes the Surgery, Peripheral Intervention"
 end = "reflects strong performance in Surgery and UCC."
 
 [[blocks]]
-id = "b041"
+id = "b040"
 type = "list_item"
 level = 1
 start = "Surgery performance reflects growth across the hernia, biosurgery"
 end = "aided by the recent acquisition of Tepha."
 
 [[blocks]]
-id = "b042"
+id = "b041"
 type = "list_item"
 level = 1
 start = "PI performance reflects the impact of a fiscal 2021 product recall"
 end = "the benefit from the recent acquisition of Venclose."
 
 [[blocks]]
-id = "b043"
+id = "b042"
 type = "list_item"
 level = 1
 start = "UCC performance was driven by continued strong demand for acute urology products."
 
 [[blocks]]
-id = "b044"
+id = "b043"
 type = "heading"
 level = 2
 start = "Assumptions and Outlook for Full Year Fiscal 2022"
 
 [[blocks]]
-id = "b045"
+id = "b044"
 type = "paragraph"
 start = "The company raised its full year revenue and adjusted EPS guidance."
 
 [[blocks]]
-id = "b046"
+id = "b045"
 type = "list_item"
 level = 1
 start = "The company now expects fiscal year 2022 revenues"
 end = "approximately $19.3 billion to $19.5 billion previously announced."
 
 [[blocks]]
-id = "b047"
+id = "b046"
 type = "list_item"
 level = 1
 start = "Revenue guidance for fiscal year 2022 now assumes"
 end = "represents an increase of approximately $150 million."
 
 [[blocks]]
-id = "b048"
+id = "b047"
 type = "list_item"
 level = 1
 start = "In addition, the revenue guidance range now assumes"
 end = "approximately $200 million previously announced."
 
 [[blocks]]
-id = "b049"
+id = "b048"
 type = "list_item"
 level = 1
 start = "Based on current rates, foreign exchange would represent"
 end = "represents an incremental headwind of approximately $150 million."
 
 [[blocks]]
-id = "b050"
+id = "b049"
 type = "list_item"
 level = 1
 start = "The company now expects fiscal year 2022 adjusted diluted EPS"
 end = "compared to $12.30 to $12.50 previously."
 
 [[blocks]]
-id = "b051"
+id = "b050"
 type = "paragraph"
 start = "BD's outlook for fiscal 2022 reflects numerous assumptions"
 end = "its assumptions on its first fiscal quarter earnings call."
 
 [[blocks]]
-id = "b052"
+id = "b051"
 type = "paragraph"
 start = "The company's expected adjusted diluted EPS for fiscal 2022"
 end = "substantial impact on GAAP measures of BD’s financial performance."
 
 [[blocks]]
-id = "b053"
+id = "b052"
 type = "heading"
 level = 2
 start = "Conference Call and Presentation Materials"
 
 [[blocks]]
-id = "b054"
+id = "b053"
 type = "paragraph"
 start = "BD will host an audio webcast today for the public"
 end = "A confirmation number is not needed to access the replay."
 
 [[blocks]]
-id = "b055"
+id = "b054"
 type = "heading"
 level = 2
 start = "Non-GAAP Financial Measures/Financial Tables"
 
 [[blocks]]
-id = "b056"
+id = "b055"
 type = "paragraph"
 start = "This news release contains certain non-GAAP financial measures."
 end = "read together with, the most comparable GAAP financial measures."
 
 [[blocks]]
-id = "b057"
+id = "b056"
 type = "paragraph"
 start = "Current and prior-year adjusted diluted earnings per share results"
 end = "dilutive impact of outstanding preferred stock."
 
 [[blocks]]
-id = "b058"
+id = "b057"
 type = "paragraph"
 start = "We also provide these measures, as well as revenues, on a currency-neutral basis"
 end = "comparing these adjusted amounts to our current-period results."
 
 [[blocks]]
-id = "b059"
+id = "b058"
 type = "paragraph"
 start = "Reconciliations of these and other non-GAAP measures"
 end = "calculated from the underlying amounts."
 
 [[blocks]]
-id = "b060"
+id = "b059"
 type = "heading"
 level = 2
 start = "About BD"
 
 [[blocks]]
-id = "b061"
+id = "b060"
 type = "paragraph"
 start = "BD is one of the largest global medical technology companies"
 end = "please visit bd.com or connect with us on LinkedIn at www.linkedin.com/company/bd1/ and Twitter @BDandCo."
 
-# CHECK: confirm this end mark is a paragraph and remains between About BD and the safe-harbor text
 [[blocks]]
-id = "b062"
-type = "paragraph"
+id = "p001"
+type = "page_artifact"
 start = "***"
 
 [[blocks]]
-id = "b063"
+id = "b062"
 type = "paragraph"
 start = "This press release contains certain estimates and other forward-looking statements"
 end = "after the date hereof except as required by applicable laws or regulations."
@@ -467,7 +465,7 @@ cells = [
 ]
 
 [[blocks]]
-id = "p001"
+id = "p002"
 type = "page_artifact"
 start = "Page 1"
 
@@ -491,7 +489,7 @@ cells = [
 ]
 
 [[blocks]]
-id = "p002"
+id = "p003"
 type = "page_artifact"
 start = "Page 2"
 
@@ -516,7 +514,7 @@ cells = [
 ]
 
 [[blocks]]
-id = "p003"
+id = "p004"
 type = "page_artifact"
 start = "Page 3"
 
@@ -546,7 +544,7 @@ cells = [
 ]
 
 [[blocks]]
-id = "p004"
+id = "p005"
 type = "page_artifact"
 start = "Page 4"
 
@@ -581,7 +579,7 @@ cells = [
 ]
 
 [[blocks]]
-id = "p005"
+id = "p006"
 type = "page_artifact"
 start = "Page 5"
 
@@ -617,7 +615,7 @@ cells = [
 ]
 
 [[blocks]]
-id = "p006"
+id = "p007"
 type = "page_artifact"
 start = "Page 6"
 
@@ -650,7 +648,7 @@ cells = [
 ]
 
 [[blocks]]
-id = "p007"
+id = "p008"
 type = "page_artifact"
 start = "Page 7"
 
@@ -679,36 +677,36 @@ cells = [
 ]
 
 [[blocks]]
-id = "b064"
+id = "b063"
 type = "footnote"
 unanchorable = true
 start = "Includes amortization and other adjustments related to the purchase accounting for acquisitions impacting identified intangible assets and valuation of fixed assets and debt."
 
 [[blocks]]
-id = "b065"
+id = "b064"
 type = "footnote"
 unanchorable = true
 start = "Represents amounts associated with integration and restructuring activities resulting from acquisitions, as well as simplification and other cost saving initiatives."
 
 [[blocks]]
-id = "b066"
+id = "b065"
 type = "footnote"
 unanchorable = true
 start = "Represents costs recorded to Other operating expense, net which were incurred for consulting, legal, tax and other advisory services associated with the planned spin-off of BD's Diabetes Care business."
 
 [[blocks]]
-id = "b067"
+id = "b066"
 type = "footnote"
 start = "Represents costs required to develop processes and systems to comply with regulations such as the European Union Medical Device Regulation"
 end = 'European Union Medical Device Regulation ("EUMDR") and General Data Protection Regulation ("GDPR").'
 
 [[blocks]]
-id = "b068"
+id = "b067"
 type = "footnote"
 start = "The current-period amount includes unrealized losses recorded within Other income, net relating to certain investments."
 
 [[blocks]]
-id = "b069"
+id = "b068"
 type = "footnote"
 start = "Represents the dilutive impact of convertible preferred shares outstanding"
 end = "at December 31, 2020 were 299,107."
@@ -718,7 +716,6 @@ id = "p008"
 type = "page_artifact"
 start = "Page 8"
 
-# CHECK: confirm this separate sparse table; it has no populated L, so these exact cells are a provisional non-geometric sample because the validator rejects a blank right cell
 [[blocks]]
 id = "t012"
 type = "table"
@@ -738,7 +735,6 @@ cells = [
   { role = "below", text = "1,956", row_header = "Less: COVID-19-only Diagnostic Testing Revenues", col_header = "Full Year FY2021" },
 ]
 
-# CHECK: confirm this is a separate table and that its sparse grid has no fully populated L
 [[blocks]]
 id = "t013"
 type = "table"
@@ -755,41 +751,41 @@ cells = [
 ]
 
 [[blocks]]
-id = "b070"
+id = "b069"
 type = "paragraph"
 start = "Note - Base Business Revenues denotes total revenues less estimated revenues for COVID-19 only diagnostic testing"
 
 [[blocks]]
-id = "b071"
+id = "b070"
 type = "footnote"
 unanchorable = true
 start = "Includes amortization and other adjustments related to the purchase accounting for acquisitions impacting identified intangible assets and valuation of fixed assets and debt."
 
 [[blocks]]
-id = "b072"
+id = "b071"
 type = "footnote"
 unanchorable = true
 start = "Represents amounts associated with integration and restructuring activities resulting from acquisitions, as well as simplification and other cost saving initiatives."
 
 [[blocks]]
-id = "b073"
+id = "b072"
 type = "footnote"
 unanchorable = true
 start = "Represents costs recorded to Other operating expense, net which were incurred for consulting, legal, tax and other advisory services associated with the planned spin-off of BD's Diabetes Care business."
 
 [[blocks]]
-id = "b074"
+id = "b073"
 type = "footnote"
 start = "Includes gains of $158 million on sale-leaseback transactions"
 end = "estimate of future product remediation costs."
 
 [[blocks]]
-id = "b075"
+id = "b074"
 type = "footnote"
 start = "Represents costs required to develop processes and systems to comply with regulations such as the EUMDR and GDPR."
 
 [[blocks]]
-id = "b076"
+id = "b075"
 type = "footnote"
 start = "Includes unrealized gains recorded within Other (expense) income, net relating to certain investments."
 
