@@ -1,0 +1,723 @@
+schema_version = 1
+fixture_id = "0000037785-14-000003_ex-99-1"
+annotator = "Lowell Mason (verified a Codex draft)"
+marked_from = "browser rendering"
+browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
+
+[[blocks]]
+id = "b001"
+type = "paragraph"
+start = "EX-99.1 2 fmcex99112312013.htm PRESS RELEASE"
+
+# CHECK: The "Exhibit 99.1" label may be a heading or paragraph; its level is unclear.
+[[blocks]]
+id = "b002"
+type = "heading"
+start = "Exhibit 99.1"
+
+[[blocks]]
+id = "b003"
+type = "paragraph"
+start = "FMC Corporation"
+after = "1735 Market Street Philadelphia,"
+
+[[blocks]]
+id = "b004"
+type = "paragraph"
+start = "1735 Market Street Philadelphia,"
+end = "Philadelphia, PA 19103 USA"
+
+# CHECK: "News Release" may be a heading or a short letterhead label; its level is unclear.
+[[blocks]]
+id = "b005"
+type = "heading"
+start = "News Release"
+
+[[blocks]]
+id = "b006"
+type = "paragraph"
+start = "215.299.6000"
+
+[[blocks]]
+id = "b007"
+type = "paragraph"
+start = "fmc.com"
+after = "For Release: Immediate"
+
+[[blocks]]
+id = "b008"
+type = "paragraph"
+start = "For Release: Immediate"
+
+[[blocks]]
+id = "b009"
+type = "paragraph"
+start = "FMC Media Contact: Jim"
+end = "Jim Fitzwater - 215.299.6633"
+
+[[blocks]]
+id = "b010"
+type = "paragraph"
+start = "FMC Investor Relations Contact:"
+end = "Alisha Bellezza - 215.299.6119"
+
+[[blocks]]
+id = "b011"
+type = "heading"
+level = 1
+start = "FMC Corporation Announces Fourth Quarter and Full Year"
+end = "Record Segment Earnings with Strong Outlook for 2014"
+
+[[blocks]]
+id = "b012"
+type = "heading"
+level = 2
+start = "Fourth Quarter 2013 Highlights"
+
+[[blocks]]
+id = "b013"
+type = "list_item"
+level = 1
+start = "Consolidated revenues up 24"
+end = "percent to $1.1 billion"
+
+[[blocks]]
+id = "b014"
+type = "list_item"
+level = 1
+start = "Agricultural Solutions segment earnings up 24 percent"
+
+[[blocks]]
+id = "b015"
+type = "list_item"
+level = 1
+start = "Health and Nutrition segment earnings up 13 percent"
+
+[[blocks]]
+id = "b016"
+type = "list_item"
+level = 1
+start = "Minerals segment earnings down 18 percent"
+
+[[blocks]]
+id = "b017"
+type = "list_item"
+level = 1
+start = "Consolidated adjusted earnings per share up 36 percent"
+end = "to $1.05 per diluted share"
+
+[[blocks]]
+id = "b018"
+type = "heading"
+level = 2
+start = "Full Year 2013 Highlights"
+
+[[blocks]]
+id = "b019"
+type = "list_item"
+level = 1
+start = "Consolidated revenues up 14"
+end = "percent to $3.9 billion"
+
+[[blocks]]
+id = "b020"
+type = "list_item"
+level = 1
+start = "Agricultural Solutions segment earnings up 19 percent"
+
+[[blocks]]
+id = "b021"
+type = "list_item"
+level = 1
+start = "Health and Nutrition segment earnings up 5 percent"
+
+[[blocks]]
+id = "b022"
+type = "list_item"
+level = 1
+start = "Minerals segment earnings down 25 percent"
+
+[[blocks]]
+id = "b023"
+type = "list_item"
+level = 1
+start = "Consolidated adjusted earnings per share up 15 percent"
+end = "to $3.88 per diluted share"
+
+[[blocks]]
+id = "b024"
+type = "heading"
+level = 2
+start = "2014 Outlook"
+unanchorable = true
+
+[[blocks]]
+id = "b025"
+type = "list_item"
+level = 1
+start = "Segment earnings in Agricultural"
+end = "market share gains and new product introductions"
+
+[[blocks]]
+id = "b026"
+type = "list_item"
+level = 1
+start = "Segment earnings in Health"
+end = "from acquired businesses and organic growth"
+
+[[blocks]]
+id = "b027"
+type = "list_item"
+level = 1
+start = "Segment earnings in Minerals"
+end = "from both Lithium and Alkali Chemicals"
+
+[[blocks]]
+id = "b028"
+type = "list_item"
+level = 1
+start = "Full-year 2014 outlook for"
+end = "prior year at midpoint of range"
+
+[[blocks]]
+id = "p001"
+type = "page_artifact"
+start = "-more-"
+
+[[blocks]]
+id = "p002"
+type = "page_artifact"
+start = "Page 2/ FMC Corporation Announces Fourth Quarter Results"
+
+[[blocks]]
+id = "b029"
+type = "paragraph"
+start = "PHILADELPHIA, February 5, 2014"
+end = "increased 15 percent to $3.88 versus $3.39 in 2012."
+
+[[blocks]]
+id = "b030"
+type = "heading"
+level = 2
+start = "Segment Results and Outlook"
+
+[[blocks]]
+id = "b031"
+type = "heading"
+level = 3
+start = "FMC Agricultural Solutions"
+after = "Fourth-quarter segment revenues for FMC Agricultural Solutions"
+
+[[blocks]]
+id = "b032"
+type = "paragraph"
+start = "Fourth-quarter segment revenues for FMC Agricultural Solutions"
+end = "primarily due to changes in product mix."
+
+[[blocks]]
+id = "b033"
+type = "paragraph"
+start = "For the full year, segment sales of $2.1 billion"
+end = "while delivering operating margins of 25 percent."
+
+[[blocks]]
+id = "p003"
+type = "page_artifact"
+start = "-more-"
+
+[[blocks]]
+id = "p004"
+type = "page_artifact"
+start = "Page 3/ FMC Corporation Announces Fourth Quarter Results"
+
+[[blocks]]
+id = "b034"
+type = "paragraph"
+start = "The company expects the above-market"
+end = "in 2014 with earnings up mid-teens percent."
+
+[[blocks]]
+id = "b035"
+type = "heading"
+level = 3
+start = "FMC Health and Nutrition"
+after = "Fourth-quarter segment revenues for FMC Health and Nutrition"
+
+[[blocks]]
+id = "b036"
+type = "paragraph"
+start = "Fourth-quarter segment revenues for FMC Health and Nutrition"
+end = "with initial sales expected in the first quarter."
+
+[[blocks]]
+id = "b037"
+type = "paragraph"
+start = "Full-year segment revenues of $762.0 million"
+end = "Manufacturing Excellence and raw material cost increases."
+
+[[blocks]]
+id = "b038"
+type = "paragraph"
+start = "FMC expects growth in 2014 from food and pharmaceutical"
+end = "increase mid-teens percent versus 2013."
+
+[[blocks]]
+id = "p005"
+type = "page_artifact"
+start = "-more-"
+
+[[blocks]]
+id = "p006"
+type = "page_artifact"
+start = "Page 4/ FMC Corporation Announces Fourth Quarter Results"
+
+[[blocks]]
+id = "b039"
+type = "heading"
+level = 3
+start = "FMC Minerals"
+after = "Fourth-quarter segment revenues for FMC Minerals"
+
+[[blocks]]
+id = "b040"
+type = "paragraph"
+start = "Fourth-quarter segment revenues for FMC Minerals"
+end = "contractual timing and product mix within the quarter."
+
+[[blocks]]
+id = "b041"
+type = "paragraph"
+start = "Full-year segment revenues of $970.0 million"
+end = "offset soda ash volume gains."
+
+[[blocks]]
+id = "b042"
+type = "paragraph"
+start = "FMC is taking a prudent approach"
+end = "improved Lithium operations and incremental soda ash volume increases."
+
+[[blocks]]
+id = "b043"
+type = "heading"
+level = 3
+start = "Corporate and Other"
+
+[[blocks]]
+id = "b044"
+type = "paragraph"
+start = "Corporate and other expenses were $22.5 million"
+end = "and debt, net of cash, was $1.7 billion."
+
+[[blocks]]
+id = "p007"
+type = "page_artifact"
+start = "-more-"
+
+[[blocks]]
+id = "p008"
+type = "page_artifact"
+start = "Page 5/ FMC Corporation Announces Fourth Quarter Results"
+
+[[blocks]]
+id = "b045"
+type = "paragraph"
+start = "In the fourth quarter, the company benefited"
+end = "per diluted share in full-year adjusted earnings."
+
+[[blocks]]
+id = "b046"
+type = "paragraph"
+start = "Also in the fourth quarter, the company announced"
+end = "will close within the first quarter of 2014."
+
+[[blocks]]
+id = "b047"
+type = "heading"
+level = 2
+start = "Outlook"
+after = "Pierre Brondeau, FMC president, CEO and chairman, said:"
+
+[[blocks]]
+id = "b048"
+type = "paragraph"
+start = 'Pierre Brondeau, FMC president, CEO and chairman, said: “We'
+end = "export pricing and increased volumes in soda ash."
+
+[[blocks]]
+id = "b049"
+type = "paragraph"
+start = '“We are entering 2014'
+end = 'well positioned for 2015.”'
+
+[[blocks]]
+id = "b050"
+type = "paragraph"
+start = "The company has posted supplemental information"
+end = "figures to the nearest available GAAP term."
+
+[[blocks]]
+id = "b051"
+type = "paragraph"
+start = "FMC will conduct its fourth quarter conference call"
+end = "This event will be available live and as a replay on the web at http://www.fmc.com."
+
+[[blocks]]
+id = "p009"
+type = "page_artifact"
+start = "-more-"
+
+[[blocks]]
+id = "p010"
+type = "page_artifact"
+start = "Page 6/ FMC Corporation Announces Fourth Quarter Results"
+
+# CHECK: This repeated-star end mark may be a paragraph or a page artifact.
+[[blocks]]
+id = "b052"
+type = "paragraph"
+start = "*****    *****    *****    *****    *****    *****    *****    *****    *****    *****"
+
+[[blocks]]
+id = "b053"
+type = "paragraph"
+start = "FMC Corporation is a diversified chemical company"
+end = "For more information, visit www.FMC.com."
+
+[[blocks]]
+id = "b054"
+type = "paragraph"
+start = "Safe Harbor Statement under the Private Securities Act of 1995:"
+end = "Historical information is not necessarily indicative of future performance."
+
+# CHECK: This hash end mark may be a paragraph or a page artifact.
+[[blocks]]
+id = "b055"
+type = "paragraph"
+start = "# # #"
+
+[[blocks]]
+id = "t001"
+type = "table"
+headers = [
+  "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES",
+  "CONDENSED CONSOLIDATED STATEMENTS OF OPERATIONS",
+  "(Unaudited, in millions, except per share amounts)",
+  "Three Months Ended",
+  "Twelve Months Ended",
+  "December 31",
+  "December 31",
+  "2013",
+  "2012",
+  "2013",
+  "2012",
+  "Amounts attributable to FMC stockholders:",
+  "Basic earnings (loss) per common share attributable to FMC stockholders:",
+  "Diluted earnings (loss) per common share attributable to FMC stockholders:",
+  "Other Data:",
+]
+cells = [
+  { role = "corner", text = "2,534.4", row_header = "Costs of sales and services", col_header = "Twelve Months Ended December 31 2013" },
+  { role = "right", text = "2,141.6", row_header = "Costs of sales and services", col_header = "Twelve Months Ended December 31 2012" },
+  { role = "below", text = "1,340.4", row_header = "Gross margin", col_header = "Twelve Months Ended December 31 2013" },
+]
+
+[[blocks]]
+id = "t002"
+type = "table"
+headers = [
+  "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES",
+  "SCHEDULE OF ADJUSTED EARNINGS FROM CONTINUING OPERATIONS (NON-GAAP)(2)",
+  "(Unaudited, in millions, except per share amounts)",
+  "Three Months Ended",
+  "Twelve Months Ended",
+  "December 31",
+  "December 31",
+  "2013",
+  "2012",
+  "2013",
+  "2012",
+]
+cells = [
+  { role = "corner", text = "2,529.2", row_header = "Costs of sales and services", col_header = "Twelve Months Ended December 31 2013" },
+  { role = "right", text = "2,134.4", row_header = "Costs of sales and services", col_header = "Twelve Months Ended December 31 2012" },
+  { role = "below", text = "1,345.6", row_header = "Gross margin", col_header = "Twelve Months Ended December 31 2013" },
+]
+
+# CHECK: This underscore separator may be a paragraph or a page artifact.
+[[blocks]]
+id = "b056"
+type = "paragraph"
+start = "___________________"
+unanchorable = true
+
+[[blocks]]
+id = "b057"
+type = "footnote"
+start = "Referred to as Adjusted Operating Profit."
+unanchorable = true
+
+[[blocks]]
+id = "b058"
+type = "footnote"
+start = "The Company believes that the Non-GAAP financial measure"
+end = "is not in accordance with GAAP."
+
+[[blocks]]
+id = "b059"
+type = "paragraph"
+start = "Please see the reconciliation of"
+end = "Non-GAAP financial measures to GAAP financial results."
+
+[[blocks]]
+id = "t003"
+type = "table"
+unanchorable = true
+headers = [
+  "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES",
+  "RECONCILIATION OF NON-GAAP FINANCIAL MEASURES",
+  "RECONCILIATION OF NET INCOME ATTRIBUTABLE TO FMC STOCKHOLDERS (GAAP)",
+  "TO ADJUSTED AFTER-TAX EARNINGS FROM CONTINUING OPERATIONS,",
+  "ATTRIBUTABLE TO FMC STOCKHOLDERS (NON-GAAP)",
+  "(Unaudited, in millions, except per share amounts)",
+  "Three Months Ended",
+  "Twelve Months Ended",
+  "December 31",
+  "December 31",
+  "2013",
+  "2012",
+  "2013",
+  "2012",
+]
+cells = [
+  { role = "corner", text = "0.28", row_header = "Non-operating pension and postretirement charges per diluted share, before tax", col_header = "Twelve Months Ended December 31 2013" },
+  { role = "right", text = "0.25", row_header = "Non-operating pension and postretirement charges per diluted share, before tax", col_header = "Twelve Months Ended December 31 2012" },
+  { role = "below", text = "0.07", row_header = "Acquisition related charges per diluted share, before tax", col_header = "Twelve Months Ended December 31 2013" },
+]
+
+# CHECK: This underscore separator may be a paragraph or a page artifact.
+[[blocks]]
+id = "b060"
+type = "paragraph"
+start = "____________________"
+unanchorable = true
+
+[[blocks]]
+id = "b061"
+type = "footnote"
+start = "Discontinued operations for all periods presented"
+end = "to sell FMC Peroxygens for $200 million."
+
+# CHECK: This dated subtitle may be a separate footnote block or part of the following paragraph.
+[[blocks]]
+id = "b062"
+type = "footnote"
+start = "Three Months Ended December 31, 2013:"
+after = "Restructuring and other charges (income) for the three months ended December 31, 2013, represents"
+
+[[blocks]]
+id = "b063"
+type = "footnote"
+start = "Restructuring and other charges (income) for the three months ended December 31, 2013, represents"
+end = "net miscellaneous charges of $0.6 million."
+
+# CHECK: This dated subtitle may be a separate footnote block or part of the following paragraph.
+[[blocks]]
+id = "b064"
+type = "footnote"
+start = "Three Months Ended December 31, 2012:"
+after = "Restructuring and other charges (income) for the three months ended December 31, 2012, primarily included"
+
+[[blocks]]
+id = "b065"
+type = "footnote"
+start = "Restructuring and other charges (income) for the three months ended December 31, 2012, primarily included"
+end = "net miscellaneous charges of $2.8 million."
+
+# CHECK: This dated subtitle may be a separate footnote block or part of the following paragraph.
+[[blocks]]
+id = "b066"
+type = "footnote"
+start = "Twelve Months Ended December 31, 2013:"
+after = "Restructuring and other charges (income) for the twelve months ended December 31, 2013, include"
+
+[[blocks]]
+id = "b067"
+type = "footnote"
+start = "Restructuring and other charges (income) for the twelve months ended December 31, 2013, include"
+end = "include net miscellaneous charges of $0.5 million."
+
+# CHECK: This dated subtitle may be a separate footnote block or part of the following paragraph.
+[[blocks]]
+id = "b068"
+type = "footnote"
+start = "Twelve Months Ended December 31, 2012:"
+after = "Restructuring and other charges (income) for the twelve months ended December 31, 2012, primarily include"
+
+[[blocks]]
+id = "b069"
+type = "footnote"
+start = "Restructuring and other charges (income) for the twelve months ended December 31, 2012, primarily include"
+end = "include net miscellaneous charges of $4.0 million."
+
+[[blocks]]
+id = "b070"
+type = "footnote"
+start = "Our non-operating pension and postretirement costs are defined"
+end = "employment benefits provided to active employees."
+
+[[blocks]]
+id = "b071"
+type = "footnote"
+start = "Charges related to the expensing of the inventory fair value step-up"
+end = 'included in "Selling, general and administrative expenses".'
+
+[[blocks]]
+id = "b072"
+type = "footnote"
+start = "The tax charges in the three and twelve months ended December 31, 2013"
+end = "state net operating losses expected to be recoverable in future years."
+
+[[blocks]]
+id = "t004"
+type = "table"
+unanchorable = true
+headers = [
+  "RECONCILIATION OF NET INCOME (GAAP) TO",
+  "ADJUSTED EARNINGS FROM CONTINUING OPERATIONS, BEFORE INTEREST AND INCOME TAXES",
+  "(NON-GAAP)",
+  "(Unaudited, in millions, except per share amounts)",
+  "Three Months Ended",
+  "Twelve Months Ended",
+  "December 31",
+  "December 31",
+  "2013",
+  "2012",
+  "2013",
+  "2012",
+]
+cells = [
+  { role = "corner", text = "101.0", row_header = "Discontinued operations, net of income taxes", col_header = "Three Months Ended December 31 2013" },
+  { role = "right", text = "2.8", row_header = "Discontinued operations, net of income taxes", col_header = "Three Months Ended December 31 2012" },
+  { role = "below", text = "0.6", row_header = "Restructuring and other charges (income)", col_header = "Three Months Ended December 31 2013" },
+]
+
+# CHECK: This underscore separator may be a paragraph or a page artifact.
+[[blocks]]
+id = "b073"
+type = "paragraph"
+start = "___________________"
+unanchorable = true
+
+[[blocks]]
+id = "b074"
+type = "footnote"
+start = "Referred to as Adjusted Operating Profit."
+after = "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES INDUSTRY SEGMENT DATA"
+
+[[blocks]]
+id = "t005"
+type = "table"
+headers = [
+  "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES",
+  "INDUSTRY SEGMENT DATA",
+  "(Unaudited, in millions)",
+  "Three Months Ended",
+  "Twelve Months Ended",
+  "December 31",
+  "December 31",
+  "2013",
+  "2012",
+  "2013",
+  "2012",
+  "Revenue",
+  "Income from continuing operations before income taxes",
+]
+cells = [
+  { role = "corner", text = "492.4", row_header = "FMC Agricultural Solutions", col_header = "Three Months Ended December 31 2012" },
+  { role = "right", text = "2,145.7", row_header = "FMC Agricultural Solutions", col_header = "Twelve Months Ended December 31 2013" },
+  { role = "below", text = "168.1", row_header = "FMC Health and Nutrition", col_header = "Three Months Ended December 31 2012" },
+]
+
+# CHECK: This underscore separator may be a paragraph or a page artifact.
+[[blocks]]
+id = "b075"
+type = "paragraph"
+start = "____________________"
+unanchorable = true
+
+# CHECK: This dated subtitle may be a separate footnote block or part of a four-period footnote.
+[[blocks]]
+id = "b076"
+type = "footnote"
+start = "Three Months Ended December 31, 2013: Amounts related"
+end = "Corporate charges of $3.6 million."
+
+# CHECK: This dated subtitle may be a separate footnote block or part of a four-period footnote.
+[[blocks]]
+id = "b077"
+type = "footnote"
+start = "Three Months Ended December 31, 2012: Amounts related"
+end = "Corporate charges of $2.3 million."
+
+# CHECK: This dated subtitle may be a separate footnote block or part of a four-period footnote.
+[[blocks]]
+id = "b078"
+type = "footnote"
+start = "Twelve Months Ended December 31, 2013: Amounts related"
+end = "Corporate charges of $7.9 million."
+
+# CHECK: This dated subtitle may be a separate footnote block or part of a four-period footnote.
+[[blocks]]
+id = "b079"
+type = "footnote"
+start = "Twelve Months Ended December 31, 2012: Amounts related"
+end = "Corporate charges of $5.3 million."
+
+[[blocks]]
+id = "b080"
+type = "footnote"
+start = 'See Note (c) to the schedule “Reconciliation of Net Income Attributable to FMC Stockholders (GAAP) to Adjusted After-Tax Earnings from Continuing Operations, Attributable to FMC Stockholders (Non-GAAP)” for further details on the components that make up this line item.'
+
+[[blocks]]
+id = "b081"
+type = "footnote"
+start = 'See Note (d) to the schedule “Reconciliation of Net Income Attributable to FMC Stockholders (GAAP) to Adjusted After-Tax Earnings from Continuing Operations, Attributable to FMC Stockholders (Non-GAAP)” for further details on the components that make up this line item.'
+
+[[blocks]]
+id = "b082"
+type = "footnote"
+start = 'See Note (a) to the schedule “Reconciliation of Net Income Attributable to FMC Stockholders (GAAP) to Adjusted After-Tax Earnings from Continuing Operations, Attributable to FMC Stockholders (Non-GAAP)” for further details on the components that make up this line item.'
+
+[[blocks]]
+id = "t006"
+type = "table"
+headers = [
+  "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES",
+  "CONDENSED CONSOLIDATED BALANCE SHEETS",
+  "(Unaudited, in millions)",
+  "December 31, 2013",
+  "December 31, 2012",
+]
+cells = [
+  { role = "corner", text = "688.4", row_header = "Inventories", col_header = "December 31, 2013" },
+  { role = "right", text = "642.4", row_header = "Inventories", col_header = "December 31, 2012" },
+  { role = "below", text = "236.8", row_header = "Other current assets", col_header = "December 31, 2013" },
+]
+
+[[blocks]]
+id = "t007"
+type = "table"
+headers = [
+  "FMC CORPORATION AND CONSOLIDATED SUBSIDIARIES",
+  "CONDENSED CONSOLIDATED STATEMENTS OF CASH FLOWS",
+  "(Unaudited, in millions)",
+  "Year ended December 31",
+  "2013",
+  "2012",
+  "Cash provided (required) by financing activities of continuing operations:",
+]
+cells = [
+  { role = "corner", text = "804.7", row_header = "Other financing activities", col_header = "Year ended December 31 2013" },
+  { role = "right", text = "144.5", row_header = "Other financing activities", col_header = "Year ended December 31 2012" },
+  { role = "below", text = "371.2", row_header = "Cash provided (required) by financing activities", col_header = "Year ended December 31 2013" },
+]

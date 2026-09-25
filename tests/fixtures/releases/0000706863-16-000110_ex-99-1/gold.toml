@@ -1,0 +1,234 @@
+schema_version = 1
+fixture_id = "0000706863-16-000110_ex-99-1"
+annotator = "Lowell Mason (verified a Codex draft)"
+marked_from = "browser rendering"
+browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
+
+[[blocks]]
+id = "b001"
+type = "paragraph"
+start = "EX-99.1 2 exhibit9912ndqtr2016earnin.htm EXHIBIT 99.1"
+
+# CHECK: Exhibit label's type and prominence need browser verification.
+[[blocks]]
+id = "b002"
+type = "heading"
+start = "Exhibit 99.1"
+
+[[blocks]]
+id = "b003"
+type = "paragraph"
+start = "For Immediate Release"
+
+[[blocks]]
+id = "b004"
+type = "paragraph"
+start = "Contact: David S. Silverman"
+
+[[blocks]]
+id = "b005"
+type = "paragraph"
+start = "(802) 888-6600"
+
+# CHECK: The second title line may instead be a separate subtitle block.
+[[blocks]]
+id = "b006"
+type = "heading"
+level = 1
+start = "Union Bankshares Announces Second Quarter Ended June 30, 2016"
+end = "Earnings and Quarterly Dividend Payment"
+
+[[blocks]]
+id = "b007"
+type = "paragraph"
+start = "Morrisville, VT July 20, 2016 - Union Bankshares, Inc."
+end = "compared to $3.901 million, or $0.88 ($0.8750) per share, for the same period in 2015."
+
+[[blocks]]
+id = "b008"
+type = "heading"
+level = 2
+start = "Second Quarter Highlights"
+
+[[blocks]]
+id = "b009"
+type = "paragraph"
+start = "Highlights of the three months ended June 30, 2016"
+end = "to the three months ended June 30, 2015 include:"
+
+[[blocks]]
+id = "b010"
+type = "list_item"
+level = 1
+start = "Net income increased $122 thousand,"
+end = "or 6.0% to $2.1 million."
+
+[[blocks]]
+id = "b011"
+type = "list_item"
+level = 1
+start = "Net interest income increased $414 thousand,"
+end = "or 7.2% to $6.2 million."
+
+[[blocks]]
+id = "b012"
+type = "list_item"
+level = 1
+start = "Return on average common equity of 15.50%"
+end = "return on average assets of 1.32%."
+
+[[blocks]]
+id = "b013"
+type = "list_item"
+level = 1
+start = "Total assets increased $35.5 million,"
+end = "or 5.9%, to $636.5 million."
+
+[[blocks]]
+id = "b014"
+type = "list_item"
+level = 1
+start = "Loans increased $31.1 million,"
+end = "or 6.5%, to $509.8 million."
+
+[[blocks]]
+id = "b015"
+type = "list_item"
+level = 1
+start = "Our loan servicing portfolio increased"
+end = "$31.1 million to $431.2 million."
+
+[[blocks]]
+id = "b016"
+type = "list_item"
+level = 1
+start = "Net loan recoveries were"
+end = "recoveries were $26 thousand"
+
+[[blocks]]
+id = "b017"
+type = "list_item"
+level = 1
+start = "Deposits increased $35.0 million,"
+end = "or 6.8%, to $548.0 million."
+
+[[blocks]]
+id = "b018"
+type = "paragraph"
+start = "Total noninterest income for the second quarter of 2016"
+end = "and merchant program income of $43 thousand."
+
+[[blocks]]
+id = "b019"
+type = "paragraph"
+start = "Total noninterest expense increased 6.7%, or $370 thousand,"
+end = "account for the increase during the comparison periods."
+
+[[blocks]]
+id = "b020"
+type = "heading"
+level = 2
+start = "Year-to-Date Highlights"
+
+[[blocks]]
+id = "b021"
+type = "paragraph"
+start = "Highlights of the six months ended June 30, 2016"
+end = "ended June 30, 2016 include:"
+
+[[blocks]]
+id = "b022"
+type = "list_item"
+level = 1
+start = "Net income decreased $3 thousand,"
+end = "or .1% compared to the same period in 2015."
+
+[[blocks]]
+id = "b023"
+type = "list_item"
+level = 1
+start = "Net interest income increased $797 thousand,"
+end = "or 7.0% to $12.1 million."
+
+[[blocks]]
+id = "b024"
+type = "list_item"
+level = 1
+start = "Return on average common equity of 14.13%"
+end = "return on average assets of 1.22%."
+
+[[blocks]]
+id = "b025"
+type = "list_item"
+level = 1
+start = "Book value per common share increased"
+end = "to $12.55 as of June 30, 2016."
+
+[[blocks]]
+id = "b026"
+type = "list_item"
+level = 1
+start = "Total shareholders’ equity increased 6.1%"
+end = "to $56.0 million compared to June 30, 2015."
+
+[[blocks]]
+id = "b027"
+type = "list_item"
+level = 1
+start = "Net loan charge-offs were $125 thousand,"
+end = "or 0.02% of average loans, for the six months ended June 30, 2016."
+
+[[blocks]]
+id = "b028"
+type = "list_item"
+level = 1
+start = "Nonperforming loans were 0.67%"
+end = "were 0.67% of total loans."
+
+[[blocks]]
+id = "b029"
+type = "paragraph"
+start = "For the six months ended June 30, 2016, noninterest income"
+end = "loan servicing income of $70 thousand and income from life insurance of $79 thousand."
+
+[[blocks]]
+id = "b030"
+type = "paragraph"
+start = "Total noninterest expense increased 7.3%, or $801 thousand,"
+end = "partially offset by a decrease in occupancy expense of $67 thousand."
+
+[[blocks]]
+id = "b031"
+type = "paragraph"
+start = "On July 20, 2016, the Board of Directors declared"
+end = "to shareholders of record as of July 30, 2016."
+
+[[blocks]]
+id = "b032"
+type = "heading"
+level = 2
+start = "About Union Bankshares, Inc."
+
+[[blocks]]
+id = "b033"
+type = "paragraph"
+start = "Union Bankshares, Inc., headquartered in Morrisville, Vermont, is the bank holding company parent"
+end = "throughout northern Vermont and New Hampshire."
+
+[[blocks]]
+id = "b034"
+type = "paragraph"
+start = "Union Bank has been helping people buy homes"
+end = "Member FDIC. Equal Housing Lender."
+
+[[blocks]]
+id = "b035"
+type = "heading"
+level = 2
+start = "Forward-Looking Statements"
+
+[[blocks]]
+id = "b036"
+type = "paragraph"
+start = "Statements made in this press release that are not historical facts"
+end = "at www.sec.gov or on our investor page at www.ublocal.com."

@@ -1,0 +1,377 @@
+schema_version = 1
+fixture_id = "0000877860-13-000100_ex-99-1"
+annotator = "Lowell Mason (verified a Codex draft)"
+marked_from = "browser rendering"
+browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
+
+[[blocks]]
+id = "p001"
+type = "page_artifact"
+start = "EX-99.1 2 item991-2013q3earningspres.htm THIRD QUARTER EARNINGS PRESS RELEASE, DATED SEPTEMBER 30, 2013"
+
+# CHECK: exhibit label; heading status and prominence require browser verification.
+[[blocks]]
+id = "b001"
+type = "heading"
+start = "Exhibit 99"
+after = "Contact: Roger R. Hopkins, Chief Accounting Officer"
+
+[[blocks]]
+id = "b002"
+type = "paragraph"
+start = "Contact: Roger R. Hopkins, Chief Accounting Officer"
+
+[[blocks]]
+id = "b003"
+type = "paragraph"
+start = "Phone: (615) 890-9100"
+
+[[blocks]]
+id = "b004"
+type = "heading"
+level = 1
+start = "NHI Reports 17.2% Increase in Third Quarter Normalized FFO"
+after = "-Increases 2013 Normalized FFO Guidance-"
+
+# CHECK: subtitle; verify that it is visually a separate level-2 heading.
+[[blocks]]
+id = "b005"
+type = "heading"
+level = 2
+start = "-Increases 2013 Normalized FFO Guidance-"
+
+[[blocks]]
+id = "b006"
+type = "paragraph"
+start = "MURFREESBORO, Tenn. – (November 4, 2013) National Health Investors, Inc."
+end = "for the three and nine months ended September 30, 2013."
+
+[[blocks]]
+id = "b007"
+type = "heading"
+level = 2
+start = "Year-To-Date Highlights"
+
+[[blocks]]
+id = "b008"
+type = "list_item"
+level = 1
+start = "Increased third quarter Normalized FFO 17.2% over the same quarter in 2012"
+
+[[blocks]]
+id = "b009"
+type = "list_item"
+level = 1
+start = "Closed or announced over $258 million of new investments"
+
+[[blocks]]
+id = "b010"
+type = "list_item"
+level = 1
+start = "Amended and expanded an unsecured credit facility of $370 million"
+end = "and $120 million of 7-year term loans"
+
+[[blocks]]
+id = "b011"
+type = "heading"
+level = 2
+start = "Financial Results"
+
+[[blocks]]
+id = "b012"
+type = "paragraph"
+start = "Normalized FFO for the three months ended September 30, 2013, was $26,193,000"
+end = "a previous write-down on a mortgage note receivable."
+
+[[blocks]]
+id = "b013"
+type = "paragraph"
+start = "FFO, as defined by the National Association of Real Estate Investment Trusts"
+end = "Net income for the three months ended September 30, 2013 includes a gain $19,370,000 on the sale of real estate."
+
+[[blocks]]
+id = "b014"
+type = "paragraph"
+start = "Normalized FFO for the nine months ended September 30, 2013, was $74,188,000"
+end = "acquisition and debt issuance costs expensed in 2013."
+
+[[blocks]]
+id = "b015"
+type = "paragraph"
+start = "FFO, as defined by NAREIT, for the nine months ended September 30, 2013"
+end = "Net income for the nine months ended September 30, 2013 includes a gain $19,370,000 on the sale of real estate."
+
+# CHECK: repeated exhibit label at a page boundary; treated as a running page artifact.
+[[blocks]]
+id = "p002"
+type = "page_artifact"
+start = "Exhibit 99"
+
+[[blocks]]
+id = "b016"
+type = "paragraph"
+start = "The reconciliations of net income attributable to common stockholders"
+end = "filed in our Form 10-Q with the Securities and Exchange Commission."
+
+[[blocks]]
+id = "b017"
+type = "heading"
+level = 2
+start = "2013 Guidance -"
+
+[[blocks]]
+id = "b018"
+type = "paragraph"
+start = "The Company currently forecasts Normalized FFO for 2013 from $3.53 to $3.55"
+end = "is set forth and reconciled below:"
+
+# CHECK: verify the visible grid boundaries; no valid unique three-cell L exists.
+[[blocks]]
+id = "t001"
+type = "table"
+unanchorable = true
+headers = ["Full-Year 2013 Range", "Low", "High"]
+cells = [
+  { role = "corner", text = ".65", row_header = "Plus: Real estate depreciation", col_header = "Full-Year 2013 Range Low" },
+  { role = "right", text = ".66", row_header = "Plus: Real estate depreciation", col_header = "Full-Year 2013 Range High" },
+  { role = "below", text = ".07", row_header = "Plus: Loan impairments, net", col_header = "Full-Year 2013 Range Low" },
+]
+
+[[blocks]]
+id = "b019"
+type = "paragraph"
+start = "The Company's guidance range reflects the existence of volatile economic conditions"
+end = "NHI's guidance may change if actual results vary from these assumptions."
+
+[[blocks]]
+id = "b020"
+type = "heading"
+level = 2
+start = "Investor Conference Call and Webcast"
+
+[[blocks]]
+id = "b021"
+type = "paragraph"
+start = "NHI will host a conference call on Tuesday, November 5, 2013"
+end = "continue for approximately 90 days."
+
+[[blocks]]
+id = "b022"
+type = "heading"
+level = 2
+start = "About National Health Investors"
+
+[[blocks]]
+id = "b023"
+type = "paragraph"
+start = "National Health Investors, Inc. (NYSE: NHI), a Maryland corporation"
+end = "medical office buildings and specialty hospitals. www.nhireit.com"
+
+[[blocks]]
+id = "b024"
+type = "paragraph"
+start = "Statements in this press release that are not historical facts"
+end = "at www.sec.gov or on NHI's web site at www.nhireit.com."
+
+[[blocks]]
+id = "p003"
+type = "page_artifact"
+start = "NHI Reports 17.2% Increase in Third Quarter Normalized FFO"
+
+[[blocks]]
+id = "p004"
+type = "page_artifact"
+start = "Page 3"
+
+[[blocks]]
+id = "p005"
+type = "page_artifact"
+start = "November 4, 2013"
+
+[[blocks]]
+id = "b025"
+type = "heading"
+level = 2
+start = "Reconciliation of Funds From Operations and Normalized Funds From Operations"
+
+# CHECK: the browser copy renders the grid with line breaks rather than tabs; verify the grid, headers, and L.
+[[blocks]]
+id = "t002"
+type = "table"
+unanchorable = true
+headers = [
+  "(in thousands, except share and per share amounts)",
+  "Three Months Ended",
+  "Nine Months Ended",
+  "September 30,",
+  "September 30,",
+  "2013",
+  "2012",
+  "2013",
+  "2012",
+  "Elimination of certain non-cash items in net income:",
+  "BASIC",
+  "DILUTED",
+]
+cells = [
+  { role = "corner", text = "5,408", row_header = "Real estate depreciation in continuing operations", col_header = "Three Months Ended September 30, 2012" },
+  { role = "right", text = "12,947", row_header = "Real estate depreciation in continuing operations", col_header = "Nine Months Ended September 30, 2013" },
+  { role = "below", text = "—", row_header = "Real estate depreciation related to noncontrolling interest", col_header = "Three Months Ended September 30, 2012" },
+]
+
+[[blocks]]
+id = "b026"
+type = "footnote"
+start = "Management believes that funds from operations (FFO) is an important supplemental measure"
+end = "as determined by GAAP in the United States, as a measure of liquidity and is not necessarily indicative of cash available to fund cash needs."
+
+[[blocks]]
+id = "b027"
+type = "footnote"
+start = "Normalized FFO excludes from FFO certain items which"
+end = "Normalized FFO excludes from FFO certain items which, due to their infrequent or unpredictable nature, may create some difficulty in comparing FFO for the current period to similar prior periods, and may include, but are not limited to, impairment of assets, gains and losses attributable to the acquisition and disposition of assets and liabilities, recoveries of previous write-downs, and changes in the fair value of interest rate swap agreements."
+
+[[blocks]]
+id = "p006"
+type = "page_artifact"
+start = "NHI Reports 17.2% Increase in Third Quarter Normalized FFO"
+
+[[blocks]]
+id = "p007"
+type = "page_artifact"
+start = "Page 4"
+
+[[blocks]]
+id = "p008"
+type = "page_artifact"
+start = "November 4, 2013"
+
+[[blocks]]
+id = "b028"
+type = "heading"
+level = 2
+start = "Reconciliation of Funds Available for Distribution and Normalized Funds Available for Distribution"
+
+# CHECK: the browser copy renders the grid with line breaks rather than tabs; verify the grid, headers, and L.
+[[blocks]]
+id = "t003"
+type = "table"
+unanchorable = true
+headers = [
+  "(in thousands, except share and per share amounts)",
+  "Three Months Ended",
+  "Nine Months Ended",
+  "September 30,",
+  "September 30,",
+  "2013",
+  "2012",
+  "2013",
+  "2012",
+  "Elimination of certain non-cash items in net income:",
+  "BASIC",
+  "DILUTED",
+]
+cells = [
+  { role = "corner", text = "5,791", row_header = "Depreciation in continuing operations", col_header = "Three Months Ended September 30, 2012" },
+  { role = "right", text = "14,705", row_header = "Depreciation in continuing operations", col_header = "Nine Months Ended September 30, 2013" },
+  { role = "below", text = "—", row_header = "Depreciation related to noncontrolling interest", col_header = "Three Months Ended September 30, 2012" },
+]
+
+[[blocks]]
+id = "b029"
+type = "footnote"
+start = "Management believes that FAD and normalized FAD are important supplemental measures"
+end = "as determined by GAAP as a measure of liquidity, and is not necessarily indicative of cash available to fund cash needs."
+
+[[blocks]]
+id = "b030"
+type = "footnote"
+start = "Normalized FAD excludes from FAD certain items which"
+end = "Normalized FAD excludes from FAD certain items which, due to their infrequent or unpredictable nature, may create some difficulty in comparing FAD for the current period to similar prior periods, and may include, but are not limited to, impairment of assets, gains and losses attributable to the acquisition and disposition of assets and liabilities, recoveries of previous write-downs, and changes in the fair value of interest rate swap agreements."
+
+[[blocks]]
+id = "p009"
+type = "page_artifact"
+start = "NHI Reports 17.2% Increase in Third Quarter Normalized FFO"
+
+[[blocks]]
+id = "p010"
+type = "page_artifact"
+start = "Page 5"
+
+[[blocks]]
+id = "p011"
+type = "page_artifact"
+start = "November 4, 2013"
+
+[[blocks]]
+id = "b031"
+type = "heading"
+level = 2
+start = "Condensed Statements of Income"
+
+# CHECK: the browser copy renders the grid with line breaks rather than tabs; verify the grid and headers.
+[[blocks]]
+id = "t004"
+type = "table"
+headers = [
+  "(in thousands, except share and per share amounts)",
+  "Three Months Ended",
+  "Nine Months Ended",
+  "September 30,",
+  "September 30,",
+  "2013",
+  "2012",
+  "2013",
+  "2012",
+  "(unaudited)",
+  "Revenues:",
+  "Expenses:",
+  "Discontinued operations",
+  "Weighted average common shares outstanding:",
+  "Earnings per common share:",
+  "Basic:",
+  "Diluted:",
+]
+cells = [
+  { role = "corner", text = "28,817", row_header = "Rental income", col_header = "Three Months Ended September 30, 2013" },
+  { role = "right", text = "21,116", row_header = "Rental income", col_header = "Three Months Ended September 30, 2012" },
+  { role = "below", text = "1,936", row_header = "Interest income from mortgage and other notes", col_header = "Three Months Ended September 30, 2013" },
+]
+
+[[blocks]]
+id = "p012"
+type = "page_artifact"
+start = "NHI Reports 17.2% Increase in Third Quarter Normalized FFO"
+
+[[blocks]]
+id = "p013"
+type = "page_artifact"
+start = "Page 6"
+
+[[blocks]]
+id = "p014"
+type = "page_artifact"
+start = "November 4, 2013"
+
+[[blocks]]
+id = "b032"
+type = "heading"
+level = 2
+start = "Selected Balance Sheet Data"
+
+# CHECK: the browser copy renders the grid with line breaks rather than tabs; verify the grid and headers.
+[[blocks]]
+id = "t005"
+type = "table"
+headers = [
+  "(in thousands)",
+  "September 30, 2013",
+  "December 31, 2012",
+  "(unaudited)",
+]
+cells = [
+  { role = "corner", text = "767,408", row_header = "Real estate properties, net", col_header = "September 30, 2013 (unaudited)" },
+  { role = "right", text = "535,390", row_header = "Real estate properties, net", col_header = "December 31, 2012" },
+  { role = "below", text = "59,367", row_header = "Mortgage and other notes receivable, net", col_header = "September 30, 2013 (unaudited)" },
+]

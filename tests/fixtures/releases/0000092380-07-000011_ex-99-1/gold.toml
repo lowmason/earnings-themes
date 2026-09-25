@@ -1,0 +1,339 @@
+schema_version = 1
+fixture_id = "0000092380-07-000011_ex-99-1"
+annotator = "Lowell Mason (verified a Codex draft)"
+marked_from = "browser rendering"
+browser = "Google Chrome Version 154.0.8037.58 (Official Build) (arm64)"
+
+[[blocks]]
+id = "b001"
+type = "heading"
+start = "EX-99.1 2 ex99-1.htm EXHIBIT 99.1 1Q07 FINANCIAL RESULTS"
+
+[[blocks]]
+id = "b002"
+type = "paragraph"
+start = "CONTACT: Investor Relations (214) 792-4415"
+
+[[blocks]]
+id = "b003"
+type = "heading"
+level = 1
+start = "SOUTHWEST AIRLINES REPORTS FIRST QUARTER EARNINGS;"
+end = "64th CONSECUTIVE QUARTER OF PROFITABILITY"
+
+[[blocks]]
+id = "b004"
+type = "paragraph"
+start = "DALLAS, TEXAS - April 19, 2007 - Southwest Airlines"
+end = "the accompanying tables for further information regarding economic results.)"
+
+[[blocks]]
+id = "b005"
+type = "heading"
+level = 2
+start = "First Quarter 2007 Financial Highlights:"
+
+[[blocks]]
+id = "b006"
+type = "list_item"
+level = 1
+start = "Record first quarter revenues of $2.2 billion, up 8.9 percent"
+
+[[blocks]]
+id = "b007"
+type = "list_item"
+level = 1
+start = "Economic net income of $33 million, down 48.4 percent"
+
+[[blocks]]
+id = "b008"
+type = "list_item"
+level = 1
+start = "Economic net income per diluted share of $.04, down 50 percent"
+
+[[blocks]]
+id = "b009"
+type = "list_item"
+level = 1
+start = "Repurchased 13.5 million shares of common stock for $209 million"
+
+[[blocks]]
+id = "b010"
+type = "paragraph"
+start = "Gary C. Kelly, CEO, stated: “Although we are gratified"
+end = "combined to cool the rate of growth in domestic air travel."
+
+[[blocks]]
+id = "b011"
+type = "paragraph"
+start = "“Last year’s second quarter revenue performance was exceptionally strong"
+end = "from first to second quarter, however."
+
+[[blocks]]
+id = "p001"
+type = "page_artifact"
+start = "/more"
+
+[[blocks]]
+id = "b012"
+type = "paragraph"
+start = "“Despite $65 million in favorable cash settlements from derivative contracts"
+end = "estimated fuel consumption for the second half of 2007 at an average crude-equivalent price of approximately $50 per barrel."
+
+[[blocks]]
+id = "b013"
+type = "paragraph"
+start = "“As expected, our first quarter 2007 unit costs, excluding fuel,"
+end = "to be comparable to second quarter 2006’s 6.68 cents."
+
+[[blocks]]
+id = "b014"
+type = "paragraph"
+start = "“We continue efforts to improve productivity and enhance the overall travel experience"
+end = "100 Best Corporate Citizens for the eighth year in a row."
+
+[[blocks]]
+id = "b015"
+type = "paragraph"
+start = '"With the lowest overall unit costs (adjusted for stage length),'
+end = "we can achieve our longterm financial goals."
+
+[[blocks]]
+id = "b016"
+type = "paragraph"
+start = "“We continue to actively explore the secondary aircraft market for additional aircraft"
+end = "to resume service to San Francisco International Airport this fall.”"
+
+[[blocks]]
+id = "b017"
+type = "paragraph"
+start = "Southwest will discuss its first quarter 2007 results on a conference call"
+end = "available at southwest.com."
+
+[[blocks]]
+id = "p002"
+type = "page_artifact"
+start = "/more"
+
+[[blocks]]
+id = "b018"
+type = "heading"
+level = 2
+start = "Operating Results"
+
+[[blocks]]
+id = "b019"
+type = "paragraph"
+start = "Total operating revenues for first quarter 2007 increased 8.9 percent"
+end = "compared to $115 million last year."
+
+[[blocks]]
+id = "b020"
+type = "paragraph"
+start = "“Other income” was $65 million for first quarter 2007"
+end = 'is also included in "other (gains) losses."'
+
+[[blocks]]
+id = "b021"
+type = "paragraph"
+start = "Net cash provided by operations for first quarter 2007 was $617 million"
+end = "under this latest authorization."
+
+[[blocks]]
+id = "b022"
+type = "paragraph"
+start = "The Company ended first quarter 2007 with $1.9 billion in cash and short-term investments"
+end = "approximately $113 million in debt in the remainder of 2007."
+
+[[blocks]]
+id = "b023"
+type = "paragraph"
+start = "This news release contains forward-looking statements as defined"
+end = "after the date of this press release."
+
+[[blocks]]
+id = "p003"
+type = "page_artifact"
+start = "/more"
+
+[[blocks]]
+id = "t001"
+type = "table"
+headers = [
+  "SOUTHWEST AIRLINES CO.",
+  "CONDENSED CONSOLIDATED STATEMENT OF INCOME",
+  "(in millions, except per share amounts)",
+  "(unaudited)",
+  "Three months ended",
+  "March 31,",
+  "Percent",
+  "2007",
+  "2006",
+  "Change",
+]
+cells = [
+  { role = "corner", text = "337", row_header = "Other operating expenses", col_header = "Three months ended March 31, 2007" },
+  { role = "right", text = "316", row_header = "Other operating expenses", col_header = "Three months ended March 31, 2006" },
+  { role = "below", text = "2,114", row_header = "Total operating expenses", col_header = "Three months ended March 31, 2007" },
+]
+
+[[blocks]]
+id = "p004"
+type = "page_artifact"
+start = "/more"
+
+[[blocks]]
+id = "t002"
+type = "table"
+unanchorable = true
+headers = [
+  "SOUTHWEST AIRLINES CO.",
+  "RECONCILIATION OF REPORTED AMOUNTS TO ECONOMIC RESULTS (SEE NOTE)",
+  "(in millions, except per share amounts)",
+  "(unaudited)",
+  "Three Months Ended",
+  "March 31,",
+  "Percent",
+  "2007",
+  "2006",
+  "Change",
+]
+cells = [
+  { role = "corner", text = "578", row_header = "Fuel and oil expense - economic basis", col_header = "Three Months Ended March 31, 2007" },
+  { role = "right", text = "484", row_header = "Fuel and oil expense - economic basis", col_header = "Three Months Ended March 31, 2006" },
+  { role = "below", text = "84", row_header = "Operating income, as reported", col_header = "Three Months Ended March 31, 2007" },
+]
+
+[[blocks]]
+id = "b024"
+type = "heading"
+start = "Note regarding use of economic (non-GAAP) financial measures"
+
+[[blocks]]
+id = "b025"
+type = "paragraph"
+start = "The economic (non-GAAP) items and results referred to in this news release"
+end = "as defined in SFAS 133."
+
+[[blocks]]
+id = "b026"
+type = "paragraph"
+start = "The Company's management utilizes both the GAAP and the economic results"
+end = "excluding the unrealized impact of hedges that will settle in future periods."
+
+[[blocks]]
+id = "p005"
+type = "page_artifact"
+start = "/more"
+
+[[blocks]]
+id = "t003"
+type = "table"
+headers = [
+  "SOUTHWEST AIRLINES CO.",
+  "COMPARATIVE CONSOLIDATED OPERATING STATISTICS",
+  "(unaudited)",
+  "Three months ended",
+  "March 31,",
+  "2007",
+  "2006",
+  "Change",
+]
+cells = [
+  { role = "corner", text = "19,960,933", row_header = "Revenue passengers carried", col_header = "Three months ended March 31, 2007" },
+  { role = "right", text = "19,199,488", row_header = "Revenue passengers carried", col_header = "Three months ended March 31, 2006" },
+  { role = "below", text = "22,903,073", row_header = "Enplaned passengers", col_header = "Three months ended March 31, 2007" },
+]
+
+[[blocks]]
+id = "p006"
+type = "page_artifact"
+start = "/more"
+
+[[blocks]]
+id = "t004"
+type = "table"
+headers = [
+  "SOUTHWEST AIRLINES CO.",
+  "CONDENSED CONSOLIDATED BALANCE SHEET",
+  "(in millions)",
+  "(unaudited)",
+  "March 31,",
+  "December 31,",
+  "2007",
+  "2006",
+]
+cells = [
+  { role = "corner", text = "278", row_header = "Accounts and other receivables", col_header = "March 31, 2007" },
+  { role = "right", text = "241", row_header = "Accounts and other receivables", col_header = "December 31, 2006" },
+  { role = "below", text = "174", row_header = "Inventories of parts and supplies, at cost", col_header = "March 31, 2007" },
+]
+
+[[blocks]]
+id = "p007"
+type = "page_artifact"
+start = "/more"
+
+[[blocks]]
+id = "t005"
+type = "table"
+unanchorable = true
+headers = [
+  "SOUTHWEST AIRLINES CO.",
+  "CONDENSED CONSOLIDATED STATEMENT OF CASH FLOWS",
+  "(in millions)",
+  "(unaudited)",
+  "Three months ended",
+  "March 31,",
+  "2007",
+  "2006",
+]
+cells = [
+  { role = "corner", text = "383", row_header = "Accounts payable and accrued liabilities", col_header = "Three months ended March 31, 2007" },
+  { role = "right", text = "317", row_header = "Accounts payable and accrued liabilities", col_header = "Three months ended March 31, 2006" },
+  { role = "below", text = "210", row_header = "Air traffic liability", col_header = "Three months ended March 31, 2007" },
+]
+
+[[blocks]]
+id = "p008"
+type = "page_artifact"
+start = "/more"
+
+[[blocks]]
+id = "t006"
+type = "table"
+unanchorable = true
+headers = [
+  "SOUTHWEST AIRLINES CO.",
+  "737-700 DELIVERY SCHEDULE",
+  "The Boeing Company",
+  "Purchase",
+  "Previously",
+  "Firm",
+  "Options",
+  "Rights",
+  "Owned",
+  "Total",
+]
+cells = [
+  { role = "corner", text = "32", row_header = "2008", col_header = "The Boeing Company Firm" },
+  { role = "right", text = "2", row_header = "2008", col_header = "The Boeing Company Options" },
+  { role = "below", text = "18", row_header = "2009", col_header = "The Boeing Company Firm" },
+]
+
+[[blocks]]
+id = "b027"
+type = "footnote"
+start = "Intend to lease two previously owned 737-700 aircraft"
+
+[[blocks]]
+id = "b028"
+type = "footnote"
+start = "2007 delivery dates: eight in first quarter, eleven in second quarter, eleven"
+end = "in third quarter and nine in fourth quarter."
+
+# CHECK: The final *** may be an end mark or a dangling footnote marker; confirm its type and boundary in the browser.
+[[blocks]]
+id = "b029"
+type = "paragraph"
+start = "***"

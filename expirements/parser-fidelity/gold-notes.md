@@ -4,6 +4,12 @@ The annotator writes one section per fixture while marking (specs/release-parser
 Gold annotation). The V2 record's gold protocol and its element-nesting section, which
 Stage 2 needs, are drawn from these notes. No candidate output is consulted while marking.
 
+There are two rounds. The first eight sections are round 1's, kept as the record of that
+gold; its drafts and snapshots have moved to `data/runs/parser-fidelity/round1/gold-drafts/`.
+At gate D (2026-09-24) the user replaced all eight fixtures, and round 2's sections follow in
+the same form. Their validator lines were filled in from the validator's output: every
+round-2 fixture is ASCII.
+
 ## 0000003370-05-000209_ex-99
 
 - Draft: Codex draft (F9), from the rendered text, verified by the user; snapshot `data/runs/parser-fidelity/gold-drafts/0000003370-05-000209_ex-99.codex.toml`
@@ -85,3 +91,83 @@ Stage 2 needs, are drawn from these notes. No candidate output is consulted whil
 - Time spent (hours): 0.25 (15 minutes)
 - Tables inside lists or inside other tables: none; its only HTML table is a layout table holding the "Exhibit 99.1" label
 - Structure the gold schema cannot express: conventions chosen here: the EDGAR filing header shown at the top of the page is a `page_artifact`; the `- # # # -` end mark is a `page_artifact`; each contact line is its own `paragraph` under a `CONTACTS` heading.
+
+## 0000007332-09-000032_ex-99
+
+- Draft:
+- Browser and version:
+- Validator encoding and basis: UTF-8 (basis: valid-utf-8; every byte is ASCII, so any browser encoding agrees)
+- `document.characterSet` in the browser (skip if the validator says every byte is ASCII): skipped; every byte is ASCII
+- Time spent (hours):
+- Tables inside lists or inside other tables:
+- Structure the gold schema cannot express:
+
+## 0000037785-14-000003_ex-99-1
+
+- Draft:
+- Browser and version:
+- Validator encoding and basis: UTF-8 (basis: valid-utf-8; every byte is ASCII, so any browser encoding agrees)
+- `document.characterSet` in the browser (skip if the validator says every byte is ASCII): skipped; every byte is ASCII
+- Time spent (hours):
+- Tables inside lists or inside other tables:
+- Structure the gold schema cannot express:
+
+## 0000009389-10-000004_ex-99-1
+
+- Draft:
+- Browser and version:
+- Validator encoding and basis: UTF-8 (basis: valid-utf-8; every byte is ASCII, so any browser encoding agrees)
+- `document.characterSet` in the browser (skip if the validator says every byte is ASCII): skipped; every byte is ASCII
+- Time spent (hours):
+- Tables inside lists or inside other tables:
+- Structure the gold schema cannot express:
+
+## 0000010795-22-000014_ex-99-1
+
+- Draft:
+- Browser and version:
+- Validator encoding and basis: UTF-8 (basis: valid-utf-8; every byte is ASCII, so any browser encoding agrees)
+- `document.characterSet` in the browser (skip if the validator says every byte is ASCII): skipped; every byte is ASCII
+- Time spent (hours):
+- Tables inside lists or inside other tables:
+- Structure the gold schema cannot express:
+
+## 0000092380-07-000011_ex-99-1
+
+- Draft:
+- Browser and version:
+- Validator encoding and basis: UTF-8 (basis: valid-utf-8; every byte is ASCII, so any browser encoding agrees)
+- `document.characterSet` in the browser (skip if the validator says every byte is ASCII): skipped; every byte is ASCII
+- Time spent (hours):
+- Tables inside lists or inside other tables:
+- Structure the gold schema cannot express:
+
+## 0000877860-13-000100_ex-99-1
+
+- Draft:
+- Browser and version:
+- Validator encoding and basis: UTF-8 (basis: valid-utf-8; every byte is ASCII, so any browser encoding agrees)
+- `document.characterSet` in the browser (skip if the validator says every byte is ASCII): skipped; every byte is ASCII
+- Time spent (hours):
+- Tables inside lists or inside other tables:
+- Structure the gold schema cannot express:
+
+## 0000706863-16-000110_ex-99-1
+
+- Draft:
+- Browser and version:
+- Validator encoding and basis: UTF-8 (basis: valid-utf-8; every byte is ASCII, so any browser encoding agrees)
+- `document.characterSet` in the browser (skip if the validator says every byte is ASCII): skipped; every byte is ASCII
+- Time spent (hours):
+- Tables inside lists or inside other tables:
+- Structure the gold schema cannot express:
+
+## 0000949699-08-000023_ex-99-1
+
+- Draft:
+- Browser and version:
+- Validator encoding and basis: UTF-8 (basis: valid-utf-8; every byte is ASCII, so any browser encoding agrees)
+- `document.characterSet` in the browser (skip if the validator says every byte is ASCII): skipped; every byte is ASCII
+- Time spent (hours):
+- Tables inside lists or inside other tables:
+- Structure the gold schema cannot express:
