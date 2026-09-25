@@ -1,5 +1,7 @@
 # Core Evidence Spine (Stage 2) Implementation Plan
 
+**Status: COMPLETE (2026-09-25)** — executed via executing-plans; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > Roadmap: specs/evidence-linked-theme-extraction-roadmap.md, Stage 2 — on plan
@@ -593,7 +595,7 @@ imports the four packages.
   - rejects unregistered markers;
   - deselects tests marked `@pytest.mark.live`.
 
-- [ ] **Step 1: Create the branch and commit this plan**
+- [x] **Step 1: Create the branch and commit this plan**
 
 ```bash
 git switch -c stage-2-core-evidence-spine
@@ -604,7 +606,7 @@ git status --short
 
 Expected: the last command prints nothing.
 
-- [ ] **Step 2: Write the failing configuration tests**
+- [x] **Step 2: Write the failing configuration tests**
 
 Each test runs pytest in a subprocess, under the root `pyproject.toml`, against
 throwaway test files in `tmp_path`. That way the tests prove the configuration
@@ -680,7 +682,7 @@ def test_same_named_test_modules_do_not_collide(tmp_path: Path) -> None:
     assert "2 passed" in result.stdout
 ```
 
-- [ ] **Step 3: Write the import-boundary tests**
+- [x] **Step 3: Write the import-boundary tests**
 
 Each test imports its package in a fresh interpreter and inspects the top-level
 modules loaded. The three files share one name on purpose: they are the collision
@@ -782,7 +784,7 @@ def test_importing_earnings_themes_loads_nothing_forbidden() -> None:
     assert modules_loaded_by("earnings_themes") & FORBIDDEN == set()
 ```
 
-- [ ] **Step 4: Run the new tests to verify they fail**
+- [x] **Step 4: Run the new tests to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest tests/test_pytest_configuration.py -q
@@ -810,7 +812,8 @@ Expected: exit 2, `2 errors`. Each is an `import file mismatch`, one for
 `prepend` import mode loads all three files as one module named
 `test_import_boundaries`.
 
-- [ ] **Step 5: Append the pytest configuration**
+- [x] **Step 5: Append the pytest configuration**
+  > Deviation: appended by extracting this block from the plan rather than typing it; `git diff pyproject.toml` showed only the block and one blank line. After the final review, `0a14c3f` added `-m "not live"` to `addopts` (see Task 13, Step 11).
 
 Append this block to the end of `pyproject.toml`, after the `[tool.ruff]` table and
 one blank line. Change nothing else in the file, and add no `[project]` table.
@@ -833,7 +836,7 @@ markers = [
 ]
 ```
 
-- [ ] **Step 6: Run the suite and the harness to verify they pass**
+- [x] **Step 6: Run the suite and the harness to verify they pass**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live" -q
@@ -848,7 +851,7 @@ uv run --locked --all-packages pytest expirements/parser-fidelity --import-mode=
 Expected: `169 passed`. The harness is untouched: its command-line
 `--import-mode=prepend` overrides the new default.
 
-- [ ] **Step 7: Lint**
+- [x] **Step 7: Lint**
 
 ```bash
 uv run --locked ruff check . && uv run --locked ruff format --check .
@@ -857,7 +860,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `All checks passed!` and `51 files already formatted`. The count covers
 every Python file Ruff sees; each later task states its own.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add pyproject.toml tests/test_pytest_configuration.py packages/earnings-core/tests/test_import_boundaries.py packages/earnings-ingestion/tests/test_import_boundaries.py packages/earnings-themes/tests/test_import_boundaries.py
@@ -901,7 +904,7 @@ git commit -m "test: configure pytest with a registered live marker and importli
   - `slice_of(text: str) -> str`, which raises `ValueError` rather than truncate when
     the span runs past `text`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-core/tests/test_hashing.py`:
 
@@ -1010,7 +1013,7 @@ python3 -c 'import sys; bad = {p: sorted({hex(ord(c)) for c in open(p, encoding=
 Expected: `escapes intact`. If it prints a file name instead, re-extract that file
 (Global Constraints, "Writing files from this plan") and rerun the check.
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_hashing.py packages/earnings-core/tests/test_spans.py -q
@@ -1020,7 +1023,7 @@ Expected: exit 2, `2 errors`, with
 `ModuleNotFoundError: No module named 'earnings_core.hashing'` and
 `ModuleNotFoundError: No module named 'earnings_core.spans'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 The leading underscore marks `_model.py` as private: Task 11 re-exports
 `SCHEMA_VERSION` from the package root.
@@ -1132,7 +1135,7 @@ class TextSpan(ContractModel):
         return text[self.start : self.end]
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_hashing.py packages/earnings-core/tests/test_spans.py -q
@@ -1140,7 +1143,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests/test_hashing.
 
 Expected: `16 passed`.
 
-- [ ] **Step 5: Run the suite and lint**
+- [x] **Step 5: Run the suite and lint**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live" -q
@@ -1149,7 +1152,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `23 passed`; `All checks passed!`; `56 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/earnings-core/src/earnings_core/_model.py packages/earnings-core/src/earnings_core/hashing.py packages/earnings-core/src/earnings_core/spans.py packages/earnings-core/tests/test_hashing.py packages/earnings-core/tests/test_spans.py
@@ -1182,7 +1185,7 @@ git commit -m "feat(core): add the contract base, SHA-256 helpers, and TextSpan"
     `ArtifactRef.for_bytes(data: bytes, *, media_type: str, storage_ref: str, rights_status: RightsStatus, rights_basis: str) -> ArtifactRef`.
   - `ArtifactRef.matches(data: bytes) -> bool`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-core/tests/test_artifacts.py`:
 
@@ -1275,7 +1278,7 @@ def test_a_newer_schema_version_is_refused() -> None:
         ArtifactRef.model_validate_json(payload)
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_artifacts.py -q
@@ -1284,7 +1287,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests/test_artifact
 Expected: exit 2, `1 error`, with
 `ModuleNotFoundError: No module named 'earnings_core.artifacts'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-core/src/earnings_core/artifacts.py`:
 
@@ -1374,7 +1377,7 @@ class ArtifactRef(VersionedRecord):
         return sha256_hex(data) == self.content_sha256
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_artifacts.py -q
@@ -1382,7 +1385,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests/test_artifact
 
 Expected: `16 passed`.
 
-- [ ] **Step 5: Run the suite and lint**
+- [x] **Step 5: Run the suite and lint**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live" -q
@@ -1391,7 +1394,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `39 passed`; `All checks passed!`; `58 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/earnings-core/src/earnings_core/artifacts.py packages/earnings-core/tests/test_artifacts.py
@@ -1430,7 +1433,7 @@ git commit -m "feat(core): add ArtifactRef with a rights status and basis"
     recomputes the hash, the `doc_id`, and the artifact match (D-7), then returns the
     first problem, or `None`. Every later check calls it first.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-core/tests/test_documents.py`:
 
@@ -1565,7 +1568,7 @@ python3 -c 'import sys; bad = {p: sorted({hex(ord(c)) for c in open(p, encoding=
 Expected: `escapes intact`. If it prints a file name instead, re-extract that file
 (Global Constraints, "Writing files from this plan") and rerun the check.
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_documents.py -q
@@ -1574,7 +1577,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests/test_document
 Expected: exit 2, `1 error`, with
 `ModuleNotFoundError: No module named 'earnings_core.documents'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-core/src/earnings_core/documents.py`:
 
@@ -1686,7 +1689,7 @@ def document_integrity_problem(document: CanonicalDocument) -> str | None:
     return None
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_documents.py -q
@@ -1694,7 +1697,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests/test_document
 
 Expected: `16 passed`.
 
-- [ ] **Step 5: Run the suite and lint**
+- [x] **Step 5: Run the suite and lint**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live" -q
@@ -1703,7 +1706,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `55 passed`; `All checks passed!`; `60 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/earnings-core/src/earnings_core/documents.py packages/earnings-core/tests/test_documents.py
@@ -1755,7 +1758,7 @@ git commit -m "feat(core): add CanonicalDocument with derived doc IDs"
   - cells sit in tables;
   - header references are valid.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-core/tests/test_elements.py`:
 
@@ -1879,7 +1882,7 @@ def test_an_element_round_trips_through_json() -> None:
     assert DocumentElement.model_validate_json(cell.model_dump_json()) == cell
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_elements.py -q
@@ -1888,7 +1891,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests/test_elements
 Expected: exit 2, `1 error`, with
 `ModuleNotFoundError: No module named 'earnings_core.elements'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-core/src/earnings_core/elements.py`:
 
@@ -2015,7 +2018,7 @@ class DocumentElement(VersionedRecord):
         )
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_elements.py -q
@@ -2023,7 +2026,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests/test_elements
 
 Expected: `16 passed`.
 
-- [ ] **Step 5: Run the suite and lint**
+- [x] **Step 5: Run the suite and lint**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live" -q
@@ -2032,7 +2035,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `71 passed`; `All checks passed!`; `62 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/earnings-core/src/earnings_core/elements.py packages/earnings-core/tests/test_elements.py
@@ -2096,7 +2099,7 @@ git commit -m "feat(core): add DocumentElement with derived element IDs"
 The enum is closed and documented in one place. Adding a reason later is a
 validator-version bump.
 
-- [ ] **Step 1: Write the shared sample**
+- [x] **Step 1: Write the shared sample**
 
 Create `packages/earnings-core/tests/conftest.py`:
 
@@ -2228,7 +2231,7 @@ python3 -c 'import sys; bad = {p: sorted({hex(ord(c)) for c in open(p, encoding=
 Expected: `escapes intact`. If it prints a file name instead, re-extract that file
 (Global Constraints, "Writing files from this plan") and rerun the check.
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Create `packages/earnings-core/tests/test_structure.py`:
 
@@ -2429,7 +2432,7 @@ def test_a_tampered_pointer_target_is_rejected(sample) -> None:
     assert outcome.reason is RejectionReason.ELEMENT_ID_MISMATCH
 ```
 
-- [ ] **Step 3: Run them to verify they fail**
+- [x] **Step 3: Run them to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_structure.py -q
@@ -2438,7 +2441,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests/test_structur
 Expected: exit 2, `1 error`, with
 `ModuleNotFoundError: No module named 'earnings_core.rejections'`.
 
-- [ ] **Step 4: Write the implementation**
+- [x] **Step 4: Write the implementation**
 
 Create `packages/earnings-core/src/earnings_core/rejections.py`:
 
@@ -2669,7 +2672,7 @@ def _crossings(elements: Sequence[DocumentElement]) -> list[Rejection]:
     return found
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_structure.py -q
@@ -2677,7 +2680,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests/test_structur
 
 Expected: `19 passed`.
 
-- [ ] **Step 6: Run the suite and lint**
+- [x] **Step 6: Run the suite and lint**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live" -q
@@ -2686,7 +2689,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `90 passed`; `All checks passed!`; `66 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/earnings-core/src/earnings_core/rejections.py packages/earnings-core/src/earnings_core/structure.py packages/earnings-core/tests/conftest.py packages/earnings-core/tests/test_structure.py
@@ -2720,7 +2723,7 @@ git commit -m "feat(core): add rejection records, element-set checks, and pointe
     It returns the one span, or `locator_not_found`, or `ambiguous_occurrence`. It
     never returns a first match.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-core/tests/test_locators.py`:
 
@@ -2839,7 +2842,7 @@ python3 -c 'import sys; bad = {p: sorted({hex(ord(c)) for c in open(p, encoding=
 Expected: `escapes intact`. If it prints a file name instead, re-extract that file
 (Global Constraints, "Writing files from this plan") and rerun the check.
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_locators.py -q
@@ -2848,7 +2851,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests/test_locators
 Expected: exit 2, `1 error`, with
 `ModuleNotFoundError: No module named 'earnings_core.locators'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-core/src/earnings_core/locators.py`:
 
@@ -2956,7 +2959,7 @@ def _after(text: str, end: int, word_ends: list[int], words: int) -> str:
     return text[end : word_ends[words - 1]]
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_locators.py -q
@@ -2964,7 +2967,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests/test_locators
 
 Expected: `11 passed`.
 
-- [ ] **Step 5: Run the suite and lint**
+- [x] **Step 5: Run the suite and lint**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live" -q
@@ -2973,7 +2976,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `101 passed`; `All checks passed!`; `68 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/earnings-core/src/earnings_core/locators.py packages/earnings-core/tests/test_locators.py
@@ -3006,7 +3009,7 @@ git commit -m "feat(core): add prefix/suffix span locators"
     returns `outside_chunk` when the local span runs past the chunk. Convert before
     storing any evidence (A §508).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-core/tests/test_chunks.py`:
 
@@ -3069,7 +3072,7 @@ def test_a_chunk_carries_its_documents_identity(sample) -> None:
     assert TextChunk.model_validate_json(chunk.model_dump_json()) == chunk
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_chunks.py -q
@@ -3078,7 +3081,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests/test_chunks.p
 Expected: exit 2, `1 error`, with
 `ModuleNotFoundError: No module named 'earnings_core.chunks'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-core/src/earnings_core/chunks.py`:
 
@@ -3141,7 +3144,7 @@ class TextChunk(VersionedRecord):
         )
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_chunks.py -q
@@ -3149,7 +3152,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests/test_chunks.p
 
 Expected: `6 passed`.
 
-- [ ] **Step 5: Run the suite and lint**
+- [x] **Step 5: Run the suite and lint**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live" -q
@@ -3158,7 +3161,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `107 passed`; `All checks passed!`; `70 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/earnings-core/src/earnings_core/chunks.py packages/earnings-core/tests/test_chunks.py
@@ -3222,7 +3225,7 @@ git commit -m "feat(core): add TextChunk and chunk-to-document span conversion"
     returns that valid candidate as a decoded JSON object, then applies `changes`.
     Here `changes` may be ill-typed: that is how Task 11 feeds malformed records.
 
-- [ ] **Step 1: Extend the shared sample**
+- [x] **Step 1: Extend the shared sample**
 
 Replace `packages/earnings-core/tests/conftest.py` with:
 
@@ -3383,7 +3386,7 @@ python3 -c 'import sys; bad = {p: sorted({hex(ord(c)) for c in open(p, encoding=
 Expected: `escapes intact`. If it prints a file name instead, re-extract that file
 (Global Constraints, "Writing files from this plan") and rerun the check.
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Create `packages/earnings-core/tests/test_evidence.py`:
 
@@ -3515,7 +3518,7 @@ def test_a_malformed_record_names_the_offending_field(sample) -> None:
     assert outcome.detail.startswith("start:")
 ```
 
-- [ ] **Step 3: Run them to verify they fail**
+- [x] **Step 3: Run them to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_evidence.py -q
@@ -3527,7 +3530,7 @@ and `ModuleNotFoundError: No module named 'earnings_core.evidence'`. Exit 4 mean
 the shared sample itself failed to import, so every `earnings-core` test is blocked
 until Step 4.
 
-- [ ] **Step 4: Write the implementation**
+- [x] **Step 4: Write the implementation**
 
 Create `packages/earnings-core/src/earnings_core/evidence.py`:
 
@@ -3732,7 +3735,7 @@ def _describe(error: ValidationError) -> str:
     )
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_evidence.py -q
@@ -3740,7 +3743,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests/test_evidence
 
 Expected: `15 passed`.
 
-- [ ] **Step 6: Run the suite and lint**
+- [x] **Step 6: Run the suite and lint**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live" -q
@@ -3749,7 +3752,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `122 passed`; `All checks passed!`; `72 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/earnings-core/src/earnings_core/evidence.py packages/earnings-core/tests/conftest.py packages/earnings-core/tests/test_evidence.py
@@ -3793,7 +3796,7 @@ git commit -m "feat(core): add the R6.1 span validator"
 - The roadmap's exit test is
   `test_applying_a_mask_leaves_the_text_and_hash_unchanged` (R3.4).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-core/tests/test_masks.py`:
 
@@ -3886,7 +3889,7 @@ def test_a_mask_round_trips_through_json(sample) -> None:
     assert OverlayMask.model_validate_json(mask.model_dump_json()) == mask
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_masks.py -q
@@ -3895,7 +3898,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests/test_masks.py
 Expected: exit 2, `1 error`, with
 `ModuleNotFoundError: No module named 'earnings_core.masks'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-core/src/earnings_core/masks.py`:
 
@@ -3996,7 +3999,7 @@ def apply_masks(
     )
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_masks.py -q
@@ -4004,7 +4007,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests/test_masks.py
 
 Expected: `7 passed`.
 
-- [ ] **Step 5: Run the suite and lint**
+- [x] **Step 5: Run the suite and lint**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live" -q
@@ -4013,7 +4016,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `129 passed`; `All checks passed!`; `74 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/earnings-core/src/earnings_core/masks.py packages/earnings-core/tests/test_masks.py
@@ -4056,7 +4059,7 @@ git commit -m "feat(core): add overlay masks computed against canonical text"
     asserts the recorded reason.
   - The six positive controls prove those starting candidates verify.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-core/tests/test_public_api.py`:
 
@@ -4457,7 +4460,7 @@ python3 -c 'import sys; bad = {p: sorted({hex(ord(c)) for c in open(p, encoding=
 Expected: `escapes intact`. If it prints a file name instead, re-extract that file
 (Global Constraints, "Writing files from this plan") and rerun the check.
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_public_api.py -q
@@ -4474,7 +4477,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests/test_failure_
 Expected: exit 2, `1 error`, with
 `ImportError: cannot import name 'VALIDATOR_VERSION' from 'earnings_core'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Replace `packages/earnings-core/src/earnings_core/__init__.py` with:
 
@@ -4553,7 +4556,7 @@ __all__ = [
 ]
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_public_api.py packages/earnings-core/tests/test_failure_classes.py -q
@@ -4561,7 +4564,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests/test_public_a
 
 Expected: `41 passed`.
 
-- [ ] **Step 5: Prove the table bites**
+- [x] **Step 5: Prove the table bites**
 
 Disable the text-equality check, run the table, then restore the committed file:
 
@@ -4579,7 +4582,7 @@ Expected, first run: exit 1, `10 failed, 28 passed`. The failures include
 Expected, second run: `38 passed`, and `git status --short` no longer lists
 `evidence.py`.
 
-- [ ] **Step 6: Run the suite and lint**
+- [x] **Step 6: Run the suite and lint**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live" -q
@@ -4588,7 +4591,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `170 passed`; `All checks passed!`; `76 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/earnings-core/src/earnings_core/__init__.py packages/earnings-core/tests/test_public_api.py packages/earnings-core/tests/test_failure_classes.py
@@ -4621,7 +4624,7 @@ git commit -m "feat(core): export the public API and the Stage 2 failure-class t
 - These tests exercise finished code, so they pass as soon as they are written.
   Steps 4 and 5 prove they can fail.
 
-- [ ] **Step 1: Write the two-parser contract test**
+- [x] **Step 1: Write the two-parser contract test**
 
 The HTML is synthetic and holds a heading, two paragraphs, a list, and a small
 table. It repeats "Results are preliminary." once in a paragraph and once in a list
@@ -4927,7 +4930,7 @@ def test_both_readers_emit_records_of_the_one_schema() -> None:
         assert DocumentElement.model_validate_json(payload) == element
 ```
 
-- [ ] **Step 2: Write the gold-vocabulary test**
+- [x] **Step 2: Write the gold-vocabulary test**
 
 Create `tests/contracts/test_gold_vocabulary.py`:
 
@@ -5011,7 +5014,7 @@ def test_gold_levels_sit_only_on_leveled_types() -> None:
             assert ElementType(block["type"]) in LEVELED_TYPES, fixture
 ```
 
-- [ ] **Step 3: Run them**
+- [x] **Step 3: Run them**
 
 ```bash
 uv run --locked --all-packages pytest tests/contracts -q
@@ -5019,7 +5022,7 @@ uv run --locked --all-packages pytest tests/contracts -q
 
 Expected: `10 passed`.
 
-- [ ] **Step 4: Prove the contract test bites**
+- [x] **Step 4: Prove the contract test bites**
 
 Make `resolve_locator` fall back to the first match, run the contract, then restore
 the committed file:
@@ -5037,7 +5040,7 @@ FAILED tests/contracts/test_element_schema_parsers.py::test_elements_both_reader
 FAILED tests/contracts/test_element_schema_parsers.py::test_repeated_text_fails_to_map_explicitly_never_to_the_first_match
 ```
 
-- [ ] **Step 5: Prove the gold-vocabulary test bites**
+- [x] **Step 5: Prove the gold-vocabulary test bites**
 
 Stop list items carrying a level, run the test, then restore the committed file:
 
@@ -5054,7 +5057,7 @@ FAILED tests/contracts/test_gold_vocabulary.py::test_every_gold_type_and_level_i
 FAILED tests/contracts/test_gold_vocabulary.py::test_gold_levels_sit_only_on_leveled_types
 ```
 
-- [ ] **Step 6: Run the suite and lint**
+- [x] **Step 6: Run the suite and lint**
 
 ```bash
 uv run --locked --all-packages pytest tests/contracts -q
@@ -5065,7 +5068,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `10 passed`; `180 passed`; `All checks passed!`; `78 files already
 formatted`. `git status --short` lists only the two new test files.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add tests/contracts/test_element_schema_parsers.py tests/contracts/test_gold_vocabulary.py
@@ -5097,7 +5100,7 @@ git commit -m "test(contracts): two readers emit one element schema; gold types 
   - Under each heading is a table whose first column holds the field or value in
     backticks.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/contracts/test_data_dictionary.py`:
 
@@ -5159,7 +5162,7 @@ def test_the_documented_versions_are_the_packages() -> None:
     assert f'`"{core.VALIDATOR_VERSION}"` (`earnings_core.VALIDATOR_VERSION`)' in text
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 ```bash
 uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py -q
@@ -5168,7 +5171,7 @@ uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py -q
 Expected: exit 1, `17 failed`, each with a `FileNotFoundError` for
 `docs/data-dictionary.md`.
 
-- [ ] **Step 3: Write the data dictionary**
+- [x] **Step 3: Write the data dictionary**
 
 Create `docs/data-dictionary.md`:
 
@@ -5440,7 +5443,7 @@ in the order of the next ten rows and records the first failure.
 | `invalid_header_reference` | A header reference names no header cell of the same table (R4.2) |
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 ```bash
 uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py -q
@@ -5448,7 +5451,7 @@ uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py -q
 
 Expected: `17 passed`.
 
-- [ ] **Step 5: Prove the drift test bites**
+- [x] **Step 5: Prove the drift test bites**
 
 Rename one documented field, run the test, then restore the file:
 
@@ -5465,7 +5468,7 @@ Expected, first run: exit 1, `1 failed, 16 passed`, with
 
 Expected, second run: `17 passed`.
 
-- [ ] **Step 6: Run the suite and lint**
+- [x] **Step 6: Run the suite and lint**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live" -q
@@ -5474,14 +5477,14 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `197 passed`; `All checks passed!`; `79 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add docs/data-dictionary.md tests/contracts/test_data_dictionary.py
 git commit -m "docs: add the earnings-core data dictionary with a drift test"
 ```
 
-- [ ] **Step 8: Update the current-state passages in CLAUDE.md and README.md**
+- [x] **Step 8: Update the current-state passages in CLAUDE.md and README.md**
 
 The script replaces exact passages. Each must match exactly once, or the script
 stops before writing anything to that file. It stamps the README's status line with
@@ -5627,7 +5630,7 @@ Expected: `applied 11 edits`. If an assertion fires, the passage changed after t
 plan was written. Stop and show the user the current passage rather than improvise
 a replacement.
 
-- [ ] **Step 9: Check the edits**
+- [x] **Step 9: Check the edits**
 
 ```bash
 git diff --stat
@@ -5644,14 +5647,15 @@ Expected:
 
   Those three still are scaffolds.
 
-- [ ] **Step 10: Human gate — the README wording**
+- [x] **Step 10: Human gate — the README wording**
 
 The README's status passages are the user's prose. Show the user
 `git diff README.md CLAUDE.md` and ask them to approve the wording or supply their
 own. Apply any change they ask for. If they change a passage the steps below check,
 adjust that check to match. Do not commit until they approve.
 
-- [ ] **Step 11: Final verification**
+- [x] **Step 11: Final verification**
+  > Deviation: the final review found that a bare run collected live-marked tests (Important #1); on the user's call, `0a14c3f` added `-m "not live"` to `addopts` with a test that a bare run deselects them, so items 1 and 2 now read `198 passed` and item 3 `198 deselected` (exit 5); items 4–8 are unchanged.
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live" -q
@@ -5676,7 +5680,7 @@ Expected, in order:
 7. No output: `uv.lock` is unchanged.
 8. Exit 0 and no output: the README's workspace smoke check.
 
-- [ ] **Step 12: Commit**
+- [x] **Step 12: Commit**
 
 ```bash
 git add CLAUDE.md README.md
