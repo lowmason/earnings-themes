@@ -25,6 +25,7 @@ Standard-library modules run in the workspace environment with
 | `pf_dump.py` | Element dumps, the network guard, the adapter entry point (frozen) | stdlib |
 | `fetch_policy_pages.py` | Fetches and verifies the source register's SEC quotes | script lock |
 | `discover.py` | Samples Item 2.02 exhibits and writes the shortlist | script lock |
+| `round2_fixtures.py` | Round-2 fixtures: `discover.suggest()` over the round-2 pool, fixed at gate D | httpx, lxml (imports `discover.py`) |
 | `promote_fixtures.py` | Copies approved exhibits into the corpus; writes the manifest | stdlib |
 | `validate_gold.py` | Validates hand-marked gold | stdlib |
 | `check_fixtures.py` | The exit-criterion-4 harness check | stdlib + git |
