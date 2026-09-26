@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Document status — read before trusting any file here
 
-This repo is documentation-first: its working code is the Stage 1 investigation harness in `expirements/parser-fidelity/` and the Stage 2 contracts in `packages/earnings-core`; the other packages are still `hello()` scaffolds, and the rest is instructions.
+This repo is documentation-first: its working code is the Stage 1 investigation harness in `expirements/parser-fidelity/`, the Stage 2 contracts in `packages/earnings-core`, and Stage 3's canonicalizer and browser diagnostic path in `packages/earnings-ingestion`; `earnings-themes` is still a `hello()` scaffold, and the rest is instructions.
 Not all of it is binding.
 
 | File | Status |
@@ -22,7 +22,7 @@ Not all of it is binding.
 
 **Deliberately unresolved — do not silently pick one** (AGENTS.md §"Source basis and unresolved choices"): the production provider/model, the final theme taxonomy, and non-exactness quality thresholds. Record these in config or a decision record; do not invent agreement. The fourth such choice, an approved inference budget, is now recorded by `specs/evidence-linked-theme-extraction.md` R14.2: **$100, for the optional hosted-ceiling ablation only**, not prompt-optimizer compiles or any other billable call. The required path needs no billable inference: R14.1 limits it to open-weight, self-hosted models, which narrows the model choice without making it.
 
-## Current state: Stages 1 and 2 complete, with Stage 3's plan A; two packages still scaffold
+## Current state: Stages 1–3 complete; `earnings-themes` still a scaffold
 
 Stage 1 of the roadmap (release parser fidelity, `specs/release-parser-fidelity.md`) is done:
 
@@ -38,13 +38,15 @@ Stage 2 of the roadmap (core evidence spine, plan 3, `specs/plans/completed/3-co
 - IDs are derived: `doc_id` is `<source_document_id>@<canonicalization_version>#<first 16 hex of the canonical hash>`, and `element_id` is `<type>-<start>-<end>`.
 - The root `pyproject.toml` configures pytest (see "Commands" below).
 
-Stage 3's plan A (structure-aware canonicalization, plan 4, `specs/structure-aware-canonicalization.md`) is done; plan B, the browser diagnostic path, comes next and completes Stage 3:
+Stage 3 (structure-aware canonicalization, `specs/structure-aware-canonicalization.md`) is done: plan A (plan 4) built the canonicalizer, and plan B (plan 5) the browser diagnostic path:
 
 - `packages/earnings-ingestion/src/earnings_ingestion/canonical/` holds `canonicalize`. It turns saved release bytes into a hashed `walker-1` document with typed elements, tables with cells, S1 sentences, and `boilerplate/1` masks, or else a `CanonicalizationFailure`. `decode.py`, `dom.py` and `walker.py` there are generated from the frozen harness by `expirements/parser-fidelity/port_walker.py`: edit the script, never the generated files.
 - `tests/fixtures/canonical/` holds the eight fixtures' canonical output, and `tests/integration/test_canonical_golden.py` fails if any byte changes. Changed canonical text or elements need a new policy, `walker-2`, never regenerated `walker-1` files.
 - `docs/verification/walker-1.md` records the port, the re-score, and the review gate. `walker-1-report.md` and `R3.5-text-fidelity.md` beside it are generated, and harness tests keep them current.
+- `packages/earnings-ingestion/src/earnings_ingestion/browser/` captures a saved page in the pinned Chrome for Testing under capture policy `isolated/1`, behind the `browser-capture` extra. Only `browser/selenium_capture.py` imports a browser library, and `tests/contracts/test_import_scan.py` holds every other module to that. `earnings-pipeline browser setup` is the only command that downloads the browser, and browser tests carry the `browser` marker and run only with `-m browser`.
+- `packages/earnings-ingestion/src/earnings_ingestion/layout/` holds `layout-1`, which reads a capture's rendered layout and maps its elements onto `walker-1`'s text under `anchored-1`; `tests/fixtures/browser/` holds the committed captures. The comparison with `walker-1` was pre-registered (`expirements/parser-fidelity/layout1-preregistered.toml`) before any release was captured, and `docs/verification/layout-1.md` records it. ADR 0002 keeps the capture diagnostic-only: `walker-1` stays the canonicalization policy.
 
-`earnings-themes` and `apps/earnings-pipeline` still contain only `hello()` stubs, as does `earnings-ingestion`'s top-level module. `data/` is gitignored and holds only local, uncommitted material: fetched pages under `data/raw/` and Stage 1 run outputs under `data/runs/`; `config/`, `prompts/` and `codebooks/` are empty directories. `origin` is set to https://github.com/lowmason/earnings-themes, which is **public** — treat anything committed here as publicly visible.
+`earnings-themes` still contains only a `hello()` stub, as do the top-level modules of `earnings-ingestion` and `apps/earnings-pipeline`; the application's one command is `earnings-pipeline browser setup`. `data/` is gitignored and holds only local, uncommitted material: fetched pages under `data/raw/`, and under `data/runs/` Stage 1's run outputs, the user's rendered copies, and the browser capture store; `config/`, `prompts/` and `codebooks/` are empty directories. `origin` is set to https://github.com/lowmason/earnings-themes, which is **public** — treat anything committed here as publicly visible.
 
 ### Workspace root is virtual — do not add `[project]` to it
 
@@ -77,6 +79,8 @@ uv run --locked ruff format --check .
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser"
 # single test:
 uv run --locked --all-packages pytest path/to/test_x.py::test_name -m "not live and not browser"
+# browser checks, opt-in, once `earnings-pipeline browser setup` has run:
+uv run --locked --all-packages --extra browser-capture pytest packages apps tests -m browser -rs
 ```
 
 Verified: `uv lock` and `uv sync --locked --all-packages`. Configured: a root

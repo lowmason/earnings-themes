@@ -41,7 +41,11 @@ Standard-library modules run in the workspace environment with
 | `v1_return_types.py` | V1: declared and observed return types (live) | script lock |
 | `port_walker.py` | Stage 3: ports the frozen walker into `earnings_ingestion.canonical` | workspace |
 | `walker1_report.py` | Stage 3: walker-1's re-score and the review gate's reports | workspace |
-| `r35_report.py` | Stage 3: R3.5's text-fidelity report, plan A's leg | workspace |
+| `r35_report.py` | Stage 3: R3.5's text-fidelity report, both legs | workspace |
+| `layout1_units.py` | Stage 3: layout-1's pre-registered targeted units | workspace |
+| `layout1_report.py` | Stage 3: the pre-registered comparison of walker-1, layout-1 and the fallback | workspace |
+| `preregister.py` | Stage 3: records and verifies layout-1's freeze (`layout1-preregistered.toml`) | stdlib + git |
+| `calibrate.py` | Stage 3: innerText against the user's rendered copies | workspace |
 
 ## Tests
 
@@ -74,8 +78,8 @@ Stage 2.
 
 ## Stage 3
 
-Stage 3 (`specs/structure-aware-canonicalization.md`, plan 4) reuses the frozen code
-without changing it. Its three scripts import `earnings_ingestion`, so they run in the
+Stage 3 (`specs/structure-aware-canonicalization.md`, plans 4 and 5) reuses the frozen
+code without changing it. Its scripts import `earnings_ingestion`, so they run in the
 workspace environment with `uv run --locked --all-packages python`.
 
 - `port_walker.py` copies the frozen walker and the helpers it uses into
@@ -84,4 +88,15 @@ workspace environment with `uv run --locked --all-packages python`.
   exactly its output and that they walk as the frozen code does.
 - `walker1_report.py` writes `docs/verification/walker-1-report.md`, and
   `r35_report.py` writes `docs/verification/R3.5-text-fidelity.md`. Their tests check
-  that the committed reports are current.
+  that the committed reports are current. R3.5's second leg needs the user's local
+  rendered copies, so its last section is checked only where they exist.
+- `layout1_units.py` writes `layout1-units.toml`, the targeted units, from the gold and
+  the frozen walker's output. `layout1_report.py` writes
+  `docs/verification/layout-1-comparison.md` from the committed browser captures.
+- `preregister.py` froze both, with every file that decides the comparison's numbers,
+  before any release was captured. After `preregister.py record`, a frozen file
+  changes only to fix a crash or an invalid element set, and `preregister.py amend`
+  records each such change. A change never alters a type decision, a mapping rule, a
+  unit, or a metric.
+- `calibrate.py` writes `docs/verification/browser-calibration.md`. It needs the
+  user's local copies, and its currency test skips visibly without them.
