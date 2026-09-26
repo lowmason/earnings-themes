@@ -350,9 +350,18 @@ file, extract that file again and rerun the check.
 
 **Lint.** `uv run --locked ruff check .` and `uv run --locked ruff format --check .`
 pass after every task, and the code below already passes both. The Expected
-`N files already formatted` counts were measured on a clean checkout: 116 before
-Task 1, growing with each task's new Python files. A different count with no
+`N files already formatted` counts assume a clean checkout: 116 before Task 1,
+growing with each task's new Python files. A different count with no
 `Would reformat` line comes from local untracked Python files and is not a failure.
+
+**Expected outputs.** At plan time this plan was replayed on a clean checkout, from
+Task 1 through Task 10's freeze commit, and those Expected outputs are what the
+replay printed. The replay's Task 5, Step 7 ran against the plan-time cache, so it
+downloaded nothing. Tasks 11–15 could not be replayed: they need the release
+captures, and no release may be captured before the freeze. Their Expected counts
+come from collecting their tests and running those that need no capture. If a count
+there differs while nothing fails, the prediction may be what is wrong. Stop and
+report it, and never change a frozen file to match a count (PB-13).
 
 **Test imports.** Ruff sorts `earnings_core` and `earnings_ingestion` as third-party
 imports in test files, in one block with `pytest`, so keep the imports as written.
@@ -941,14 +950,14 @@ records them, and `walker-1`'s files as plan 4 committed them.
 ## Preconditions — read before Task 1
 
 - **Branch.** Work on `stage-3-browser-diagnostic-path` in the main checkout (PB-23).
-  At planning time its only commit above `main` (`0938b66`) was this plan, and the
-  branch was unpushed. Run this and read the result:
+  At planning time its only commits above `main` (`0938b66`) were this plan's two,
+  and the branch was unpushed. Run this and read the result:
 
   ```bash
   git switch stage-3-browser-diagnostic-path && git log --oneline -3 && git status --short
   ```
 
-  Expected: the head is `docs(plan): plan 5, Stage 3 plan B: the browser diagnostic path`,
+  Expected: the head is `docs(plan): plan 5, say which Expected outputs were replayed`,
   or a later commit the user made, and the status is empty.
 - **Stay in the main checkout.** Do not execute in a separate worktree. `data/` is
   gitignored, so a worktree lacks:
