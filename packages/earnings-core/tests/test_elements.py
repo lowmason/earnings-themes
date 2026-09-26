@@ -4,6 +4,7 @@ from earnings_core.elements import (
     DocumentElement,
     ElementType,
     TableCellContext,
+    TextOrigin,
     derive_element_id,
 )
 from earnings_core.spans import TextSpan
@@ -115,3 +116,20 @@ def test_an_element_round_trips_through_json() -> None:
         source_type="lxml:th",
     )
     assert DocumentElement.model_validate_json(cell.model_dump_json()) == cell
+
+
+def test_text_is_native_unless_marked_otherwise() -> None:
+    element = DocumentElement.create(DOCUMENT, ElementType.HEADING, HEADING)
+    assert element.text_origin is TextOrigin.NATIVE
+
+
+def test_text_origin_takes_the_enum_in_python_and_its_value_in_json() -> None:
+    element = DocumentElement.create(
+        DOCUMENT, ElementType.PARAGRAPH, HEADING, text_origin=TextOrigin.OCR
+    )
+    assert '"text_origin":"ocr"' in element.model_dump_json()
+    assert DocumentElement.model_validate_json(element.model_dump_json()) == element
+    with pytest.raises(ValidationError):
+        DocumentElement.create(
+            DOCUMENT, ElementType.PARAGRAPH, HEADING, text_origin="ocr"
+        )

@@ -18,6 +18,7 @@ PUBLIC = {
     "SpanLocator",
     "TableCellContext",
     "TextChunk",
+    "TextOrigin",
     "TextSpan",
     "VerifiedSpan",
     "apply_masks",
@@ -47,5 +48,5 @@ def test_the_scaffold_placeholder_is_gone() -> None:
 
 
 def test_versions_are_pinned() -> None:
-    assert earnings_core.SCHEMA_VERSION == 1
-    assert earnings_core.VALIDATOR_VERSION == "1"
+    assert earnings_core.SCHEMA_VERSION == 2
+    assert earnings_core.VALIDATOR_VERSION == "2"

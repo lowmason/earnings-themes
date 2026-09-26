@@ -4,15 +4,20 @@ from enum import StrEnum
 
 from earnings_core._model import VersionedRecord
 
-VALIDATOR_VERSION = "1"
-"""Bump when any check changes: caches key on the verifier version (R14.6)."""
+VALIDATOR_VERSION = "2"
+"""Bump when any check changes: caches key on the verifier version (R14.6).
+
+Version 2 (Stage 3) added the OCR refusal, reports every crossing pair, and rechecks
+the element invariants that construction checks and ``model_copy`` skips.
+"""
 
 
 class RejectionReason(StrEnum):
     """Every reason a check can refuse a record, one per failure class."""
 
     MALFORMED_RECORD = "malformed_record"
-    """Wrong types, missing or extra fields, or a non-integer offset (R3.2, R5.5)."""
+    """Wrong types, missing or extra fields, a non-integer offset, or an element that
+    breaks an invariant construction enforces (R3.2, R5.5, R4.1)."""
     DOCUMENT_INTEGRITY = "document_integrity"
     """The document's own hash or doc_id disagrees with its text (R6.1, R3.3)."""
     WRONG_DOCUMENT = "wrong_document"
@@ -29,6 +34,8 @@ class RejectionReason(StrEnum):
     """The span is not inside the element it is attributed to (R6.1)."""
     CROSSES_SPEAKER_TURN = "crosses_speaker_turn"
     """The span runs across a speaker-turn boundary (A §585, V9)."""
+    OCR_DERIVED_TEXT = "ocr_derived_text"
+    """The span overlaps OCR-derived text, which is never an original quotation (R4.3)."""
     LOCATOR_MISMATCH = "locator_mismatch"
     """The stored prefix or suffix is not the text around the span (R5.4)."""
     AMBIGUOUS_OCCURRENCE = "ambiguous_occurrence"

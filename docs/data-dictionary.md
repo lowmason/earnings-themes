@@ -5,16 +5,20 @@ table below lists every field or value of one contract;
 `tests/contracts/test_data_dictionary.py` fails when a field or value changes without
 this file changing too.
 
-## earnings-core contracts, schema version 1
+## earnings-core contracts, schema version 2
 
 - **Package.** `packages/earnings-core`, imported as `earnings_core`.
-- **Schema version.** `1` (`earnings_core.SCHEMA_VERSION`). Every top-level record
+- **Schema version.** `2` (`earnings_core.SCHEMA_VERSION`). Every top-level record
   carries it as `schema_version`, and a payload with another version is refused.
-- **Validator version.** `"1"` (`earnings_core.VALIDATOR_VERSION`), stamped on every
+- **Validator version.** `"2"` (`earnings_core.VALIDATOR_VERSION`), stamped on every
   `Rejection` and `VerifiedSpan`. Caches key on it (R14.6); bump it whenever a check
   changes.
-- **Compatibility.** This is the first version. No earlier schema exists, so nothing
-  migrates and no cache or output is invalidated (A §187).
+- **Compatibility.** Version 2 (Stage 3) adds `DocumentElement.text_origin` and the
+  `ocr_derived_text` rejection. Its checks also report every crossing pair, recheck
+  the element invariants that construction enforces, validate `MaskedDocument`
+  itself, and refuse more non-portable `storage_ref` values. Version 1 records are
+  refused. None was ever persisted, so nothing migrates and no cache is invalidated
+  (A §187).
 - **Conventions.**
   - Offsets are zero-based Unicode code points over a half-open `[start, end)`,
     never UTF-8 bytes, UTF-16 code units, or model tokens (R3.2).
@@ -28,7 +32,7 @@ this file changing too.
 
 | Identifier | Derivation | Example |
 | --- | --- | --- |
-| `doc_id` | `<source_document_id>@<canonicalization_version>#<first 16 hex of canonical_hash>` | `0000007332-09-000032_ex-99@walker-w16.norm-1#<16 hex>` |
+| `doc_id` | `<source_document_id>@<canonicalization_version>#<first 16 hex of canonical_hash>` | `0000007332-09-000032_ex-99@walker-1#<16 hex>` |
 | `element_id` | `<type>-<start>-<end>` | `paragraph-120-450` |
 
 Changed canonical text is always a new `doc_id` (R3.3). An `element_id` is unique
@@ -50,10 +54,10 @@ A stored artifact, identified by the SHA-256 of its bytes.
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `schema_version` | `1` | Contract schema version |
+| `schema_version` | `2` | Contract schema version |
 | `content_sha256` | 64 lowercase hex | SHA-256 of the artifact's bytes |
 | `media_type` | string | Lowercase media type, e.g. `text/plain; charset=utf-8` |
-| `storage_ref` | string | Repository-relative path or non-file URI; never an absolute local path |
+| `storage_ref` | string | Repository-relative path or non-file URI: never absolute, `~`, `file:` in any case, a drive letter, a backslash, or a `..` segment |
 | `rights_status` | `RightsStatus` | What may be done with the content |
 | `rights_basis` | non-blank string | Why: the register entry or terms that decide the status |
 
@@ -72,16 +76,17 @@ One immutable, hashed version of a source document's text (R3.1, R3.3). The
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `schema_version` | `1` | Contract schema version |
+| `schema_version` | `2` | Contract schema version |
 | `doc_id` | string | Derived ID of this version (see Identifiers) |
 | `source_document_id` | ID part | The source record this text came from |
-| `canonicalization_version` | ID part | The whole canonicalization policy: parser, rules, and normalization |
+| `canonicalization_version` | ID part | The whole canonicalization policy, e.g. `walker-1`: parser, rules, normalization, layout, and sentence rules |
 | `canonical_text` | non-empty string | The text every offset indexes; never holds a lone surrogate |
 | `canonical_hash` | 64 lowercase hex | SHA-256 of `canonical_text` as UTF-8 |
 | `text_artifact` | `ArtifactRef` or null | Where the same UTF-8 bytes are stored, if they are |
 
 An ID part is letters, digits, and `. _ : -` only. Parser and library versions are
-run-manifest provenance, recorded by Stage 3, not document fields.
+provenance, recorded in Stage 3's `CanonicalizationManifest` (below), not document
+fields.
 
 ### `ElementType`
 
@@ -98,6 +103,15 @@ run-manifest provenance, recorded by Stage 3, not document fields.
 | `speaker_turn` | One speaker's uninterrupted turn in a transcript |
 | `page_artifact` | A running header or footer, page number, or filing banner |
 | `other` | Anything a parser cannot type more precisely |
+
+### `TextOrigin`
+
+Where an element's text came from (R4.3).
+
+| Value | Meaning |
+| --- | --- |
+| `native` | Text the source carries as text, extracted without recognition |
+| `ocr` | Text recognized from an image: lower-fidelity, and never verified as an original quotation |
 
 ### `TableCellContext`
 
@@ -119,7 +133,7 @@ One typed structural unit of one document version (R4.1). The
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `schema_version` | `1` | Contract schema version |
+| `schema_version` | `2` | Contract schema version |
 | `element_id` | string | Derived from `type` and `span` (see Identifiers) |
 | `doc_id` | string | The document version the element belongs to |
 | `type` | `ElementType` | What kind of unit it is |
@@ -128,6 +142,7 @@ One typed structural unit of one document version (R4.1). The
 | `level` | int ≥ 1 or null | Outline or nesting depth; `section`, `heading`, and `list_item` only |
 | `table_cell` | `TableCellContext` or null | Required on `table_cell` elements, forbidden elsewhere |
 | `source_type` | string | The producing parser's own name for the unit, e.g. `lxml:h1` |
+| `text_origin` | `TextOrigin` | Where the text came from; `native` unless recognized from an image |
 
 In a valid element set any two spans nest or are disjoint.
 
@@ -149,7 +164,7 @@ before evidence is stored (A §508).
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `schema_version` | `1` | Contract schema version |
+| `schema_version` | `2` | Contract schema version |
 | `doc_id` | string | The document version it views |
 | `canonical_hash` | 64 lowercase hex | That version's canonical hash |
 | `span` | `TextSpan` | The chunk's range in the document |
@@ -161,7 +176,7 @@ A proposed evidence span before verification: one contiguous range (R5.5).
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `schema_version` | `1` | Contract schema version |
+| `schema_version` | `2` | Contract schema version |
 | `doc_id` | string | The document version it claims |
 | `canonical_hash` | 64 lowercase hex | That version's hash, as the candidate stored it |
 | `start` | int ≥ 0 | Offset of the first code point |
@@ -178,7 +193,7 @@ text, never copied from a candidate (A §523).
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `schema_version` | `1` | Contract schema version |
+| `schema_version` | `2` | Contract schema version |
 | `doc_id` | string | The verified document version |
 | `canonical_hash` | 64 lowercase hex | Its canonical hash |
 | `start` | int ≥ 0 | Offset of the first code point |
@@ -204,7 +219,7 @@ changes the text or its offsets.
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `schema_version` | `1` | Contract schema version |
+| `schema_version` | `2` | Contract schema version |
 | `doc_id` | string | The document version it overlays |
 | `canonical_hash` | 64 lowercase hex | That version's canonical hash |
 | `span` | `TextSpan` | The masked range |
@@ -215,7 +230,8 @@ changes the text or its offsets.
 ### `MaskedDocument`
 
 A document with the masks one policy version computed over it. An in-memory view,
-not a persisted record.
+not a persisted record. Construction refuses a tampered document, a mask of another
+document or version, a mask past the text, and a mask from another policy.
 
 | Field | Type | Meaning |
 | --- | --- | --- |
@@ -230,7 +246,7 @@ Why a check refused a record (R6.2: rejections stay auditable).
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `schema_version` | `1` | Contract schema version |
+| `schema_version` | `2` | Contract schema version |
 | `reason` | `RejectionReason` | The failure class |
 | `detail` | string | What failed, naming the record or element |
 | `validator_version` | string | The validator that refused it |
@@ -238,11 +254,11 @@ Why a check refused a record (R6.2: rejections stay auditable).
 ### `RejectionReason`
 
 `parse_span_candidate` records `malformed_record`. `validate_span` then runs its checks
-in the order of the next ten rows and records the first failure.
+in the order of the next eleven rows and records the first failure.
 
 | Value | Meaning |
 | --- | --- |
-| `malformed_record` | Wrong types, missing or extra fields, or a non-integer offset (R3.2, R5.5) |
+| `malformed_record` | Wrong types, missing or extra fields, a non-integer offset, or an element breaking an invariant construction enforces (R3.2, R5.5, R4.1) |
 | `document_integrity` | The document's own hash or `doc_id` disagrees with its text (R6.1, R3.3) |
 | `wrong_document` | The record names another document or version (R6.1, R3.3) |
 | `canonical_hash_mismatch` | The record's stored hash is not the document's (R6.1) |
@@ -251,6 +267,7 @@ in the order of the next ten rows and records the first failure.
 | `unknown_element` | A pointer or attribution names no element of the document (R5.1, V9) |
 | `outside_element` | The span is not inside its attributed element (R6.1) |
 | `crosses_speaker_turn` | The span runs across a speaker-turn boundary (A §585, V9) |
+| `ocr_derived_text` | The span overlaps OCR-derived text, never an original quotation (R4.3) |
 | `locator_mismatch` | The stored prefix or suffix is not the text around the span (R5.4) |
 | `ambiguous_occurrence` | Repeated text whose context does not single out one occurrence (R5.4) |
 | `locator_not_found` | No occurrence matches a locator (R5.4) |

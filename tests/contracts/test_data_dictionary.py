@@ -27,7 +27,13 @@ MODELS = [
     core.MaskedDocument,
     core.Rejection,
 ]
-ENUMS = [core.RightsStatus, core.ElementType, core.MaskCategory, core.RejectionReason]
+ENUMS = [
+    core.RightsStatus,
+    core.ElementType,
+    core.TextOrigin,
+    core.MaskCategory,
+    core.RejectionReason,
+]
 
 
 def documented(name: str) -> set[str]:
