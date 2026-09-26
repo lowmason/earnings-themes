@@ -256,7 +256,11 @@ Amend plan 6 in place:
   | `1475162` | `https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20241101-1475162/1475162_djiadjuaintcdowaes.pdf` | `2026-09-26T21:12:22` | `fd02c23edb53c87d5e478646a008d0971d9ffe7fa9a569158db64657a85d8d2a` |
   | `1484126` | `https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20260623-1484126/1484126_djiavzjune2026.pdf` | `2026-09-26T21:08:05` | `c022ddf1cc80472b66f32eca0f6c14dd404f4db3e49af0d2a244c0fa5d1b622c` |
 
-  Still pending from the user: the anchor revision's ID and UTC timestamp.
+  The anchor is revision `1230712338` of "Dow Jones Industrial Average", saved at
+  08:04 on 24 June 2024, so its `as_of` and `published_on` are `2024-06-24`. Task 17
+  Step 4 fetches it as
+  `https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average?oldid=1230712338`.
+  Every Step 1 fact is now in.
 - **Task 17, Step 2.** Two of the three terms hashes are taken:
   - `wikipedia-djia`:
     `581ce13c873fabdd2648e56752f889cd5e4384604ccaaeca27e8ed777c8224cd`;
@@ -264,8 +268,11 @@ Amend plan 6 in place:
     `b11d9ecd3bcd0d86ccd1a3301e90ccf66b307c5f5f3709a00e26a55a6246e076`.
 
   The third, `spdji-announcements`' terms at `https://www.spglobal.com/en/terms-of-use`,
-  was refused live (§The S&P terms page). The user saves that page by hand, and
-  `cohort terms --saved` hashes it once Task 16b has landed.
+  was refused live (§The S&P terms page). The user saved the page by hand ("Webpage,
+  Complete") as `Terms of Use _ S&P Global.html` in Downloads. Its header comment
+  names that URL. Previewed with the package's `terms_digest`, it hashes to
+  `85f9ecb532ff7771e4b10111066da0a2631ab5b756fcdb72fd29bc51456ab1e0`, which
+  `cohort terms --saved` should reproduce once Task 16b has landed.
 - **The identity.** The user set `SOURCE_IDENTITY` equal to `EDGAR_IDENTITY`. Each
   web-client command carries the prefix `SOURCE_IDENTITY="$EDGAR_IDENTITY"`, and
   neither value is ever printed.
