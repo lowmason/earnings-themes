@@ -553,3 +553,40 @@ layout-1's element stream over one canonical document, under mapping policy
 | `retypes` | map of rule to int | Blocks retyped by each of `C1`–`C5`, zeros included |
 | `elements` | tuple of `DocumentElement` | Document order, each table followed by its cells; canonical text no element covers is `other`, one element per line |
 | `failures` | tuple of `AlignmentFailure` | Every unit that did not map |
+
+## earnings-ingestion retrieval records, schema version 1
+
+- **Package.** `earnings_ingestion.fetch`, in `packages/earnings-ingestion` (Stage 4,
+  plan 6): retrieval metadata and the artifact store.
+- **Schema version.** `Retrieval` joins ingestion schema version `1`, since no
+  earlier record's fields changed, and carries it as `schema_version`.
+- **Saved artifacts.** An `ArtifactStore` rooted at a directory under `data/raw/`
+  stores an artifact as `<root>/<source_id>/<sha256><ext>`. Each retrieval of it gets
+  a record at
+  `<root>/<source_id>/retrievals/<sha256>/<UTC stamp>-<first 12 hex of the record's hash>.json`.
+  `data/raw/` is never committed.
+
+### `Retrieval`
+
+One retrieval of one saved artifact. The identity sent as the User-Agent is never
+recorded.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Ingestion record schema version |
+| `request_url` | string | The URL requested; for a page a person saved, the URL it was saved from |
+| `final_url` | string | The URL after any redirects |
+| `retrieved_at` | UTC datetime | When the bytes arrived, or when a person saved them |
+| `retrieval_method` | `RetrievalMethod` | How the bytes reached the store |
+| `http_status` | int or null | The response's status; null exactly when a person saved the page |
+| `media_type` | media type | The Content-Type's lowercase media type, without parameters |
+| `content_type` | string | The Content-Type header as received |
+| `byte_count` | int ≥ 0 | The body's length, after any Content-Encoding is decoded |
+| `sha256` | 64 lowercase hex | SHA-256 of the body |
+
+### `RetrievalMethod`
+
+| Value | Meaning |
+| --- | --- |
+| `http` | Fetched by a package client, under its access policy |
+| `saved_by_user` | Saved by a person in a browser and registered by hash; nothing was fetched |
