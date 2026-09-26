@@ -151,3 +151,32 @@ def test_extraction_never_writes_outside_its_directory(
     destination.mkdir()
     with pytest.raises(ValueError, match=message):
         safe_extract(archive, destination)
+
+
+def test_links_cannot_compose_a_way_out(tmp_path: Path) -> None:
+    """Each link resolves inside when it is made, yet together they lead out:
+    ``b -> c/..`` while ``c`` does not exist, then ``c -> .``, then a file under ``b``."""
+    archive = tmp_path / "composed.zip"
+    with zipfile.ZipFile(archive, "w") as zipped:
+        for name, target in (("b", "c/.."), ("c", ".")):
+            info = zipfile.ZipInfo(name)
+            info.external_attr = (stat.S_IFLNK | 0o777) << 16
+            zipped.writestr(info, target)
+        zipped.writestr("b/escaped.txt", b"x")
+    destination = tmp_path / "out"
+    destination.mkdir()
+    with pytest.raises(ValueError, match="unsafe link"):
+        safe_extract(archive, destination)
+    assert not (tmp_path / "escaped.txt").exists()
+
+
+def test_an_entry_under_a_link_that_leaves_is_refused(tmp_path: Path) -> None:
+    """The last check before every write: an entry's parent must resolve inside."""
+    archive = make_zip(tmp_path / "under.zip", {"away/escaped.txt": b"x"})
+    destination = tmp_path / "out"
+    destination.mkdir()
+    (tmp_path / "elsewhere").mkdir()
+    (destination / "away").symlink_to(tmp_path / "elsewhere")
+    with pytest.raises(ValueError, match="unsafe entry"):
+        safe_extract(archive, destination)
+    assert not (tmp_path / "elsewhere" / "escaped.txt").exists()

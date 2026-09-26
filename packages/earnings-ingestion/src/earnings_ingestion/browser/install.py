@@ -177,9 +177,11 @@ def _check(archive: Archive, path: Path) -> None:
 def safe_extract(archive: Path, destination: Path) -> None:
     """Extract ``archive`` into ``destination``, keeping symlinks and executable bits.
 
-    An absolute entry, a ``..`` segment, or a symlink that leaves ``destination``
-    raises ``ValueError``: the hash already vouches for the archive, and this is the
-    second line of defence.
+    Each of these raises ``ValueError``: an absolute entry, or one with a ``..``
+    segment; an entry that would land outside ``destination`` through a link already
+    there; and a link whose target is absolute, holds a ``..`` segment, or resolves
+    outside. Links may only descend, so no two of them can compose a way out. The
+    hash already vouches for the archive: this is the second line of defence.
     """
     destination = destination.resolve()
     with zipfile.ZipFile(archive) as zipped:
@@ -188,6 +190,8 @@ def safe_extract(archive: Path, destination: Path) -> None:
             if name.is_absolute() or ".." in name.parts:
                 raise ValueError(f"unsafe entry {info.filename!r}")
             target = destination.joinpath(*name.parts)
+            if not target.resolve().is_relative_to(destination):
+                raise ValueError(f"unsafe entry {info.filename!r}: it lands outside")
             mode = info.external_attr >> 16
             if info.is_dir():
                 target.mkdir(parents=True, exist_ok=True)
@@ -195,9 +199,11 @@ def safe_extract(archive: Path, destination: Path) -> None:
             target.parent.mkdir(parents=True, exist_ok=True)
             if stat.S_ISLNK(mode):
                 link = zipped.read(info).decode("utf-8")
-                resolved = (target.parent / link).resolve()
-                if PurePosixPath(link).is_absolute() or not resolved.is_relative_to(
-                    destination
+                pointer = PurePosixPath(link)
+                if (
+                    pointer.is_absolute()
+                    or ".." in pointer.parts
+                    or not (target.parent / link).resolve().is_relative_to(destination)
                 ):
                     raise ValueError(f"unsafe link {info.filename!r} -> {link!r}")
                 os.symlink(link, target)
