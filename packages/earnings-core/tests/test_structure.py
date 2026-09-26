@@ -80,7 +80,76 @@ def test_spans_that_cross_without_nesting_are_refused(sample) -> None:
         TextSpan(start=welcome.start, end=revenue.end),
     )
     found = validate_elements(sample.document, [*sample.elements, straddle])
-    assert reasons(found) == [RejectionReason.CROSSING_ELEMENTS]
+    operator = sample.element(ElementType.SPEAKER_TURN, "Operator:")
+    ceo = sample.element(ElementType.SPEAKER_TURN, "CEO:")
+    sentence = sample.element(ElementType.SENTENCE, "Revenue rose")
+    assert [(r.reason, r.detail) for r in found] == [
+        (
+            RejectionReason.CROSSING_ELEMENTS,
+            f"{straddle.element_id} overlaps {operator.element_id} without nesting",
+        ),
+        (
+            RejectionReason.CROSSING_ELEMENTS,
+            f"{ceo.element_id} overlaps {straddle.element_id} without nesting",
+        ),
+        (
+            RejectionReason.CROSSING_ELEMENTS,
+            f"{sentence.element_id} overlaps {straddle.element_id} without nesting",
+        ),
+    ]
+
+
+def test_every_crossing_pair_is_reported() -> None:
+    document = CanonicalDocument.create(
+        source_document_id="crossing-test",
+        canonicalization_version="test-1",
+        canonical_text="x" * 20,
+    )
+    a, b, c = (
+        DocumentElement.create(
+            document, ElementType.OTHER, TextSpan(start=start, end=end)
+        )
+        for start, end in ((0, 10), (5, 15), (12, 20))
+    )
+    found = validate_elements(document, [a, b, c])
+    assert [r.detail for r in found] == [
+        "other-5-15 overlaps other-0-10 without nesting",
+        "other-12-20 overlaps other-5-15 without nesting",
+    ]
+
+
+def test_a_level_on_a_type_without_levels_is_malformed(sample) -> None:
+    section = sample.element(ElementType.SECTION, "Prepared remarks")
+    turn = sample.element(ElementType.SPEAKER_TURN, "Operator:")
+    leveled = turn.model_copy(update={"level": 2})
+    found = validate_elements(sample.document, [section, leveled])
+    assert reasons(found) == [RejectionReason.MALFORMED_RECORD]
+    assert "carries level 2" in found[0].detail
+
+
+def test_a_table_cell_stripped_of_its_context_is_malformed() -> None:
+    table, metric, *_ = table_elements()
+    stripped = metric.model_copy(update={"table_cell": None})
+    found = validate_elements(TABLE, [table, stripped])
+    assert reasons(found) == [RejectionReason.MALFORMED_RECORD]
+
+
+def test_table_context_on_another_type_is_malformed_only() -> None:
+    table, metric, *_ = table_elements()
+    paragraph = DocumentElement.create(
+        TABLE, ElementType.PARAGRAPH, TextSpan(start=0, end=6)
+    )
+    misplaced = paragraph.model_copy(update={"table_cell": metric.table_cell})
+    found = validate_elements(TABLE, [table, misplaced])
+    assert reasons(found) == [RejectionReason.MALFORMED_RECORD]
+
+
+def test_an_element_that_is_its_own_parent_is_malformed_only(sample) -> None:
+    heading = sample.element(ElementType.HEADING, "Prepared remarks")
+    looped = heading.model_copy(update={"parent_id": heading.element_id})
+    found = validate_elements(sample.document, [looped])
+    assert reasons(found) == [RejectionReason.MALFORMED_RECORD]
+    assert "is its own parent" in found[0].detail
 
 
 def test_a_tampered_document_is_reported_once(sample) -> None:

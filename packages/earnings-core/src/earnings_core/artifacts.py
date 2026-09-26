@@ -1,5 +1,6 @@
 """ArtifactRef: a content-addressed pointer to a stored artifact and its rights."""
 
+import re
 from enum import StrEnum
 from typing import Annotated, Self
 
@@ -18,6 +19,8 @@ MediaType = Annotated[
     ),
 ]
 """A lowercase media type with optional parameters, e.g. ``text/plain; charset=utf-8``."""
+
+_DRIVE_LETTER = re.compile(r"^[A-Za-z]:")
 
 
 class RightsStatus(StrEnum):
@@ -52,7 +55,15 @@ class ArtifactRef(VersionedRecord):
     @field_validator("storage_ref")
     @classmethod
     def _portable(cls, value: str) -> str:
-        if value.startswith(("/", "~", "file:")) or "\\" in value:
+        """Refuse absolute and home paths, ``file:`` in any case, a drive letter, a
+        backslash, and any ``..`` segment."""
+        if (
+            value.startswith(("/", "~"))
+            or value.casefold().startswith("file:")
+            or _DRIVE_LETTER.match(value)
+            or "\\" in value
+            or ".." in value.split("/")
+        ):
             raise ValueError(
                 f"storage_ref {value!r} must be a repository-relative path"
                 " or a non-file URI"

@@ -4,8 +4,12 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
-SCHEMA_VERSION = 1
-"""The version of every earnings-core contract; any field change bumps it (A §187)."""
+SCHEMA_VERSION = 2
+"""The version of every earnings-core contract; any field change bumps it (A §187).
+
+Version 2 (Stage 3) added ``DocumentElement.text_origin``. Version 1 records are
+refused; none was ever persisted, so nothing migrates.
+"""
 
 
 class ContractModel(BaseModel):
@@ -22,4 +26,4 @@ class ContractModel(BaseModel):
 class VersionedRecord(ContractModel):
     """A top-level record that carries its schema version when serialized."""
 
-    schema_version: Literal[1] = SCHEMA_VERSION
+    schema_version: Literal[2] = SCHEMA_VERSION

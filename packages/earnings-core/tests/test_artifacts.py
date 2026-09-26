@@ -49,12 +49,50 @@ def test_a_digest_must_be_64_lowercase_hex_characters(digest: str) -> None:
 
 @pytest.mark.parametrize(
     "storage_ref",
-    ["/Users/someone/data/raw/x.html", "~/data/x.html", "file:///tmp/x.html", "a\\b"],
-    ids=["absolute", "home", "file-uri", "backslash"],
+    [
+        "/Users/someone/data/raw/x.html",
+        "~/data/x.html",
+        "file:///tmp/x.html",
+        "a\\b",
+        "FILE:///Users/someone/x.html",
+        "File:/tmp/x.html",
+        "C:/Users/someone/x.html",
+        "c:x.html",
+        "../outside/x.html",
+        "data/raw/../../outside.html",
+        "data/raw/..",
+    ],
+    ids=[
+        "absolute",
+        "home",
+        "file-uri",
+        "backslash",
+        "file-uri-upper-case",
+        "file-uri-mixed-case",
+        "drive-letter",
+        "drive-relative",
+        "leading-dot-dot",
+        "inner-dot-dot",
+        "trailing-dot-dot",
+    ],
 )
 def test_storage_ref_must_be_portable(storage_ref: str) -> None:
     with pytest.raises(ValidationError, match="repository-relative"):
         make_ref(storage_ref=storage_ref)
+
+
+@pytest.mark.parametrize(
+    "storage_ref",
+    [
+        "data/raw/example/source.html",
+        "s3://bucket/raw/source.html",
+        "https://www.sec.gov/Archives/edgar/data/7332/exhibit991.htm",
+        "data/..hidden/x.html",
+    ],
+    ids=["relative-path", "s3-uri", "https-uri", "dot-dot-prefix-in-a-name"],
+)
+def test_portable_storage_refs_are_accepted(storage_ref: str) -> None:
+    assert make_ref(storage_ref=storage_ref).storage_ref == storage_ref
 
 
 @pytest.mark.parametrize(
@@ -78,9 +116,12 @@ def test_rights_status_takes_the_enum_in_python_and_its_value_in_json() -> None:
     assert ArtifactRef.model_validate_json(ref.model_dump_json()) == ref
 
 
-def test_a_newer_schema_version_is_refused() -> None:
+@pytest.mark.parametrize("version", [1, 3], ids=["schema-1", "schema-3"])
+def test_another_schema_version_is_refused(version: int) -> None:
     payload = (
-        make_ref().model_dump_json().replace('"schema_version":1', '"schema_version":2')
+        make_ref()
+        .model_dump_json()
+        .replace('"schema_version":2', f'"schema_version":{version}')
     )
     with pytest.raises(ValidationError):
         ArtifactRef.model_validate_json(payload)

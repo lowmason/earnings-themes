@@ -22,7 +22,7 @@ Not all of it is binding.
 
 **Deliberately unresolved — do not silently pick one** (AGENTS.md §"Source basis and unresolved choices"): the production provider/model, the final theme taxonomy, and non-exactness quality thresholds. Record these in config or a decision record; do not invent agreement. The fourth such choice, an approved inference budget, is now recorded by `specs/evidence-linked-theme-extraction.md` R14.2: **$100, for the optional hosted-ceiling ablation only**, not prompt-optimizer compiles or any other billable call. The required path needs no billable inference: R14.1 limits it to open-weight, self-hosted models, which narrows the model choice without making it.
 
-## Current state: Stages 1 and 2 complete; three packages still scaffold
+## Current state: Stages 1 and 2 complete, with Stage 3's plan A; two packages still scaffold
 
 Stage 1 of the roadmap (release parser fidelity, `specs/release-parser-fidelity.md`) is done:
 
@@ -30,15 +30,21 @@ Stage 1 of the roadmap (release parser fidelity, `specs/release-parser-fidelity.
 - `docs/source-register.toml` is the source register (AGENTS.md §242), with the `sec-edgar` entry that the fixture manifest cites; `fetch_policy_pages.py verify` checks its quotes against saved pages.
 - `expirements/parser-fidelity/` holds the Stage 1 harness: fetcher, discovery, class tests, candidate adapters, the walker, the control, the gold validator, the scorer, the selection rule, the V1 script and the fixture check. Its tests run with `uv run --locked --all-packages pytest expirements/parser-fidelity --import-mode=prepend -q`.
 - `docs/verification/` holds V1 (edgartools return types) and V2 (release parser fidelity).
-- `docs/adr/0001-use-the-bespoke-lxml-walker-as-the-base-parser-for-release-canonicalization.md` records the base parser: the bespoke lxml walker, accepted 2026-09-25. Its measured code stays frozen in the harness until Stage 3 moves it into `earnings-ingestion`.
+- `docs/adr/0001-use-the-bespoke-lxml-walker-as-the-base-parser-for-release-canonicalization.md` records the base parser: the bespoke lxml walker, accepted 2026-09-25. Its measured code stays frozen in the harness; Stage 3 ported it into `earnings-ingestion` (below).
 
 Stage 2 of the roadmap (core evidence spine, plan 3, `specs/plans/completed/3-core-evidence-spine.md`) is done:
 
-- `packages/earnings-core` holds the shared contracts, schema version 1: `TextSpan`, `CanonicalDocument`, `DocumentElement`, `ArtifactRef`, `OverlayMask`, `SpanLocator` and `TextChunk`, with the exactness checks `validate_span` and `validate_elements`. Every refusal is a `Rejection` carrying a `RejectionReason`. `docs/data-dictionary.md` documents every field, and `tests/contracts/test_data_dictionary.py` fails if the two drift apart.
+- `packages/earnings-core` holds the shared contracts, schema version 2 since Stage 3 added `TextOrigin`: `TextSpan`, `CanonicalDocument`, `DocumentElement`, `ArtifactRef`, `OverlayMask`, `SpanLocator` and `TextChunk`, with the exactness checks `validate_span` and `validate_elements`. Every refusal is a `Rejection` carrying a `RejectionReason`. `docs/data-dictionary.md` documents every field, and `tests/contracts/test_data_dictionary.py` fails if the two drift apart.
 - IDs are derived: `doc_id` is `<source_document_id>@<canonicalization_version>#<first 16 hex of the canonical hash>`, and `element_id` is `<type>-<start>-<end>`.
 - The root `pyproject.toml` configures pytest (see "Commands" below).
 
-`earnings-ingestion`, `earnings-themes` and `apps/earnings-pipeline` still contain only `hello()` stubs. `data/` is gitignored and holds only local, uncommitted material: fetched pages under `data/raw/` and Stage 1 run outputs under `data/runs/`; `config/`, `prompts/`, `codebooks/` and `tests/integration/` are empty directories. `origin` is set to https://github.com/lowmason/earnings-themes, which is **public** — treat anything committed here as publicly visible.
+Stage 3's plan A (structure-aware canonicalization, plan 4, `specs/structure-aware-canonicalization.md`) is done; plan B, the browser diagnostic path, comes next and completes Stage 3:
+
+- `packages/earnings-ingestion/src/earnings_ingestion/canonical/` holds `canonicalize`. It turns saved release bytes into a hashed `walker-1` document with typed elements, tables with cells, S1 sentences, and `boilerplate/1` masks, or else a `CanonicalizationFailure`. `decode.py`, `dom.py` and `walker.py` there are generated from the frozen harness by `expirements/parser-fidelity/port_walker.py`: edit the script, never the generated files.
+- `tests/fixtures/canonical/` holds the eight fixtures' canonical output, and `tests/integration/test_canonical_golden.py` fails if any byte changes. Changed canonical text or elements need a new policy, `walker-2`, never regenerated `walker-1` files.
+- `docs/verification/walker-1.md` records the port, the re-score, and the review gate. `walker-1-report.md` and `R3.5-text-fidelity.md` beside it are generated, and harness tests keep them current.
+
+`earnings-themes` and `apps/earnings-pipeline` still contain only `hello()` stubs, as does `earnings-ingestion`'s top-level module. `data/` is gitignored and holds only local, uncommitted material: fetched pages under `data/raw/` and Stage 1 run outputs under `data/runs/`; `config/`, `prompts/` and `codebooks/` are empty directories. `origin` is set to https://github.com/lowmason/earnings-themes, which is **public** — treat anything committed here as publicly visible.
 
 ### Workspace root is virtual — do not add `[project]` to it
 
@@ -81,7 +87,10 @@ repeat a test module's name; `strict = true`; a registered `live` marker; and
 `testpaths = ["packages", "apps", "tests"]`. The frozen Stage 1 harness still needs
 `--import-mode=prepend`, which its own command passes.
 Environment: uv 0.12.15, Python 3.14.0 (uv-managed; Homebrew's `python3` is 3.14.7),
-`requires-python = ">=3.14"`.
+`requires-python = ">=3.14"`. `.python-version` pins 3.14.0 exactly: the canonical
+fixtures record the Python version, so any other interpreter fails
+`tests/integration/test_canonical_golden.py` with "regenerate" (plan 4, PA-14). Bump the
+pin and regenerate the fixtures together.
 
 ## Architecture
 

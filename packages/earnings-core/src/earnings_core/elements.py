@@ -37,6 +37,19 @@ LEVELED_TYPES = frozenset(
 """Types that may carry a level: an outline depth, or a list's nesting depth."""
 
 
+class TextOrigin(StrEnum):
+    """Where an element's text came from (R4.3).
+
+    OCR text is lower-fidelity and never an original quotation: ``validate_span``
+    refuses any span that overlaps it.
+    """
+
+    NATIVE = "native"
+    """Text the source carries as text, extracted without recognition."""
+    OCR = "ocr"
+    """Text recognized from an image."""
+
+
 class TableCellContext(ContractModel):
     """A cell's grid position and the header cells that label it (R4.1, R4.2).
 
@@ -77,6 +90,7 @@ class DocumentElement(VersionedRecord):
     level: PositiveInt | None = None
     table_cell: TableCellContext | None = None
     source_type: str = ""
+    text_origin: TextOrigin = TextOrigin.NATIVE
 
     @model_validator(mode="after")
     def _consistent(self) -> Self:
@@ -106,6 +120,7 @@ class DocumentElement(VersionedRecord):
         level: int | None = None,
         table_cell: TableCellContext | None = None,
         source_type: str = "",
+        text_origin: TextOrigin = TextOrigin.NATIVE,
     ) -> Self:
         """An element of ``document``, with its ID derived from type and span."""
         return cls(
@@ -117,4 +132,5 @@ class DocumentElement(VersionedRecord):
             level=level,
             table_cell=table_cell,
             source_type=source_type,
+            text_origin=text_origin,
         )

@@ -56,7 +56,7 @@
       stand, at the latest when Stage 1 completes. → done in plan 1
 
 ## 1-release-parser-fidelity — 2026-09-25
-- [ ] Carry V2's findings into Stage 3: V2's "Residual failures (for Stage 3)"
+- [x] Carry V2's findings into Stage 3: V2's "Residual failures (for Stage 3)"
       and "Findings for Stage 3" (`docs/verification/V2-parser-fidelity.md`) and
       ADR 0001's Consequences list what the walker leaves to the canonicalizer:
       split, merged and header-lost blocks by fixture, body text typed as
@@ -66,7 +66,7 @@
       beautifulsoup4, which the walker never imports. The roadmap's Stage 3 entry
       consumes only "Stage 1 parser decision and fixtures", so these could be
       missed. Size: plan. Done when: the Stage 3 spec or plan compensates for or
-      records each of V2's findings for Stage 3.
+      records each of V2's findings for Stage 3. → done in plan 4
 - [ ] Time parsers without their imports before relying on speed (V2, "Notes on
       ADR 0001 after acceptance", "Fast."): the harness's `parse_seconds`
       includes the library import for edgartools, sec-parser and the control,
@@ -111,14 +111,14 @@
       re-verifies and a tampered copy is rejected. Size: quick-fix. Done when:
       that API and its test land, at the latest when Stage 7 first stores
       `VerifiedSpan`s.
-- [ ] Report every crossing in `validate_elements` (final review, Minor;
+- [x] Report every crossing in `validate_elements` (final review, Minor;
       deferred by the user): `_crossings` in
       `packages/earnings-core/src/earnings_core/structure.py` never pushes an
       element it has reported, so a later crossing against that element goes
       unreported. With A=[0,10), B=[5,15) and C=[12,20), B is reported against A
       but not against C. The set is still refused, but D-8 promises every
       structural problem at once. Size: quick-fix. Done when: that case reports
-      both crossings, with a test.
+      both crossings, with a test. → done in plan 4
 - [ ] Prefer the genuine element in `resolve_pointer` (final review, Minor;
       deferred by the user): `resolve_pointer` in
       `packages/earnings-core/src/earnings_core/structure.py` returns
@@ -129,7 +129,7 @@
       quick-fix. Done when: `resolve_pointer` resolves the genuine element
       wherever it sits in the list, with a test that lists the stale element
       first.
-- [ ] Recheck construction-only invariants in `validate_elements` (final review,
+- [x] Recheck construction-only invariants in `validate_elements` (final review,
       Minor; deferred by the user): `validate_elements` in
       `packages/earnings-core/src/earnings_core/structure.py` recomputes hashes
       and derived IDs (D-7) but not a level on a non-leveled type, table-cell
@@ -138,8 +138,8 @@
       docstring in `packages/earnings-core/src/earnings_core/_model.py` says the
       validators recheck every stored invariant. Size: quick-fix. Done when:
       `_own_problems` rechecks all three with tests, or that docstring is
-      narrowed to hashes and derived IDs.
-- [ ] Close D-12's portability gaps in `ArtifactRef.storage_ref` (final review,
+      narrowed to hashes and derived IDs. → done in plan 4
+- [x] Close D-12's portability gaps in `ArtifactRef.storage_ref` (final review,
       Minor; deferred by the user): the check in
       `packages/earnings-core/src/earnings_core/artifacts.py` is a
       case-sensitive prefix test, so `FILE:///Users/...`, `File:/...`,
@@ -147,15 +147,15 @@
       publishing a home directory from this public repository. Size: quick-fix.
       Done when: `storage_ref` refuses a `file:` scheme in any case, a
       drive-letter path, and a `..` segment, with tests, before Stage 4 persists
-      its first `ArtifactRef`.
-- [ ] Validate `MaskedDocument` itself (final review, Minor; deferred by the
+      its first `ArtifactRef`. → done in plan 4
+- [x] Validate `MaskedDocument` itself (final review, Minor; deferred by the
       user): `MaskedDocument` in
       `packages/earnings-core/src/earnings_core/masks.py` has no validator, so
       building one directly bypasses the checks in `apply_masks`: document
       match, bounds, and one policy version (D-18). Size: quick-fix. Done when:
       a `model_validator` on `MaskedDocument` enforces those checks and
       `apply_masks` relies on it, with a test that a directly built bad set is
-      refused, at the latest when Stage 3 first builds `MaskedDocument`s.
+      refused, at the latest when Stage 3 first builds `MaskedDocument`s. → done in plan 4
 - [ ] Reject, don't raise, on unvalidated offsets (final review, Minor; deferred
       by the user): given a candidate built by `model_copy` with a float offset,
       `validate_span` in `packages/earnings-core/src/earnings_core/evidence.py`
@@ -182,3 +182,25 @@
       sibling-package and browser imports alongside the runtime check, at the
       latest when Stage 3 adds the `browser-capture` extra to
       `earnings-ingestion` (B3).
+
+## 4-structure-aware-canonicalization-plan-a — 2026-09-25
+- [ ] Settle the review gate's open page-artifact and mask findings (plan 4,
+      Task 11; the user kept these rules at the gate on 2026-09-25):
+      `docs/verification/walker-1.md` ("The review gate") and
+      `docs/verification/walker-1-report.md` list them. Under `walker-1`, C5 in
+      `packages/earnings-ingestion/src/earnings_ingestion/canonical/compensate.py`
+      types National Health Investors' own headline, "NHI Reports 17.2%
+      Increase in Third Quarter Normalized FFO", as `page_artifact` on all five
+      copies, because the walker typed it a paragraph, so the canonical fixtures
+      Stage 7 receives exclude it from narrative eligibility. C5 also types
+      Becton Dickinson's repeated statement titles. No C rule types the end
+      marks ("# # #", "***", "###") or the running heads that carry a page
+      number ("Ball Corp - N", FMC's "Page N/ ..."). M1-M5 in
+      `canonical/boilerplate.py` leave Becton Dickinson's "1Represents a
+      non-GAAP" footnotes, which the walker typed as paragraphs, and Southwestern
+      Energy's forward-looking-statements continuation paragraph unmasked. A
+      retype changes elements, so it needs `walker-2`; a mask change needs
+      `boilerplate/2`. Styled headings are plan B's pre-registered target, and
+      ADR 0002 decides promotion. Size: plan. Done when: plan B's verification
+      record or ADR 0002 gives each finding a disposition: fixed under a new
+      policy version, a plan B target, or a recorded limitation.

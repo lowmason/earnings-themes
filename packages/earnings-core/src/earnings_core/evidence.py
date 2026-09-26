@@ -7,7 +7,12 @@ from pydantic import NonNegativeInt, ValidationError, model_validator
 
 from earnings_core._model import VersionedRecord
 from earnings_core.documents import CanonicalDocument, document_integrity_problem
-from earnings_core.elements import DocumentElement, ElementType, derive_element_id
+from earnings_core.elements import (
+    DocumentElement,
+    ElementType,
+    TextOrigin,
+    derive_element_id,
+)
 from earnings_core.hashing import Sha256Hex
 from earnings_core.locators import SpanLocator, occurrences
 from earnings_core.rejections import VALIDATOR_VERSION, Rejection, RejectionReason
@@ -84,9 +89,10 @@ def validate_span(
     """Accept one evidence span only if every check holds (R6.1); no tolerance exists.
 
     The checks run in a fixed order, each presupposing the ones before it, and the
-    first failure is the recorded reason. Nothing here is a threshold (R13.2): text is
-    compared with ``==``, never normalized. Check the element set once with
-    ``validate_elements`` before checking spans against it.
+    first failure is the recorded reason. A span over OCR-derived text is refused
+    after the speaker-turn check, however exactly it matches (R4.3). Nothing here is
+    a threshold (R13.2): text is compared with ``==``, never normalized. Check the
+    element set once with ``validate_elements`` before checking spans against it.
     """
     problem = document_integrity_problem(document)
     if problem is not None:
@@ -132,6 +138,12 @@ def validate_span(
             return _reject(
                 RejectionReason.CROSSES_SPEAKER_TURN,
                 f"[{start}, {end}) crosses the boundary of {turn.element_id}",
+            )
+    for recognized in _ocr_elements(document, elements):
+        if recognized.span.overlaps(span):
+            return _reject(
+                RejectionReason.OCR_DERIVED_TEXT,
+                f"[{start}, {end}) overlaps OCR-derived {recognized.element_id}",
             )
     before = text[max(0, start - len(candidate.prefix)) : start]
     after = text[end : end + len(candidate.suffix)]
@@ -188,6 +200,17 @@ def _speaker_turns(
         element
         for element in elements
         if element.type is ElementType.SPEAKER_TURN and _genuine(document, element)
+    ]
+
+
+def _ocr_elements(
+    document: CanonicalDocument, elements: Sequence[DocumentElement]
+) -> list[DocumentElement]:
+    """Genuine elements whose text was recognized from an image (R4.3)."""
+    return [
+        element
+        for element in elements
+        if element.text_origin is TextOrigin.OCR and _genuine(document, element)
     ]
 
 

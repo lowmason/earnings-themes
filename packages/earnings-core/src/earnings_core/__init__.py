@@ -1,6 +1,6 @@
 """earnings-core: the contracts and exactness checks every other package builds on.
 
-Contract schema version 1; docs/data-dictionary.md documents every field.
+Contract schema version 2; docs/data-dictionary.md documents every field.
 """
 
 from earnings_core._model import SCHEMA_VERSION
@@ -16,6 +16,7 @@ from earnings_core.elements import (
     DocumentElement,
     ElementType,
     TableCellContext,
+    TextOrigin,
     derive_element_id,
 )
 from earnings_core.evidence import (
@@ -54,6 +55,7 @@ __all__ = [
     "SpanLocator",
     "TableCellContext",
     "TextChunk",
+    "TextOrigin",
     "TextSpan",
     "VerifiedSpan",
     "apply_masks",
