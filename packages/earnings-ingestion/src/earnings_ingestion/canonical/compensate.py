@@ -4,6 +4,10 @@ The rules apply in order to each block's N1 text, and a block retyped by one rul
 not considered by a later one. A retype drops the block's level, which only headings
 and list items carry. Compensation never retypes a W14 grid table or a list
 container.
+
+C5 was amended at the review gate on 2026-09-25 (docs/verification/walker-1.md): it
+never retypes a block the walker typed heading, though a heading still counts toward
+its text's occurrences.
 """
 
 import re
@@ -93,6 +97,7 @@ def _first_rule(
         return "C4"
     if (
         "C5" in rules
+        and block.type != "heading"
         and len(text.split()) <= MAX_HEADING_WORDS
         and occurrences[text] >= 3
     ):

@@ -145,10 +145,7 @@ def test_c4_needs_the_whole_text(text: str) -> None:
 
 
 def test_c5_retypes_short_blocks_that_repeat_three_times() -> None:
-    running = [
-        Block(type="heading", text="Acme Corp.", source_type="p", level=None)
-        for _ in range(3)
-    ]
+    running = [paragraph("Acme Corp.") for _ in range(3)]
     blocks, retypes = compensate([paragraph("Body."), *running])
     assert [block.type for block in blocks] == ["paragraph"] + ["page_artifact"] * 3
     assert retypes["C5"] == 3
@@ -166,15 +163,28 @@ def test_c5_needs_twelve_words_or_fewer() -> None:
     assert types_after([paragraph(long) for _ in range(3)]) == ["paragraph"] * 3
 
 
-def test_c5_drops_the_level_of_a_repeated_html_heading() -> None:
-    headings = [
-        Block(type="heading", text="Acme Corp.", source_type="h3", level=3)
-        for _ in range(3)
-    ]
-    blocks, _ = compensate([paragraph("Body."), *headings])
+def test_c5_never_retypes_a_heading() -> None:
+    html = Block(type="heading", text="Acme Corp.", source_type="h3", level=3)
+    styled = Block(type="heading", text="Acme Corp.", source_type="p")
+    blocks, retypes = compensate(
+        [paragraph("Body."), html, styled, paragraph("Acme Corp.")]
+    )
     assert [(block.type, block.level) for block in blocks[1:]] == [
-        ("page_artifact", None)
-    ] * 3
+        ("heading", 3),
+        ("heading", None),
+        ("page_artifact", None),
+    ]
+    assert retypes["C5"] == 1
+
+
+def test_a_retype_drops_a_headings_level() -> None:
+    heading = Block(type="heading", text="Page 1 of 2", source_type="h3", level=3)
+    blocks, _ = compensate([paragraph("Body."), heading])
+    assert (blocks[1].type, blocks[1].level, blocks[1].retyped_by) == (
+        "page_artifact",
+        None,
+        "C4",
+    )
 
 
 def test_a_retyped_list_item_keeps_its_container() -> None:
