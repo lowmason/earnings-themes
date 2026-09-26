@@ -57,12 +57,13 @@ class CanonicalizationManifest(IngestionRecord):
 
 
 class FailureReason(StrEnum):
-    """Why no canonical document was made; decoding never fails."""
+    """Why no canonical document was made; ``canonicalize`` never raises on input."""
 
     UNSUPPORTED_MEDIA_TYPE = "unsupported_media_type"
     """The media type's essence is not ``text/html``."""
     PARSE_FAILED = "parse_failed"
-    """lxml raised, or libxml2 logged a fatal error, such as excessive nesting depth."""
+    """Decoding, lxml, or the walker raised on input it cannot read, or libxml2 logged a
+    fatal error, such as excessive nesting depth."""
     NO_NATIVE_TEXT = "no_native_text"
     """Nothing is left after N1: image-only input lands here (R4.3, SC7)."""
     INVALID_ELEMENTS = "invalid_elements"

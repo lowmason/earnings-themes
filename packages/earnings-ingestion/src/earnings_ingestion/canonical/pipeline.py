@@ -46,6 +46,15 @@ COMPONENTS = {
 PRE_TABLE_WITHOUT_CELLS = "pre_table_without_cells"
 """Limitation: C1 typed a ``<pre>`` piece as a table, which yields no cell evidence."""
 
+UNREADABLE = (etree.LxmlError, LookupError, ValueError)
+"""What decoding, lxml, or the walker raises on input it cannot read: ``parse_failed``.
+
+The ported rules raise these on crafted input: a charset label naming a codec that is
+not a text encoding (``LookupError``) or that refuses ``errors="replace"``; a label that
+decodes to a lone surrogate, which lxml cannot encode; a span or font weight that
+``int()`` refuses. Added after plan 4's final review (docs/verification/walker-1.md).
+"""
+
 
 def canonicalize(
     raw: bytes, *, source_document_id: str, media_type: str
@@ -53,7 +62,8 @@ def canonicalize(
     """The canonical document for ``raw``, or the reason there is none.
 
     ``media_type``'s essence must be ``text/html``; parameters, such as a charset, are
-    ignored, because decoding follows the ported rule alone. An invalid
+    ignored, because decoding follows the ported rule alone. Input that decoding, lxml,
+    or the walker cannot read is ``parse_failed``, never an exception. An invalid
     ``source_document_id`` raises ``ValueError``: it is the caller's error, not the
     document's.
     """
@@ -75,14 +85,14 @@ def canonicalize(
         return failure(
             FailureReason.UNSUPPORTED_MEDIA_TYPE, f"{media_type!r} is not text/html"
         )
-    decoded = decode_html_bytes(raw)
     try:
+        decoded = decode_html_bytes(raw)
         fatal, image_count = _inspect(decoded.text)
-        if fatal is not None:
-            return failure(FailureReason.PARSE_FAILED, fatal)
-        walked, pre_lines = walk(decoded.text)
-    except etree.LxmlError as error:
+        walked, pre_lines = walk(decoded.text) if fatal is None else ([], {})
+    except UNREADABLE as error:
         return failure(FailureReason.PARSE_FAILED, f"{type(error).__name__}: {error}")
+    if fatal is not None:
+        return failure(FailureReason.PARSE_FAILED, fatal)
 
     blocks = to_blocks(walked, pre_lines)
     if all(block.container for block in blocks):

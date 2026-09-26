@@ -328,14 +328,15 @@ regenerates byte for byte.
 | Value | Meaning |
 | --- | --- |
 | `unsupported_media_type` | The media type's essence is not `text/html` |
-| `parse_failed` | lxml raised, or libxml2 logged a fatal error, such as nesting past its depth limit |
+| `parse_failed` | Decoding, lxml, or the walker raised on input it cannot read, such as a charset label naming a codec that is not a text encoding; or libxml2 logged a fatal error, such as nesting past its depth limit |
 | `no_native_text` | Nothing is left after N1; image-only input lands here (R4.3) |
 | `invalid_elements` | `validate_elements` found problems: a canonicalizer defect, never the input's |
 
 ### `CanonicalizationFailure`
 
 A document the canonicalizer refused. A failure is never an empty document and never
-a partial element set; decoding never fails.
+a partial element set, and `canonicalize` never raises on input: only an invalid
+`source_document_id`, the caller's error, raises.
 
 | Field | Type | Meaning |
 | --- | --- | --- |

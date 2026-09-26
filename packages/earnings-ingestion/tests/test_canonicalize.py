@@ -187,6 +187,55 @@ def test_a_fatal_error_after_a_hundred_errors_is_still_caught() -> None:
     assert failed(deep(300, before=duplicates)).reason is FailureReason.PARSE_FAILED
 
 
+BACKSLASH = bytes([0x5C])
+
+
+def grid(first_cell: bytes) -> bytes:
+    return (
+        b"<table><tr>"
+        + first_cell
+        + b"<td>2</td></tr><tr><td>3</td><td>4</td></tr></table>"
+    )
+
+
+@pytest.mark.parametrize(
+    ("raw", "error"),
+    [
+        (b'<meta charset="base64"><p>Hello</p>', "LookupError"),
+        (b'<meta charset="rot13"><p>Hello</p>', "LookupError"),
+        (b'<meta charset="idna"><p>Hello \xff</p>', "UnicodeError"),
+        (
+            b'<meta charset="unicode-escape"><p>A ' + BACKSLASH + b"ud800</p>",
+            "UnicodeEncodeError",
+        ),
+        (b'<meta charset="utf-7"><p>A +2AA-</p>', "UnicodeEncodeError"),
+        (grid('<td colspan="\N{SUPERSCRIPT TWO}">1</td>'.encode()), "ValueError"),
+        (grid(b'<td colspan="' + b"1" * 5000 + b'">1</td>'), "ValueError"),
+        (
+            b'<p><span style="font-weight:' + b"9" * 5000 + b'">Bold</span> text</p>',
+            "ValueError",
+        ),
+    ],
+    ids=[
+        "non-text-codec",
+        "rot13-codec",
+        "idna-codec",
+        "unicode-escape-surrogate",
+        "utf-7-surrogate",
+        "superscript-colspan",
+        "huge-colspan",
+        "huge-font-weight",
+    ],
+)
+def test_input_the_decoder_or_walker_cannot_read_fails_to_parse(
+    raw: bytes, error: str
+) -> None:
+    failure = failed(raw)
+    assert failure.reason is FailureReason.PARSE_FAILED
+    assert failure.detail.startswith(f"{error}: ")
+    assert (failure.image_count, failure.rejections) == (None, ())
+
+
 def test_the_deepest_nesting_libxml2_keeps_canonicalizes_at_the_default_limit() -> None:
     limit = sys.getrecursionlimit()
     result = canonical(deep(254))
@@ -222,6 +271,18 @@ def test_rejected_elements_fail_with_their_rejections(
 def test_an_invalid_source_document_id_is_the_callers_error() -> None:
     with pytest.raises(ValueError):
         canonicalize(RELEASE, source_document_id="has space", media_type="text/html")
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [b'<meta charset="base64"><p>Hello</p>', deep(300)],
+    ids=["decoding-fails", "libxml2-fatal"],
+)
+def test_an_invalid_source_document_id_raises_even_when_parsing_fails(
+    raw: bytes,
+) -> None:
+    with pytest.raises(ValueError):
+        canonicalize(raw, source_document_id="has space", media_type="text/html")
 
 
 def test_canonicalization_is_deterministic() -> None:
