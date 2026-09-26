@@ -40,6 +40,8 @@ def modules_loaded_by(module: str) -> set[str]:
         "earnings_ingestion.browser.renderer",
         "earnings_ingestion.browser.serialize",
         "earnings_ingestion.browser.store",
+        "earnings_ingestion.layout",
+        "earnings_ingestion.layout.extract",
     ],
 )
 def test_importing_ingestion_loads_nothing_forbidden(module: str) -> None:

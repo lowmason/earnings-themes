@@ -522,3 +522,34 @@ A rendered table's own rows, and the cell of another table that holds it.
 | `header` | bool | The cell is a `th` |
 | `colspan` | int > 0 | Its `colSpan`, at least 1 |
 | `rowspan` | int > 0 | Its `rowSpan`, at least 1 |
+
+### `AlignmentFailure`
+
+One layout-1 unit that maps onto no single canonical span (SC13). It carries an
+existing core reason; core has no alignment reason.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Ingestion record schema version |
+| `status` | `alignment_failed` | Always this value |
+| `reason` | `RejectionReason` | `locator_not_found` when the text occurs nowhere; `ambiguous_occurrence` when it occurs more than once and no neighbour decides, or its one place is out of order or overlaps another unit's |
+| `unit_type` | string | The unit's layout-1 type, or `table_cell` |
+| `text` | string | The unit's text after N1 |
+| `detail` | string | Which of the above, in words |
+
+### `LayoutExtraction`
+
+layout-1's element stream over one canonical document, under mapping policy
+`anchored-1`, with every alignment failure.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Ingestion record schema version |
+| `layout_version` | ID part | `layout-1` |
+| `mapping_policy` | ID part | `anchored-1` |
+| `capture_id` | string | The capture it read |
+| `doc_id` | string | The canonical document it maps onto |
+| `units` | int ≥ 0 | Units aligned: each block, and each cell of a table |
+| `retypes` | map of rule to int | Blocks retyped by each of `C1`–`C5`, zeros included |
+| `elements` | tuple of `DocumentElement` | Document order, each table followed by its cells; canonical text no element covers is `other`, one element per line |
+| `failures` | tuple of `AlignmentFailure` | Every unit that did not map |
