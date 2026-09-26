@@ -1,0 +1,254 @@
+# Synthetic evidence.
+schema_version = 1
+
+[[snapshots]]
+evidence_id = "roster-2024-06-28"
+source_id = "synthetic-roster"
+role = "anchor"
+url = "https://roster.example/index?rev=1001"
+artifact_sha256 = "2eddf7f654c2bf71b03614de434e3b53d4f71755ad323f02b8a42004879a521a"
+canonical_sha256 = "e5b7d9df6de1e447bff0a1ef54ff397080eef9f6ca27e5c4f491987532ace9ef"
+as_of = 2024-06-28
+published_on = 2024-06-20
+
+[[snapshots.members]]
+security_id = "acme-common"
+name = "Acme Industrial"
+ticker = "ACMX"
+span = [98, 118]
+cited_sha256 = "fdd552fddb7a9eb9dc7779176b12f71ad5f4ba86c37e0480969f851e5776cfc1"
+
+[[snapshots.members]]
+security_id = "borealis-common"
+name = "Northern Airways"
+ticker = "BORA"
+span = [131, 152]
+cited_sha256 = "b2556b321144201b949f184ca6b84ca16dcbe00f128cb78349ee8bf01774f4db"
+
+[[snapshots.members]]
+security_id = "dynamo-class-a"
+name = "Dynamo Motors (Class A)"
+ticker = "DYNA"
+span = [165, 193]
+cited_sha256 = "e45bd0131dfde7bb0e5707f7ba28e19f030b47fcb786b398d51af92ce0accb41"
+
+[[snapshots.members]]
+security_id = "eastfield-common"
+name = "EFB Financial"
+ticker = "EFB"
+span = [206, 223]
+cited_sha256 = "924f38b64cc462d07af7c4dfaee068e1d92661654845ffbf69f690c68f9ebc93"
+
+[[snapshots]]
+evidence_id = "roster-2024-11-08"
+source_id = "synthetic-roster"
+role = "corroboration"
+url = "https://roster.example/index?rev=1002"
+artifact_sha256 = "7d5c8710efa9e7d71380bce832df2662791fdb768dabaeb804146ae507091bdb"
+canonical_sha256 = "ec5bc6e82a2d76c17659e4b67f90eb82ce2af875abadf5a0e6c5e909462d5b91"
+as_of = 2024-11-08
+published_on = 2024-11-08
+
+[[snapshots.members]]
+security_id = "acme-common"
+name = "Acme Industrial"
+ticker = "ACMX"
+span = [101, 121]
+cited_sha256 = "fdd552fddb7a9eb9dc7779176b12f71ad5f4ba86c37e0480969f851e5776cfc1"
+
+[[snapshots.members]]
+security_id = "borealis-common"
+name = "Borealis Air"
+ticker = "BORA"
+span = [134, 151]
+cited_sha256 = "3ba874fc4cf88b07b2ee3f0cfe3e1433743db725c0899ef5c10a2c7f7599e435"
+
+[[snapshots.members]]
+security_id = "dynamo-class-a"
+name = "Dynamo Motors (Class A)"
+ticker = "DYNA"
+span = [164, 192]
+cited_sha256 = "e45bd0131dfde7bb0e5707f7ba28e19f030b47fcb786b398d51af92ce0accb41"
+
+[[snapshots.members]]
+security_id = "eastfield-common"
+name = "EFB Financial"
+ticker = "EFB"
+span = [205, 222]
+cited_sha256 = "924f38b64cc462d07af7c4dfaee068e1d92661654845ffbf69f690c68f9ebc93"
+
+[[snapshots]]
+evidence_id = "roster-2025-06-30"
+source_id = "synthetic-roster"
+role = "corroboration"
+url = "https://roster.example/index?rev=1003"
+artifact_sha256 = "5f31923975de16b75fca7ba5ebf5e29b508e892b3be244d617544612ff76c20d"
+canonical_sha256 = "059a948863f51b15000dff41a55f90388b8e018faa439ef1372df83a3c809891"
+as_of = 2025-06-30
+published_on = 2025-06-30
+
+[[snapshots.members]]
+security_id = "acme-common"
+name = "Acme Industrial"
+ticker = "ACME"
+span = [98, 118]
+cited_sha256 = "759d5eae09043d6039251d5f0a429101b0fa103212d957b66c1a1423463dfc06"
+
+[[snapshots.members]]
+security_id = "corvid-common"
+name = "Corvid Systems"
+ticker = "CRVD"
+span = [131, 150]
+cited_sha256 = "eaa6fdef55d7ba6789f6d617e28b6e65c4cd4177f7192594b75c88444fb1f358"
+
+[[snapshots.members]]
+security_id = "dynamo-class-a"
+name = "Dynamo Motors (Class A)"
+ticker = "DYNA"
+span = [163, 191]
+cited_sha256 = "e45bd0131dfde7bb0e5707f7ba28e19f030b47fcb786b398d51af92ce0accb41"
+
+[[snapshots.members]]
+security_id = "eastfield-common"
+name = "EFB Financial"
+ticker = "EFB"
+span = [204, 221]
+cited_sha256 = "924f38b64cc462d07af7c4dfaee068e1d92661654845ffbf69f690c68f9ebc93"
+
+[[changes]]
+evidence_id = "index-2024-10-31"
+source_id = "synthetic-index"
+url = "https://index.example/notices/index-2024-10-31"
+artifact_sha256 = "10027d18db346705ae9f31107d5a72ec0792f8aabf40d116b80c71b5cb449181"
+canonical_sha256 = "c0f5f49355b5c5646c4c22880736f34b369cf3ce6149234e28198995a6d2ec9a"
+announced_on = 2024-10-31
+published_on = 2024-10-31
+published_at = "2024-10-31T21:00:00Z"
+effective_on = 2024-11-07
+timing = "before_open"
+date_span = [109, 167]
+date_cited_sha256 = "83ed179857407aca8521b189d2552ec5734f0ed64c8d23def4e43050deffe4f7"
+
+[[changes.entries]]
+action = "added"
+security_id = "corvid-common"
+name = "Corvid Systems"
+ticker = "CRVD"
+span = [44, 65]
+cited_sha256 = "1d5e543f9e37a91cd082c2509bc5a5c6a09d469dcc992d4704f859324df9ef58"
+
+[[changes]]
+evidence_id = "index-2024-11-01"
+source_id = "synthetic-index"
+url = "https://index.example/notices/index-2024-11-01"
+artifact_sha256 = "05bfc161c2789fcd94ec6007e8195714f7ddb4de3a010467ea94f069c13e1804"
+canonical_sha256 = "97af652fda44ca32bb29375262063b673cb24352402429e58a68053dc53f58c2"
+announced_on = 2024-11-01
+published_on = 2024-11-01
+published_at = "2024-11-01T21:15:00Z"
+effective_on = 2024-11-08
+timing = "before_open"
+date_span = [135, 191]
+date_cited_sha256 = "681e594e4de0aab8431807f10932daea9542058704f35b54c4fc1ef2c3da0d01"
+
+[[changes.entries]]
+action = "added"
+security_id = "corvid-common"
+name = "Corvid Systems"
+ticker = "CRVD"
+span = [44, 65]
+cited_sha256 = "1d5e543f9e37a91cd082c2509bc5a5c6a09d469dcc992d4704f859324df9ef58"
+
+[[changes.entries]]
+action = "removed"
+security_id = "borealis-common"
+name = "Borealis Air"
+ticker = "BORA"
+span = [79, 98]
+cited_sha256 = "851dbab643d7264b01304a82f3272c0de80a7286f45332123ed3984879680383"
+
+[[changes]]
+evidence_id = "index-2026-06-16"
+source_id = "synthetic-index"
+url = "https://index.example/notices/index-2026-06-16"
+artifact_sha256 = "c143469535f832e42034a08713f27cbd0f35fc3a93b05af44952eef2ac438b44"
+canonical_sha256 = "e5f39f47bd7329bfee446a99d59b3d8a6823301ea4e0f86c87d8c63a4f33b72b"
+announced_on = 2026-06-16
+published_on = 2026-06-16
+published_at = "2026-06-16T21:00:00Z"
+effective_on = 2026-06-22
+timing = "before_open"
+date_span = [144, 197]
+date_cited_sha256 = "63c84db911aad4eeedea8611cbbdc6307e306b1ff49f36110e1b3cf33eb808e1"
+
+[[changes.entries]]
+action = "added"
+security_id = "dynamo-class-b"
+name = "Dynamo Motors (Class B)"
+ticker = "DYNB"
+span = [44, 74]
+cited_sha256 = "ddfc8b3b21e847e46d0b7ef98b6094145a0ee5aa88c41a9e9eb3038b4025e58f"
+
+[[changes.entries]]
+action = "removed"
+security_id = "eastfield-common"
+name = "EFB Financial"
+ticker = "EFB"
+span = [88, 107]
+cited_sha256 = "6108bdcfcf954abd3b2c78276f70d1a761f154aff0d90637bc3702df0edd9c46"
+
+[[changes]]
+evidence_id = "index-2026-09-25"
+source_id = "synthetic-index"
+url = "https://index.example/notices/index-2026-09-25"
+artifact_sha256 = "f2b7c9548d3c7e2016ad5c65ae32e57d170e525c1aad19d889bb8f3227a57c06"
+canonical_sha256 = "137b2d109b42e501cd8a1af35230f8940ec0d33f54da8db76e2bdce2606c68ca"
+announced_on = 2026-09-25
+published_on = 2026-09-25
+published_at = "2026-09-25T21:00:00Z"
+effective_on = 2026-10-05
+timing = "before_open"
+date_span = [136, 191]
+date_cited_sha256 = "131190ef6f5428e394f7b0d06ef54d8df92e5c3a195f22f009b496e539437c2f"
+
+[[changes.entries]]
+action = "added"
+security_id = "fenwick-common"
+name = "Fenwick Labs"
+ticker = "FNWK"
+span = [44, 63]
+cited_sha256 = "de866879438f3315a30a9047f7fc37e1e61f892673cc9c39e240c4abdf17a4fa"
+
+[[changes.entries]]
+action = "removed"
+security_id = "acme-common"
+name = "Acme Industrial"
+ticker = "ACME"
+span = [77, 99]
+cited_sha256 = "805ff366040383181da28eddef7156c163b8c999a7aa7c8e738a81c87af2badc"
+
+[[checks]]
+evidence_id = "user-list-2026-09-26"
+source_id = "user-list"
+as_of = 2026-09-22
+published_on = 2026-09-26
+
+[[checks.members]]
+name = "Acme Industrial"
+ticker = "ACME"
+
+[[checks.members]]
+name = "Corvid Systems"
+ticker = "CRVD"
+
+[[checks.members]]
+name = "Dynamo Motors (Class A)"
+ticker = "DYNA"
+
+[[checks.members]]
+name = "Dynamo Motors (Class B)"
+ticker = "DYNB"
+
+[[checks.members]]
+name = "Fenwick Labs"
+ticker = "FNWK"

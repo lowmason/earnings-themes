@@ -1,0 +1,6 @@
+# Synthetic sec-edgar entry.
+[sources]
+
+[sources.sec-edgar]
+owner = "Synthetic SEC"
+last_verified = 2026-09-27

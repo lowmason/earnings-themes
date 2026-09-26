@@ -1,3 +1,4 @@
 tests/fixtures/releases/*/source.html -text
 tests/fixtures/canonical/*.json -text
 tests/fixtures/browser/* -text
+tests/fixtures/cohort/** -text

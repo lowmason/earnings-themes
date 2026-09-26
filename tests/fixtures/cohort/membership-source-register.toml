@@ -1,0 +1,76 @@
+# Synthetic register.
+schema_version = 1
+
+[sources]
+
+[sources.synthetic-roster]
+owner = "Synthetic Encyclopedia"
+url = "https://roster.example/index"
+access_method = "Fixed revisions through the cohort web client."
+terms_url = "https://roster.example/terms"
+coverage = "Dated revisions of the roster."
+evidence_class = "secondary"
+roles = ["anchor", "corroboration"]
+cost = "Free; synthetic."
+license_terms = "Invented for this repository's tests."
+redistribution_status = "Synthetic; committed as test data."
+expected_update_pattern = "Never updated."
+known_limitations = ["Synthetic: it describes no real index."]
+last_verified = 2026-09-27
+rights_status = "redistributable"
+rights_basis = "synthetic test data, invented for this repository"
+terms_sha256 = "722bcfc02d72599470fb5712dea4f397ba68705b7bb686a3b79712a5e5f2698e"
+
+[sources.synthetic-index]
+owner = "Synthetic Index Services"
+url = "https://index.example/notices"
+access_method = "Notices through the cohort web client."
+terms_url = "https://index.example/terms"
+coverage = "Every addition and removal."
+evidence_class = "official"
+roles = ["change"]
+cost = "Free; synthetic."
+license_terms = "Invented for this repository's tests."
+redistribution_status = "Synthetic; committed as test data."
+expected_update_pattern = "Never updated."
+known_limitations = ["Synthetic: it describes no real index."]
+last_verified = 2026-09-27
+rights_status = "redistributable"
+rights_basis = "synthetic test data, invented for this repository"
+terms_sha256 = "722bcfc02d72599470fb5712dea4f397ba68705b7bb686a3b79712a5e5f2698e"
+
+[sources.synthetic-fund]
+owner = "Synthetic Industrial Average Fund Trust"
+url = "https://www.sec.gov/cgi-bin/browse-edgar?CIK=0009990900"
+access_method = "N-PORT filings through the shared SEC client."
+terms_url = "https://www.sec.gov/privacy"
+coverage = "Quarterly holdings."
+evidence_class = "etf_proxy"
+roles = ["corroboration"]
+cost = "Free; synthetic."
+license_terms = "Invented for this repository's tests."
+redistribution_status = "Synthetic; committed as test data."
+expected_update_pattern = "Never updated."
+known_limitations = ["Synthetic: it describes no real index."]
+last_verified = 2026-09-27
+rights_status = "redistributable"
+rights_basis = "synthetic test data, invented for this repository"
+terms_sha256 = "722bcfc02d72599470fb5712dea4f397ba68705b7bb686a3b79712a5e5f2698e"
+
+[sources.user-list]
+owner = "The user"
+url = "https://user.example/list"
+access_method = "Supplied in conversation."
+terms_url = "https://user.example/terms"
+coverage = "One list, as of the cutoff."
+evidence_class = "user_supplied"
+roles = ["check"]
+cost = "Free; synthetic."
+license_terms = "Invented for this repository's tests."
+redistribution_status = "Synthetic; committed as test data."
+expected_update_pattern = "Never updated."
+known_limitations = ["Synthetic: it describes no real index."]
+last_verified = 2026-09-27
+rights_status = "redistributable"
+rights_basis = "synthetic test data, invented for this repository"
+terms_sha256 = "722bcfc02d72599470fb5712dea4f397ba68705b7bb686a3b79712a5e5f2698e"

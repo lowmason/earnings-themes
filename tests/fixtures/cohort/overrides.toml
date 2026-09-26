@@ -1,0 +1,91 @@
+# Synthetic review.
+schema_version = 1
+
+[[overrides]]
+override_id = "reject-preliminary-date"
+kind = "reject_assertion"
+membership_assertion_id = "index-2024-10-31:corvid-common:added"
+rationale = "index-2024-11-01 sets November 8, replacing the preliminary November 7."
+reviewer = "Synthetic Reviewer"
+recorded_on = 2026-09-28
+effective_from = 2024-07-01
+
+[[overrides.citations]]
+source_id = "synthetic-index"
+url = "https://index.example/notices/index-2024-11-01"
+
+[[overrides]]
+override_id = "eastfield-issuer"
+kind = "set_issuer"
+security_id = "eastfield-common"
+cik = "0009990006"
+rationale = "SEC's record for this CIK lists EFB; EFB Financial is its trade name."
+reviewer = "Synthetic Reviewer"
+recorded_on = 2026-09-28
+effective_from = 2024-07-01
+
+[[overrides.citations]]
+source_id = "sec-edgar"
+url = "https://data.sec.gov/submissions/CIK0009990006.json"
+artifact_sha256 = "0d440a0502d9d17eeb8d25609633ea311eab436854c95503c8815ac87e5796aa"
+
+[overrides.citations.locator]
+kind = "json_pointer"
+pointer = "/tickers"
+cited_sha256 = "d91bbb86186d6019de7a8bb341a39d1b713e2d978ec0f780a041d8c66bf3073d"
+
+[[overrides]]
+override_id = "alias-dynamo-a"
+kind = "holding_alias"
+security_id = "dynamo-class-a"
+holding_name = "Dynamo Motors Co Class A"
+rationale = "The fund lists the Class A shares under this name."
+reviewer = "Synthetic Reviewer"
+recorded_on = 2026-09-28
+effective_from = 2024-07-01
+
+[[overrides.citations]]
+source_id = "synthetic-fund"
+url = "https://www.sec.gov/Archives/edgar/data/9990900/000999090025000001/primary_doc.xml"
+
+[[overrides]]
+override_id = "alias-dynamo-b"
+kind = "holding_alias"
+security_id = "dynamo-class-b"
+holding_name = "Dynamo Motors Co Class B"
+rationale = "The fund lists the Class B shares under this name."
+reviewer = "Synthetic Reviewer"
+recorded_on = 2026-09-28
+effective_from = 2024-07-01
+
+[[overrides.citations]]
+source_id = "synthetic-fund"
+url = "https://www.sec.gov/Archives/edgar/data/9990900/000999090025000001/primary_doc.xml"
+
+[[overrides]]
+override_id = "alias-eastfield"
+kind = "holding_alias"
+security_id = "eastfield-common"
+holding_name = "Eastfield Bank Corp"
+rationale = "The fund lists EFB Financial under its legal name."
+reviewer = "Synthetic Reviewer"
+recorded_on = 2026-09-28
+effective_from = 2024-07-01
+
+[[overrides.citations]]
+source_id = "synthetic-fund"
+url = "https://www.sec.gov/Archives/edgar/data/9990900/000999090025000001/primary_doc.xml"
+
+[[overrides]]
+override_id = "ack-lagging-revision"
+kind = "acknowledge"
+finding_id = "difference:roster-2024-11-08"
+finding_digest = "47dee1cfae9c3f838285d2f34facd232a51370ea95d0a91c4a6a658b38cc8949"
+rationale = "The revision was saved on the change date, before editors updated it; the next revision agrees."
+reviewer = "Synthetic Reviewer"
+recorded_on = 2026-09-28
+effective_from = 2024-07-01
+
+[[overrides.citations]]
+source_id = "synthetic-roster"
+url = "https://roster.example/index?rev=1003"

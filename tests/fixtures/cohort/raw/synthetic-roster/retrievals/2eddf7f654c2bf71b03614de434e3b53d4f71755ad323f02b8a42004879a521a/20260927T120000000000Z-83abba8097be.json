@@ -1,0 +1,1 @@
+{"schema_version":1,"request_url":"https://roster.example/index?rev=1001","final_url":"https://roster.example/index?rev=1001","retrieved_at":"2026-09-27T12:00:00Z","retrieval_method":"http","http_status":200,"media_type":"text/html","content_type":"text/html","byte_count":512,"sha256":"2eddf7f654c2bf71b03614de434e3b53d4f71755ad323f02b8a42004879a521a"}

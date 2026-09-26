@@ -1,0 +1,2646 @@
+{
+ "assertions": [
+  {
+   "announcement_date": "2024-10-31",
+   "asserted_action": "added",
+   "asserted_date": "2024-11-07",
+   "asserted_timing": "before_open",
+   "cik": "0009990003",
+   "effective_from": null,
+   "effective_from_basis": null,
+   "effective_from_timing": null,
+   "effective_to": null,
+   "effective_to_timing": null,
+   "evidence_id": "index-2024-10-31",
+   "evidence_locators": [
+    {
+     "canonical_sha256": "c0f5f49355b5c5646c4c22880736f34b369cf3ce6149234e28198995a6d2ec9a",
+     "canonicalization_version": "walker-1",
+     "cited_sha256": "1d5e543f9e37a91cd082c2509bc5a5c6a09d469dcc992d4704f859324df9ef58",
+     "end": 65,
+     "kind": "text_span",
+     "pointer": null,
+     "start": 44
+    },
+    {
+     "canonical_sha256": "c0f5f49355b5c5646c4c22880736f34b369cf3ce6149234e28198995a6d2ec9a",
+     "canonicalization_version": "walker-1",
+     "cited_sha256": "83ed179857407aca8521b189d2552ec5734f0ed64c8d23def4e43050deffe4f7",
+     "end": 167,
+     "kind": "text_span",
+     "pointer": null,
+     "start": 109
+    }
+   ],
+   "issuer_id": "cik-0009990003",
+   "membership_assertion_id": "index-2024-10-31:corvid-common:added",
+   "publication_date": "2024-10-31",
+   "publication_time": "2024-10-31T21:00:00Z",
+   "raw_content_hash": "10027d18db346705ae9f31107d5a72ec0792f8aabf40d116b80c71b5cb449181",
+   "resolved_by": "reject-preliminary-date",
+   "retrieved_at": "2026-09-27T12:00:00Z",
+   "rights_status": "redistributable",
+   "security_id": "corvid-common",
+   "source_id": "synthetic-index",
+   "source_snapshot_date": null,
+   "status": "conflicting",
+   "universe_id": "djia-synthetic",
+   "url": "https://index.example/notices/index-2024-10-31"
+  },
+  {
+   "announcement_date": "2024-11-01",
+   "asserted_action": "removed",
+   "asserted_date": "2024-11-08",
+   "asserted_timing": "before_open",
+   "cik": "0009990002",
+   "effective_from": "2024-06-28",
+   "effective_from_basis": "anchor_snapshot",
+   "effective_from_timing": "unspecified",
+   "effective_to": "2024-11-08",
+   "effective_to_timing": "before_open",
+   "evidence_id": "index-2024-11-01",
+   "evidence_locators": [
+    {
+     "canonical_sha256": "97af652fda44ca32bb29375262063b673cb24352402429e58a68053dc53f58c2",
+     "canonicalization_version": "walker-1",
+     "cited_sha256": "851dbab643d7264b01304a82f3272c0de80a7286f45332123ed3984879680383",
+     "end": 98,
+     "kind": "text_span",
+     "pointer": null,
+     "start": 79
+    },
+    {
+     "canonical_sha256": "97af652fda44ca32bb29375262063b673cb24352402429e58a68053dc53f58c2",
+     "canonicalization_version": "walker-1",
+     "cited_sha256": "681e594e4de0aab8431807f10932daea9542058704f35b54c4fc1ef2c3da0d01",
+     "end": 191,
+     "kind": "text_span",
+     "pointer": null,
+     "start": 135
+    }
+   ],
+   "issuer_id": "cik-0009990002",
+   "membership_assertion_id": "index-2024-11-01:borealis-common:removed",
+   "publication_date": "2024-11-01",
+   "publication_time": "2024-11-01T21:15:00Z",
+   "raw_content_hash": "05bfc161c2789fcd94ec6007e8195714f7ddb4de3a010467ea94f069c13e1804",
+   "resolved_by": null,
+   "retrieved_at": "2026-09-27T12:00:00Z",
+   "rights_status": "redistributable",
+   "security_id": "borealis-common",
+   "source_id": "synthetic-index",
+   "source_snapshot_date": null,
+   "status": "supported",
+   "universe_id": "djia-synthetic",
+   "url": "https://index.example/notices/index-2024-11-01"
+  },
+  {
+   "announcement_date": "2024-11-01",
+   "asserted_action": "added",
+   "asserted_date": "2024-11-08",
+   "asserted_timing": "before_open",
+   "cik": "0009990003",
+   "effective_from": "2024-11-08",
+   "effective_from_basis": "announced",
+   "effective_from_timing": "before_open",
+   "effective_to": null,
+   "effective_to_timing": null,
+   "evidence_id": "index-2024-11-01",
+   "evidence_locators": [
+    {
+     "canonical_sha256": "97af652fda44ca32bb29375262063b673cb24352402429e58a68053dc53f58c2",
+     "canonicalization_version": "walker-1",
+     "cited_sha256": "1d5e543f9e37a91cd082c2509bc5a5c6a09d469dcc992d4704f859324df9ef58",
+     "end": 65,
+     "kind": "text_span",
+     "pointer": null,
+     "start": 44
+    },
+    {
+     "canonical_sha256": "97af652fda44ca32bb29375262063b673cb24352402429e58a68053dc53f58c2",
+     "canonicalization_version": "walker-1",
+     "cited_sha256": "681e594e4de0aab8431807f10932daea9542058704f35b54c4fc1ef2c3da0d01",
+     "end": 191,
+     "kind": "text_span",
+     "pointer": null,
+     "start": 135
+    }
+   ],
+   "issuer_id": "cik-0009990003",
+   "membership_assertion_id": "index-2024-11-01:corvid-common:added",
+   "publication_date": "2024-11-01",
+   "publication_time": "2024-11-01T21:15:00Z",
+   "raw_content_hash": "05bfc161c2789fcd94ec6007e8195714f7ddb4de3a010467ea94f069c13e1804",
+   "resolved_by": null,
+   "retrieved_at": "2026-09-27T12:00:00Z",
+   "rights_status": "redistributable",
+   "security_id": "corvid-common",
+   "source_id": "synthetic-index",
+   "source_snapshot_date": null,
+   "status": "supported",
+   "universe_id": "djia-synthetic",
+   "url": "https://index.example/notices/index-2024-11-01"
+  },
+  {
+   "announcement_date": "2026-06-16",
+   "asserted_action": "added",
+   "asserted_date": "2026-06-22",
+   "asserted_timing": "before_open",
+   "cik": "0009990005",
+   "effective_from": "2026-06-22",
+   "effective_from_basis": "announced",
+   "effective_from_timing": "before_open",
+   "effective_to": null,
+   "effective_to_timing": null,
+   "evidence_id": "index-2026-06-16",
+   "evidence_locators": [
+    {
+     "canonical_sha256": "e5f39f47bd7329bfee446a99d59b3d8a6823301ea4e0f86c87d8c63a4f33b72b",
+     "canonicalization_version": "walker-1",
+     "cited_sha256": "ddfc8b3b21e847e46d0b7ef98b6094145a0ee5aa88c41a9e9eb3038b4025e58f",
+     "end": 74,
+     "kind": "text_span",
+     "pointer": null,
+     "start": 44
+    },
+    {
+     "canonical_sha256": "e5f39f47bd7329bfee446a99d59b3d8a6823301ea4e0f86c87d8c63a4f33b72b",
+     "canonicalization_version": "walker-1",
+     "cited_sha256": "63c84db911aad4eeedea8611cbbdc6307e306b1ff49f36110e1b3cf33eb808e1",
+     "end": 197,
+     "kind": "text_span",
+     "pointer": null,
+     "start": 144
+    }
+   ],
+   "issuer_id": "cik-0009990005",
+   "membership_assertion_id": "index-2026-06-16:dynamo-class-b:added",
+   "publication_date": "2026-06-16",
+   "publication_time": "2026-06-16T21:00:00Z",
+   "raw_content_hash": "c143469535f832e42034a08713f27cbd0f35fc3a93b05af44952eef2ac438b44",
+   "resolved_by": null,
+   "retrieved_at": "2026-09-27T12:00:00Z",
+   "rights_status": "redistributable",
+   "security_id": "dynamo-class-b",
+   "source_id": "synthetic-index",
+   "source_snapshot_date": null,
+   "status": "supported",
+   "universe_id": "djia-synthetic",
+   "url": "https://index.example/notices/index-2026-06-16"
+  },
+  {
+   "announcement_date": "2026-06-16",
+   "asserted_action": "removed",
+   "asserted_date": "2026-06-22",
+   "asserted_timing": "before_open",
+   "cik": "0009990006",
+   "effective_from": "2024-06-28",
+   "effective_from_basis": "anchor_snapshot",
+   "effective_from_timing": "unspecified",
+   "effective_to": "2026-06-22",
+   "effective_to_timing": "before_open",
+   "evidence_id": "index-2026-06-16",
+   "evidence_locators": [
+    {
+     "canonical_sha256": "e5f39f47bd7329bfee446a99d59b3d8a6823301ea4e0f86c87d8c63a4f33b72b",
+     "canonicalization_version": "walker-1",
+     "cited_sha256": "6108bdcfcf954abd3b2c78276f70d1a761f154aff0d90637bc3702df0edd9c46",
+     "end": 107,
+     "kind": "text_span",
+     "pointer": null,
+     "start": 88
+    },
+    {
+     "canonical_sha256": "e5f39f47bd7329bfee446a99d59b3d8a6823301ea4e0f86c87d8c63a4f33b72b",
+     "canonicalization_version": "walker-1",
+     "cited_sha256": "63c84db911aad4eeedea8611cbbdc6307e306b1ff49f36110e1b3cf33eb808e1",
+     "end": 197,
+     "kind": "text_span",
+     "pointer": null,
+     "start": 144
+    }
+   ],
+   "issuer_id": "cik-0009990006",
+   "membership_assertion_id": "index-2026-06-16:eastfield-common:removed",
+   "publication_date": "2026-06-16",
+   "publication_time": "2026-06-16T21:00:00Z",
+   "raw_content_hash": "c143469535f832e42034a08713f27cbd0f35fc3a93b05af44952eef2ac438b44",
+   "resolved_by": null,
+   "retrieved_at": "2026-09-27T12:00:00Z",
+   "rights_status": "redistributable",
+   "security_id": "eastfield-common",
+   "source_id": "synthetic-index",
+   "source_snapshot_date": null,
+   "status": "supported",
+   "universe_id": "djia-synthetic",
+   "url": "https://index.example/notices/index-2026-06-16"
+  },
+  {
+   "announcement_date": "2026-09-25",
+   "asserted_action": "removed",
+   "asserted_date": "2026-10-05",
+   "asserted_timing": "before_open",
+   "cik": "0009990001",
+   "effective_from": null,
+   "effective_from_basis": null,
+   "effective_from_timing": null,
+   "effective_to": null,
+   "effective_to_timing": null,
+   "evidence_id": "index-2026-09-25",
+   "evidence_locators": [
+    {
+     "canonical_sha256": "137b2d109b42e501cd8a1af35230f8940ec0d33f54da8db76e2bdce2606c68ca",
+     "canonicalization_version": "walker-1",
+     "cited_sha256": "805ff366040383181da28eddef7156c163b8c999a7aa7c8e738a81c87af2badc",
+     "end": 99,
+     "kind": "text_span",
+     "pointer": null,
+     "start": 77
+    },
+    {
+     "canonical_sha256": "137b2d109b42e501cd8a1af35230f8940ec0d33f54da8db76e2bdce2606c68ca",
+     "canonicalization_version": "walker-1",
+     "cited_sha256": "131190ef6f5428e394f7b0d06ef54d8df92e5c3a195f22f009b496e539437c2f",
+     "end": 191,
+     "kind": "text_span",
+     "pointer": null,
+     "start": 136
+    }
+   ],
+   "issuer_id": "cik-0009990001",
+   "membership_assertion_id": "index-2026-09-25:acme-common:removed",
+   "publication_date": "2026-09-25",
+   "publication_time": "2026-09-25T21:00:00Z",
+   "raw_content_hash": "f2b7c9548d3c7e2016ad5c65ae32e57d170e525c1aad19d889bb8f3227a57c06",
+   "resolved_by": null,
+   "retrieved_at": "2026-09-27T12:00:00Z",
+   "rights_status": "redistributable",
+   "security_id": "acme-common",
+   "source_id": "synthetic-index",
+   "source_snapshot_date": null,
+   "status": "withheld",
+   "universe_id": "djia-synthetic",
+   "url": "https://index.example/notices/index-2026-09-25"
+  },
+  {
+   "announcement_date": "2026-09-25",
+   "asserted_action": "added",
+   "asserted_date": "2026-10-05",
+   "asserted_timing": "before_open",
+   "cik": null,
+   "effective_from": null,
+   "effective_from_basis": null,
+   "effective_from_timing": null,
+   "effective_to": null,
+   "effective_to_timing": null,
+   "evidence_id": "index-2026-09-25",
+   "evidence_locators": [
+    {
+     "canonical_sha256": "137b2d109b42e501cd8a1af35230f8940ec0d33f54da8db76e2bdce2606c68ca",
+     "canonicalization_version": "walker-1",
+     "cited_sha256": "de866879438f3315a30a9047f7fc37e1e61f892673cc9c39e240c4abdf17a4fa",
+     "end": 63,
+     "kind": "text_span",
+     "pointer": null,
+     "start": 44
+    },
+    {
+     "canonical_sha256": "137b2d109b42e501cd8a1af35230f8940ec0d33f54da8db76e2bdce2606c68ca",
+     "canonicalization_version": "walker-1",
+     "cited_sha256": "131190ef6f5428e394f7b0d06ef54d8df92e5c3a195f22f009b496e539437c2f",
+     "end": 191,
+     "kind": "text_span",
+     "pointer": null,
+     "start": 136
+    }
+   ],
+   "issuer_id": null,
+   "membership_assertion_id": "index-2026-09-25:fenwick-common:added",
+   "publication_date": "2026-09-25",
+   "publication_time": "2026-09-25T21:00:00Z",
+   "raw_content_hash": "f2b7c9548d3c7e2016ad5c65ae32e57d170e525c1aad19d889bb8f3227a57c06",
+   "resolved_by": null,
+   "retrieved_at": "2026-09-27T12:00:00Z",
+   "rights_status": "redistributable",
+   "security_id": "fenwick-common",
+   "source_id": "synthetic-index",
+   "source_snapshot_date": null,
+   "status": "withheld",
+   "universe_id": "djia-synthetic",
+   "url": "https://index.example/notices/index-2026-09-25"
+  },
+  {
+   "announcement_date": null,
+   "asserted_action": "member_at",
+   "asserted_date": "2024-06-28",
+   "asserted_timing": "unspecified",
+   "cik": "0009990001",
+   "effective_from": "2024-06-28",
+   "effective_from_basis": "anchor_snapshot",
+   "effective_from_timing": "unspecified",
+   "effective_to": null,
+   "effective_to_timing": null,
+   "evidence_id": "roster-2024-06-28",
+   "evidence_locators": [
+    {
+     "canonical_sha256": "e5b7d9df6de1e447bff0a1ef54ff397080eef9f6ca27e5c4f491987532ace9ef",
+     "canonicalization_version": "walker-1",
+     "cited_sha256": "fdd552fddb7a9eb9dc7779176b12f71ad5f4ba86c37e0480969f851e5776cfc1",
+     "end": 118,
+     "kind": "text_span",
+     "pointer": null,
+     "start": 98
+    }
+   ],
+   "issuer_id": "cik-0009990001",
+   "membership_assertion_id": "roster-2024-06-28:acme-common:member_at",
+   "publication_date": "2024-06-20",
+   "publication_time": null,
+   "raw_content_hash": "2eddf7f654c2bf71b03614de434e3b53d4f71755ad323f02b8a42004879a521a",
+   "resolved_by": null,
+   "retrieved_at": "2026-09-27T12:00:00Z",
+   "rights_status": "redistributable",
+   "security_id": "acme-common",
+   "source_id": "synthetic-roster",
+   "source_snapshot_date": "2024-06-28",
+   "status": "supported",
+   "universe_id": "djia-synthetic",
+   "url": "https://roster.example/index?rev=1001"
+  },
+  {
+   "announcement_date": null,
+   "asserted_action": "member_at",
+   "asserted_date": "2024-06-28",
+   "asserted_timing": "unspecified",
+   "cik": "0009990002",
+   "effective_from": "2024-06-28",
+   "effective_from_basis": "anchor_snapshot",
+   "effective_from_timing": "unspecified",
+   "effective_to": "2024-11-08",
+   "effective_to_timing": "before_open",
+   "evidence_id": "roster-2024-06-28",
+   "evidence_locators": [
+    {
+     "canonical_sha256": "e5b7d9df6de1e447bff0a1ef54ff397080eef9f6ca27e5c4f491987532ace9ef",
+     "canonicalization_version": "walker-1",
+     "cited_sha256": "b2556b321144201b949f184ca6b84ca16dcbe00f128cb78349ee8bf01774f4db",
+     "end": 152,
+     "kind": "text_span",
+     "pointer": null,
+     "start": 131
+    }
+   ],
+   "issuer_id": "cik-0009990002",
+   "membership_assertion_id": "roster-2024-06-28:borealis-common:member_at",
+   "publication_date": "2024-06-20",
+   "publication_time": null,
+   "raw_content_hash": "2eddf7f654c2bf71b03614de434e3b53d4f71755ad323f02b8a42004879a521a",
+   "resolved_by": null,
+   "retrieved_at": "2026-09-27T12:00:00Z",
+   "rights_status": "redistributable",
+   "security_id": "borealis-common",
+   "source_id": "synthetic-roster",
+   "source_snapshot_date": "2024-06-28",
+   "status": "supported",
+   "universe_id": "djia-synthetic",
+   "url": "https://roster.example/index?rev=1001"
+  },
+  {
+   "announcement_date": null,
+   "asserted_action": "member_at",
+   "asserted_date": "2024-06-28",
+   "asserted_timing": "unspecified",
+   "cik": "0009990005",
+   "effective_from": "2024-06-28",
+   "effective_from_basis": "anchor_snapshot",
+   "effective_from_timing": "unspecified",
+   "effective_to": null,
+   "effective_to_timing": null,
+   "evidence_id": "roster-2024-06-28",
+   "evidence_locators": [
+    {
+     "canonical_sha256": "e5b7d9df6de1e447bff0a1ef54ff397080eef9f6ca27e5c4f491987532ace9ef",
+     "canonicalization_version": "walker-1",
+     "cited_sha256": "e45bd0131dfde7bb0e5707f7ba28e19f030b47fcb786b398d51af92ce0accb41",
+     "end": 193,
+     "kind": "text_span",
+     "pointer": null,
+     "start": 165
+    }
+   ],
+   "issuer_id": "cik-0009990005",
+   "membership_assertion_id": "roster-2024-06-28:dynamo-class-a:member_at",
+   "publication_date": "2024-06-20",
+   "publication_time": null,
+   "raw_content_hash": "2eddf7f654c2bf71b03614de434e3b53d4f71755ad323f02b8a42004879a521a",
+   "resolved_by": null,
+   "retrieved_at": "2026-09-27T12:00:00Z",
+   "rights_status": "redistributable",
+   "security_id": "dynamo-class-a",
+   "source_id": "synthetic-roster",
+   "source_snapshot_date": "2024-06-28",
+   "status": "supported",
+   "universe_id": "djia-synthetic",
+   "url": "https://roster.example/index?rev=1001"
+  },
+  {
+   "announcement_date": null,
+   "asserted_action": "member_at",
+   "asserted_date": "2024-06-28",
+   "asserted_timing": "unspecified",
+   "cik": "0009990006",
+   "effective_from": "2024-06-28",
+   "effective_from_basis": "anchor_snapshot",
+   "effective_from_timing": "unspecified",
+   "effective_to": "2026-06-22",
+   "effective_to_timing": "before_open",
+   "evidence_id": "roster-2024-06-28",
+   "evidence_locators": [
+    {
+     "canonical_sha256": "e5b7d9df6de1e447bff0a1ef54ff397080eef9f6ca27e5c4f491987532ace9ef",
+     "canonicalization_version": "walker-1",
+     "cited_sha256": "924f38b64cc462d07af7c4dfaee068e1d92661654845ffbf69f690c68f9ebc93",
+     "end": 223,
+     "kind": "text_span",
+     "pointer": null,
+     "start": 206
+    }
+   ],
+   "issuer_id": "cik-0009990006",
+   "membership_assertion_id": "roster-2024-06-28:eastfield-common:member_at",
+   "publication_date": "2024-06-20",
+   "publication_time": null,
+   "raw_content_hash": "2eddf7f654c2bf71b03614de434e3b53d4f71755ad323f02b8a42004879a521a",
+   "resolved_by": null,
+   "retrieved_at": "2026-09-27T12:00:00Z",
+   "rights_status": "redistributable",
+   "security_id": "eastfield-common",
+   "source_id": "synthetic-roster",
+   "source_snapshot_date": "2024-06-28",
+   "status": "supported",
+   "universe_id": "djia-synthetic",
+   "url": "https://roster.example/index?rev=1001"
+  }
+ ],
+ "candidate_issuer_ids": [
+  "cik-0009990001",
+  "cik-0009990002",
+  "cik-0009990003",
+  "cik-0009990005",
+  "cik-0009990006"
+ ],
+ "definition": {
+  "content_hash": "ed21ed3c0142d2e813f81ede3389eee268793c69500a9e6d23589158f8a12254",
+  "created_at": "2026-09-28T00:00:00Z",
+  "expected_member_count": 4,
+  "membership_reference": "first_publication_time",
+  "period_end_start": "2024-07-01",
+  "period_end_stop": "2026-07-01",
+  "public_information_cutoff": "2026-09-22",
+  "selection_policy_version": "djia-pilot/1",
+  "source_register_version": "40279ef34e496bfa93ed4cde86020ee9c2e9ae1a14a3552370e9d66a6ecba92c",
+  "universe_id": "djia-synthetic",
+  "universe_name": "djia",
+  "universe_version": 1
+ },
+ "intervals": [
+  {
+   "assertion_ids": [
+    "roster-2024-06-28:acme-common:member_at"
+   ],
+   "effective_from": "2024-06-28",
+   "effective_from_basis": "anchor_snapshot",
+   "effective_from_timing": "unspecified",
+   "effective_to": null,
+   "effective_to_timing": null,
+   "security_id": "acme-common"
+  },
+  {
+   "assertion_ids": [
+    "index-2024-11-01:borealis-common:removed",
+    "roster-2024-06-28:borealis-common:member_at"
+   ],
+   "effective_from": "2024-06-28",
+   "effective_from_basis": "anchor_snapshot",
+   "effective_from_timing": "unspecified",
+   "effective_to": "2024-11-08",
+   "effective_to_timing": "before_open",
+   "security_id": "borealis-common"
+  },
+  {
+   "assertion_ids": [
+    "index-2024-11-01:corvid-common:added"
+   ],
+   "effective_from": "2024-11-08",
+   "effective_from_basis": "announced",
+   "effective_from_timing": "before_open",
+   "effective_to": null,
+   "effective_to_timing": null,
+   "security_id": "corvid-common"
+  },
+  {
+   "assertion_ids": [
+    "roster-2024-06-28:dynamo-class-a:member_at"
+   ],
+   "effective_from": "2024-06-28",
+   "effective_from_basis": "anchor_snapshot",
+   "effective_from_timing": "unspecified",
+   "effective_to": null,
+   "effective_to_timing": null,
+   "security_id": "dynamo-class-a"
+  },
+  {
+   "assertion_ids": [
+    "index-2026-06-16:dynamo-class-b:added"
+   ],
+   "effective_from": "2026-06-22",
+   "effective_from_basis": "announced",
+   "effective_from_timing": "before_open",
+   "effective_to": null,
+   "effective_to_timing": null,
+   "security_id": "dynamo-class-b"
+  },
+  {
+   "assertion_ids": [
+    "index-2026-06-16:eastfield-common:removed",
+    "roster-2024-06-28:eastfield-common:member_at"
+   ],
+   "effective_from": "2024-06-28",
+   "effective_from_basis": "anchor_snapshot",
+   "effective_from_timing": "unspecified",
+   "effective_to": "2026-06-22",
+   "effective_to_timing": "before_open",
+   "security_id": "eastfield-common"
+  }
+ ],
+ "issuers": [
+  {
+   "cik": "0009990001",
+   "former_names": [],
+   "issuer_id": "cik-0009990001",
+   "sec_name": "Acme Industrial Corp",
+   "security_ids": [
+    "acme-common"
+   ]
+  },
+  {
+   "cik": "0009990002",
+   "former_names": [
+    "Northern Airways Inc"
+   ],
+   "issuer_id": "cik-0009990002",
+   "sec_name": "Borealis Air Inc",
+   "security_ids": [
+    "borealis-common"
+   ]
+  },
+  {
+   "cik": "0009990003",
+   "former_names": [],
+   "issuer_id": "cik-0009990003",
+   "sec_name": "Corvid Systems Inc",
+   "security_ids": [
+    "corvid-common"
+   ]
+  },
+  {
+   "cik": "0009990005",
+   "former_names": [],
+   "issuer_id": "cik-0009990005",
+   "sec_name": "Dynamo Motors Co",
+   "security_ids": [
+    "dynamo-class-a",
+    "dynamo-class-b"
+   ]
+  },
+  {
+   "cik": "0009990006",
+   "former_names": [],
+   "issuer_id": "cik-0009990006",
+   "sec_name": "Eastfield Bank Corp",
+   "security_ids": [
+    "eastfield-common"
+   ]
+  }
+ ],
+ "mappings": [
+  {
+   "candidates": [
+    {
+     "cik": "0009990001",
+     "citations": [
+      {
+       "artifact": {
+        "content_sha256": "9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "65a9d2907b2f500d20f5ed06eb4c793174a397749239e472fd9553847a703289",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/0",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://www.sec.gov/files/company_tickers.json"
+      },
+      {
+       "artifact": {
+        "content_sha256": "e59e9b52f18add7ad01b17533556bb3b356723f5e7a5089e0d48304eef7d2a0c",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/e59e9b52f18add7ad01b17533556bb3b356723f5e7a5089e0d48304eef7d2a0c.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "f73bb31f7526d2c474f36eb4276622f4eb04c0ec355c796ee29816e5e1e6dea6",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/name",
+         "start": null
+        },
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "c8970a04bf34091dffb0f510bd35f0a637a20b6bc4fb5e58c065a8f76debcbbf",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/tickers",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://data.sec.gov/submissions/CIK0009990001.json"
+      }
+     ],
+     "cited_name": "Acme Industrial",
+     "confirmed": true,
+     "evidence_id": "roster-2025-06-30",
+     "matched_name": "Acme Industrial Corp",
+     "sec_name": "Acme Industrial Corp",
+     "ticker": "ACME",
+     "ticker_listed": true
+    }
+   ],
+   "cik": "0009990001",
+   "issuer_id": "cik-0009990001",
+   "method": "sec_ticker_and_name",
+   "override_id": null,
+   "reason": null,
+   "security_id": "acme-common",
+   "status": "resolved"
+  },
+  {
+   "candidates": [
+    {
+     "cik": "0009990002",
+     "citations": [
+      {
+       "artifact": {
+        "content_sha256": "9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "8cdf662d4ffce79ecc56c36f959e15b3789039ab0656384eef7d8d67fb883f58",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/1",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://www.sec.gov/files/company_tickers.json"
+      },
+      {
+       "artifact": {
+        "content_sha256": "917c0f55b1929f0b0d72c9d731b6eb57234564a6c8ff2d93e447d430e32e1f47",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/917c0f55b1929f0b0d72c9d731b6eb57234564a6c8ff2d93e447d430e32e1f47.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "89b9f4c64f628c58d03d626713530f06551b36ed9ce2d2ca11bdef63a825c651",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/name",
+         "start": null
+        },
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "3c836d888ca2845f35fb5aab1d11680042bd7b9ce68b5de7768c83689cddcfd3",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/tickers",
+         "start": null
+        },
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "4af9ffd7a1ab8e79f257265d6d81376a68d934828a5180d35f80abd199da407e",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/formerNames/0",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://data.sec.gov/submissions/CIK0009990002.json"
+      }
+     ],
+     "cited_name": "Northern Airways",
+     "confirmed": true,
+     "evidence_id": "roster-2024-06-28",
+     "matched_name": "Northern Airways Inc",
+     "sec_name": "Borealis Air Inc",
+     "ticker": "BORA",
+     "ticker_listed": true
+    },
+    {
+     "cik": "0009990002",
+     "citations": [
+      {
+       "artifact": {
+        "content_sha256": "9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "8cdf662d4ffce79ecc56c36f959e15b3789039ab0656384eef7d8d67fb883f58",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/1",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://www.sec.gov/files/company_tickers.json"
+      },
+      {
+       "artifact": {
+        "content_sha256": "917c0f55b1929f0b0d72c9d731b6eb57234564a6c8ff2d93e447d430e32e1f47",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/917c0f55b1929f0b0d72c9d731b6eb57234564a6c8ff2d93e447d430e32e1f47.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "89b9f4c64f628c58d03d626713530f06551b36ed9ce2d2ca11bdef63a825c651",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/name",
+         "start": null
+        },
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "3c836d888ca2845f35fb5aab1d11680042bd7b9ce68b5de7768c83689cddcfd3",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/tickers",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://data.sec.gov/submissions/CIK0009990002.json"
+      }
+     ],
+     "cited_name": "Borealis Air",
+     "confirmed": true,
+     "evidence_id": "index-2024-11-01",
+     "matched_name": "Borealis Air Inc",
+     "sec_name": "Borealis Air Inc",
+     "ticker": "BORA",
+     "ticker_listed": true
+    },
+    {
+     "cik": "0009990002",
+     "citations": [
+      {
+       "artifact": {
+        "content_sha256": "9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "8cdf662d4ffce79ecc56c36f959e15b3789039ab0656384eef7d8d67fb883f58",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/1",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://www.sec.gov/files/company_tickers.json"
+      },
+      {
+       "artifact": {
+        "content_sha256": "917c0f55b1929f0b0d72c9d731b6eb57234564a6c8ff2d93e447d430e32e1f47",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/917c0f55b1929f0b0d72c9d731b6eb57234564a6c8ff2d93e447d430e32e1f47.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "89b9f4c64f628c58d03d626713530f06551b36ed9ce2d2ca11bdef63a825c651",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/name",
+         "start": null
+        },
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "3c836d888ca2845f35fb5aab1d11680042bd7b9ce68b5de7768c83689cddcfd3",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/tickers",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://data.sec.gov/submissions/CIK0009990002.json"
+      }
+     ],
+     "cited_name": "Borealis Air",
+     "confirmed": true,
+     "evidence_id": "roster-2024-11-08",
+     "matched_name": "Borealis Air Inc",
+     "sec_name": "Borealis Air Inc",
+     "ticker": "BORA",
+     "ticker_listed": true
+    }
+   ],
+   "cik": "0009990002",
+   "issuer_id": "cik-0009990002",
+   "method": "sec_ticker_and_name",
+   "override_id": null,
+   "reason": null,
+   "security_id": "borealis-common",
+   "status": "resolved"
+  },
+  {
+   "candidates": [
+    {
+     "cik": "0009990003",
+     "citations": [
+      {
+       "artifact": {
+        "content_sha256": "9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "953fef4b21546b1d6abeffbc4d6ef229a612d3913ddabd57aa843a590f77f5cf",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/2",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://www.sec.gov/files/company_tickers.json"
+      },
+      {
+       "artifact": {
+        "content_sha256": "840ff26c0bad257db3b60a3b10ee08ecf609b36889032d784246f667d10d0ced",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/840ff26c0bad257db3b60a3b10ee08ecf609b36889032d784246f667d10d0ced.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "70ee8ef426040f9097e174532c7b28ad5691f498fcfe1f3e65269a411292565f",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/name",
+         "start": null
+        },
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "434723dca1df6f3c832f9837b7131eae7822ca1b2ff3bc5d87af3e86ca6c3051",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/tickers",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://data.sec.gov/submissions/CIK0009990003.json"
+      }
+     ],
+     "cited_name": "Corvid Systems",
+     "confirmed": true,
+     "evidence_id": "index-2024-10-31",
+     "matched_name": "Corvid Systems Inc",
+     "sec_name": "Corvid Systems Inc",
+     "ticker": "CRVD",
+     "ticker_listed": true
+    },
+    {
+     "cik": "0009990003",
+     "citations": [
+      {
+       "artifact": {
+        "content_sha256": "9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "953fef4b21546b1d6abeffbc4d6ef229a612d3913ddabd57aa843a590f77f5cf",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/2",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://www.sec.gov/files/company_tickers.json"
+      },
+      {
+       "artifact": {
+        "content_sha256": "840ff26c0bad257db3b60a3b10ee08ecf609b36889032d784246f667d10d0ced",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/840ff26c0bad257db3b60a3b10ee08ecf609b36889032d784246f667d10d0ced.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "70ee8ef426040f9097e174532c7b28ad5691f498fcfe1f3e65269a411292565f",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/name",
+         "start": null
+        },
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "434723dca1df6f3c832f9837b7131eae7822ca1b2ff3bc5d87af3e86ca6c3051",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/tickers",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://data.sec.gov/submissions/CIK0009990003.json"
+      }
+     ],
+     "cited_name": "Corvid Systems",
+     "confirmed": true,
+     "evidence_id": "index-2024-11-01",
+     "matched_name": "Corvid Systems Inc",
+     "sec_name": "Corvid Systems Inc",
+     "ticker": "CRVD",
+     "ticker_listed": true
+    },
+    {
+     "cik": "0009990003",
+     "citations": [
+      {
+       "artifact": {
+        "content_sha256": "9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "953fef4b21546b1d6abeffbc4d6ef229a612d3913ddabd57aa843a590f77f5cf",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/2",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://www.sec.gov/files/company_tickers.json"
+      },
+      {
+       "artifact": {
+        "content_sha256": "840ff26c0bad257db3b60a3b10ee08ecf609b36889032d784246f667d10d0ced",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/840ff26c0bad257db3b60a3b10ee08ecf609b36889032d784246f667d10d0ced.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "70ee8ef426040f9097e174532c7b28ad5691f498fcfe1f3e65269a411292565f",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/name",
+         "start": null
+        },
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "434723dca1df6f3c832f9837b7131eae7822ca1b2ff3bc5d87af3e86ca6c3051",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/tickers",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://data.sec.gov/submissions/CIK0009990003.json"
+      }
+     ],
+     "cited_name": "Corvid Systems",
+     "confirmed": true,
+     "evidence_id": "roster-2025-06-30",
+     "matched_name": "Corvid Systems Inc",
+     "sec_name": "Corvid Systems Inc",
+     "ticker": "CRVD",
+     "ticker_listed": true
+    }
+   ],
+   "cik": "0009990003",
+   "issuer_id": "cik-0009990003",
+   "method": "sec_ticker_and_name",
+   "override_id": null,
+   "reason": null,
+   "security_id": "corvid-common",
+   "status": "resolved"
+  },
+  {
+   "candidates": [
+    {
+     "cik": "0009990005",
+     "citations": [
+      {
+       "artifact": {
+        "content_sha256": "9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "1278914d2de2dbc89ece36e5b87c60ace0ea1ae340c13e3fce3edac2b04ab4c3",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/3",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://www.sec.gov/files/company_tickers.json"
+      },
+      {
+       "artifact": {
+        "content_sha256": "207b9ad22f1328e5b23869f67ceeb0fdb17204cdfdb8715ef1cf4a0c00660773",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/207b9ad22f1328e5b23869f67ceeb0fdb17204cdfdb8715ef1cf4a0c00660773.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "6db680b477f5603375480e9cef2e3d977af886b860d4fbdc476a3bec1699f8d5",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/name",
+         "start": null
+        },
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "60f86936358b48338d48204245d151e87a098b19b1e5206df92df7b26e04044b",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/tickers",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://data.sec.gov/submissions/CIK0009990005.json"
+      }
+     ],
+     "cited_name": "Dynamo Motors (Class A)",
+     "confirmed": true,
+     "evidence_id": "roster-2024-06-28",
+     "matched_name": "Dynamo Motors Co",
+     "sec_name": "Dynamo Motors Co",
+     "ticker": "DYNA",
+     "ticker_listed": true
+    },
+    {
+     "cik": "0009990005",
+     "citations": [
+      {
+       "artifact": {
+        "content_sha256": "9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "1278914d2de2dbc89ece36e5b87c60ace0ea1ae340c13e3fce3edac2b04ab4c3",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/3",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://www.sec.gov/files/company_tickers.json"
+      },
+      {
+       "artifact": {
+        "content_sha256": "207b9ad22f1328e5b23869f67ceeb0fdb17204cdfdb8715ef1cf4a0c00660773",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/207b9ad22f1328e5b23869f67ceeb0fdb17204cdfdb8715ef1cf4a0c00660773.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "6db680b477f5603375480e9cef2e3d977af886b860d4fbdc476a3bec1699f8d5",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/name",
+         "start": null
+        },
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "60f86936358b48338d48204245d151e87a098b19b1e5206df92df7b26e04044b",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/tickers",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://data.sec.gov/submissions/CIK0009990005.json"
+      }
+     ],
+     "cited_name": "Dynamo Motors (Class A)",
+     "confirmed": true,
+     "evidence_id": "roster-2024-11-08",
+     "matched_name": "Dynamo Motors Co",
+     "sec_name": "Dynamo Motors Co",
+     "ticker": "DYNA",
+     "ticker_listed": true
+    },
+    {
+     "cik": "0009990005",
+     "citations": [
+      {
+       "artifact": {
+        "content_sha256": "9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "1278914d2de2dbc89ece36e5b87c60ace0ea1ae340c13e3fce3edac2b04ab4c3",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/3",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://www.sec.gov/files/company_tickers.json"
+      },
+      {
+       "artifact": {
+        "content_sha256": "207b9ad22f1328e5b23869f67ceeb0fdb17204cdfdb8715ef1cf4a0c00660773",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/207b9ad22f1328e5b23869f67ceeb0fdb17204cdfdb8715ef1cf4a0c00660773.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "6db680b477f5603375480e9cef2e3d977af886b860d4fbdc476a3bec1699f8d5",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/name",
+         "start": null
+        },
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "60f86936358b48338d48204245d151e87a098b19b1e5206df92df7b26e04044b",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/tickers",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://data.sec.gov/submissions/CIK0009990005.json"
+      }
+     ],
+     "cited_name": "Dynamo Motors (Class A)",
+     "confirmed": true,
+     "evidence_id": "roster-2025-06-30",
+     "matched_name": "Dynamo Motors Co",
+     "sec_name": "Dynamo Motors Co",
+     "ticker": "DYNA",
+     "ticker_listed": true
+    }
+   ],
+   "cik": "0009990005",
+   "issuer_id": "cik-0009990005",
+   "method": "sec_ticker_and_name",
+   "override_id": null,
+   "reason": null,
+   "security_id": "dynamo-class-a",
+   "status": "resolved"
+  },
+  {
+   "candidates": [
+    {
+     "cik": "0009990005",
+     "citations": [
+      {
+       "artifact": {
+        "content_sha256": "9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "0b44ed211f01264fc4263f763568ccf343f4c4284dbdcd839ca79162e297f8e8",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/4",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://www.sec.gov/files/company_tickers.json"
+      },
+      {
+       "artifact": {
+        "content_sha256": "207b9ad22f1328e5b23869f67ceeb0fdb17204cdfdb8715ef1cf4a0c00660773",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/207b9ad22f1328e5b23869f67ceeb0fdb17204cdfdb8715ef1cf4a0c00660773.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "6db680b477f5603375480e9cef2e3d977af886b860d4fbdc476a3bec1699f8d5",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/name",
+         "start": null
+        },
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "60f86936358b48338d48204245d151e87a098b19b1e5206df92df7b26e04044b",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/tickers",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://data.sec.gov/submissions/CIK0009990005.json"
+      }
+     ],
+     "cited_name": "Dynamo Motors (Class B)",
+     "confirmed": true,
+     "evidence_id": "index-2026-06-16",
+     "matched_name": "Dynamo Motors Co",
+     "sec_name": "Dynamo Motors Co",
+     "ticker": "DYNB",
+     "ticker_listed": true
+    }
+   ],
+   "cik": "0009990005",
+   "issuer_id": "cik-0009990005",
+   "method": "sec_ticker_and_name",
+   "override_id": null,
+   "reason": null,
+   "security_id": "dynamo-class-b",
+   "status": "resolved"
+  },
+  {
+   "candidates": [
+    {
+     "cik": "0009990006",
+     "citations": [
+      {
+       "artifact": {
+        "content_sha256": "9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "13ab0f34fe1cac5313b77f5de364cedf817edf44d0e37a7d3af5ab70a3678e21",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/5",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://www.sec.gov/files/company_tickers.json"
+      },
+      {
+       "artifact": {
+        "content_sha256": "0d440a0502d9d17eeb8d25609633ea311eab436854c95503c8815ac87e5796aa",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/0d440a0502d9d17eeb8d25609633ea311eab436854c95503c8815ac87e5796aa.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "ed67c8e5456b711af552cfca0704d24f4935b5a52dbf641811d3d786c229af6e",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/name",
+         "start": null
+        },
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "d91bbb86186d6019de7a8bb341a39d1b713e2d978ec0f780a041d8c66bf3073d",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/tickers",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://data.sec.gov/submissions/CIK0009990006.json"
+      }
+     ],
+     "cited_name": "EFB Financial",
+     "confirmed": false,
+     "evidence_id": "roster-2024-06-28",
+     "matched_name": null,
+     "sec_name": "Eastfield Bank Corp",
+     "ticker": "EFB",
+     "ticker_listed": true
+    },
+    {
+     "cik": "0009990006",
+     "citations": [
+      {
+       "artifact": {
+        "content_sha256": "9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "13ab0f34fe1cac5313b77f5de364cedf817edf44d0e37a7d3af5ab70a3678e21",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/5",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://www.sec.gov/files/company_tickers.json"
+      },
+      {
+       "artifact": {
+        "content_sha256": "0d440a0502d9d17eeb8d25609633ea311eab436854c95503c8815ac87e5796aa",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/0d440a0502d9d17eeb8d25609633ea311eab436854c95503c8815ac87e5796aa.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "ed67c8e5456b711af552cfca0704d24f4935b5a52dbf641811d3d786c229af6e",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/name",
+         "start": null
+        },
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "d91bbb86186d6019de7a8bb341a39d1b713e2d978ec0f780a041d8c66bf3073d",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/tickers",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://data.sec.gov/submissions/CIK0009990006.json"
+      }
+     ],
+     "cited_name": "EFB Financial",
+     "confirmed": false,
+     "evidence_id": "roster-2024-11-08",
+     "matched_name": null,
+     "sec_name": "Eastfield Bank Corp",
+     "ticker": "EFB",
+     "ticker_listed": true
+    },
+    {
+     "cik": "0009990006",
+     "citations": [
+      {
+       "artifact": {
+        "content_sha256": "9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "13ab0f34fe1cac5313b77f5de364cedf817edf44d0e37a7d3af5ab70a3678e21",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/5",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://www.sec.gov/files/company_tickers.json"
+      },
+      {
+       "artifact": {
+        "content_sha256": "0d440a0502d9d17eeb8d25609633ea311eab436854c95503c8815ac87e5796aa",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/0d440a0502d9d17eeb8d25609633ea311eab436854c95503c8815ac87e5796aa.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "ed67c8e5456b711af552cfca0704d24f4935b5a52dbf641811d3d786c229af6e",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/name",
+         "start": null
+        },
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "d91bbb86186d6019de7a8bb341a39d1b713e2d978ec0f780a041d8c66bf3073d",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/tickers",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://data.sec.gov/submissions/CIK0009990006.json"
+      }
+     ],
+     "cited_name": "EFB Financial",
+     "confirmed": false,
+     "evidence_id": "roster-2025-06-30",
+     "matched_name": null,
+     "sec_name": "Eastfield Bank Corp",
+     "ticker": "EFB",
+     "ticker_listed": true
+    },
+    {
+     "cik": "0009990006",
+     "citations": [
+      {
+       "artifact": {
+        "content_sha256": "9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/9dda2ae233a7ae94d55ca86100850a5d4970ce66de8b0d4f1bb3b62c230b64cb.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "13ab0f34fe1cac5313b77f5de364cedf817edf44d0e37a7d3af5ab70a3678e21",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/5",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://www.sec.gov/files/company_tickers.json"
+      },
+      {
+       "artifact": {
+        "content_sha256": "0d440a0502d9d17eeb8d25609633ea311eab436854c95503c8815ac87e5796aa",
+        "media_type": "application/json",
+        "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+        "rights_status": "local_only",
+        "schema_version": 2,
+        "storage_ref": "tests/fixtures/cohort/raw/sec-edgar/0d440a0502d9d17eeb8d25609633ea311eab436854c95503c8815ac87e5796aa.json"
+       },
+       "locators": [
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "ed67c8e5456b711af552cfca0704d24f4935b5a52dbf641811d3d786c229af6e",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/name",
+         "start": null
+        },
+        {
+         "canonical_sha256": null,
+         "canonicalization_version": null,
+         "cited_sha256": "d91bbb86186d6019de7a8bb341a39d1b713e2d978ec0f780a041d8c66bf3073d",
+         "end": null,
+         "kind": "json_pointer",
+         "pointer": "/tickers",
+         "start": null
+        }
+       ],
+       "retrieved_at": "2026-09-27T12:00:00Z",
+       "source_id": "sec-edgar",
+       "url": "https://data.sec.gov/submissions/CIK0009990006.json"
+      }
+     ],
+     "cited_name": "EFB Financial",
+     "confirmed": false,
+     "evidence_id": "index-2026-06-16",
+     "matched_name": null,
+     "sec_name": "Eastfield Bank Corp",
+     "ticker": "EFB",
+     "ticker_listed": true
+    }
+   ],
+   "cik": "0009990006",
+   "issuer_id": "cik-0009990006",
+   "method": "override",
+   "override_id": "eastfield-issuer",
+   "reason": "SEC's record for this CIK lists EFB; EFB Financial is its trade name.",
+   "security_id": "eastfield-common",
+   "status": "resolved"
+  },
+  {
+   "candidates": [],
+   "cik": null,
+   "issuer_id": null,
+   "method": null,
+   "override_id": null,
+   "reason": "no name or ticker was published for it by the cutoff",
+   "security_id": "fenwick-common",
+   "status": "unresolved"
+  }
+ ],
+ "overrides": [
+  {
+   "cik": null,
+   "citations": [
+    {
+     "artifact_sha256": null,
+     "locator": null,
+     "source_id": "synthetic-roster",
+     "url": "https://roster.example/index?rev=1003"
+    }
+   ],
+   "effective_from": "2024-07-01",
+   "effective_to": null,
+   "finding_digest": "47dee1cfae9c3f838285d2f34facd232a51370ea95d0a91c4a6a658b38cc8949",
+   "finding_id": "difference:roster-2024-11-08",
+   "holding_name": null,
+   "kind": "acknowledge",
+   "membership_assertion_id": null,
+   "override_id": "ack-lagging-revision",
+   "rationale": "The revision was saved on the change date, before editors updated it; the next revision agrees.",
+   "recorded_on": "2026-09-28",
+   "reviewer": "Synthetic Reviewer",
+   "security_id": null
+  },
+  {
+   "cik": null,
+   "citations": [
+    {
+     "artifact_sha256": null,
+     "locator": null,
+     "source_id": "synthetic-fund",
+     "url": "https://www.sec.gov/Archives/edgar/data/9990900/000999090025000001/primary_doc.xml"
+    }
+   ],
+   "effective_from": "2024-07-01",
+   "effective_to": null,
+   "finding_digest": null,
+   "finding_id": null,
+   "holding_name": "Dynamo Motors Co Class A",
+   "kind": "holding_alias",
+   "membership_assertion_id": null,
+   "override_id": "alias-dynamo-a",
+   "rationale": "The fund lists the Class A shares under this name.",
+   "recorded_on": "2026-09-28",
+   "reviewer": "Synthetic Reviewer",
+   "security_id": "dynamo-class-a"
+  },
+  {
+   "cik": null,
+   "citations": [
+    {
+     "artifact_sha256": null,
+     "locator": null,
+     "source_id": "synthetic-fund",
+     "url": "https://www.sec.gov/Archives/edgar/data/9990900/000999090025000001/primary_doc.xml"
+    }
+   ],
+   "effective_from": "2024-07-01",
+   "effective_to": null,
+   "finding_digest": null,
+   "finding_id": null,
+   "holding_name": "Dynamo Motors Co Class B",
+   "kind": "holding_alias",
+   "membership_assertion_id": null,
+   "override_id": "alias-dynamo-b",
+   "rationale": "The fund lists the Class B shares under this name.",
+   "recorded_on": "2026-09-28",
+   "reviewer": "Synthetic Reviewer",
+   "security_id": "dynamo-class-b"
+  },
+  {
+   "cik": null,
+   "citations": [
+    {
+     "artifact_sha256": null,
+     "locator": null,
+     "source_id": "synthetic-fund",
+     "url": "https://www.sec.gov/Archives/edgar/data/9990900/000999090025000001/primary_doc.xml"
+    }
+   ],
+   "effective_from": "2024-07-01",
+   "effective_to": null,
+   "finding_digest": null,
+   "finding_id": null,
+   "holding_name": "Eastfield Bank Corp",
+   "kind": "holding_alias",
+   "membership_assertion_id": null,
+   "override_id": "alias-eastfield",
+   "rationale": "The fund lists EFB Financial under its legal name.",
+   "recorded_on": "2026-09-28",
+   "reviewer": "Synthetic Reviewer",
+   "security_id": "eastfield-common"
+  },
+  {
+   "cik": "0009990006",
+   "citations": [
+    {
+     "artifact_sha256": "0d440a0502d9d17eeb8d25609633ea311eab436854c95503c8815ac87e5796aa",
+     "locator": {
+      "canonical_sha256": null,
+      "canonicalization_version": null,
+      "cited_sha256": "d91bbb86186d6019de7a8bb341a39d1b713e2d978ec0f780a041d8c66bf3073d",
+      "end": null,
+      "kind": "json_pointer",
+      "pointer": "/tickers",
+      "start": null
+     },
+     "source_id": "sec-edgar",
+     "url": "https://data.sec.gov/submissions/CIK0009990006.json"
+    }
+   ],
+   "effective_from": "2024-07-01",
+   "effective_to": null,
+   "finding_digest": null,
+   "finding_id": null,
+   "holding_name": null,
+   "kind": "set_issuer",
+   "membership_assertion_id": null,
+   "override_id": "eastfield-issuer",
+   "rationale": "SEC's record for this CIK lists EFB; EFB Financial is its trade name.",
+   "recorded_on": "2026-09-28",
+   "reviewer": "Synthetic Reviewer",
+   "security_id": "eastfield-common"
+  },
+  {
+   "cik": null,
+   "citations": [
+    {
+     "artifact_sha256": null,
+     "locator": null,
+     "source_id": "synthetic-index",
+     "url": "https://index.example/notices/index-2024-11-01"
+    }
+   ],
+   "effective_from": "2024-07-01",
+   "effective_to": null,
+   "finding_digest": null,
+   "finding_id": null,
+   "holding_name": null,
+   "kind": "reject_assertion",
+   "membership_assertion_id": "index-2024-10-31:corvid-common:added",
+   "override_id": "reject-preliminary-date",
+   "rationale": "index-2024-11-01 sets November 8, replacing the preliminary November 7.",
+   "recorded_on": "2026-09-28",
+   "reviewer": "Synthetic Reviewer",
+   "security_id": null
+  }
+ ],
+ "report": {
+  "anchor_evidence_id": "roster-2024-06-28",
+  "findings": [
+   {
+    "blocking": true,
+    "detail": "roster-2024-11-08 on 2024-11-08: reconstruction only: corvid-common; snapshot only: borealis-common; unmatched: none",
+    "digest": "47dee1cfae9c3f838285d2f34facd232a51370ea95d0a91c4a6a658b38cc8949",
+    "evidence_ids": [
+     "roster-2024-11-08"
+    ],
+    "finding_id": "difference:roster-2024-11-08",
+    "kind": "difference",
+    "resolved_by": [
+     "ack-lagging-revision"
+    ],
+    "security_id": null
+   },
+   {
+    "blocking": false,
+    "detail": "user-list-2026-09-26 on 2026-09-22: reconstruction only: none; snapshot only: fenwick-common; unmatched: none",
+    "digest": "5d86efa78d98d954e0645daf6141bc89890b327d57c70dd1071ea7493be71244",
+    "evidence_ids": [
+     "user-list-2026-09-26"
+    ],
+    "finding_id": "difference:user-list-2026-09-26",
+    "kind": "difference",
+    "resolved_by": [],
+    "security_id": null
+   },
+   {
+    "blocking": false,
+    "detail": "no corroborating snapshot is dated in 2026Q3",
+    "digest": "4de2f30afbbe60bd0be2c58b5507fc7d58a40feee1fdd8ef83bb9a981f9c82eb",
+    "evidence_ids": [],
+    "finding_id": "gap:2026q3",
+    "kind": "gap",
+    "resolved_by": [],
+    "security_id": null
+   },
+   {
+    "blocking": true,
+    "detail": "eastfield-common: unresolved: no candidate lists the cited ticker under a covering name",
+    "digest": "ed20da1255c84b7e268306cb805b69f8b7bebd64f5417817901309fd09139873",
+    "evidence_ids": [
+     "index-2026-06-16",
+     "roster-2024-06-28",
+     "roster-2024-11-08",
+     "roster-2025-06-30"
+    ],
+    "finding_id": "identity:eastfield-common",
+    "kind": "identity",
+    "resolved_by": [
+     "eastfield-issuer"
+    ],
+    "security_id": "eastfield-common"
+   },
+   {
+    "blocking": true,
+    "detail": "corvid-common: added on 2024-11-08 while a member",
+    "digest": "974413e5e275a52d804c6c94c6e724fc483199081ae05297d916249cb82ba300",
+    "evidence_ids": [
+     "index-2024-10-31",
+     "index-2024-11-01"
+    ],
+    "finding_id": "membership_conflict:corvid-common",
+    "kind": "membership_conflict",
+    "resolved_by": [
+     "reject-preliminary-date"
+    ],
+    "security_id": "corvid-common"
+   },
+   {
+    "blocking": false,
+    "detail": "0009990900-25-000002 (NPORT-P) for 2025-03-31 is replaced by 0009990900-25-000003",
+    "digest": "cf20072f3ff60aa9f0a57a3494f4bfe591135ebd341006ece1ece3ac1c8a8454",
+    "evidence_ids": [],
+    "finding_id": "superseded:0009990900-25-000002",
+    "kind": "superseded",
+    "resolved_by": [],
+    "security_id": null
+   },
+   {
+    "blocking": false,
+    "detail": "0009990900-26-000004 was first published 2026-09-24, after the cutoff 2026-09-22; it is reported and never applied",
+    "digest": "dacb2d3857f8729d8208a9dcb96fbb11d6bd5a78c5088ee29bcd4c3938484497",
+    "evidence_ids": [
+     "0009990900-26-000004"
+    ],
+    "finding_id": "withheld:0009990900-26-000004",
+    "kind": "withheld",
+    "resolved_by": [],
+    "security_id": null
+   },
+   {
+    "blocking": false,
+    "detail": "index-2026-09-25 was first published 2026-09-25, after the cutoff 2026-09-22; it is reported and never applied",
+    "digest": "cfbbcba98582b7054eb13baf8ded6f1d3554be30d9c919841d69e72cafaf36da",
+    "evidence_ids": [
+     "index-2026-09-25"
+    ],
+    "finding_id": "withheld:index-2026-09-25",
+    "kind": "withheld",
+    "resolved_by": [],
+    "security_id": null
+   },
+   {
+    "blocking": false,
+    "detail": "user-list-2026-09-26 was first published 2026-09-26, after the cutoff 2026-09-22; it is reported and never applied",
+    "digest": "939e72dd5adf7fa29fee3761fc86b05e1509d976c28f3185f62a5d4615f99041",
+    "evidence_ids": [
+     "user-list-2026-09-26"
+    ],
+    "finding_id": "withheld:user-list-2026-09-26",
+    "kind": "withheld",
+    "resolved_by": [],
+    "security_id": null
+   }
+  ],
+  "limitations": [
+   "The anchor, roster-2024-06-28, is secondary evidence dated 2024-06-28: that date bounds each anchored start from below.",
+   "Fund holdings are an ETF proxy: they corroborate the reconstruction and never add or remove a member.",
+   "SEC identity records were retrieved after the cutoff: they establish issuer identity, never membership.",
+   "Intervals are resolved to the day; ordering a change and a release on one day is Stage 5's eligibility decision."
+  ],
+  "reconciliations": [
+   {
+    "as_of": "2024-09-30",
+    "citation": {
+     "artifact": {
+      "content_sha256": "85c10d8a370502242e4c9c97c48be898d546ff7daf011055ceb4c91d45ff69c5",
+      "media_type": "application/xml",
+      "rights_basis": "synthetic test data, invented for this repository",
+      "rights_status": "redistributable",
+      "schema_version": 2,
+      "storage_ref": "tests/fixtures/cohort/raw/synthetic-fund/85c10d8a370502242e4c9c97c48be898d546ff7daf011055ceb4c91d45ff69c5.xml"
+     },
+     "locators": [],
+     "retrieved_at": "2026-09-27T12:00:00Z",
+     "source_id": "synthetic-fund",
+     "url": "https://www.sec.gov/Archives/edgar/data/9990900/000999090024000001/primary_doc.xml"
+    },
+    "evidence_class": "etf_proxy",
+    "matched": [
+     "acme-common",
+     "borealis-common",
+     "dynamo-class-a",
+     "eastfield-common"
+    ],
+    "published_on": "2024-11-26",
+    "reconstructed_only": [],
+    "snapshot_id": "synthetic-fund:0009990900-24-000001",
+    "snapshot_only": [],
+    "source_id": "synthetic-fund",
+    "unmatched": [],
+    "withheld": false
+   },
+   {
+    "as_of": "2024-11-08",
+    "citation": {
+     "artifact": {
+      "content_sha256": "7d5c8710efa9e7d71380bce832df2662791fdb768dabaeb804146ae507091bdb",
+      "media_type": "text/html",
+      "rights_basis": "synthetic test data, invented for this repository",
+      "rights_status": "redistributable",
+      "schema_version": 2,
+      "storage_ref": "tests/fixtures/cohort/raw/synthetic-roster/7d5c8710efa9e7d71380bce832df2662791fdb768dabaeb804146ae507091bdb.html"
+     },
+     "locators": [
+      {
+       "canonical_sha256": "ec5bc6e82a2d76c17659e4b67f90eb82ce2af875abadf5a0e6c5e909462d5b91",
+       "canonicalization_version": "walker-1",
+       "cited_sha256": "fdd552fddb7a9eb9dc7779176b12f71ad5f4ba86c37e0480969f851e5776cfc1",
+       "end": 121,
+       "kind": "text_span",
+       "pointer": null,
+       "start": 101
+      },
+      {
+       "canonical_sha256": "ec5bc6e82a2d76c17659e4b67f90eb82ce2af875abadf5a0e6c5e909462d5b91",
+       "canonicalization_version": "walker-1",
+       "cited_sha256": "3ba874fc4cf88b07b2ee3f0cfe3e1433743db725c0899ef5c10a2c7f7599e435",
+       "end": 151,
+       "kind": "text_span",
+       "pointer": null,
+       "start": 134
+      },
+      {
+       "canonical_sha256": "ec5bc6e82a2d76c17659e4b67f90eb82ce2af875abadf5a0e6c5e909462d5b91",
+       "canonicalization_version": "walker-1",
+       "cited_sha256": "e45bd0131dfde7bb0e5707f7ba28e19f030b47fcb786b398d51af92ce0accb41",
+       "end": 192,
+       "kind": "text_span",
+       "pointer": null,
+       "start": 164
+      },
+      {
+       "canonical_sha256": "ec5bc6e82a2d76c17659e4b67f90eb82ce2af875abadf5a0e6c5e909462d5b91",
+       "canonicalization_version": "walker-1",
+       "cited_sha256": "924f38b64cc462d07af7c4dfaee068e1d92661654845ffbf69f690c68f9ebc93",
+       "end": 222,
+       "kind": "text_span",
+       "pointer": null,
+       "start": 205
+      }
+     ],
+     "retrieved_at": "2026-09-27T12:00:00Z",
+     "source_id": "synthetic-roster",
+     "url": "https://roster.example/index?rev=1002"
+    },
+    "evidence_class": "secondary",
+    "matched": [
+     "acme-common",
+     "dynamo-class-a",
+     "eastfield-common"
+    ],
+    "published_on": "2024-11-08",
+    "reconstructed_only": [
+     "corvid-common"
+    ],
+    "snapshot_id": "roster-2024-11-08",
+    "snapshot_only": [
+     "borealis-common"
+    ],
+    "source_id": "synthetic-roster",
+    "unmatched": [],
+    "withheld": false
+   },
+   {
+    "as_of": "2024-12-31",
+    "citation": {
+     "artifact": {
+      "content_sha256": "796b5cb90f0976b89f389c398a75928675d8c24beadf57689b4b811218fb3585",
+      "media_type": "application/xml",
+      "rights_basis": "synthetic test data, invented for this repository",
+      "rights_status": "redistributable",
+      "schema_version": 2,
+      "storage_ref": "tests/fixtures/cohort/raw/synthetic-fund/796b5cb90f0976b89f389c398a75928675d8c24beadf57689b4b811218fb3585.xml"
+     },
+     "locators": [],
+     "retrieved_at": "2026-09-27T12:00:00Z",
+     "source_id": "synthetic-fund",
+     "url": "https://www.sec.gov/Archives/edgar/data/9990900/000999090025000001/primary_doc.xml"
+    },
+    "evidence_class": "etf_proxy",
+    "matched": [
+     "acme-common",
+     "corvid-common",
+     "dynamo-class-a",
+     "eastfield-common"
+    ],
+    "published_on": "2025-02-26",
+    "reconstructed_only": [],
+    "snapshot_id": "synthetic-fund:0009990900-25-000001",
+    "snapshot_only": [],
+    "source_id": "synthetic-fund",
+    "unmatched": [],
+    "withheld": false
+   },
+   {
+    "as_of": "2025-03-31",
+    "citation": {
+     "artifact": {
+      "content_sha256": "7718d7b2db455c690dbd89b179161f821e3cc44d87e1e3d07fdd14d53511bca5",
+      "media_type": "application/xml",
+      "rights_basis": "synthetic test data, invented for this repository",
+      "rights_status": "redistributable",
+      "schema_version": 2,
+      "storage_ref": "tests/fixtures/cohort/raw/synthetic-fund/7718d7b2db455c690dbd89b179161f821e3cc44d87e1e3d07fdd14d53511bca5.xml"
+     },
+     "locators": [],
+     "retrieved_at": "2026-09-27T12:00:00Z",
+     "source_id": "synthetic-fund",
+     "url": "https://www.sec.gov/Archives/edgar/data/9990900/000999090025000003/primary_doc.xml"
+    },
+    "evidence_class": "etf_proxy",
+    "matched": [
+     "acme-common",
+     "corvid-common",
+     "dynamo-class-a",
+     "eastfield-common"
+    ],
+    "published_on": "2025-06-10",
+    "reconstructed_only": [],
+    "snapshot_id": "synthetic-fund:0009990900-25-000003",
+    "snapshot_only": [],
+    "source_id": "synthetic-fund",
+    "unmatched": [],
+    "withheld": false
+   },
+   {
+    "as_of": "2025-06-30",
+    "citation": {
+     "artifact": {
+      "content_sha256": "5f31923975de16b75fca7ba5ebf5e29b508e892b3be244d617544612ff76c20d",
+      "media_type": "text/html",
+      "rights_basis": "synthetic test data, invented for this repository",
+      "rights_status": "redistributable",
+      "schema_version": 2,
+      "storage_ref": "tests/fixtures/cohort/raw/synthetic-roster/5f31923975de16b75fca7ba5ebf5e29b508e892b3be244d617544612ff76c20d.html"
+     },
+     "locators": [
+      {
+       "canonical_sha256": "059a948863f51b15000dff41a55f90388b8e018faa439ef1372df83a3c809891",
+       "canonicalization_version": "walker-1",
+       "cited_sha256": "759d5eae09043d6039251d5f0a429101b0fa103212d957b66c1a1423463dfc06",
+       "end": 118,
+       "kind": "text_span",
+       "pointer": null,
+       "start": 98
+      },
+      {
+       "canonical_sha256": "059a948863f51b15000dff41a55f90388b8e018faa439ef1372df83a3c809891",
+       "canonicalization_version": "walker-1",
+       "cited_sha256": "eaa6fdef55d7ba6789f6d617e28b6e65c4cd4177f7192594b75c88444fb1f358",
+       "end": 150,
+       "kind": "text_span",
+       "pointer": null,
+       "start": 131
+      },
+      {
+       "canonical_sha256": "059a948863f51b15000dff41a55f90388b8e018faa439ef1372df83a3c809891",
+       "canonicalization_version": "walker-1",
+       "cited_sha256": "e45bd0131dfde7bb0e5707f7ba28e19f030b47fcb786b398d51af92ce0accb41",
+       "end": 191,
+       "kind": "text_span",
+       "pointer": null,
+       "start": 163
+      },
+      {
+       "canonical_sha256": "059a948863f51b15000dff41a55f90388b8e018faa439ef1372df83a3c809891",
+       "canonicalization_version": "walker-1",
+       "cited_sha256": "924f38b64cc462d07af7c4dfaee068e1d92661654845ffbf69f690c68f9ebc93",
+       "end": 221,
+       "kind": "text_span",
+       "pointer": null,
+       "start": 204
+      }
+     ],
+     "retrieved_at": "2026-09-27T12:00:00Z",
+     "source_id": "synthetic-roster",
+     "url": "https://roster.example/index?rev=1003"
+    },
+    "evidence_class": "secondary",
+    "matched": [
+     "acme-common",
+     "corvid-common",
+     "dynamo-class-a",
+     "eastfield-common"
+    ],
+    "published_on": "2025-06-30",
+    "reconstructed_only": [],
+    "snapshot_id": "roster-2025-06-30",
+    "snapshot_only": [],
+    "source_id": "synthetic-roster",
+    "unmatched": [],
+    "withheld": false
+   },
+   {
+    "as_of": "2025-06-30",
+    "citation": {
+     "artifact": {
+      "content_sha256": "7408ea9d27e7bd2fdb6be1f28c46e8a8d1958ac21584a28e4b707d30274eae05",
+      "media_type": "application/xml",
+      "rights_basis": "synthetic test data, invented for this repository",
+      "rights_status": "redistributable",
+      "schema_version": 2,
+      "storage_ref": "tests/fixtures/cohort/raw/synthetic-fund/7408ea9d27e7bd2fdb6be1f28c46e8a8d1958ac21584a28e4b707d30274eae05.xml"
+     },
+     "locators": [],
+     "retrieved_at": "2026-09-27T12:00:00Z",
+     "source_id": "synthetic-fund",
+     "url": "https://www.sec.gov/Archives/edgar/data/9990900/000999090025000004/primary_doc.xml"
+    },
+    "evidence_class": "etf_proxy",
+    "matched": [
+     "acme-common",
+     "corvid-common",
+     "dynamo-class-a",
+     "eastfield-common"
+    ],
+    "published_on": "2025-08-27",
+    "reconstructed_only": [],
+    "snapshot_id": "synthetic-fund:0009990900-25-000004",
+    "snapshot_only": [],
+    "source_id": "synthetic-fund",
+    "unmatched": [],
+    "withheld": false
+   },
+   {
+    "as_of": "2025-09-30",
+    "citation": {
+     "artifact": {
+      "content_sha256": "f470bd8323ea6fa51a7b3b60917c6462372f222bfc563c20e8f39c880f452cc6",
+      "media_type": "application/xml",
+      "rights_basis": "synthetic test data, invented for this repository",
+      "rights_status": "redistributable",
+      "schema_version": 2,
+      "storage_ref": "tests/fixtures/cohort/raw/synthetic-fund/f470bd8323ea6fa51a7b3b60917c6462372f222bfc563c20e8f39c880f452cc6.xml"
+     },
+     "locators": [],
+     "retrieved_at": "2026-09-27T12:00:00Z",
+     "source_id": "synthetic-fund",
+     "url": "https://www.sec.gov/Archives/edgar/data/9990900/000999090025000005/primary_doc.xml"
+    },
+    "evidence_class": "etf_proxy",
+    "matched": [
+     "acme-common",
+     "corvid-common",
+     "dynamo-class-a",
+     "eastfield-common"
+    ],
+    "published_on": "2025-11-25",
+    "reconstructed_only": [],
+    "snapshot_id": "synthetic-fund:0009990900-25-000005",
+    "snapshot_only": [],
+    "source_id": "synthetic-fund",
+    "unmatched": [],
+    "withheld": false
+   },
+   {
+    "as_of": "2025-12-31",
+    "citation": {
+     "artifact": {
+      "content_sha256": "6c33afc233193702f21b37f991233cd89388d9a1880695b5ccb4528ac317e8f7",
+      "media_type": "application/xml",
+      "rights_basis": "synthetic test data, invented for this repository",
+      "rights_status": "redistributable",
+      "schema_version": 2,
+      "storage_ref": "tests/fixtures/cohort/raw/synthetic-fund/6c33afc233193702f21b37f991233cd89388d9a1880695b5ccb4528ac317e8f7.xml"
+     },
+     "locators": [],
+     "retrieved_at": "2026-09-27T12:00:00Z",
+     "source_id": "synthetic-fund",
+     "url": "https://www.sec.gov/Archives/edgar/data/9990900/000999090026000001/primary_doc.xml"
+    },
+    "evidence_class": "etf_proxy",
+    "matched": [
+     "acme-common",
+     "corvid-common",
+     "dynamo-class-a",
+     "eastfield-common"
+    ],
+    "published_on": "2026-02-25",
+    "reconstructed_only": [],
+    "snapshot_id": "synthetic-fund:0009990900-26-000001",
+    "snapshot_only": [],
+    "source_id": "synthetic-fund",
+    "unmatched": [],
+    "withheld": false
+   },
+   {
+    "as_of": "2026-03-31",
+    "citation": {
+     "artifact": {
+      "content_sha256": "5e92bf64ee62e252bdccacec801bf876d7d51141329fdfb2db16874263ccca10",
+      "media_type": "application/xml",
+      "rights_basis": "synthetic test data, invented for this repository",
+      "rights_status": "redistributable",
+      "schema_version": 2,
+      "storage_ref": "tests/fixtures/cohort/raw/synthetic-fund/5e92bf64ee62e252bdccacec801bf876d7d51141329fdfb2db16874263ccca10.xml"
+     },
+     "locators": [],
+     "retrieved_at": "2026-09-27T12:00:00Z",
+     "source_id": "synthetic-fund",
+     "url": "https://www.sec.gov/Archives/edgar/data/9990900/000999090026000002/primary_doc.xml"
+    },
+    "evidence_class": "etf_proxy",
+    "matched": [
+     "acme-common",
+     "corvid-common",
+     "dynamo-class-a",
+     "eastfield-common"
+    ],
+    "published_on": "2026-05-27",
+    "reconstructed_only": [],
+    "snapshot_id": "synthetic-fund:0009990900-26-000002",
+    "snapshot_only": [],
+    "source_id": "synthetic-fund",
+    "unmatched": [],
+    "withheld": false
+   },
+   {
+    "as_of": "2026-06-30",
+    "citation": {
+     "artifact": {
+      "content_sha256": "4fd63a288f294cbe2383fb6e7e5f0b7b6da16bbbb80624408759ecedd12cf0ae",
+      "media_type": "application/xml",
+      "rights_basis": "synthetic test data, invented for this repository",
+      "rights_status": "redistributable",
+      "schema_version": 2,
+      "storage_ref": "tests/fixtures/cohort/raw/synthetic-fund/4fd63a288f294cbe2383fb6e7e5f0b7b6da16bbbb80624408759ecedd12cf0ae.xml"
+     },
+     "locators": [],
+     "retrieved_at": "2026-09-27T12:00:00Z",
+     "source_id": "synthetic-fund",
+     "url": "https://www.sec.gov/Archives/edgar/data/9990900/000999090026000003/primary_doc.xml"
+    },
+    "evidence_class": "etf_proxy",
+    "matched": [
+     "acme-common",
+     "corvid-common",
+     "dynamo-class-a",
+     "dynamo-class-b"
+    ],
+    "published_on": "2026-08-26",
+    "reconstructed_only": [],
+    "snapshot_id": "synthetic-fund:0009990900-26-000003",
+    "snapshot_only": [],
+    "source_id": "synthetic-fund",
+    "unmatched": [],
+    "withheld": false
+   },
+   {
+    "as_of": "2026-06-30",
+    "citation": {
+     "artifact": {
+      "content_sha256": "4fd63a288f294cbe2383fb6e7e5f0b7b6da16bbbb80624408759ecedd12cf0ae",
+      "media_type": "application/xml",
+      "rights_basis": "synthetic test data, invented for this repository",
+      "rights_status": "redistributable",
+      "schema_version": 2,
+      "storage_ref": "tests/fixtures/cohort/raw/synthetic-fund/4fd63a288f294cbe2383fb6e7e5f0b7b6da16bbbb80624408759ecedd12cf0ae.xml"
+     },
+     "locators": [],
+     "retrieved_at": "2026-09-27T12:00:00Z",
+     "source_id": "synthetic-fund",
+     "url": "https://www.sec.gov/Archives/edgar/data/9990900/000999090026000004/primary_doc.xml"
+    },
+    "evidence_class": "etf_proxy",
+    "matched": [
+     "acme-common",
+     "corvid-common",
+     "dynamo-class-a",
+     "dynamo-class-b"
+    ],
+    "published_on": "2026-09-24",
+    "reconstructed_only": [],
+    "snapshot_id": "synthetic-fund:0009990900-26-000004",
+    "snapshot_only": [],
+    "source_id": "synthetic-fund",
+    "unmatched": [],
+    "withheld": true
+   },
+   {
+    "as_of": "2026-09-22",
+    "citation": null,
+    "evidence_class": "user_supplied",
+    "matched": [
+     "acme-common",
+     "corvid-common",
+     "dynamo-class-a",
+     "dynamo-class-b"
+    ],
+    "published_on": "2026-09-26",
+    "reconstructed_only": [],
+    "snapshot_id": "user-list-2026-09-26",
+    "snapshot_only": [
+     "fenwick-common"
+    ],
+    "source_id": "user-list",
+    "unmatched": [],
+    "withheld": true
+   }
+  ],
+  "universe_id": "djia-synthetic"
+ },
+ "schema_version": 1,
+ "securities": [
+  {
+   "identities": [
+    {
+     "evidence_id": "roster-2024-06-28",
+     "name": "Acme Industrial",
+     "observed_on": "2024-06-28",
+     "ticker": "ACMX"
+    },
+    {
+     "evidence_id": "roster-2024-11-08",
+     "name": "Acme Industrial",
+     "observed_on": "2024-11-08",
+     "ticker": "ACMX"
+    },
+    {
+     "evidence_id": "roster-2025-06-30",
+     "name": "Acme Industrial",
+     "observed_on": "2025-06-30",
+     "ticker": "ACME"
+    },
+    {
+     "evidence_id": "index-2026-09-25",
+     "name": "Acme Industrial",
+     "observed_on": "2026-10-05",
+     "ticker": "ACME"
+    }
+   ],
+   "security_id": "acme-common"
+  },
+  {
+   "identities": [
+    {
+     "evidence_id": "roster-2024-06-28",
+     "name": "Northern Airways",
+     "observed_on": "2024-06-28",
+     "ticker": "BORA"
+    },
+    {
+     "evidence_id": "index-2024-11-01",
+     "name": "Borealis Air",
+     "observed_on": "2024-11-08",
+     "ticker": "BORA"
+    },
+    {
+     "evidence_id": "roster-2024-11-08",
+     "name": "Borealis Air",
+     "observed_on": "2024-11-08",
+     "ticker": "BORA"
+    }
+   ],
+   "security_id": "borealis-common"
+  },
+  {
+   "identities": [
+    {
+     "evidence_id": "index-2024-10-31",
+     "name": "Corvid Systems",
+     "observed_on": "2024-11-07",
+     "ticker": "CRVD"
+    },
+    {
+     "evidence_id": "index-2024-11-01",
+     "name": "Corvid Systems",
+     "observed_on": "2024-11-08",
+     "ticker": "CRVD"
+    },
+    {
+     "evidence_id": "roster-2025-06-30",
+     "name": "Corvid Systems",
+     "observed_on": "2025-06-30",
+     "ticker": "CRVD"
+    }
+   ],
+   "security_id": "corvid-common"
+  },
+  {
+   "identities": [
+    {
+     "evidence_id": "roster-2024-06-28",
+     "name": "Dynamo Motors (Class A)",
+     "observed_on": "2024-06-28",
+     "ticker": "DYNA"
+    },
+    {
+     "evidence_id": "roster-2024-11-08",
+     "name": "Dynamo Motors (Class A)",
+     "observed_on": "2024-11-08",
+     "ticker": "DYNA"
+    },
+    {
+     "evidence_id": "roster-2025-06-30",
+     "name": "Dynamo Motors (Class A)",
+     "observed_on": "2025-06-30",
+     "ticker": "DYNA"
+    }
+   ],
+   "security_id": "dynamo-class-a"
+  },
+  {
+   "identities": [
+    {
+     "evidence_id": "index-2026-06-16",
+     "name": "Dynamo Motors (Class B)",
+     "observed_on": "2026-06-22",
+     "ticker": "DYNB"
+    }
+   ],
+   "security_id": "dynamo-class-b"
+  },
+  {
+   "identities": [
+    {
+     "evidence_id": "roster-2024-06-28",
+     "name": "EFB Financial",
+     "observed_on": "2024-06-28",
+     "ticker": "EFB"
+    },
+    {
+     "evidence_id": "roster-2024-11-08",
+     "name": "EFB Financial",
+     "observed_on": "2024-11-08",
+     "ticker": "EFB"
+    },
+    {
+     "evidence_id": "roster-2025-06-30",
+     "name": "EFB Financial",
+     "observed_on": "2025-06-30",
+     "ticker": "EFB"
+    },
+    {
+     "evidence_id": "index-2026-06-16",
+     "name": "EFB Financial",
+     "observed_on": "2026-06-22",
+     "ticker": "EFB"
+    }
+   ],
+   "security_id": "eastfield-common"
+  },
+  {
+   "identities": [
+    {
+     "evidence_id": "index-2026-09-25",
+     "name": "Fenwick Labs",
+     "observed_on": "2026-10-05",
+     "ticker": "FNWK"
+    }
+   ],
+   "security_id": "fenwick-common"
+  }
+ ],
+ "sources": [
+  {
+   "evidence_class": null,
+   "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
+   "rights_status": "local_only",
+   "source_id": "sec-edgar"
+  },
+  {
+   "evidence_class": "etf_proxy",
+   "rights_basis": "synthetic test data, invented for this repository",
+   "rights_status": "redistributable",
+   "source_id": "synthetic-fund"
+  },
+  {
+   "evidence_class": "official",
+   "rights_basis": "synthetic test data, invented for this repository",
+   "rights_status": "redistributable",
+   "source_id": "synthetic-index"
+  },
+  {
+   "evidence_class": "secondary",
+   "rights_basis": "synthetic test data, invented for this repository",
+   "rights_status": "redistributable",
+   "source_id": "synthetic-roster"
+  },
+  {
+   "evidence_class": "user_supplied",
+   "rights_basis": "synthetic test data, invented for this repository",
+   "rights_status": "redistributable",
+   "source_id": "user-list"
+  }
+ ]
+}
