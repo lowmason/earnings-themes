@@ -652,9 +652,9 @@ chooses beside `walker-1` (PT-1). A whole-document hash citation was rejected: i
 would drop P6-9's check that a row's name and ticker occur in its cited text.
 
 - **The policy.** Given a saved PDF's bytes, `pdftext-1`:
-  1. reads them with pypdf 6.19.0, holding pypdf's logger below ERROR for the call
-     and restoring it after, since the text's hash, not pypdf's recovery warnings,
-     is the authority (PT-5);
+  1. reads them with pypdf 6.19.0, holding pypdf's logger at ERROR for the call, so
+     that its recovery warnings are silenced, and restoring it after, since the
+     text's hash, not those warnings, is the authority (PT-5);
   2. takes each page's plain-mode `extract_text()`, in page order;
   3. normalizes the text to NFC, the repository's convention, never NFKC;
   4. collapses each line's whitespace runs to one space, strips its ends, and drops
@@ -15309,6 +15309,7 @@ This record verifies roadmap Stage 4, the point-in-time DJIA cohort, which
 | --- | --- | --- |
 | Task 5, the format probe | SEC | [GATE: the count it printed, or "declined"] |
 | The PDF spike, while `specs/pdf-citation-text.md` was designed | uv, outside the lockfile | pypdf 6.19.0 and pdfminer.six 20260107, run from uv's cache; no project file changed |
+| The replay of Task 16b, while the amendment was planned | uv, to PyPI | one `uv add`, approved by the user: `Resolved 152 packages` and `+ pypdf==6.19.0`; the tree was then restored, offline |
 | Task 16b, Step 3, the `uv add` of `pypdf==6.19.0` | uv, to PyPI | [GATE: what `uv add` printed: packages resolved, and pypdf installed] |
 | Task 17, Step 2, the terms pages | web and SEC | [GATE] |
 | Task 17, Step 4, the evidence pages | web | [GATE; name any page saved by hand] |
