@@ -22,6 +22,7 @@ from earnings_ingestion.browser.renderer import (
     CaptureEnvironment,
     FakeRenderer,
 )
+from earnings_ingestion.browser.store import CaptureStore, capture_once
 
 __all__ = [
     "ISOLATED_1",
@@ -31,6 +32,7 @@ __all__ = [
     "CapturePolicy",
     "CaptureReason",
     "CaptureStatus",
+    "CaptureStore",
     "FakeRenderer",
     "LayoutBlock",
     "LayoutCell",
@@ -39,4 +41,5 @@ __all__ = [
     "LayoutRun",
     "LayoutTable",
     "RenderedCapture",
+    "capture_once",
 ]
