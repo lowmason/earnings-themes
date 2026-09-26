@@ -972,3 +972,154 @@ The opt-in live verification's result (P-VL), saved under `data/runs/cohort/live
 | `rebuilt_content_hash` | 64 lowercase hex or null | The rebuilt cohort's content hash |
 | `frozen_content_hash` | 64 lowercase hex or null | The latest frozen version's |
 | `blocking_finding_ids` | tuple of ID part | Findings that would hold a freeze now |
+
+## Curated cohort files
+
+`config/universe/<name>/` holds three curated files, and
+`docs/membership-source-register.toml` holds the register. Each file is read as TOML,
+then canonical JSON, into strict models, so an unknown key is refused.
+
+- `universe.toml` is one `UniverseConfig`.
+- `evidence.toml` is an `EvidenceFile`.
+- `overrides.toml` is an `OverridesFile` of `Override` records.
+
+### `UniverseConfig`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `universe_id` | ID part | Copied to the definition |
+| `universe_name` | ID part | `djia` |
+| `period_end_start` | date | Copied to the definition |
+| `period_end_stop` | date | Copied to the definition |
+| `public_information_cutoff` | date | Copied to the definition |
+| `membership_reference` | `first_publication_time` | Copied to the definition |
+| `selection_policy_version` | string | Copied to the definition |
+| `expected_member_count` | int ≥ 1 | Copied to the definition |
+| `etf_proxy` | `EtfProxy` or null | The corroborating fund |
+
+### `EtfProxy`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `source_id` | register slug | The fund's membership-register source |
+| `cik` | 10 digits | The fund's CIK |
+| `forms` | tuple of string | The forms read, `NPORT-P` and `NPORT-P/A` |
+
+### `EvidenceFile`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | The file's version |
+| `snapshots` | tuple of `SnapshotEvidence` | At most one is the anchor |
+| `changes` | tuple of `ChangeEvidence` | Official announcements |
+| `checks` | tuple of `CheckList` | Lists compared and reported only |
+
+### `SnapshotEvidence`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `evidence_id` | ID part | A curated slug, unique in the file |
+| `source_id` | register slug | Registered for the role |
+| `url` | string | A URL the artifact was retrieved or saved from |
+| `artifact_sha256` | 64 lowercase hex | The saved artifact |
+| `canonical_sha256` | 64 lowercase hex | Its walker-1 canonical text's hash |
+| `published_on` | date | First publication, as the source states it |
+| `published_at` | UTC datetime or null | The time, if stated |
+| `role` | `anchor` or `corroboration` | Its use |
+| `as_of` | date | The date it describes |
+| `members` | tuple of `Row` | Each listed security, with where it is listed |
+
+### `ChangeEvidence`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `evidence_id` | ID part | A curated slug, unique in the file |
+| `source_id` | register slug | An official source registered for `change` |
+| `url` | string | A URL the artifact was retrieved or saved from |
+| `artifact_sha256` | 64 lowercase hex | The saved artifact |
+| `canonical_sha256` | 64 lowercase hex | Its walker-1 canonical text's hash |
+| `published_on` | date | First publication |
+| `published_at` | UTC datetime or null | The time, if stated |
+| `announced_on` | date | The announcement's date |
+| `effective_on` | date | The effective date it states |
+| `timing` | `BoundTiming` | The time of day it states |
+| `date_span` | two ints | Where it states the date: `[start, end)` in the canonical text |
+| `date_cited_sha256` | 64 lowercase hex | SHA-256 of that text |
+| `entries` | tuple of `ChangeRow` | Each addition and removal |
+
+### `Row`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `security_id` | ID part | The security |
+| `name` | string | The name exactly as the cited text prints it |
+| `ticker` | string | The ticker exactly as the cited text prints it |
+| `span` | two ints | Where the text states both: `[start, end)` in the canonical text |
+| `cited_sha256` | 64 lowercase hex | SHA-256 of that text |
+
+### `ChangeRow`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `security_id` | ID part | The security |
+| `name` | string | The name exactly as the cited text prints it |
+| `ticker` | string | The ticker exactly as the cited text prints it |
+| `span` | two ints | Where the text states both |
+| `cited_sha256` | 64 lowercase hex | SHA-256 of that text |
+| `action` | `added` or `removed` | The change |
+
+### `CheckList`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `evidence_id` | ID part | A curated slug |
+| `source_id` | register slug | Registered for `check` |
+| `as_of` | date | The date the list describes |
+| `published_on` | date | When it was supplied |
+| `members` | tuple of `CheckMember` | Its entries, compared by ticker |
+
+### `CheckMember`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `name` | string | As supplied |
+| `ticker` | string | As supplied |
+
+### `OverridesFile`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | The file's version |
+| `overrides` | tuple of `Override` | Unique `override_id`s |
+
+### `MembershipRegister`
+
+`docs/membership-source-register.toml`: A §242's fields for index-membership sources.
+It is the second register, beside `docs/source-register.toml`, and it quotes no
+source.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | The file's version |
+| `sources` | map of register slug to `RegisterEntry` | One entry per source |
+
+### `RegisterEntry`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `owner` | string | Who publishes it |
+| `url` | string | Its home |
+| `access_method` | string | How the project reaches it, and through which client |
+| `cost` | string | What access costs |
+| `license_terms` | string | The terms, summarized in the project's words |
+| `terms_url` | string or null | The terms page; null only for a user-supplied list |
+| `terms_sha256` | 64 lowercase hex or null | The terms page's hash when a person last read it: SHA-256 of its `walker-1` canonical text for an HTML page, of its bytes otherwise |
+| `redistribution_status` | string | What may be redistributed |
+| `coverage` | string | What it covers |
+| `expected_update_pattern` | string | How it changes |
+| `known_limitations` | tuple of string | What it cannot show |
+| `last_verified` | date | When a person last checked the entry |
+| `evidence_class` | `EvidenceClass` | Its class |
+| `roles` | tuple of `SourceRole` | Its permitted uses |
+| `rights_status` | `RightsStatus` | Unclear rights are `local_only` |
+| `rights_basis` | string | Why |

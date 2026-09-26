@@ -1,6 +1,6 @@
 """docs/data-dictionary.md documents every field and value of the core contracts
 and of the ingestion records: the canonicalizer's, the capture's, layout-1's, the
-retrieval metadata, and the cohort's records.
+retrieval metadata, and the cohort's records and curated files.
 
 AGENTS.md §191: document public interfaces and update the data dictionary in the
 same change. A contract that gains, loses, or renames a field fails here.
@@ -14,7 +14,9 @@ import earnings_core as core
 import earnings_ingestion.canonical as ingestion
 import pytest
 from earnings_ingestion import browser, layout
+from earnings_ingestion.cohort import config as cohort_config
 from earnings_ingestion.cohort import records as cohort
+from earnings_ingestion.cohort import register as cohort_register
 from earnings_ingestion.fetch import records as fetch
 from pydantic import BaseModel
 
@@ -65,6 +67,18 @@ MODELS = [
     cohort.UniverseManifest,
     cohort.LiveCheck,
     cohort.LiveVerification,
+    cohort_config.UniverseConfig,
+    cohort_config.EtfProxy,
+    cohort_config.EvidenceFile,
+    cohort_config.SnapshotEvidence,
+    cohort_config.ChangeEvidence,
+    cohort_config.Row,
+    cohort_config.ChangeRow,
+    cohort_config.CheckList,
+    cohort_config.CheckMember,
+    cohort_config.OverridesFile,
+    cohort_register.MembershipRegister,
+    cohort_register.RegisterEntry,
 ]
 ENUMS = [
     core.RightsStatus,
