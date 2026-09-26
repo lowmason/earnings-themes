@@ -1,5 +1,7 @@
 # Structure-Aware Canonicalization, Plan A (Stage 3): the Canonicalizer — Implementation Plan
 
+**Status: COMPLETE (2026-09-25)** — executed via executing-plans; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > Roadmap: specs/evidence-linked-theme-extraction-roadmap.md, Stage 3 — on
@@ -534,7 +536,7 @@ The spec's plan A exit criteria map onto this plan's tasks as follows:
 | Gate | When | Who | What it unblocks |
 | --- | --- | --- | --- |
 | PA-5 | the planning handoff, before Task 1 | user | Whether a fatal libxml2 error fails the document. **Passed 2026-09-25: yes.** Task 8 implements it. |
-| The review gate | Task 11 | user | Committing the canonical fixtures. The user reviews the mask and page-artifact reports, may amend an M or C rule, and decides what to do about any C2–C5 regression. |
+| The review gate | Task 11 | user | Committing the canonical fixtures. The user reviews the mask and page-artifact reports, may amend an M or C rule, and decides what to do about any C2–C5 regression. **Passed 2026-09-25: C5 amended; M1–M5 and C2–C4 kept.** |
 
 In subagent-driven execution, Task 11 runs in the controller session with the user,
 never in a subagent. It is a hard stop: nothing after Task 11 starts until the user
@@ -688,7 +690,7 @@ diff touches most of them.
   - **`ArtifactRef.storage_ref`** refuses `file:` in any case, a drive letter, and a
     `..` segment.
 
-- [ ] **Step 1: Commit this plan**
+- [x] **Step 1: Commit this plan**
 
 ```bash
 git log --oneline -3 && git status --short
@@ -698,7 +700,7 @@ git commit -m "docs(plan): plan 4, Stage 3 plan A: the canonicalizer"
 
 Expected: the status lists only this plan, and the commit adds one file.
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Extract the six test files. In each file the new tests are the ones that name
 `TextOrigin`, OCR, crossings, malformed contexts, or portability. The other tests are
@@ -1542,7 +1544,7 @@ python3 /tmp/plan4-escapes.py packages/earnings-core/tests/test_public_api.py pa
 Expected: `escapes intact`. `test_artifacts.py` keeps plan 3's literal `€`, which the
 check allows.
 
-- [ ] **Step 3: Run them to verify they fail**
+- [x] **Step 3: Run them to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core -q
@@ -1554,7 +1556,7 @@ Expected: exit 2, `2 errors during collection`:
   'earnings_core.elements'`;
 - `test_ocr.py`: `ImportError: cannot import name 'TextOrigin' from 'earnings_core'`.
 
-- [ ] **Step 4: Write the implementation**
+- [x] **Step 4: Write the implementation**
 
 Replace the eight modules. The changes are:
 
@@ -2521,7 +2523,7 @@ __all__ = [
 ]
 ```
 
-- [ ] **Step 5: Run them to verify they pass**
+- [x] **Step 5: Run them to verify they pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core -q
@@ -2529,7 +2531,7 @@ uv run --locked --all-packages pytest packages/earnings-core -q
 
 Expected: exit 0, `190 passed`.
 
-- [ ] **Step 6: Extend the dictionary's drift test and watch it fail**
+- [x] **Step 6: Extend the dictionary's drift test and watch it fail**
 
 The drift test gains `TextOrigin` among its enums and checks the documented versions
 against 2 and `"2"`.
@@ -2611,7 +2613,7 @@ Expected: exit 1, `4 failed, 14 passed`:
 - `TextOrigin` has no heading;
 - the versions test finds schema version 1.
 
-- [ ] **Step 7: Update the data dictionary**
+- [x] **Step 7: Update the data dictionary**
 
 This replaces plan 3's dictionary. The changes:
 
@@ -2914,7 +2916,7 @@ uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py -q
 
 Expected: exit 0, `18 passed`.
 
-- [ ] **Step 8: Run the default suite and lint**
+- [x] **Step 8: Run the default suite and lint**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live" -q
@@ -2923,7 +2925,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `225 passed`; `All checks passed!` and `80 files already formatted`.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git log --oneline -3
@@ -2987,7 +2989,7 @@ modules to the script's output.
   - `main()`, which writes the three modules and prints one `wrote <path>` line for
     each.
 
-- [ ] **Step 1: Create the subpackage**
+- [x] **Step 1: Create the subpackage**
 
 The subpackage's `__init__.py` must exist before the generated modules do. Ruff counts
 a module as first-party within its own package only when that package exists, and
@@ -3000,7 +3002,7 @@ Create `packages/earnings-ingestion/src/earnings_ingestion/canonical/__init__.py
 """Structure-aware canonicalization of saved release HTML (Stage 3, walker-1)."""
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 The test covers:
 
@@ -3230,7 +3232,7 @@ python3 /tmp/plan4-escapes.py expirements/parser-fidelity/test_port_equality.py
 
 Expected: `escapes intact`.
 
-- [ ] **Step 3: Run it to verify it fails**
+- [x] **Step 3: Run it to verify it fails**
 
 ```bash
 uv run --locked --all-packages pytest expirements/parser-fidelity/test_port_equality.py --import-mode=prepend -q
@@ -3239,7 +3241,7 @@ uv run --locked --all-packages pytest expirements/parser-fidelity/test_port_equa
 Expected: exit 2, `1 error during collection`, with
 `ImportError: cannot import name 'decode' from 'earnings_ingestion.canonical'`.
 
-- [ ] **Step 4: Write the port script**
+- [x] **Step 4: Write the port script**
 
 The script's parts:
 
@@ -3682,7 +3684,7 @@ python3 /tmp/plan4-escapes.py expirements/parser-fidelity/port_walker.py
 
 Expected: `escapes intact`.
 
-- [ ] **Step 5: Generate the port**
+- [x] **Step 5: Generate the port**
 
 ```bash
 uv run --locked --all-packages python expirements/parser-fidelity/port_walker.py
@@ -3699,7 +3701,7 @@ wrote packages/earnings-ingestion/src/earnings_ingestion/canonical/walker.py
 Never edit the three generated modules by hand. A change goes into `port_walker.py`,
 and the first test fails until the modules are regenerated.
 
-- [ ] **Step 6: Run the test to verify it passes**
+- [x] **Step 6: Run the test to verify it passes**
 
 ```bash
 uv run --locked --all-packages pytest expirements/parser-fidelity/test_port_equality.py --import-mode=prepend -q -rs
@@ -3709,7 +3711,7 @@ Expected: exit 0, `37 passed`, with no skips. If a development release is missin
 locally, its test shows as `SKIPPED` and the count drops by one; record that in
 Task 11's verification record.
 
-- [ ] **Step 7: Run the harness suite, the freeze check, the default suite, and lint**
+- [x] **Step 7: Run the harness suite, the freeze check, the default suite, and lint**
 
 ```bash
 uv run --locked --all-packages pytest expirements/parser-fidelity --import-mode=prepend -q
@@ -3723,7 +3725,7 @@ Expected: `206 passed`; `freeze verified`; `225 passed`; `All checks passed!` an
 the copied definitions were already formatted, and the headers and edits are written
 to match.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git log --oneline -3
@@ -3775,7 +3777,7 @@ list containers kept, and grid tables turned into positioned cells.
     cell. A block, or a table's every cell, left empty by N1 is dropped, and parents
     are renumbered.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `test_normalize.py` holds V9's normalization cases (§Verification (plan A), item 7).
 Each non-ASCII input is built with `chr()`.
@@ -3951,7 +3953,7 @@ python3 /tmp/plan4-escapes.py packages/earnings-ingestion/tests/test_normalize.p
 
 Expected: `escapes intact`.
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_normalize.py packages/earnings-ingestion/tests/test_blocks.py -q
@@ -3961,7 +3963,7 @@ Expected: exit 2, `2 errors during collection`, with
 `ModuleNotFoundError: No module named 'earnings_ingestion.canonical.normalize'` and
 `ModuleNotFoundError: No module named 'earnings_ingestion.canonical.blocks'`.
 
-- [ ] **Step 3: Write N1**
+- [x] **Step 3: Write N1**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/canonical/normalize.py`:
 
@@ -4002,7 +4004,7 @@ uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_nor
 
 Expected: exit 0, `21 passed`.
 
-- [ ] **Step 4: Write the block model**
+- [x] **Step 4: Write the block model**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/canonical/blocks.py`:
 
@@ -4134,7 +4136,7 @@ uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_blo
 
 Expected: exit 0, `9 passed`.
 
-- [ ] **Step 5: Run the escape check, the default suite, and lint**
+- [x] **Step 5: Run the escape check, the default suite, and lint**
 
 ```bash
 python3 /tmp/plan4-escapes.py packages/earnings-ingestion/src/earnings_ingestion/canonical/normalize.py packages/earnings-ingestion/src/earnings_ingestion/canonical/blocks.py
@@ -4145,7 +4147,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `255 passed`; `All checks passed!` and
 `90 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -4180,7 +4182,7 @@ PA-22 record.
     count for every rule in `RULES`, zeros included. Task 10 passes `rules=("C1",)`
     to isolate C1.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 There is one positive case and at least one negative case per rule, plus:
 
@@ -4416,7 +4418,7 @@ python3 /tmp/plan4-escapes.py packages/earnings-ingestion/tests/test_compensate.
 
 Expected: `escapes intact`.
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_compensate.py -q
@@ -4425,7 +4427,7 @@ uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_com
 Expected: exit 2, `1 error during collection`, with
 `ModuleNotFoundError: No module named 'earnings_ingestion.canonical.compensate'`.
 
-- [ ] **Step 3: Write C1–C5**
+- [x] **Step 3: Write C1–C5**
 
 C5 counts occurrences over the blocks before any retype, excluding tables, so one
 rule's retype never changes what a later rule counts.
@@ -4535,7 +4537,7 @@ def _first_rule(
     return None
 ```
 
-- [ ] **Step 4: Run it to verify it passes**
+- [x] **Step 4: Run it to verify it passes**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_compensate.py -q
@@ -4543,7 +4545,7 @@ uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_com
 
 Expected: exit 0, `39 passed`.
 
-- [ ] **Step 5: Run the escape check, the default suite, and lint**
+- [x] **Step 5: Run the escape check, the default suite, and lint**
 
 ```bash
 python3 /tmp/plan4-escapes.py packages/earnings-ingestion/src/earnings_ingestion/canonical/compensate.py
@@ -4554,7 +4556,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `294 passed`; `All checks passed!` and
 `92 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -4593,7 +4595,7 @@ unit's text, and the separators belong to no leaf.
       whose columns overlap its own, in row order.
   - **Errors.** `DocumentElement` construction errors are raised (PA-12).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/earnings-ingestion/tests/test_build.py`:
 
@@ -4786,7 +4788,7 @@ python3 /tmp/plan4-escapes.py packages/earnings-ingestion/tests/test_build.py
 
 Expected: `escapes intact`.
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_build.py -q
@@ -4795,7 +4797,7 @@ uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_bui
 Expected: exit 2, `1 error during collection`, with
 `ModuleNotFoundError: No module named 'earnings_ingestion.canonical.build'`.
 
-- [ ] **Step 3: Write L1**
+- [x] **Step 3: Write L1**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/canonical/build.py`:
 
@@ -4979,7 +4981,7 @@ def _cell_elements(
     return elements
 ```
 
-- [ ] **Step 4: Run it to verify it passes**
+- [x] **Step 4: Run it to verify it passes**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_build.py -q
@@ -4987,7 +4989,7 @@ uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_bui
 
 Expected: exit 0, `8 passed`.
 
-- [ ] **Step 5: Run the escape check, the default suite, and lint**
+- [x] **Step 5: Run the escape check, the default suite, and lint**
 
 ```bash
 python3 /tmp/plan4-escapes.py packages/earnings-ingestion/src/earnings_ingestion/canonical/build.py
@@ -4998,7 +5000,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `302 passed`; `All checks passed!` and
 `94 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -5038,7 +5040,7 @@ a longer pointer quote is safer than a claim cut in half.
     splittable element followed by its sentences. Sentences have
     `type=ElementType.SENTENCE`, `source_type="sentence"`, and their unit as parent.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 The test holds V9's sentence cases (§Verification (plan A), item 8). The abbreviation
 case samples every family in the spec's list: titles, company forms, legal forms,
@@ -5264,7 +5266,7 @@ python3 /tmp/plan4-escapes.py packages/earnings-ingestion/tests/test_sentences.p
 
 Expected: `escapes intact`.
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_sentences.py -q
@@ -5273,7 +5275,7 @@ uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_sen
 Expected: exit 2, `1 error during collection`, with
 `ModuleNotFoundError: No module named 'earnings_ingestion.canonical.sentences'`.
 
-- [ ] **Step 3: Write S1**
+- [x] **Step 3: Write S1**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/canonical/sentences.py`:
 
@@ -5392,7 +5394,7 @@ def with_sentences(
     return out
 ```
 
-- [ ] **Step 4: Run it to verify it passes**
+- [x] **Step 4: Run it to verify it passes**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_sentences.py -q
@@ -5400,7 +5402,7 @@ uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_sen
 
 Expected: exit 0, `29 passed`.
 
-- [ ] **Step 5: Run the escape check, the default suite, and lint**
+- [x] **Step 5: Run the escape check, the default suite, and lint**
 
 ```bash
 python3 /tmp/plan4-escapes.py packages/earnings-ingestion/src/earnings_ingestion/canonical/sentences.py
@@ -5411,7 +5413,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `331 passed`; `All checks passed!` and
 `96 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -5444,7 +5446,7 @@ first matching rule. Masked elements stay in extraction's traversal.
   - `boilerplate_masks(document, elements) -> MaskedDocument`: one mask per masked
     element, in element order, built through `apply_masks`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/earnings-ingestion/tests/test_boilerplate.py`:
 
@@ -5654,7 +5656,7 @@ python3 /tmp/plan4-escapes.py packages/earnings-ingestion/tests/test_boilerplate
 
 Expected: `escapes intact`.
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_boilerplate.py -q
@@ -5663,7 +5665,7 @@ uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_boi
 Expected: exit 2, `1 error during collection`, with
 `ModuleNotFoundError: No module named 'earnings_ingestion.canonical.boilerplate'`.
 
-- [ ] **Step 3: Write M1–M5**
+- [x] **Step 3: Write M1–M5**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/canonical/boilerplate.py`:
 
@@ -5795,7 +5797,7 @@ def _any(folded: str, *phrases: str) -> bool:
     return any(phrase in folded for phrase in phrases)
 ```
 
-- [ ] **Step 4: Run it to verify it passes**
+- [x] **Step 4: Run it to verify it passes**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_boilerplate.py -q
@@ -5803,7 +5805,7 @@ uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_boi
 
 Expected: exit 0, `32 passed`.
 
-- [ ] **Step 5: Run the escape check, the default suite, and lint**
+- [x] **Step 5: Run the escape check, the default suite, and lint**
 
 ```bash
 python3 /tmp/plan4-escapes.py packages/earnings-ingestion/src/earnings_ingestion/canonical/boilerplate.py
@@ -5814,7 +5816,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `363 passed`; `All checks passed!` and
 `98 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -5878,7 +5880,7 @@ answered at the planning handoff.
   `PRE_TABLE_WITHOUT_CELLS = "pre_table_without_cells"`. The manifest lists that
   limitation whenever C1 retyped a piece.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `test_canonicalize.py` covers:
 
@@ -6268,7 +6270,7 @@ python3 /tmp/plan4-escapes.py packages/earnings-ingestion/tests/test_records.py 
 
 Expected: `escapes intact`.
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_records.py packages/earnings-ingestion/tests/test_canonicalize.py -q
@@ -6280,7 +6282,7 @@ Expected: exit 2, `2 errors during collection`, each an `ImportError` from
 - `test_records.py`: `cannot import name 'CanonicalizationFailure'`;
 - `test_canonicalize.py`: `cannot import name 'CANONICALIZATION_VERSION'`.
 
-- [ ] **Step 3: Write the records, the pipeline, and the public API**
+- [x] **Step 3: Write the records, the pipeline, and the public API**
 
 `_inspect` parses the decoded text a second time, with its own parser, because the
 walker's parser is not exposed. It returns libxml2's first fatal error and the `<img>`
@@ -6606,7 +6608,7 @@ __all__ = [
 This is block 2 for `__init__.py`: extract it with
 `python3 /tmp/plan4-extract.py packages/earnings-ingestion/src/earnings_ingestion/canonical/__init__.py 2`.
 
-- [ ] **Step 4: Run them to verify they pass**
+- [x] **Step 4: Run them to verify they pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_records.py packages/earnings-ingestion/tests/test_canonicalize.py -q
@@ -6614,7 +6616,7 @@ uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_rec
 
 Expected: exit 0, `31 passed`.
 
-- [ ] **Step 5: Extend the drift test to the ingestion records**
+- [x] **Step 5: Extend the drift test to the ingestion records**
 
 The drift test gains the three ingestion models, `FailureReason`, and the section's
 heading with its version. This is block 2 for the test: extract it with
@@ -6707,7 +6709,7 @@ Expected: exit 1, `5 failed, 17 passed`:
 - the versions test finds no `## earnings-ingestion records, schema version 1`
   section.
 
-- [ ] **Step 6: Document the ingestion records**
+- [x] **Step 6: Document the ingestion records**
 
 This is block 2 for the dictionary, which appends: extract it with
 `python3 /tmp/plan4-extract.py docs/data-dictionary.md 2`. It prints
@@ -6804,7 +6806,7 @@ uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py -q
 
 Expected: exit 0, `22 passed`.
 
-- [ ] **Step 7: Run the escape check, the default suite, and lint**
+- [x] **Step 7: Run the escape check, the default suite, and lint**
 
 ```bash
 python3 /tmp/plan4-escapes.py packages/earnings-ingestion/src/earnings_ingestion/canonical/records.py packages/earnings-ingestion/src/earnings_ingestion/canonical/pipeline.py packages/earnings-ingestion/src/earnings_ingestion/canonical/__init__.py tests/contracts/test_data_dictionary.py
@@ -6815,7 +6817,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `398 passed`; `All checks passed!` and
 `102 files already formatted`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git log --oneline -3
@@ -6856,7 +6858,7 @@ is written here but first run in Task 11, after the review gate's report exists.
     `wrote <path>` line each. It exits with the failure's reason if a release does not
     canonicalize.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `test_canonical_fixtures.py` has four groups of checks:
 
@@ -7117,7 +7119,7 @@ python3 /tmp/plan4-escapes.py packages/earnings-ingestion/tests/test_serialize.p
 
 Expected: `escapes intact`.
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_serialize.py tests/integration/test_canonical_fixtures.py -q
@@ -7126,7 +7128,7 @@ uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_ser
 Expected: exit 2, `1 error during collection`, with
 `ModuleNotFoundError: No module named 'earnings_ingestion.canonical.serialize'`.
 
-- [ ] **Step 3: Write the serializer**
+- [x] **Step 3: Write the serializer**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/canonical/serialize.py`:
 
@@ -7170,7 +7172,7 @@ def _records(models: Iterable[BaseModel]) -> str:
     return "[\n" + ",\n".join(rows) + "\n]"
 ```
 
-- [ ] **Step 4: Run them to verify they pass**
+- [x] **Step 4: Run them to verify they pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_serialize.py tests/integration/test_canonical_fixtures.py -q
@@ -7178,7 +7180,7 @@ uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_ser
 
 Expected: exit 0, `41 passed`.
 
-- [ ] **Step 5: Write the regeneration script, and keep the fixtures' bytes**
+- [x] **Step 5: Write the regeneration script, and keep the fixtures' bytes**
 
 Do not run the script yet: Task 11 runs it.
 
@@ -7244,7 +7246,7 @@ tests/fixtures/releases/*/source.html -text
 tests/fixtures/canonical/*.json -text
 ```
 
-- [ ] **Step 6: Run the escape check, the default suite, and lint**
+- [x] **Step 6: Run the escape check, the default suite, and lint**
 
 ```bash
 python3 /tmp/plan4-escapes.py packages/earnings-ingestion/src/earnings_ingestion/canonical/serialize.py tests/integration/regenerate_canonical_fixtures.py
@@ -7255,7 +7257,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `439 passed`; `All checks passed!` and
 `106 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -7324,7 +7326,7 @@ This task writes and tests the script. Task 11 runs it, at the gate.
   - **Output.** `render(fixtures) -> str` builds the whole report, and `main()` writes
     it and prints `wrote docs/verification/walker-1-report.md`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 The test runs on synthetic input only. It covers:
 
@@ -7474,7 +7476,7 @@ python3 /tmp/plan4-escapes.py expirements/parser-fidelity/test_walker1_report.py
 
 Expected: `escapes intact`.
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 ```bash
 uv run --locked --all-packages pytest expirements/parser-fidelity/test_walker1_report.py --import-mode=prepend -q
@@ -7483,7 +7485,7 @@ uv run --locked --all-packages pytest expirements/parser-fidelity/test_walker1_r
 Expected: exit 2, `1 error during collection`, with
 `ModuleNotFoundError: No module named 'walker1_report'`.
 
-- [ ] **Step 3: Write the script**
+- [x] **Step 3: Write the script**
 
 Create `expirements/parser-fidelity/walker1_report.py`:
 
@@ -7938,7 +7940,7 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **Step 4: Run it to verify it passes**
+- [x] **Step 4: Run it to verify it passes**
 
 ```bash
 uv run --locked --all-packages pytest expirements/parser-fidelity/test_walker1_report.py --import-mode=prepend -q
@@ -7947,7 +7949,7 @@ uv run --locked --all-packages pytest expirements/parser-fidelity/test_walker1_r
 Expected: exit 0, `10 passed`. Do not run the script itself yet: its report belongs
 to Task 11's gate.
 
-- [ ] **Step 5: Run the escape check, the harness suite, the freeze check, and lint**
+- [x] **Step 5: Run the escape check, the harness suite, the freeze check, and lint**
 
 ```bash
 python3 /tmp/plan4-escapes.py expirements/parser-fidelity/walker1_report.py
@@ -7959,7 +7961,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `216 passed`; `freeze verified`; `All checks passed!` and
 `108 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -8007,7 +8009,7 @@ C1 regressions, so any C2–C5 regression needs the user's decision at this gate
   - the committed report, kept current by `test_walker1_report_current.py`;
   - the verification record.
 
-- [ ] **Step 1: Write the golden test and watch it fail**
+- [x] **Step 1: Write the golden test and watch it fail**
 
 Create `tests/integration/test_canonical_golden.py`:
 
@@ -8081,7 +8083,7 @@ Expected: `escapes intact`, then exit 1, `9 failed`:
 - the count test finds no fixtures;
 - each of the eight fixture tests raises `FileNotFoundError`.
 
-- [ ] **Step 2: Generate the canonical fixtures and the report**
+- [x] **Step 2: Generate the canonical fixtures and the report**
 
 Both stay uncommitted until the gate is passed.
 
@@ -8100,7 +8102,7 @@ Expected:
 - a status listing `?? docs/verification/walker-1-report.md`,
   `?? tests/fixtures/canonical/` and `?? tests/integration/test_canonical_golden.py`.
 
-- [ ] **Step 3: Read the verdict**
+- [x] **Step 3: Read the verdict**
 
 ```bash
 grep -A3 '^### Verdict' docs/verification/walker-1-report.md
@@ -8130,7 +8132,8 @@ These are the measured numbers behind that verdict:
 If the verdict differs from the expected text, stop and report the difference: the
 code differs from what this plan measured.
 
-- [ ] **Step 4: The review gate (hard stop)**
+- [x] **Step 4: The review gate (hard stop)**
+  > Deviation: the chat summary gave the report's full lists, which this step's as-measured text under-lists (27 untyped anchored blocks; 15 flagged mask blocks, of which only Southwestern's continuation paragraph is a real miss), and a scratch what-if (in `/tmp`, no repository change) measured the example C5 amendment before the user answered: no regression, 57 anchored blocks typed instead of 60, NHI's headline unchanged. The user chose "Amend C5", "Keep M1–M5" and "Keep C2–C5".
 
 Send the report to the user:
 
@@ -8198,7 +8201,8 @@ lists a C2–C5 regression, and name each such regression and its blocks in it.
 
 Record each answer, and its reason, verbatim for Step 6.
 
-- [ ] **Step 5: Apply any amendment (the amendment loop)**
+- [x] **Step 5: Apply any amendment (the amendment loop)**
+  > Deviation: ran for C5, amended to "C5 never retypes a block the walker typed heading" (a heading still counts toward its text's occurrences). Two tests contradicted it, not one: `test_c5_retypes_short_blocks_that_repeat_three_times` now uses paragraphs, and `test_c5_drops_the_level_of_a_repeated_html_heading` became `test_a_retype_drops_a_headings_level`, via C4; `test_c5_never_retypes_a_heading` is new. The regenerated report equals the what-if byte for byte, the user approved it, and `76f3891` committed the amendment alone. The verdict now lists no regression. The spec's C5 text stays as approved, per Global Constraints; `docs/verification/walker-1.md` records the amended rule.
 
 Skip this step if the user amended nothing. Otherwise, for each amended rule:
 
@@ -8231,7 +8235,8 @@ An amendment adds tests and can change the generated numbers, so later Expected
 counts differ from this plan's. Add a `> Deviation:` note wherever a count differs,
 giving the amendment as the cause.
 
-- [ ] **Step 6: Write the verification record**
+- [x] **Step 6: Write the verification record**
+  > Deviation: besides the gate slots, the record's first-generated "Missed" list was completed from the report: 27 untyped anchored blocks, where this plan's text listed only the end marks and Southwestern's lines.
 
 Extract it:
 
@@ -8413,7 +8418,7 @@ grep -n 'GATE:' docs/verification/walker-1.md
 
 Expected: no output, exit 1.
 
-- [ ] **Step 7: Keep the committed report current**
+- [x] **Step 7: Keep the committed report current**
 
 Create `expirements/parser-fidelity/test_walker1_report_current.py`:
 
@@ -8436,7 +8441,8 @@ uv run --locked --all-packages pytest expirements/parser-fidelity/test_walker1_r
 
 Expected: exit 0, `1 passed`.
 
-- [ ] **Step 8: Run the escape check, both suites, the freeze check, and lint**
+- [x] **Step 8: Run the escape check, both suites, the freeze check, and lint**
+  > Deviation: `449 passed`, not 448: the amendment added one test. The harness count, the freeze check and lint matched.
 
 ```bash
 python3 /tmp/plan4-escapes.py tests/integration/test_canonical_golden.py expirements/parser-fidelity/test_walker1_report_current.py
@@ -8454,7 +8460,7 @@ Expected:
 - `freeze verified`;
 - `All checks passed!` and `110 files already formatted`.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git log --oneline -3
@@ -8503,7 +8509,7 @@ pilot releases, which have no gold. They count and list, and set no threshold
       first match.
     - `joined_to_text(canonical, position) -> bool`: R3.5's fidelity hazard.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/earnings-ingestion/tests/test_fidelity.py`:
 
@@ -8693,7 +8699,7 @@ python3 /tmp/plan4-escapes.py packages/earnings-ingestion/tests/test_fidelity.py
 
 Expected: `escapes intact`.
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_fidelity.py -q
@@ -8702,7 +8708,7 @@ uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_fid
 Expected: exit 2, `1 error during collection`, with
 `ModuleNotFoundError: No module named 'earnings_ingestion.canonical.fidelity'`.
 
-- [ ] **Step 3: Write the comparators**
+- [x] **Step 3: Write the comparators**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/canonical/fidelity.py`:
 
@@ -8922,7 +8928,7 @@ def joined_to_text(canonical: str, position: int) -> bool:
     return position > 0 and canonical[position - 1].isalnum()
 ```
 
-- [ ] **Step 4: Run it to verify it passes**
+- [x] **Step 4: Run it to verify it passes**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_fidelity.py -q
@@ -8930,7 +8936,8 @@ uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_fid
 
 Expected: exit 0, `26 passed`.
 
-- [ ] **Step 5: Run the escape check, the default suite, and lint**
+- [x] **Step 5: Run the escape check, the default suite, and lint**
+  > Deviation: `475 passed`, not 474, from the gate's added test.
 
 ```bash
 python3 /tmp/plan4-escapes.py packages/earnings-ingestion/src/earnings_ingestion/canonical/fidelity.py
@@ -8941,7 +8948,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `474 passed`; `All checks passed!` and
 `112 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -8990,7 +8997,7 @@ harness test keeps the report current.
     - `render(counts) -> str` builds the report, and `main()` writes it and prints
       `wrote docs/verification/R3.5-text-fidelity.md`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `expirements/parser-fidelity/test_r35_report.py`:
 
@@ -9071,7 +9078,7 @@ uv run --locked --all-packages pytest expirements/parser-fidelity/test_r35_repor
 Expected: `escapes intact`, then exit 2, `1 error during collection`, with
 `ModuleNotFoundError: No module named 'r35_report'`.
 
-- [ ] **Step 2: Write the generator**
+- [x] **Step 2: Write the generator**
 
 The Unicode section records PA-16's correction to the spec's expectation. The
 character references in the fixtures decode to non-ASCII characters, so the gold has
@@ -9508,7 +9515,7 @@ uv run --locked --all-packages pytest expirements/parser-fidelity/test_r35_repor
 
 Expected: `escapes intact`, then exit 0, `4 passed`.
 
-- [ ] **Step 3: Write the structure test and watch it fail**
+- [x] **Step 3: Write the structure test and watch it fail**
 
 The spec's item 10 asks for this test in the default suite. It needs no harness
 import, because it reads only the committed report.
@@ -9563,7 +9570,7 @@ uv run --locked --all-packages pytest tests/integration/test_r35_report.py -q
 Expected: `escapes intact`, then exit 1, `6 failed`, each with `FileNotFoundError`,
 because the report does not exist yet.
 
-- [ ] **Step 4: Generate the report**
+- [x] **Step 4: Generate the report**
 
 ```bash
 uv run --locked --all-packages python expirements/parser-fidelity/r35_report.py
@@ -9593,7 +9600,7 @@ If the review gate amended a rule, these numbers can differ; add a `> Deviation:
 note giving the new ones. Read the report through before committing it: it is a
 committed verification record.
 
-- [ ] **Step 5: Keep the committed report current**
+- [x] **Step 5: Keep the committed report current**
 
 Create `expirements/parser-fidelity/test_r35_report_current.py`:
 
@@ -9618,7 +9625,8 @@ uv run --locked --all-packages pytest expirements/parser-fidelity/test_r35_repor
 
 Expected: exit 0, `1 passed`.
 
-- [ ] **Step 6: Run the escape check, both suites, the freeze check, and lint**
+- [x] **Step 6: Run the escape check, both suites, the freeze check, and lint**
+  > Deviation: `481 passed`, not 480, from the gate's added test. The amendment changed none of the R3.5 report's numbers.
 
 ```bash
 python3 /tmp/plan4-escapes.py expirements/parser-fidelity/test_r35_report_current.py
@@ -9636,7 +9644,7 @@ Expected:
 - `freeze verified`;
 - `All checks passed!` and `116 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -9659,7 +9667,7 @@ git commit -m "docs(verification): add R3.5's text-fidelity report, plan A's leg
 - Consumes: everything this plan built.
 - Produces: documentation only. No test changes, so the counts stay at Task 13's.
 
-- [ ] **Step 1: Update the harness README**
+- [x] **Step 1: Update the harness README**
 
 The README's Outputs bullet said everything generated goes to gitignored `data/`.
 That stays true of Stage 1, but Stage 3 commits two reports, so the bullet now names
@@ -9757,7 +9765,7 @@ workspace environment with `uv run --locked --all-packages python`.
   that the committed reports are current.
 ````
 
-- [ ] **Step 2: Update CLAUDE.md's current state**
+- [x] **Step 2: Update CLAUDE.md's current state**
 
 Unlike `AGENTS.md`, nothing cites `CLAUDE.md` by line number, so it may change
 length. Apply the four replacements below. Each must match exactly once. If one does
@@ -9806,7 +9814,8 @@ EOF
 Expected: `CLAUDE.md updated`. Then run `git diff --stat CLAUDE.md`, and read the
 diff: four passages change and nothing else.
 
-- [ ] **Step 3: Final verification**
+- [x] **Step 3: Final verification**
+  > Deviation: `481 passed`, not 480, as this step's note anticipates for a gate amendment; everything else matched. After the final review, `24ccbd3` pinned Python 3.14.0, `163e737` made input that decoding, lxml or the walker cannot read `parse_failed` (ten more tests, so the default suite reads `491 passed`), and `e8c699a` corrected two report lines; see `docs/verification/walker-1.md`, "After the final review".
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live" -q
@@ -9831,7 +9840,7 @@ Expected:
 If the gate amended a rule, the two suite counts are higher by the tests the amendment
 added.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git log --oneline -3

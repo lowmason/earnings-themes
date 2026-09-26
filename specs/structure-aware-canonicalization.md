@@ -945,3 +945,5 @@ Sequencing:
 On each plan's completion, refresh the "Current state" section of `CLAUDE.md`. In the
 handoff, state which commands ran, that no model was called, and whether any
 `browser` or `live` check ran.
+
+> Plan A: COMPLETE (2026-09-25) — implemented by plan 4 (specs/plans/completed/4-structure-aware-canonicalization-plan-a.md). Next: write plan B.
