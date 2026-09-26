@@ -39,12 +39,14 @@ The user supplied five notices. Two are cited:
 ### The S&P terms page
 
 The register requires every published source to record its terms' URL and hash
-(`cohort/register.py`), and the notices link to no terms page. The user will look in
-the footer of the S&P DJI site, `www.spglobal.com/spdji/en/`, which the notices name.
-But S&P's site answered automated requests with 403 at planning, and `cohort terms`
-can only fetch. So `cohort terms` gains a way to hash a copy the user saves in a
-browser (PT-9), as `cohort register` already records an evidence page that a site
-refuses.
+(`cohort/register.py`), and the notices link to no terms page. In the footer of the
+S&P DJI site, `www.spglobal.com/spdji/en/`, which the notices name, the user found
+S&P Global's site-wide terms: `https://www.spglobal.com/en/terms-of-use`. But
+`cohort terms` can only fetch, and the host refuses it. On 2026-09-26, with the
+user's approval, it answered `robots.txt` with a persistent 403 (two requests),
+and the client stopped before requesting the page. So `cohort terms` gains a way to
+hash a copy the user saves in a browser (PT-9), as `cohort register` already
+records an evidence page that a site refuses.
 
 ## The evidence behind the library
 
@@ -254,15 +256,16 @@ Amend plan 6 in place:
   | `1475162` | `https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20241101-1475162/1475162_djiadjuaintcdowaes.pdf` | `2026-09-26T21:12:22` | `fd02c23edb53c87d5e478646a008d0971d9ffe7fa9a569158db64657a85d8d2a` |
   | `1484126` | `https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20260623-1484126/1484126_djiavzjune2026.pdf` | `2026-09-26T21:08:05` | `c022ddf1cc80472b66f32eca0f6c14dd404f4db3e49af0d2a244c0fa5d1b622c` |
 
-  These are still pending from the user:
-  - the anchor revision's ID and UTC timestamp;
-  - the S&P DJI terms-of-use URL, which the user will look for in the S&P DJI
-    site's footer (§The S&P terms page).
+  Still pending from the user: the anchor revision's ID and UTC timestamp.
 - **Task 17, Step 2.** Two of the three terms hashes are taken:
   - `wikipedia-djia`:
     `581ce13c873fabdd2648e56752f889cd5e4384604ccaaeca27e8ed777c8224cd`;
   - `dia-nport`:
     `b11d9ecd3bcd0d86ccd1a3301e90ccf66b307c5f5f3709a00e26a55a6246e076`.
+
+  The third, `spdji-announcements`' terms at `https://www.spglobal.com/en/terms-of-use`,
+  was refused live (§The S&P terms page). The user saves that page by hand, and
+  `cohort terms --saved` hashes it once Task 16b has landed.
 - **The identity.** The user set `SOURCE_IDENTITY` equal to `EDGAR_IDENTITY`. Each
   web-client command carries the prefix `SOURCE_IDENTITY="$EDGAR_IDENTITY"`, and
   neither value is ever printed.
