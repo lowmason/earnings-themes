@@ -61,10 +61,10 @@ non-package members too. Only the absence of `[project]` removes the root from t
 Application CLI entry points belong in `apps/earnings-pipeline`, never in the root.
 
 Verified working from a clean state at the root commit; lock and sync counts refreshed at
-`bdcf0a4` via `uv lock --check` and `uv sync --dry-run`:
+`1fe96c3` via `uv lock --check` and `uv sync`:
 
 ```
-$ uv lock                              # Resolved 140 packages
+$ uv lock                              # Resolved 151 packages
 $ uv sync --locked --all-packages      # 40 packages incl. earnings-{core,ingestion,pipeline,themes}; dev group synced by default
 $ uv run --locked python -c "import earnings_themes; print(earnings_themes.__file__)"
 .../packages/earnings-themes/src/earnings_themes/__init__.py
