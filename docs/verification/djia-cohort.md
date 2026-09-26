@@ -12,7 +12,7 @@ This record verifies roadmap Stage 4, the point-in-time DJIA cohort, which
 | Intervals from an anchor plus changes; inclusive starts, exclusive ends, open intervals (P-VF) | `test_anchor_additions_and_removals_make_half_open_intervals`; `test_intervals_are_half_open` |
 | A missing anchor refuses the freeze with its reason; conflicts stay separate and hold it until review | `test_a_missing_anchor_refuses_the_freeze_with_its_reason`; `test_conflicting_dates_stay_separate_and_hold_until_one_is_rejected`; `test_before_review_its_findings_hold_the_freeze` |
 | The report lists every conflict and gap (P-A4) | `test_every_break_in_the_sequence_is_a_conflict`; `test_every_uncorroborated_quarter_is_a_gap`; the real report below |
-| Evidence published after the cutoff cannot revise the version (P-C4) | `test_evidence_published_after_the_cutoff_is_withheld`; `test_a_row_published_after_the_cutoff_never_changes_an_identity` |
+| Evidence published after the cutoff changes no interval, mapping, count, or candidate issuer (P-C4); it is still recorded, as withheld, so a refreeze that includes it makes a new version with the same facts (see Limitations) | `test_evidence_published_after_the_cutoff_is_withheld`; `test_a_row_published_after_the_cutoff_never_changes_an_identity` |
 | No snapshot backdated; no ETF holdings treated as the roster | `test_a_later_snapshot_is_never_backdated_into_the_anchor`; `test_fund_holdings_are_never_the_roster` |
 | Ticker changes and multiple securities preserved; one issuer row per issuer (P-VF) | `test_a_ticker_change_keeps_both_identities_and_resolves_once`; `test_two_securities_of_one_issuer_derive_one_issuer_row` |
 | Access and redistribution recorded for every source; unclear rights stay local | `docs/membership-source-register.toml`; `test_the_manifest_records_rights_for_every_source_it_cites`; `test_saved_evidence_stays_local_and_the_fixture_is_committed` |
@@ -39,6 +39,11 @@ This record verifies roadmap Stage 4, the point-in-time DJIA cohort, which
   spin-off, announced before the window; Honeywell's spin-off, which leaves it in
   the index; and a Transportation Average change. The June 2026 notice also keeps
   Honeywell in the index under a new name, which changes no membership.
+
+  `alphabet-common` follows Task 17's rule for share classes: the cited notice names
+  no class, so the ID ends in `-common`, although GOOGL is Alphabet's Class A stock.
+  A Class C listing (GOOG) would need an ID of its own, and this one cannot be
+  renamed without a new version.
 - **Size.** 33 intervals over 33 securities, and 33 candidate issuers.
 - **Corroboration.** Nine of the fund's N-PORT reports were compared, dated
   2024-07-31 through 2026-07-31, one for each quarter of the fund's fiscal year.
@@ -97,8 +102,12 @@ The rebuilt content hash equals the frozen one. The record is under
   - fund holdings are an ETF proxy;
   - SEC's identity records were retrieved after the cutoff;
   - intervals are resolved to the day.
-- **One machine.** The SEC lock coordinates one machine. Stage 1's harness client
-  must never run live beside a package client.
+- **One checkout.** The SEC and web client locks live under each checkout's
+  `data/runs/`, so they coordinate the processes of one checkout, not the whole
+  machine. A second worktree or clone takes locks of its own, and two could together
+  send more than 2 requests per second. Until the locks move to one place per
+  machine (`specs/deferred_items.md`), send SEC requests from one checkout at a time.
+  Stage 1's harness client must never run live beside a package client.
 - **`acceptanceDateTime`.** The readers take SEC's offset as written. Whether the
   time is UTC or Eastern is unverified, and Stage 4 uses it only to order filings
   of one fund. Stage 5 must settle it before using it as a filing's acceptance time
@@ -113,3 +122,13 @@ The rebuilt content hash equals the frozen one. The record is under
   re-read only SEC's terms page. S&P's and Wikimedia's terms, both S&P DJI notices,
   and the Wikipedia anchor were not re-read, and their saved bytes and the hashes
   taken at Task 17 remain the evidence.
+- **Versions and the cutoff.** The content hash covers everything a manifest records,
+  including withheld evidence and the SEC files that identities cite. So a refreeze
+  after a notice published past the cutoff is curated, or after `fetch-sec` saves
+  newer SEC records, makes a new version whose intervals, mappings, and candidate
+  issuers are unchanged. Stage 5 should key on those, not on the content hash
+  (`specs/deferred_items.md`).
+- **Citation checks.** The build checks that each cited row's name and ticker occur
+  in its cited text, which a one- or two-letter ticker meets easily, and nothing ties
+  an effective date or its timing to the date span mechanically. Each cited row and
+  date was read when it was cited (Task 17, Steps 5 and 6).
