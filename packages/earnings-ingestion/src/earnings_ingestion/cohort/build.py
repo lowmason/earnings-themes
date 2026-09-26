@@ -17,7 +17,6 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from earnings_ingestion.canonical import CANONICALIZATION_VERSION
 from earnings_ingestion.cohort.config import (
     UNIVERSE_DIR,
     ChangeEvidence,
@@ -316,7 +315,7 @@ class _Builder:
         def span(start: int, end: int, cited: str) -> EvidenceLocator:
             return EvidenceLocator(
                 kind=LocatorKind.TEXT_SPAN,
-                canonicalization_version=CANONICALIZATION_VERSION,
+                canonicalization_version=text.version,
                 canonical_sha256=item.canonical_sha256,
                 start=start,
                 end=end,

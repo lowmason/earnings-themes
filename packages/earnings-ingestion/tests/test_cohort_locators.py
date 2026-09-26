@@ -91,3 +91,40 @@ def test_each_kind_needs_its_media_type() -> None:
         ArtifactText(DATA, "application/json").find("ACME")
     with pytest.raises(LocatorError, match="needs JSON"):
         ArtifactText(PAGE, "text/html").pointer("/0")
+
+
+PDF_ROWS = [
+    (72, 720, "Synthetic roster"),
+    (72, 700, "Acme Industrial"),
+    (250, 700, "ACME"),
+    (72, 682, "Borealis Air  "),
+    (250, 682, "BORA"),
+]
+
+
+def test_a_pdf_is_cited_through_pdftext_1(make_pdf) -> None:
+    page = ArtifactText(make_pdf(PDF_ROWS), "application/pdf")
+    text, text_hash = page.canonical
+    assert page.version == "pdftext-1"
+    assert text == "Synthetic roster\nAcme Industrial ACME\nBorealis Air BORA"
+    assert text_hash == sha256_hex(text.encode("utf-8"))
+    for locator in (page.find("ACME"), page.line("BORA"), page.span(0, 9)):
+        assert locator.canonicalization_version == "pdftext-1"
+        page.verify(locator)
+    assert page.cited(page.line("BORA")) == "Borealis Air BORA"
+
+
+def test_a_span_is_verified_only_under_its_own_policy(make_pdf) -> None:
+    pdf = ArtifactText(make_pdf(PDF_ROWS), "application/pdf")
+    html = ArtifactText(PAGE, "text/html")
+    with pytest.raises(LocatorError, match="made under walker-1, not pdftext-1"):
+        pdf.verify(html.find("Acme Industrial"))
+    with pytest.raises(LocatorError, match="made under pdftext-1, not walker-1"):
+        html.verify(pdf.find("Acme Industrial"))
+
+
+def test_only_html_and_pdf_have_citation_text() -> None:
+    with pytest.raises(LocatorError, match="needs HTML or PDF, not text/plain"):
+        ArtifactText(b"plain", "text/plain").find("plain")
+    with pytest.raises(LocatorError, match="pdftext-1 cannot read it"):
+        ArtifactText(b"not a pdf", "application/pdf").find("pdf")

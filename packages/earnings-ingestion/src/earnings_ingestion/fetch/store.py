@@ -20,6 +20,7 @@ from earnings_ingestion.fetch.records import SOURCE_ID_PATTERN, Retrieval
 
 EXTENSIONS = {
     "application/json": ".json",
+    "application/pdf": ".pdf",
     "application/xml": ".xml",
     "text/html": ".html",
     "text/plain": ".txt",

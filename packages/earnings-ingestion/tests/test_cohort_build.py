@@ -279,3 +279,23 @@ def test_the_manifest_records_rights_for_every_source_it_cites(repo) -> None:
     assert {s.source_id: s.rights_status for s in manifest.sources}["sec-edgar"] == (
         "local_only"
     )
+
+
+def test_a_pdf_notice_keeps_the_intervals_and_cites_through_pdftext_1(
+    pdf_cohort,
+) -> None:
+    frozen = load_manifest(
+        pdf_cohort / DIRECTORY / "manifests" / "djia-synthetic-v1.json"
+    )
+    built = build(pdf_cohort, **OPTIONS)
+    assert built.intervals == frozen.intervals
+    assert built.report.blocking == ()
+    pdf = next((pdf_cohort / DIRECTORY / "raw" / "synthetic-index").glob("*.pdf"))
+    notice = [a for a in built.assertions if a.evidence_id == "index-2024-11-01"]
+    assert {a.security_id for a in notice} == {"corvid-common", "borealis-common"}
+    assert {a.raw_content_hash for a in notice} == {pdf.stem}
+    assert {
+        locator.canonicalization_version
+        for assertion in notice
+        for locator in assertion.evidence_locators
+    } == {"pdftext-1"}

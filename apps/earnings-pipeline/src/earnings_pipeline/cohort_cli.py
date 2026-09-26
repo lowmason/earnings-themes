@@ -6,12 +6,13 @@
     earnings-pipeline cohort cite SOURCE_ID SHA256 --find TEXT [--line]
     earnings-pipeline cohort build
     earnings-pipeline cohort freeze
-    earnings-pipeline cohort terms URL
+    earnings-pipeline cohort terms URL [--saved FILE]
     earnings-pipeline cohort verify-live
 
 Only ``fetch``, ``fetch-sec``, ``terms``, and ``verify-live`` use the network, each
-through its client's access policy; ``build`` and ``freeze`` read committed files and
-saved artifacts alone. ``cite`` prints the TOML to commit on stdout and the cited text
+through its client's access policy, and ``terms --saved`` hashes a copy saved in a
+browser without it; ``build`` and ``freeze`` read committed files and saved
+artifacts alone. ``cite`` prints the TOML to commit on stdout and the cited text
 on stderr only, so no source wording is pasted into a committed file by accident.
 """
 
@@ -23,6 +24,7 @@ from urllib.parse import urlsplit
 
 import typer
 from earnings_ingestion.cohort.acquire import (
+    check_media_type,
     cite,
     fetch_page,
     fetch_sec,
@@ -263,8 +265,28 @@ def freeze_command(context: typer.Context) -> None:
 
 
 @cohort.command("terms")
-def terms_command(context: typer.Context, url: str) -> None:
-    """Print the hash a register records for a terms page."""
+def terms_command(
+    context: typer.Context,
+    url: str,
+    saved: Annotated[
+        Path | None,
+        typer.Option(help="A copy saved in a browser: hash it, and send nothing."),
+    ] = None,
+    media_type: Annotated[str, typer.Option(help="The saved copy's type.")] = (
+        "text/html"
+    ),
+) -> None:
+    """Print the hash a register records for a terms page: fetched from URL, or
+    read from a copy that a person saved in a browser (plan 6, P6-24)."""
+    if saved is not None:
+        body = saved.read_bytes()
+        try:
+            check_media_type(body, media_type)
+            digest = terms_digest(body, media_type)
+        except ValueError as error:
+            _fail(f"Refused: {error}")
+        typer.echo(f'terms_sha256 = "{digest}"')
+        return
     layout: Layout = context.obj
     host = urlsplit(url).hostname or ""
     try:

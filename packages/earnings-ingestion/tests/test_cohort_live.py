@@ -92,3 +92,31 @@ def test_changes_and_refusals_are_recorded_not_hidden(cohort_repo) -> None:
     assert outcomes[refused] == "refused"
     assert outcomes[blocked] == "refused"
     assert result.rebuilt_content_hash == result.frozen_content_hash
+
+
+def test_the_evidence_refetch_accepts_an_unchanged_pdf(pdf_cohort) -> None:
+    served = pages(pdf_cohort)
+    notice = "https://index.example/notices/index-2024-11-01"
+    pdf = next((pdf_cohort / FIXTURE_DIR / "raw" / "synthetic-index").glob("*.pdf"))
+    served[notice] = (pdf.read_bytes(), "application/pdf")
+    serve = fake(served)
+
+    def fetch(url, types):
+        """The clients refuse a response whose media type was not asked for."""
+        fetched = serve(url, types)
+        assert fetched.retrieval.media_type in types
+        return fetched
+
+    result = verify_live(
+        pdf_cohort,
+        fetch_web=fetch,
+        fetch_sec=fake(served),
+        now=NOW,
+        options=build_options(),
+    )
+    (check,) = [check for check in result.checks if check.url == notice]
+    assert (check.outcome, check.retrieval.media_type) == (
+        "unchanged",
+        "application/pdf",
+    )
+    assert result.build_problems == ()

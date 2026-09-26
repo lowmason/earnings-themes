@@ -169,3 +169,50 @@ def test_fetch_saves_pages_through_the_web_client(repo, monkeypatch) -> None:
     result = run(repo, "fetch", "synthetic-index", "https://index.example/notices/new")
     assert result.exit_code == 0, result.output
     assert sha256_hex(body) in result.stdout
+
+
+def test_register_saves_a_pdf_and_refuses_a_contradicting_type(
+    repo, tmp_path_factory
+) -> None:
+    body = b"%PDF-1.4\n%%EOF\n"
+    saved = tmp_path_factory.mktemp("browser") / "notice.pdf"
+    saved.write_bytes(body)
+    register = [
+        "register",
+        "synthetic-index",
+        str(saved),
+        "--url",
+        "https://index.example/notices/by-hand.pdf",
+        "--saved-at",
+        "2026-09-29T10:00:00",
+    ]
+    stored = run(repo, *register, "--media-type", "application/pdf")
+    assert stored.exit_code == 0, stored.output
+    assert f"/synthetic-index/{sha256_hex(body)}.pdf" in stored.stdout
+    refused = run(repo, *register, "--media-type", "text/html")
+    assert refused.exit_code == 1
+    assert "Refused: text/html contradicts the bytes" in refused.stderr
+
+
+def test_terms_hashes_a_saved_copy_without_a_client(
+    repo, monkeypatch, tmp_path_factory
+) -> None:
+    page = b"<html><body><p>Terms of use.</p></body></html>"
+    saved = tmp_path_factory.mktemp("browser") / "terms.html"
+    saved.write_bytes(page)
+    for name in ("EDGAR_IDENTITY", "SOURCE_IDENTITY"):
+        monkeypatch.delenv(name, raising=False)
+
+    def no_client(*args, **kwargs):
+        raise AssertionError("a saved copy needs no client")
+
+    monkeypatch.setattr(cohort_cli, "open_web_client", no_client)
+    monkeypatch.setattr(cohort_cli, "open_sec_client", no_client)
+    terms = ["terms", "https://terms.example/terms-of-use", "--saved", str(saved)]
+    hashed = run(repo, *terms)
+    assert hashed.exit_code == 0, hashed.output
+    digest = cohort_cli.terms_digest(page, "text/html")
+    assert hashed.stdout == f'terms_sha256 = "{digest}"\n'
+    refused = run(repo, *terms, "--media-type", "application/pdf")
+    assert refused.exit_code == 1
+    assert "Refused: application/pdf contradicts the bytes" in refused.stderr

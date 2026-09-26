@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from earnings_ingestion.cohort.acquire import HTML, terms_digest
+from earnings_ingestion.cohort.acquire import HTML, PDF, terms_digest
 from earnings_ingestion.cohort.build import COHORT_STORE, CohortError, build
 from earnings_ingestion.cohort.config import UNIVERSE_DIR, load_cohort_config
 from earnings_ingestion.cohort.freeze import frozen_manifests
@@ -94,7 +94,7 @@ def verify_live(
             )
             continue
         try:
-            fetched = fetch(url, ANY if purpose == "terms" else HTML)
+            fetched = fetch(url, ANY if purpose == "terms" else HTML | PDF)
         except RobotsRefusal as exc:
             outcome, detail, retrieval = "refused", str(exc), None
         except AccessStop as exc:

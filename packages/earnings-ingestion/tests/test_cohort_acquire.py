@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 from earnings_core import RightsStatus, sha256_hex
 from earnings_ingestion.cohort.acquire import (
+    check_media_type,
     cite,
     fetch_page,
     fetch_sec,
@@ -200,3 +201,48 @@ def test_a_terms_page_is_hashed_by_its_canonical_text() -> None:
         page.replace(b"<p>", b"<p class='x'>"), "text/html"
     )
     assert terms_digest(b"plain", "text/plain") == sha256_hex(b"plain")
+
+
+@pytest.mark.parametrize(
+    ("body", "media_type", "found"),
+    [
+        (b"%PDF-1.4\n%%EOF\n", "text/html", "which are a PDF"),
+        (b"<p>A notice.</p>", "application/pdf", "which are not a PDF"),
+    ],
+)
+def test_bytes_that_contradict_their_type_are_refused(
+    cohort_repo, body, media_type, found
+) -> None:
+    refusal = f"{media_type} contradicts the bytes, {found}"
+    with pytest.raises(ValueError, match=refusal):
+        check_media_type(body, media_type)
+    store = ArtifactStore(cohort_repo / RAW, cohort_repo)
+    with pytest.raises(ValueError, match=refusal):
+        register_saved(
+            store,
+            registers_of(cohort_repo),
+            "synthetic-index",
+            body,
+            url="https://index.example/notices/saved",
+            media_type=media_type,
+            saved_at=NOW,
+        )
+    assert not list(
+        (cohort_repo / RAW / "synthetic-index").glob(f"{sha256_hex(body)}.*")
+    )
+
+
+def test_bytes_that_match_their_type_pass() -> None:
+    check_media_type(b"%PDF-1.7\n", "application/pdf")
+    check_media_type(b"<p>A notice.</p>", "text/html")
+    check_media_type(b"Terms.", "text/plain; charset=utf-8")
+
+
+def test_a_pdf_page_is_fetched_and_saved_as_a_pdf(cohort_repo, make_pdf) -> None:
+    store = ArtifactStore(cohort_repo / RAW, cohort_repo)
+    pdf = make_pdf([(72, 720, "A notice.")])
+    url = "https://index.example/notices/a.pdf"
+    fetch = fake({url: (pdf, "application/pdf")}, [])
+    ref = fetch_page(fetch, store, registers_of(cohort_repo), "synthetic-index", url)
+    assert ref.media_type == "application/pdf"
+    assert ref.storage_ref.endswith(f"/synthetic-index/{sha256_hex(pdf)}.pdf")

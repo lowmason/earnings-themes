@@ -4,7 +4,7 @@ browser: browser capture stays behind an optional extra (A §173; B3).
 Only ``earnings_ingestion.browser.selenium_capture`` may load a browser library, and
 only when something imports it; tests/contracts/test_import_scan.py checks the source
 statically as well. The cohort's offline path, from saved artifacts to a frozen
-manifest, loads no network client (A §410).
+manifest, loads no network client (A §410), and neither does pdftext-1's PDF reader.
 """
 
 import json
@@ -47,6 +47,7 @@ def modules_loaded_by(module: str) -> set[str]:
         "earnings_ingestion.fetch.robots",
         "earnings_ingestion.sec.client",
         "earnings_ingestion.cohort.build",
+        "earnings_ingestion.cohort.pdftext",
         "earnings_ingestion.cohort.web",
     ],
 )
@@ -75,6 +76,8 @@ def full_modules_loaded_by(module: str) -> set[str]:
     [
         "earnings_ingestion.cohort.build",
         "earnings_ingestion.cohort.freeze",
+        "earnings_ingestion.cohort.locators",
+        "earnings_ingestion.cohort.pdftext",
         "earnings_ingestion.cohort.synthetic",
         "earnings_ingestion.sec.data",
         "earnings_ingestion.sec.urls",

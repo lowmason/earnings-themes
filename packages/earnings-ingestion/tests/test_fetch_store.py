@@ -121,3 +121,13 @@ def test_a_retrieval_is_utc_and_records_status_only_for_http() -> None:
         )
     with pytest.raises(ValidationError, match="http_status"):
         Retrieval(**fields | {"retrieval_method": RetrievalMethod.SAVED_BY_USER})
+
+
+def test_a_pdf_is_stored_as_a_pdf(tmp_path) -> None:
+    body = b"%PDF-1.4\n%%EOF\n"
+    record = retrieval(body).model_copy(
+        update={"media_type": "application/pdf", "content_type": "application/pdf"}
+    )
+    ref = store_in(tmp_path).put("press", body, record, **RIGHTS)
+    assert ref.storage_ref == f"data/raw/cohort/press/{sha256_hex(body)}.pdf"
+    assert (tmp_path / ref.storage_ref).read_bytes() == body

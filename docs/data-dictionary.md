@@ -630,7 +630,7 @@ What kind of source an item comes from (P §Membership evidence and source right
 
 | Value | Meaning |
 | --- | --- |
-| `text_span` | Half-open code-point offsets into an HTML artifact's walker-1 canonical text |
+| `text_span` | Half-open code-point offsets into an artifact's citation text: walker-1's canonical text for HTML, pdftext-1's text for a PDF |
 | `json_pointer` | An RFC 6901 pointer into a JSON artifact |
 
 ### `BoundTiming`
@@ -714,7 +714,7 @@ Where cited evidence sits in an artifact, and the hash of what it says there.
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `kind` | `LocatorKind` | Which kind of locator |
-| `canonicalization_version` | ID part or null | `walker-1` for a text span; null for a pointer |
+| `canonicalization_version` | ID part or null | A text span's citation-text policy: `walker-1` for HTML, `pdftext-1` for a PDF; null for a pointer |
 | `canonical_sha256` | 64 lowercase hex or null | The hash of the artifact's canonical text, for a text span |
 | `start` | int ≥ 0 or null | A text span's first code point |
 | `end` | int ≥ 0 or null | A text span's end, exclusive; `start < end` |
@@ -1022,7 +1022,7 @@ then canonical JSON, into strict models, so an unknown key is refused.
 | `source_id` | register slug | Registered for the role |
 | `url` | string | A URL the artifact was retrieved or saved from |
 | `artifact_sha256` | 64 lowercase hex | The saved artifact |
-| `canonical_sha256` | 64 lowercase hex | Its walker-1 canonical text's hash |
+| `canonical_sha256` | 64 lowercase hex | Its citation text's hash: walker-1's for HTML, pdftext-1's for a PDF |
 | `published_on` | date | First publication, as the source states it |
 | `published_at` | UTC datetime or null | The time, if stated |
 | `role` | `anchor` or `corroboration` | Its use |
@@ -1037,7 +1037,7 @@ then canonical JSON, into strict models, so an unknown key is refused.
 | `source_id` | register slug | An official source registered for `change` |
 | `url` | string | A URL the artifact was retrieved or saved from |
 | `artifact_sha256` | 64 lowercase hex | The saved artifact |
-| `canonical_sha256` | 64 lowercase hex | Its walker-1 canonical text's hash |
+| `canonical_sha256` | 64 lowercase hex | Its citation text's hash: walker-1's for HTML, pdftext-1's for a PDF |
 | `published_on` | date | First publication |
 | `published_at` | UTC datetime or null | The time, if stated |
 | `announced_on` | date | The announcement's date |

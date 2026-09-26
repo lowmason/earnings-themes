@@ -2,9 +2,10 @@
 
 Two locator kinds exist (plan 6, P6-9):
 
-- ``text_span``: code-point offsets into the walker-1 canonical text of an HTML
-  artifact. The locator records the canonicalization version and the canonical text's
-  hash, so a different text can never silently move the span.
+- ``text_span``: code-point offsets into an artifact's citation text. The media type
+  chooses the policy (P6-24): an HTML artifact's walker-1 canonical text, or a PDF's
+  pdftext-1 text. The locator records the policy and the text's hash, so a different
+  text can never silently move the span.
 - ``json_pointer``: an RFC 6901 pointer into a JSON artifact.
 
 ``cited_sha256`` hashes the cited content: the span's text as UTF-8, or the canonical
@@ -18,7 +19,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from functools import cached_property
 
-from earnings_core import ArtifactRef, sha256_hex
+from earnings_core import ArtifactRef, hash_canonical_text, sha256_hex
 
 from earnings_ingestion.canonical import (
     CANONICALIZATION_VERSION,
@@ -26,7 +27,10 @@ from earnings_ingestion.canonical import (
     canonicalize,
 )
 from earnings_ingestion.cohort.digests import canonical_json
+from earnings_ingestion.cohort.pdftext import PDFTEXT_VERSION, PdfTextError, pdf_text
 from earnings_ingestion.cohort.records import Citation, EvidenceLocator, LocatorKind
+
+_POLICIES = {"text/html": CANONICALIZATION_VERSION, "application/pdf": PDFTEXT_VERSION}
 
 
 class LocatorError(ValueError):
@@ -61,17 +65,29 @@ def resolve_json_pointer(document: object, pointer: str) -> object:
 
 
 class ArtifactText:
-    """One saved artifact, read once: canonical text if HTML, parsed data if JSON."""
+    """One saved artifact, read once: citation text if HTML or PDF, data if JSON."""
 
     def __init__(self, body: bytes, media_type: str) -> None:
         self.body = body
         self.media_type = _essence(media_type)
 
+    @property
+    def version(self) -> str:
+        """The citation-text policy the media type chooses: walker-1 for HTML,
+        pdftext-1 for a PDF."""
+        if self.media_type not in _POLICIES:
+            raise LocatorError(f"a text span needs HTML or PDF, not {self.media_type}")
+        return _POLICIES[self.media_type]
+
     @cached_property
     def canonical(self) -> tuple[str, str]:
-        """walker-1's canonical text and its hash."""
-        if self.media_type != "text/html":
-            raise LocatorError(f"a text span needs HTML, not {self.media_type}")
+        """The citation text, under ``version``, and its hash."""
+        if self.version == PDFTEXT_VERSION:
+            try:
+                text = pdf_text(self.body)
+            except PdfTextError as exc:
+                raise LocatorError(str(exc)) from exc
+            return text, hash_canonical_text(text)
         result = canonicalize(
             self.body, source_document_id="cohort-evidence", media_type="text/html"
         )
@@ -94,7 +110,7 @@ class ArtifactText:
             raise LocatorError(f"[{start}, {end}) is outside [0, {len(text)})")
         return EvidenceLocator(
             kind=LocatorKind.TEXT_SPAN,
-            canonicalization_version=CANONICALIZATION_VERSION,
+            canonicalization_version=self.version,
             canonical_sha256=text_hash,
             start=start,
             end=end,
@@ -114,7 +130,8 @@ class ArtifactText:
 
     def line(self, needle: str, occurrence: int = 1) -> EvidenceLocator:
         """The span of the whole line holding the ``occurrence``-th ``needle``.
-        walker-1 writes a table row as one line of tab-separated cells, so this
+        walker-1 writes a table row as one line of tab-separated cells, and
+        pdftext-1 a PDF table's row as one line of space-separated cells, so this
         cites a roster row with every cell in it."""
         found = self.find(needle, occurrence)
         text, _ = self.canonical
@@ -139,12 +156,14 @@ class ArtifactText:
         return canonical_json(value).decode("utf-8")
 
     def verify(self, locator: EvidenceLocator) -> None:
-        """Raise ``LocatorError`` unless ``locator`` still cites what it hashed."""
+        """Raise ``LocatorError`` unless ``locator`` still cites what it hashed. A
+        span made under another policy than this artifact's is refused before any
+        text is extracted."""
         if locator.kind is LocatorKind.TEXT_SPAN:
-            if locator.canonicalization_version != CANONICALIZATION_VERSION:
+            if locator.canonicalization_version != self.version:
                 raise LocatorError(
                     f"the span was made under {locator.canonicalization_version},"
-                    f" not {CANONICALIZATION_VERSION}"
+                    f" not {self.version}"
                 )
             if self.canonical[1] != locator.canonical_sha256:
                 raise LocatorError("the artifact's canonical text is not the one cited")

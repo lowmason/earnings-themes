@@ -40,6 +40,7 @@ from earnings_ingestion.sec.urls import (
 
 JSON = frozenset({"application/json"})
 HTML = frozenset({"text/html"})
+PDF = frozenset({"application/pdf"})
 XML = frozenset({"application/xml", "text/xml"})
 
 
@@ -67,10 +68,20 @@ def fetch_page(
     source_id: str,
     url: str,
 ) -> ArtifactRef:
-    """Fetch one HTML page of a registered source and save it."""
+    """Fetch one HTML or PDF page of a registered source and save it."""
     registers.entry(source_id)
-    fetched = fetch(url, HTML)
+    fetched = fetch(url, HTML | PDF)
     return _put(store, registers, source_id, fetched.body, fetched.retrieval)
+
+
+def check_media_type(body: bytes, media_type: str) -> None:
+    """Refuse bytes that contradict ``media_type`` (plan 6, P6-24): a PDF
+    declared as anything else, or a declared PDF without the %PDF- signature.
+    """
+    declared_pdf = media_type.partition(";")[0].strip().lower() in PDF
+    if body.startswith(b"%PDF-") != declared_pdf:
+        found = "not a PDF" if declared_pdf else "a PDF"
+        raise ValueError(f"{media_type} contradicts the bytes, which are {found}")
 
 
 def register_saved(
@@ -85,6 +96,7 @@ def register_saved(
 ) -> ArtifactRef:
     """Save a page a person saved in a browser from ``url`` at ``saved_at``."""
     registers.entry(source_id)
+    check_media_type(body, media_type)
     retrieval = Retrieval(
         request_url=url,
         final_url=url,
