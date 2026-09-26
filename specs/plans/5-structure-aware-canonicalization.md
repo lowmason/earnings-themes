@@ -1,5 +1,7 @@
 # Structure-Aware Canonicalization, Plan B (Stage 3): the Browser Diagnostic Path — Implementation Plan
 
+**Status: COMPLETE (2026-09-26)** — executed via executing-plans; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > Roadmap: specs/evidence-linked-theme-extraction-roadmap.md, Stage 3 — on
@@ -1026,7 +1028,7 @@ together (PB-17).
 
   Every later task uses them.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Replace `tests/test_pytest_configuration.py` with:
 
@@ -1161,13 +1163,13 @@ def test_same_named_test_modules_do_not_collide(tmp_path: Path) -> None:
     assert "2 passed" in result.stdout
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `uv run --locked --all-packages pytest tests/test_pytest_configuration.py -q`
 
 Expected: `4 failed, 5 passed`. The four new tests fail because `browser` is not yet a registered marker, and strict mode refuses an unregistered one.
 
-- [ ] **Step 3: Register the marker and deselect it by default**
+- [x] **Step 3: Register the marker and deselect it by default**
 
 Replace `pyproject.toml` with:
 
@@ -1229,13 +1231,13 @@ markers = [
 ]
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest tests/test_pytest_configuration.py -q`
 
 Expected: `9 passed`.
 
-- [ ] **Step 5: Change the documented command**
+- [x] **Step 5: Change the documented command**
 
 `AGENTS.md` is cited by line number, so its line 206 changes in place and the file
 keeps 837 lines. Apply the replacements below. Each must match exactly once. If one
@@ -1293,7 +1295,7 @@ the five files of this task, `5 files changed, 62 insertions(+), 10 deletions(-)
 `AGENTS.md` 2, `CLAUDE.md` 7, `README.md` 9, `pyproject.toml` 8, and
 `tests/test_pytest_configuration.py` 46.
 
-- [ ] **Step 6: Run the checks**
+- [x] **Step 6: Run the checks**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q
@@ -1302,7 +1304,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `495 passed`, then `All checks passed!` and `116 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -1376,7 +1378,7 @@ tests exercise every record without a browser.
     - The fixtures `make_capture` (returns `build_capture`) and `payload` (a deep copy
       of `PAYLOAD`).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/conftest.py`:
 
@@ -1722,13 +1724,13 @@ def test_the_fake_is_unavailable_for_anything_else() -> None:
     assert fake.environment is ENVIRONMENT
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_browser_records.py packages/earnings-ingestion/tests/test_browser_renderer.py -q`
 
 Expected: an error while loading `conftest.py`: `ModuleNotFoundError: No module named 'earnings_ingestion.browser'`.
 
-- [ ] **Step 3: Write the records, the policy, the metadata script, and the renderer**
+- [x] **Step 3: Write the records, the policy, the metadata script, and the renderer**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/browser/records.py`:
 
@@ -2546,13 +2548,13 @@ __all__ = [
 ]
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_browser_records.py packages/earnings-ingestion/tests/test_browser_renderer.py -q`
 
 Expected: `19 passed`.
 
-- [ ] **Step 5: Extend the drift test to the capture records**
+- [x] **Step 5: Extend the drift test to the capture records**
 
 Replace `tests/contracts/test_data_dictionary.py` with:
 
@@ -2645,7 +2647,7 @@ Run: `uv run --locked --all-packages pytest tests/contracts/test_data_dictionary
 
 Expected: `10 failed, 22 passed`: the eight new models' fields and the two new enums' values are not documented yet.
 
-- [ ] **Step 6: Document the capture records**
+- [x] **Step 6: Document the capture records**
 
 Append to `docs/data-dictionary.md`:
 
@@ -2818,7 +2820,7 @@ Run: `uv run --locked --all-packages pytest tests/contracts/test_data_dictionary
 
 Expected: `32 passed`.
 
-- [ ] **Step 7: Run the checks**
+- [x] **Step 7: Run the checks**
 
 ```bash
 python3 /tmp/plan5-escapes.py packages/earnings-ingestion/src/earnings_ingestion/browser/*.py packages/earnings-ingestion/tests/conftest.py packages/earnings-ingestion/tests/test_browser_*.py tests/contracts/test_data_dictionary.py
@@ -2828,7 +2830,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `524 passed`; `All checks passed!` and `124 files already formatted`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git log --oneline -3
@@ -2873,7 +2875,7 @@ Two ways to keep a capture:
     `from_capture_json(text) -> RenderedCapture`.
   - `earnings_ingestion.browser` also exports `CaptureStore` and `capture_once`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_browser_store.py`:
 
@@ -3043,13 +3045,13 @@ def test_non_ascii_text_is_escaped(make_capture: Make, payload: dict) -> None:
     assert from_capture_json(text) == record
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_browser_store.py packages/earnings-ingestion/tests/test_browser_serialize.py -q`
 
 Expected: `2 errors during collection`, each a `ModuleNotFoundError`: no module named `earnings_ingestion.browser.store`, and none named `earnings_ingestion.browser.serialize`.
 
-- [ ] **Step 3: Write the store, the format, and the public API**
+- [x] **Step 3: Write the store, the format, and the public API**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/browser/store.py`:
 
@@ -3255,13 +3257,13 @@ __all__ = [
 This is block 2 for that path: extract it with
 `python3 /tmp/plan5-extract.py packages/earnings-ingestion/src/earnings_ingestion/browser/__init__.py 2`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_browser_store.py packages/earnings-ingestion/tests/test_browser_serialize.py -q`
 
 Expected: `9 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan5-escapes.py packages/earnings-ingestion/src/earnings_ingestion/browser/*.py packages/earnings-ingestion/tests/test_browser_store.py packages/earnings-ingestion/tests/test_browser_serialize.py
@@ -3271,7 +3273,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `533 passed`; `All checks passed!` and `128 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -3317,7 +3319,7 @@ that they build themselves: no test downloads anything.
 - Produces, in the application: `earnings_pipeline.cli.app`, a typer app with the
   command `browser setup [--cache PATH]`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_browser_install.py`:
 
@@ -3527,13 +3529,15 @@ def test_setup_reports_a_refused_archive(monkeypatch, tmp_path: Path) -> None:
     assert "Refused: chrome: got 3 bytes" in result.output
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_browser_install.py apps/earnings-pipeline/tests/test_cli.py -q`
 
 Expected: `2 errors during collection`: `ModuleNotFoundError: No module named 'earnings_ingestion.browser.install'`.
 
-- [ ] **Step 3: Write the manifest and the install**
+- [x] **Step 3: Write the manifest and the install**
+
+> Deviation: the final review found that `safe_extract` let links compose a way out of the destination, which PB-3 did not consider; after Task 15, `2b3fc96` made links descend only and checks every entry where it resolves, with two tests.
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/browser/chrome-for-testing.toml`:
 
@@ -3798,7 +3802,7 @@ def download(archive: Archive, path: Path) -> None:
                 out.write(chunk)
 ```
 
-- [ ] **Step 4: Write the command**
+- [x] **Step 4: Write the command**
 
 Create `apps/earnings-pipeline/src/earnings_pipeline/cli.py`:
 
@@ -3888,7 +3892,7 @@ requires = ["uv_build>=0.12.15,<0.13.0"]
 build-backend = "uv_build"
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_browser_install.py apps/earnings-pipeline/tests/test_cli.py -q
@@ -3897,7 +3901,7 @@ uv run --locked --all-packages earnings-pipeline browser --help
 
 Expected: uv rebuilds `earnings-pipeline` once, for its new script. Then `13 passed`, then typer's help for `earnings-pipeline browser`, which lists one command, `setup`.
 
-- [ ] **Step 6: Run the checks**
+- [x] **Step 6: Run the checks**
 
 ```bash
 python3 /tmp/plan5-escapes.py packages/earnings-ingestion/src/earnings_ingestion/browser/install.py packages/earnings-ingestion/tests/test_browser_install.py apps/earnings-pipeline/src/earnings_pipeline/cli.py apps/earnings-pipeline/tests/test_cli.py
@@ -3908,7 +3912,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `uv lock --check` prints `Resolved 140 packages` and exits 0; `546 passed`; `All checks passed!` and `132 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -3958,7 +3962,7 @@ permission.
   - `BROWSER_ENGINE = "Chrome for Testing"` and `TILE_HEIGHT = 4096`, the height of
     one screenshot tile.
 
-- [ ] **Step 1: Add the extra and lock it**
+- [x] **Step 1: Add the extra and lock it**
 
 Replace `packages/earnings-ingestion/pyproject.toml` with:
 
@@ -4016,7 +4020,7 @@ Expected:
 No other locked version may change. If `uv lock` moves any other package, stop and
 report.
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Create `tests/contracts/test_import_scan.py`:
 
@@ -4412,13 +4416,13 @@ def test_without_binaries_every_capture_is_unavailable(adapter) -> None:
     assert capture.reason is CaptureReason.BROWSER_UNAVAILABLE
 ```
 
-- [ ] **Step 3: Run the scan to verify it fails**
+- [x] **Step 3: Run the scan to verify it fails**
 
 Run: `uv run --locked --all-packages pytest tests/contracts/test_import_scan.py packages/earnings-ingestion/tests/test_import_boundaries.py -q`
 
 Expected: `1 failed, 11 passed`. `test_the_adapter_is_the_one_module_that_imports_a_browser` fails with `FileNotFoundError`, because the adapter does not exist yet.
 
-- [ ] **Step 4: Write the adapter**
+- [x] **Step 4: Write the adapter**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/browser/selenium_capture.py`:
 
@@ -4964,7 +4968,7 @@ def _first_line(error: Exception) -> str:
     return f"{type(error).__name__}: {text[0] if text else ''}"[:300]
 ```
 
-- [ ] **Step 5: Run the boundary checks and the default suite**
+- [x] **Step 5: Run the boundary checks and the default suite**
 
 ```bash
 python3 /tmp/plan5-escapes.py packages/earnings-ingestion/src/earnings_ingestion/browser/selenium_capture.py packages/earnings-ingestion/tests/test_selenium_capture.py packages/earnings-ingestion/tests/test_import_boundaries.py tests/contracts/test_import_scan.py
@@ -4975,7 +4979,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `12 passed`; `557 passed, 13 deselected`; `All checks passed!` and `135 files already formatted`. The 13 deselected tests are the browser tests. The adapter is imported by a fixture, not at collection, so they are deselected whether or not the extra is installed.
 
-- [ ] **Step 6: Name the extra in the README**
+- [x] **Step 6: Name the extra in the README**
 
 ```bash
 python3 - <<'EOF'
@@ -4998,7 +5002,7 @@ EOF
 
 Expected: `README.md updated`.
 
-- [ ] **Step 7: Install the pinned browser (human gate)**
+- [x] **Step 7: Install the pinned browser (human gate)**
 
 This step downloads, so it waits for the user (Human gates). In subagent-driven
 execution a subagent stops here and reports back, and the controller asks. Ask in
@@ -5030,7 +5034,7 @@ driver: ~/Library/Caches/earnings-themes/chrome-for-testing/154.0.8037.57/mac-ar
 `Refused: ...` means an archive's size or hash is not the manifest's. Stop and
 report it: never edit the manifest to match.
 
-- [ ] **Step 8: Run the browser checks**
+- [x] **Step 8: Run the browser checks**
 
 ```bash
 uv run --locked --all-packages --extra browser-capture pytest packages/earnings-ingestion/tests/test_selenium_capture.py -m browser -q -rsP
@@ -5048,7 +5052,7 @@ reason says which.
 
 Record the printed environment line; Task 15's verification record quotes it.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git log --oneline -3
@@ -5099,7 +5103,7 @@ Nothing here maps onto canonical text yet: Task 7 does that.
   `block(*runs, tag="p", cell=None, **context)`, `table(*rows, parent=None, head=0, th=False)`
   and `cells(rows, table_index=0)`, and the fixture `parts`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Replace `packages/earnings-ingestion/tests/conftest.py` with:
 
@@ -5571,13 +5575,13 @@ def test_a_nested_data_table_is_read_in_place(parts) -> None:
     ]
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_layout_blocks.py -q`
 
 Expected: `1 error during collection`: `ModuleNotFoundError: No module named 'earnings_ingestion.layout'`.
 
-- [ ] **Step 3: Write layout-1's blocks**
+- [x] **Step 3: Write layout-1's blocks**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/layout/__init__.py`:
 
@@ -6017,13 +6021,13 @@ def _is_data_table(table: _Table) -> bool:
     return rows_with_text >= 2 and has_multi_cell_row
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_layout_blocks.py -q`
 
 Expected: `19 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan5-escapes.py packages/earnings-ingestion/src/earnings_ingestion/layout/*.py packages/earnings-ingestion/tests/conftest.py packages/earnings-ingestion/tests/test_layout_blocks.py
@@ -6033,7 +6037,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `576 passed, 13 deselected`; `All checks passed!` and `138 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -6073,7 +6077,7 @@ exactly one reading.
     A placed unit has `start` and no reason. An unplaced one has
     `LOCATOR_NOT_FOUND` or `AMBIGUOUS_OCCURRENCE`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_layout_align.py`:
 
@@ -6174,13 +6178,13 @@ def test_an_empty_text_holds_nothing(text: str) -> None:
     assert places(text, ["A"]) == [NOT_FOUND]
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_layout_align.py -q`
 
 Expected: `1 error during collection`: `ModuleNotFoundError: No module named 'earnings_ingestion.layout.align'`.
 
-- [ ] **Step 3: Write the policy**
+- [x] **Step 3: Write the policy**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/layout/align.py`:
 
@@ -6390,13 +6394,13 @@ def _longest_ending(values: Sequence[int]) -> list[int]:
     return lengths
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_layout_align.py -q`
 
 Expected: `12 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan5-escapes.py packages/earnings-ingestion/src/earnings_ingestion/layout/align.py packages/earnings-ingestion/tests/test_layout_align.py
@@ -6406,7 +6410,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `588 passed, 13 deselected`; `All checks passed!` and `140 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -6469,7 +6473,7 @@ as the spec's pre-registered comparison defines them. It is the only new module 
     `PROSE_ROW = "prose_row"`, and
     `fired(document, elements) -> tuple[str, ...]`, in that order.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_layout_extract.py`:
 
@@ -6658,13 +6662,13 @@ def test_each_trigger_fires_exactly_when_its_condition_holds(
     assert triggers(body) == expected
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_layout_extract.py packages/earnings-ingestion/tests/test_triggers.py -q`
 
 Expected: `2 errors during collection`, each a `ModuleNotFoundError`: no module named `earnings_ingestion.layout.extract`, and none named `earnings_ingestion.canonical.triggers`.
 
-- [ ] **Step 3: Write the records, the extractor, the triggers, and the public API**
+- [x] **Step 3: Write the records, the extractor, the triggers, and the public API**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/layout/records.py`:
 
@@ -7043,13 +7047,13 @@ __all__ = [
 This is block 2 for that path: extract it with
 `python3 /tmp/plan5-extract.py packages/earnings-ingestion/src/earnings_ingestion/layout/__init__.py 2`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_layout_extract.py packages/earnings-ingestion/tests/test_triggers.py -q`
 
 Expected: `11 passed`.
 
-- [ ] **Step 5: Extend the drift test to the layout records, and document them**
+- [x] **Step 5: Extend the drift test to the layout records, and document them**
 
 Replace `tests/contracts/test_data_dictionary.py` with:
 
@@ -7190,7 +7194,7 @@ Run: `uv run --locked --all-packages pytest tests/contracts/test_data_dictionary
 
 Expected: `34 passed`.
 
-- [ ] **Step 6: Extend the runtime boundary checks to the layout modules**
+- [x] **Step 6: Extend the runtime boundary checks to the layout modules**
 
 Replace `packages/earnings-ingestion/tests/test_import_boundaries.py` with:
 
@@ -7248,7 +7252,7 @@ def test_importing_ingestion_loads_nothing_forbidden(module: str) -> None:
 This is block 2 for that path: extract it with
 `python3 /tmp/plan5-extract.py packages/earnings-ingestion/tests/test_import_boundaries.py 2`.
 
-- [ ] **Step 7: Run the checks**
+- [x] **Step 7: Run the checks**
 
 ```bash
 python3 /tmp/plan5-escapes.py packages/earnings-ingestion/src/earnings_ingestion/layout/*.py packages/earnings-ingestion/src/earnings_ingestion/canonical/triggers.py packages/earnings-ingestion/tests/test_layout_extract.py packages/earnings-ingestion/tests/test_triggers.py packages/earnings-ingestion/tests/test_import_boundaries.py tests/contracts/test_data_dictionary.py
@@ -7258,7 +7262,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `603 passed, 13 deselected`; `All checks passed!` and `145 files already formatted`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git log --oneline -3
@@ -7307,7 +7311,7 @@ to until the pre-registration verifies.
     - `releases` refuses unless `preregister.py verify` passes (Task 10).
   - **The committed contract capture.**
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Replace `tests/contracts/test_element_schema_parsers.py` with:
 
@@ -7481,13 +7485,13 @@ def test_the_pinned_browser_still_renders_the_committed_capture() -> None:
     )
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `uv run --locked --all-packages pytest tests/contracts/test_element_schema_parsers.py -q`
 
 Expected: `1 error during collection`: `FileNotFoundError` for `tests/fixtures/browser/contract-release.html`.
 
-- [ ] **Step 3: Write the contract release, the capture script, and the attribute**
+- [x] **Step 3: Write the contract release, the capture script, and the attribute**
 
 Create `tests/fixtures/browser/contract-release.html`:
 
@@ -7608,7 +7612,7 @@ tests/fixtures/browser/* -text
 The attribute keeps Git from converting line endings in the fixtures, as it already
 does for the release sources and the canonical fixtures.
 
-- [ ] **Step 4: Capture the contract release**
+- [x] **Step 4: Capture the contract release**
 
 ```bash
 uv run --locked --all-packages --extra browser-capture python tests/integration/capture_browser_fixtures.py contract
@@ -7617,7 +7621,7 @@ uv run --locked --all-packages --extra browser-capture python tests/integration/
 
 Expected: `wrote tests/fixtures/browser/contract-release.capture.json (completed)`, then `refused: layout-1 is not pre-registered: preregister.py does not exist yet`, with exit status 1. The refusal is the point: no release can be captured before Task 10's freeze.
 
-- [ ] **Step 5: Run the contract**
+- [x] **Step 5: Run the contract**
 
 ```bash
 uv run --locked --all-packages pytest tests/contracts/test_element_schema_parsers.py -q
@@ -7626,7 +7630,7 @@ uv run --locked --all-packages --extra browser-capture pytest tests/contracts/te
 
 Expected: `8 passed, 1 deselected`, then `1 passed, 8 deselected`: the pinned browser still renders the committed capture's text and layout.
 
-- [ ] **Step 6: Run the checks**
+- [x] **Step 6: Run the checks**
 
 ```bash
 python3 /tmp/plan5-escapes.py tests/contracts/test_element_schema_parsers.py tests/integration/capture_browser_fixtures.py
@@ -7637,7 +7641,7 @@ git status --short
 
 Expected: `escapes intact`; `605 passed, 14 deselected`; `All checks passed!` and `146 files already formatted`. The status lists ` M .gitattributes`, ` M tests/contracts/test_element_schema_parsers.py`, `?? tests/fixtures/browser/`, and `?? tests/integration/capture_browser_fixtures.py`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -7704,7 +7708,7 @@ synthetic scores and never read a release capture.
     - `record`, `verify` and `amend`.
     - The commands `record`, `verify`, and `amend PATH --reason R --note N`.
 
-- [ ] **Step 1: Write the failing unit tests**
+- [x] **Step 1: Write the failing unit tests**
 
 Create `expirements/parser-fidelity/test_layout1_units.py`:
 
@@ -7761,7 +7765,7 @@ Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_lay
 
 Expected: `1 error during collection`: `ModuleNotFoundError: No module named 'layout1_units'`.
 
-- [ ] **Step 2: Write the units script and derive the units**
+- [x] **Step 2: Write the units script and derive the units**
 
 Create `expirements/parser-fidelity/layout1_units.py`:
 
@@ -7926,7 +7930,7 @@ Expected:
 Other counts mean the gold, the frozen walker, or the scorer has changed. Stop and
 report.
 
-- [ ] **Step 3: Write the comparison's failing tests**
+- [x] **Step 3: Write the comparison's failing tests**
 
 Create `expirements/parser-fidelity/test_layout1_report.py`:
 
@@ -8150,7 +8154,7 @@ Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_lay
 
 Expected: `1 error during collection`: `ModuleNotFoundError: No module named 'layout1_report'`.
 
-- [ ] **Step 4: Write the comparison**
+- [x] **Step 4: Write the comparison**
 
 Create `expirements/parser-fidelity/layout1_report.py`:
 
@@ -8694,7 +8698,7 @@ Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_lay
 
 Expected: `29 passed`.
 
-- [ ] **Step 5: Write the freeze's failing tests**
+- [x] **Step 5: Write the freeze's failing tests**
 
 Create `expirements/parser-fidelity/test_preregister.py`:
 
@@ -8773,7 +8777,7 @@ Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_pre
 
 Expected: `1 error during collection`: `ModuleNotFoundError: No module named 'preregister'`.
 
-- [ ] **Step 6: Write the freeze**
+- [x] **Step 6: Write the freeze**
 
 Create `expirements/parser-fidelity/preregister.py`:
 
@@ -8986,7 +8990,7 @@ Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_pre
 
 Expected: `4 passed, 1 skipped`. The skip reads `layout-1 is not pre-registered yet (plan 5, Task 10)`, and Step 9 removes it.
 
-- [ ] **Step 7: Run the checks**
+- [x] **Step 7: Run the checks**
 
 ```bash
 python3 /tmp/plan5-escapes.py expirements/parser-fidelity/layout1_units.py expirements/parser-fidelity/test_layout1_units.py expirements/parser-fidelity/layout1_report.py expirements/parser-fidelity/test_layout1_report.py expirements/parser-fidelity/preregister.py expirements/parser-fidelity/test_preregister.py
@@ -8998,7 +9002,7 @@ uv run --locked --all-packages python expirements/parser-fidelity/freeze.py veri
 
 Expected: `escapes intact`; `262 passed, 1 skipped`; `605 passed, 14 deselected`; `All checks passed!` and `152 files already formatted`; `freeze verified`.
 
-- [ ] **Step 8: Commit the units and the comparison**
+- [x] **Step 8: Commit the units and the comparison**
 
 ```bash
 git log --oneline -3
@@ -9006,7 +9010,7 @@ git add expirements/parser-fidelity/layout1_units.py expirements/parser-fidelity
 git commit -m "feat(harness): pre-register layout-1's targeted units and comparison rules"
 ```
 
-- [ ] **Step 9: Freeze, and commit the record on its own**
+- [x] **Step 9: Freeze, and commit the record on its own**
 
 ```bash
 git status --short
@@ -9083,7 +9087,7 @@ failure is not a crash: it is recorded, and it counts in the comparison.
       `differences(captured, copied, facts) -> list[Difference]`,
       `missing_inputs()`, `calibrate()` and `render(results)`.
 
-- [ ] **Step 1: Check the freeze, then capture the releases**
+- [x] **Step 1: Check the freeze, then capture the releases**
 
 ```bash
 uv run --locked --all-packages python expirements/parser-fidelity/preregister.py verify
@@ -9103,7 +9107,9 @@ A capture that is neither completed nor partial stops the script with its status
 reason and detail. Stop and report it: never commit a partial set, and never retry
 under another policy.
 
-- [ ] **Step 2: Write the capture checks, and run them**
+- [x] **Step 2: Write the capture checks, and run them**
+
+> Deviation: `test_every_layout1_unit_is_an_exact_span_or_an_alignment_failure` failed on Pharmacyclics (34 + 0 != 46): C1 makes 12 `<pre>` blocks cell-less `table` units, as `walker-1` does, and the test counted every table as a container. This step's PB-13 routing did not fit, because no frozen file was wrong. With the user's approval the unfrozen test now excludes only table containers, and nothing was amended (`768ff8b`).
 
 Create `tests/integration/test_browser_fixtures.py`:
 
@@ -9228,7 +9234,7 @@ Expected: `25 passed, 8 deselected`, then `8 passed, 25 deselected`.
 - A recapture whose hashes differ means the environment is not the pinned one. Stop
   and report.
 
-- [ ] **Step 3: Write calibration's failing tests**
+- [x] **Step 3: Write calibration's failing tests**
 
 Create `expirements/parser-fidelity/test_calibrate.py`:
 
@@ -9324,7 +9330,7 @@ Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_cal
 
 Expected: `2 errors during collection`: `ModuleNotFoundError: No module named 'calibrate'`.
 
-- [ ] **Step 4: Write calibration, and publish its report**
+- [x] **Step 4: Write calibration, and publish its report**
 
 Create `expirements/parser-fidelity/calibrate.py`:
 
@@ -9643,7 +9649,7 @@ Expected: `wrote docs/verification/browser-calibration.md`, then `14 passed`.
 Read `docs/verification/browser-calibration.md`. Task 15's record summarizes its
 counts per kind.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan5-escapes.py tests/integration/test_browser_fixtures.py expirements/parser-fidelity/calibrate.py expirements/parser-fidelity/test_calibrate.py expirements/parser-fidelity/test_calibrate_current.py
@@ -9666,7 +9672,7 @@ Expected:
 - a status listing only this task's files: the eight new captures, the four new
   Python files, and the calibration report.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -9715,7 +9721,7 @@ both legs the report is final (exit criterion 8).
     - `leg2(fixture) -> Leg2`.
     - `render(counts, legs) -> str` and `render_leg2(legs)`.
 
-- [ ] **Step 1: Write the comparators' failing tests**
+- [x] **Step 1: Write the comparators' failing tests**
 
 Replace `packages/earnings-ingestion/tests/test_fidelity.py` with:
 
@@ -9936,7 +9942,7 @@ Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/te
 
 Expected: `1 error during collection`: `ImportError: cannot import name 'HUNK_CATEGORIES' from 'earnings_ingestion.canonical.fidelity'`.
 
-- [ ] **Step 2: Write the comparators**
+- [x] **Step 2: Write the comparators**
 
 Replace `packages/earnings-ingestion/src/earnings_ingestion/canonical/fidelity.py` with:
 
@@ -10245,7 +10251,7 @@ Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/te
 
 Expected: `37 passed`.
 
-- [ ] **Step 3: Write the report's failing tests**
+- [x] **Step 3: Write the report's failing tests**
 
 Replace `expirements/parser-fidelity/test_r35_report.py` with:
 
@@ -10441,7 +10447,7 @@ uv run --locked --all-packages pytest tests/integration/test_r35_report.py -q
 
 Expected: `2 errors during collection`: `ImportError: cannot import name 'COPIED' from 'r35_report'`. Then `1 failed, 6 passed`: `test_the_report_is_final_with_both_legs` fails, because the committed report has no second leg yet.
 
-- [ ] **Step 4: Write leg 2, and regenerate the report**
+- [x] **Step 4: Write leg 2, and regenerate the report**
 
 Replace `expirements/parser-fidelity/r35_report.py` with:
 
@@ -10992,7 +10998,7 @@ Expected:
 
 Read the new leg. Task 15's record summarizes its hunk counts per category.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan5-escapes.py packages/earnings-ingestion/src/earnings_ingestion/canonical/fidelity.py packages/earnings-ingestion/tests/test_fidelity.py expirements/parser-fidelity/r35_report.py expirements/parser-fidelity/test_r35_report.py expirements/parser-fidelity/test_r35_report_current.py tests/integration/test_r35_report.py
@@ -11004,7 +11010,7 @@ uv run --locked --all-packages python expirements/parser-fidelity/freeze.py veri
 
 Expected: `escapes intact`; `642 passed, 22 deselected`; `279 passed`; `All checks passed!` and `156 files already formatted`; `freeze verified`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -11035,7 +11041,7 @@ anything: a number you dislike is a finding, not a bug, unless it comes from a
   - **ADR 0002 and its outcome.** Task 14 reads the outcome. It runs on 2 or 3 and is
     skipped on 1.
 
-- [ ] **Step 1: Write the failing currency test**
+- [x] **Step 1: Write the failing currency test**
 
 Create `expirements/parser-fidelity/test_layout1_report_current.py`:
 
@@ -11059,7 +11065,7 @@ Run: `uv run --locked --all-packages pytest expirements/parser-fidelity/test_lay
 
 Expected: `1 failed`: `FileNotFoundError` for `docs/verification/layout-1-comparison.md`.
 
-- [ ] **Step 2: Run the comparison**
+- [x] **Step 2: Run the comparison**
 
 ```bash
 uv run --locked --all-packages python expirements/parser-fidelity/preregister.py verify
@@ -11071,7 +11077,7 @@ uv run --locked --all-packages python expirements/parser-fidelity/freeze.py veri
 
 Expected: `pre-registration verified`; `wrote docs/verification/layout-1-comparison.md`; `280 passed`; `All checks passed!` and `157 files already formatted`; `freeze verified`.
 
-- [ ] **Step 3: Commit the comparison before the decision**
+- [x] **Step 3: Commit the comparison before the decision**
 
 ```bash
 git log --oneline -3
@@ -11079,7 +11085,7 @@ git add expirements/parser-fidelity/test_layout1_report_current.py docs/verifica
 git commit -m "docs(verification): run layout-1's pre-registered comparison"
 ```
 
-- [ ] **Step 4: Read the report**
+- [x] **Step 4: Read the report**
 
 Read all of `docs/verification/layout-1-comparison.md`. Its sections are:
 
@@ -11098,7 +11104,9 @@ Check the Captures table against Task 11: eight fixtures, each `completed` or
 National Health Investors, and nothing elsewhere. A mismatch means the frozen code
 or the captures changed. Stop and report it.
 
-- [ ] **Step 5: ADR 0002's gate (human gate, hard stop)**
+- [x] **Step 5: ADR 0002's gate (human gate, hard stop)**
+
+> Deviation: the user asked for a recommendation before choosing. Outcome 1 was recommended, after a check that Stage 7 consumes class 2 through R4.2, and the user chose it without a note.
 
 This step runs in the controller session with the user, never in a subagent.
 
@@ -11124,7 +11132,7 @@ This step runs in the controller session with the user, never in a subagent.
 
 Wait for the answer. Record it and the user's reason; Step 6 and Task 15 quote both.
 
-- [ ] **Step 6: Write ADR 0002**
+- [x] **Step 6: Write ADR 0002**
 
 The file name follows the outcome:
 
@@ -11286,7 +11294,7 @@ grep -n 'GATE:\|\[Keep' docs/adr/0002-*.md
 
 Expected: no output.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -11347,6 +11355,8 @@ fails. The eight fixtures are re-canonicalized into `tests/fixtures/walker-2/`, 
     format with walker-2's manifest.
 
 - [ ] **Step 1: Write the failing tests**
+
+> Skipped: ADR 0002 chose outcome 1 (diagnostic-only); nothing is promoted
 
 Create `packages/earnings-ingestion/tests/test_promoted.py`:
 
@@ -11566,6 +11576,8 @@ Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/te
 Expected: `1 error during collection`: `ModuleNotFoundError: No module named 'earnings_ingestion.promoted'`.
 
 - [ ] **Step 2: Write walker-2**
+
+> Skipped: ADR 0002 chose outcome 1 (diagnostic-only); nothing is promoted
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/promoted/records.py`:
 
@@ -11909,6 +11921,8 @@ __all__ = [
 
 - [ ] **Step 3: Set the activation from ADR 0002**
 
+> Skipped: ADR 0002 chose outcome 1 (diagnostic-only); nothing is promoted
+
 On outcome 2, change nothing: `ACTIVATION = Activation.FALLBACK` is already the
 default. On outcome 3 only, run:
 
@@ -11930,11 +11944,15 @@ The tests pass under either activation: each one that depends on it names it.
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
+> Skipped: ADR 0002 chose outcome 1 (diagnostic-only); nothing is promoted
+
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_promoted.py -q`
 
 Expected: `10 passed`.
 
 - [ ] **Step 5: Document walker-2's records, and extend the boundary checks**
+
+> Skipped: ADR 0002 chose outcome 1 (diagnostic-only); nothing is promoted
 
 Replace `tests/contracts/test_data_dictionary.py` with:
 
@@ -12177,6 +12195,8 @@ Expected: `48 passed`.
 
 - [ ] **Step 6: Re-canonicalize the fixtures under walker-2**
 
+> Skipped: ADR 0002 chose outcome 1 (diagnostic-only); nothing is promoted
+
 Create `tests/integration/regenerate_walker2_fixtures.py`:
 
 ```python
@@ -12316,6 +12336,8 @@ promoted version never falls back.
 
 - [ ] **Step 7: Run the checks**
 
+> Skipped: ADR 0002 chose outcome 1 (diagnostic-only); nothing is promoted
+
 ```bash
 python3 /tmp/plan5-escapes.py packages/earnings-ingestion/src/earnings_ingestion/promoted/*.py packages/earnings-ingestion/tests/test_promoted.py tests/integration/regenerate_walker2_fixtures.py tests/integration/test_walker2_golden.py tests/contracts/test_data_dictionary.py packages/earnings-ingestion/tests/test_import_boundaries.py
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q
@@ -12326,6 +12348,8 @@ git status --short
 Expected: `escapes intact`; `674 passed, 22 deselected`; `All checks passed!` and `164 files already formatted`. The status lists only this task's files.
 
 - [ ] **Step 8: Commit**
+
+> Skipped: ADR 0002 chose outcome 1 (diagnostic-only); nothing is promoted
 
 ```bash
 git log --oneline -3
@@ -12358,7 +12382,9 @@ named report or step, and never leave one.
   - ADR 0002.
 - Produces: documentation only. Test counts stay at the previous task's.
 
-- [ ] **Step 1: Write the verification record**
+- [x] **Step 1: Write the verification record**
+
+> Deviation: on outcome 1 the record's Limitations line about `walker-2` was reworded, and a bullet discloses Task 11's test correction. After the final review, `adafc7f` added two limitations: the captures' temporary paths, recorded at the user's choice, and `walker-1`'s `<br>` join.
 
 ```bash
 python3 /tmp/plan5-extract.py docs/verification/layout-1.md
@@ -12475,7 +12501,7 @@ grep -n 'GATE:' docs/verification/layout-1.md
 
 Expected: no output.
 
-- [ ] **Step 2: Update the harness README**
+- [x] **Step 2: Update the harness README**
 
 Apply the replacements below. Each must match exactly once. If one does not match,
 stop and ask:
@@ -12533,7 +12559,9 @@ EOF
 
 Expected: `harness README updated`.
 
-- [ ] **Step 3: Update CLAUDE.md's current state**
+- [x] **Step 3: Update CLAUDE.md's current state**
+
+> Deviation: the plan left CLAUDE.md's lock count at 140; after the final review, `87c521c` refreshed it to 151.
 
 Nothing cites `CLAUDE.md` by line number, so it may change length. Apply the
 replacements below. Each must match exactly once. If one does not match, because the
@@ -12605,7 +12633,7 @@ grep -n 'GATE:' CLAUDE.md
 Expected: `CLAUDE.md updated`, and `grep` prints nothing. Then run
 `git diff --stat CLAUDE.md`, and read the diff: six passages change and nothing else.
 
-- [ ] **Step 4: Final verification**
+- [x] **Step 4: Final verification**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q
@@ -12634,7 +12662,7 @@ Expected:
 Put the browser checks' result line and today's date into the record's Environment
 section (Step 1's slots), if you have not already.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git log --oneline -3

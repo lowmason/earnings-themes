@@ -947,3 +947,6 @@ handoff, state which commands ran, that no model was called, and whether any
 `browser` or `live` check ran.
 
 > Plan A: COMPLETE (2026-09-25) — implemented by plan 4 (specs/plans/completed/4-structure-aware-canonicalization-plan-a.md). Next: write plan B.
+
+> Stage 3: COMPLETE (2026-09-26) — implemented by plans 4 (specs/plans/completed/4-structure-aware-canonicalization-plan-a.md) and 5 (specs/plans/completed/5-structure-aware-canonicalization.md).
+> Next: resume the roadmap.
