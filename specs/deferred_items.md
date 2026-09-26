@@ -174,17 +174,17 @@
       rejection-store design records whether `Rejection` gains structured
       subject fields (a schema bump with a data-dictionary update) or the store
       pairs each rejection with its candidate.
-- [ ] Check import boundaries statically as well (final review, recommendation;
+- [x] Check import boundaries statically as well (final review, recommendation;
       deferred by the user): the three
       `packages/*/tests/test_import_boundaries.py` files inspect `sys.modules`
       after a top-level import, so an import inside a function escapes them.
       Size: quick-fix. Done when: an AST scan of each package's `src/` refuses
       sibling-package and browser imports alongside the runtime check, at the
       latest when Stage 3 adds the `browser-capture` extra to
-      `earnings-ingestion` (B3).
+      `earnings-ingestion` (B3). → done in plan 5
 
 ## 4-structure-aware-canonicalization-plan-a — 2026-09-25
-- [ ] Settle the review gate's open page-artifact and mask findings (plan 4,
+- [x] Settle the review gate's open page-artifact and mask findings (plan 4,
       Task 11; the user kept these rules at the gate on 2026-09-25):
       `docs/verification/walker-1.md` ("The review gate") and
       `docs/verification/walker-1-report.md` list them. Under `walker-1`, C5 in
@@ -203,4 +203,63 @@
       `boilerplate/2`. Styled headings are plan B's pre-registered target, and
       ADR 0002 decides promotion. Size: plan. Done when: plan B's verification
       record or ADR 0002 gives each finding a disposition: fixed under a new
-      policy version, a plan B target, or a recorded limitation.
+      policy version, a plan B target, or a recorded limitation. → done in plan 5
+
+## 5-structure-aware-canonicalization — 2026-09-26
+- [ ] Keep the capturing machine's paths out of committed captures (final
+      review, Important #2; before the first push the user chose to record it
+      rather than rewrite the captures): in `tests/fixtures/browser/`, the
+      blocked-request URLs of seven release captures carry this Mac's temporary
+      directory (`file:///private/var/folders/…/earnings-capture-<random>/page/<image>`).
+      `SeleniumRenderer` writes them, in
+      `packages/earnings-ingestion/src/earnings_ingestion/browser/selenium_capture.py`,
+      which plan 5's pre-registration froze, and no metric reads them. Fix: have
+      `tests/integration/capture_browser_fixtures.py`, or the adapter under a new
+      capture policy version, write a fixed placeholder for the scratch prefix.
+      Size: quick-fix. Revisit if: the committed captures are regenerated, such
+      as for a new pin or capture policy version.
+- [ ] Harden the frozen capture adapter (final review, Minor #4). Three defects
+      in `packages/earnings-ingestion/src/earnings_ingestion/browser/selenium_capture.py`:
+      - `driver.current_url`, read after navigation, runs outside `_step`, so a
+        WebDriver error there escapes `capture()` instead of returning a
+        `failed` capture.
+      - `_Interceptor.__init__` reads `http://<debugger address>/json` with
+        `urllib.request.urlopen`, which routes even 127.0.0.1 through an
+        `http_proxy` variable that `no_proxy` does not cover. On such a machine
+        every capture fails at startup; an opener built with `ProxyHandler({})`
+        avoids it.
+      - A failing `Page.getFrameTree` or `Fetch.enable` there leaves the
+        WebSocket open.
+      The file is frozen by `expirements/parser-fidelity/layout1-preregistered.toml`
+      and changes only through `preregister.py amend`, for a crash or an invalid
+      element set. Size: plan. Done when: the next adapter or capture policy
+      version lands all three, with tests.
+- [ ] Report `browser setup`'s ordinary failures in one line (final review,
+      Minor #5): `apps/earnings-pipeline/src/earnings_pipeline/cli.py` catches
+      only `ValueError`, so an `httpx.HTTPError`, an `OSError`, or
+      `subprocess.TimeoutExpired` from `reported_version` prints a traceback.
+      Size: quick-fix. Revisit if: a real install fails with a traceback, or the
+      CLI gains a second command.
+- [ ] Three small robustness fixes (final review, Minor #6):
+      - `install` in
+        `packages/earnings-ingestion/src/earnings_ingestion/browser/install.py`
+        ends with `assert done is not None`, which `-O` strips.
+      - `tests/integration/capture_browser_fixtures.py` writes whatever the store
+        returns, though its docstring promises fixtures without screenshots.
+        Only `tests/integration/test_browser_fixtures.py` would catch a stored
+        capture that has some.
+      - `browser/store.py` stamps failure files with a literal `Z`, though
+        `unrendered` accepts any aware time.
+      Size: quick-fix. Done when: `install` raises explicitly, the capture script
+      drops screenshots before writing, and the store converts to UTC, with a
+      test for the script.
+- [ ] Separate words split by `<br>` in table cells (final review, Minor #7;
+      R3.5's second leg): `walker-1` canonicalizes Becton Dickinson's header
+      cells `Foreign<br>Currency<br>Translation`
+      (`tests/fixtures/releases/0000010795-22-000014_ex-99-1/source.html`) as
+      `ForeignCurrencyTranslation`. These are the two "other" hunks of leg 2 in
+      `docs/verification/R3.5-text-fidelity.md`. A change to canonical text needs
+      a new policy version (SC14), and table cells stay outside narrative
+      extraction (R4.2). Size: plan. Revisit if: a stage needs cell-text
+      fidelity, such as Stage 7's cell evidence or Stage 10's evidence views, or
+      a `walker-2` is planned for another reason.

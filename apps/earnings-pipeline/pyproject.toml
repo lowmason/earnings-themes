@@ -18,6 +18,9 @@ dependencies = [
     "rich",
 ]
 
+[project.scripts]
+earnings-pipeline = "earnings_pipeline.cli:app"
+
 [project.optional-dependencies]
 orchestration = [
     "langgraph",

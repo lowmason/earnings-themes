@@ -7,8 +7,10 @@ differences the check exists to find. The comparators count and list; they set n
 threshold (R13.1). Stage 5 reruns them on its pilot releases.
 """
 
+import difflib
 import re
 import unicodedata
+from collections.abc import Collection
 from dataclasses import dataclass
 from html.parser import HTMLParser
 
@@ -211,3 +213,86 @@ def joined_to_text(canonical: str, position: int) -> bool:
     """True when a run located at ``position`` directly follows a letter or digit, as
     a raised "1" after "million" does."""
     return position > 0 and canonical[position - 1].isalnum()
+
+
+HUNK_CATEGORIES = (
+    "unicode",
+    "numeric_signs",
+    "scale",
+    "superscripts",
+    "footnotes",
+    "table_headings",
+    "other",
+)
+"""R3.5's six categories, in the report's order, and ``other`` (plan 5's leg)."""
+_SIGN_CHARACTERS = "()+-\N{EN DASH}\N{MINUS SIGN}"
+_LEADING_FOOTNOTE = re.compile(
+    r"(?:\(\d{1,2}\)|\([a-z]\)|\*{1,3}|[\N{DAGGER}\N{DOUBLE DAGGER}])(?:\s|$)"
+)
+
+
+def token_hunks(canonical: str, rendered: str) -> list[tuple[str, str]]:
+    """Each differing hunk of a whitespace-insensitive token diff between the canonical
+    text and a browser's text of the same source, both in comparison space, as
+    ``(canonical side, rendered side)``; either side may be empty. difflib aligns the
+    tokens with its junk heuristic off."""
+    left = comparison_space(canonical).split()
+    right = comparison_space(rendered).split()
+    matcher = difflib.SequenceMatcher(None, left, right, autojunk=False)
+    return [
+        (" ".join(left[i1:i2]), " ".join(right[j1:j2]))
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes()
+        if tag != "equal"
+    ]
+
+
+def hunk_category(
+    canonical: str,
+    rendered: str,
+    sup_runs: Collection[str],
+    headers: Collection[str],
+) -> str:
+    """The category of a differing hunk: the first of these tests it passes.
+
+    ``sup_runs`` are the source's non-empty ``<sup>`` run texts and ``headers`` the
+    gold's table header texts, all in comparison space.
+
+    1. unicode: a non-ASCII character on either side;
+    2. scale: a scale phrase on either side;
+    3. superscripts: a side that is a run, or sides equal without spaces where a side
+       starts or ends with a run: a raised marker joined or split;
+    4. footnotes: a side that starts with a W10 marker;
+    5. numeric_signs: a signed figure on either side, or sides equal once
+       parentheses, plus, hyphen, en dash, and minus sign are removed;
+    6. table_headings: a side inside a header text;
+    7. other.
+    """
+    sides = [side for side in (canonical, rendered) if side]
+    if any(non_ascii(side) for side in sides):
+        return "unicode"
+    if any(any(scale_counts(side).values()) for side in sides):
+        return "scale"
+    joined = _strip(canonical, " ") == _strip(rendered, " ")
+    bare = [side.replace(" ", "") for side in sides]
+    if any(side in sup_runs for side in sides) or (
+        joined
+        and any(
+            side.startswith(run) or side.endswith(run)
+            for side in bare
+            for run in sup_runs
+        )
+    ):
+        return "superscripts"
+    if any(_LEADING_FOOTNOTE.match(side) for side in sides):
+        return "footnotes"
+    if any(signed_figures(side) for side in sides) or _strip(
+        canonical, _SIGN_CHARACTERS
+    ) == _strip(rendered, _SIGN_CHARACTERS):
+        return "numeric_signs"
+    if any(side in header for side in sides for header in headers):
+        return "table_headings"
+    return "other"
+
+
+def _strip(text: str, characters: str) -> str:
+    return "".join(char for char in text if char not in characters)

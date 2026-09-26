@@ -203,7 +203,7 @@ root checks are:
 uv sync --locked --all-packages --group dev
 uv run --locked ruff check .
 uv run --locked ruff format --check .
-uv run --locked --all-packages pytest packages apps tests -m "not live"
+uv run --locked --all-packages pytest packages apps tests -m "not live and not browser"
 ```
 
 Use `uv lock` to create or intentionally update the lockfile, then review the diff.
