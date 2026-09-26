@@ -1,0 +1,105 @@
+# Membership source register (AGENTS.md §242; plan 6, P6-15): the index-membership
+# sources that config/universe/djia/evidence.toml cites, keyed by source_id. It quotes
+# no source. A published source's terms are tracked by terms_url and terms_sha256,
+# which `earnings-pipeline cohort terms <terms_url>` computes; a different hash asks
+# for a new reading. Release sources and sec-edgar stay in docs/source-register.toml.
+schema_version = 1
+
+[sources.wikipedia-djia]
+owner = "Wikipedia contributors; hosted by the Wikimedia Foundation"
+url = "https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average"
+access_method = """One fixed revision, requested as \
+https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average?oldid=<revision> through the cohort \
+web client after robots.txt allows it, with the identity in SOURCE_IDENTITY. If robots.txt or \
+the site refuses, a person saves the revision in a browser, and `earnings-pipeline cohort \
+register` records it as saved_by_user."""
+cost = "Free; no account."
+license_terms = """Text under the Creative Commons Attribution-ShareAlike 4.0 license, under the \
+Wikimedia Foundation's Terms of Use at terms_url."""
+terms_url = "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use"
+terms_sha256 = "581ce13c873fabdd2648e56752f889cd5e4384604ccaaeca27e8ed777c8224cd"
+redistribution_status = """Reuse needs attribution and share-alike. This repository commits \
+facts and citations only (plan 6, P6-3), and the saved revision stays under data/raw/cohort/."""
+coverage = "A dated secondary roster: a revision states the constituents when it was saved."
+expected_update_pattern = "Edited at any time; a saved revision never changes."
+known_limitations = [
+    "Secondary evidence written by volunteers: it can lag or err, so official changes decide.",
+    "A revision's date is when it was saved, not when the roster changed.",
+]
+last_verified = 2026-09-26
+evidence_class = "secondary"
+roles = ["anchor", "corroboration"]
+rights_status = "redistributable"
+rights_basis = "CC BY-SA 4.0: reuse needs attribution and share-alike"
+
+[sources.spdji-announcements]
+owner = "S&P Dow Jones Indices LLC"
+url = "https://www.spglobal.com/spdji/en/"
+access_method = """Each Dow Jones Industrial Average change notice is a PDF that a person saves \
+in a browser, and `earnings-pipeline cohort register --media-type application/pdf` records it \
+as saved_by_user, with its URL and the time it was saved. S&P DJI's site refuses automated \
+requests (HTTP 403), so no notice is fetched."""
+cost = "Free to read; no account."
+license_terms = "S&P Global's site-wide terms of use, at terms_url, linked from the S&P DJI site's footer, govern the announcements."
+terms_url = "https://www.spglobal.com/en/terms-of-use"
+terms_sha256 = "85f9ecb532ff7771e4b10111066da0a2631ab5b756fcdb72fd29bc51456ab1e0"
+redistribution_status = """S&P DJI materials carry redistribution restrictions. This repository \
+commits facts and citations only (plan 6, P6-3), and the saved announcements stay under \
+data/raw/cohort/."""
+coverage = "Official additions to and removals from the index, with their announced and effective dates."
+expected_update_pattern = "A new announcement for each change; announcements are not revised in place."
+known_limitations = [
+    "An effective date is stated as a trading day, before the open or after the close, with no time.",
+    "The site refused automated requests at planning, so announcements may be saved by hand.",
+    "Notices are PDFs, cited through pdftext-1 (pypdf 6.19.0); a notice without a text layer cannot be cited.",
+]
+last_verified = 2026-09-26
+evidence_class = "official"
+roles = ["change"]
+rights_status = "restricted"
+rights_basis = "S&P DJI's terms restrict redistribution; only locators and facts are kept (R2.1)"
+
+[sources.dia-nport]
+owner = "SPDR Dow Jones Industrial Average ETF Trust, the filer; hosted by SEC EDGAR"
+url = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001041130"
+access_method = """The fund's N-PORT filings (NPORT-P and NPORT-P/A), listed in its submissions \
+JSON and fetched through the shared SEC client by `earnings-pipeline cohort fetch-sec`, with the \
+identity in EDGAR_IDENTITY (docs/source-register.toml, sec-edgar)."""
+cost = "Free; no account or API key."
+license_terms = """SEC's statement on reuse of its website content, at terms_url. The filings are \
+authored by the filer."""
+terms_url = "https://www.sec.gov/about/privacy-information"
+terms_sha256 = "b11d9ecd3bcd0d86ccd1a3301e90ccf66b307c5f5f3709a00e26a55a6246e076"
+redistribution_status = """SEC's reuse statement does not address the filer's rights in its \
+filings, and this register draws no conclusion about them. The filings stay under \
+data/raw/cohort/, and only facts and citations are committed."""
+coverage = "The fund's holdings on each report date: a public ETF proxy for the index roster."
+expected_update_pattern = "A report for each period; amendments arrive as new accessions."
+known_limitations = [
+    "An ETF proxy: holdings corroborate the roster and never establish membership (A §261).",
+    "Holdings name issuers, not securities, and may lag an index change.",
+]
+last_verified = 2026-09-26
+evidence_class = "etf_proxy"
+roles = ["corroboration"]
+rights_status = "local_only"
+rights_basis = "SEC-hosted filings whose filer rights are unaddressed; kept local, like sec-edgar"
+
+[sources.user-djia-list]
+owner = "The project owner"
+url = "https://github.com/lowmason/earnings-themes/blob/main/config/universe/djia/evidence.toml"
+access_method = """Supplied in plan 6's planning session on 2026-09-26, and transcribed into \
+config/universe/djia/evidence.toml as a check list."""
+cost = "Free."
+license_terms = "Supplied by the project owner for this repository."
+redistribution_status = "The owner's own list of names and tickers, committed in evidence.toml."
+coverage = "One list of 30 names and tickers, after the index's June 2026 change."
+expected_update_pattern = "Never updated; another list would be another check."
+known_limitations = [
+    "Supplied after the cutoff and cites no source: a check only, compared and reported, never evidence.",
+]
+last_verified = 2026-09-26
+evidence_class = "user_supplied"
+roles = ["check"]
+rights_status = "redistributable"
+rights_basis = "the project owner's own list, supplied for this repository"

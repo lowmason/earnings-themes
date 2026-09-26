@@ -1,0 +1,14 @@
+# The point-in-time DJIA cohort (plan 6): P's universe definition, which each frozen
+# manifest copies. Task 5's probe, or Task 17's fetch-sec, confirms the fund's CIK.
+universe_id = "djia-2024q3-2026q2"
+universe_name = "djia"
+period_end_start = 2024-07-01
+period_end_stop = 2026-07-01
+public_information_cutoff = 2026-09-22
+membership_reference = "first_publication_time"
+selection_policy_version = "djia-pilot/1"
+expected_member_count = 30
+
+[etf_proxy]
+source_id = "dia-nport"
+cik = "0001041130"
