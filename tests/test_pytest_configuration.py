@@ -60,6 +60,52 @@ def test_a_bare_run_deselects_live_tests(tmp_path: Path) -> None:
     assert "1 passed, 1 deselected" in result.stdout
 
 
+MARKED = (
+    "import pytest\n"
+    "\n"
+    "def test_offline():\n"
+    "    pass\n"
+    "\n"
+    "@pytest.mark.live\n"
+    "def test_online():\n"
+    "    raise AssertionError('a live test ran by default')\n"
+    "\n"
+    "@pytest.mark.browser\n"
+    "def test_in_a_browser():\n"
+    "    raise AssertionError('a browser test ran by default')\n"
+)
+
+
+def test_browser_marker_is_registered() -> None:
+    result = run_pytest("--markers")
+    assert result.returncode == 0, result.stderr
+    assert "@pytest.mark.browser:" in result.stdout
+
+
+def test_a_bare_run_deselects_live_and_browser_tests(tmp_path: Path) -> None:
+    (tmp_path / "test_marks.py").write_text(MARKED, encoding="utf-8")
+    result = run_pytest(str(tmp_path), "-q")
+    assert result.returncode == 0, result.stdout
+    assert "1 passed, 2 deselected" in result.stdout
+
+
+def test_the_documented_command_deselects_live_and_browser_tests(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "test_marks.py").write_text(MARKED, encoding="utf-8")
+    result = run_pytest(str(tmp_path), "-m", "not live and not browser", "-q")
+    assert result.returncode == 0, result.stdout
+    assert "1 passed, 2 deselected" in result.stdout
+
+
+def test_minus_m_browser_selects_only_browser_tests(tmp_path: Path) -> None:
+    (tmp_path / "test_marks.py").write_text(MARKED, encoding="utf-8")
+    result = run_pytest(str(tmp_path), "-m", "browser", "-q")
+    assert result.returncode == 1, result.stdout
+    assert "1 failed, 2 deselected" in result.stdout
+    assert "a browser test ran by default" in result.stdout
+
+
 def test_unregistered_marker_is_an_error(tmp_path: Path) -> None:
     (tmp_path / "test_typo.py").write_text(
         "import pytest\n\n@pytest.mark.lvie\ndef test_typo():\n    pass\n",

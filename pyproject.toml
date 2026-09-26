@@ -41,13 +41,15 @@ extend-exclude = ["*.md"]
 # repeat a basename. The frozen Stage 1 harness imports its modules by bare name and
 # still needs prepend mode: its documented command passes --import-mode=prepend, which
 # overrides this default.
-# -m "not live" deselects live tests unless the command line passes its own -m, such as
-# -m live: pytest keeps the last -m it is given (A §217: live checks are opt-in).
-addopts = ["--import-mode=importlib", "-m", "not live"]
+# -m "not live and not browser" deselects live and browser tests unless the command line
+# passes its own -m, such as -m live or -m browser: pytest keeps the last -m it is given
+# (A §217: live checks are opt-in; Stage 3 spec, Checks: so are browser checks).
+addopts = ["--import-mode=importlib", "-m", "not live and not browser"]
 testpaths = ["packages", "apps", "tests"]
 # strict: unknown config keys, unregistered markers, non-strict xfail, and duplicate
 # parametrize IDs are errors.
 strict = true
 markers = [
     "live: needs the network, credentials, or a billable service; run only with -m live",
+    "browser: needs the pinned Chrome for Testing and the browser-capture extra; run only with -m browser",
 ]

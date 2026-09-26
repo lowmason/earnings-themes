@@ -222,14 +222,17 @@ Run the configured checks:
 ```bash
 uv run --locked ruff check .
 uv run --locked ruff format --check .
-uv run --locked --all-packages pytest packages apps tests -m "not live"
+uv run --locked --all-packages pytest packages apps tests -m "not live and not browser"
 ```
 
 The root `pyproject.toml` configures pytest. Test modules are imported by path,
 so members may reuse a module name; unknown markers and configuration keys are
 errors; and a test that needs the network, credentials, or a billable service
-carries the `live` marker and runs only with `-m live`. The Stage 1 harness keeps
-its own command, given under "Current roadmap". There is no CI configuration yet.
+carries the `live` marker and runs only with `-m live`. A test that needs the
+pinned Chrome for Testing carries the `browser` marker and runs only with
+`-m browser`; without the browser or the `browser-capture` extra it skips and
+says why. The Stage 1 harness keeps its own command, given under "Current
+roadmap". There is no CI configuration yet.
 
 Default tests must not make network requests or billable model calls.
 

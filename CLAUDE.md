@@ -74,16 +74,17 @@ $ uv run --locked python -c "import earnings_themes; print(earnings_themes.__fil
 uv sync --locked --all-packages --group dev
 uv run --locked ruff check .
 uv run --locked ruff format --check .
-uv run --locked --all-packages pytest packages apps tests -m "not live"
+uv run --locked --all-packages pytest packages apps tests -m "not live and not browser"
 # single test:
-uv run --locked --all-packages pytest path/to/test_x.py::test_name -m "not live"
+uv run --locked --all-packages pytest path/to/test_x.py::test_name -m "not live and not browser"
 ```
 
 Verified: `uv lock` and `uv sync --locked --all-packages`. Configured: a root
 `[dependency-groups] dev` (pytest, pytest-asyncio, pytest-cov, ruff) and
 `[tool.ruff] extend-exclude = ["*.md"]`, which keeps Ruff from reformatting code blocks in the
 preserved Markdown. Stage 2 added `[tool.pytest]`: `--import-mode=importlib`, so members may
-repeat a test module's name; `strict = true`; a registered `live` marker; and
+repeat a test module's name; `strict = true`; registered `live` and `browser` markers, both deselected by
+default; and
 `testpaths = ["packages", "apps", "tests"]`. The frozen Stage 1 harness still needs
 `--import-mode=prepend`, which its own command passes.
 Environment: uv 0.12.15, Python 3.14.0 (uv-managed; Homebrew's `python3` is 3.14.7),
