@@ -164,10 +164,43 @@ On 2026-09-25, the user reviewed `walker-1-report.md` as first generated (§Gate
   - C5 retypes 62 blocks, not 82: Ball 7 instead of 14, and FMC 5 instead of 18.
     57 of the 87 anchored blocks are typed `page_artifact`, not 60. Ball's three
     "Unaudited Notes…" running heads join the untyped blocks, which makes 30.
+  - Page artifacts matching no gold anchor fall from 43 to 26: FMC's from 13 to 0,
+    and Ball's from 8 to 4, the street-address lines. The "Typed beyond the gold"
+    list above describes the report as first generated.
   - The masks did not change.
 
 The names `walker-1` and `boilerplate/1` stand, because neither was published before
 the gate.
+
+## After the final review
+
+Plan 4's final whole-branch review, on 2026-09-25, found two Important issues. The
+user chose each fix.
+
+- **Crafted input raised.** Like the frozen code, `canonicalize` raised on input it
+  cannot read:
+  - a charset label naming a codec that is not a text encoding, or one that refuses
+    `errors="replace"`;
+  - a label that decodes to a lone surrogate;
+  - a span or font weight that `int()` refuses.
+
+  It now returns `parse_failed` with the exception in the detail. An invalid
+  `source_document_id` still raises. The port stays verbatim, and no output changed.
+  The spec's §Failures still reads "`parse_failed` — lxml raised" and "Decoding never
+  fails", as approved. This record, the data dictionary, and `records.py` give the
+  reading as built. The regression tests are in
+  `packages/earnings-ingestion/tests/test_canonicalize.py`:
+  `test_input_the_decoder_or_walker_cannot_read_fails_to_parse` and
+  `test_an_invalid_source_document_id_raises_even_when_parsing_fails`.
+- **The Python pin.** The fixtures record `python_version`, so under any other 3.14.x
+  the golden test failed all eight with "regenerate", although the canonical output
+  was identical under 3.14.7. `.python-version` now pins 3.14.0, so a bump regenerates
+  the fixtures deliberately (PA-14).
+- **Two report corrections.**
+  - "Post-hoc numbers" above now gives the page artifacts that match no gold anchor.
+  - R3.5's report no longer attributes all 14 header texts in no cell to C1 tables.
+    Pharmacyclics' C1 tables hold 12 of them, and Southwestern Energy's grid tables
+    hold 2.
 
 ## V2 disposition, as built
 
