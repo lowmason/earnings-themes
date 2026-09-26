@@ -131,3 +131,14 @@ gate"). Each now has a disposition (plan 5, PB-21). This closes the deferred ite
   stylesheet hides was never measured on a release.
 - **Development-set numbers.** The fixtures were Stage 1's test set, and the classes
   were named from its failures (SC2). R12.2's validation set is the independent test.
+- **Machine paths in the captures.** In seven of the eight release captures, the
+  blocked-request URLs carry the capturing machine's temporary directory
+  (`file:///private/var/folders/…/earnings-capture-<random>/page/<image>`). The
+  frozen adapter writes them, and no metric reads them. At the final review the user
+  chose to record this rather than rewrite the committed captures. The deferred
+  items carry the fix for the next capture.
+- **Words joined across `<br>` in table cells.** R3.5's second leg shows `walker-1`
+  joining Becton Dickinson's header cells `Foreign<br>Currency<br>Translation` as
+  `ForeignCurrencyTranslation`. A change to canonical text needs a new policy
+  version (SC14), so this stays a limitation of `walker-1`. Table cells are cell
+  evidence, outside narrative extraction (R4.2).
