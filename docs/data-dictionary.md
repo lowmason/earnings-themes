@@ -280,3 +280,82 @@ in the order of the next eleven rows and records the first failure.
 | `crossing_elements` | Two spans overlap without nesting (R4.1) |
 | `table_cell_parent` | A table cell's parent is not a table (R4.1, R4.2) |
 | `invalid_header_reference` | A header reference names no header cell of the same table (R4.2) |
+
+## earnings-ingestion records, schema version 1
+
+- **Package.** `packages/earnings-ingestion`, imported as `earnings_ingestion.canonical`
+  (Stage 3, plan 4).
+- **Schema version.** `1` (`earnings_ingestion.canonical.INGESTION_SCHEMA_VERSION`).
+  The manifest and the failure carry it as `schema_version`, and a payload with
+  another version is refused.
+- **Not core contracts.** `earnings-themes` never imports ingestion (A §173): Stage 7
+  reads the committed canonical fixtures through the core contracts.
+- **Canonical fixtures.** `tests/fixtures/canonical/<fixture_id>.json` is one JSON
+  object with the keys `document` (a `CanonicalDocument`), `elements` (the
+  `DocumentElement` records), `manifest` (the `CanonicalizationManifest`), and `masks`
+  (the `OverlayMask` records). Keys are sorted, non-ASCII characters are escaped, and
+  each record is one line. Read each record with its contract's `model_validate_json`.
+
+### `CanonicalizationManifest`
+
+How one canonical document version was made. It holds no timestamp and no path, so it
+regenerates byte for byte.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Ingestion record schema version |
+| `canonicalization_version` | ID part | The whole policy, e.g. `walker-1` |
+| `components` | map of string to string | Each component's identifier: `decoding`, `walker`, `normalization`, `compensation`, `layout`, `sentences` |
+| `lxml_version` | string | `lxml.etree.LXML_VERSION`, dotted |
+| `libxml2_version` | string | `lxml.etree.LIBXML_VERSION`, dotted |
+| `python_version` | string | The interpreter's version |
+| `source_document_id` | ID part | The saved source document |
+| `raw_sha256` | 64 lowercase hex | SHA-256 of the saved bytes |
+| `raw_bytes` | int ≥ 0 | Their byte count |
+| `encoding` | string | The decoded encoding |
+| `encoding_basis` | string | Why: `bom`, `meta`, `valid-utf-8`, or `default` |
+| `element_counts` | map of type to int | Elements by `ElementType` value; absent types are omitted |
+| `image_count` | int ≥ 0 | `<img>` elements in the parsed document |
+| `replacement_characters` | int ≥ 0 | U+FFFD characters in the canonical text, which decoding keeps |
+| `retypes` | map of rule to int | Blocks retyped by each of `C1`–`C5`, zeros included |
+| `limitations` | tuple of string | Limitations triggered: `pre_table_without_cells` when C1 fired |
+| `mask_policy_id` | ID part | The boilerplate policy, `boilerplate` |
+| `mask_policy_version` | ID part | Its version, `1` |
+| `mask_count` | int ≥ 0 | Masks the policy found |
+
+### `FailureReason`
+
+| Value | Meaning |
+| --- | --- |
+| `unsupported_media_type` | The media type's essence is not `text/html` |
+| `parse_failed` | lxml raised, or libxml2 logged a fatal error, such as nesting past its depth limit |
+| `no_native_text` | Nothing is left after N1; image-only input lands here (R4.3) |
+| `invalid_elements` | `validate_elements` found problems: a canonicalizer defect, never the input's |
+
+### `CanonicalizationFailure`
+
+A document the canonicalizer refused. A failure is never an empty document and never
+a partial element set; decoding never fails.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Ingestion record schema version |
+| `source_document_id` | ID part | The saved source document |
+| `raw_sha256` | 64 lowercase hex | SHA-256 of the saved bytes |
+| `canonicalization_version` | ID part | The policy that refused it |
+| `reason` | `FailureReason` | The failure class |
+| `detail` | string | What failed |
+| `image_count` | int ≥ 0, or null | `<img>` elements: recorded exactly for `no_native_text` |
+| `rejections` | tuple of `Rejection` | `validate_elements`' findings: recorded exactly for `invalid_elements` |
+
+### `Canonicalized`
+
+`canonicalize`'s result: an in-memory bundle, not a persisted record. Construction
+refuses parts that describe different documents.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `document` | `CanonicalDocument` | The canonical document |
+| `elements` | tuple of `DocumentElement` | Document order, each parent before its children, each table followed by its cells and each block by its sentences |
+| `masked` | `MaskedDocument` | The masks of policy `boilerplate` version `1` |
+| `manifest` | `CanonicalizationManifest` | How the document was made |

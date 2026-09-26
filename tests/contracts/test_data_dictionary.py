@@ -1,4 +1,5 @@
-"""docs/data-dictionary.md documents every field and value of the core contracts.
+"""docs/data-dictionary.md documents every field and value of the core contracts
+and of the canonicalizer's ingestion records.
 
 AGENTS.md §191: document public interfaces and update the data dictionary in the
 same change. A contract that gains, loses, or renames a field fails here.
@@ -9,6 +10,7 @@ from enum import StrEnum
 from pathlib import Path
 
 import earnings_core as core
+import earnings_ingestion.canonical as ingestion
 import pytest
 from pydantic import BaseModel
 
@@ -26,6 +28,9 @@ MODELS = [
     core.OverlayMask,
     core.MaskedDocument,
     core.Rejection,
+    ingestion.CanonicalizationManifest,
+    ingestion.CanonicalizationFailure,
+    ingestion.Canonicalized,
 ]
 ENUMS = [
     core.RightsStatus,
@@ -33,6 +38,7 @@ ENUMS = [
     core.TextOrigin,
     core.MaskCategory,
     core.RejectionReason,
+    ingestion.FailureReason,
 ]
 
 
@@ -59,3 +65,7 @@ def test_the_documented_versions_are_the_packages() -> None:
     text = DICTIONARY.read_text(encoding="utf-8")
     assert f"schema version {core.SCHEMA_VERSION}\n" in text
     assert f'`"{core.VALIDATOR_VERSION}"` (`earnings_core.VALIDATOR_VERSION`)' in text
+    assert (
+        f"## earnings-ingestion records, schema version"
+        f" {ingestion.INGESTION_SCHEMA_VERSION}\n" in text
+    )
