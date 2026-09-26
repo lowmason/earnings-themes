@@ -263,3 +263,88 @@
       extraction (R4.2). Size: plan. Revisit if: a stage needs cell-text
       fidelity, such as Stage 7's cell evidence or Stage 10's evidence views, or
       a `walker-2` is planned for another reason.
+
+## 6-point-in-time-djia-cohort — 2026-09-26
+- [ ] Give the universe manifest an operative identity (final review, Important
+      #1; the user corrected the wording and deferred the design): P6-12 said
+      evidence published after the cutoff cannot change a manifest's content, but
+      `content_hash` in
+      `packages/earnings-ingestion/src/earnings_ingestion/cohort/build.py` covers
+      withheld assertions and findings, and the SEC artifacts that identities cite,
+      which `ArtifactStore.latest` picks newest first. So curating a notice
+      published after 2026-09-22, or re-running `earnings-pipeline cohort
+      fetch-sec`, then refreezing, makes a new version in
+      `config/universe/djia/manifests/` whose intervals, mappings, and candidate
+      issuers are unchanged, and Stage 5's manifests would re-version with it.
+      Options: an operative hash over the cutoff-admissible content, SEC artifacts
+      pinned by hash in the curated files, or both; the committed v1 must stay
+      loadable. Size: design. Done when: Stage 5's spec or plan decides what
+      identifies the universe for its manifests, and a test shows that a withheld
+      notice and a re-fetched SEC record leave that identity unchanged.
+- [ ] Hold the SEC and web client locks once per machine (final review, Important
+      #2): `LOCK_PATH` in
+      `packages/earnings-ingestion/src/earnings_ingestion/sec/client.py` and in
+      `packages/earnings-ingestion/src/earnings_ingestion/cohort/web.py` resolves
+      under each checkout's `data/runs/`, so a second worktree or clone takes its
+      own lock, and two checkouts could together exceed the project's 2 requests
+      per second (R1.3). The docstrings and P6-16 say "one per machine";
+      `docs/verification/djia-cohort.md` now says one checkout.
+      `test_one_client_per_machine` cannot catch it, since both of its clients
+      share one `tmp_path`. Fix: put both locks in one machine-wide place, such as
+      the user's cache directory, with a test that two repository roots share one
+      lock. Size: quick-fix. Done when: both locks are machine-wide and tested, and
+      the record says one machine again, before a second checkout or Stage 5's
+      EDGAR adapter sends SEC requests.
+- [ ] Three robustness fixes in the cohort path (final review, Minor; paths under
+      `packages/earnings-ingestion/src/earnings_ingestion/` unless given in full):
+      - `_build` in `apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py`
+        catches only `CohortError`, but a bad override makes `reconstruct`
+        (`cohort/intervals.py`), `resolve` (`cohort/resolution.py`), or
+        `acknowledge` (`cohort/findings.py`) raise `ValueError`, which prints a
+        traceback, not a `problem:` line. `terms_digest` also runs outside any
+        `try` in `cohort_cli.py`'s `terms` and in `cohort/live.py`, so a terms page
+        that `walker-1` cannot read aborts `verify-live` before its record is
+        written.
+      - `read_submissions` in `sec/data.py` lets `KeyError` and `TypeError` escape
+        on a malformed `formerNames` or `filings.files` entry, and reads a string
+        `tickers` as characters, though its docstring promises `SecDataError`.
+      - `retry_after_seconds` in `fetch/client.py` accepts any `str.isdigit()`
+        value, so a non-ASCII digit such as a superscript two reaches `float()`
+        and raises `ValueError` rather than being ignored.
+      Size: quick-fix. Done when: each case has a test, and each ends as a
+      `problem:` line, a `SecDataError`, or an ignored header.
+- [ ] Four stale claims (final review, Minor; paths under
+      `packages/earnings-ingestion/src/earnings_ingestion/` unless given in full):
+      - `fetch/robots.py`'s docstring says a response the client gives up on
+        disallows everything, but `client.get` raises `AccessStop`, which
+        propagates out of `verdict`.
+      - `cohort/web.py`'s docstring says the client reaches only registered
+        sources' hosts, but `cohort_cli.py` opens it for whatever hosts its URLs
+        name, and `fetch_page` in `cohort/acquire.py` checks that the source
+        exists, not that the URL's host is the source's.
+      - `LocatorKind.TEXT_SPAN`'s docstring in `cohort/records.py` names HTML
+        only, and `cohort/pdftext.py`'s module docstring says pypdf's logger is
+        held "below ERROR", where the code holds it at ERROR.
+      - `README.md`'s `docs/` row omits the membership register, the
+        `djia-cohort` record, ADR 0002, and the Stage 3 records.
+      Size: quick-fix. Done when: each claim matches the code, or `fetch_page`
+      checks the URL's host against its source, with a test.
+- [ ] Decide what an override's dates mean (final review, Minor): every `Override`
+      records `effective_from`, and optionally `effective_to`, and
+      `docs/data-dictionary.md` describes them as the period the decision covers,
+      but nothing under
+      `packages/earnings-ingestion/src/earnings_ingestion/cohort/` reads them, so
+      a `holding_alias` or `set_issuer` applies on every date. Size: design.
+      Done when: the dictionary says the dates are a record only, or the build
+      scopes each override by them, with a test.
+- [ ] Let `verify-live` re-read the other hosts after one refuses (final review,
+      recommendation; P6-20): `verify_live` in
+      `packages/earnings-ingestion/src/earnings_ingestion/cohort/live.py` sends
+      every non-SEC check through one web client, which stops at the first
+      persistent 403. On 2026-09-26 S&P Global's host refused at robots.txt, and
+      the Wikimedia terms, both S&P DJI notices, and the Wikipedia anchor went
+      unrequested (`docs/verification/djia-cohort.md`, Limitations). Options: a
+      web client per host, or refusing hosts checked last; either needs a
+      decision on whether AGENTS.md's stop on a persistent 403 covers the run or
+      one host. Size: design. Done when: that decision is recorded, and a test
+      shows that a refusal on one host leaves the other hosts' checks requested.

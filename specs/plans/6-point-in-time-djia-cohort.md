@@ -1,5 +1,7 @@
 # Point-in-Time DJIA Cohort (Stage 4) — Implementation Plan
 
+**Status: COMPLETE (2026-09-26)** — executed via executing-plans; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > Roadmap: specs/evidence-linked-theme-extraction-roadmap.md, Stage 4 — on plan
@@ -516,6 +518,8 @@ reported as `withheld` and never applied. None of these ever uses it:
 A withheld difference never blocks. So evidence published after the cutoff cannot
 change the manifest's content, and hence its version.
 
+> Deviation: the final review found the last sentence overstated. Evidence published after the cutoff changes no interval, mapping, count, or candidate issuer, but it is recorded as withheld, and the content hash covers it and the SEC files that identities cite; so a refreeze that includes it, or that follows a `fetch-sec` saving newer SEC records, makes a new version with the same facts. The user chose to correct the record (`43a2b9a`) and defer an operative identity to Stage 5 (`specs/deferred_items.md`).
+
 **P6-13 — Candidate issuers.** A security is in scope when its interval overlaps
 `[period_end_start, cutoff + 1 day)`. Membership is judged at
 `first_publication_time`, and a release published up to the cutoff can be eligible.
@@ -904,7 +908,7 @@ this task records it at ingestion's grain (P6-5).
   Artifacts are stored at `<root>/<source_id>/<sha256><ext>`, and retrieval records
   at `<root>/<source_id>/retrievals/<sha256>/<stamp>-<12 hex>.json`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_fetch_store.py`:
 
@@ -1127,14 +1131,14 @@ def test_the_documented_versions_are_the_packages() -> None:
     )
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_fetch_store.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: FAIL. Collection stops in both files with
 `No module named 'earnings_ingestion.fetch'`, and pytest reports `2 errors`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/fetch/__init__.py`:
 
@@ -1383,13 +1387,13 @@ def write_new(path: Path, data: bytes) -> None:
         os.unlink(temporary)
 ```
 
-- [ ] **Step 4: Run the store's tests to verify they pass**
+- [x] **Step 4: Run the store's tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_fetch_store.py -q`
 
 Expected: `12 passed`.
 
-- [ ] **Step 5: Document the records**
+- [x] **Step 5: Document the records**
 
 Run: `uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py -q`
 
@@ -1442,7 +1446,7 @@ Run: `uv run --locked --all-packages pytest tests/contracts/test_data_dictionary
 
 Expected: `36 passed`.
 
-- [ ] **Step 6: Run the checks**
+- [x] **Step 6: Run the checks**
 
 ```bash
 python3 /tmp/plan6-escapes.py packages/earnings-ingestion/src/earnings_ingestion/fetch/*.py packages/earnings-ingestion/tests/test_fetch_store.py tests/contracts/test_data_dictionary.py
@@ -1453,7 +1457,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `658 passed, 22 deselected`;
 `All checks passed!` and `161 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -1505,7 +1509,7 @@ and each source's client configures it.
   - the constants `DEFAULT_MAX_REQUESTS = 500`, `MAX_ATTEMPTS = 4`, and
     `FORBIDDEN_LIMIT = 2`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_fetch_client.py`:
 
@@ -1755,14 +1759,14 @@ def test_concurrent_workers_share_one_allowance() -> None:
     )
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_fetch_client.py -q`
 
 Expected: FAIL. Collection stops with
 `No module named 'earnings_ingestion.fetch.client'`, and pytest reports `1 error`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/fetch/client.py`:
 
@@ -2069,13 +2073,13 @@ class PoliteClient:
         self._sleep(delay)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_fetch_client.py -q`
 
 Expected: `15 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan6-escapes.py packages/earnings-ingestion/src/earnings_ingestion/fetch/client.py packages/earnings-ingestion/tests/test_fetch_client.py
@@ -2086,7 +2090,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `673 passed, 22 deselected`;
 `All checks passed!` and `163 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -2125,7 +2129,7 @@ not used.
   - `decide(rules, target) -> tuple[bool, Rule | None]`;
   - `RobotsGate(client: PoliteClient)`, with `verdict(url) -> RobotsVerdict`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_fetch_robots.py`:
 
@@ -2225,14 +2229,14 @@ def test_a_persistent_403_on_robots_stops_the_source() -> None:
         gate.verdict("https://www.example.com/terms")
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_fetch_robots.py -q`
 
 Expected: FAIL. Collection stops with
 `No module named 'earnings_ingestion.fetch.robots'`, and pytest reports `1 error`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/fetch/robots.py`:
 
@@ -2357,13 +2361,13 @@ class RobotsGate:
         return self._origins[origin]
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_fetch_robots.py -q`
 
 Expected: `15 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan6-escapes.py packages/earnings-ingestion/src/earnings_ingestion/fetch/robots.py packages/earnings-ingestion/tests/test_fetch_robots.py
@@ -2374,7 +2378,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `688 passed, 22 deselected`;
 `All checks passed!` and `165 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -2436,7 +2440,7 @@ converts one to the form its endpoint uses (A §264).
     - the context manager `open_sec_client(repo, *, environ=None, max_requests=500, transport=None, clock=..., sleep=..., rng=None, now=...)`,
       which yields a `SecClient`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_sec_client.py`:
 
@@ -2663,14 +2667,14 @@ def test_importing_ingestion_loads_nothing_forbidden(module: str) -> None:
 
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_sec_client.py packages/earnings-ingestion/tests/test_import_boundaries.py -q`
 
 Expected: FAIL. `test_sec_client.py` stops at collection with
 `No module named 'earnings_ingestion.sec'`, and pytest reports `1 error`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/sec/__init__.py`:
 
@@ -2854,13 +2858,13 @@ def open_sec_client(
             client.close()
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_sec_client.py packages/earnings-ingestion/tests/test_import_boundaries.py -q`
 
 Expected: `28 passed`.
 
-- [ ] **Step 5: Name the shared client in the release register**
+- [x] **Step 5: Name the shared client in the release register**
 
 Replace `docs/source-register.toml` with:
 
@@ -2926,7 +2930,9 @@ Run: `uv run --locked --all-packages python expirements/parser-fidelity/fetch_po
 
 Expected: `register quotes verified`.
 
-- [ ] **Step 6: Run the checks**
+- [x] **Step 6: Run the checks**
+
+> Deviation: `ruff format --check` failed because this task's block 1 of `test_import_boundaries.py` ended in a stray blank line; with the user's approval the one newline was stripped (`6119dbe`). The plan's formatted-file counts for Tasks 4 to 11 are one lower than the real ones, because the replay matched them by substring beside that unformatted file; Task 12's clean replacement of the file closed the offset.
 
 ```bash
 python3 /tmp/plan6-escapes.py packages/earnings-ingestion/src/earnings_ingestion/sec/*.py packages/earnings-ingestion/tests/test_sec_client.py packages/earnings-ingestion/tests/test_import_boundaries.py
@@ -2937,7 +2943,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `708 passed, 22 deselected`;
 `All checks passed!` and `169 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -2997,7 +3003,7 @@ fund's name. That CIK was a lead found at planning, and Task 17 names it in
   - `read_nport_holdings(body) -> HoldingsReport`;
   - `json_pointer_token(key) -> str`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_sec_data.py`:
 
@@ -3143,14 +3149,14 @@ def test_an_nport_document_of_another_shape_is_refused(body) -> None:
         read_nport_holdings(body)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_sec_data.py -q`
 
 Expected: FAIL. Collection stops with
 `No module named 'earnings_ingestion.sec.data'`, and pytest reports `1 error`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/sec/data.py`:
 
@@ -3434,13 +3440,13 @@ def read_nport_holdings(body: bytes) -> HoldingsReport:
     return HoldingsReport(report_date=report_date, holdings=tuple(holdings))
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_sec_data.py -q`
 
 Expected: `13 passed`.
 
-- [ ] **Step 5: Write the live format probe**
+- [x] **Step 5: Write the live format probe**
 
 Create `tests/integration/test_sec_formats_live.py`:
 
@@ -3552,7 +3558,7 @@ Run: `uv run --locked --all-packages pytest tests/integration/test_sec_formats_l
 
 Expected: `1 deselected`.
 
-- [ ] **Step 6: Run the checks, and commit**
+- [x] **Step 6: Run the checks, and commit**
 
 ```bash
 python3 /tmp/plan6-escapes.py packages/earnings-ingestion/src/earnings_ingestion/sec/data.py packages/earnings-ingestion/tests/test_sec_data.py tests/integration/test_sec_formats_live.py
@@ -3569,7 +3575,7 @@ git add packages/earnings-ingestion/src/earnings_ingestion/sec/data.py packages/
 git commit -m "feat(ingestion): read SEC's ticker list, submissions, and N-PORT holdings"
 ```
 
-- [ ] **Step 7 (gate): Probe SEC's live formats**
+- [x] **Step 7 (gate): Probe SEC's live formats**
 
 Ask the user in chat, and wait for a clear yes. For example:
 
@@ -3692,7 +3698,7 @@ sorted keys, no whitespace, UTF-8 as itself, and ISO dates.
   - `cohort/digests.py`: `canonical_json(value) -> bytes`, which dumps a model in
     JSON mode first, and `digest(value) -> str`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_cohort_records.py`:
 
@@ -4123,14 +4129,14 @@ def test_the_documented_versions_are_the_packages() -> None:
 This is block 2 for that path: extract it with
 `python3 /tmp/plan6-extract.py tests/contracts/test_data_dictionary.py 2`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_records.py packages/earnings-ingestion/tests/test_cohort_digests.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: FAIL. Collection stops in all three files with
 `No module named 'earnings_ingestion.cohort'`, and pytest reports `3 errors`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/cohort/__init__.py`:
 
@@ -4718,13 +4724,13 @@ def digest(value: object) -> str:
     return sha256_hex(canonical_json(value))
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_records.py packages/earnings-ingestion/tests/test_cohort_digests.py -q`
 
 Expected: `15 passed`.
 
-- [ ] **Step 5: Document the records**
+- [x] **Step 5: Document the records**
 
 Run: `uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py -q`
 
@@ -5125,7 +5131,7 @@ Run: `uv run --locked --all-packages pytest tests/contracts/test_data_dictionary
 
 Expected: `66 passed`.
 
-- [ ] **Step 6: Run the checks**
+- [x] **Step 6: Run the checks**
 
 ```bash
 python3 /tmp/plan6-escapes.py packages/earnings-ingestion/src/earnings_ingestion/cohort/*.py packages/earnings-ingestion/tests/test_cohort_records.py packages/earnings-ingestion/tests/test_cohort_digests.py tests/contracts/test_data_dictionary.py
@@ -5136,7 +5142,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `766 passed, 23 deselected`;
 `All checks passed!` and `177 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -5203,7 +5209,7 @@ git commit -m "feat(ingestion): define the cohort records and canonical JSON"
     - `CohortConfig(universe, evidence, overrides)`;
     - `load_toml(path, model)` and `load_cohort_config(directory) -> CohortConfig`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_cohort_register.py`:
 
@@ -5609,7 +5615,7 @@ def test_the_documented_versions_are_the_packages() -> None:
 This is block 3 for that path: extract it with
 `python3 /tmp/plan6-extract.py tests/contracts/test_data_dictionary.py 3`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_register.py packages/earnings-ingestion/tests/test_cohort_config.py tests/contracts/test_data_dictionary.py -q`
 
@@ -5617,7 +5623,7 @@ Expected: FAIL. Collection stops in all three files, first with
 `No module named 'earnings_ingestion.cohort.register'`, and pytest reports
 `3 errors`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/cohort/register.py`:
 
@@ -5947,13 +5953,13 @@ def load_cohort_config(directory: Path) -> CohortConfig:
     )
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_register.py packages/earnings-ingestion/tests/test_cohort_config.py -q`
 
 Expected: `16 passed`.
 
-- [ ] **Step 5: Document the curated files**
+- [x] **Step 5: Document the curated files**
 
 Run: `uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py -q`
 
@@ -6123,7 +6129,7 @@ Run: `uv run --locked --all-packages pytest tests/contracts/test_data_dictionary
 
 Expected: `78 passed`.
 
-- [ ] **Step 6: Run the checks**
+- [x] **Step 6: Run the checks**
 
 ```bash
 python3 /tmp/plan6-escapes.py packages/earnings-ingestion/src/earnings_ingestion/cohort/register.py packages/earnings-ingestion/src/earnings_ingestion/cohort/config.py packages/earnings-ingestion/tests/test_cohort_register.py packages/earnings-ingestion/tests/test_cohort_config.py tests/contracts/test_data_dictionary.py
@@ -6134,7 +6140,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `794 passed, 23 deselected`;
 `All checks passed!` and `181 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -6193,7 +6199,7 @@ line).
   - `cohort/names.py`: `DROPPED`, `tokens(name) -> frozenset[str]`, and
     `covered(cited, other) -> bool`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_cohort_locators.py`:
 
@@ -6340,7 +6346,7 @@ def test_anything_less_is_not_covered(cited, other) -> None:
     assert not covered(cited, other)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_locators.py packages/earnings-ingestion/tests/test_cohort_names.py -q`
 
@@ -6348,7 +6354,7 @@ Expected: FAIL. Collection stops in both files, first with
 `No module named 'earnings_ingestion.cohort.locators'`, and pytest reports
 `2 errors`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/cohort/locators.py`:
 
@@ -6580,13 +6586,13 @@ def covered(cited: str, other: str) -> bool:
     return bool(significant) and significant <= tokens(other)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_locators.py packages/earnings-ingestion/tests/test_cohort_names.py -q`
 
 Expected: `22 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan6-escapes.py packages/earnings-ingestion/src/earnings_ingestion/cohort/locators.py packages/earnings-ingestion/src/earnings_ingestion/cohort/names.py packages/earnings-ingestion/tests/test_cohort_locators.py packages/earnings-ingestion/tests/test_cohort_names.py
@@ -6597,7 +6603,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `816 passed, 23 deselected`;
 `All checks passed!` and `185 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -6652,7 +6658,7 @@ git commit -m "feat(ingestion): cite saved artifacts by locator and match names 
     - `roster(intervals, day) -> frozenset[str]`;
     - `count_findings(intervals, *, anchor_date, cutoff, expected) -> tuple[Finding, ...]`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_cohort_findings.py`:
 
@@ -6960,7 +6966,7 @@ def test_a_roster_of_the_wrong_size_is_a_blocking_finding() -> None:
     assert finding.holds_freeze
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_findings.py packages/earnings-ingestion/tests/test_cohort_intervals.py -q`
 
@@ -6968,7 +6974,7 @@ Expected: FAIL. Collection stops in both files, first with
 `No module named 'earnings_ingestion.cohort.findings'`, and pytest reports
 `2 errors`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/cohort/findings.py`:
 
@@ -7322,13 +7328,13 @@ def count_findings(
     return tuple(findings)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_findings.py packages/earnings-ingestion/tests/test_cohort_intervals.py -q`
 
 Expected: `16 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan6-escapes.py packages/earnings-ingestion/src/earnings_ingestion/cohort/findings.py packages/earnings-ingestion/src/earnings_ingestion/cohort/intervals.py packages/earnings-ingestion/tests/test_cohort_findings.py packages/earnings-ingestion/tests/test_cohort_intervals.py
@@ -7339,7 +7345,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `832 passed, 23 deselected`;
 `All checks passed!` and `189 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -7390,7 +7396,7 @@ P §Issuer resolution, as P6-8 reads it.
   - `Resolution(mappings, issuers, findings)`;
   - `resolve(securities, sec, overrides, in_scope: frozenset[str]) -> Resolution`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_cohort_resolution.py`:
 
@@ -7631,7 +7637,7 @@ def test_a_proposed_cik_without_saved_submissions_stops_the_build() -> None:
         )
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_resolution.py -q`
 
@@ -7639,7 +7645,7 @@ Expected: FAIL. Collection stops with
 `No module named 'earnings_ingestion.cohort.resolution'`, and pytest reports
 `1 error`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/cohort/resolution.py`:
 
@@ -7865,13 +7871,13 @@ def _issuers(mappings: list[IssuerMapping], sec: SecEvidence) -> tuple[Issuer, .
     return tuple(issuers)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_resolution.py -q`
 
 Expected: `10 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan6-escapes.py packages/earnings-ingestion/src/earnings_ingestion/cohort/resolution.py packages/earnings-ingestion/tests/test_cohort_resolution.py
@@ -7882,7 +7888,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `842 passed, 23 deselected`;
 `All checks passed!` and `191 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -7933,7 +7939,7 @@ and the difference is reported.
   - `difference_findings(reconciliations) -> tuple[Finding, ...]`;
   - `gap_findings(reconciliations, *, start, cutoff) -> tuple[Finding, ...]`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_cohort_corroboration.py`:
 
@@ -8113,7 +8119,7 @@ def test_every_uncorroborated_quarter_is_a_gap() -> None:
     assert not any(f.blocking for f in gaps)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_corroboration.py -q`
 
@@ -8121,7 +8127,7 @@ Expected: FAIL. Collection stops with
 `No module named 'earnings_ingestion.cohort.corroboration'`, and pytest reports
 `1 error`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/cohort/corroboration.py`:
 
@@ -8334,13 +8340,13 @@ def gap_findings(
     return tuple(findings)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_corroboration.py -q`
 
 Expected: `7 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan6-escapes.py packages/earnings-ingestion/src/earnings_ingestion/cohort/corroboration.py packages/earnings-ingestion/tests/test_cohort_corroboration.py
@@ -8351,7 +8357,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `849 passed, 23 deselected`;
 `All checks passed!` and `193 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -8457,7 +8463,7 @@ exercises every Stage 4 P-VF case:
       the frozen manifest's path.
   - `conftest.py`: the fixtures `synthetic_cohort`, per session, and `cohort_repo`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_cohort_build.py`:
 
@@ -9069,7 +9075,7 @@ It adds `cohort.build` to the modules that load nothing forbidden. It also check
 that the offline path loads no network client: `build`, `freeze`, `synthetic`, the
 SEC readers and URL builders, and the store.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_build.py packages/earnings-ingestion/tests/test_import_boundaries.py -q`
 
@@ -9077,7 +9083,7 @@ Expected: FAIL. Every test module in `packages/earnings-ingestion/tests/` shares
 conftest, so none loads: pytest reports `ImportError while loading conftest` with
 `No module named 'earnings_ingestion.cohort.synthetic'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/cohort/build.py`:
 
@@ -10714,13 +10720,13 @@ Append to `docs/data-dictionary.md`:
 This is block 4 for that path: extract it with
 `python3 /tmp/plan6-extract.py docs/data-dictionary.md 4`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_build.py packages/earnings-ingestion/tests/test_import_boundaries.py -q`
 
 Expected: `35 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan6-escapes.py packages/earnings-ingestion/src/earnings_ingestion/cohort/build.py packages/earnings-ingestion/src/earnings_ingestion/cohort/freeze.py packages/earnings-ingestion/src/earnings_ingestion/cohort/synthetic.py packages/earnings-ingestion/tests/conftest.py packages/earnings-ingestion/tests/test_cohort_build.py packages/earnings-ingestion/tests/test_import_boundaries.py
@@ -10731,7 +10737,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `873 passed, 23 deselected`;
 `All checks passed!` and `198 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -10776,7 +10782,7 @@ membership-interval and issuer-resolution legs.
   - The command
     `uv run --locked --all-packages python tests/integration/regenerate_cohort_fixtures.py`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `tests/integration/test_cohort_fixtures.py`:
 
@@ -10916,13 +10922,13 @@ def test_git_keeps_every_fixture_byte() -> None:
     assert result.stdout.splitlines() == [f"{name}: text: unset" for name in names]
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest tests/integration/test_cohort_fixtures.py -q`
 
 Expected: FAIL: `7 failed`, because `tests/fixtures/cohort/` does not exist yet.
 
-- [ ] **Step 3: Generate the fixture, and keep its bytes**
+- [x] **Step 3: Generate the fixture, and keep its bytes**
 
 Create `tests/integration/regenerate_cohort_fixtures.py`:
 
@@ -10971,13 +10977,13 @@ Run: `find tests/fixtures/cohort -type f | wc -l`
 
 Expected: `55`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest tests/integration/test_cohort_fixtures.py -q`
 
 Expected: `7 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan6-escapes.py tests/integration/regenerate_cohort_fixtures.py tests/integration/test_cohort_fixtures.py
@@ -10988,7 +10994,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `880 passed, 23 deselected`;
 `All checks passed!` and `200 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -11059,7 +11065,7 @@ This is every network step of Stage 4 except the live verification.
     - `cite(store, registers, source_id, sha256, *, find=None, occurrence=1, span=None, pointer=None, line=False) -> tuple[EvidenceLocator, str]`;
     - `terms_digest(body, media_type) -> str`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_cohort_web.py`:
 
@@ -11452,14 +11458,14 @@ def test_the_offline_cohort_path_loads_no_network_client(module: str) -> None:
 This is block 3 for that path: extract it with
 `python3 /tmp/plan6-extract.py packages/earnings-ingestion/tests/test_import_boundaries.py 3`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_web.py packages/earnings-ingestion/tests/test_cohort_acquire.py packages/earnings-ingestion/tests/test_import_boundaries.py -q`
 
 Expected: FAIL. Collection stops in the two new files, first with
 `No module named 'earnings_ingestion.cohort.web'`, and pytest reports `2 errors`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/cohort/web.py`:
 
@@ -11792,13 +11798,13 @@ def terms_digest(body: bytes, media_type: str) -> str:
     return sha256_hex(body)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_web.py packages/earnings-ingestion/tests/test_cohort_acquire.py packages/earnings-ingestion/tests/test_import_boundaries.py -q`
 
 Expected: `31 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan6-escapes.py packages/earnings-ingestion/src/earnings_ingestion/cohort/web.py packages/earnings-ingestion/src/earnings_ingestion/cohort/acquire.py packages/earnings-ingestion/tests/test_cohort_web.py packages/earnings-ingestion/tests/test_cohort_acquire.py packages/earnings-ingestion/tests/test_import_boundaries.py
@@ -11809,7 +11815,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `893 passed, 23 deselected`;
 `All checks passed!` and `204 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -11862,7 +11868,7 @@ integration test runs the real verification, and is `live`: it never runs by def
   - `default_options() -> dict[str, Path]`;
   - `run_live(repo, *, environ=None) -> tuple[LiveVerification, Path]`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_cohort_live.py`:
 
@@ -11963,14 +11969,14 @@ def test_changes_and_refusals_are_recorded_not_hidden(cohort_repo) -> None:
     assert result.rebuilt_content_hash == result.frozen_content_hash
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_live.py -q`
 
 Expected: FAIL. Collection stops with
 `No module named 'earnings_ingestion.cohort.live'`, and pytest reports `1 error`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/cohort/live.py`:
 
@@ -12154,13 +12160,13 @@ def run_live(
     return result, path
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_live.py -q`
 
 Expected: `2 passed`.
 
-- [ ] **Step 5: Add the opt-in live test**
+- [x] **Step 5: Add the opt-in live test**
 
 Create `tests/integration/test_cohort_live.py`:
 
@@ -12205,7 +12211,7 @@ Run: `uv run --locked --all-packages pytest tests/integration/test_cohort_live.p
 
 Expected: `1 deselected`.
 
-- [ ] **Step 6: Run the checks**
+- [x] **Step 6: Run the checks**
 
 ```bash
 python3 /tmp/plan6-escapes.py packages/earnings-ingestion/src/earnings_ingestion/cohort/live.py packages/earnings-ingestion/tests/test_cohort_live.py tests/integration/test_cohort_live.py
@@ -12216,7 +12222,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `895 passed, 24 deselected`;
 `All checks passed!` and `207 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -12259,7 +12265,7 @@ the real cohort's paths. The tests point them at a copy of the synthetic cohort.
   - `Layout(repo, config_dir, store_root, register, sec_register)`;
   - `cli.app` gains the `cohort` group, beside `browser`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `apps/earnings-pipeline/tests/test_cohort_cli.py`:
 
@@ -12437,14 +12443,14 @@ def test_fetch_saves_pages_through_the_web_client(repo, monkeypatch) -> None:
     assert sha256_hex(body) in result.stdout
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_cohort_cli.py -q`
 
 Expected: FAIL. Collection stops with `cannot import name 'cohort_cli'`, and pytest
 reports `1 error`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py`:
 
@@ -12806,7 +12812,7 @@ def setup(
     typer.echo(f"driver: {binaries.driver}")
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_cohort_cli.py -q`
 
@@ -12817,7 +12823,7 @@ Run: `uv run --locked --all-packages earnings-pipeline cohort --help`
 Expected: the help lists `fetch`, `register`, `fetch-sec`, `cite`, `build`,
 `freeze`, `terms`, and `verify-live`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan6-escapes.py apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py apps/earnings-pipeline/src/earnings_pipeline/cli.py apps/earnings-pipeline/tests/test_cohort_cli.py
@@ -12829,7 +12835,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `904 passed, 24 deselected`; `280 passed`;
 `All checks passed!` and `209 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -12839,6 +12845,8 @@ git commit -m "feat(pipeline): add the earnings-pipeline cohort commands"
 
 ---
 ### Task 16b: PDF citations (`pdftext-1`)
+
+> Deviation: this task is the amendment of 2026-09-26 by `specs/pdf-citation-text.md` (`7b7afef`, `7696e52`), inserted before Task 17 when every S&P DJI notice turned out to be a PDF. The amendment also changed P6-9, P6-15, the counts after this task, and Tasks 17 and 18.
 
 This task implements `specs/pdf-citation-text.md`, the amendment of 2026-09-26
 (P6-24). Every S&P DJI notice that Task 17 cites is a PDF, and `walker-1` reads HTML
@@ -12908,7 +12916,7 @@ media type chooses between them.
 
   Task 17 registers and cites the real notices with these.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 The conftest gains `make_pdf`, which builds a small PDF from text runs as ASCII
 bytes with a computed cross-reference table, and `pdf_cohort`. That fixture
@@ -13954,7 +13962,7 @@ def test_the_offline_cohort_path_loads_no_network_client(module: str) -> None:
 This is block 4 for that path: extract it with
 `python3 /tmp/plan6-extract.py packages/earnings-ingestion/tests/test_import_boundaries.py 4`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_pdftext.py packages/earnings-ingestion/tests/test_cohort_locators.py packages/earnings-ingestion/tests/test_cohort_build.py packages/earnings-ingestion/tests/test_fetch_store.py packages/earnings-ingestion/tests/test_cohort_acquire.py packages/earnings-ingestion/tests/test_cohort_live.py packages/earnings-ingestion/tests/test_import_boundaries.py apps/earnings-pipeline/tests/test_cohort_cli.py -q`
 
@@ -13962,7 +13970,7 @@ Expected: FAIL. Collection stops in two files, first with
 `No module named 'earnings_ingestion.cohort.pdftext'`, then with
 `cannot import name 'check_media_type'`, and pytest reports `2 errors`.
 
-- [ ] **Step 3 (gate): Add the dependency**
+- [x] **Step 3 (gate): Add the dependency**
 
 Ask the user. `uv add` reaches PyPI to resolve, changes `uv.lock`, and installs
 pypdf 6.19.0. The spike left its wheel in uv's cache. If the user declines, stop:
@@ -13987,7 +13995,7 @@ Expected: `Resolved 152 packages`; then `Resolved 152 packages` and `Checked 41 
 then `2 files changed`, `packages/earnings-ingestion/pyproject.toml` and `uv.lock`; then
 the one added line, `+    "pypdf==6.19.0",`.
 
-- [ ] **Step 4: Write the implementation**
+- [x] **Step 4: Write the implementation**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/cohort/pdftext.py`:
 
@@ -14409,13 +14417,13 @@ python3 /tmp/plan6-extract.py /tmp/plan6-16b-edits.py && python3 /tmp/plan6-16b-
 
 Expected: `extracted /tmp/plan6-16b-edits.py: 120 lines`, then `code edits applied`.
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_pdftext.py packages/earnings-ingestion/tests/test_cohort_locators.py packages/earnings-ingestion/tests/test_cohort_build.py packages/earnings-ingestion/tests/test_fetch_store.py packages/earnings-ingestion/tests/test_cohort_acquire.py packages/earnings-ingestion/tests/test_cohort_live.py packages/earnings-ingestion/tests/test_import_boundaries.py apps/earnings-pipeline/tests/test_cohort_cli.py -q`
 
 Expected: `102 passed`.
 
-- [ ] **Step 6: Record `pdftext-1` in the data dictionary**
+- [x] **Step 6: Record `pdftext-1` in the data dictionary**
 
 No field or value changes, so the dictionary's test already passes. Three
 descriptions name `walker-1` alone: the `text_span` value,
@@ -14461,7 +14469,7 @@ uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py -q
 Expected: `extracted /tmp/plan6-16b-dictionary.py: 26 lines`, then
 `data dictionary updated`, then `78 passed`.
 
-- [ ] **Step 7: Run the checks**
+- [x] **Step 7: Run the checks**
 
 ```bash
 python3 /tmp/plan6-escapes.py packages/earnings-ingestion/src/earnings_ingestion/cohort/pdftext.py packages/earnings-ingestion/src/earnings_ingestion/cohort/locators.py packages/earnings-ingestion/src/earnings_ingestion/cohort/build.py packages/earnings-ingestion/src/earnings_ingestion/cohort/acquire.py packages/earnings-ingestion/src/earnings_ingestion/cohort/live.py packages/earnings-ingestion/src/earnings_ingestion/fetch/store.py apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py packages/earnings-ingestion/tests/conftest.py packages/earnings-ingestion/tests/test_cohort_pdftext.py packages/earnings-ingestion/tests/test_cohort_locators.py packages/earnings-ingestion/tests/test_cohort_build.py packages/earnings-ingestion/tests/test_fetch_store.py packages/earnings-ingestion/tests/test_cohort_acquire.py packages/earnings-ingestion/tests/test_cohort_live.py packages/earnings-ingestion/tests/test_import_boundaries.py apps/earnings-pipeline/tests/test_cohort_cli.py
@@ -14474,7 +14482,7 @@ git status --short -- tests/fixtures
 Expected: `escapes intact`; `929 passed, 24 deselected`; `280 passed`; `All checks passed!` and
 `211 files already formatted`; no `git status` output, since the synthetic cohort is unchanged.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git log --oneline -3
@@ -14546,7 +14554,7 @@ with a ticker or name, and a security that leaves and rejoins keeps it.
   load_manifest(Path("config/universe/djia/manifests/djia-2024q3-2026q2-v1.json"))
   ```
 
-- [ ] **Step 1 (gate): Settle the sources with the user**
+- [x] **Step 1 (gate): Settle the sources with the user**
 
 Put these to the user, in one batch of questions:
 
@@ -14568,7 +14576,7 @@ Put these to the user, in one batch of questions:
      when it was saved, in UTC, and never derive a URL from a file name. Only a
      PDF without a text layer, which `pdftext-1` refuses, stops for the user.
 
-- [ ] **Step 2 (gate): Record the terms pages' hashes**
+- [x] **Step 2 (gate): Record the terms pages' hashes**
 
 Ask the user, naming the requests. There are three terms pages:
 
@@ -14601,7 +14609,9 @@ Expected: each prints `terms_sha256 = "<64 hex>"`.
 - The user reads each terms page before its hash goes into the register, because a
   hash records a reading.
 
-- [ ] **Step 3: Write the register and the curated files**
+- [x] **Step 3: Write the register and the curated files**
+
+> Deviation: shown the filled `spdji-announcements` entry, the user approved it with one change: `license_terms` names S&P Global's site-wide terms, which `terms_url` points to, rather than S&P Dow Jones Indices' own.
 
 Create `docs/membership-source-register.toml`:
 
@@ -14892,7 +14902,7 @@ uv run --locked --all-packages python -c "from pathlib import Path; from earning
 Expected, a prediction that was replayed with dummy hashes: no `grep` output, then
 `curated files load: djia-2024q3-2026q2 30`.
 
-- [ ] **Step 4 (gate): Save the anchor, and register the notices**
+- [x] **Step 4 (gate): Save the anchor, and register the notices**
 
 **The anchor** is fetched. Ask the user, naming the requests: the revision's page and
 `en.wikipedia.org`'s robots.txt, through the web client at one request per second.
@@ -14934,7 +14944,7 @@ the saved file's SHA-256. The retrieval records `saved_by_user`. Keep each SHA-2
 - `Refused:` means the bytes contradict the declared type (P6-24): stop and ask.
 - A notice with no text layer is refused later, by `cite`: stop and ask then.
 
-- [ ] **Step 5: Cite the anchor's rows**
+- [x] **Step 5: Cite the anchor's rows**
 
 `walker-1` writes each row of the components table as one line of tab-separated
 cells, so cite each constituent's whole row by its symbol cell:
@@ -14975,7 +14985,9 @@ span = [GATE: cite's span]
 cited_sha256 = "[GATE: cite's cited_sha256]"
 ```
 
-- [ ] **Step 6: Cite each announcement**
+- [x] **Step 6: Cite each announcement**
+
+> Deviation: GOOGL's security ID is `alphabet-common`, not the example list's `alphabet-class-a`: the cited notice names no share class, so the rule above gives `-common`, and the user confirmed it at Step 9.
 
 For each notice, cite through `pdftext-1` (P6-24), which writes each row of a table
 as one line, its cells joined by single spaces:
@@ -15035,7 +15047,7 @@ uv run --locked --all-packages python -c "from pathlib import Path; from earning
 Expected, a prediction: no `grep` output, then
 `evidence loads: 30 anchor rows, [GATE: the count of announcements] changes`.
 
-- [ ] **Step 7 (gate): Save SEC's records**
+- [x] **Step 7 (gate): Save SEC's records**
 
 Ask the user. `fetch-sec` sends, through the shared SEC client:
 
@@ -15062,7 +15074,7 @@ with `<n>` between 40 and 70.
   The name must be the SPDR Dow Jones Industrial Average ETF Trust. If it isn't,
   stop and ask.
 
-- [ ] **Step 8: Build, and read the report**
+- [x] **Step 8: Build, and read the report**
 
 Run: `uv run --locked --all-packages earnings-pipeline cohort build`
 
@@ -15083,7 +15095,7 @@ Likely findings, which are predictions:
 - `gap:2026q3`, noted, because the quarter's N-PORT is filed after the cutoff;
 - the user list's `difference:` and `withheld:`, both noted.
 
-- [ ] **Step 9 (gate): Review each blocking finding with the user**
+- [x] **Step 9 (gate): Review each blocking finding with the user**
 
 Put every `BLOCKING` finding to the user, with its detail and the decision it needs.
 Each decision becomes an override in `config/universe/djia/overrides.toml`, with a
@@ -15132,7 +15144,7 @@ cited_sha256 = "[GATE: cite's cited_sha256]"
 The implementer never writes `reviewer`: the user supplies the name in chat, for
 each override or once for all.
 
-- [ ] **Step 10: Rebuild until nothing blocks**
+- [x] **Step 10: Rebuild until nothing blocks**
 
 Run: `uv run --locked --all-packages earnings-pipeline cohort build`
 
@@ -15149,7 +15161,7 @@ line.
 
   Expected: no output.
 
-- [ ] **Step 11 (gate): The user approves the report**
+- [x] **Step 11 (gate): The user approves the report**
 
 Show the user the final `build` output:
 
@@ -15159,7 +15171,7 @@ Show the user the final `build` output:
 
 Freeze only after a clear yes.
 
-- [ ] **Step 12: Freeze**
+- [x] **Step 12: Freeze**
 
 ```bash
 uv run --locked --all-packages earnings-pipeline cohort freeze
@@ -15180,7 +15192,7 @@ uv run --locked --all-packages python -c "from pathlib import Path; from earning
 
 Expected: `manifest loads: <n> intervals, <n> candidate issuers, 0 blocking`.
 
-- [ ] **Step 13: Run the checks**
+- [x] **Step 13: Run the checks**
 
 ```bash
 git check-ignore data/raw/cohort/wikipedia-djia
@@ -15196,7 +15208,7 @@ Expected:
 - `All checks passed!` and `211 files already formatted`;
 - only `docs/membership-source-register.toml` and `config/`, as untracked.
 
-- [ ] **Step 14: Commit**
+- [x] **Step 14: Commit**
 
 ```bash
 git log --oneline -3
@@ -15224,7 +15236,7 @@ never leave one.
   17's outputs.
 - Produces: documentation only. Test counts stay at Task 16b's.
 
-- [ ] **Step 1 (gate): Verify the real cohort live**
+- [x] **Step 1 (gate): Verify the real cohort live**
 
 Ask the user. `verify-live` sends about ten requests, with both identities:
 
@@ -15257,7 +15269,9 @@ Read each outcome with the user:
 - **Unequal hashes, or build problems:** stop and report. The frozen manifest no
   longer reproduces.
 
-- [ ] **Step 2: Write the verification record**
+- [x] **Step 2: Write the verification record**
+
+> Deviation: beyond its slots, the record names the three notices not curated and, as Step 1 directs for a refusal, adds an "Unverified live" limitation. After the final review, `43a2b9a` corrected its P-C4 row and its lock bullet (one checkout, not one machine) and added the version, citation-check, and `alphabet-common` notes.
 
 Create `docs/verification/djia-cohort.md`:
 
@@ -15353,7 +15367,7 @@ Run: `grep -n 'GATE:' docs/verification/djia-cohort.md`
 
 Expected: no output.
 
-- [ ] **Step 3: Record the current state in `CLAUDE.md` and `README.md`**
+- [x] **Step 3: Record the current state in `CLAUDE.md` and `README.md`**
 
 The lock and sync counts that `CLAUDE.md` records are Task 16b's. Confirm them
 first, offline:
@@ -15470,7 +15484,7 @@ wc -l AGENTS.md
 Expected: `current state recorded`, then `837 AGENTS.md`, because `AGENTS.md` is
 untouched.
 
-- [ ] **Step 4: Final verification**
+- [x] **Step 4: Final verification**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q
@@ -15490,7 +15504,7 @@ Expected:
 - `freeze verified`;
 - no `git grep` output.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git log --oneline -3

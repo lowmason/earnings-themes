@@ -465,3 +465,6 @@ Stage 5 is routed to brainstorming. Its own stage spec carries its Roadmap line
 and must keep this specification's Stage 5 contracts and ordering. The roadmap
 amendment itself was carried out on 2026-09-22 by plan 2
 (`specs/plans/completed/2-point-in-time-djia-cohort.md`); it completed no stage.
+
+> Stage 4: COMPLETE (2026-09-26) — implemented by plan 6 (specs/plans/completed/6-point-in-time-djia-cohort.md).
+> Next: resume the roadmap. This spec stays live for Stage 15 (plan 6, P6-1).
