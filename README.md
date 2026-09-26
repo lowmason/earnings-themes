@@ -95,14 +95,16 @@ claim; support is assessed separately.
 
 | Path | Responsibility | Current state |
 | --- | --- | --- |
-| `packages/earnings-core/` | Shared contracts, identifiers, hashes, provenance, and pure span helpers | Stage 2 contracts and exactness checks (schema v1) |
-| `packages/earnings-ingestion/` | Source adapters, raw snapshots, deterministic parsing, canonicalization, and entity resolution | Scaffold only |
+| `packages/earnings-core/` | Shared contracts, identifiers, hashes, provenance, and pure span helpers | Stage 2 contracts and exactness checks (schema v2) |
+| `packages/earnings-ingestion/` | Source adapters, raw snapshots, deterministic parsing, canonicalization, and entity resolution | Stage 3's canonicalizer and browser diagnostic path; Stage 4's artifact store, shared SEC client, and point-in-time DJIA cohort |
 | `packages/earnings-themes/` | Quote-claim extraction, exact-span verification, support assessment, codebooks, and evaluation | Scaffold only |
-| `apps/earnings-pipeline/` | Thin application layer for configuration, stage coordination, checkpoints, and reporting | Scaffold only |
+| `apps/earnings-pipeline/` | Thin application layer for configuration, stage coordination, checkpoints, and reporting | `earnings-pipeline browser setup` and the `earnings-pipeline cohort` commands |
 | `docs/` | Source notes and, as the project develops, methodology, source registers, verification reports, and decisions | Source notes, the release source register, verification records V1 and V2, ADR 0001, and the `earnings-core` data dictionary |
 | `specs/` | Binding and exploratory system specifications, reviews, and the staged implementation roadmap | Present |
 | `expirements/parser-fidelity/` | Stage 1's investigation harness: parser candidates, scorer, and selection rule | Complete; a record, not product code |
 | `tests/fixtures/releases/` | Stage 1's eight release fixtures, with gold annotations and a provenance manifest | Present |
+| `config/universe/djia/` | The cohort's curated files and frozen universe manifests: facts and citations, never source text | Stage 4's frozen cohort |
+| `tests/fixtures/cohort/` | The synthetic cohort, which replays offline to its frozen manifest | Present |
 
 The intended dependency direction is:
 
@@ -123,7 +125,7 @@ using those primitives.
 ## Current roadmap
 
 The implementation is organized as a staged, evidence-first roadmap of sixteen
-stages. Stages 1 and 2 are complete; Stage 3 is next.
+stages. Stages 1 to 4 are complete; Stage 5 is next.
 
 The roadmap was amended on 2026-09-22 by
 [the point-in-time DJIA cohort specification](specs/point-in-time-djia-cohort.md).
@@ -159,8 +161,24 @@ uv run --locked --all-packages pytest expirements/parser-fidelity --import-mode=
 contracts every later stage builds on: hashed, versioned canonical documents;
 typed elements with derived IDs and code-point spans; overlay masks; span
 locators; and an exactness validator with no tolerance. The
-[data dictionary](docs/data-dictionary.md) documents every field. The next
-milestone is **Stage 3: structure-aware canonicalization**.
+[data dictionary](docs/data-dictionary.md) documents every field.
+
+**Stage 3: structure-aware canonicalization** is complete. `earnings-ingestion`
+turns a saved release into a hashed `walker-1` canonical document with typed
+elements, tables, sentences, and boilerplate masks.
+[ADR 0002](docs/adr/0002-keep-the-browser-capture-diagnostic-only.md) keeps its
+pinned-browser capture diagnostic-only.
+
+**Stage 4: point-in-time DJIA cohort** is complete. `earnings-ingestion` rebuilds
+the index's membership security by security, from a dated anchor snapshot and
+S&P Dow Jones Indices' announcements. It resolves each security to an issuer and
+a zero-padded CIK from SEC's records, and reports every conflict, gap, and
+difference. The reviewed cohort is frozen as a versioned, content-hashed
+manifest in `config/universe/djia/manifests/` before any earnings document is
+acquired. Every SEC request goes through one shared client at 2 requests per
+second. The [verification record](docs/verification/djia-cohort.md) has the
+details. The next milestone is **Stage 5: event discovery, eligibility, and
+acquisition**.
 
 Key planning documents:
 
@@ -268,8 +286,10 @@ uv sync --locked --all-packages --extra extraction
   `tests/fixtures/`.
 - The source register that records access, licensing, and redistribution status
   for release fixtures is [`docs/source-register.toml`](docs/source-register.toml),
-  a Stage 1 deliverable. Stage 4 adds a second register for
-  index-membership sources, which does not exist yet. A free or open-source
+  a Stage 1 deliverable. Stage 4 added a second register for
+  index-membership sources,
+  [`docs/membership-source-register.toml`](docs/membership-source-register.toml),
+  which quotes no source. A free or open-source
   acquisition tool confers no rights to the underlying index data.
 - SEC access requires a descriptive User-Agent with genuine project contact
   information configured outside committed code. The project default is a shared
