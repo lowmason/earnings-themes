@@ -7,6 +7,11 @@
 >
 > This plan is Stage 4's only plan, so its completion completes Stage 4. The cohort
 > spec stays live for Stage 15 (P6-1). Completion below says exactly what it does.
+>
+> **Amended 2026-09-26** by `specs/pdf-citation-text.md`, which this plan also
+> implements. Task 16b, before Task 17, cites PDF notices through `pdftext-1` and
+> adds `cohort terms --saved` (P6-24). It brings the plan's one new dependency,
+> `pypdf==6.19.0`, and every Expected count after it is restated.
 
 **Goal:** Build roadmap Stage 4 in `earnings-ingestion` and freeze the cohort it
 defines:
@@ -18,7 +23,9 @@ defines:
 - a coverage and conflict report;
 - all of it frozen before any earnings document is acquired;
 - the shared SEC client that closes R1.3 (D5), through which this stage and every
-  later adapter send SEC requests.
+  later adapter send SEC requests;
+- PDF citation text, `pdftext-1`, because S&P Dow Jones Indices publishes its index
+  notices as PDFs (Task 16b, P6-24).
 
 It ships a synthetic cohort that replays offline, and the real cohort's frozen
 manifest, built from locally saved evidence and reviewed and signed by the user.
@@ -57,13 +64,15 @@ manifest, built from locally saved evidence and reviewed and signed by the user.
 
 **Tech Stack:**
 
-- Python 3.14.0 and uv 0.12.15. No new dependency, and `uv.lock` does not change.
+- Python 3.14.0 and uv 0.12.15. One new dependency, `pypdf==6.19.0`, pinned exactly
+  (P6-24): Task 16b adds it, and `uv.lock` changes there and nowhere else.
 - Already declared and locked:
   - httpx 0.28.1, for both clients;
   - lxml 6.1.3, for N-PORT XML, and under `walker-1`;
   - pydantic 2.13.5;
   - typer 0.27.2, for the CLI;
   - pytest 9.1.1 and Ruff 0.16.8.
+- Added by Task 16b: pypdf 6.19.0, pure Python, for `pdftext-1`.
 - From the standard library: `tomllib`, `fcntl`, `threading`, `email.utils`,
   `json`, `urllib.parse`, and `unicodedata`.
 
@@ -132,6 +141,7 @@ Every task's requirements include these.
 | Ingestion record schema | `1`, unchanged: the new records join it (P6-5) | `INGESTION_SCHEMA_VERSION` |
 | Core schema | `2`, unchanged | `earnings_core` |
 | Canonicalization of cited pages | `walker-1`, unchanged | `canonical/` |
+| PDF citation text | `pdftext-1` (pypdf 6.19.0) | `cohort/pdftext.py` (Task 16b) |
 | Membership reference | `first_publication_time` | `universe.toml` (Task 17) |
 | Selection policy | `djia-pilot/1`, named now, defined by Stage 5 (P6-4) | `universe.toml` (Task 17) |
 | SEC client | 0.5 s between request starts (2 req/s), shared across SEC hosts | `sec/client.py` (Task 4) |
@@ -157,7 +167,8 @@ each after the user's clear yes in chat.
 - A persistent 403 stops the run. Report it, and never rotate identity (A §404).
 - When robots.txt or a site refuses automated fetching, the user saves the page in
   a browser and `earnings-pipeline cohort register` records it (P6-17).
-- Nothing downloads a dependency, and `uv.lock` stays as it is.
+- Nothing downloads a dependency, and `uv.lock` stays as it is, except at Task 16b's
+  gated `uv add` of `pypdf==6.19.0` (Human gates).
 
 **Identities.** `EDGAR_IDENTITY` (the SEC client) and `SOURCE_IDENTITY` (the web
 client) belong to the user and are configured outside Git. Never print them, commit
@@ -288,8 +299,10 @@ pass after every task, and the code below already passes both.
 
 **Expected outputs.** At plan time this plan was replayed on a clean checkout from
 the Preconditions through Task 16, and those Expected outputs are what the replay
-printed. Three kinds of step could not be replayed, so their outputs are
-predictions, marked as such:
+printed. Task 16b, added by the amendment of 2026-09-26, was replayed the same way
+on Task 16's code, its dependency gate included, and every count after it is
+restated from that replay. Three kinds of step could not be replayed, so their
+outputs are predictions, marked as such:
 
 - the live steps;
 - Task 17's real cohort;
@@ -463,7 +476,7 @@ The build rechecks every locator against the saved bytes:
 - each curated row's name and ticker must occur in its cited text.
 
 `walker-1` writes a table row as one line of tab-separated cells, so `cite --line`
-cites a whole row.
+cites a whole row. **Amended:** text spans also run over `pdftext-1` text for a PDF artifact (P6-24).
 
 **P6-10 — Corroboration** (`cohort/corroboration.py`). Each dated snapshot is
 compared with the reconstructed roster on its own date.
@@ -532,7 +545,7 @@ change the manifest's content, and hence its version.
   - It quotes no source.
   - A published source's terms are tracked by `terms_url` and `terms_sha256`, which
     `earnings-pipeline cohort terms` computes: the `walker-1` canonical text's
-    SHA-256 for HTML, otherwise the bytes'.
+    SHA-256 for HTML, otherwise the bytes'. **Amended:** it also hashes a copy saved in a browser, with `--saved` (P6-24).
   - A list the user supplied has no terms page.
 - **`sec-edgar`** stays in `docs/source-register.toml`. Its `access_method` now names
   the shared client (Task 4).
@@ -632,6 +645,50 @@ synthetic cohort builds on the readers' assumptions: Task 5's gated
 `anchor_snapshot`). Stage 4 never orders a change against a release on the same day:
 that is Stage 5's eligibility decision (P-C2), and the report states it.
 
+**P6-24 — PDF citation text, `pdftext-1`** (`cohort/pdftext.py`; the amendment
+`specs/pdf-citation-text.md`, PT-1 to PT-9). S&P DJI publishes its index notices as
+PDFs. So a PDF is cited through a second citation-text policy, which the media type
+chooses beside `walker-1` (PT-1). A whole-document hash citation was rejected: it
+would drop P6-9's check that a row's name and ticker occur in its cited text.
+
+- **The policy.** Given a saved PDF's bytes, `pdftext-1`:
+  1. reads them with pypdf 6.19.0, holding pypdf's logger below ERROR for the call
+     and restoring it after, since the text's hash, not pypdf's recovery warnings,
+     is the authority (PT-5);
+  2. takes each page's plain-mode `extract_text()`, in page order;
+  3. normalizes the text to NFC, the repository's convention, never NFKC;
+  4. collapses each line's whitespace runs to one space, strips its ends, and drops
+     the lines left empty, so a needle reads as the page does (PT-2);
+  5. joins every line, across pages, with `\n`.
+
+  The result is the citation text. It is hashed and cited as `walker-1`'s canonical
+  text is, by the SHA-256 of its UTF-8 and by half-open code-point offsets, and no
+  `CanonicalDocument` is built (PT-8).
+- **Refusals.** It refuses three kinds of input: bytes pypdf cannot read; any
+  encrypted PDF, even one that an empty password opens; and a PDF with no text
+  layer, since OCR is out of scope.
+  - `pdf_text` raises its own `PdfTextError`. `ArtifactText` turns it into a
+    `LocatorError` that names `pdftext-1`, as it already turns a `walker-1` failure
+    into one.
+  - The spec has `pdf_text` raise `LocatorError` itself. That would make
+    `pdftext.py` import `locators.py`, which imports it, so the conversion lives in
+    `ArtifactText`. A citation meets the same refusal.
+- **The pin.** pypdf is pinned exactly, `pypdf==6.19.0`, because the version defines
+  the policy (PT-3).
+  - Another version's output is `pdftext-2`, with new citations, never an edited
+    hash.
+  - The `browser-capture` extra's exact pins are the precedent.
+  - The golden test is the drift alarm.
+- **Media types.** `check_media_type` refuses bytes that contradict their declared
+  type: a `%PDF-` body declared as anything else, or a declared PDF without that
+  signature (PT-4). `cohort register` and `cohort terms --saved` share it.
+- **Terms saved by hand (PT-9).** `cohort terms URL --saved FILE [--media-type TYPE]`
+  hashes a terms page the user saved in a browser, by the register's own rule
+  (P6-15). It sends no request and needs no identity, and the user still reads the
+  page before its hash enters the register.
+- **Tests** build invented PDFs at test time, and the committed synthetic cohort does
+  not change (PT-6).
+
 ## Requirement map
 
 The roadmap's Stage 4 Exit line, clause by clause:
@@ -685,16 +742,17 @@ The Consumes line's constraints:
 | `sec-edgar`'s `access_method` names the shared client | `docs/source-register.toml`, then `fetch_policy_pages.py verify` | 4 |
 | The README records the second register | `README.md` | 18 |
 | `pf_fetch.py` ported, never imported | `fetch/client.py`; `tests/contracts/test_import_scan.py` already refuses package imports of `expirements/` | 2 |
-| No parser, canonicalizer, document, or model artifact | Only `walker-1` is used, to cite pages | 8 |
+| No parser, canonicalizer, document, or model artifact | `walker-1` (HTML) and `pdftext-1` (PDF) produce citation text only (PT-8) | 8, 16b |
 
 ## Human gates
 
 | Gate | When | Who | What it unblocks |
 | --- | --- | --- | --- |
 | The format probe | Task 5, Step 7 | user | At most eight SEC requests through the shared client (P6-21). If the user declines, skip the step and note it: Task 17's `fetch-sec` then meets SEC's formats first. |
+| The PDF dependency | Task 16b, Step 3 | user | `uv add --package earnings-ingestion "pypdf==6.19.0"` reaches PyPI and changes `uv.lock`. The wheel is already in uv's cache from the spike. If the user declines, stop: Task 17 cannot cite the PDF notices. |
 | The real sources | Task 17, Step 1 | user | The four register entries, the Wikipedia revision (its ID and timestamp), and the list of S&P DJI announcements from the anchor's date through the cutoff |
 | Live acquisition | Task 17, Steps 3, 4, and 7 | user | The terms pages (four), the evidence pages (about four, each after its host's robots.txt), and `fetch-sec` (about 50 to 60 SEC requests). Ask before each group of commands, naming the requests. |
-| Hand-saving | Task 17, whenever a fetch is refused | user | The user saves the refused page in a browser, and `cohort register` records it |
+| Hand-saving | Task 17, whenever a fetch is refused | user | The user saves the refused page in a browser, and `cohort register` records it. A refused terms page is saved the same way, and `cohort terms --saved` hashes it (PT-9). |
 | The review | Task 17, Steps 9–11 | user | The decision for each blocking finding, each override's rationale, and the signature |
 | The freeze | Task 17, Step 12 | user | The real cohort's freeze, once the user approves the build's report |
 | Live verification | Task 18, Step 1 | user | `cohort verify-live`: the terms pages, each evidence URL, and each host's robots.txt, about ten requests |
@@ -712,11 +770,11 @@ user has answered. A subagent that reaches a gate stops and reports back instead
 | Path | Responsibility | Task |
 | --- | --- | --- |
 | `…/fetch/__init__.py`, `records.py`, `store.py`; `…/tests/test_fetch_store.py` | Retrieval metadata; the content-addressed store; `write_new` | 1 |
-| `docs/data-dictionary.md`, `tests/contracts/test_data_dictionary.py` | The retrieval records (Task 1); the cohort records (Task 6); the curated files (Task 7); the frozen manifests (Task 12) | 1, 6, 7, 12 |
+| `docs/data-dictionary.md`, `tests/contracts/test_data_dictionary.py` | The retrieval records (Task 1); the cohort records (Task 6); the curated files (Task 7); the frozen manifests (Task 12); `pdftext-1` beside `walker-1` (Task 16b) | 1, 6, 7, 12, 16b |
 | `…/fetch/client.py`; `…/tests/test_fetch_client.py` | The polite client, ported from `pf_fetch.py` | 2 |
 | `…/fetch/robots.py`; `…/tests/test_fetch_robots.py` | The robots.txt gate | 3 |
 | `…/sec/__init__.py`, `identifiers.py`, `urls.py`, `client.py`; `…/tests/test_sec_client.py` | CIKs; SEC URLs; the shared SEC client | 4 |
-| `…/tests/test_import_boundaries.py` | The runtime import checks: the clients (Task 4), the offline path (Task 12), the web client (Task 14) | 4, 12, 14 |
+| `…/tests/test_import_boundaries.py` | The runtime import checks: the clients (Task 4), the offline path (Task 12), the web client (Task 14), `pdftext-1` (Task 16b) | 4, 12, 14, 16b |
 | `docs/source-register.toml` | `sec-edgar`'s access method and coverage | 4 |
 | `…/sec/data.py`; `…/tests/test_sec_data.py` | SEC's record readers | 5 |
 | `tests/integration/test_sec_formats_live.py` | The live format probe | 5 |
@@ -731,6 +789,9 @@ user has answered. A subagent that reaches a gate stops and reports back instead
 | `…/cohort/web.py`, `acquire.py`; `…/tests/test_cohort_web.py`, `test_cohort_acquire.py` | The web client; acquisition and citing | 14 |
 | `…/cohort/live.py`; `…/tests/test_cohort_live.py`; `tests/integration/test_cohort_live.py` | The live verification | 15 |
 | `apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py`, `cli.py`; `apps/earnings-pipeline/tests/test_cohort_cli.py` | The `cohort` commands | 16 |
+| `…/cohort/pdftext.py`; `…/tests/test_cohort_pdftext.py` | PDF citation text, `pdftext-1` (P6-24) | 16b |
+| `…/cohort/locators.py`, `build.py`, `acquire.py`, `live.py`; `…/fetch/store.py`; `apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py`; `…/tests/conftest.py`, `test_cohort_locators.py`, `test_cohort_build.py`, `test_fetch_store.py`, `test_cohort_acquire.py`, `test_cohort_live.py`; `apps/earnings-pipeline/tests/test_cohort_cli.py` | Citing a PDF; refusing a contradicting media type; `cohort terms --saved` (PT-9) | 16b |
+| `packages/earnings-ingestion/pyproject.toml`, `uv.lock` | `pypdf==6.19.0`, by the gated `uv add` | 16b |
 | `docs/membership-source-register.toml`; `config/universe/djia/universe.toml`, `evidence.toml`, `overrides.toml`; `config/universe/djia/manifests/` (generated) | The real cohort | 17 |
 | `docs/verification/djia-cohort.md`; `CLAUDE.md`; `README.md` | The verification record; the current state | 18 |
 
@@ -12777,6 +12838,1654 @@ git commit -m "feat(pipeline): add the earnings-pipeline cohort commands"
 ```
 
 ---
+### Task 16b: PDF citations (`pdftext-1`)
+
+This task implements `specs/pdf-citation-text.md`, the amendment of 2026-09-26
+(P6-24). Every S&P DJI notice that Task 17 cites is a PDF, and `walker-1` reads HTML
+only (P6-9). So a second citation-text policy, `pdftext-1`, joins `walker-1`, and the
+media type chooses between them.
+
+- **`cohort/pdftext.py`** holds the policy: pypdf 6.19.0's plain text, normalized to
+  NFC, with whitespace collapsed, blank lines dropped, and lines joined by `\n`.
+- **`ArtifactText`** sends HTML to `walker-1` and a PDF to `pdftext-1`. Its new
+  `version` property names the policy that each span records, and `verify` refuses a
+  span made under another. `build` records the artifact's policy, not the `walker-1`
+  constant.
+- **Acquisition.**
+  - The store names a PDF `<sha256>.pdf`.
+  - `fetch_page` and the live refetch accept a PDF.
+  - `check_media_type` refuses bytes that contradict their declared type.
+    `cohort register` uses it, and so does `cohort terms --saved`, which hashes a
+    terms page saved by hand (PT-9).
+- **The dependency.** `pypdf==6.19.0`, the plan's one new dependency, arrives at its
+  own gate (Step 3).
+- **Tests** build invented PDFs at test time. No binary enters Git, and the committed
+  synthetic cohort does not change.
+
+**Files:**
+
+- Create: `packages/earnings-ingestion/src/earnings_ingestion/cohort/pdftext.py`.
+- Modify: `packages/earnings-ingestion/src/earnings_ingestion/cohort/locators.py`
+  (replaced whole, block 2 of 2).
+- Modify, by exact replacement:
+  - `cohort/build.py`, `cohort/acquire.py`, `cohort/live.py`, and `fetch/store.py`,
+    under `packages/earnings-ingestion/src/earnings_ingestion/`;
+  - `apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py`;
+  - `docs/data-dictionary.md`.
+- Modify, by `uv add`: `packages/earnings-ingestion/pyproject.toml` and `uv.lock`.
+- Test (create): `packages/earnings-ingestion/tests/test_cohort_pdftext.py`.
+- Test (replaced whole), under `packages/earnings-ingestion/tests/`: `conftest.py`
+  (block 2 of 2), `test_cohort_acquire.py` (block 2 of 2), and
+  `test_import_boundaries.py` (block 4 of 4).
+- Test (appended, block 2 of 2 each):
+  - under `packages/earnings-ingestion/tests/`: `test_cohort_locators.py`,
+    `test_cohort_build.py`, `test_fetch_store.py`, and `test_cohort_live.py`;
+  - `apps/earnings-pipeline/tests/test_cohort_cli.py`.
+
+**Interfaces:**
+
+- Consumes:
+  - Task 8's `ArtifactText` and `LocatorError`;
+  - Task 12's `build`, the synthetic cohort, and the `cohort_repo` fixture;
+  - Task 14's `fetch_page`, `register_saved`, `cite`, and `terms_digest`;
+  - Task 15's `verify_live`;
+  - Task 16's `cohort register` and `cohort terms`.
+- Produces:
+  - `cohort/pdftext.py`: `PDFTEXT_VERSION = "pdftext-1"`,
+    `pdf_text(body: bytes) -> str`, and `PdfTextError(ValueError)`;
+  - `ArtifactText.version -> str`: `"walker-1"` for HTML, `"pdftext-1"` for a PDF,
+    and a `LocatorError` for any other type;
+  - `cohort/acquire.py`: `PDF = frozenset({"application/pdf"})`, and
+    `check_media_type(body: bytes, media_type: str) -> None`, which raises
+    `ValueError`;
+  - `fetch/store.py`: `EXTENSIONS["application/pdf"] == ".pdf"`;
+  - `earnings-pipeline cohort terms URL --saved FILE [--media-type TYPE]`;
+  - two test fixtures:
+    - `make_pdf`, a factory `make_pdf(*pages) -> bytes`, each page a list of
+      `(x, y, text)` runs;
+    - `pdf_cohort`, the synthetic cohort with its notice `index-2024-11-01`
+      replaced by an invented PDF.
+
+  Task 17 registers and cites the real notices with these.
+
+- [ ] **Step 1: Write the failing tests**
+
+The conftest gains `make_pdf`, which builds a small PDF from text runs as ASCII
+bytes with a computed cross-reference table, and `pdf_cohort`. That fixture
+registers an invented PDF notice, and cites its rows and date through `pdftext-1`,
+as Task 17 does for a real notice.
+
+Replace `packages/earnings-ingestion/tests/conftest.py` with:
+
+```python
+"""Shared test data. Plan 5: a small completed capture, its layout payload, and
+builders for synthetic layout metadata. Plan 6: the synthetic cohort, and for
+pdftext-1 a PDF builder and the cohort with a PDF notice (Task 16b)."""
+
+import copy
+import shutil
+from collections.abc import Callable
+from datetime import UTC, datetime
+from pathlib import Path
+
+import pytest
+from earnings_core import sha256_hex
+from earnings_ingestion.browser.metadata import METADATA_VERSION, parse_metadata
+from earnings_ingestion.browser.policy import ISOLATED_1
+from earnings_ingestion.browser.records import (
+    CaptureStatus,
+    RenderedCapture,
+    layout_hash,
+)
+from earnings_ingestion.browser.renderer import (
+    CaptureEnvironment,
+    cache_key,
+    capture_id,
+)
+from earnings_ingestion.cohort.acquire import cite, register_saved
+from earnings_ingestion.cohort.register import load_registers
+from earnings_ingestion.cohort.synthetic import (
+    FIXTURE_DIR,
+    build_options,
+    write_synthetic_cohort,
+)
+from earnings_ingestion.fetch.store import ArtifactStore
+
+ENVIRONMENT = CaptureEnvironment(
+    browser_engine="Chrome for Testing",
+    browser_version="154.0.8037.57",
+    driver_version="154.0.8037.57",
+    selenium_version="4.49.0",
+    os_name="Darwin",
+    os_version="26.6.2",
+    architecture="arm64",
+)
+PAYLOAD = {
+    "blocks": [
+        {
+            "tag": "p",
+            "display": "block",
+            "heading_level": None,
+            "list_item": False,
+            "list_depth": 0,
+            "table": None,
+            "row": None,
+            "cell": None,
+            "x": 8,
+            "y": 16,
+            "width": 1264,
+            "height": 18,
+            "runs": [
+                {
+                    "text": "Revenue rose.",
+                    "br": False,
+                    "visible": True,
+                    "bold": False,
+                    "underline": False,
+                    "superscript": False,
+                    "symbol_font": False,
+                    "font_size": 16,
+                }
+            ],
+        }
+    ],
+    "tables": [],
+}
+
+
+def build_capture(**changes: object) -> RenderedCapture:
+    layout = changes.pop("layout", parse_metadata(PAYLOAD))
+    text = changes.pop("rendered_text", "Revenue rose.")
+    raw = b"<p>Revenue rose.</p>"
+    key = cache_key(sha256_hex(raw), ISOLATED_1, ENVIRONMENT)
+    fields = {
+        "capture_id": capture_id("release", ISOLATED_1, key),
+        "cache_key": key,
+        "source_document_id": "release",
+        "raw_sha256": sha256_hex(raw),
+        "capture_policy": "isolated",
+        "capture_policy_version": "1",
+        "metadata_version": METADATA_VERSION,
+        "browser_engine": "Chrome for Testing",
+        "browser_version": "154.0.8037.57",
+        "driver_version": "154.0.8037.57",
+        "selenium_version": "4.49.0",
+        "os_name": "Darwin",
+        "os_version": "26.6.2",
+        "architecture": "arm64",
+        "viewport_width": 1280,
+        "viewport_height": 1024,
+        "device_scale_factor": 1,
+        "locale": "en-US",
+        "timezone": "UTC",
+        "font_set": "Darwin 26.6.2 system fonts",
+        "document_charset": "UTF-8",
+        "script_policy": "disabled",
+        "network_policy": "blocked",
+        "image_policy": "blocked",
+        "missing_resource_policy": "recorded",
+        "rendered_text": text,
+        "rendered_text_sha256": sha256_hex(text.encode("utf-8")),
+        "layout": layout,
+        "layout_sha256": layout_hash(layout),
+        "screenshots": (),
+        "blocked_requests": (),
+        "captured_at": datetime(2026, 9, 26, 12, 0, tzinfo=UTC),
+        "duration_seconds": 0.8,
+        "status": CaptureStatus.COMPLETED,
+        "reason": None,
+        "detail": "",
+    }
+    fields.update(changes)
+    return RenderedCapture(**fields)
+
+
+@pytest.fixture
+def make_capture() -> Callable[..., RenderedCapture]:
+    """A factory: a completed capture of one paragraph, with any field replaced."""
+    return build_capture
+
+
+@pytest.fixture
+def payload() -> dict:
+    """The layout-metadata script's result for that paragraph, safe to change."""
+    return copy.deepcopy(PAYLOAD)
+
+
+class LayoutParts:
+    """Builders for the layout-metadata script's output: runs, blocks, and tables."""
+
+    @staticmethod
+    def run(text: str, **style: object) -> dict:
+        base = {
+            "text": text,
+            "br": False,
+            "visible": True,
+            "bold": False,
+            "underline": False,
+            "superscript": False,
+            "symbol_font": False,
+            "font_size": 16,
+        }
+        return {**base, **style}
+
+    @staticmethod
+    def br() -> dict:
+        return LayoutParts.run("\n", br=True)
+
+    @staticmethod
+    def block(
+        *runs: dict,
+        tag: str = "p",
+        cell: tuple[int, int, int] | None = None,
+        **context: object,
+    ) -> dict:
+        base = {
+            "tag": tag,
+            "display": "block",
+            "heading_level": None,
+            "list_item": False,
+            "list_depth": 0,
+            "table": None if cell is None else cell[0],
+            "row": None if cell is None else cell[1],
+            "cell": None if cell is None else cell[2],
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 10,
+            "runs": list(runs),
+        }
+        return {**base, **context}
+
+    @staticmethod
+    def table(
+        *rows: list[int],
+        parent: tuple[int, int, int] | None = None,
+        head: int = 0,
+        th: bool = False,
+    ) -> dict:
+        """Rows as colspans, one per rendered cell; the first ``head`` rows in thead."""
+        return {
+            "parent_table": None if parent is None else parent[0],
+            "parent_row": None if parent is None else parent[1],
+            "parent_cell": None if parent is None else parent[2],
+            "rows": [
+                {
+                    "head": index < head,
+                    "cells": [
+                        {"header": th, "colspan": span, "rowspan": 1} for span in row
+                    ],
+                }
+                for index, row in enumerate(rows)
+            ],
+        }
+
+    @staticmethod
+    def cells(rows: list[list[str]], table_index: int = 0) -> list[dict]:
+        """One ``td`` block per non-empty cell text, in row-major order."""
+        return [
+            LayoutParts.block(LayoutParts.run(text), tag="td", cell=(table_index, r, c))
+            for r, row in enumerate(rows)
+            for c, text in enumerate(row)
+            if text
+        ]
+
+
+@pytest.fixture
+def parts() -> type[LayoutParts]:
+    return LayoutParts
+
+
+@pytest.fixture(scope="session")
+def synthetic_cohort(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """A repository holding the synthetic cohort, generated once; never change it."""
+    repo = tmp_path_factory.mktemp("synthetic-cohort")
+    write_synthetic_cohort(repo)
+    return repo
+
+
+@pytest.fixture
+def cohort_repo(synthetic_cohort: Path, tmp_path: Path) -> Path:
+    """A private copy of the synthetic cohort's repository, safe to change."""
+    shutil.copytree(synthetic_cohort, tmp_path, dirs_exist_ok=True)
+    return tmp_path
+
+
+def _pdf_string(text: str) -> str:
+    """``text`` as an ASCII PDF literal string: a WinAnsi character as an octal
+    escape, and U+0301 as code 0x81, which the font's /Differences names /acutecomb."""
+    out = []
+    for char in text:
+        if char in "\\()":
+            out.append("\\" + char)
+        elif " " <= char <= "~":
+            out.append(char)
+        else:
+            code = 0x81 if char == chr(0x301) else char.encode("cp1252")[0]
+            out.append(f"\\{code:03o}")
+    return "".join(out)
+
+
+def build_pdf(*pages: list[tuple[int, int, str]]) -> bytes:
+    """A PDF with one page per argument, each a list of (x, y, text) runs in 12-point
+    Helvetica: ASCII bytes, no compressed stream, and a computed cross-reference
+    table. Runs on one baseline extract as one line, joined by single spaces."""
+    count = len(pages)
+    kids = " ".join(f"{3 + 2 * index} 0 R" for index in range(count))
+    font = 3 + 2 * count
+    objects = [
+        "<< /Type /Catalog /Pages 2 0 R >>",
+        f"<< /Type /Pages /Kids [{kids}] /Count {count} >>",
+    ]
+    for index, runs in enumerate(pages):
+        content = "\n".join(
+            f"BT /F1 12 Tf {x} {y} Td ({_pdf_string(text)}) Tj ET"
+            for x, y, text in runs
+        )
+        objects.append(
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources"
+            f" << /Font << /F1 {font} 0 R >> >> /Contents {4 + 2 * index} 0 R >>"
+        )
+        objects.append(f"<< /Length {len(content)} >>\nstream\n{content}\nendstream")
+    objects.append(
+        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding << /Type"
+        " /Encoding /BaseEncoding /WinAnsiEncoding /Differences [129 /acutecomb] >> >>"
+    )
+    pdf = "%PDF-1.4\n"
+    offsets = []
+    for number, body in enumerate(objects, start=1):
+        offsets.append(len(pdf))
+        pdf += f"{number} 0 obj\n{body}\nendobj\n"
+    xref = len(pdf)
+    pdf += f"xref\n0 {len(objects) + 1}\n0000000000 65535 f \n"
+    pdf += "".join(f"{offset:010d} 00000 n \n" for offset in offsets)
+    pdf += f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\n"
+    pdf += f"startxref\n{xref}\n%%EOF\n"
+    return pdf.encode("ascii")
+
+
+@pytest.fixture
+def make_pdf() -> Callable[..., bytes]:
+    """A factory: a small PDF built from text runs, one argument per page."""
+    return build_pdf
+
+
+PDF_NOTICE = [
+    (72, 720, "Synthetic Index Services announces a change"),
+    (72, 690, "Corvid Systems will replace Borealis Air in the Synthetic Industrial"),
+    (72, 675, "Average prior to"),
+    (72, 660, "the open of trading on Friday, November 8, 2024."),
+    (72, 630, "Company"),
+    (250, 630, "Ticker"),
+    (330, 630, "Action"),
+    (72, 612, "Corvid Systems"),
+    (250, 612, "CRVD"),
+    (330, 612, "Added"),
+    (72, 594, "Borealis Air"),
+    (250, 594, "BORA"),
+    (330, 594, "Removed"),
+]
+PDF_NOTICE_URL = "https://index.example/notices/index-2024-11-01"
+
+
+@pytest.fixture
+def pdf_cohort(cohort_repo: Path) -> Path:
+    """The private copy, its official notice index-2024-11-01 replaced by an invented
+    PDF that states the same facts. The PDF is registered as Task 17 registers a
+    saved notice, and its rows and effective date are cited through pdftext-1."""
+    store = ArtifactStore(cohort_repo / FIXTURE_DIR / "raw", cohort_repo)
+    options = build_options()
+    registers = load_registers(
+        cohort_repo, options["register"], options["sec_register"]
+    )
+    ref = register_saved(
+        store,
+        registers,
+        "synthetic-index",
+        build_pdf(PDF_NOTICE),
+        url=PDF_NOTICE_URL,
+        media_type="application/pdf",
+        saved_at=datetime(2026, 9, 28, 12, 0, tzinfo=UTC),
+    )
+
+    def locate(needle: str, line: bool = False):
+        sha = ref.content_sha256
+        return cite(store, registers, "synthetic-index", sha, find=needle, line=line)[0]
+
+    when = locate("prior to\nthe open of trading on Friday, November 8, 2024")
+    added = locate("Corvid Systems CRVD", line=True)
+    removed = locate("Borealis Air BORA", line=True)
+    block = (
+        '[[changes]]\nevidence_id = "index-2024-11-01"\nsource_id = "synthetic-index"\n'
+        f'url = "{PDF_NOTICE_URL}"\nartifact_sha256 = "{ref.content_sha256}"\n'
+        f'canonical_sha256 = "{when.canonical_sha256}"\nannounced_on = 2024-11-01\n'
+        'published_on = 2024-11-01\npublished_at = "2024-11-01T21:15:00Z"\n'
+        'effective_on = 2024-11-08\ntiming = "before_open"\n'
+        f"date_span = [{when.start}, {when.end}]\n"
+        f'date_cited_sha256 = "{when.cited_sha256}"\n\n'
+        '[[changes.entries]]\naction = "added"\nsecurity_id = "corvid-common"\n'
+        'name = "Corvid Systems"\nticker = "CRVD"\n'
+        f"span = [{added.start}, {added.end}]\n"
+        f'cited_sha256 = "{added.cited_sha256}"\n\n'
+        '[[changes.entries]]\naction = "removed"\nsecurity_id = "borealis-common"\n'
+        'name = "Borealis Air"\nticker = "BORA"\n'
+        f"span = [{removed.start}, {removed.end}]\n"
+        f'cited_sha256 = "{removed.cited_sha256}"\n\n'
+    )
+    path = cohort_repo / FIXTURE_DIR / "evidence.toml"
+    evidence = path.read_text(encoding="utf-8")
+    start = evidence.index('[[changes]]\nevidence_id = "index-2024-11-01"\n')
+    end = evidence.index("[[changes]]\n", start + 1)
+    path.write_text(evidence[:start] + block + evidence[end:], encoding="utf-8")
+    return cohort_repo
+```
+
+This is block 2 for that path: extract it with
+`python3 /tmp/plan6-extract.py packages/earnings-ingestion/tests/conftest.py 2`.
+
+The policy's own tests pin an invented two-page notice's text and its golden hash,
+which are the drift alarm.
+
+Create `packages/earnings-ingestion/tests/test_cohort_pdftext.py`:
+
+```python
+"""pdftext-1, the citation text of a saved PDF (plan 6, P6-24).
+
+The invented notice's text and its golden hash are the drift alarm, as walker-1's
+golden test is. If pypdf's output changes, the remedy is pdftext-2 and new citations,
+never an edited hash.
+"""
+
+import io
+import logging
+
+import pytest
+from earnings_core import hash_canonical_text
+from earnings_ingestion.cohort.pdftext import PDFTEXT_VERSION, PdfTextError, pdf_text
+from pypdf import PdfReader, PdfWriter
+
+TM = chr(0x2122)  # the trade mark sign: NFC keeps it, NFKC would spell it out
+NOTICE = [
+    [
+        (72, 740, "Synthetic Index Services"),
+        (72, 722, "Corvid Systems Set to Join the Synthetic Industrial Average"),
+        (72, 692, "NEW YORK, Nov. 1, 2024: Corvid Systems will replace Borealis Air"),
+        (72, 677, f"in the Synthetic Industrial Average{TM} prior to the open of"),
+        (72, 662, "trading on Friday, November 8, 2024."),
+        (72, 632, "Effective Date"),
+        (170, 632, "Action"),
+        (240, 632, "Company"),
+        (400, 632, "Ticker"),
+        (72, 614, "Nov 8, 2024"),
+        (170, 614, "Adding"),
+        (240, 614, "Corvid Systems"),
+        (400, 614, "CRVD"),
+        (170, 596, "Dropping"),
+        (240, 596, "Borealis Air"),
+        (400, 596, "BORA"),
+        (72, 566, "   "),
+        (72, 548, "  For more information,   contact the index team. "),
+    ],
+    [
+        (72, 740, "About Synthetic Index Services"),
+        (72, 722, "This notice is synthetic test data, invented for this repository."),
+    ],
+]
+TEXT = "\n".join(
+    [
+        "Synthetic Index Services",
+        "Corvid Systems Set to Join the Synthetic Industrial Average",
+        "NEW YORK, Nov. 1, 2024: Corvid Systems will replace Borealis Air",
+        f"in the Synthetic Industrial Average{TM} prior to the open of",
+        "trading on Friday, November 8, 2024.",
+        "Effective Date Action Company Ticker",
+        "Nov 8, 2024 Adding Corvid Systems CRVD",
+        "Dropping Borealis Air BORA",
+        "For more information, contact the index team.",
+        "About Synthetic Index Services",
+        "This notice is synthetic test data, invented for this repository.",
+    ]
+)
+GOLDEN = "4fe6134c599aec03e11250e8ff4e6f3010876d7cf6b061ac3248a4a152f3fd08"
+
+
+def test_the_notice_extracts_to_its_golden_text(make_pdf) -> None:
+    """Runs on one baseline join with single spaces, whitespace collapses, blank
+    lines drop, pages join with a newline, and NFC keeps the trade mark sign."""
+    text = pdf_text(make_pdf(*NOTICE))
+    assert (PDFTEXT_VERSION, text) == ("pdftext-1", TEXT)
+    assert hash_canonical_text(text) == GOLDEN
+
+
+def test_a_rerun_is_identical(make_pdf) -> None:
+    body = make_pdf(*NOTICE)
+    assert pdf_text(body) == pdf_text(body)
+
+
+def test_decomposed_text_is_normalized_to_nfc(make_pdf) -> None:
+    body = make_pdf([(72, 720, "Cafe" + chr(0x301) + " au lait")])
+    assert chr(0x301) in PdfReader(io.BytesIO(body)).pages[0].extract_text()
+    assert pdf_text(body) == "Caf" + chr(0xE9) + " au lait"
+
+
+@pytest.mark.parametrize("damage", ["garbage", "truncated", "empty"])
+def test_bytes_pypdf_cannot_read_are_refused(make_pdf, damage) -> None:
+    whole = make_pdf(*NOTICE)
+    body = {
+        "garbage": b"not a pdf at all",
+        "truncated": whole[: len(whole) // 2],
+        "empty": b"",
+    }[damage]
+    with pytest.raises(PdfTextError, match="pdftext-1 cannot read it"):
+        pdf_text(body)
+
+
+@pytest.mark.parametrize("user_password", ["", "secret"])
+def test_an_encrypted_pdf_is_refused_even_one_that_opens(
+    make_pdf, user_password
+) -> None:
+    """RC4, which pypdf writes with no extra dependency; an empty user password
+    opens the file, and it is still refused."""
+    writer = PdfWriter(clone_from=PdfReader(io.BytesIO(make_pdf(*NOTICE))))
+    writer.encrypt(
+        user_password=user_password, owner_password="owner", algorithm="RC4-128"
+    )
+    out = io.BytesIO()
+    writer.write(out)
+    with pytest.raises(PdfTextError, match="pdftext-1 refuses an encrypted PDF"):
+        pdf_text(out.getvalue())
+
+
+def test_a_pdf_without_a_text_layer_is_refused(make_pdf) -> None:
+    with pytest.raises(PdfTextError, match="pdftext-1 found no text layer"):
+        pdf_text(make_pdf([]))
+
+
+def test_recovery_warnings_are_silenced_and_the_logger_restored(
+    make_pdf, caplog
+) -> None:
+    whole = make_pdf(*NOTICE)
+    # Object 1 starts at byte 9; point its entry at byte 17, inside the object.
+    damaged = whole.replace(b"0000000009 00000 n \n", b"0000000017 00000 n \n")
+    caplog.set_level(logging.DEBUG, logger="pypdf")
+    PdfReader(io.BytesIO(damaged))
+    assert "Ignoring wrong pointing object 1 0" in caplog.text
+    caplog.clear()
+    assert pdf_text(damaged) == TEXT
+    assert caplog.records == []
+    assert logging.getLogger("pypdf").level == logging.DEBUG
+    with pytest.raises(PdfTextError):
+        pdf_text(b"not a pdf at all")
+    assert logging.getLogger("pypdf").level == logging.DEBUG
+```
+
+Append to `packages/earnings-ingestion/tests/test_cohort_locators.py`:
+
+```python
+
+
+PDF_ROWS = [
+    (72, 720, "Synthetic roster"),
+    (72, 700, "Acme Industrial"),
+    (250, 700, "ACME"),
+    (72, 682, "Borealis Air  "),
+    (250, 682, "BORA"),
+]
+
+
+def test_a_pdf_is_cited_through_pdftext_1(make_pdf) -> None:
+    page = ArtifactText(make_pdf(PDF_ROWS), "application/pdf")
+    text, text_hash = page.canonical
+    assert page.version == "pdftext-1"
+    assert text == "Synthetic roster\nAcme Industrial ACME\nBorealis Air BORA"
+    assert text_hash == sha256_hex(text.encode("utf-8"))
+    for locator in (page.find("ACME"), page.line("BORA"), page.span(0, 9)):
+        assert locator.canonicalization_version == "pdftext-1"
+        page.verify(locator)
+    assert page.cited(page.line("BORA")) == "Borealis Air BORA"
+
+
+def test_a_span_is_verified_only_under_its_own_policy(make_pdf) -> None:
+    pdf = ArtifactText(make_pdf(PDF_ROWS), "application/pdf")
+    html = ArtifactText(PAGE, "text/html")
+    with pytest.raises(LocatorError, match="made under walker-1, not pdftext-1"):
+        pdf.verify(html.find("Acme Industrial"))
+    with pytest.raises(LocatorError, match="made under pdftext-1, not walker-1"):
+        html.verify(pdf.find("Acme Industrial"))
+
+
+def test_only_html_and_pdf_have_citation_text() -> None:
+    with pytest.raises(LocatorError, match="needs HTML or PDF, not text/plain"):
+        ArtifactText(b"plain", "text/plain").find("plain")
+    with pytest.raises(LocatorError, match="pdftext-1 cannot read it"):
+        ArtifactText(b"not a pdf", "application/pdf").find("pdf")
+```
+
+This is block 2 for that path: extract it with
+`python3 /tmp/plan6-extract.py packages/earnings-ingestion/tests/test_cohort_locators.py 2`.
+
+Append to `packages/earnings-ingestion/tests/test_cohort_build.py`:
+
+```python
+
+
+def test_a_pdf_notice_keeps_the_intervals_and_cites_through_pdftext_1(
+    pdf_cohort,
+) -> None:
+    frozen = load_manifest(
+        pdf_cohort / DIRECTORY / "manifests" / "djia-synthetic-v1.json"
+    )
+    built = build(pdf_cohort, **OPTIONS)
+    assert built.intervals == frozen.intervals
+    assert built.report.blocking == ()
+    pdf = next((pdf_cohort / DIRECTORY / "raw" / "synthetic-index").glob("*.pdf"))
+    notice = [a for a in built.assertions if a.evidence_id == "index-2024-11-01"]
+    assert {a.security_id for a in notice} == {"corvid-common", "borealis-common"}
+    assert {a.raw_content_hash for a in notice} == {pdf.stem}
+    assert {
+        locator.canonicalization_version
+        for assertion in notice
+        for locator in assertion.evidence_locators
+    } == {"pdftext-1"}
+```
+
+This is block 2 for that path: extract it with
+`python3 /tmp/plan6-extract.py packages/earnings-ingestion/tests/test_cohort_build.py 2`.
+
+Append to `packages/earnings-ingestion/tests/test_fetch_store.py`:
+
+```python
+
+
+def test_a_pdf_is_stored_as_a_pdf(tmp_path) -> None:
+    body = b"%PDF-1.4\n%%EOF\n"
+    record = retrieval(body).model_copy(
+        update={"media_type": "application/pdf", "content_type": "application/pdf"}
+    )
+    ref = store_in(tmp_path).put("press", body, record, **RIGHTS)
+    assert ref.storage_ref == f"data/raw/cohort/press/{sha256_hex(body)}.pdf"
+    assert (tmp_path / ref.storage_ref).read_bytes() == body
+```
+
+This is block 2 for that path: extract it with
+`python3 /tmp/plan6-extract.py packages/earnings-ingestion/tests/test_fetch_store.py 2`.
+
+Replace `packages/earnings-ingestion/tests/test_cohort_acquire.py` with:
+
+```python
+"""Acquisition, offline: a fake fetch serves the synthetic cohort's SEC records."""
+
+import shutil
+from datetime import UTC, datetime
+from pathlib import Path
+
+import pytest
+from earnings_core import RightsStatus, sha256_hex
+from earnings_ingestion.cohort.acquire import (
+    check_media_type,
+    cite,
+    fetch_page,
+    fetch_sec,
+    register_saved,
+    terms_digest,
+)
+from earnings_ingestion.cohort.build import build
+from earnings_ingestion.cohort.config import load_cohort_config
+from earnings_ingestion.cohort.register import load_registers
+from earnings_ingestion.cohort.synthetic import FIXTURE_DIR, build_options
+from earnings_ingestion.fetch.client import Fetched
+from earnings_ingestion.fetch.records import Retrieval, RetrievalMethod
+from earnings_ingestion.fetch.store import ArtifactStore
+
+RAW = FIXTURE_DIR / "raw"
+SYNTHETIC = {
+    "rights_status": RightsStatus.REDISTRIBUTABLE,
+    "rights_basis": "synthetic test data, invented for this repository",
+}
+NOW = datetime(2026, 9, 30, 9, 0, tzinfo=UTC)
+
+
+def served(repo: Path, *sources: str) -> dict[str, tuple[bytes, str]]:
+    """Every saved artifact of ``sources``, by the URL it came from."""
+    store = ArtifactStore(repo / RAW, repo)
+    pages = {}
+    for source_id in sources:
+        for path in (repo / RAW / source_id / "retrievals").glob("*/*.json"):
+            record = Retrieval.model_validate_json(path.read_text(encoding="utf-8"))
+            body = store.get(source_id, record.sha256, **SYNTHETIC).body
+            pages[record.request_url] = (body, record.media_type)
+    return pages
+
+
+def fake(pages: dict[str, tuple[bytes, str]], requested: list[str]):
+    def fetch(url: str, types: frozenset[str]) -> Fetched:
+        requested.append(url)
+        body, media = pages[url]
+        assert media in types
+        return Fetched(
+            body=body,
+            retrieval=Retrieval(
+                request_url=url,
+                final_url=url,
+                retrieved_at=NOW,
+                retrieval_method=RetrievalMethod.HTTP,
+                http_status=200,
+                media_type=media,
+                content_type=media,
+                byte_count=len(body),
+                sha256=sha256_hex(body),
+            ),
+        )
+
+    return fetch
+
+
+def test_fetch_sec_saves_every_record_the_build_reads(cohort_repo) -> None:
+    pages = served(cohort_repo, "sec-edgar", "synthetic-fund")
+    for source_id in ("sec-edgar", "synthetic-fund"):
+        shutil.rmtree(cohort_repo / RAW / source_id)
+    store = ArtifactStore(cohort_repo / RAW, cohort_repo)
+    options = build_options()
+    registers = load_registers(
+        cohort_repo, options["register"], options["sec_register"]
+    )
+    config = load_cohort_config(cohort_repo / FIXTURE_DIR)
+    requested: list[str] = []
+
+    first = fetch_sec(fake(pages, requested), store, registers, config)
+    assert sorted(first.fetched) == sorted(pages)
+    assert first.kept == []
+    rebuilt = build(cohort_repo, **options)
+    assert rebuilt.report.blocking == ()
+    assert rebuilt.candidate_issuer_ids == (
+        "cik-0009990001",
+        "cik-0009990002",
+        "cik-0009990003",
+        "cik-0009990005",
+        "cik-0009990006",
+    )
+
+    again = fetch_sec(fake(pages, requested), store, registers, config)
+    assert len(again.kept) == 10
+    assert all("/Archives/" not in url for url in again.fetched)
+
+
+def registers_of(repo: Path):
+    options = build_options()
+    return load_registers(repo, options["register"], options["sec_register"])
+
+
+def test_a_hand_saved_page_records_that_nothing_was_fetched(cohort_repo) -> None:
+    store = ArtifactStore(cohort_repo / RAW, cohort_repo)
+    ref = register_saved(
+        store,
+        registers_of(cohort_repo),
+        "synthetic-index",
+        b"<p>Saved in a browser.</p>",
+        url="https://index.example/notices/saved",
+        media_type="text/html",
+        saved_at=NOW,
+    )
+    (retrieval,) = store.get(
+        "synthetic-index", ref.content_sha256, **SYNTHETIC
+    ).retrievals
+    assert retrieval.retrieval_method is RetrievalMethod.SAVED_BY_USER
+    assert retrieval.http_status is None
+
+
+def test_a_page_is_saved_only_for_a_registered_source(cohort_repo) -> None:
+    store = ArtifactStore(cohort_repo / RAW, cohort_repo)
+    pages = {"https://index.example/a": (b"<p>A notice.</p>", "text/html")}
+    fetch = fake(pages, [])
+    ref = fetch_page(
+        fetch,
+        store,
+        registers_of(cohort_repo),
+        "synthetic-index",
+        "https://index.example/a",
+    )
+    assert ref.storage_ref.startswith("tests/fixtures/cohort/raw/synthetic-index/")
+    with pytest.raises(ValueError, match="not in the membership source register"):
+        fetch_page(
+            fetch,
+            store,
+            registers_of(cohort_repo),
+            "elsewhere",
+            "https://index.example/a",
+        )
+
+
+def test_cite_finds_a_span_or_a_pointer_and_shows_its_text(cohort_repo) -> None:
+    store = ArtifactStore(cohort_repo / RAW, cohort_repo)
+    registers = registers_of(cohort_repo)
+    page = next(iter(served(cohort_repo, "synthetic-index").values()))[0]
+    locator, text = cite(
+        store,
+        registers,
+        "synthetic-index",
+        sha256_hex(page),
+        find="Synthetic Industrial Average",
+    )
+    assert text == "Synthetic Industrial Average"
+    assert locator.canonicalization_version == "walker-1"
+    again, same = cite(
+        store,
+        registers,
+        "synthetic-index",
+        sha256_hex(page),
+        span=(locator.start, locator.end),
+    )
+    assert (again, same) == (locator, text)
+    tickers = next(
+        body
+        for url, (body, _) in served(cohort_repo, "sec-edgar").items()
+        if url.endswith("company_tickers.json")
+    )
+    pointed, value = cite(
+        store, registers, "sec-edgar", sha256_hex(tickers), pointer="/0/ticker"
+    )
+    assert (pointed.pointer, value) == ("/0/ticker", '"ACME"')
+    with pytest.raises(ValueError, match="exactly one"):
+        cite(store, registers, "sec-edgar", sha256_hex(tickers))
+
+
+def test_cite_can_take_the_whole_line_holding_a_row(cohort_repo) -> None:
+    store = ArtifactStore(cohort_repo / RAW, cohort_repo)
+    registers = registers_of(cohort_repo)
+    page = next(iter(served(cohort_repo, "synthetic-roster").values()))[0]
+    locator, text = cite(
+        store, registers, "synthetic-roster", sha256_hex(page), find="ACM", line=True
+    )
+    assert "\t" in text and "ACM" in text and "\n" not in text
+    found, _ = cite(store, registers, "synthetic-roster", sha256_hex(page), find="ACM")
+    assert locator.start <= found.start < found.end <= locator.end
+    with pytest.raises(ValueError, match="line needs find"):
+        cite(
+            store,
+            registers,
+            "synthetic-roster",
+            sha256_hex(page),
+            span=(0, 3),
+            line=True,
+        )
+
+
+def test_a_terms_page_is_hashed_by_its_canonical_text() -> None:
+    page = b"<html><body><p>Terms.</p></body></html>"
+    assert terms_digest(page, "text/html") == terms_digest(
+        page.replace(b"<p>", b"<p class='x'>"), "text/html"
+    )
+    assert terms_digest(b"plain", "text/plain") == sha256_hex(b"plain")
+
+
+@pytest.mark.parametrize(
+    ("body", "media_type", "found"),
+    [
+        (b"%PDF-1.4\n%%EOF\n", "text/html", "which are a PDF"),
+        (b"<p>A notice.</p>", "application/pdf", "which are not a PDF"),
+    ],
+)
+def test_bytes_that_contradict_their_type_are_refused(
+    cohort_repo, body, media_type, found
+) -> None:
+    refusal = f"{media_type} contradicts the bytes, {found}"
+    with pytest.raises(ValueError, match=refusal):
+        check_media_type(body, media_type)
+    store = ArtifactStore(cohort_repo / RAW, cohort_repo)
+    with pytest.raises(ValueError, match=refusal):
+        register_saved(
+            store,
+            registers_of(cohort_repo),
+            "synthetic-index",
+            body,
+            url="https://index.example/notices/saved",
+            media_type=media_type,
+            saved_at=NOW,
+        )
+    assert not list(
+        (cohort_repo / RAW / "synthetic-index").glob(f"{sha256_hex(body)}.*")
+    )
+
+
+def test_bytes_that_match_their_type_pass() -> None:
+    check_media_type(b"%PDF-1.7\n", "application/pdf")
+    check_media_type(b"<p>A notice.</p>", "text/html")
+    check_media_type(b"Terms.", "text/plain; charset=utf-8")
+
+
+def test_a_pdf_page_is_fetched_and_saved_as_a_pdf(cohort_repo, make_pdf) -> None:
+    store = ArtifactStore(cohort_repo / RAW, cohort_repo)
+    pdf = make_pdf([(72, 720, "A notice.")])
+    url = "https://index.example/notices/a.pdf"
+    fetch = fake({url: (pdf, "application/pdf")}, [])
+    ref = fetch_page(fetch, store, registers_of(cohort_repo), "synthetic-index", url)
+    assert ref.media_type == "application/pdf"
+    assert ref.storage_ref.endswith(f"/synthetic-index/{sha256_hex(pdf)}.pdf")
+```
+
+This is block 2 for that path: extract it with
+`python3 /tmp/plan6-extract.py packages/earnings-ingestion/tests/test_cohort_acquire.py 2`.
+
+Append to `packages/earnings-ingestion/tests/test_cohort_live.py`:
+
+```python
+
+
+def test_the_evidence_refetch_accepts_an_unchanged_pdf(pdf_cohort) -> None:
+    served = pages(pdf_cohort)
+    notice = "https://index.example/notices/index-2024-11-01"
+    pdf = next((pdf_cohort / FIXTURE_DIR / "raw" / "synthetic-index").glob("*.pdf"))
+    served[notice] = (pdf.read_bytes(), "application/pdf")
+    serve = fake(served)
+
+    def fetch(url, types):
+        """The clients refuse a response whose media type was not asked for."""
+        fetched = serve(url, types)
+        assert fetched.retrieval.media_type in types
+        return fetched
+
+    result = verify_live(
+        pdf_cohort,
+        fetch_web=fetch,
+        fetch_sec=fake(served),
+        now=NOW,
+        options=build_options(),
+    )
+    (check,) = [check for check in result.checks if check.url == notice]
+    assert (check.outcome, check.retrieval.media_type) == (
+        "unchanged",
+        "application/pdf",
+    )
+    assert result.build_problems == ()
+```
+
+This is block 2 for that path: extract it with
+`python3 /tmp/plan6-extract.py packages/earnings-ingestion/tests/test_cohort_live.py 2`.
+
+Append to `apps/earnings-pipeline/tests/test_cohort_cli.py`:
+
+```python
+
+
+def test_register_saves_a_pdf_and_refuses_a_contradicting_type(
+    repo, tmp_path_factory
+) -> None:
+    body = b"%PDF-1.4\n%%EOF\n"
+    saved = tmp_path_factory.mktemp("browser") / "notice.pdf"
+    saved.write_bytes(body)
+    register = [
+        "register",
+        "synthetic-index",
+        str(saved),
+        "--url",
+        "https://index.example/notices/by-hand.pdf",
+        "--saved-at",
+        "2026-09-29T10:00:00",
+    ]
+    stored = run(repo, *register, "--media-type", "application/pdf")
+    assert stored.exit_code == 0, stored.output
+    assert f"/synthetic-index/{sha256_hex(body)}.pdf" in stored.stdout
+    refused = run(repo, *register, "--media-type", "text/html")
+    assert refused.exit_code == 1
+    assert "Refused: text/html contradicts the bytes" in refused.stderr
+
+
+def test_terms_hashes_a_saved_copy_without_a_client(
+    repo, monkeypatch, tmp_path_factory
+) -> None:
+    page = b"<html><body><p>Terms of use.</p></body></html>"
+    saved = tmp_path_factory.mktemp("browser") / "terms.html"
+    saved.write_bytes(page)
+    for name in ("EDGAR_IDENTITY", "SOURCE_IDENTITY"):
+        monkeypatch.delenv(name, raising=False)
+
+    def no_client(*args, **kwargs):
+        raise AssertionError("a saved copy needs no client")
+
+    monkeypatch.setattr(cohort_cli, "open_web_client", no_client)
+    monkeypatch.setattr(cohort_cli, "open_sec_client", no_client)
+    terms = ["terms", "https://terms.example/terms-of-use", "--saved", str(saved)]
+    hashed = run(repo, *terms)
+    assert hashed.exit_code == 0, hashed.output
+    digest = cohort_cli.terms_digest(page, "text/html")
+    assert hashed.stdout == f'terms_sha256 = "{digest}"\n'
+    refused = run(repo, *terms, "--media-type", "application/pdf")
+    assert refused.exit_code == 1
+    assert "Refused: application/pdf contradicts the bytes" in refused.stderr
+```
+
+This is block 2 for that path: extract it with
+`python3 /tmp/plan6-extract.py apps/earnings-pipeline/tests/test_cohort_cli.py 2`.
+
+Replace `packages/earnings-ingestion/tests/test_import_boundaries.py` with:
+
+```python
+"""earnings-ingestion imports neither earnings-themes nor the application, and no
+browser: browser capture stays behind an optional extra (A §173; B3).
+
+Only ``earnings_ingestion.browser.selenium_capture`` may load a browser library, and
+only when something imports it; tests/contracts/test_import_scan.py checks the source
+statically as well. The cohort's offline path, from saved artifacts to a frozen
+manifest, loads no network client (A §410), and neither does pdftext-1's PDF reader.
+"""
+
+import json
+import subprocess
+import sys
+
+import pytest
+
+FORBIDDEN = {
+    "earnings_themes",
+    "earnings_pipeline",
+    "selenium",
+    "websocket",
+    "playwright",
+    "pyppeteer",
+}
+
+
+def modules_loaded_by(module: str) -> set[str]:
+    """Top-level modules a fresh interpreter holds after importing ``module``."""
+    code = f"import json, sys, {module}; print(json.dumps(sorted(sys.modules)))"
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True
+    )
+    return {name.partition(".")[0] for name in json.loads(result.stdout)}
+
+
+@pytest.mark.parametrize(
+    "module",
+    [
+        "earnings_ingestion",
+        "earnings_ingestion.browser",
+        "earnings_ingestion.browser.install",
+        "earnings_ingestion.browser.renderer",
+        "earnings_ingestion.browser.serialize",
+        "earnings_ingestion.browser.store",
+        "earnings_ingestion.layout",
+        "earnings_ingestion.layout.extract",
+        "earnings_ingestion.fetch.client",
+        "earnings_ingestion.fetch.robots",
+        "earnings_ingestion.sec.client",
+        "earnings_ingestion.cohort.build",
+        "earnings_ingestion.cohort.pdftext",
+        "earnings_ingestion.cohort.web",
+    ],
+)
+def test_importing_ingestion_loads_nothing_forbidden(module: str) -> None:
+    assert modules_loaded_by(module) & FORBIDDEN == set()
+
+
+NETWORK = {
+    "httpx",
+    "earnings_ingestion.fetch.client",
+    "earnings_ingestion.sec.client",
+    "earnings_ingestion.cohort.web",
+}
+
+
+def full_modules_loaded_by(module: str) -> set[str]:
+    code = f"import json, sys, {module}; print(json.dumps(sorted(sys.modules)))"
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True
+    )
+    return set(json.loads(result.stdout))
+
+
+@pytest.mark.parametrize(
+    "module",
+    [
+        "earnings_ingestion.cohort.build",
+        "earnings_ingestion.cohort.freeze",
+        "earnings_ingestion.cohort.locators",
+        "earnings_ingestion.cohort.pdftext",
+        "earnings_ingestion.cohort.synthetic",
+        "earnings_ingestion.sec.data",
+        "earnings_ingestion.sec.urls",
+        "earnings_ingestion.fetch.store",
+    ],
+)
+def test_the_offline_cohort_path_loads_no_network_client(module: str) -> None:
+    """Building and freezing read saved bytes; they cannot reach the network (A §410)."""
+    assert full_modules_loaded_by(module) & NETWORK == set()
+```
+
+This is block 4 for that path: extract it with
+`python3 /tmp/plan6-extract.py packages/earnings-ingestion/tests/test_import_boundaries.py 4`.
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_pdftext.py packages/earnings-ingestion/tests/test_cohort_locators.py packages/earnings-ingestion/tests/test_cohort_build.py packages/earnings-ingestion/tests/test_fetch_store.py packages/earnings-ingestion/tests/test_cohort_acquire.py packages/earnings-ingestion/tests/test_cohort_live.py packages/earnings-ingestion/tests/test_import_boundaries.py apps/earnings-pipeline/tests/test_cohort_cli.py -q`
+
+Expected: FAIL. Collection stops in two files, first with
+`No module named 'earnings_ingestion.cohort.pdftext'`, then with
+`cannot import name 'check_media_type'`, and pytest reports `2 errors`.
+
+- [ ] **Step 3 (gate): Add the dependency**
+
+Ask the user. `uv add` reaches PyPI to resolve, changes `uv.lock`, and installs
+pypdf 6.19.0. The spike left its wheel in uv's cache. If the user declines, stop:
+Task 17 cannot cite the PDF notices. On a yes:
+
+```bash
+uv add --package earnings-ingestion "pypdf==6.19.0"
+```
+
+Expected: `Resolved 152 packages`, and `+ pypdf==6.19.0` among the packages it installs.
+
+Then confirm the lock and the environment offline, and that nothing else changed:
+
+```bash
+uv lock --check --offline
+uv sync --locked --all-packages --offline
+git diff --stat -- '*pyproject.toml' uv.lock
+git diff -- packages/earnings-ingestion/pyproject.toml | grep '^[-+] '
+```
+
+Expected: `Resolved 152 packages`; then `Resolved 152 packages` and `Checked 41 packages`;
+then `2 files changed`, `packages/earnings-ingestion/pyproject.toml` and `uv.lock`; then
+the one added line, `+    "pypdf==6.19.0",`.
+
+- [ ] **Step 4: Write the implementation**
+
+Create `packages/earnings-ingestion/src/earnings_ingestion/cohort/pdftext.py`:
+
+```python
+"""pdftext-1: the citation text of a saved PDF (plan 6, P6-24).
+
+S&P Dow Jones Indices publishes its index notices as PDFs, and a citation needs text
+to point into. Given a PDF's bytes, the policy:
+
+1. reads them with pypdf 6.19.0, holding pypdf's logger below ERROR for the call;
+2. takes each page's plain-mode text, in page order;
+3. normalizes the text to NFC, never NFKC;
+4. collapses each line's whitespace runs to one space and strips its ends, dropping
+   the lines left empty;
+5. joins every line, across pages, with a newline.
+
+The result is hashed and cited as walker-1's canonical text is: the SHA-256 of its
+UTF-8, and half-open code-point offsets into it. pypdf is pinned exactly because its
+version defines the policy, so another version's text is ``pdftext-2``. Like this
+stage's use of walker-1, the policy produces citation text only, never a
+``CanonicalDocument``.
+
+A PDF is data: pypdf runs no script, follows no link, and reaches no network. Its
+recovery warnings are silenced, since the text's hash, not the warnings, is the
+authority. The policy refuses bytes pypdf cannot read; any encrypted PDF, even one
+that an empty password opens, so the text never depends on a decryption attempt; and
+a PDF with no text layer, since OCR is out of scope.
+"""
+
+import io
+import logging
+import re
+import unicodedata
+
+from pypdf import PdfReader
+
+PDFTEXT_VERSION = "pdftext-1"
+_WHITESPACE = re.compile(r"\s+")
+
+
+class PdfTextError(ValueError):
+    """A PDF that has no pdftext-1 text."""
+
+
+def _pages(body: bytes) -> list[str]:
+    """Each page's plain-mode text, with pypdf's logger held below ERROR."""
+    logger = logging.getLogger("pypdf")
+    level = logger.level
+    logger.setLevel(logging.ERROR)
+    try:
+        reader = PdfReader(io.BytesIO(body))
+        if reader.is_encrypted:
+            raise PdfTextError(f"{PDFTEXT_VERSION} refuses an encrypted PDF")
+        return [page.extract_text(extraction_mode="plain") for page in reader.pages]
+    except PdfTextError:
+        raise
+    except Exception as exc:  # pypdf raises many exception types on malformed bytes
+        raise PdfTextError(f"{PDFTEXT_VERSION} cannot read it: {exc}") from exc
+    finally:
+        logger.setLevel(level)
+
+
+def pdf_text(body: bytes) -> str:
+    """pdftext-1's text of a PDF; ``PdfTextError`` if it has none."""
+    text = unicodedata.normalize("NFC", "\n".join(_pages(body)))
+    lines = (_WHITESPACE.sub(" ", line).strip() for line in text.splitlines())
+    joined = "\n".join(line for line in lines if line)
+    if not joined:
+        raise PdfTextError(
+            f"{PDFTEXT_VERSION} found no text layer; OCR is out of scope"
+        )
+    return joined
+```
+
+Replace `packages/earnings-ingestion/src/earnings_ingestion/cohort/locators.py` with:
+
+```python
+"""Cite evidence in a saved artifact, and verify a citation, without its wording.
+
+Two locator kinds exist (plan 6, P6-9):
+
+- ``text_span``: code-point offsets into an artifact's citation text. The media type
+  chooses the policy (P6-24): an HTML artifact's walker-1 canonical text, or a PDF's
+  pdftext-1 text. The locator records the policy and the text's hash, so a different
+  text can never silently move the span.
+- ``json_pointer``: an RFC 6901 pointer into a JSON artifact.
+
+``cited_sha256`` hashes the cited content: the span's text as UTF-8, or the canonical
+JSON of the value at the pointer. Verification recomputes it from the saved bytes.
+The cited content itself never enters a committed file; ``ArtifactText.cited`` returns
+it for a person's terminal.
+"""
+
+import json
+from dataclasses import dataclass
+from datetime import datetime
+from functools import cached_property
+
+from earnings_core import ArtifactRef, hash_canonical_text, sha256_hex
+
+from earnings_ingestion.canonical import (
+    CANONICALIZATION_VERSION,
+    CanonicalizationFailure,
+    canonicalize,
+)
+from earnings_ingestion.cohort.digests import canonical_json
+from earnings_ingestion.cohort.pdftext import PDFTEXT_VERSION, PdfTextError, pdf_text
+from earnings_ingestion.cohort.records import Citation, EvidenceLocator, LocatorKind
+
+_POLICIES = {"text/html": CANONICALIZATION_VERSION, "application/pdf": PDFTEXT_VERSION}
+
+
+class LocatorError(ValueError):
+    """A locator that does not identify the content it claims to."""
+
+
+def _essence(media_type: str) -> str:
+    return media_type.partition(";")[0].strip().lower()
+
+
+def resolve_json_pointer(document: object, pointer: str) -> object:
+    """The value at an RFC 6901 pointer; ``LocatorError`` if there is none."""
+    if pointer == "":
+        return document
+    if not pointer.startswith("/"):
+        raise LocatorError(f"{pointer!r} is not a JSON pointer")
+    value = document
+    for raw in pointer[1:].split("/"):
+        token = raw.replace("~1", "/").replace("~0", "~")
+        if isinstance(value, dict) and token in value:
+            value = value[token]
+        elif (
+            isinstance(value, list)
+            and token.isdigit()
+            and (token == "0" or not token.startswith("0"))
+            and int(token) < len(value)
+        ):
+            value = value[int(token)]
+        else:
+            raise LocatorError(f"{pointer!r} names nothing in the document")
+    return value
+
+
+class ArtifactText:
+    """One saved artifact, read once: citation text if HTML or PDF, data if JSON."""
+
+    def __init__(self, body: bytes, media_type: str) -> None:
+        self.body = body
+        self.media_type = _essence(media_type)
+
+    @property
+    def version(self) -> str:
+        """The citation-text policy the media type chooses: walker-1 for HTML,
+        pdftext-1 for a PDF."""
+        if self.media_type not in _POLICIES:
+            raise LocatorError(f"a text span needs HTML or PDF, not {self.media_type}")
+        return _POLICIES[self.media_type]
+
+    @cached_property
+    def canonical(self) -> tuple[str, str]:
+        """The citation text, under ``version``, and its hash."""
+        if self.version == PDFTEXT_VERSION:
+            try:
+                text = pdf_text(self.body)
+            except PdfTextError as exc:
+                raise LocatorError(str(exc)) from exc
+            return text, hash_canonical_text(text)
+        result = canonicalize(
+            self.body, source_document_id="cohort-evidence", media_type="text/html"
+        )
+        if isinstance(result, CanonicalizationFailure):
+            raise LocatorError(f"walker-1 cannot read it: {result.detail}")
+        return result.document.canonical_text, result.document.canonical_hash
+
+    @cached_property
+    def data(self) -> object:
+        if self.media_type != "application/json":
+            raise LocatorError(f"a JSON pointer needs JSON, not {self.media_type}")
+        try:
+            return json.loads(self.body)
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise LocatorError(f"it is not JSON: {exc}") from exc
+
+    def span(self, start: int, end: int) -> EvidenceLocator:
+        text, text_hash = self.canonical
+        if not 0 <= start < end <= len(text):
+            raise LocatorError(f"[{start}, {end}) is outside [0, {len(text)})")
+        return EvidenceLocator(
+            kind=LocatorKind.TEXT_SPAN,
+            canonicalization_version=self.version,
+            canonical_sha256=text_hash,
+            start=start,
+            end=end,
+            cited_sha256=sha256_hex(text[start:end].encode("utf-8")),
+        )
+
+    def find(self, needle: str, occurrence: int = 1) -> EvidenceLocator:
+        """The span of the ``occurrence``-th (1-based) appearance of ``needle``."""
+        text, _ = self.canonical
+        start = -1
+        for _ in range(occurrence):
+            start = text.find(needle, start + 1)
+            if start == -1:
+                count = "" if occurrence == 1 else f" {occurrence} times"
+                raise LocatorError(f"{needle!r} does not occur{count}")
+        return self.span(start, start + len(needle))
+
+    def line(self, needle: str, occurrence: int = 1) -> EvidenceLocator:
+        """The span of the whole line holding the ``occurrence``-th ``needle``.
+        walker-1 writes a table row as one line of tab-separated cells, and
+        pdftext-1 a PDF table's row as one line of space-separated cells, so this
+        cites a roster row with every cell in it."""
+        found = self.find(needle, occurrence)
+        text, _ = self.canonical
+        start = text.rfind("\n", 0, found.start) + 1
+        end = text.find("\n", found.end)
+        return self.span(start, len(text) if end == -1 else end)
+
+    def pointer(self, pointer: str) -> EvidenceLocator:
+        value = resolve_json_pointer(self.data, pointer)
+        return EvidenceLocator(
+            kind=LocatorKind.JSON_POINTER,
+            pointer=pointer,
+            cited_sha256=sha256_hex(canonical_json(value)),
+        )
+
+    def cited(self, locator: EvidenceLocator) -> str:
+        """The content ``locator`` cites, once it has been verified."""
+        self.verify(locator)
+        if locator.kind is LocatorKind.TEXT_SPAN:
+            return self.canonical[0][locator.start : locator.end]
+        value = resolve_json_pointer(self.data, locator.pointer)
+        return canonical_json(value).decode("utf-8")
+
+    def verify(self, locator: EvidenceLocator) -> None:
+        """Raise ``LocatorError`` unless ``locator`` still cites what it hashed. A
+        span made under another policy than this artifact's is refused before any
+        text is extracted."""
+        if locator.kind is LocatorKind.TEXT_SPAN:
+            if locator.canonicalization_version != self.version:
+                raise LocatorError(
+                    f"the span was made under {locator.canonicalization_version},"
+                    f" not {self.version}"
+                )
+            if self.canonical[1] != locator.canonical_sha256:
+                raise LocatorError("the artifact's canonical text is not the one cited")
+            fresh = self.span(locator.start, locator.end)
+        else:
+            fresh = self.pointer(locator.pointer)
+        if fresh.cited_sha256 != locator.cited_sha256:
+            raise LocatorError("the cited content no longer hashes to cited_sha256")
+
+
+@dataclass(frozen=True)
+class CitableArtifact:
+    """A stored artifact with what a citation of it records."""
+
+    source_id: str
+    url: str
+    artifact: ArtifactRef
+    retrieved_at: datetime
+    text: ArtifactText
+
+    def cite(self, *locators: EvidenceLocator) -> Citation:
+        return Citation(
+            source_id=self.source_id,
+            url=self.url,
+            artifact=self.artifact,
+            retrieved_at=self.retrieved_at,
+            locators=locators,
+        )
+```
+
+This is block 2 for that path: extract it with
+`python3 /tmp/plan6-extract.py packages/earnings-ingestion/src/earnings_ingestion/cohort/locators.py 2`.
+
+The other five files change by exact replacement. Each old text must match once, so
+a file that has drifted from Task 16's stops the script before anything is written
+to it:
+
+- `build.py` records the artifact's policy, `text.version`, and drops the
+  `walker-1` constant's import;
+- `store.py` names a PDF `.pdf`;
+- `acquire.py` gains `PDF` and `check_media_type`, `fetch_page` accepts a PDF, and
+  `register_saved` checks the declared type;
+- `live.py` refetches a PDF;
+- `cohort_cli.py`'s `terms` gains `--saved` and `--media-type` (PT-9).
+
+Create `/tmp/plan6-16b-edits.py`:
+
+```python
+from pathlib import Path
+
+INGESTION = "packages/earnings-ingestion/src/earnings_ingestion/"
+EDITS = {
+    INGESTION + "cohort/build.py": [
+        ("from earnings_ingestion.canonical import CANONICALIZATION_VERSION\n", ""),
+        (
+            "                canonicalization_version=CANONICALIZATION_VERSION,\n",
+            "                canonicalization_version=text.version,\n",
+        ),
+    ],
+    INGESTION + "fetch/store.py": [
+        (
+            '    "application/json": ".json",\n',
+            '    "application/json": ".json",\n    "application/pdf": ".pdf",\n',
+        ),
+    ],
+    INGESTION + "cohort/acquire.py": [
+        (
+            'HTML = frozenset({"text/html"})\n',
+            'HTML = frozenset({"text/html"})\nPDF = frozenset({"application/pdf"})\n',
+        ),
+        (
+            '    """Fetch one HTML page of a registered source and save it."""\n'
+            "    registers.entry(source_id)\n"
+            "    fetched = fetch(url, HTML)\n",
+            '    """Fetch one HTML or PDF page of a registered source and save it."""\n'
+            "    registers.entry(source_id)\n"
+            "    fetched = fetch(url, HTML | PDF)\n",
+        ),
+        (
+            "def register_saved(\n",
+            "def check_media_type(body: bytes, media_type: str) -> None:\n"
+            '    """Refuse bytes that contradict ``media_type`` (plan 6, P6-24): a PDF\n'
+            "    declared as anything else, or a declared PDF without the %PDF- signature.\n"
+            '    """\n'
+            '    declared_pdf = media_type.partition(";")[0].strip().lower() in PDF\n'
+            '    if body.startswith(b"%PDF-") != declared_pdf:\n'
+            '        found = "not a PDF" if declared_pdf else "a PDF"\n'
+            '        raise ValueError(f"{media_type} contradicts the bytes, which are {found}")\n'
+            "\n"
+            "\n"
+            "def register_saved(\n",
+        ),
+        (
+            '    """Save a page a person saved in a browser from ``url`` at ``saved_at``."""\n'
+            "    registers.entry(source_id)\n",
+            '    """Save a page a person saved in a browser from ``url`` at ``saved_at``."""\n'
+            "    registers.entry(source_id)\n"
+            "    check_media_type(body, media_type)\n",
+        ),
+    ],
+    INGESTION + "cohort/live.py": [
+        (
+            "from earnings_ingestion.cohort.acquire import HTML, terms_digest\n",
+            "from earnings_ingestion.cohort.acquire import HTML, PDF, terms_digest\n",
+        ),
+        (
+            '            fetched = fetch(url, ANY if purpose == "terms" else HTML)\n',
+            '            fetched = fetch(url, ANY if purpose == "terms" else HTML | PDF)\n',
+        ),
+    ],
+    "apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py": [
+        (
+            "    earnings-pipeline cohort terms URL\n",
+            "    earnings-pipeline cohort terms URL [--saved FILE]\n",
+        ),
+        (
+            "Only ``fetch``, ``fetch-sec``, ``terms``, and ``verify-live`` use the network, each\n"
+            "through its client's access policy; ``build`` and ``freeze`` read committed files and\n"
+            "saved artifacts alone.",
+            "Only ``fetch``, ``fetch-sec``, ``terms``, and ``verify-live`` use the network, each\n"
+            "through its client's access policy, and ``terms --saved`` hashes a copy saved in a\n"
+            "browser without it; ``build`` and ``freeze`` read committed files and saved\n"
+            "artifacts alone.",
+        ),
+        (
+            "from earnings_ingestion.cohort.acquire import (\n    cite,\n",
+            "from earnings_ingestion.cohort.acquire import (\n    check_media_type,\n    cite,\n",
+        ),
+        (
+            '@cohort.command("terms")\n'
+            "def terms_command(context: typer.Context, url: str) -> None:\n"
+            '    """Print the hash a register records for a terms page."""\n'
+            "    layout: Layout = context.obj\n",
+            '@cohort.command("terms")\n'
+            "def terms_command(\n"
+            "    context: typer.Context,\n"
+            "    url: str,\n"
+            "    saved: Annotated[\n"
+            "        Path | None,\n"
+            '        typer.Option(help="A copy saved in a browser: hash it, and send nothing."),\n'
+            "    ] = None,\n"
+            '    media_type: Annotated[str, typer.Option(help="The saved copy\'s type.")] = (\n'
+            '        "text/html"\n'
+            "    ),\n"
+            ") -> None:\n"
+            '    """Print the hash a register records for a terms page: fetched from URL, or\n'
+            '    read from a copy that a person saved in a browser (plan 6, P6-24)."""\n'
+            "    if saved is not None:\n"
+            "        body = saved.read_bytes()\n"
+            "        try:\n"
+            "            check_media_type(body, media_type)\n"
+            "            digest = terms_digest(body, media_type)\n"
+            "        except ValueError as error:\n"
+            '            _fail(f"Refused: {error}")\n'
+            "        typer.echo(f'terms_sha256 = \"{digest}\"')\n"
+            "        return\n"
+            "    layout: Layout = context.obj\n",
+        ),
+    ],
+}
+for name, pairs in EDITS.items():
+    path = Path(name)
+    text = path.read_text(encoding="utf-8")
+    for old, new in pairs:
+        assert text.count(old) == 1, (name, old[:60])
+        text = text.replace(old, new)
+    path.write_text(text, encoding="utf-8")
+print("code edits applied")
+```
+
+Extract it, then run it from the repository root:
+
+```bash
+python3 /tmp/plan6-extract.py /tmp/plan6-16b-edits.py && python3 /tmp/plan6-16b-edits.py
+```
+
+Expected: `extracted /tmp/plan6-16b-edits.py: 120 lines`, then `code edits applied`.
+
+- [ ] **Step 5: Run the tests to verify they pass**
+
+Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_pdftext.py packages/earnings-ingestion/tests/test_cohort_locators.py packages/earnings-ingestion/tests/test_cohort_build.py packages/earnings-ingestion/tests/test_fetch_store.py packages/earnings-ingestion/tests/test_cohort_acquire.py packages/earnings-ingestion/tests/test_cohort_live.py packages/earnings-ingestion/tests/test_import_boundaries.py apps/earnings-pipeline/tests/test_cohort_cli.py -q`
+
+Expected: `102 passed`.
+
+- [ ] **Step 6: Record `pdftext-1` in the data dictionary**
+
+No field or value changes, so the dictionary's test already passes. Three
+descriptions name `walker-1` alone: the `text_span` value,
+`EvidenceLocator.canonicalization_version`, and the curated files'
+`canonical_sha256`, in two tables. Each now names `pdftext-1` beside it.
+
+Create `/tmp/plan6-16b-dictionary.py`:
+
+```python
+from pathlib import Path
+
+path = Path("docs/data-dictionary.md")
+text = path.read_text(encoding="utf-8")
+EDITS = [
+    (
+        "| `text_span` | Half-open code-point offsets into an HTML artifact's walker-1 canonical text |",
+        "| `text_span` | Half-open code-point offsets into an artifact's citation text: walker-1's canonical text for HTML, pdftext-1's text for a PDF |",
+        1,
+    ),
+    (
+        "| `canonicalization_version` | ID part or null | `walker-1` for a text span; null for a pointer |",
+        "| `canonicalization_version` | ID part or null | A text span's citation-text policy: `walker-1` for HTML, `pdftext-1` for a PDF; null for a pointer |",
+        1,
+    ),
+    (
+        "| `canonical_sha256` | 64 lowercase hex | Its walker-1 canonical text's hash |",
+        "| `canonical_sha256` | 64 lowercase hex | Its citation text's hash: walker-1's for HTML, pdftext-1's for a PDF |",
+        2,
+    ),
+]
+for old, new, count in EDITS:
+    assert text.count(old) == count, (old[:60], text.count(old))
+    text = text.replace(old, new)
+path.write_text(text, encoding="utf-8")
+print("data dictionary updated")
+```
+
+```bash
+python3 /tmp/plan6-extract.py /tmp/plan6-16b-dictionary.py && python3 /tmp/plan6-16b-dictionary.py
+uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py -q
+```
+
+Expected: `extracted /tmp/plan6-16b-dictionary.py: 26 lines`, then
+`data dictionary updated`, then `78 passed`.
+
+- [ ] **Step 7: Run the checks**
+
+```bash
+python3 /tmp/plan6-escapes.py packages/earnings-ingestion/src/earnings_ingestion/cohort/pdftext.py packages/earnings-ingestion/src/earnings_ingestion/cohort/locators.py packages/earnings-ingestion/src/earnings_ingestion/cohort/build.py packages/earnings-ingestion/src/earnings_ingestion/cohort/acquire.py packages/earnings-ingestion/src/earnings_ingestion/cohort/live.py packages/earnings-ingestion/src/earnings_ingestion/fetch/store.py apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py packages/earnings-ingestion/tests/conftest.py packages/earnings-ingestion/tests/test_cohort_pdftext.py packages/earnings-ingestion/tests/test_cohort_locators.py packages/earnings-ingestion/tests/test_cohort_build.py packages/earnings-ingestion/tests/test_fetch_store.py packages/earnings-ingestion/tests/test_cohort_acquire.py packages/earnings-ingestion/tests/test_cohort_live.py packages/earnings-ingestion/tests/test_import_boundaries.py apps/earnings-pipeline/tests/test_cohort_cli.py
+uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q
+uv run --locked --all-packages pytest expirements/parser-fidelity --import-mode=prepend -q
+uv run --locked ruff check . && uv run --locked ruff format --check .
+git status --short -- tests/fixtures
+```
+
+Expected: `escapes intact`; `929 passed, 24 deselected`; `280 passed`; `All checks passed!` and
+`211 files already formatted`; no `git status` output, since the synthetic cohort is unchanged.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git log --oneline -3
+git add packages/earnings-ingestion/pyproject.toml uv.lock packages/earnings-ingestion/src/earnings_ingestion/cohort/pdftext.py packages/earnings-ingestion/src/earnings_ingestion/cohort/locators.py packages/earnings-ingestion/src/earnings_ingestion/cohort/build.py packages/earnings-ingestion/src/earnings_ingestion/cohort/acquire.py packages/earnings-ingestion/src/earnings_ingestion/cohort/live.py packages/earnings-ingestion/src/earnings_ingestion/fetch/store.py apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py packages/earnings-ingestion/tests/conftest.py packages/earnings-ingestion/tests/test_cohort_pdftext.py packages/earnings-ingestion/tests/test_cohort_locators.py packages/earnings-ingestion/tests/test_cohort_build.py packages/earnings-ingestion/tests/test_fetch_store.py packages/earnings-ingestion/tests/test_cohort_acquire.py packages/earnings-ingestion/tests/test_cohort_live.py packages/earnings-ingestion/tests/test_import_boundaries.py apps/earnings-pipeline/tests/test_cohort_cli.py docs/data-dictionary.md
+git commit -m "feat(ingestion): cite PDF notices through pdftext-1, and hash saved terms pages"
+git status --short
+```
+
+Expected: no `git status` output after the commit.
+
+---
 ### Task 17: The real DJIA cohort — curate, review, and freeze
 
 This task builds the real cohort from evidence saved at execution, under the user's
@@ -12788,12 +14497,26 @@ named step's output, and never leave one.
 - **Raw artifacts** stay under the gitignored `data/raw/cohort/`.
 - **What is committed:** the register, the three curated files, and the frozen
   manifest. They hold facts, URLs, locators, and hashes only.
-- **Planning-time leads, not evidence:**
-  - NVIDIA and Sherwin-Williams replaced Intel and Dow Inc. effective 2024-11-08,
-    announced 2024-11-01;
-  - Alphabet (Class A) replaced Verizon, announced in June 2026.
+- **The saved notices.** The user saved five S&P DJI notices, all PDFs, which are
+  cited through `pdftext-1` (P6-24). Two state DJIA changes in the window:
+  - `1475162`, a press release of 2024-11-01: NVIDIA and Sherwin-Williams replace
+    Intel and Dow Inc., prior to the open on 2024-11-08;
+  - `1484126`, a press release of 2026-06-23: Alphabet (Class A) replaces Verizon,
+    prior to the open on 2026-06-29.
 
-  Only the saved announcements decide.
+  The other three are not curated: `1471327` (3M's spin-off, before the window),
+  `1480747` (Honeywell's spin-off, which leaves Honeywell in the index), and
+  `1483528` (a Transportation Average change). Only the saved notices decide,
+  through the rows that Step 6 cites.
+- **Facts already supplied.** Task 17 paused at Step 1 on 2026-09-26 for this
+  plan's amendment. `specs/pdf-citation-text.md`, §State when this was written,
+  records what the user supplied then:
+  - each cited PDF's URL, saved-at time, and SHA-256;
+  - the anchor revision;
+  - S&P DJI's terms URL and its hand-saved copy;
+  - two of the three terms hashes.
+
+  Take those from there, and ask only for what is missing.
 
 **Security IDs.** A security ID is a stable internal ID (A §264). It is the company's
 short name as a lowercase slug, with words joined by hyphens, followed by `-common`,
@@ -12838,18 +14561,20 @@ Put these to the user, in one batch of questions:
    browser. The agent does not fetch `/w/` pages, which robots.txt disallows.
 3. **The announcements.** Ask for the list of S&P DJI announcements of DJIA
    constituent changes, from the anchor's date through `2026-09-22`, with each
-   one's URL, and the terms-of-use page those pages link to.
+   one's URL, and for S&P DJI's terms-of-use page (Step 2).
    - A change announced after the cutoff is still curated: the build withholds it
      (P6-12).
-   - If an announcement exists only as a PDF, stop and ask. `walker-1` reads HTML
-     only, so a PDF cannot be cited (P6-9).
+   - A PDF is cited under `pdftext-1` (P6-24). For a PDF saved by hand, also ask
+     when it was saved, in UTC, and never derive a URL from a file name. Only a
+     PDF without a text layer, which `pdftext-1` refuses, stops for the user.
 
 - [ ] **Step 2 (gate): Record the terms pages' hashes**
 
 Ask the user, naming the requests. There are three terms pages:
 
 - one at `foundation.wikimedia.org`, through the web client, after its robots.txt;
-- one at S&P DJI, the same way;
+- S&P DJI's, the same way. The notices link no terms page, so its URL comes from
+  the footer of the S&P DJI site;
 - `https://www.sec.gov/about/privacy-information`, through the SEC client.
 
 That is about five requests, sent with `SOURCE_IDENTITY` and `EDGAR_IDENTITY`. On a
@@ -12863,8 +14588,16 @@ uv run --locked --all-packages earnings-pipeline cohort terms https://www.sec.go
 
 Expected: each prints `terms_sha256 = "<64 hex>"`.
 
-- A `Stopped:` line means a refusal. Report it to the user: a terms page that
-  cannot be read leaves that source unregistered.
+- A `Stopped:` line means a refusal. Report it to the user, who may save the page
+  in a browser and read it. The saved copy is hashed with no request and no
+  identity (PT-9):
+
+  ```text
+  uv run --locked --all-packages earnings-pipeline cohort terms [GATE: the terms_url] --saved "[GATE: the saved file]"
+  ```
+
+  Expected: `terms_sha256 = "<64 hex>"`. A terms page that can be neither fetched
+  nor saved leaves that source unregistered.
 - The user reads each terms page before its hash goes into the register, because a
   hash records a reading.
 
@@ -12910,13 +14643,13 @@ rights_basis = "CC BY-SA 4.0: reuse needs attribution and share-alike"
 [sources.spdji-announcements]
 owner = "S&P Dow Jones Indices LLC"
 url = "https://www.spglobal.com/spdji/en/"
-access_method = """Each Dow Jones Industrial Average change announcement, through the cohort web \
-client after robots.txt allows it, with the identity in SOURCE_IDENTITY. S&P DJI's site refused \
-automated requests at planning (HTTP 403), so a person may save each announcement in a browser, \
-and `earnings-pipeline cohort register` records it as saved_by_user."""
+access_method = """Each Dow Jones Industrial Average change notice is a PDF that a person saves \
+in a browser, and `earnings-pipeline cohort register --media-type application/pdf` records it \
+as saved_by_user, with its URL and the time it was saved. S&P DJI's site refuses automated \
+requests (HTTP 403), so no notice is fetched."""
 cost = "Free to read; no account."
 license_terms = "S&P Dow Jones Indices' terms of use, at terms_url, govern the announcements."
-terms_url = "[GATE: the terms-of-use page that the announcement pages link to]"
+terms_url = "[GATE: Step 2's S&P DJI terms URL]"
 terms_sha256 = "[GATE: Step 2's terms_sha256 for this terms_url]"
 redistribution_status = """S&P DJI materials carry redistribution restrictions. This repository \
 commits facts and citations only (plan 6, P6-3), and the saved announcements stay under \
@@ -12926,6 +14659,7 @@ expected_update_pattern = "A new announcement for each change; announcements are
 known_limitations = [
     "An effective date is stated as a trading day, before the open or after the close, with no time.",
     "The site refused automated requests at planning, so announcements may be saved by hand.",
+    "Notices are PDFs, cited through pdftext-1 (pypdf 6.19.0); a notice without a text layer cannot be cited.",
 ]
 last_verified = "[GATE: Step 2's date]"
 evidence_class = "official"
@@ -13158,34 +14892,47 @@ uv run --locked --all-packages python -c "from pathlib import Path; from earning
 Expected, a prediction that was replayed with dummy hashes: no `grep` output, then
 `curated files load: djia-2024q3-2026q2 30`.
 
-- [ ] **Step 4 (gate): Save the anchor and the announcements**
+- [ ] **Step 4 (gate): Save the anchor, and register the notices**
 
-Ask the user, naming the requests: one page per URL, plus one robots.txt per host,
-all through the web client at one request per second. On a yes:
+**The anchor** is fetched. Ask the user, naming the requests: the revision's page and
+`en.wikipedia.org`'s robots.txt, through the web client at one request per second.
+On a yes:
 
 ```text
 uv run --locked --all-packages earnings-pipeline cohort fetch wikipedia-djia "https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average?oldid=[GATE: the revision ID]"
-uv run --locked --all-packages earnings-pipeline cohort fetch spdji-announcements [GATE: each announcement's URL]
 ```
 
-Expected: one line per page, `<sha256>  data/raw/cohort/<source>/<sha256>.html  <url>`.
-Keep each SHA-256.
+Expected: `<sha256>  data/raw/cohort/wikipedia-djia/<sha256>.html  <url>`. Keep the
+SHA-256.
 
-**If a page is refused,** the command prints `Stopped:` and a reason:
+**If it is refused,** the command prints `Stopped:` and a reason:
 
 - a robots.txt refusal names the rule;
 - a persistent 403 stops that client.
 
-Neither is retried with another identity. For each refused page:
+Neither is retried with another identity. Ask the user to save the revision in a
+browser, as "Webpage, HTML only", and record it with:
 
-1. Ask the user to save it in a browser, as "Webpage, HTML only".
-2. Record it with:
+```text
+uv run --locked --all-packages earnings-pipeline cohort register wikipedia-djia [GATE: the saved file] --url "https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average?oldid=[GATE: the revision ID]" --saved-at [GATE: when it was saved, in UTC, as 2026-10-01T14:30:00]
+```
 
-   ```text
-   uv run --locked --all-packages earnings-pipeline cohort register [GATE: source_id] [GATE: the saved file] --url "[GATE: the page's URL]" --saved-at [GATE: when it was saved, in UTC, as 2026-10-01T14:30:00]
-   ```
+Expected: the same one-line output, and the retrieval records `saved_by_user`.
 
-   Expected: the same one-line output, and the retrieval records `saved_by_user`.
+**The notices** are PDFs the user saved in a browser, so none is fetched and this
+sends no request. Register each cited notice with its original URL and the time it
+was saved, in UTC. The user supplies both, and a URL is never derived from a file
+name:
+
+```text
+uv run --locked --all-packages earnings-pipeline cohort register spdji-announcements "[GATE: the saved PDF]" --url "[GATE: its original URL]" --saved-at [GATE: when it was saved, in UTC] --media-type application/pdf
+```
+
+Expected: `<sha256>  data/raw/cohort/spdji-announcements/<sha256>.pdf  <url>`, with
+the saved file's SHA-256. The retrieval records `saved_by_user`. Keep each SHA-256.
+
+- `Refused:` means the bytes contradict the declared type (P6-24): stop and ask.
+- A notice with no text layer is refused later, by `cite`: stop and ask then.
 
 - [ ] **Step 5: Cite the anchor's rows**
 
@@ -13230,15 +14977,22 @@ cited_sha256 = "[GATE: cite's cited_sha256]"
 
 - [ ] **Step 6: Cite each announcement**
 
-For each announcement, cite:
+For each notice, cite through `pdftext-1` (P6-24), which writes each row of a table
+as one line, its cells joined by single spaces:
 
-- each company it adds or removes, with a `--find` needle that holds both the
-  company's name and its ticker, as the announcement writes them;
-- the sentence that states the effective date.
+- each company it adds or removes, by its row in the notice's summary table: use
+  `--find "<name> <ticker>" --line`, with the name and ticker as the row writes
+  them.
+  - Read the row on stderr: it must be that company's row, with its ticker.
+  - If the needle first matches elsewhere, add `--occurrence N`.
+- the effective date, by one of two routes:
+  - a row that states it, cited with `--line`;
+  - a span across lines, found without `--line` by a needle that holds a newline
+    (`$'…\n…'`), since `pdftext-1` joins lines with `\n`.
 
 ```text
-uv run --locked --all-packages earnings-pipeline cohort cite spdji-announcements [GATE: sha256] --find "[GATE: the text naming the company and its ticker]"
-uv run --locked --all-packages earnings-pipeline cohort cite spdji-announcements [GATE: sha256] --find "[GATE: the effective-date statement]"
+uv run --locked --all-packages earnings-pipeline cohort cite spdji-announcements [GATE: sha256] --find "[GATE: the company's name and ticker, as its row writes them]" --line
+uv run --locked --all-packages earnings-pipeline cohort cite spdji-announcements [GATE: sha256] --find "[GATE: text in the row that states the effective date]" --line
 ```
 
 Insert one `[[changes]]` for each announcement, before `[[checks]]`, with its
@@ -13438,8 +15192,8 @@ git status --short
 Expected:
 
 - `data/raw/cohort/wikipedia-djia`, so the raw evidence is ignored;
-- `904 passed, 24 deselected`, and no test changed;
-- `All checks passed!` and `209 files already formatted`;
+- `929 passed, 24 deselected`, and no test changed;
+- `All checks passed!` and `211 files already formatted`;
 - only `docs/membership-source-register.toml` and `config/`, as untracked.
 
 - [ ] **Step 14: Commit**
@@ -13468,14 +15222,14 @@ never leave one.
 
 - Consumes: everything this plan built; Task 17's frozen manifest; Task 5's and Task
   17's outputs.
-- Produces: documentation only. Test counts stay at Task 16's.
+- Produces: documentation only. Test counts stay at Task 16b's.
 
 - [ ] **Step 1 (gate): Verify the real cohort live**
 
 Ask the user. `verify-live` sends about ten requests, with both identities:
 
 - each cited source's terms page;
-- each anchor and announcement URL;
+- each anchor and notice URL, the PDF notices included;
 - each host's robots.txt.
 
 Its rebuild reads saved artifacts only. On a yes:
@@ -13496,6 +15250,10 @@ Read each outcome with the user:
 - **`changed` on an evidence page:** the saved bytes stay the evidence. Report the
   difference to the user, and change nothing.
 - **`refused`:** record it as a limitation. Never retry with another identity.
+  - A prediction: S&P DJI's host refused Task 17's requests with a persistent 403,
+    so expect its checks `refused`.
+  - A client that meets a 403 sends nothing more (P6-20). So each later check
+    through the web client then reads `failed`, as not requested.
 - **Unequal hashes, or build problems:** stop and report. The frozen manifest no
   longer reproduces.
 
@@ -13550,6 +15308,8 @@ This record verifies roadmap Stage 4, the point-in-time DJIA cohort, which
 | Step | Client | Requests |
 | --- | --- | --- |
 | Task 5, the format probe | SEC | [GATE: the count it printed, or "declined"] |
+| The PDF spike, while `specs/pdf-citation-text.md` was designed | uv, outside the lockfile | pypdf 6.19.0 and pdfminer.six 20260107, run from uv's cache; no project file changed |
+| Task 16b, Step 3, the `uv add` of `pypdf==6.19.0` | uv, to PyPI | [GATE: what `uv add` printed: packages resolved, and pypdf installed] |
 | Task 17, Step 2, the terms pages | web and SEC | [GATE] |
 | Task 17, Step 4, the evidence pages | web | [GATE; name any page saved by hand] |
 | Task 17, Step 7, `fetch-sec` | SEC | [GATE: `requests sent`] |
@@ -13581,6 +15341,9 @@ check with its URL and what was done]. The rebuilt content hash
   (R1.5).
 - **Secondary anchor.** A Wikipedia revision can lag or err. The official changes
   and the fund's holdings check it, and each disagreement was reviewed.
+- **`pdftext-1`.** It has no OCR, so a PDF without a text layer cannot be cited. It
+  is bound to pypdf 6.19.0: another version's text is `pdftext-2`, and every PDF
+  citation must then be made again.
 ````
 
 Then check that no slot is left:
@@ -13590,6 +15353,18 @@ Run: `grep -n 'GATE:' docs/verification/djia-cohort.md`
 Expected: no output.
 
 - [ ] **Step 3: Record the current state in `CLAUDE.md` and `README.md`**
+
+The lock and sync counts that `CLAUDE.md` records are Task 16b's. Confirm them
+first, offline:
+
+```bash
+uv lock --check --offline
+uv sync --locked --all-packages --offline
+```
+
+Expected: `Resolved 152 packages`, then `Resolved 152 packages` and
+`Checked 41 packages`, as Task 16b's Step 3 printed. If a count differs, stop and
+report, since the script below records these counts.
 
 Apply the exact replacements, each of which must match once:
 
@@ -13615,7 +15390,7 @@ EDITS = {
             "\n`earnings-themes` still contains only a `hello()` stub, as do the top-level modules of `earnings-ingestion` and `apps/earnings-pipeline`; the application's one command is `earnings-pipeline browser setup`. `data/` is gitignored and holds only local, uncommitted material: fetched pages under `data/raw/`, and under `data/runs/` Stage 1's run outputs, the user's rendered copies, and the browser capture store; `config/`, `prompts/` and `codebooks/` are empty directories.",
             "\nStage 4 (point-in-time DJIA cohort, plan 6, `specs/point-in-time-djia-cohort.md`) is done:\n\n"
             "- `packages/earnings-ingestion/src/earnings_ingestion/fetch/` holds the retrieval record, the polite client ported from `pf_fetch.py`, the robots gate, and the content-addressed artifact store; `sec/` holds the shared SEC client, through which every SEC request goes (R1.3, D5), and SEC's record readers.\n"
-            "- `packages/earnings-ingestion/src/earnings_ingestion/cohort/` builds the cohort from curated files and saved artifacts, fetching nothing, and freezes it as a versioned, content-hashed manifest. `earnings-pipeline cohort` holds its commands.\n"
+            "- `packages/earnings-ingestion/src/earnings_ingestion/cohort/` builds the cohort from curated files and saved artifacts, fetching nothing, and freezes it as a versioned, content-hashed manifest. It cites an HTML page through `walker-1` and a PDF through `pdftext-1` (`cohort/pdftext.py`, with pypdf 6.19.0 pinned exactly). `earnings-pipeline cohort` holds its commands.\n"
             "- `docs/membership-source-register.toml` is the second source register, for index-membership sources. `config/universe/djia/` holds the curated files and the frozen manifests, which hold facts and citations, never source text. `tests/fixtures/cohort/` is the synthetic cohort, which regenerates byte for byte and replays offline. `docs/verification/djia-cohort.md` records the stage.\n\n"
             "`earnings-themes` still contains only a `hello()` stub, as do the top-level modules of `earnings-ingestion` and `apps/earnings-pipeline`; the application's commands are `earnings-pipeline browser setup` and the `earnings-pipeline cohort` group. `data/` is gitignored and holds only local, uncommitted material: fetched pages under `data/raw/`, the cohort's saved evidence under `data/raw/cohort/`, and under `data/runs/` Stage 1's run outputs, the user's rendered copies, the browser capture store, the client locks, and the cohort's live-verification records; `prompts/` and `codebooks/` are empty directories.",
         ),
@@ -13624,6 +15399,12 @@ EDITS = {
             "- `EDGAR_IDENTITY` may be exported in your shell, so a `live` test's skip guard does not stop it: `-m live` really sends requests. Run live checks only with the user's go-ahead; check collection with `--collect-only`.\n"
             "- The root-level `src/earnings_themes/` orphan from `uv init` has been deleted.",
         ),
+        (
+            "lock and sync counts refreshed at\n`1fe96c3` via `uv lock --check` and `uv sync`:",
+            "lock and sync counts refreshed at\nplan 6's Task 16b, which added `pypdf==6.19.0`, via `uv lock --check` and `uv sync`:",
+        ),
+        ("# Resolved 151 packages\n", "# Resolved 152 packages\n"),
+        ("      # 40 packages incl.", "      # 41 packages incl."),
     ],
     "README.md": [
         (
@@ -13701,9 +15482,9 @@ git grep -n 'GATE:' -- docs config CLAUDE.md README.md
 
 Expected:
 
-- `904 passed, 24 deselected`;
+- `929 passed, 24 deselected`;
 - `280 passed`;
-- `All checks passed!` and `209 files already formatted`;
+- `All checks passed!` and `211 files already formatted`;
 - `register quotes verified`;
 - `freeze verified`;
 - no `git grep` output.
@@ -13784,6 +15565,11 @@ After Task 18, run the final whole-branch review. Then:
    - Mark up this plan: tick the steps, add `> Deviation:` and `> Skipped:` notes, and
      add the status header. A declined Task 5 probe is a `> Skipped:` note, not a
      deferred item: Task 17's `fetch-sec` met SEC's formats instead.
+   - Record two deviations, each as a `> Deviation:` note:
+     - at Task 4, Step 6, block 1 of `test_import_boundaries.py` ended in a stray
+       blank line, which the user approved stripping;
+     - the amendment by `specs/pdf-citation-text.md`, which inserted Task 16b and
+       changed P6-9, P6-15, the counts after Task 16b, and Tasks 17 and 18.
 2. **Rollout stamp.** Append a blank line and these two lines to the end of
    `specs/point-in-time-djia-cohort.md`, putting the completion date in place of
    `YYYY-MM-DD`:
@@ -13803,33 +15589,52 @@ After Task 18, run the final whole-branch review. Then:
 4. **Backlog triage.** Run
    `uv run --no-project --python 3.13 python ~/.claude/skills/writing-plans/scripts/deferred_stats.py`,
    and report its summary line. Present the triage rubric if its thresholds trip.
-5. **Retire the plan only (P6-1).** The spec stays in `specs/`.
-   - Move the plan:
+5. **Retire the plan and the amendment's spec (P6-1).** The cohort spec stays in
+   `specs/`.
+   - `specs/pdf-citation-text.md` retires with this plan, which implements it. The
+     protocol would not match it, because its name is not the plan's.
+   - Move both:
 
      ```bash
      git mv specs/plans/6-point-in-time-djia-cohort.md specs/plans/completed/
+     git mv specs/pdf-citation-text.md specs/completed/
      ```
 
-   - The plan holds no relative Markdown link. `docs/verification/djia-cohort.md`
-     cites its old path, so re-point it, then check that none is left:
+   - Neither holds a relative Markdown link. `docs/verification/djia-cohort.md`
+     cites both old paths, and the retired spec cites the plan's, so re-point each,
+     as plan 5 re-pointed the Stage 3 records when their spec retired. The retired
+     plan keeps its own mentions, as plans 4 and 5 do. Then mark the spec complete
+     at its top, and check that no old path is left outside the retired plans:
 
      ```bash
      python3 - <<'EOF'
      from pathlib import Path
 
-     path = Path("docs/verification/djia-cohort.md")
-     text = path.read_text(encoding="utf-8")
-     old = "`specs/plans/6-point-in-time-djia-cohort.md`"
-     assert text.count(old) == 1
-     path.write_text(text.replace(old, "`specs/plans/completed/6-point-in-time-djia-cohort.md`"), encoding="utf-8")
-     print("re-pointed docs/verification/djia-cohort.md")
+     PLAN = ("`specs/plans/6-point-in-time-djia-cohort.md`", "`specs/plans/completed/6-point-in-time-djia-cohort.md`")
+     SPEC = ("`specs/pdf-citation-text.md`", "`specs/completed/pdf-citation-text.md`")
+     for name, pairs in (
+         ("docs/verification/djia-cohort.md", (PLAN, SPEC)),
+         ("specs/completed/pdf-citation-text.md", (PLAN,)),
+     ):
+         path = Path(name)
+         text = path.read_text(encoding="utf-8")
+         for old, new in pairs:
+             assert text.count(old) == 1, (name, old)
+             text = text.replace(old, new)
+         path.write_text(text, encoding="utf-8")
+         print(f"re-pointed {name}")
+     path = Path("specs/completed/pdf-citation-text.md")
+     title, rest = path.read_text(encoding="utf-8").split("\n", 1)
+     status = "**Status: COMPLETE (YYYY-MM-DD)** — implemented by plan 6, Task 16b; retired to specs/completed/ with plan 6."
+     path.write_text(f"{title}\n\n{status}\n{rest}", encoding="utf-8")
+     print("marked specs/completed/pdf-citation-text.md complete")
      EOF
-     git grep -n "specs/plans/6-point-in-time" -- . ':!specs/plans/completed'
+     git grep -n -e "specs/plans/6-point-in-time" -e "specs/pdf-citation-text" -- . ':!specs/plans/completed'
      ```
 
-     Expected: `re-pointed docs/verification/djia-cohort.md`, then no `git grep`
-     output.
-   - Commit as `chore(specs): retire plan 6`.
+     Put the completion date in place of `YYYY-MM-DD` before running it. Expected:
+     the two `re-pointed` lines and the `marked` line, then no `git grep` output.
+   - Commit as `chore(specs): retire plan 6 and the pdftext-1 spec`.
 6. **Roadmap.** Run derive-roadmap's reconcile step on
    `specs/evidence-linked-theme-extraction-roadmap.md`. The spec's Stage 4 stamp is
    authoritative. The reconcile:
