@@ -2,7 +2,7 @@
 
 This record verifies plan A of `specs/structure-aware-canonicalization.md`, the
 canonicalizer, for Stage 3 of `specs/evidence-linked-theme-extraction-roadmap.md`.
-Plan 4 (`specs/plans/4-structure-aware-canonicalization-plan-a.md`) built it. Plan B,
+Plan 4 (`specs/plans/completed/4-structure-aware-canonicalization-plan-a.md`) built it. Plan B,
 the browser diagnostic path, adds its own record, and Stage 3 is complete only then.
 
 **Outcome:** `walker-1` turns all eight Stage 1 fixtures, offline, into valid hashed
