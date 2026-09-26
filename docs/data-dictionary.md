@@ -590,3 +590,385 @@ recorded.
 | --- | --- |
 | `http` | Fetched by a package client, under its access policy |
 | `saved_by_user` | Saved by a person in a browser and registered by hash; nothing was fetched |
+
+## earnings-ingestion cohort records, schema version 1
+
+- **Packages.** In `packages/earnings-ingestion` (Stage 4, plan 6):
+  - `earnings_ingestion.sec`: the shared SEC client and SEC's record readers;
+  - `earnings_ingestion.cohort`: the point-in-time DJIA cohort.
+- **Schema version.** These records join ingestion schema version `1`, since no
+  earlier record's fields changed. `UniverseManifest` and `LiveVerification` carry
+  it as `schema_version`; the nested parts do not.
+- **Facts and citations only.** A committed cohort record or curated file carries
+  facts, URLs, locators, and hashes, and never a source's wording (the user's
+  decision, 2026-09-26). The saved artifacts stay local.
+- **Canonical JSON.** Every cohort hash is SHA-256 over canonical JSON
+  (`earnings_ingestion.cohort.digests`): sorted keys, separators without whitespace,
+  UTF-8 with non-ASCII characters written as themselves, and dates in ISO 8601.
+
+### `EvidenceClass`
+
+What kind of source an item comes from (P §Membership evidence and source rights).
+
+| Value | Meaning |
+| --- | --- |
+| `official` | The index provider's own statement |
+| `secondary` | A dated third-party roster, labeled as secondary evidence |
+| `etf_proxy` | A tracking fund's holdings: corroboration only, never the roster |
+| `user_supplied` | A list the user supplied: a check, never evidence |
+
+### `SourceRole`
+
+| Value | Meaning |
+| --- | --- |
+| `anchor` | The dated snapshot the intervals start from |
+| `change` | Addition and removal announcements |
+| `corroboration` | A dated snapshot the reconstruction must reproduce |
+| `check` | A snapshot compared and reported, never holding the freeze |
+
+### `LocatorKind`
+
+| Value | Meaning |
+| --- | --- |
+| `text_span` | Half-open code-point offsets into an HTML artifact's walker-1 canonical text |
+| `json_pointer` | An RFC 6901 pointer into a JSON artifact |
+
+### `BoundTiming`
+
+When on its date a change takes effect, as the evidence states it.
+
+| Value | Meaning |
+| --- | --- |
+| `before_open` | Before the open of trading on the date |
+| `after_close` | After the close of trading on the date |
+| `unspecified` | The evidence gives no time of day; always the anchor's timing |
+
+### `BoundBasis`
+
+| Value | Meaning |
+| --- | --- |
+| `announced` | An official effective date |
+| `anchor_snapshot` | The anchor's date: a lower bound on the start, never an entry date |
+
+### `AssertedAction`
+
+| Value | Meaning |
+| --- | --- |
+| `member_at` | The anchor lists the security as a member on its date |
+| `added` | A change adds the security |
+| `removed` | A change removes the security |
+
+### `AssertionStatus`
+
+| Value | Meaning |
+| --- | --- |
+| `supported` | Consistent with the security's other evidence, and part of an interval |
+| `conflicting` | The security's evidence does not form one alternating sequence after the anchor; holds the freeze until a reviewer rejects the wrong assertion |
+| `ambiguous` | An addition and a removal of the security share an effective date; holds the freeze the same way |
+| `withheld` | First published after the cutoff: kept, never applied (P-C4) |
+
+### `ResolutionStatus`
+
+| Value | Meaning |
+| --- | --- |
+| `resolved` | One CIK, confirmed by SEC's records or named by an override |
+| `unresolved` | No candidate confirmed |
+| `conflicting` | More than one CIK confirmed |
+| `retained_unresolved` | A reviewer kept it unresolved and excluded it, with a reason |
+
+### `ResolutionMethod`
+
+| Value | Meaning |
+| --- | --- |
+| `sec_ticker_and_name` | SEC's ticker list proposed the CIK, and SEC's record for it lists the cited ticker under a name, current or former, that covers the cited name |
+| `override` | A `set_issuer` override named it |
+
+### `OverrideKind`
+
+| Value | Meaning |
+| --- | --- |
+| `reject_assertion` | Set aside one conflicting or ambiguous assertion; it stays in the manifest, marked |
+| `set_issuer` | Name a security's CIK, citing the evidence |
+| `retain_unresolved` | Keep a security unresolved and exclude it from the candidate issuers |
+| `acknowledge` | Accept one `member_count` or `difference` finding, bound to its digest |
+| `holding_alias` | Match a fund holding's name to a security |
+
+### `FindingKind`
+
+| Value | Meaning |
+| --- | --- |
+| `missing_anchor` | No usable anchor; blocking, and no override resolves it |
+| `membership_conflict` | A security's evidence conflicts; blocking until assertions are rejected |
+| `membership_ambiguity` | A security is added and removed on one date; blocking until an assertion is rejected |
+| `identity` | An in-scope security without exactly one confirmed CIK; blocking until `set_issuer` or `retain_unresolved` decides it |
+| `member_count` | The roster's size differs from the expected count on a date; blocking until acknowledged |
+| `difference` | A snapshot disagrees with the reconstruction on its date; blocking until acknowledged, unless it is a check list or was published after the cutoff |
+| `gap` | A calendar quarter with no corroborating snapshot; reported |
+| `withheld` | Evidence first published after the cutoff; reported |
+| `superseded` | A fund filing replaced by a later one for its report date; reported |
+
+### `EvidenceLocator`
+
+Where cited evidence sits in an artifact, and the hash of what it says there.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `kind` | `LocatorKind` | Which kind of locator |
+| `canonicalization_version` | ID part or null | `walker-1` for a text span; null for a pointer |
+| `canonical_sha256` | 64 lowercase hex or null | The hash of the artifact's canonical text, for a text span |
+| `start` | int ≥ 0 or null | A text span's first code point |
+| `end` | int ≥ 0 or null | A text span's end, exclusive; `start < end` |
+| `pointer` | string or null | A JSON pointer: empty, or starting with `/` |
+| `cited_sha256` | 64 lowercase hex | SHA-256 of the cited content: the span's UTF-8 text, or the canonical JSON of the pointer's value |
+
+### `Citation`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `source_id` | register slug | The source's key in a register |
+| `url` | string | Where the artifact came from |
+| `artifact` | `ArtifactRef` | The saved bytes: hash, media type, storage path, and rights |
+| `retrieved_at` | UTC datetime | The artifact's first retrieval |
+| `locators` | tuple of `EvidenceLocator` | The places cited; empty when the whole artifact is the evidence |
+
+### `SourceRights`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `source_id` | register slug | The source |
+| `evidence_class` | `EvidenceClass` or null | Its class; null for `sec-edgar`, which is identity evidence |
+| `rights_status` | `RightsStatus` | What may be done with its content |
+| `rights_basis` | string | Why |
+
+### `CitedIdentity`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `evidence_id` | ID part | The curated item whose row states it |
+| `observed_on` | date | The row's date: a snapshot's as-of date, or a change's effective date |
+| `name` | string | The company name as the row prints it |
+| `ticker` | string | The ticker as the row prints it |
+
+### `SecurityRecord`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `security_id` | ID part | A curated slug for the security, never a ticker |
+| `identities` | tuple of `CitedIdentity` | Every row that names it, by date then item; ticker changes stay visible |
+
+### `MembershipAssertion`
+
+One evidence item's statement about one security (P §Data contracts). A change item's
+locators are the row's and then the effective date's.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `membership_assertion_id` | ID part | `<evidence_id>:<security_id>:<asserted_action>` |
+| `universe_id` | ID part | The universe |
+| `security_id` | ID part | The security |
+| `issuer_id` | ID part or null | `cik-<cik>` once resolved |
+| `cik` | 10 digits or null | The zero-padded CIK once resolved |
+| `asserted_action` | `AssertedAction` | What the item says |
+| `asserted_date` | date | The date it says it for |
+| `asserted_timing` | `BoundTiming` | The time of day it says |
+| `effective_from` | date or null | The start of the interval it supports; null unless `supported` |
+| `effective_from_basis` | `BoundBasis` or null | What establishes that start |
+| `effective_from_timing` | `BoundTiming` or null | The start's timing |
+| `effective_to` | date or null | The interval's exclusive end; null while open |
+| `effective_to_timing` | `BoundTiming` or null | The end's timing |
+| `announcement_date` | date or null | A change's announcement date |
+| `source_snapshot_date` | date or null | A snapshot's as-of date |
+| `publication_date` | date | When the item was first published, at date precision |
+| `publication_time` | UTC datetime or null | When, if the evidence gives a time |
+| `retrieved_at` | UTC datetime | The artifact's first retrieval; never a publication time |
+| `source_id` | register slug | The source |
+| `evidence_id` | ID part | The curated item |
+| `url` | string | Where the artifact came from |
+| `evidence_locators` | tuple of `EvidenceLocator` | Where the item states it |
+| `raw_content_hash` | 64 lowercase hex | SHA-256 of the saved artifact |
+| `rights_status` | `RightsStatus` | The source's rights |
+| `status` | `AssertionStatus` | The assertion's standing |
+| `resolved_by` | ID part or null | The `reject_assertion` override that set it aside |
+
+### `MembershipInterval`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `security_id` | ID part | The security |
+| `effective_from` | date | Inclusive start |
+| `effective_from_basis` | `BoundBasis` | What establishes it |
+| `effective_from_timing` | `BoundTiming` | Its timing |
+| `effective_to` | date or null | Exclusive end; null when open |
+| `effective_to_timing` | `BoundTiming` or null | Its timing |
+| `assertion_ids` | tuple of ID part | The supported assertions behind the start and the end |
+
+### `IssuerCandidate`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `evidence_id` | ID part | The row whose ticker proposed it |
+| `cited_name` | string | The name on that row |
+| `ticker` | string | The ticker on that row |
+| `cik` | 10 digits | The CIK SEC's ticker list gives that ticker |
+| `sec_name` | string | SEC's current name for the CIK |
+| `ticker_listed` | bool | SEC's record for the CIK lists the ticker |
+| `matched_name` | string or null | The SEC name, current or former, that covers the cited name |
+| `confirmed` | bool | `ticker_listed` and a matched name |
+| `citations` | tuple of `Citation` | The ticker-list entry, and the submissions record's name, tickers, and any matched former name |
+
+### `IssuerMapping`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `security_id` | ID part | The security |
+| `status` | `ResolutionStatus` | The outcome |
+| `method` | `ResolutionMethod` or null | How it resolved; null unless `resolved` |
+| `issuer_id` | ID part or null | `cik-<cik>` when resolved |
+| `cik` | 10 digits or null | The CIK when resolved |
+| `candidates` | tuple of `IssuerCandidate` | Every candidate checked, confirmed or not |
+| `override_id` | ID part or null | The override that decided it |
+| `reason` | string or null | Why it is unresolved, or the override's rationale |
+
+### `Issuer`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `issuer_id` | ID part | `cik-<cik>` |
+| `cik` | 10 digits | The zero-padded CIK |
+| `sec_name` | string | SEC's current name |
+| `former_names` | tuple of string | SEC's former names |
+| `security_ids` | tuple of ID part | Its securities; several securities still make one issuer |
+
+### `OverrideCitation`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `source_id` | string | The source cited |
+| `url` | string | Where the evidence is |
+| `artifact_sha256` | 64 lowercase hex or null | A saved artifact the build verifies, when there is one |
+| `locator` | `EvidenceLocator` or null | A place in that artifact |
+
+### `Override`
+
+A reviewed manual decision, never a parser branch (P §Issuer resolution). Exactly the
+targets its kind needs are set.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `override_id` | ID part | A curated slug |
+| `kind` | `OverrideKind` | The decision |
+| `membership_assertion_id` | ID part or null | `reject_assertion`'s target |
+| `security_id` | ID part or null | The target of `set_issuer`, `retain_unresolved`, and `holding_alias` |
+| `cik` | 10 digits or null | `set_issuer`'s CIK |
+| `finding_id` | ID part or null | `acknowledge`'s finding |
+| `finding_digest` | 64 lowercase hex or null | The digest of the finding as reviewed |
+| `holding_name` | string or null | `holding_alias`'s holding name, exactly as filed |
+| `citations` | tuple of `OverrideCitation` | The evidence; required for `set_issuer` |
+| `rationale` | string | Why |
+| `reviewer` | string | Who decided; the user, never an agent |
+| `recorded_on` | date | When |
+| `effective_from` | date | The start of the period the decision covers |
+| `effective_to` | date or null | Its exclusive end; null when open |
+
+### `Finding`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `finding_id` | ID part | `<kind>:<subject>` |
+| `kind` | `FindingKind` | What was found |
+| `blocking` | bool | It holds the freeze until resolved |
+| `security_id` | ID part or null | The security concerned, if one |
+| `detail` | string | What it says |
+| `evidence_ids` | tuple of string | The evidence items concerned |
+| `digest` | 64 lowercase hex | SHA-256 of the canonical JSON of the finding's kind, subject, detail, blocking flag, security, and evidence ids |
+| `resolved_by` | tuple of ID part | The overrides that resolved it |
+
+### `SnapshotReconciliation`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `snapshot_id` | ID part | The evidence id, or `<source_id>:<accession>` for a fund filing |
+| `source_id` | register slug | The source |
+| `evidence_class` | `EvidenceClass` | Its class |
+| `as_of` | date | The date it describes |
+| `published_on` | date | When it was first published |
+| `withheld` | bool | Published after the cutoff: reported only |
+| `matched` | tuple of ID part | Securities in both the snapshot and the reconstruction |
+| `reconstructed_only` | tuple of ID part | Members the snapshot lacks |
+| `snapshot_only` | tuple of ID part | Securities it lists that the reconstruction does not |
+| `unmatched` | tuple of string | Holding names or tickers that match no single security |
+| `citation` | `Citation` or null | The snapshot's artifact; null for a check list |
+
+### `CohortReport`
+
+The coverage and conflict report (P-A4).
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `universe_id` | ID part | The universe |
+| `anchor_evidence_id` | ID part or null | The anchor used; null when none is usable |
+| `limitations` | tuple of string | What the evidence cannot show |
+| `findings` | tuple of `Finding` | Every finding, by id |
+| `reconciliations` | tuple of `SnapshotReconciliation` | Every snapshot compared, by date |
+
+### `UniverseDefinition`
+
+P §Data contracts, universe definition.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `universe_id` | ID part | The universe across its versions |
+| `universe_version` | int ≥ 1 | The version; a new one only when the content changes |
+| `universe_name` | ID part | `djia` |
+| `period_end_start` | date | `2024-07-01`, inclusive |
+| `period_end_stop` | date | `2026-07-01`, exclusive |
+| `public_information_cutoff` | date | `2026-09-22` |
+| `membership_reference` | `first_publication_time` | The time membership is judged at |
+| `expected_member_count` | int ≥ 1 | `30`: the roster's size at every date |
+| `source_register_version` | 64 lowercase hex | SHA-256 of the canonical JSON of the register entries the manifest cites, `sec-edgar` always among them |
+| `selection_policy_version` | string | `djia-pilot/1`, the rules of P §Deterministic pilot selection |
+| `content_hash` | 64 lowercase hex | See the frozen manifest, above |
+| `created_at` | UTC datetime | When this version was frozen |
+
+### `UniverseManifest`
+
+The frozen cohort, which Stage 5 joins against.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Ingestion record schema version |
+| `definition` | `UniverseDefinition` | The universe |
+| `sources` | tuple of `SourceRights` | Every source cited |
+| `securities` | tuple of `SecurityRecord` | Every security the evidence names |
+| `assertions` | tuple of `MembershipAssertion` | Every assertion, whatever its status |
+| `intervals` | tuple of `MembershipInterval` | The derived intervals |
+| `mappings` | tuple of `IssuerMapping` | One per security |
+| `issuers` | tuple of `Issuer` | One per resolved CIK |
+| `candidate_issuer_ids` | tuple of ID part | Issuers of the securities whose intervals meet `[period_end_start, cutoff]` |
+| `overrides` | tuple of `Override` | Every reviewed decision applied |
+| `report` | `CohortReport` | The coverage and conflict report |
+
+### `LiveCheck`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `source_id` | register slug | The source |
+| `purpose` | `terms` or `evidence` | A terms page, or a curated evidence page |
+| `url` | string | What was requested |
+| `outcome` | `unchanged`, `changed`, `refused`, or `failed` | What it found |
+| `detail` | string | The hashes compared, or the refusal or error |
+| `retrieval` | `Retrieval` or null | The request's metadata; null when nothing was received |
+
+### `LiveVerification`
+
+The opt-in live verification's result (P-VL), saved under `data/runs/cohort/live/`.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Ingestion record schema version |
+| `checked_at` | UTC datetime | When it ran |
+| `checks` | tuple of `LiveCheck` | Every live request |
+| `build_problems` | tuple of string | Why the rebuild stopped, if it did |
+| `rebuilt_content_hash` | 64 lowercase hex or null | The rebuilt cohort's content hash |
+| `frozen_content_hash` | 64 lowercase hex or null | The latest frozen version's |
+| `blocking_finding_ids` | tuple of ID part | Findings that would hold a freeze now |

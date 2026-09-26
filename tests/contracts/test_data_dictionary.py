@@ -1,6 +1,6 @@
 """docs/data-dictionary.md documents every field and value of the core contracts
-and of the ingestion records: the canonicalizer's, the capture's, layout-1's, and the
-retrieval metadata.
+and of the ingestion records: the canonicalizer's, the capture's, layout-1's, the
+retrieval metadata, and the cohort's records.
 
 AGENTS.md §191: document public interfaces and update the data dictionary in the
 same change. A contract that gains, loses, or renames a field fails here.
@@ -14,6 +14,7 @@ import earnings_core as core
 import earnings_ingestion.canonical as ingestion
 import pytest
 from earnings_ingestion import browser, layout
+from earnings_ingestion.cohort import records as cohort
 from earnings_ingestion.fetch import records as fetch
 from pydantic import BaseModel
 
@@ -45,6 +46,25 @@ MODELS = [
     layout.AlignmentFailure,
     layout.LayoutExtraction,
     fetch.Retrieval,
+    cohort.EvidenceLocator,
+    cohort.Citation,
+    cohort.SourceRights,
+    cohort.CitedIdentity,
+    cohort.SecurityRecord,
+    cohort.MembershipAssertion,
+    cohort.MembershipInterval,
+    cohort.IssuerCandidate,
+    cohort.IssuerMapping,
+    cohort.Issuer,
+    cohort.OverrideCitation,
+    cohort.Override,
+    cohort.Finding,
+    cohort.SnapshotReconciliation,
+    cohort.CohortReport,
+    cohort.UniverseDefinition,
+    cohort.UniverseManifest,
+    cohort.LiveCheck,
+    cohort.LiveVerification,
 ]
 ENUMS = [
     core.RightsStatus,
@@ -56,6 +76,17 @@ ENUMS = [
     browser.CaptureStatus,
     browser.CaptureReason,
     fetch.RetrievalMethod,
+    cohort.EvidenceClass,
+    cohort.SourceRole,
+    cohort.LocatorKind,
+    cohort.BoundTiming,
+    cohort.BoundBasis,
+    cohort.AssertedAction,
+    cohort.AssertionStatus,
+    cohort.ResolutionStatus,
+    cohort.ResolutionMethod,
+    cohort.OverrideKind,
+    cohort.FindingKind,
 ]
 
 
