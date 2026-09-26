@@ -39,6 +39,9 @@ Standard-library modules run in the workspace environment with
 | `lock_gate.py` | The lock gate, run in a `git archive` scratch copy | script lock |
 | `select_parser.py` | Applies the fixed selection rule step by step | stdlib |
 | `v1_return_types.py` | V1: declared and observed return types (live) | script lock |
+| `port_walker.py` | Stage 3: ports the frozen walker into `earnings_ingestion.canonical` | workspace |
+| `walker1_report.py` | Stage 3: walker-1's re-score and the review gate's reports | workspace |
+| `r35_report.py` | Stage 3: R3.5's text-fidelity report, plan A's leg | workspace |
 
 ## Tests
 
@@ -66,4 +69,19 @@ Stage 2.
 - **Freeze.** After `freeze.py record`, a frozen file changes only to fix a crash or a
   network-guard trip caused by harness code. `freeze.py amend` records each such
   change. A change never alters a type mapping or a walker rule.
-- **Outputs.** Everything generated goes to gitignored `data/raw/` and `data/runs/`.
+- **Outputs.** Everything Stage 1 generates goes to gitignored `data/raw/` and
+  `data/runs/`.
+
+## Stage 3
+
+Stage 3 (`specs/structure-aware-canonicalization.md`, plan 4) reuses the frozen code
+without changing it. Its three scripts import `earnings_ingestion`, so they run in the
+workspace environment with `uv run --locked --all-packages python`.
+
+- `port_walker.py` copies the frozen walker and the helpers it uses into
+  `packages/earnings-ingestion/src/earnings_ingestion/canonical/` (`decode.py`,
+  `dom.py`, `walker.py`). `test_port_equality.py` checks that those modules are
+  exactly its output and that they walk as the frozen code does.
+- `walker1_report.py` writes `docs/verification/walker-1-report.md`, and
+  `r35_report.py` writes `docs/verification/R3.5-text-fidelity.md`. Their tests check
+  that the committed reports are current.
