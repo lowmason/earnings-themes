@@ -47,6 +47,7 @@ def modules_loaded_by(module: str) -> set[str]:
         "earnings_ingestion.fetch.robots",
         "earnings_ingestion.sec.client",
         "earnings_ingestion.cohort.build",
+        "earnings_ingestion.cohort.web",
     ],
 )
 def test_importing_ingestion_loads_nothing_forbidden(module: str) -> None:
