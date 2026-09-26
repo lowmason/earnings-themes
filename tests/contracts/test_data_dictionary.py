@@ -1,5 +1,5 @@
 """docs/data-dictionary.md documents every field and value of the core contracts
-and of the canonicalizer's ingestion records.
+and of the ingestion records: the canonicalizer's and the capture's.
 
 AGENTS.md §191: document public interfaces and update the data dictionary in the
 same change. A contract that gains, loses, or renames a field fails here.
@@ -12,6 +12,7 @@ from pathlib import Path
 import earnings_core as core
 import earnings_ingestion.canonical as ingestion
 import pytest
+from earnings_ingestion import browser
 from pydantic import BaseModel
 
 DICTIONARY = Path(__file__).resolve().parents[2] / "docs" / "data-dictionary.md"
@@ -31,6 +32,14 @@ MODELS = [
     ingestion.CanonicalizationManifest,
     ingestion.CanonicalizationFailure,
     ingestion.Canonicalized,
+    browser.RenderedCapture,
+    browser.BlockedRequest,
+    browser.LayoutMetadata,
+    browser.LayoutBlock,
+    browser.LayoutRun,
+    browser.LayoutTable,
+    browser.LayoutRow,
+    browser.LayoutCell,
 ]
 ENUMS = [
     core.RightsStatus,
@@ -39,6 +48,8 @@ ENUMS = [
     core.MaskCategory,
     core.RejectionReason,
     ingestion.FailureReason,
+    browser.CaptureStatus,
+    browser.CaptureReason,
 ]
 
 

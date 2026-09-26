@@ -360,3 +360,165 @@ refuses parts that describe different documents.
 | `elements` | tuple of `DocumentElement` | Document order, each parent before its children, each table followed by its cells and each block by its sentences |
 | `masked` | `MaskedDocument` | The masks of policy `boilerplate` version `1` |
 | `manifest` | `CanonicalizationManifest` | How the document was made |
+
+## earnings-ingestion browser and layout records, schema version 1
+
+- **Packages.** `earnings_ingestion.browser` (the capture) and
+  `earnings_ingestion.layout` (layout-1 and its mapping), in
+  `packages/earnings-ingestion` (Stage 3, plan 5).
+- **Schema version.** These records join ingestion schema version `1`: no earlier
+  record's fields changed. `RenderedCapture`, `AlignmentFailure`, and
+  `LayoutExtraction` carry it as `schema_version`; the nested parts do not.
+- **Diagnostic provenance.** A capture establishes what the pinned browser displayed
+  under a recorded policy. It is never a canonical span and never evidence of a quote
+  (B2): every layout-1 span comes from matching canonical text, never from a DOM
+  offset.
+- **Fixture captures.** `tests/fixtures/browser/<name>.capture.json` is one JSON
+  object with the keys `blocks` (the layout's `LayoutBlock` records), `capture` (the
+  `RenderedCapture` without its layout), and `tables` (the `LayoutTable` records).
+  Keys are sorted, non-ASCII characters are escaped, and each record is one line.
+  `earnings_ingestion.browser.serialize.from_capture_json` reads one back and
+  rechecks both hashes. Screenshots are never committed.
+
+### `RenderedCapture`
+
+One capture of one saved source under one capture policy (B1, B2, B7). A `failed` or
+`unavailable` capture holds no text, layout, or screenshot.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Ingestion record schema version |
+| `capture_id` | string | `<source_document_id>@<policy>-<version>#<first 16 hex of cache_key>` |
+| `cache_key` | 64 lowercase hex | SHA-256 over the raw hash, the policy and its version, the metadata script's version and text, the render configuration, and the browser, driver, Selenium, and platform; never a timestamp |
+| `source_document_id` | ID part | The saved source document |
+| `raw_sha256` | 64 lowercase hex | SHA-256 of the saved bytes |
+| `capture_policy` | ID part | The capture policy's name, `isolated` |
+| `capture_policy_version` | ID part | Its version, `1` |
+| `metadata_version` | ID part | The layout-metadata script, `layout-metadata-1` |
+| `browser_engine` | string | `Chrome for Testing` |
+| `browser_version` | string | The pinned browser version, or `none` when none is installed |
+| `driver_version` | string | The pinned chromedriver version, or `none` |
+| `selenium_version` | string | Selenium's version |
+| `os_name` | string | `platform.system()`, such as `Darwin` |
+| `os_version` | string | The operating system's release |
+| `architecture` | string | `platform.machine()`, such as `arm64` |
+| `viewport_width` | int > 0 | Window width in CSS pixels |
+| `viewport_height` | int > 0 | Window height in CSS pixels |
+| `device_scale_factor` | int > 0 | Device pixels per CSS pixel |
+| `locale` | string | The browser's language, `en-US` |
+| `timezone` | string | The emulated time zone, `UTC` |
+| `font_set` | string | The platform's system fonts, named by its release |
+| `document_charset` | string | `document.characterSet`: the encoding the browser used; empty when nothing rendered |
+| `script_policy` | string | `disabled`: document JavaScript never runs |
+| `network_policy` | string | `blocked`: every request but the saved file is refused and recorded |
+| `image_policy` | string | `blocked`: images are refused like any request |
+| `missing_resource_policy` | string | `recorded`: a blocked resource is listed, and a required one makes the capture `partial` |
+| `rendered_text` | string | `document.body.innerText`, exactly as returned |
+| `rendered_text_sha256` | 64 lowercase hex | SHA-256 of its UTF-8 bytes |
+| `layout` | `LayoutMetadata` | The layout-metadata script's result |
+| `layout_sha256` | 64 lowercase hex | SHA-256 of the layout as ASCII JSON with sorted keys and no spaces |
+| `screenshots` | tuple of `ArtifactRef` | Content-hashed PNG tiles, `local_only` under `data/runs/` |
+| `blocked_requests` | tuple of `BlockedRequest` | Each distinct refused request once, sorted by URL and type |
+| `captured_at` | aware datetime | When the capture started; never part of the cache key |
+| `duration_seconds` | float ≥ 0 | How long it took |
+| `status` | `CaptureStatus` | The outcome |
+| `reason` | `CaptureReason`, or null | Why it is not `completed`: null exactly when `completed` |
+| `detail` | string | What failed, or which required resources were blocked |
+
+### `CaptureStatus`
+
+| Value | Meaning |
+| --- | --- |
+| `completed` | Every resource the rendering needs was present |
+| `partial` | Rendered, but a blocked stylesheet, font, or frame may have changed it; the reason is `blocked_required_resource` |
+| `failed` | The browser ran, and no usable rendering came back |
+| `unavailable` | No pinned browser could run here |
+
+### `CaptureReason`
+
+| Value | Meaning |
+| --- | --- |
+| `browser_unavailable` | The pinned browser or driver is not installed, or none is pinned for this platform |
+| `startup_failure` | The browser or driver did not start, or is not the pinned version |
+| `timeout` | Startup, navigation, or capture ran past its bound |
+| `blocked_required_resource` | A stylesheet, font, or frame the page asked for was blocked |
+| `document_load_failure` | The saved file did not load, or the page left it |
+| `capture_failure` | Reading text, layout, or a screenshot failed, or request interception stopped |
+
+### `BlockedRequest`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `url` | string | The requested URL |
+| `resource_type` | string | CDP's resource type, such as `Image`, `Stylesheet`, or `Document` |
+| `required` | bool | A stylesheet, font, or subframe document: its absence makes the capture `partial` |
+
+### `LayoutMetadata`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `blocks` | tuple of `LayoutBlock` | Every block of the rendered body, in document order |
+| `tables` | tuple of `LayoutTable` | Every rendered table, in document order; blocks and tables refer to tables by index here |
+
+### `LayoutBlock`
+
+The runs one block element holds directly, split where a nested block starts (W2's
+analog). Content with computed `display: none`, and `noscript`, is left out.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `tag` | string | The block element's tag, lowercase |
+| `display` | string | Its computed `display` |
+| `heading_level` | int > 0, or null | 1–6 when the nearest heading or list-item ancestor is `h1`–`h6` |
+| `list_item` | bool | The nearest such ancestor is an `li` |
+| `list_depth` | int ≥ 0 | How many `ul` and `ol` elements enclose it |
+| `table` | int ≥ 0, or null | The table holding its nearest enclosing cell |
+| `row` | int ≥ 0, or null | That cell's row among the table's own rendered rows |
+| `cell` | int ≥ 0, or null | That cell's position among the row's rendered cells |
+| `x` | int | Left edge in CSS pixels, from the page's origin |
+| `y` | int | Top edge in CSS pixels, from the page's origin |
+| `width` | int ≥ 0 | Width in CSS pixels |
+| `height` | int ≥ 0 | Height in CSS pixels |
+| `runs` | tuple of `LayoutRun` | Its text runs and line breaks, in document order |
+
+### `LayoutRun`
+
+One text node's raw DOM text with its computed style, or one `<br>`. The text is the
+node's own, so a CSS `text-transform` never alters it.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `text` | string | The node's text, or `"\n"` for a `<br>` |
+| `br` | bool | A `<br>` outside `<pre>`; inside `<pre>` a `<br>` is a text run of `"\n"` |
+| `visible` | bool | Computed `visibility: visible` and at least one rendered box |
+| `bold` | bool | Computed `font-weight` of 600 or more |
+| `underline` | bool | An underline decoration on it or any ancestor |
+| `superscript` | bool | `vertical-align: super` on it or an ancestor inside its block |
+| `symbol_font` | bool | A Wingdings or Symbol `font-family` |
+| `font_size` | float ≥ 0 | Computed `font-size` in CSS pixels |
+
+### `LayoutTable`
+
+A rendered table's own rows, and the cell of another table that holds it.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `parent_table` | int ≥ 0, or null | The table of the nearest enclosing cell; null for a table in no cell |
+| `parent_row` | int ≥ 0, or null | That cell's row |
+| `parent_cell` | int ≥ 0, or null | That cell's position in its row |
+| `rows` | tuple of `LayoutRow` | The table's own rendered rows, in document order |
+
+### `LayoutRow`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `head` | bool | The row sits in a `thead` |
+| `cells` | tuple of `LayoutCell` | Its rendered cells, in document order |
+
+### `LayoutCell`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `header` | bool | The cell is a `th` |
+| `colspan` | int > 0 | Its `colSpan`, at least 1 |
+| `rowspan` | int > 0 | Its `rowSpan`, at least 1 |
