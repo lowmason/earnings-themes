@@ -2,7 +2,7 @@
 
 This record verifies roadmap Stage 4, the point-in-time DJIA cohort, which
 `specs/point-in-time-djia-cohort.md` specifies. Plan 6
-(`specs/plans/6-point-in-time-djia-cohort.md`) built it.
+(`specs/plans/completed/6-point-in-time-djia-cohort.md`) built it.
 
 ## What was verified
 
@@ -69,7 +69,7 @@ This record verifies roadmap Stage 4, the point-in-time DJIA cohort, which
 | Step | Client | Requests |
 | --- | --- | --- |
 | Task 5, the format probe | SEC | 4, with the user's approval: `1 passed`, and nothing saved |
-| The PDF spike, while `specs/pdf-citation-text.md` was designed | uv, outside the lockfile | pypdf 6.19.0 and pdfminer.six 20260107, run from uv's cache; no project file changed |
+| The PDF spike, while `specs/completed/pdf-citation-text.md` was designed | uv, outside the lockfile | pypdf 6.19.0 and pdfminer.six 20260107, run from uv's cache; no project file changed |
 | The replay of Task 16b, while the amendment was planned | uv, to PyPI | one `uv add`, approved by the user: `Resolved 152 packages` and `+ pypdf==6.19.0`; the tree was then restored, offline |
 | Task 16b, Step 3, the `uv add` of `pypdf==6.19.0` | uv, to PyPI | `Resolved 152 packages`, then `+ pypdf==6.19.0`, installed beside the rebuilt `earnings-ingestion` |
 | Task 17, Step 2, the terms pages | web and SEC | Wikimedia's: about 2 web requests (robots.txt and the page), run by the user. SEC's: 1. S&P Global's: 2 web requests, both answered 403 at robots.txt, so the user saved the page in a browser and `cohort terms --saved` hashed it, with no request |

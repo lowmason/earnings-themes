@@ -1,7 +1,9 @@
 # PDF citation text (`pdftext-1`): an amendment to plan 6
 
+**Status: COMPLETE (2026-09-26)** — implemented by plan 6, Task 16b; retired to specs/completed/ with plan 6.
+
 > For agentic workers: REQUIRED NEXT SKILL: writing-plans, to amend
-> `specs/plans/6-point-in-time-djia-cohort.md` in place. Insert Task 16b before
+> `specs/plans/completed/6-point-in-time-djia-cohort.md` in place. Insert Task 16b before
 > Task 17, and change only what §Plan changes names. Tasks 1–16 are committed (tip
 > `b9603b1`): do not plan them again. Plan 6 implements this spec, so retire it
 > with plan 6 at plan 6's completion.
