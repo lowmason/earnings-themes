@@ -1,0 +1,21 @@
+# Chrome for Testing, pinned for the browser diagnostic path (plan 5, PB-3).
+# `earnings-pipeline browser setup` downloads each archive, checks its size and
+# SHA-256 against this file, and extracts it into a cache outside the repository.
+# Checked at plan time on 2026-09-26: the Stable channel's version for mac-arm64.
+version = "154.0.8037.57"
+
+[[archives]]
+platform = "mac-arm64"
+name = "chrome"
+url = "https://storage.googleapis.com/chrome-for-testing-public/154.0.8037.57/mac-arm64/chrome-mac-arm64.zip"
+size = 191429663
+sha256 = "0e6b3439469c1b8b95b2e89c72ea29f7af00fb2c28a8878358a0b6002b6d3a64"
+executable = "chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
+
+[[archives]]
+platform = "mac-arm64"
+name = "chromedriver"
+url = "https://storage.googleapis.com/chrome-for-testing-public/154.0.8037.57/mac-arm64/chromedriver-mac-arm64.zip"
+size = 9302980
+sha256 = "97a96253f407512086744a953a3def997461fc7c37882b4f9cca297bab5f644e"
+executable = "chromedriver-mac-arm64/chromedriver"
