@@ -1,4 +1,5 @@
-"""Shared test data (plan 5): a small completed capture and its layout payload."""
+"""Shared test data (plan 5): a small completed capture, its layout payload, and
+builders for synthetic layout metadata."""
 
 import copy
 from collections.abc import Callable
@@ -118,3 +119,87 @@ def make_capture() -> Callable[..., RenderedCapture]:
 def payload() -> dict:
     """The layout-metadata script's result for that paragraph, safe to change."""
     return copy.deepcopy(PAYLOAD)
+
+
+class LayoutParts:
+    """Builders for the layout-metadata script's output: runs, blocks, and tables."""
+
+    @staticmethod
+    def run(text: str, **style: object) -> dict:
+        base = {
+            "text": text,
+            "br": False,
+            "visible": True,
+            "bold": False,
+            "underline": False,
+            "superscript": False,
+            "symbol_font": False,
+            "font_size": 16,
+        }
+        return {**base, **style}
+
+    @staticmethod
+    def br() -> dict:
+        return LayoutParts.run("\n", br=True)
+
+    @staticmethod
+    def block(
+        *runs: dict,
+        tag: str = "p",
+        cell: tuple[int, int, int] | None = None,
+        **context: object,
+    ) -> dict:
+        base = {
+            "tag": tag,
+            "display": "block",
+            "heading_level": None,
+            "list_item": False,
+            "list_depth": 0,
+            "table": None if cell is None else cell[0],
+            "row": None if cell is None else cell[1],
+            "cell": None if cell is None else cell[2],
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 10,
+            "runs": list(runs),
+        }
+        return {**base, **context}
+
+    @staticmethod
+    def table(
+        *rows: list[int],
+        parent: tuple[int, int, int] | None = None,
+        head: int = 0,
+        th: bool = False,
+    ) -> dict:
+        """Rows as colspans, one per rendered cell; the first ``head`` rows in thead."""
+        return {
+            "parent_table": None if parent is None else parent[0],
+            "parent_row": None if parent is None else parent[1],
+            "parent_cell": None if parent is None else parent[2],
+            "rows": [
+                {
+                    "head": index < head,
+                    "cells": [
+                        {"header": th, "colspan": span, "rowspan": 1} for span in row
+                    ],
+                }
+                for index, row in enumerate(rows)
+            ],
+        }
+
+    @staticmethod
+    def cells(rows: list[list[str]], table_index: int = 0) -> list[dict]:
+        """One ``td`` block per non-empty cell text, in row-major order."""
+        return [
+            LayoutParts.block(LayoutParts.run(text), tag="td", cell=(table_index, r, c))
+            for r, row in enumerate(rows)
+            for c, text in enumerate(row)
+            if text
+        ]
+
+
+@pytest.fixture
+def parts() -> type[LayoutParts]:
+    return LayoutParts
