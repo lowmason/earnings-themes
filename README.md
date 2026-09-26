@@ -244,6 +244,7 @@ so the required path does not install every experimental or hosted provider:
 | Package | Extras | Intended use |
 | --- | --- | --- |
 | `earnings-ingestion` | `edgar`, `entity-matching` | EDGAR-library experiments and fuzzy candidate generation |
+| `earnings-ingestion` | `browser-capture` | Stage 3's browser diagnostic path: Selenium and websocket-client drive the pinned Chrome for Testing, which `earnings-pipeline browser setup` installs |
 | `earnings-themes` | `extraction`, `fuzzy-localization`, `embeddings` | Typed extraction, candidate localization, and offline clustering experiments |
 | `earnings-themes` | `openai`, `anthropic` | Optional hosted-provider adapters; installation does not authorize billable calls |
 | `earnings-themes` | `jev`, `jev-langchain` | Optional, separately authorized verification experiments; not part of the required path |

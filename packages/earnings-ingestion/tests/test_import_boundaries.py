@@ -1,14 +1,22 @@
 """earnings-ingestion imports neither earnings-themes nor the application, and no
-browser: browser capture stays behind an optional extra (A §173; B3)."""
+browser: browser capture stays behind an optional extra (A §173; B3).
+
+Only ``earnings_ingestion.browser.selenium_capture`` may load a browser library, and
+only when something imports it; tests/contracts/test_import_scan.py checks the source
+statically as well.
+"""
 
 import json
 import subprocess
 import sys
 
+import pytest
+
 FORBIDDEN = {
     "earnings_themes",
     "earnings_pipeline",
     "selenium",
+    "websocket",
     "playwright",
     "pyppeteer",
 }
@@ -23,5 +31,16 @@ def modules_loaded_by(module: str) -> set[str]:
     return {name.partition(".")[0] for name in json.loads(result.stdout)}
 
 
-def test_importing_earnings_ingestion_loads_nothing_forbidden() -> None:
-    assert modules_loaded_by("earnings_ingestion") & FORBIDDEN == set()
+@pytest.mark.parametrize(
+    "module",
+    [
+        "earnings_ingestion",
+        "earnings_ingestion.browser",
+        "earnings_ingestion.browser.install",
+        "earnings_ingestion.browser.renderer",
+        "earnings_ingestion.browser.serialize",
+        "earnings_ingestion.browser.store",
+    ],
+)
+def test_importing_ingestion_loads_nothing_forbidden(module: str) -> None:
+    assert modules_loaded_by(module) & FORBIDDEN == set()
