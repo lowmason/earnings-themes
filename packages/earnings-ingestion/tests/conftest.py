@@ -1,9 +1,11 @@
-"""Shared test data (plan 5): a small completed capture, its layout payload, and
-builders for synthetic layout metadata."""
+"""Shared test data. Plan 5: a small completed capture, its layout payload, and
+builders for synthetic layout metadata. Plan 6: the synthetic cohort."""
 
 import copy
+import shutil
 from collections.abc import Callable
 from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 from earnings_core import sha256_hex
@@ -19,6 +21,7 @@ from earnings_ingestion.browser.renderer import (
     cache_key,
     capture_id,
 )
+from earnings_ingestion.cohort.synthetic import write_synthetic_cohort
 
 ENVIRONMENT = CaptureEnvironment(
     browser_engine="Chrome for Testing",
@@ -203,3 +206,18 @@ class LayoutParts:
 @pytest.fixture
 def parts() -> type[LayoutParts]:
     return LayoutParts
+
+
+@pytest.fixture(scope="session")
+def synthetic_cohort(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """A repository holding the synthetic cohort, generated once; never change it."""
+    repo = tmp_path_factory.mktemp("synthetic-cohort")
+    write_synthetic_cohort(repo)
+    return repo
+
+
+@pytest.fixture
+def cohort_repo(synthetic_cohort: Path, tmp_path: Path) -> Path:
+    """A private copy of the synthetic cohort's repository, safe to change."""
+    shutil.copytree(synthetic_cohort, tmp_path, dirs_exist_ok=True)
+    return tmp_path

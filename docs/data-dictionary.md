@@ -1123,3 +1123,16 @@ source.
 | `roles` | tuple of `SourceRole` | Its permitted uses |
 | `rights_status` | `RightsStatus` | Unclear rights are `local_only` |
 | `rights_basis` | string | Why |
+
+## Frozen cohort manifests
+
+- **Where.** `config/universe/<name>/manifests/<universe_id>-v<version>.json` holds
+  one `UniverseManifest` as indented JSON with sorted keys, written once and never
+  replaced. The synthetic cohort's is under `tests/fixtures/cohort/manifests/`.
+- **The content hash.** `content_hash` covers the manifest's canonical JSON without
+  `universe_version`, `content_hash`, and `created_at`. Identical content keeps its
+  version; new content takes the next.
+- **Reading.** `earnings_ingestion.cohort.freeze.load_manifest` rechecks that hash
+  and the file's name, and needs no saved artifact.
+- **Saved artifacts.** The cohort's are under `data/raw/cohort/`, which is never
+  committed; the synthetic cohort's are under `tests/fixtures/cohort/raw/`.
