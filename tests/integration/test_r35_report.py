@@ -1,5 +1,5 @@
 """R3.5's committed report covers all six categories (Stage 3 spec: Verification
-(plan A), item 10)."""
+(plan A), item 10), and both legs, which makes it final (plan B)."""
 
 import re
 from pathlib import Path
@@ -35,3 +35,10 @@ def test_every_category_reports_its_instances(category: str) -> None:
     section = sections().get(category)
     assert section is not None, f"the R3.5 report has no {category} section"
     assert INSTANCES.search(section), f"{category} reports no instance count"
+
+
+def test_the_report_is_final_with_both_legs() -> None:
+    leg2 = sections().get("Leg 2: canonical text against the browser's text")
+    assert leg2 is not None, "the R3.5 report has no second leg"
+    assert "### Against innerText" in leg2
+    assert "### Against the user's rendered copies" in leg2

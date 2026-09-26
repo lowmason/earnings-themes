@@ -6,15 +6,18 @@ Non-ASCII inputs are built from code points, so no tool can normalize them.
 import pytest
 from earnings_ingestion.canonical import Canonicalized, canonicalize
 from earnings_ingestion.canonical.fidelity import (
+    HUNK_CATEGORIES,
     SCALE_PHRASES,
     classify_run,
     comparison_space,
+    hunk_category,
     joined_to_text,
     locate_run,
     non_ascii,
     read_source,
     scale_counts,
     signed_figures,
+    token_hunks,
 )
 
 EN_DASH, MINUS, NBSP = chr(0x2013), chr(0x2212), chr(0x00A0)
@@ -175,3 +178,33 @@ def test_a_bare_digit_run_joined_to_a_number_is_a_hazard() -> None:
 def test_a_marker_after_a_space_is_not_joined() -> None:
     canonical = "Net income (1) rose."
     assert not joined_to_text(canonical, canonical.index("(1)"))
+
+
+def test_token_hunks_ignore_whitespace_and_pair_the_sides() -> None:
+    assert token_hunks("Same\ttext.", f"Same{NBSP}text.\n") == []
+    assert token_hunks("Net  sales rose 5%", "Net sales rose 5 %") == [("5%", "5 %")]
+    assert token_hunks("A B C", "A C") == [("B", "")]
+    assert token_hunks("A C", "A B C") == [("", "B")]
+
+
+@pytest.mark.parametrize(
+    ("canonical", "rendered", "category"),
+    [
+        (f"caf{E_ACUTE}", "cafe", "unicode"),
+        ("(in millions)", "", "scale"),
+        ("1Represents", "1 Represents", "superscripts"),
+        ("(a)", "", "superscripts"),
+        ("(2) Excludes", "", "footnotes"),
+        ("(1.2)", "1.2", "numeric_signs"),
+        (f"{MINUS}4", "-4", "unicode"),
+        ("-", "", "numeric_signs"),
+        ("Three Months", "", "table_headings"),
+        ("Net", "Gross", "other"),
+    ],
+)
+def test_a_hunk_takes_the_first_category_it_passes(
+    canonical: str, rendered: str, category: str
+) -> None:
+    runs, headers = {"(a)", "1"}, ["Three Months Ended"]
+    assert hunk_category(canonical, rendered, runs, headers) == category
+    assert category in HUNK_CATEGORIES
