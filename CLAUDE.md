@@ -87,7 +87,10 @@ repeat a test module's name; `strict = true`; a registered `live` marker; and
 `testpaths = ["packages", "apps", "tests"]`. The frozen Stage 1 harness still needs
 `--import-mode=prepend`, which its own command passes.
 Environment: uv 0.12.15, Python 3.14.0 (uv-managed; Homebrew's `python3` is 3.14.7),
-`requires-python = ">=3.14"`.
+`requires-python = ">=3.14"`. `.python-version` pins 3.14.0 exactly: the canonical
+fixtures record the Python version, so any other interpreter fails
+`tests/integration/test_canonical_golden.py` with "regenerate" (plan 4, PA-14). Bump the
+pin and regenerate the fixtures together.
 
 ## Architecture
 
