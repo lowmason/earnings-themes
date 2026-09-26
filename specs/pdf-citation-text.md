@@ -7,7 +7,8 @@
 > with plan 6 at plan 6's completion.
 
 The user approved this design on 2026-09-26, in a brainstorming session held while
-plan 6's Task 17 was paused at its Step 1 gate.
+plan 6's Task 17 was paused at its Step 1 gate. A later addition, PT-9, lets
+`cohort terms` hash a terms page saved by hand (§The S&P terms page).
 
 ## Why
 
@@ -34,6 +35,16 @@ The user supplied five notices. Two are cited:
 | `1480747`, index announcement, 2025-10-27 | Honeywell spins off Solstice before the open on 2025-10-30; Honeywell stays | No: no change |
 | `1483528`, press release, 2026-05-27 | A Transportation Average change | No: another index |
 | `1484126`, press release, 2026-06-23 | GOOGL replaces VZ, prior to the open on 2026-06-29; Honeywell stays, renamed Honeywell Technologies Inc. | **Yes** |
+
+### The S&P terms page
+
+The register requires every published source to record its terms' URL and hash
+(`cohort/register.py`), and the notices link to no terms page. The user will look in
+the footer of the S&P DJI site, `www.spglobal.com/spdji/en/`, which the notices name.
+But S&P's site answered automated requests with 403 at planning, and `cohort terms`
+can only fetch. So `cohort terms` gains a way to hash a copy the user saves in a
+browser (PT-9), as `cohort register` already records an evidence page that a site
+refuses.
 
 ## The evidence behind the library
 
@@ -68,6 +79,7 @@ The user made these on 2026-09-26.
 | PT-6 | Tests build invented PDFs at test time. The committed synthetic fixture does not change. |
 | PT-7 | Plan 6 gains Task 16b, before Task 17, with its own dependency gate. Tasks 17 and 18 keep their numbers. |
 | PT-8 | The roadmap's Stage 4 Consumes clause, "No parser, canonicalizer, document, or model artifact", still holds. `pdftext-1`, like this stage's use of `walker-1`, produces citation text and no document artifact. The user signed this reading. |
+| PT-9 | `cohort terms URL --saved FILE [--media-type TYPE]` hashes a terms page the user saved in a browser, by the register's own rule: the `walker-1` canonical text's SHA-256 for HTML, the bytes' otherwise. It sends no request and needs no identity. It refuses bytes that contradict the media type, by PT-4's check. The user still reads the page before its hash enters the register. |
 
 ## The policy: `pdftext-1`
 
@@ -104,9 +116,9 @@ in full.
 | `cohort/locators.py` | `ArtifactText.canonical` sends `text/html` to `walker-1` and `application/pdf` to `pdftext-1`, and refuses any other type. A new `version` property names the policy, which `span`, `find`, and `line` record. `verify` refuses a locator whose version is not the artifact's. |
 | `cohort/build.py` | `span()` records `text.version`, not the `walker-1` constant (`build.py:319`) |
 | `fetch/store.py` | `EXTENSIONS` gains `application/pdf` as `.pdf`; a PDF would otherwise be stored as `.bin` |
-| `cohort/acquire.py` | a `PDF` media-type set; `fetch_page` accepts HTML or PDF; `register_saved` refuses a contradicting type (PT-4) |
+| `cohort/acquire.py` | a `PDF` media-type set; `fetch_page` accepts HTML or PDF; `check_media_type(body, media_type)`, PT-4's one check, which `register_saved` and `cohort terms --saved` share |
 | `cohort/live.py` | the evidence refetch accepts HTML or PDF |
-| `apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py` | `register --media-type application/pdf` works as it stands. A contradicting type now exits 1 with the refusal. |
+| `apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py` | `register --media-type application/pdf` works as it stands. A contradicting type now exits 1 with the refusal. `terms` gains `--saved FILE` and `--media-type` (PT-9). |
 | `packages/earnings-ingestion/pyproject.toml`, `uv.lock` | `pypdf==6.19.0` |
 | `docs/data-dictionary.md` | The `text_span` value and `EvidenceLocator.canonicalization_version` now name `pdftext-1` beside `walker-1`. No field or value is added. |
 
@@ -153,9 +165,9 @@ table. It follows the conftest's `make_capture` pattern, and no binary enters Gi
 | `test_cohort_locators.py` | `ArtifactText` over a PDF: version `pdftext-1`; `span`, `find`, and `line` record it; `verify` passes. A `walker-1` locator on a PDF, a `pdftext-1` locator on HTML, and any other media type are refused. |
 | `test_cohort_build.py` | In a private copy of the synthetic cohort, the official index notice is replaced by an invented PDF stating the same facts, and its rows are cited again. `build` gives the same intervals, and the change citations record `pdftext-1`. |
 | `test_fetch_store.py` | a PDF is stored as `<sha256>.pdf` |
-| `test_cohort_acquire.py` | `register_saved` refuses a contradicting type in both directions. `fetch_page` accepts an `application/pdf` response through a mock transport. |
+| `test_cohort_acquire.py` | `check_media_type`, and so `register_saved`, refuses a contradicting type in both directions. `fetch_page` accepts an `application/pdf` response through a mock transport. |
 | `test_cohort_live.py` | the evidence refetch accepts an unchanged PDF |
-| `apps/earnings-pipeline/tests/test_cohort_cli.py` | `cohort register --media-type application/pdf` stores a `.pdf`, and a contradicting type exits 1 |
+| `apps/earnings-pipeline/tests/test_cohort_cli.py` | `cohort register --media-type application/pdf` stores a `.pdf`, and a contradicting type exits 1. `cohort terms URL --saved FILE` prints `terms_digest` of the file's bytes without opening a client, even with no identity set, and a contradicting type exits 1. |
 | `test_import_boundaries.py` | `cohort.pdftext` loads nothing forbidden, and the offline path still loads no network client |
 
 The committed synthetic fixture, `tests/fixtures/cohort/`, and its byte-for-byte
@@ -183,17 +195,23 @@ Amend plan 6 in place:
    text only (PT-8), Tasks 8 and 16b.
 5. **Human gates.** A new row: the PDF dependency, at Task 16b.
    `uv add --package earnings-ingestion "pypdf==6.19.0"` reaches PyPI and changes
-   `uv.lock`. The wheel is already in uv's cache from the spike.
+   `uv.lock`. The wheel is already in uv's cache from the spike. The hand-saving
+   row gains the terms page: the user saves it, and `cohort terms --saved` hashes it
+   (PT-9).
 6. **File map.** Task 16b's rows.
 7. **Task 16b**, "PDF citations (`pdftext-1`)". It follows the plan's usual shape:
    failing tests, the gated dependency, the implementation, the dictionary, the
-   checks, and one commit. Every new Python file is ASCII and passes the escape
-   check.
+   checks, and one commit. It also adds `cohort terms --saved` (PT-9). Every new
+   Python file is ASCII and passes the escape check.
 8. **Task 17.**
    - The planning-time leads give way to the saved notices above.
    - Step 1's "If an announcement exists only as a PDF, stop and ask" becomes: a
      PDF is cited under `pdftext-1` (P6-24), and only a PDF without a text layer
      stops for the user.
+   - Step 2: S&P DJI's terms URL comes from the S&P DJI site's footer, since the
+     notices link none. If `cohort terms <url>` stops, the user saves the page in
+     a browser and reads it, and `cohort terms <url> --saved <file>` hashes it
+     (PT-9).
    - Step 3: `spdji-announcements`' `access_method` names the PDF notices, saved by
      hand and recorded by `cohort register --media-type application/pdf`. Its
      `known_limitations` adds: notices are PDFs cited through `pdftext-1` (pypdf
@@ -226,11 +244,20 @@ Amend plan 6 in place:
   unpushed. Task 5's format probe ran, with the user's approval, and sent 4 SEC
   requests.
 - **Task 17, Step 1.** The user approved the four register entries as the plan
-  proposes them, and supplied the notices above. These are still pending from the
-  user:
+  proposes them, and supplied the notices above. For each cited PDF, the user gave
+  its original URL. Its saved-at time is the file's modification time, which the
+  user chose over a recalled "4 pm". Task 17 Step 4 registers each one once Task 16b
+  has landed:
+
+  | Notice | URL | `--saved-at` (UTC) | SHA-256 of the saved file |
+  | --- | --- | --- | --- |
+  | `1475162` | `https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20241101-1475162/1475162_djiadjuaintcdowaes.pdf` | `2026-09-26T21:12:22` | `fd02c23edb53c87d5e478646a008d0971d9ffe7fa9a569158db64657a85d8d2a` |
+  | `1484126` | `https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20260623-1484126/1484126_djiavzjune2026.pdf` | `2026-09-26T21:08:05` | `c022ddf1cc80472b66f32eca0f6c14dd404f4db3e49af0d2a244c0fa5d1b622c` |
+
+  These are still pending from the user:
   - the anchor revision's ID and UTC timestamp;
-  - the S&P DJI terms-of-use URL;
-  - each cited PDF's original URL and saved-at time.
+  - the S&P DJI terms-of-use URL, which the user will look for in the S&P DJI
+    site's footer (§The S&P terms page).
 - **Task 17, Step 2.** Two of the three terms hashes are taken:
   - `wikipedia-djia`:
     `581ce13c873fabdd2648e56752f889cd5e4384604ccaaeca27e8ed777c8224cd`;
