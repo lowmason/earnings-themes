@@ -38,7 +38,7 @@ Stage 2 of the roadmap (core evidence spine, plan 3, `specs/plans/completed/3-co
 - IDs are derived: `doc_id` is `<source_document_id>@<canonicalization_version>#<first 16 hex of the canonical hash>`, and `element_id` is `<type>-<start>-<end>`.
 - The root `pyproject.toml` configures pytest (see "Commands" below).
 
-Stage 3 (structure-aware canonicalization, `specs/structure-aware-canonicalization.md`) is done: plan A (plan 4) built the canonicalizer, and plan B (plan 5) the browser diagnostic path:
+Stage 3 (structure-aware canonicalization, `specs/completed/structure-aware-canonicalization.md`) is done: plan A (plan 4) built the canonicalizer, and plan B (plan 5) the browser diagnostic path:
 
 - `packages/earnings-ingestion/src/earnings_ingestion/canonical/` holds `canonicalize`. It turns saved release bytes into a hashed `walker-1` document with typed elements, tables with cells, S1 sentences, and `boilerplate/1` masks, or else a `CanonicalizationFailure`. `decode.py`, `dom.py` and `walker.py` there are generated from the frozen harness by `expirements/parser-fidelity/port_walker.py`: edit the script, never the generated files.
 - `tests/fixtures/canonical/` holds the eight fixtures' canonical output, and `tests/integration/test_canonical_golden.py` fails if any byte changes. Changed canonical text or elements need a new policy, `walker-2`, never regenerated `walker-1` files.

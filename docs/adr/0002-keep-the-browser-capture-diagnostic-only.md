@@ -9,7 +9,7 @@
 ## Context
 
 What was known on 2026-09-26, when Stage 3's plan B
-(`specs/plans/5-structure-aware-canonicalization.md`) finished its pre-registered
+(`specs/plans/completed/5-structure-aware-canonicalization.md`) finished its pre-registered
 comparison (`docs/verification/layout-1-comparison.md`):
 
 - **The question.** The browser spec's diagnostic-first promotion rule keeps

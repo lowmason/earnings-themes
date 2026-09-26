@@ -1,5 +1,7 @@
 # Structure-aware canonicalization
 
+**Status: COMPLETE (2026-09-26)** — Stage 3; implemented by plans 4 and 5; retired to specs/completed/.
+
 > For agentic workers: REQUIRED NEXT SKILL: writing-plans. This is the stage spec
 > for Stage 3 of `specs/evidence-linked-theme-extraction-roadmap.md`. Plan it as two
 > plans, in order: plan A (§Plan A) first, and plan B (§Plan B) only after plan A

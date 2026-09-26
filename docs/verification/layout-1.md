@@ -1,7 +1,7 @@
 # layout-1 and the browser diagnostic path: verification record
 
-This record verifies plan B of `specs/structure-aware-canonicalization.md`, the
-browser diagnostic path. Plan 5 (`specs/plans/5-structure-aware-canonicalization.md`)
+This record verifies plan B of `specs/completed/structure-aware-canonicalization.md`, the
+browser diagnostic path. Plan 5 (`specs/plans/completed/5-structure-aware-canonicalization.md`)
 built it. With plan A, whose record is `docs/verification/walker-1.md`, it completes
 Stage 3.
 

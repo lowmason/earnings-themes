@@ -78,7 +78,7 @@ Stage 2.
 
 ## Stage 3
 
-Stage 3 (`specs/structure-aware-canonicalization.md`, plans 4 and 5) reuses the frozen
+Stage 3 (`specs/completed/structure-aware-canonicalization.md`, plans 4 and 5) reuses the frozen
 code without changing it. Its scripts import `earnings_ingestion`, so they run in the
 workspace environment with `uv run --locked --all-packages python`.
 

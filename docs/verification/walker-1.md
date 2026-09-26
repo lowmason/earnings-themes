@@ -1,6 +1,6 @@
 # walker-1: plan A's verification record
 
-This record verifies plan A of `specs/structure-aware-canonicalization.md`, the
+This record verifies plan A of `specs/completed/structure-aware-canonicalization.md`, the
 canonicalizer, for Stage 3 of `specs/evidence-linked-theme-extraction-roadmap.md`.
 Plan 4 (`specs/plans/completed/4-structure-aware-canonicalization-plan-a.md`) built it. Plan B,
 the browser diagnostic path, adds its own record, and Stage 3 is complete only then.
