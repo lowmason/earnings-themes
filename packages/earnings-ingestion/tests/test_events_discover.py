@@ -7,6 +7,7 @@ request exactly the responses the build reads, each once, and never an exhibit.
 
 import re
 import shutil
+from datetime import timedelta
 from pathlib import Path
 
 import httpx
@@ -31,7 +32,7 @@ from earnings_ingestion.events.layer import (
     filings,
 )
 from earnings_ingestion.events.saved import SavedResponses
-from earnings_ingestion.events.synthetic import eight_k, index_page
+from earnings_ingestion.events.synthetic import eight_k, index_page, save
 from earnings_ingestion.fetch.client import UnexpectedResponse
 from earnings_ingestion.fetch.records import Retrieval
 from earnings_ingestion.fetch.store import ArtifactStore
@@ -172,10 +173,11 @@ def test_a_stopped_run_resumes_and_fetches_only_what_the_store_lacks(
 def test_discovery_names_each_saved_response_the_build_cannot_read(
     universe, layer, tmp_path
 ) -> None:
-    """A saved response whose bytes are gone is never fetched again, because it is
+    """A saved response the build cannot read is never fetched again, because it is
     saved, so discovery names it rather than finish as though nothing were wrong. One
-    issuer loses its submissions file; another keeps its registrant but loses an
-    index page; a third loses a candidate's primary document."""
+    issuer loses its submissions file's bytes; another keeps its registrant, but an
+    index page of its, saved again, states no Accepted value; a third loses a
+    candidate's primary document."""
     store = ArtifactStore(tmp_path / "data" / "raw" / "events", tmp_path)
     run(universe, Recorder(layer), store)
     borealis, corvid = (f"/edgar/data/{int(r.cik)}/" for r in (BOREALIS, CORVID))
@@ -183,19 +185,25 @@ def test_discovery_names_each_saved_response_the_build_cannot_read(
     document = min(
         url for url in layer if corvid in url and not url.endswith("-index.htm")
     )
+    submissions = submissions_url(ACME.cik)
     saved = SavedResponses(store)
     gone = {}
-    for url in (submissions_url(ACME.cik), index, document):
+    for url in (submissions, document):
         artifact = saved.get(url).artifact
         (tmp_path / artifact.storage_ref).unlink()
         gone[url] = artifact.content_sha256
+    unlabeled = layer[index][0].replace(b">Accepted<", b">Received<")
+    assert unlabeled != layer[index][0]
+    later = saved.get(index).retrieved_at + timedelta(seconds=1)
+    save(store, index, unlabeled, "text/html", later)
     recorder = Recorder(layer)
     result, sent, _ = run(universe, recorder, store)
     assert (recorder.requested, sent, result.fetched) == ([], 0, [])
+    no_bytes = "for source 'sec-edgar': its retrieval records remain, but its bytes"
     assert result.problems == [
-        f"{url}: no artifact {sha256} for source 'sec-edgar': its retrieval records"
-        " remain, but its bytes are gone"
-        for url, sha256 in gone.items()
+        f"{submissions}: no artifact {gone[submissions]} {no_bytes} are gone",
+        f"{index}: the index page states no Accepted",
+        f"{document}: no artifact {gone[document]} {no_bytes} are gone",
     ]
 
 
