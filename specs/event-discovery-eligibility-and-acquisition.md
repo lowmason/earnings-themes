@@ -124,8 +124,9 @@ They ground the design, and plan A's records re-derive what they rely on.
      `Z`.
    - Among the 172 main files, the 76 whose latest filing is on or before 2026-04-02
      give Eastern digits, and the 96 whose latest filing is on or after 2026-04-09
-     give UTC. A file's convention follows SEC's last regeneration of the file, not
-     the filing.
+     give UTC. That split is consistent with SEC changing its generator in early April
+     2026 and regenerating a file whenever its registrant files. This is an
+     inference, and the rule in §Acceptance time does not depend on it.
    - The index page's Eastern value matched in every case.
 2. **Candidate filings.** Stage 4 saved the 33 issuers' submissions on 2026-09-26 and
    2026-09-27.
@@ -250,13 +251,24 @@ These are plan A's first tasks, done before any Stage 5 request.
   - Missing or disagreeing labels stay null, with a non-blocking
     `fiscal_labels_unknown` finding.
 - **Guards.** Each is a blocking finding that an `acknowledge` override answers.
-  - `period_gap` fires in two cases:
+  - `period_gap` fires in three cases, each meaning that an in-window period end may
+    be missing:
     - two consecutive visible period ends of an issuer, at least one of them inside
       the window, are more than 105 days apart;
-    - the issuer's last visible period end lies inside the window and more than 105
-      days before the cutoff.
+    - no visible period end precedes the issuer's first in-window one, and that one
+      lies 92 or more days after the window's start;
+    - no visible period end follows the issuer's last in-window one, and that one
+      lies more than 91 days before the window's stop.
+  - The guard judges the window's edges by quarter length, never by filing lag. A
+    rule keyed to the cutoff would falsely flag Nike, whose last in-window period ends
+    2026-05-31, since its next 10-Q is not due until after the cutoff.
   - `no_slots` fires when a candidate issuer has no slot.
-  - v1 should trip neither, and fixtures trip both.
+  - Checked on 2026-09-27 against Stage 4's saved recent blocks, filtered to the
+    cutoff:
+    - the first and third cases fire for no issuer, and `no_slots` for none;
+    - the second fires only for Goldman Sachs and JPMorgan, whose earlier filings sit
+      in older pages those files leave out, and which discovery reads.
+  - Fixtures trip every case.
 
 ### Candidates and `release-id/1` (step 2)
 
@@ -429,6 +441,10 @@ One record serves as both P's "complete eligible-event manifest" and Stage 15's
 - **Files.** `config/corpus/djia-2024q3-2026q2/events-v<N>.json` and its evidence
   record are committed. They hold facts, URLs, hashes, and locators, never source text
   (P6-3).
+- **The data dictionary.** Plan A's records join ingestion schema version 1 (P6-5):
+  the event manifest and its rows, the evidence record, the overrides, and the pilot
+  manifest. Each is documented in `docs/data-dictionary.md`, whose drift test covers
+  it.
 
 ### P's expected-event contract, field by field
 
@@ -561,7 +577,7 @@ their names and flags.
   - a quarter with two candidates that the rule cannot separate;
   - an 8-K/A;
   - a pre-market release on the day of a `before_open` change;
-  - a period gap;
+  - each `period_gap` case, and a Nike-like calendar that trips none;
   - both acceptance-time conventions;
   - a filing accepted after the cutoff;
   - an AMC-like pro forma overview filed as a filing's only EX-99, for plan B.
@@ -596,7 +612,9 @@ their names and flags.
    - An issuer with two securities yields one slot per period (P-VF).
    - Period ends on each side of 2024-07-01 and of 2026-07-01 exercise both window
      boundaries (P-VF).
-   - A gap, and an issuer without slots, each block until acknowledged.
+   - Each of the three `period_gap` cases, and an issuer without slots, blocks until
+     acknowledged. A fiscal calendar like Nike's, whose next report falls after the
+     cutoff, trips none.
 7. **Eligibility (P-C2, P-VF).**
    - Releases just before and just after each timing's bound resolve to the correct
      side.
@@ -725,6 +743,9 @@ events store, and `walker-1` canonicalizes it.
   - Writes are atomic and never replace an earlier run. The current state is the
     latest transition per document.
   - Canonical documents go under `data/runs/events/canonical/`, named by `doc_id`.
+- **The data dictionary.** The processing-state rows and their transitions join
+  ingestion schema version 1 (P6-5), and are documented in `docs/data-dictionary.md`
+  under its drift test.
 
 ### Verification (plan B)
 
