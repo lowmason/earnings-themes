@@ -474,7 +474,7 @@ class _Builder:
             registrant = read_submissions(stored.body)
             filings = list(registrant.filings)
             for page in registrant.older_pages:
-                older = self._latest(SEC_SOURCE_ID, submissions_page_url(page))
+                older = self._latest(SEC_SOURCE_ID, submissions_page_url(page.name))
                 if older is not None:
                     filings.extend(read_submissions_page(older.body))
         except (SecDataError, ValueError) as exc:

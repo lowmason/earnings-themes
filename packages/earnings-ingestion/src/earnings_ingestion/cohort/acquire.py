@@ -156,7 +156,7 @@ def fetch_sec(
     filings = list(registrant.filings)
     for page in registrant.older_pages:
         filings += read_submissions_page(
-            get("sec-edgar", submissions_page_url(page), JSON)
+            get("sec-edgar", submissions_page_url(page.name), JSON)
         )
     rights = registers.rights(proxy.source_id)
     for filing in filings:

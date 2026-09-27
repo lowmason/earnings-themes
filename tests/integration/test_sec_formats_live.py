@@ -52,7 +52,7 @@ def test_sec_formats_match_the_readers() -> None:
             filing
             for page in fund.older_pages[:1]
             for filing in read_submissions_page(
-                client.fetch(submissions_page_url(page), JSON).body
+                client.fetch(submissions_page_url(page.name), JSON).body
             )
         ]
         reports = [f for f in fund.filings if f.form in NPORT]
@@ -74,7 +74,7 @@ def test_sec_formats_match_the_readers() -> None:
     print(
         f"fund recent filings: {len(fund.filings)}, from"
         f" {min(f.filing_date for f in fund.filings)}; older pages:"
-        f" {list(fund.older_pages)}; first older page: {len(older)} filings"
+        f" {[page.name for page in fund.older_pages]}; first older page: {len(older)} filings"
     )
     print(
         f"latest N-PORT: {latest.accession} {latest.form} filed {latest.filing_date},"

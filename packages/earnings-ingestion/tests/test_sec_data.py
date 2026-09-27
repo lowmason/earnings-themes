@@ -5,6 +5,7 @@ from datetime import UTC, date, datetime
 
 import pytest
 from earnings_ingestion.sec.data import (
+    OlderPage,
     SecDataError,
     raw_document_name,
     read_company_tickers,
@@ -93,7 +94,55 @@ def test_submissions_give_name_former_names_tickers_and_filings() -> None:
     assert first.accepted_at == datetime(2025, 2, 1, 16, 5, tzinfo=UTC)
     assert (first.report_date, second.report_date) == (date(2024, 12, 31), None)
     assert second.pointer("form") == "/filings/recent/form/1"
-    assert registrant.older_pages == ("CIK0009990001-submissions-001.json",)
+    assert registrant.older_pages == (
+        OlderPage(
+            name="CIK0009990001-submissions-001.json",
+            filing_from=None,
+            filing_to=None,
+            pointer="/filings/files/0",
+        ),
+    )
+    assert (first.items, second.items) == ((), ())
+
+
+def with_items(items: list) -> bytes:
+    data = json.loads(submissions())
+    data["filings"]["recent"]["items"] = items
+    return json.dumps(data).encode()
+
+
+def test_items_are_read_when_the_column_is_present() -> None:
+    """Stage 5 reads each filing's items; Stage 4's files, which carry no items
+    column, read as before (the Stage 5 spec, §Store, client, and readers)."""
+    first, second = read_submissions(with_items(["", "2.02,9.01"])).filings
+    assert (first.items, second.items) == ((), ("2.02", "9.01"))
+
+
+@pytest.mark.parametrize("items", [["2.02"], ["", 202]], ids=["ragged", "not-text"])
+def test_malformed_items_are_refused(items) -> None:
+    with pytest.raises(SecDataError):
+        read_submissions(with_items(items))
+
+
+def test_an_older_page_records_the_dates_it_covers() -> None:
+    body = pages(
+        [
+            {
+                "name": "CIK0009990001-submissions-001.json",
+                "filingCount": 2,
+                "filingFrom": "2019-01-02",
+                "filingTo": "2024-06-28",
+            }
+        ]
+    )
+    (page,) = read_submissions(body).older_pages
+    assert (page.filing_from, page.filing_to) == (date(2019, 1, 2), date(2024, 6, 28))
+
+
+def test_an_older_page_with_a_malformed_date_is_refused() -> None:
+    body = pages([{"name": "p.json", "filingFrom": "2019-13-02"}])
+    with pytest.raises(SecDataError, match="not a date"):
+        read_submissions(body)
 
 
 def pages(entries: list) -> bytes:
