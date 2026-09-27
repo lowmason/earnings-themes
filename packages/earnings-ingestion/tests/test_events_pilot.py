@@ -307,6 +307,35 @@ def test_a_quarter_with_no_eligible_event_refuses() -> None:
     )
 
 
+def on(row: EventRow, published: datetime) -> EventRow:
+    """``row``, accepted and first published at ``published``."""
+    return row.model_copy(
+        update={
+            "filing_acceptance_time": published,
+            "first_publication_time": published,
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    ("kind", "published"),
+    [
+        (ENTRY, datetime(2025, 5, 1, 18, 0, tzinfo=UTC)),
+        (EXIT, datetime(2025, 5, 1, 14, 0, tzinfo=UTC)),
+    ],
+    ids=["entry", "exit"],
+)
+def test_the_member_side_includes_the_transitions_own_day(kind, published) -> None:
+    """P7-20: the member side includes the transition's own Eastern date, since
+    eligibility has already placed a same-day release against the bound's timing.
+    Issuer 12's only eligible event is published on that day, so the transition is
+    matched."""
+    rows, moves = forty()
+    move = transition(12, kind, date(2025, 5, 1))
+    chosen = run([*rows, on(event(12, date(2025, 3, 31)), published)], [*moves, move])
+    assert move not in chosen.unmatched_transitions
+
+
 def test_shuffled_input_gives_a_byte_identical_pilot() -> None:
     rows, moves = forty()
     events = EventManifestDefinition(
@@ -439,12 +468,19 @@ def dynamo(universe: UniverseManifest, a_to: date, b_from: date) -> UniverseMani
             [(EXIT, date(2026, 6, 22)), (ENTRY, date(2026, 6, 29))],
         ),
         (date(2026, 9, 22), date(2026, 9, 23), [(EXIT, date(2026, 9, 22))]),
+        (
+            date(2024, 7, 1),
+            date(2024, 7, 8),
+            [(EXIT, date(2024, 7, 1)), (ENTRY, date(2024, 7, 8))],
+        ),
     ],
-    ids=["handoff", "gap", "cutoff"],
+    ids=["handoff", "gap", "cutoff", "start"],
 )
 def test_a_handoff_is_no_transition_and_a_gap_is_two(
     universe, a_to, b_from, expected
 ) -> None:
+    """Scope is ``[period_end_start, public_information_cutoff]``, both ends
+    included: an exit on 2024-07-01 and one on 2026-09-22 are in it."""
     found = transitions(dynamo(universe, a_to, b_from))
     assert [
         (t.kind, t.effective_date) for t in found if t.issuer_id == "cik-0009990005"
