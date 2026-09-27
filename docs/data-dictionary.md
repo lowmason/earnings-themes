@@ -1224,7 +1224,7 @@ as P's expected event and as Stage 15's ledger entry.
 | `periodic_accession` | accession | The original 10-Q, 10-K, 10-QT, or 10-KT that made the slot |
 | `periodic_form` | `10-Q`, `10-K`, `10-QT`, or `10-KT` | Its form |
 | `release_accession` | accession or null | The release filing; null when unidentified |
-| `candidate_accessions` | tuple of accession | The slot's candidates, by accession |
+| `candidate_accessions` | tuple of accession | The slot's candidates, by accession, each once |
 | `identification_method` | `IdentificationMethod` or null | How the release filing was identified |
 | `filing_acceptance_time` | UTC datetime or null | The release filing's index-page Accepted value, read in America/New_York |
 | `first_publication_time` | UTC datetime or null | Equal to `filing_acceptance_time`: an upper bound on first availability (EV9) |

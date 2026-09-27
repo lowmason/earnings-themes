@@ -36,11 +36,18 @@ from earnings_ingestion.events.records import (
 from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.events.synthetic import (
     JSON,
+    SyntheticFiling,
     SyntheticStore,
     companyfacts_file,
     save,
+    submissions_file,
 )
-from earnings_ingestion.sec.urls import archive_url, companyfacts_url, filing_index_url
+from earnings_ingestion.sec.urls import (
+    archive_url,
+    companyfacts_url,
+    filing_index_url,
+    submissions_url,
+)
 
 ROOT = Path(__file__).resolve().parents[3]
 COHORT = ROOT / "tests" / "fixtures" / "cohort" / "manifests" / "djia-synthetic-v1.json"
@@ -398,6 +405,47 @@ def test_a_missing_response_stops_the_build(universe, tmp_path) -> None:
         f"nothing saved from {submissions}: run events discover",
         f"nothing saved from {facts}: run events discover",
     )
+
+
+def resave_submissions(
+    layer: SyntheticStore, registrant: Registrant, *extra: SyntheticFiling
+) -> None:
+    """Save, a day later, the registrant's submissions file with ``extra`` rows."""
+    listed = [filing for filing, _ in filings(registrant)]
+    body = submissions_file(
+        registrant.cik,
+        registrant.name,
+        [*listed, *extra],
+        convention=registrant.convention,
+    )
+    later = RETRIEVED.replace(day=29)
+    save(layer.store, submissions_url(registrant.cik), body, JSON, later)
+
+
+def test_a_filing_listed_twice_stops_the_build(universe, tmp_path) -> None:
+    """Two copies of Acme's release for 2024-08-31 would be two candidates, and so a
+    false several_release_filings; the repeat is refused instead."""
+    layer = write_layer(tmp_path / "data" / "raw" / "events", tmp_path)
+    (twice,) = [f for f, _ in filings(ACME) if f.accepted == "2024-09-26 16:05:00"]
+    resave_submissions(layer, ACME, twice)
+    (problem,) = refused(universe, layer)
+    assert problem.startswith(f"{twice.accession} is listed 2 times: at /filings/")
+
+
+def test_a_filing_two_issuers_list_changes_nothing(universe, tmp_path) -> None:
+    """The repeat check is per issuer: a schedule listed under Acme and Borealis
+    alike leaves the build as it was."""
+    layer = write_layer(tmp_path / "data" / "raw" / "events", tmp_path)
+    before = run(universe, layer).content_hash
+    schedule = SyntheticFiling(
+        accession="0009990002-25-000900",
+        form="SC 13G",
+        filing_date=date(2025, 2, 10),
+        accepted="2025-02-10 10:00:00",
+    )
+    resave_submissions(layer, ACME, schedule)
+    resave_submissions(layer, BOREALIS, schedule)
+    assert run(universe, layer).content_hash == before
 
 
 def test_a_companyfacts_file_of_another_registrant_stops_the_build(

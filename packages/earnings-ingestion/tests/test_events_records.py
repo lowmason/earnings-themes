@@ -111,6 +111,7 @@ def test_an_unidentified_release_has_no_times_and_no_assertion() -> None:
             },
             "UTC",
         ),
+        ({"candidate_accessions": ("0009990001-24-000029",) * 2}, "candidate"),
     ],
     ids=[
         "id-not-issuer-and-period",
@@ -120,6 +121,7 @@ def test_an_unidentified_release_has_no_times_and_no_assertion() -> None:
         "member-without-assertion",
         "assertion-after-cutoff",
         "time-not-utc",
+        "candidate-repeated",
     ],
 )
 def test_an_inconsistent_row_is_refused(changes, message) -> None:

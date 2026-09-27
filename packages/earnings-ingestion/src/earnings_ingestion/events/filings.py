@@ -22,8 +22,12 @@ It then places each filing the build reads (plan 7, P7-8):
   filed on or after ``start``, is ``acceptance_time_unknown`` in the same way.
 
 A saved response that is missing, unreadable, or for another accession is a
-problem: no review can settle it, so the build stops and lists it. Each missing
-response's URL is also listed in ``missing``, which discovery fetches next.
+problem: no review can settle it, so the build stops and lists it. So is an accession
+that the issuer's files list more than once, in one block or two: it is refused,
+never deduplicated, and the problem names each copy's pointer. The check is per
+issuer, since one filing, such as a schedule one registrant files about another, can
+be listed under both. Each missing response's URL is also listed in ``missing``,
+which discovery fetches next.
 """
 
 from dataclasses import dataclass
@@ -174,7 +178,23 @@ class _Reader:
                 listed.append((artifact, read_older_page(artifact.text.body, page)))
             except SecDataError as exc:
                 self.problems.append(f"{url}: {exc}")
+        self.repeats(listed)
         return registrant, listed, skipped
+
+    def repeats(self, listed: list[tuple[CitableArtifact, tuple[Filing, ...]]]) -> None:
+        """Refuse each accession the issuer's files list more than once, naming each
+        copy's pointer: two copies would make two candidates of one filing."""
+        copies: dict[str, list[str]] = {}
+        for artifact, filings in listed:
+            for filing in filings:
+                copies.setdefault(filing.accession, []).append(
+                    f"at {filing.pointer('accessionNumber')} in {artifact.url}"
+                )
+        for accession, where in copies.items():
+            if len(where) > 1:
+                self.problems.append(
+                    f"{accession} is listed {len(where)} times: {', '.join(where)}"
+                )
 
     def indexes(
         self, cik: str, filings: list[Filing]

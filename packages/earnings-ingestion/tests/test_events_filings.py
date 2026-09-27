@@ -301,6 +301,36 @@ def test_an_older_page_of_another_count_is_a_problem(saved) -> None:
     )
 
 
+def test_a_filing_listed_in_two_files_is_a_problem(saved) -> None:
+    """Two copies of one 8-K would make two candidates of one filing, and so a false
+    several_release_filings. The repeat is refused, never deduplicated, naming each
+    copy's pointer."""
+    filing = release(29, "2024-10-24 16:05:12")
+    name = "CIK0009990001-submissions-001.json"
+    saved.submissions([filing], pages=[older_page_entry(name, [filing])])
+    saved.page(name, [filing])
+    saved.index(filing)
+    assert saved.read().problems == (
+        (
+            f"{filing.accession} is listed 2 times:"
+            f" at /filings/recent/accessionNumber/0 in {submissions_url(CIK)},"
+            f" at /accessionNumber/0 in {submissions_page_url(name)}"
+        ),
+    )
+
+
+def test_a_filing_listed_twice_in_one_block_is_a_problem(saved) -> None:
+    report = periodic(40, date(2024, 9, 30), "2024-11-04 16:30:00")
+    saved.submissions([report, report])
+    assert saved.read().problems == (
+        (
+            f"{report.accession} is listed 2 times:"
+            f" at /filings/recent/accessionNumber/0 in {submissions_url(CIK)},"
+            f" at /filings/recent/accessionNumber/1 in {submissions_url(CIK)}"
+        ),
+    )
+
+
 def test_the_newest_retrieval_of_each_url_is_read(saved) -> None:
     first = [release(29, "2024-10-24 16:05:12")]
     saved.submissions(first)

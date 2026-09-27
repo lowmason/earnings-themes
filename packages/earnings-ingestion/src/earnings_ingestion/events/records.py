@@ -182,6 +182,8 @@ class EventRow(_Part):
         )
         if len({value is None for value in release}) != 1:
             raise ValueError("a release filing comes with its method and its times")
+        if len(set(self.candidate_accessions)) != len(self.candidate_accessions):
+            raise ValueError("candidate_accessions name each candidate once")
         if self.first_publication_time != self.filing_acceptance_time:
             raise ValueError("first publication is the filing's acceptance (EV9)")
         acceptance = self.filing_acceptance_time
