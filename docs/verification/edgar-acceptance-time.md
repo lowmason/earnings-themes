@@ -15,26 +15,24 @@ cross-checks each row whose filing's index page is also saved. A file's
 convention is the one its cross-checked rows share.
 
 - **Leg 1** reads Stage 1's pages, under `data/raw/discovery/`.
+- **Leg 2** reads Stage 5's pages, under `data/raw/events/`.
 
-Leg 2 reads Stage 5's own pages, which cover the window's filings. It is
-added when Stage 5's discovery run has saved them.
-
-| | Leg 1 |
-| --- | --- |
-| Retrieved | 2026-09-22 to 2026-09-25 |
-| Submissions files read | 300 |
-| Older pages read | 51 |
-| Index pages read | 226 |
-| Files with a cross-checked row | 221 |
-| Rows cross-checked | 227 |
-| Rows in true UTC | 143 |
-| Rows in Eastern digits and Z | 84 |
-| Rows in neither | 0 |
-| Files in both conventions | 0 |
-| Submissions files in true UTC | 96, latest filing 2026-04-09 to 2026-09-24 |
-| Submissions files in Eastern digits and Z | 76, latest filing 2008-02-14 to 2026-04-02 |
-| Older pages in true UTC | 43 |
-| Older pages in Eastern digits and Z | 6 |
+| | Leg 1 | Leg 2 |
+| --- | --- | --- |
+| Retrieved | 2026-09-22 to 2026-09-25 | 2026-09-27 to 2026-09-27 |
+| Submissions files read | 300 | 33 |
+| Older pages read | 51 | 19 |
+| Index pages read | 226 | 305 |
+| Files with a cross-checked row | 221 | 43 |
+| Rows cross-checked | 227 | 305 |
+| Rows in true UTC | 143 | 305 |
+| Rows in Eastern digits and Z | 84 | 0 |
+| Rows in neither | 0 | 0 |
+| Files in both conventions | 0 | 0 |
+| Submissions files in true UTC | 96, latest filing 2026-04-09 to 2026-09-24 | 33, latest filing 2026-08-19 to 2026-09-25 |
+| Submissions files in Eastern digits and Z | 76, latest filing 2008-02-14 to 2026-04-02 | 0, latest filing none |
+| Older pages in true UTC | 43 | 10 |
+| Older pages in Eastern digits and Z | 6 | 0 |
 
 Every cross-checked row follows one of the two conventions, and no file
 follows both. So Stage 5 reads the index page's Accepted value as the
