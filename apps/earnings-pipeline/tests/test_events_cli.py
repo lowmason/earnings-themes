@@ -10,9 +10,11 @@ import httpx
 import pytest
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
 from earnings_ingestion.events.fixture import COHORT_MANIFEST, FIXTURE_DIR
+from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.fetch.records import Retrieval
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec import client as sec_client
+from earnings_ingestion.sec.urls import filing_index_url
 from earnings_pipeline import cli, events_cli
 from typer.testing import CliRunner
 
@@ -204,3 +206,58 @@ def test_discover_filing_spends_at_most_two_requests(repo, monkeypatch) -> None:
     assert result.exit_code == 1
     assert budgets == [2]
     assert "Stopped: the saved filings of CIK 0009990005 list no" in result.stderr
+
+
+FILED = ("0009990001", "0009990001-24-000003")
+"""An Item 2.02 8-K that its issuer's saved submissions list."""
+
+
+def unsave(repo: Path, cik: str, accession: str) -> tuple[str, str]:
+    """Delete the retrieval records of a filing's saved index page and primary
+    document, so that discovery lacks both; return the two URLs."""
+    folder = f"/{int(cik)}/{accession.replace('-', '')}/"
+    root = repo / FIXTURE_DIR / "raw" / SEC_SOURCE_ID / "retrievals"
+    gone = []
+    for path in sorted(root.glob("*/*.json")):
+        record = Retrieval.model_validate_json(path.read_text(encoding="utf-8"))
+        if folder in record.request_url:
+            path.unlink()
+            gone.append(record.request_url)
+    index = filing_index_url(cik, accession)
+    (document,) = set(gone) - {index}
+    assert len(gone) == 2
+    return index, document
+
+
+def test_discover_filing_keeps_a_smaller_approved_cap(repo, monkeypatch) -> None:
+    """An approved --max-requests is a hard ceiling with --filing too: the run stops
+    at it, and a rerun fetches only what is left."""
+    index, document = unsave(repo, *FILED)
+    budgets = client(monkeypatch, served())
+    result = run(repo, "discover", "--max-requests", "1", "--filing", *FILED)
+    assert result.exit_code == 1
+    assert budgets == [1]
+    assert result.stdout.splitlines() == [
+        "at most 1 requests to SEC, through the shared client",
+        f"8-K {FILED[1]}: 2 to fetch",
+        "requests sent: 1; a rerun fetches only what is missing",
+    ]
+    assert "Stopped: request budget of 1 reached" in result.stderr
+    saved = SavedResponses(ArtifactStore(repo / FIXTURE_DIR / "raw", repo))
+    assert index in saved and document not in saved
+    result = run(repo, "discover", "--filing", *FILED)
+    assert result.exit_code == 0, result.output
+    assert budgets == [1, 2]
+    assert result.stdout.splitlines()[1:] == [
+        f"8-K {FILED[1]}: 1 to fetch",
+        "fetched 1; requests sent: 1",
+    ]
+
+
+def test_discover_filing_never_raises_its_cap(repo, monkeypatch) -> None:
+    unsave(repo, *FILED)
+    budgets = client(monkeypatch, served())
+    result = run(repo, "discover", "--max-requests", "5", "--filing", *FILED)
+    assert result.exit_code == 0, result.output
+    assert budgets == [2]
+    assert result.stdout.splitlines()[-1] == "fetched 2; requests sent: 2"

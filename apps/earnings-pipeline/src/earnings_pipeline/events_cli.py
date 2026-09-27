@@ -2,16 +2,18 @@
 and select and freeze its pilot (plan 7, P7-18).
 
     earnings-pipeline events discover --max-requests N    # the shared SEC client
-    earnings-pipeline events discover --filing CIK ACCESSION
+    earnings-pipeline events discover --filing CIK ACCESSION    # at most 2 requests
     earnings-pipeline events build
     earnings-pipeline events freeze
     earnings-pipeline events select
 
 Only ``discover`` uses the network, through the shared SEC client. It states its
 request budget before it sends anything, and each phase's count before that phase,
-and a rerun fetches only what the store lacks. ``build``, ``freeze``, and ``select``
-read committed files and saved responses alone. ``build`` exits 1 while anything
-holds the freeze.
+and a rerun fetches only what the store lacks. Its budget is ``--max-requests``, the
+count the user approved. ``--filing`` caps itself at 2, or at ``--max-requests`` if
+that is smaller, so no approval is ever exceeded. ``build``, ``freeze``, and
+``select`` read committed files and saved responses alone. ``build`` exits 1 while
+anything holds the freeze.
 
 The universe is the latest frozen manifest in ``--universe-dir``, which holds one
 universe's versions; ``select`` reads the version its event manifest read.
@@ -53,6 +55,8 @@ from earnings_ingestion.sec.client import open_sec_client
 events = typer.Typer(
     no_args_is_help=True, help="Stage 5's events: discovery, eligibility, the pilot."
 )
+FILING_REQUESTS = 2
+"""What ``discover --filing`` fetches at most: an index page and an 8-K document."""
 
 
 @dataclass(frozen=True)
@@ -109,7 +113,10 @@ def discover_command(
     context: typer.Context,
     max_requests: Annotated[
         int | None,
-        typer.Option(help="The request count approved at the gate; the client's cap."),
+        typer.Option(
+            help="The request count approved at the gate; the client's cap. With"
+            " --filing, the cap is 2, or this count if it is smaller."
+        ),
     ] = None,
     filing: Annotated[
         tuple[str, str] | None,
@@ -119,7 +126,12 @@ def discover_command(
     """Save what the build reads from SEC, through the shared SEC client."""
     layout: Layout = context.obj
     universe = layout.universes()[-1]
-    budget = 2 if filing is not None else max_requests
+    if filing is None:
+        budget = max_requests
+    elif max_requests is None:
+        budget = FILING_REQUESTS
+    else:
+        budget = min(max_requests, FILING_REQUESTS)
     if budget is None:
         _fail("Refused: pass --max-requests, the request count the user approved")
     typer.echo(f"at most {budget} requests to SEC, through the shared client")
