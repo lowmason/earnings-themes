@@ -483,7 +483,8 @@ class PilotManifest(IngestionRecord):
     definition: PilotDefinition
     rows: tuple[PilotRow, ...]
     unmatched_transitions: tuple[MembershipTransition, ...]
-    """Each transition in scope with no eligible event on its member side."""
+    """Each transition in scope with no eligible event on its member side, within
+    the membership spell it opens or closes."""
 
     @model_validator(mode="after")
     def _ordered(self) -> Self:

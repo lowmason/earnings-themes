@@ -1448,7 +1448,7 @@ and nor is a same-day handoff between two of its securities.
 | `schema_version` | `1` | Ingestion record schema version |
 | `definition` | `PilotDefinition` | The definition |
 | `rows` | tuple of `PilotRow` | The selected events in `selection_order`, as many as `target` |
-| `unmatched_transitions` | tuple of `MembershipTransition` | Each transition with no eligible event on its member side: reported, not refused. Sorted by date, issuer, and kind |
+| `unmatched_transitions` | tuple of `MembershipTransition` | Each transition with no eligible event on its member side, within the membership spell it opens or closes (a clarification under `djia-pilot/1`, 2026-09-27): reported, not refused. Sorted by date, issuer, and kind |
 
 ## Frozen pilots
 

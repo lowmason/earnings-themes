@@ -336,6 +336,74 @@ def test_the_member_side_includes_the_transitions_own_day(kind, published) -> No
     assert move not in chosen.unmatched_transitions
 
 
+def others() -> list[EventRow]:
+    """Issuers 3 to 10, members throughout, with an eligible event in every
+    quarter."""
+    return [event(n, end) for n in range(3, 11) for end in ENDS]
+
+
+def test_an_exit_is_matched_only_within_the_spell_it_closes() -> None:
+    """Issuer 1 leaves on 2025-03-01, returns on 2025-05-01, and leaves again on
+    2025-06-01, with no release in its second spell. Both bounds of that spell are
+    reported: the release of 2025-01-25 is the first spell's, not the second's."""
+    rows = [event(1, end) for end in ENDS[:2]] + others()
+    moves = [
+        transition(1, EXIT, date(2025, 3, 1)),
+        transition(1, ENTRY, date(2025, 5, 1)),
+        transition(1, EXIT, date(2025, 6, 1)),
+    ]
+    assert run(rows, moves).unmatched_transitions == tuple(moves[1:])
+
+
+def test_an_entry_is_matched_only_within_the_spell_it_opens() -> None:
+    """Issuer 1 joins on 2025-03-01, leaves on 2025-04-01, and returns on
+    2025-10-01, with no release in its first spell. Both bounds of that spell are
+    reported: the release of 2025-10-25 is the later spell's."""
+    rows = [event(1, end) for end in ENDS[4:]] + others()
+    moves = [
+        transition(1, ENTRY, date(2025, 3, 1)),
+        transition(1, EXIT, date(2025, 4, 1)),
+        transition(1, ENTRY, date(2025, 10, 1)),
+    ]
+    assert run(rows, moves).unmatched_transitions == tuple(moves[:2])
+
+
+def test_an_entry_adds_its_target_in_the_order_of_the_spell_it_opens() -> None:
+    """Issuer 21's release of 2025-10-25 is the target of its entry of 2025-10-01,
+    not of its entry of 2025-03-01, whose spell is empty. So issuer 22's target,
+    from its exit of 2025-06-01, is added first. Under ``SEED``, step 1 takes
+    neither target."""
+    rows = [event(21, end) for end in ENDS[4:]]
+    rows += [event(22, end) for end in ENDS[:3]] + others()
+    moves = [
+        transition(21, ENTRY, date(2025, 3, 1)),
+        transition(21, EXIT, date(2025, 4, 1)),
+        transition(22, EXIT, date(2025, 6, 1)),
+        transition(21, ENTRY, date(2025, 10, 1)),
+    ]
+    chosen = run(rows, moves)
+    added = [row.event_id for row in chosen.rows if row.selection_reason is BOUNDARY]
+    assert added == ["cik-0000000022:2025-03-31", "cik-0000000021:2025-09-30"]
+    assert chosen.unmatched_transitions == tuple(moves[:2])
+
+
+@pytest.mark.parametrize(
+    "published",
+    [datetime(2025, 5, 1, 18, 0, tzinfo=UTC), datetime(2025, 6, 2, 14, 0, tzinfo=UTC)],
+    ids=["on-the-entry", "on-the-exit"],
+)
+def test_a_spell_includes_both_of_its_bounds(published) -> None:
+    """Issuer 12 is a member from 2025-05-01 to 2025-06-02, and its only eligible
+    event is published on one of those days, so both transitions are matched."""
+    rows, moves = forty()
+    spell = [
+        transition(12, ENTRY, date(2025, 5, 1)),
+        transition(12, EXIT, date(2025, 6, 2)),
+    ]
+    row = on(event(12, date(2025, 3, 31)), published)
+    assert run([*rows, row], [*moves, *spell]).unmatched_transitions == ()
+
+
 def test_shuffled_input_gives_a_byte_identical_pilot() -> None:
     rows, moves = forty()
     events = EventManifestDefinition(

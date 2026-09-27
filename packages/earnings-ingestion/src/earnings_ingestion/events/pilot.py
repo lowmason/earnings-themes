@@ -22,7 +22,11 @@
   second security joining a member issuer is neither, and nor is a same-day handoff.
   Those dated in ``[period_end_start, public_information_cutoff]`` are in scope. The
   member side of an entry is on or after its date, and of an exit on or before it:
-  eligibility has already placed each release against the bound's timing.
+  eligibility has already placed each release against the bound's timing. It stays
+  within the membership spell the transition opens or closes, so an event of another
+  spell never represents it: an entry's reaches up to the issuer's next exit in
+  scope, and an exit's back to its previous entry, both ends included. This
+  clarifies ``djia-pilot/1`` (2026-09-27); it moves no v1 record.
 
 Freezing follows the event manifest's rules (P6-14). Loading rechecks the chain: the
 pilot's hash and name, the event manifest it names, and that manifest's universe,
@@ -30,7 +34,7 @@ whose operative hash is computed again.
 """
 
 from collections import Counter
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from enum import StrEnum
@@ -160,19 +164,28 @@ def _published(row: EventRow) -> date:
 
 def _member_side(
     transition: MembershipTransition,
+    moves: Sequence[MembershipTransition],
     events: list[EventRow],
     h: Callable[[str], str],
 ) -> EventRow | None:
-    """The transition's nearest eligible event on its member side, if any."""
+    """The transition's nearest eligible event on its member side, if any, within
+    the membership spell it opens or closes. Among ``moves``, the issuer's next exit
+    ends an entry's spell, and its previous entry starts an exit's; both ends are
+    included."""
     day = transition.effective_date
+    own = [move for move in moves if move.issuer_id == transition.issuer_id]
+    exits = [m.effective_date for m in own if m.kind is TransitionKind.EXIT]
+    entries = [m.effective_date for m in own if m.kind is TransitionKind.ENTRY]
     if transition.kind is TransitionKind.ENTRY:
-        after = [row for row in events if _published(row) >= day]
+        until = min((d for d in exits if d > day), default=date.max)
+        after = [row for row in events if day <= _published(row) <= until]
         return min(
             after,
             key=lambda row: (row.first_publication_time, h(row.event_id)),
             default=None,
         )
-    before = [row for row in events if _published(row) <= day]
+    since = max((d for d in entries if d < day), default=date.min)
+    before = [row for row in events if since <= _published(row) <= day]
     return min(
         before,
         key=lambda row: (-row.first_publication_time.timestamp(), h(row.event_id)),
@@ -238,10 +251,10 @@ def select(
         take(row, SelectionReason.ISSUER_COVERAGE)
 
     unmatched, boundary = [], []
-    for transition in sorted(
-        transitions, key=lambda t: (t.effective_date, t.issuer_id, t.kind)
-    ):
-        row = _member_side(transition, by_issuer.get(transition.issuer_id, []), h)
+    moves = sorted(transitions, key=lambda t: (t.effective_date, t.issuer_id, t.kind))
+    for transition in moves:
+        events = by_issuer.get(transition.issuer_id, [])
+        row = _member_side(transition, moves, events, h)
         if row is None:
             unmatched.append(transition)
         else:

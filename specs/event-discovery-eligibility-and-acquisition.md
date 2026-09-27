@@ -508,13 +508,22 @@ Every field keeps its own column, and no record substitutes one time for another
      `[2024-07-01, 2026-09-22]`, meaning an issuer's membership starting or ending.
      A second security joining a member issuer is not one, and neither is an
      `anchor_snapshot` start.
-   - For each transition, the target is the nearest eligible event on the member side.
+   - For each transition, the target is the nearest eligible event on the member side,
+     within the membership spell the transition opens or closes.
      After an entry, that is the issuer's eligible event with the earliest
-     `first_publication_time` after the entry. Before an exit, it is the one with the
-     latest `first_publication_time` before the exit.
+     `first_publication_time` after the entry and up to the issuer's next exit. Before
+     an exit, it is the one with the latest `first_publication_time` before the exit
+     and since the issuer's previous entry. Both ends of the spell are included.
+     - *Clarified 2026-09-27, under `djia-pilot/1`.* The earlier text set no bound at
+       the spell's far end, so a transition bounding a spell with no eligible event
+       could take an event from another of the issuer's spells. Such an event does
+       not represent the boundary (P §Deterministic pilot selection: "not already
+       represented"), so the transition is reported instead. No v1 issuer has two
+       spells, so no v1 record moves, and the policy keeps its name (EV8).
    - A target not yet selected is added. Additions are ordered by the transition's
      date, then by `h(event_id)`. Reason: `membership_boundary`.
-   - A transition with no eligible event on its member side is reported, not refused.
+   - A transition with no eligible event on its member side, within its spell, is
+     reported, not refused.
 3. **Quarter coverage.** For each quarter with no selection, in time order, add its
    event whose issuer has the fewest selections, with ties broken by `h(event_id)`.
    Reason: `quarter_coverage`. A quarter with no eligible event refuses with
