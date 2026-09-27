@@ -1348,3 +1348,20 @@ primary document through `walker-1`'s text, and a JSON file by pointer.
 | `files` | tuple of `FileEvidence` | Every submissions file and older page read |
 | `skipped_pages` | tuple of `SkippedPage` | Every older page skipped by its dates |
 | `events` | tuple of `EventCitations` | One per row |
+
+## Frozen event manifests
+
+- **Where.** `config/corpus/<corpus_id>/events-v<N>.json` holds one `EventManifest`,
+  and `events-v<N>.evidence.json` beside it holds that version's `EventEvidence`. Each
+  is indented JSON with sorted keys, written once and never replaced, and the evidence
+  record is written first. The synthetic corpus's are in `tests/fixtures/events/`.
+- **The content hash.** `content_hash` covers the canonical JSON of the definition,
+  less `event_manifest_version`, `universe_version`, `content_hash`, and `created_at`,
+  with the rows, the findings, and the overrides. Identical content keeps its version,
+  whatever its evidence record would say; new content takes the next.
+- **Reading.** `earnings_ingestion.events.freeze.load_event_manifest` rechecks that
+  hash and the file's name, and `load_event_evidence` the evidence record's name.
+  `earnings_ingestion.events.evidence.check_evidence` verifies every citation against
+  a store's saved bytes.
+- **Saved artifacts.** Discovery's are under `data/raw/events/`, which is never
+  committed; the synthetic layer's are under `tests/fixtures/events/raw/`.
