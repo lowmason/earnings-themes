@@ -23,6 +23,7 @@ from earnings_ingestion.fetch.records import Retrieval, RetrievalMethod
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.identifiers import unpad_cik
 from earnings_ingestion.sec.urls import (
+    companyfacts_url,
     filing_index_url,
     submissions_page_url,
     submissions_url,
@@ -128,6 +129,32 @@ def filings_page(
     """An older filings page: the same columns, at the top level."""
     ordered = sorted(filings, key=lambda f: (f.accepted, f.accession), reverse=True)
     return _json(_columns(ordered, convention))
+
+
+def companyfacts_file(
+    cik: str, name: str, facts: Sequence[tuple[str, int | None, str | None]]
+) -> bytes:
+    """Companyfacts JSON: one revenue fact per ``(accession, fy, fp)``, in order. Two
+    facts of one accession may state different labels, and ``None`` leaves one out."""
+    entries = [
+        {"accn": accession, "fp": period, "fy": year, "val": 1000 + number}
+        for number, (accession, year, period) in enumerate(facts)
+    ]
+    return _json(
+        {
+            "cik": int(unpad_cik(cik)),
+            "entityName": name,
+            "facts": {
+                "us-gaap": {
+                    "Revenues": {
+                        "label": "Revenues",
+                        "description": "Invented revenue.",
+                        "units": {"USD": entries},
+                    }
+                }
+            },
+        }
+    )
 
 
 def _row(sequence: str, description: str, href: str, name: str, kind: str) -> str:
@@ -278,3 +305,11 @@ class SyntheticStore:
             index_page(cik, filing, exhibits),
             HTML,
         )
+
+    def companyfacts(
+        self,
+        cik: str,
+        name: str,
+        facts: Sequence[tuple[str, int | None, str | None]],
+    ) -> None:
+        self.put(companyfacts_url(cik), companyfacts_file(cik, name, facts), JSON)
