@@ -12,9 +12,10 @@ request budget before it sends anything, and each phase's count before that phas
 and a rerun fetches only what the store lacks. Its budget is ``--max-requests``, the
 count the user approved. ``--filing`` caps itself at 2, or at ``--max-requests`` if
 that is smaller, so no approval is ever exceeded. It names one filing, since each is
-approved on its own, and a second ``--filing`` is refused. ``build``, ``freeze``, and
-``select`` read committed files and saved responses alone. ``build`` exits 1 while
-anything holds the freeze.
+approved on its own, and a second ``--filing`` is refused. ``discover`` exits 1 and
+names each saved response the build cannot read, which no rerun fetches again, since
+it is saved. ``build``, ``freeze``, and ``select`` read committed files and saved
+responses alone. ``build`` exits 1 while anything holds the freeze.
 
 The universe is the latest frozen manifest in ``--universe-dir``, which holds one
 universe's versions; ``select`` reads the version its event manifest read.
@@ -138,7 +139,8 @@ def discover_command(
         typer.Option(help="CIK ACCESSION: one filing's index page and 8-K document."),
     ] = None,
 ) -> None:
-    """Save what the build reads from SEC, through the shared SEC client."""
+    """Save what the build reads from SEC, through the shared SEC client. Exit 1,
+    naming each one, when a saved response cannot be read: a rerun cannot mend it."""
     layout: Layout = context.obj
     universe = layout.universes()[-1]
     if filing is None:
@@ -168,6 +170,10 @@ def discover_command(
         typer.echo(f"requests sent: {sent}; a rerun fetches only what is missing")
         _fail(f"Stopped: {error}")
     typer.echo(f"fetched {len(result.fetched)}; requests sent: {sent}")
+    for problem in result.problems:
+        typer.echo(f"problem: {problem}", err=True)
+    if result.problems:
+        raise typer.Exit(1)
 
 
 def _build(layout: Layout) -> tuple[EventBuild, SavedResponses]:

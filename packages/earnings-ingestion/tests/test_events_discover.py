@@ -22,7 +22,14 @@ from earnings_ingestion.events.fixture import (
     SYNTHETIC_CORPUS,
 )
 from earnings_ingestion.events.freeze import load_event_manifest
-from earnings_ingestion.events.layer import DYNAMO, Release, filings
+from earnings_ingestion.events.layer import (
+    ACME,
+    BOREALIS,
+    CORVID,
+    DYNAMO,
+    Release,
+    filings,
+)
 from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.events.synthetic import eight_k, index_page
 from earnings_ingestion.fetch.client import UnexpectedResponse
@@ -160,6 +167,36 @@ def test_a_stopped_run_resumes_and_fetches_only_what_the_store_lacks(
     again = Recorder(layer)
     result, sent, _ = run(universe, again, store)
     assert (again.requested, sent, result.fetched) == ([], 0, [])
+
+
+def test_discovery_names_each_saved_response_the_build_cannot_read(
+    universe, layer, tmp_path
+) -> None:
+    """A saved response whose bytes are gone is never fetched again, because it is
+    saved, so discovery names it rather than finish as though nothing were wrong. One
+    issuer loses its submissions file; another keeps its registrant but loses an
+    index page; a third loses a candidate's primary document."""
+    store = ArtifactStore(tmp_path / "data" / "raw" / "events", tmp_path)
+    run(universe, Recorder(layer), store)
+    borealis, corvid = (f"/edgar/data/{int(r.cik)}/" for r in (BOREALIS, CORVID))
+    index = min(url for url in layer if borealis in url and url.endswith("-index.htm"))
+    document = min(
+        url for url in layer if corvid in url and not url.endswith("-index.htm")
+    )
+    saved = SavedResponses(store)
+    gone = {}
+    for url in (submissions_url(ACME.cik), index, document):
+        artifact = saved.get(url).artifact
+        (tmp_path / artifact.storage_ref).unlink()
+        gone[url] = artifact.content_sha256
+    recorder = Recorder(layer)
+    result, sent, _ = run(universe, recorder, store)
+    assert (recorder.requested, sent, result.fetched) == ([], 0, [])
+    assert result.problems == [
+        f"{url}: no artifact {sha256} for source 'sec-edgar': its retrieval records"
+        " remain, but its bytes are gone"
+        for url, sha256 in gone.items()
+    ]
 
 
 def test_discover_filing_saves_one_filing_and_an_8ks_document(

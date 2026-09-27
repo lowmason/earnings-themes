@@ -14,6 +14,11 @@ resumes where a stopped run left off. Each phase reads what the one before saved
 
 So discovery fetches exactly what the build reads, and never an exhibit (EV2).
 
+Last, it reads what it saved as the build does. A saved response the build cannot
+read, because its bytes are gone or changed or it is not the response its URL names,
+is never fetched again, since it is saved. ``Discovery.problems`` names each one, and
+``events discover`` exits 1.
+
 ``discover_filing`` saves one filing's index page, and an 8-K's or 8-K/A's primary
 document. It is the remedy for an ``acceptance_time_unknown`` finding, and for a
 ``set_release_filing`` that names a filing discovery did not read.
@@ -43,13 +48,18 @@ JSON = frozenset({"application/json"})
 HTML = frozenset({"text/html"})
 DOCUMENT = frozenset({"text/html", "text/plain"})
 """A primary document may be plain text; ``release-id/1`` then reports it unread."""
+NOT_SAVED = "nothing saved from "
+"""How the readers begin a problem that discovery answers by fetching."""
 
 
 @dataclass
 class Discovery:
-    """What a discovery run requested, in order."""
+    """What a discovery run requested, in order, and what it saved but cannot read."""
 
     fetched: list[str] = field(default_factory=list)
+    problems: list[str] = field(default_factory=list)
+    """Each saved response the build cannot read: its bytes are gone or changed, or
+    it is not the response its URL names. It is saved, so no rerun fetches it again."""
 
 
 class _Run:
@@ -137,7 +147,37 @@ def discover(
                 url = archive_url(cik, filing.accession, filing.primary_document)
                 documents.append((url, DOCUMENT))
     run.phase("primary documents", documents)
+    run.result.problems.extend(_unreadable(SavedResponses(store), issuers, universe))
     return run.result
+
+
+def _unreadable(
+    saved: SavedResponses, issuers: list[tuple[str, str]], universe: UniverseManifest
+) -> list[str]:
+    """What the build would refuse among the saved responses, read as the build reads
+    them: each issuer's problems but what is not saved, which discovery fetches, and
+    each problem with a candidate's primary document."""
+    definition = universe.definition
+    start, stop = definition.period_end_start, definition.period_end_stop
+    cutoff = definition.public_information_cutoff
+    problems = []
+    for issuer_id, cik in issuers:
+        filings = issuer_filings(saved, cik, issuer_id, start=start, cutoff=cutoff)
+        problems.extend(p for p in filings.problems if not p.startswith(NOT_SAVED))
+        facts = saved.get(companyfacts_url(cik))
+        if filings.registrant is None or facts is None:
+            continue
+        made, _ = issuer_slots(
+            filings,
+            read_companyfacts(facts.text.body),
+            issuer_id,
+            start=start,
+            stop=stop,
+        )
+        for slot in made:
+            found = identify(slot, filings.releases, saved, cutoff=cutoff)
+            problems.extend(found.problems)
+    return problems
 
 
 def discover_filing(

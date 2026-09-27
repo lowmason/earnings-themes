@@ -14,7 +14,7 @@ from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.fetch.records import Retrieval
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec import client as sec_client
-from earnings_ingestion.sec.urls import filing_index_url
+from earnings_ingestion.sec.urls import filing_index_url, submissions_url
 from earnings_pipeline import cli, events_cli
 from typer.testing import CliRunner
 
@@ -198,6 +198,32 @@ def test_discover_stops_on_a_persistent_403_and_says_how_to_resume(
     assert result.exit_code == 1
     assert "Stopped: " in result.stderr and "403" in result.stderr
     assert "a rerun fetches only what is missing" in result.stdout
+
+
+def test_discover_names_a_saved_response_it_cannot_read_and_fails(
+    repo, monkeypatch
+) -> None:
+    """A saved response whose bytes are gone is never fetched again: discover names
+    it and exits 1, and promises nothing of a rerun, which cannot mend it."""
+    url = submissions_url("0009990001")
+    saved = SavedResponses(ArtifactStore(repo / FIXTURE_DIR / "raw", repo))
+    artifact = saved.get(url).artifact
+    (repo / artifact.storage_ref).unlink()
+    client(monkeypatch, served())
+    result = run(repo, "discover", "--max-requests", "5")
+    assert result.exit_code == 1
+    assert result.stdout.splitlines()[1:] == [
+        "submissions and companyfacts: 0 to fetch",
+        "older pages and index pages: 0 to fetch",
+        "primary documents: 0 to fetch",
+        "fetched 0; requests sent: 0",
+    ]
+    assert result.stderr.splitlines() == [
+        (
+            f"problem: {url}: no artifact {artifact.content_sha256} for source"
+            " 'sec-edgar': its retrieval records remain, but its bytes are gone"
+        )
+    ]
 
 
 def test_discover_filing_spends_at_most_two_requests(repo, monkeypatch) -> None:
