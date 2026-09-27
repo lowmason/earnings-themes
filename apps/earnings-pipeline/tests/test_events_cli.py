@@ -261,3 +261,21 @@ def test_discover_filing_never_raises_its_cap(repo, monkeypatch) -> None:
     assert result.exit_code == 0, result.output
     assert budgets == [2]
     assert result.stdout.splitlines()[-1] == "fetched 2; requests sent: 2"
+
+
+@pytest.mark.parametrize(
+    "second",
+    [
+        ["--filing", "0009990001", "0009990001-25-000008"],
+        ["--filing=0009990001", "0009990001-25-000008"],
+    ],
+)
+def test_discover_refuses_a_second_filing(repo, monkeypatch, second) -> None:
+    """Each filing's requests are approved on their own: a second --filing is refused
+    before any client opens, never dropped."""
+    budgets = client(monkeypatch, served())
+    result = run(repo, "discover", "--filing", *FILED, *second)
+    assert result.exit_code == 1
+    assert budgets == []
+    assert result.stdout == ""
+    assert "Refused: pass one --filing" in result.stderr

@@ -11,7 +11,8 @@ Only ``discover`` uses the network, through the shared SEC client. It states its
 request budget before it sends anything, and each phase's count before that phase,
 and a rerun fetches only what the store lacks. Its budget is ``--max-requests``, the
 count the user approved. ``--filing`` caps itself at 2, or at ``--max-requests`` if
-that is smaller, so no approval is ever exceeded. ``build``, ``freeze``, and
+that is smaller, so no approval is ever exceeded. It names one filing, since each is
+approved on its own, and a second ``--filing`` is refused. ``build``, ``freeze``, and
 ``select`` read committed files and saved responses alone. ``build`` exits 1 while
 anything holds the freeze.
 
@@ -51,6 +52,7 @@ from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.fetch.client import AccessStop, UnexpectedResponse
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.client import open_sec_client
+from typer.core import TyperCommand
 
 events = typer.Typer(
     no_args_is_help=True, help="Stage 5's events: discovery, eligibility, the pilot."
@@ -108,7 +110,20 @@ def _fail(message: str) -> NoReturn:
     raise typer.Exit(1)
 
 
-@events.command("discover")
+class _OneFiling(TyperCommand):
+    """``discover``, which refuses a second ``--filing`` before any client opens. The
+    option takes one CIK and accession, and Click keeps only the last of several, so
+    the others would be dropped unfetched and unreported."""
+
+    def parse_args(self, ctx, args: list[str]) -> list[str]:
+        options = args[: args.index("--")] if "--" in args else args
+        named = [arg for arg in options if arg.split("=", 1)[0] == "--filing"]
+        if len(named) > 1:
+            _fail("Refused: pass one --filing; each filing is approved on its own")
+        return super().parse_args(ctx, args)
+
+
+@events.command("discover", cls=_OneFiling)
 def discover_command(
     context: typer.Context,
     max_requests: Annotated[
