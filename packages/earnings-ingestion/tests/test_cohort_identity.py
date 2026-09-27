@@ -10,6 +10,7 @@ from earnings_core import RightsStatus, sha256_hex
 from earnings_ingestion.cohort.build import EPOCH, build
 from earnings_ingestion.cohort.freeze import load_manifest
 from earnings_ingestion.cohort.identity import operative_hash, operative_projection
+from earnings_ingestion.cohort.locators import ArtifactText
 from earnings_ingestion.cohort.synthetic import FIXTURE_DIR, build_options
 from earnings_ingestion.fetch.records import Retrieval, RetrievalMethod
 from earnings_ingestion.fetch.store import ArtifactStore
@@ -52,6 +53,71 @@ def test_a_withheld_notice_changes_the_content_but_not_the_identity(repo) -> Non
     whose unresolved mapping has no interval, so it decides no event."""
     before = hashes(repo)
     edit(repo, "evidence.toml", change_block(repo, "index-2026-09-25"), "")
+    after = hashes(repo)
+    assert after[0] != before[0]
+    assert after[1] == before[1]
+
+
+def resolve_fenwick(repo: Path, cik: int) -> None:
+    """A second ``set_issuer`` override, like Eastfield's, resolving fenwick-common to
+    ``cik`` and citing that CIK's saved submissions record."""
+    text = (repo / FIXTURE_DIR / "overrides.toml").read_text(encoding="utf-8")
+    start = text.index('[[overrides]]\noverride_id = "eastfield-issuer"')
+    block = text[start : text.index("[[overrides]]", start + 1)]
+    url = submissions_url(cik)
+    saved = ArtifactStore(repo / FIXTURE_DIR / "raw", repo).latest(
+        "sec-edgar",
+        url,
+        rights_status=RightsStatus.REDISTRIBUTABLE,
+        rights_basis="synthetic",
+    )
+    tickers = ArtifactText(saved.body, "application/json").pointer("/tickers")
+    replacements = {
+        'override_id = "eastfield-issuer"': 'override_id = "fenwick-issuer"',
+        'security_id = "eastfield-common"': 'security_id = "fenwick-common"',
+        'cik = "0009990006"': f'cik = "{cik:010d}"',
+        submissions_url(9990006): url,
+        '"0d440a0502d9d17eeb8d25609633ea311eab436854c95503c8815ac87e5796aa"': (
+            f'"{saved.ref.content_sha256}"'
+        ),
+        '"d91bbb86186d6019de7a8bb341a39d1b713e2d978ec0f780a041d8c66bf3073d"': (
+            f'"{tickers.cited_sha256}"'
+        ),
+    }
+    for old, new in replacements.items():
+        assert block.count(old) == 1, old
+        block = block.replace(old, new)
+    anchor = '[[overrides]]\noverride_id = "alias-dynamo-a"'
+    edit(repo, "overrides.toml", anchor, f"{block}{anchor}")
+
+
+@pytest.mark.parametrize(
+    ("cik", "securities"),
+    [
+        (9990006, {"cik-0009990006": ("eastfield-common", "fenwick-common")}),
+        (9990007, {"cik-0009990007": ("fenwick-common",)}),
+    ],
+    ids=["another-issuer", "its-own-issuer"],
+)
+def test_a_set_issuer_on_a_withheld_only_security_leaves_the_identity(
+    repo, cik, securities
+) -> None:
+    """Only the withheld notice names Fenwick, so it has no interval. A reviewer's
+    ``set_issuer`` resolves it all the same, and its issuer then lists it, but no
+    interval, membership, or candidate changes: the identity leaves out each
+    security without an interval, and each issuer left with none (plan 7, P7-4,
+    extended 2026-09-27)."""
+    before = hashes(repo)
+    resolve_fenwick(repo, cik)
+    built = build(repo, **OPTIONS).manifest(1, EPOCH)
+    assert {
+        issuer.issuer_id: issuer.security_ids
+        for issuer in built.issuers
+        if "fenwick-common" in issuer.security_ids
+    } == securities
+    synthetic = load_manifest(SYNTHETIC)
+    assert built.intervals == synthetic.intervals
+    assert built.candidate_issuer_ids == synthetic.candidate_issuer_ids
     after = hashes(repo)
     assert after[0] != before[0]
     assert after[1] == before[1]

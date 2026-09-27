@@ -11,10 +11,14 @@ eligibility can read, and Stage 5's records key on it:
 - the definition's window, cutoff, membership reference, and selection policy;
 - every interval, with both bounds, their timing and basis, and its assertions;
 - the mapping of each security that has an interval: its status, issuer, and CIK;
-- each issuer's CIK and securities, and the candidate issuers.
+- each issuer's CIK and those of its securities that have an interval, for each
+  issuer that has one, and the candidate issuers.
 
 A security named only by evidence the cutoff withholds has no interval, so its
-mapping decides no event and is left out (plan 7, P7-4).
+mapping decides no event and is left out (plan 7, P7-4). So is its place in an
+issuer's securities, which a reviewer's ``set_issuer`` can give it, and so is an
+issuer left with no such security: eligibility and the pilot read an issuer's
+securities only through their intervals (P7-4, extended 2026-09-27).
 
 The assertions themselves are left out too, but not their actions, which
 ``eligibility.span`` reads: ``reconstruct`` derives each interval from its
@@ -53,8 +57,10 @@ def operative_projection(manifest: UniverseManifest) -> dict:
             if mapping.security_id in with_interval
         ],
         "issuers": [
-            issuer.model_dump(mode="json", include={"issuer_id", "cik", "security_ids"})
+            issuer.model_dump(mode="json", include={"issuer_id", "cik"})
+            | {"security_ids": held}
             for issuer in sorted(manifest.issuers, key=lambda i: i.issuer_id)
+            if (held := [s for s in issuer.security_ids if s in with_interval])
         ],
         "candidate_issuer_ids": sorted(manifest.candidate_issuer_ids),
     }

@@ -182,6 +182,13 @@ These are plan A's first tasks, done before any Stage 5 request.
        its `assertion_ids`;
      - each mapping's `security_id`, `status`, `issuer_id`, and `cik`;
      - each issuer's `issuer_id`, `cik`, and `security_ids`;
+       - *Narrowed 2026-09-27, extending plan 7's P7-4.* P7-4 keeps only the mappings
+         of securities that have an interval. The projection also keeps, in each
+         issuer's `security_ids`, only those securities, and leaves out an issuer
+         left with none. Otherwise a reviewer's `set_issuer` on a security that only
+         withheld evidence names moved the operative hash while no interval,
+         membership, candidate, or event changed. v1 and the synthetic cohort keep
+         their operative hashes.
      - `candidate_issuer_ids`.
    - Everything else is left out:
      - the version, the content hash, and the creation time;
