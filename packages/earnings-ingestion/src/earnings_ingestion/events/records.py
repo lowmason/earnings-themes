@@ -1,5 +1,6 @@
-"""Stage 5's records: the event manifest, its evidence record, and the overrides
-(the Stage 5 spec, §The event manifest and §Review overrides).
+"""Stage 5's records: the event manifest, its evidence record, the overrides, and the
+pilot manifest (the Stage 5 spec, §The event manifest, §Review overrides, and §Pilot
+selection).
 
 - **Rows.** An ``EventRow`` is one slot: an issuer's period end, the periodic report
   that made it, the release filing that first published its results, and its
@@ -11,6 +12,9 @@
   cites what each row rests on (EV11). A re-fetch changes it and nothing else.
 - **Overrides.** ``EventOverride`` is a reviewer's signed decision, read strictly from
   ``overrides.toml`` like Stage 4's (P6-18).
+- **The pilot.** ``PilotManifest`` is ``djia-pilot/1``'s frozen selection: its rows in
+  the order taken, each with its reason, and the transitions it could not cover. Its
+  content hash leaves out the same fields as the event manifest's.
 
 These are ingestion records and join ingestion schema version 1 (P6-5). A committed
 record carries facts, URLs, hashes, and locators, never a source's wording (P6-3).
@@ -409,3 +413,107 @@ class EventEvidence(IngestionRecord):
     files: tuple[FileEvidence, ...]
     skipped_pages: tuple[SkippedPage, ...]
     events: tuple[EventCitations, ...]
+
+
+class SelectionReason(StrEnum):
+    """Why ``djia-pilot/1`` took an event (S §Pilot selection)."""
+
+    ISSUER_COVERAGE = "issuer_coverage"
+    """Step 1: the issuer's event from the quarter with the fewest selections."""
+    MEMBERSHIP_BOUNDARY = "membership_boundary"
+    """Step 2: the nearest eligible event on a transition's member side."""
+    QUARTER_COVERAGE = "quarter_coverage"
+    """Step 3: an event of a quarter that had no selection."""
+    LONGITUDINAL_FILL = "longitudinal_fill"
+    """Step 5: the event farthest from its issuer's nearest selected period end."""
+
+
+class TransitionKind(StrEnum):
+    ENTRY = "entry"
+    """The issuer's membership starts."""
+    EXIT = "exit"
+    """The issuer's membership ends."""
+
+
+class PilotRow(_Part):
+    """One selected event."""
+
+    event_id: IdPart
+    selection_order: PositiveInt
+    selection_reason: SelectionReason
+
+
+class MembershipTransition(_Part):
+    """An issuer-level entry or exit (S §Pilot selection, step 2)."""
+
+    issuer_id: IdPart
+    kind: TransitionKind
+    effective_date: date
+    assertion_ids: tuple[IdPart, ...]
+    """The assertions that set the bound."""
+
+
+class PilotDefinition(_Part):
+    """The pilot manifest's definition (S §Pilot selection)."""
+
+    pilot_id: IdPart
+    pilot_version: PositiveInt
+    universe_version: PositiveInt
+    universe_operative_hash: Sha256Hex
+    event_manifest_version: PositiveInt
+    eligible_event_manifest_hash: Sha256Hex
+    selection_policy_version: NonBlankStr
+    selection_seed: Sha256Hex
+    target: PositiveInt
+    underfilled: bool
+    content_hash: Sha256Hex
+    created_at: AwareDatetime
+
+
+PILOT_UNHASHED = frozenset(
+    {"pilot_version", "universe_version", "content_hash", "created_at"}
+)
+
+
+class PilotManifest(IngestionRecord):
+    """The frozen pilot: the events to acquire, in the order taken."""
+
+    definition: PilotDefinition
+    rows: tuple[PilotRow, ...]
+    unmatched_transitions: tuple[MembershipTransition, ...]
+    """Each transition in scope with no eligible event on its member side."""
+
+    @model_validator(mode="after")
+    def _ordered(self) -> Self:
+        orders = [row.selection_order for row in self.rows]
+        if orders != list(range(1, len(self.rows) + 1)):
+            raise ValueError("rows are in selection order, from 1")
+        if len({row.event_id for row in self.rows}) != len(self.rows):
+            raise ValueError("an event is selected once")
+        if len(self.rows) != self.definition.target:
+            raise ValueError("the pilot holds its target")
+        keys = [
+            (t.effective_date, t.issuer_id, t.kind) for t in self.unmatched_transitions
+        ]
+        if keys != sorted(set(keys)):
+            raise ValueError(
+                "transitions are unique and sorted by date, issuer, and kind"
+            )
+        return self
+
+
+def pilot_content_hash(manifest: PilotManifest) -> str:
+    """SHA-256 of the canonical JSON of the definition, less ``PILOT_UNHASHED``, with
+    the rows and the unmatched transitions."""
+    definition = manifest.definition.model_dump(
+        mode="json", exclude=set(PILOT_UNHASHED)
+    )
+    return digest(
+        {
+            "definition": definition,
+            "rows": [row.model_dump(mode="json") for row in manifest.rows],
+            "unmatched_transitions": [
+                t.model_dump(mode="json") for t in manifest.unmatched_transitions
+            ],
+        }
+    )

@@ -1365,3 +1365,95 @@ primary document through `walker-1`'s text, and a JSON file by pointer.
   a store's saved bytes.
 - **Saved artifacts.** Discovery's are under `data/raw/events/`, which is never
   committed; the synthetic layer's are under `tests/fixtures/events/raw/`.
+
+## earnings-ingestion pilot records, schema version 1
+
+- **Package.** The records are in `earnings_ingestion.events.records`, and the policy,
+  `djia-pilot/1`, in `earnings_ingestion.events.pilot` (Stage 5, plan 7).
+- **Schema version.** These records join ingestion schema version `1`.
+  `PilotManifest` carries it as `schema_version`; the nested parts do not.
+- **Inputs.** The pilot reads a frozen event manifest's `eligible` rows, and the
+  membership transitions of the universe manifest that event manifest read (P7-20).
+  No acquisition, parse, or later outcome is an input.
+
+### `SelectionReason`
+
+Why `djia-pilot/1` took an event (S §Pilot selection).
+
+| Value | Meaning |
+| --- | --- |
+| `issuer_coverage` | Step 1: the issuer's event from the quarter with the fewest selections so far |
+| `membership_boundary` | Step 2: the nearest eligible event on a transition's member side |
+| `quarter_coverage` | Step 3: an event of a quarter with no selection, from the issuer with the fewest |
+| `longitudinal_fill` | Step 5: the event farthest, in days, from its issuer's nearest selected `period_end` |
+
+### `TransitionKind`
+
+| Value | Meaning |
+| --- | --- |
+| `entry` | The issuer's membership starts: a start, not an `anchor_snapshot`, whose day before no interval of the issuer holds |
+| `exit` | The issuer's membership ends: an end whose day no interval of the issuer holds |
+
+### `PilotRow`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part | An `eligible` event of the event manifest the pilot names |
+| `selection_order` | int ≥ 1 | The order taken, from 1 |
+| `selection_reason` | `SelectionReason` | The step that took it |
+
+### `MembershipTransition`
+
+An issuer-level entry or exit dated in `[2024-07-01, 2026-09-22]`, read from the
+universe's intervals by day. A second security joining a member issuer is not one,
+and nor is a same-day handoff between two of its securities.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `issuer_id` | ID part | The issuer |
+| `kind` | `TransitionKind` | Entry or exit |
+| `effective_date` | date | The bound's date |
+| `assertion_ids` | tuple of ID part | The assertions that set the bound |
+
+### `PilotDefinition`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `pilot_id` | ID part | `<corpus_id>-pilot`, such as `djia-2024q3-2026q2-pilot` |
+| `pilot_version` | int ≥ 1 | The version; a new one only when the content changes |
+| `universe_version` | int ≥ 1 | The cohort version read; outside the content hash (P7-2) |
+| `universe_operative_hash` | 64 lowercase hex | Its `operative_hash`, which the event manifest records too (EV4) |
+| `event_manifest_version` | int ≥ 1 | The event manifest drawn from |
+| `eligible_event_manifest_hash` | 64 lowercase hex | That manifest's `content_hash` |
+| `selection_policy_version` | string | `djia-pilot/1` |
+| `selection_seed` | 64 lowercase hex | SHA-256 of the canonical JSON of `eligible_event_manifest_hash`, `selection_policy_version`, and `universe_operative_hash` |
+| `target` | int ≥ 1 | 40, or every eligible event when there are fewer |
+| `underfilled` | bool | Fewer than 40 eligible events, so the target is all of them |
+| `content_hash` | 64 lowercase hex | See the frozen pilots, below |
+| `created_at` | UTC datetime | When this version was frozen |
+
+### `PilotManifest`
+
+`pilot-v<N>.json`: the frozen selection.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Ingestion record schema version |
+| `definition` | `PilotDefinition` | The definition |
+| `rows` | tuple of `PilotRow` | The selected events in `selection_order`, as many as `target` |
+| `unmatched_transitions` | tuple of `MembershipTransition` | Each transition with no eligible event on its member side: reported, not refused. Sorted by date, issuer, and kind |
+
+## Frozen pilots
+
+- **Where.** `config/corpus/<corpus_id>/pilot-v<N>.json` holds one `PilotManifest`,
+  beside the event manifest it names. It is indented JSON with sorted keys, written
+  once and never replaced. The synthetic corpus's is in `tests/fixtures/events/`.
+- **The content hash.** `content_hash` covers the canonical JSON of the definition,
+  less `pilot_version`, `universe_version`, `content_hash`, and `created_at`, with the
+  rows and the unmatched transitions. Identical content keeps its version; new
+  content takes the next. A new event manifest or a new policy gives a new seed, and
+  so a new version.
+- **Reading.** `earnings_ingestion.events.pilot.load_pilot` rechecks the chain: the
+  pilot's hash and name; the event manifest it names, in the same directory, by its
+  content hash; the universe's operative hash, computed again from the universe
+  manifest; the seed; and that every row is an eligible event of that manifest.

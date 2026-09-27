@@ -1,7 +1,7 @@
 """docs/data-dictionary.md documents every field and value of the core contracts
 and of the ingestion records: the canonicalizer's, the capture's, layout-1's, the
 retrieval metadata, the cohort's records and curated files, and Stage 5's event
-records.
+and pilot records.
 
 AGENTS.md §191: document public interfaces and update the data dictionary in the
 same change. A contract that gains, loses, or renames a field fails here.
@@ -92,6 +92,10 @@ MODELS = [
     events.SkippedPage,
     events.EventCitations,
     events.EventEvidence,
+    events.PilotRow,
+    events.MembershipTransition,
+    events.PilotDefinition,
+    events.PilotManifest,
 ]
 ENUMS = [
     core.RightsStatus,
@@ -120,6 +124,8 @@ ENUMS = [
     events.IdentificationMethod,
     events.EventFindingKind,
     events.EventOverrideKind,
+    events.SelectionReason,
+    events.TransitionKind,
 ]
 
 
