@@ -3,12 +3,13 @@
 Evidence-linked research infrastructure for company data and earnings themes.
 
 > [!IMPORTANT]
-> **Project status (2026-09-25): Stages 1 and 2 complete.** The `uv` workspace,
-> package boundaries, specifications, and staged roadmap exist; Stage 1's parser
-> investigation is finished; and `earnings-core` holds the shared evidence contracts
-> and exactness checks, with an offline test suite. The other packages still contain
-> placeholder APIs; there is no operational pipeline, command-line interface,
-> approved theme codebook, or published dataset yet.
+> **Project status (2026-09-27): Stages 1 to 4 complete, and the
+> first of Stage 5's two plans.** The `uv` workspace, package boundaries,
+> specifications, and staged roadmap exist. `earnings-core` holds the shared
+> evidence contracts, and `earnings-ingestion` canonicalizes releases, rebuilds the
+> point-in-time DJIA cohort, and discovers and freezes its earnings events and pilot,
+> each with offline tests. `earnings-themes` still contains a placeholder API; there
+> is no theme extraction, approved theme codebook, or published dataset yet.
 
 ## Purpose
 
@@ -96,15 +97,17 @@ claim; support is assessed separately.
 | Path | Responsibility | Current state |
 | --- | --- | --- |
 | `packages/earnings-core/` | Shared contracts, identifiers, hashes, provenance, and pure span helpers | Stage 2 contracts and exactness checks (schema v2) |
-| `packages/earnings-ingestion/` | Source adapters, raw snapshots, deterministic parsing, canonicalization, and entity resolution | Stage 3's canonicalizer and browser diagnostic path; Stage 4's artifact store, shared SEC client, and point-in-time DJIA cohort |
+| `packages/earnings-ingestion/` | Source adapters, raw snapshots, deterministic parsing, canonicalization, and entity resolution | Stage 3's canonicalizer and browser diagnostic path; Stage 4's artifact store, shared SEC client, and point-in-time DJIA cohort; Stage 5's event discovery, eligibility, and pilot selection |
 | `packages/earnings-themes/` | Quote-claim extraction, exact-span verification, support assessment, codebooks, and evaluation | Scaffold only |
-| `apps/earnings-pipeline/` | Thin application layer for configuration, stage coordination, checkpoints, and reporting | `earnings-pipeline browser setup` and the `earnings-pipeline cohort` commands |
+| `apps/earnings-pipeline/` | Thin application layer for configuration, stage coordination, checkpoints, and reporting | `earnings-pipeline browser setup`, and the `earnings-pipeline cohort` and `earnings-pipeline events` commands |
 | `docs/` | Source notes and, as the project develops, methodology, source registers, verification reports, and decisions | Source notes, the release source register, verification records V1 and V2, ADR 0001, and the `earnings-core` data dictionary |
 | `specs/` | Binding and exploratory system specifications, reviews, and the staged implementation roadmap | Present |
 | `expirements/parser-fidelity/` | Stage 1's investigation harness: parser candidates, scorer, and selection rule | Complete; a record, not product code |
 | `tests/fixtures/releases/` | Stage 1's eight release fixtures, with gold annotations and a provenance manifest | Present |
 | `config/universe/djia/` | The cohort's curated files and frozen universe manifests: facts and citations, never source text | Stage 4's frozen cohort |
 | `tests/fixtures/cohort/` | The synthetic cohort, which replays offline to its frozen manifest | Present |
+| `config/corpus/djia-2024q3-2026q2/` | The reviewed event overrides, the frozen event manifest and its evidence record, and the frozen pilot: facts, URLs, hashes, and locators, never source text | Stage 5's frozen event manifest and pilot |
+| `tests/fixtures/events/` | The synthetic event corpus, which replays offline to its frozen event manifest and pilot | Present |
 
 The intended dependency direction is:
 
@@ -125,7 +128,7 @@ using those primitives.
 ## Current roadmap
 
 The implementation is organized as a staged, evidence-first roadmap of sixteen
-stages. Stages 1 to 4 are complete; Stage 5 is next.
+stages. Stages 1 to 4 are complete, and so is the first of Stage 5's two plans.
 
 The roadmap was amended on 2026-09-22 by
 [the point-in-time DJIA cohort specification](specs/point-in-time-djia-cohort.md).
@@ -177,8 +180,16 @@ difference. The reviewed cohort is frozen as a versioned, content-hashed
 manifest in `config/universe/djia/manifests/` before any earnings document is
 acquired. Every SEC request goes through one shared client at 2 requests per
 second. The [verification record](docs/verification/djia-cohort.md) has the
-details. The next milestone is **Stage 5: event discovery, eligibility, and
-acquisition**.
+details.
+
+**Stage 5: event discovery, eligibility, and acquisition** is half done. Its first
+plan finds each cohort issuer's quarterly earnings releases in SEC's filing
+metadata, and judges each one's eligibility by point-in-time membership at its
+EDGAR acceptance time. It freezes the reviewed event manifest and a deterministic
+pilot selection in `config/corpus/djia-2024q3-2026q2/` before any release is
+acquired. The [verification record](docs/verification/djia-events.md) has the
+details. The next milestone is Stage 5's second plan, which acquires the pilot's
+releases.
 
 Key planning documents:
 
@@ -192,6 +203,9 @@ Key planning documents:
   — the firm universe, event corpus, and deterministic pilot selection; the
   stage specification for roadmap Stages 4 and 15, and binding on Stage 5's
   event-eligibility and pilot-selection design.
+- [Event discovery, eligibility, and acquisition specification](specs/event-discovery-eligibility-and-acquisition.md)
+  — Stage 5's two plans: discovery, eligibility, and the freezes; then
+  acquisition and processing states.
 - [Earnings-theme learning path](docs/earnings-themes.md) — the original staged
   learning exercise that motivates the extraction track.
 - [Company-ingestion source note](docs/earnings-ingestion.md) — the original
