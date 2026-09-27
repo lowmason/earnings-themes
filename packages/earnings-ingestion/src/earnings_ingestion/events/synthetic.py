@@ -1,7 +1,8 @@
 """Synthetic SEC responses for Stage 5 (the Stage 5 spec, §The synthetic event layer).
 
-The builders write submissions files, older pages, and index pages in SEC's formats,
-as Stage 5's readers read them, for invented registrants. Tests build their cases
+The builders write submissions files, older pages, companyfacts files, index pages,
+and 8-K primary documents in SEC's formats, as Stage 5's readers read them, for
+invented registrants. Tests build their cases
 with them, and the synthetic event layer writes its committed fixture through them.
 Every name and word they write is invented; none is copied from a filing.
 
@@ -13,6 +14,7 @@ import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime
+from html import escape
 from pathlib import Path
 
 from earnings_core import sha256_hex
@@ -23,6 +25,7 @@ from earnings_ingestion.fetch.records import Retrieval, RetrievalMethod
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.identifiers import unpad_cik
 from earnings_ingestion.sec.urls import (
+    archive_url,
     companyfacts_url,
     filing_index_url,
     submissions_page_url,
@@ -235,6 +238,36 @@ def index_page(
     ).encode()
 
 
+def eight_k(
+    registrant: str,
+    items: Sequence[tuple[str, Sequence[str]]],
+    *,
+    cover: bool = False,
+    signed: date | None = None,
+) -> bytes:
+    """An 8-K's primary document: the registrant, then each ``(item, paragraphs)`` as
+    a heading and its paragraphs, then a signature dated ``signed``. ``cover`` also
+    lists the items in a table on the cover page, as some registrants do, which gives
+    each item a heading with nothing under it."""
+    parts = ["<p>Form 8-K</p><p>Current Report</p>", f"<p>{escape(registrant)}</p>"]
+    if cover:
+        rows = "".join(
+            f"<tr><td></td><td>Item {item}</td><td>{ITEM_TITLES[item]}</td></tr>"
+            for item, _ in items
+        )
+        parts.append(f"<table>{rows}</table>")
+    for item, paragraphs in items:
+        parts.append(f"<p><b>Item {item} {ITEM_TITLES[item]}</b></p>")
+        parts.extend(f"<p>{escape(paragraph)}</p>" for paragraph in paragraphs)
+    parts.append(f"<p>Signature</p><p>{escape(registrant)}</p>")
+    if signed is not None:
+        parts.append(f"<p>Date: {signed:%B} {signed.day}, {signed.year}</p>")
+    return (
+        "<!DOCTYPE html><html><head><title>Form 8-K</title></head><body>"
+        f"{''.join(parts)}</body></html>\n"
+    ).encode()
+
+
 def save(
     store: ArtifactStore,
     url: str,
@@ -313,3 +346,14 @@ class SyntheticStore:
         facts: Sequence[tuple[str, int | None, str | None]],
     ) -> None:
         self.put(companyfacts_url(cik), companyfacts_file(cik, name, facts), JSON)
+
+    def document(
+        self,
+        cik: str,
+        filing: SyntheticFiling,
+        body: bytes,
+        media_type: str = HTML,
+    ) -> None:
+        """Save ``body`` as the filing's primary document."""
+        url = archive_url(cik, filing.accession, filing.primary_document)
+        self.put(url, body, media_type)
