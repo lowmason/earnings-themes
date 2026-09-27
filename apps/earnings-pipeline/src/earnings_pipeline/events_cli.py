@@ -48,7 +48,11 @@ from earnings_ingestion.events.freeze import (
     frozen_event_manifests,
 )
 from earnings_ingestion.events.pilot import freeze_pilot, select_pilot
-from earnings_ingestion.events.records import EventStatus
+from earnings_ingestion.events.records import (
+    ACKNOWLEDGEABLE,
+    EventFindingKind,
+    EventStatus,
+)
 from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.fetch.client import AccessStop, UnexpectedResponse
 from earnings_ingestion.fetch.store import ArtifactStore
@@ -195,12 +199,24 @@ def _build(layout: Layout) -> tuple[EventBuild, SavedResponses]:
 @events.command("build")
 def build_command(context: typer.Context) -> None:
     """Build offline; print every row, candidate, and finding, and what holds the
-    freeze, with each blocking finding's digest."""
+    freeze, with each blocking finding's remedy. A ``period_gap`` or ``no_slots`` is
+    acknowledged with its digest; an ``acceptance_time_unknown`` needs its filing's
+    index page, which ``events discover --filing`` saves; and no override or
+    discover run answers an ``acceptance_time_mismatch``."""
     built, _ = _build(context.obj)
     for line in built.report():
         typer.echo(line)
     for finding in built.blocking:
-        typer.echo(f"acknowledge {finding.finding_id} with digest {finding.digest}")
+        if finding.kind in ACKNOWLEDGEABLE:
+            typer.echo(f"acknowledge {finding.finding_id} with digest {finding.digest}")
+        elif finding.kind is EventFindingKind.ACCEPTANCE_TIME_UNKNOWN:
+            cik = built.issuers[finding.issuer_id].cik
+            accession = finding.finding_id.removeprefix(f"{finding.kind}:")
+            typer.echo(
+                f"{finding.finding_id}: run events discover --filing {cik} {accession}"
+            )
+        elif finding.kind is EventFindingKind.ACCEPTANCE_TIME_MISMATCH:
+            typer.echo(f"{finding.finding_id}: no override or discover run answers it")
     eligible = [r for r in built.rows if r.eligibility_status is EventStatus.ELIGIBLE]
     typer.echo(
         f"{len(built.rows)} events, {len(eligible)} eligible,"

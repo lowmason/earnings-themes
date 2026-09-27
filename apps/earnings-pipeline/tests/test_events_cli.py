@@ -4,13 +4,17 @@ responses, so no request leaves the process."""
 
 import shutil
 from contextlib import contextmanager
+from dataclasses import replace
+from datetime import timedelta
 from pathlib import Path
 
 import httpx
 import pytest
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
 from earnings_ingestion.events.fixture import COHORT_MANIFEST, FIXTURE_DIR
+from earnings_ingestion.events.layer import DYNAMO, RETRIEVED, filings
 from earnings_ingestion.events.saved import SavedResponses
+from earnings_ingestion.events.synthetic import save, submissions_file
 from earnings_ingestion.fetch.records import Retrieval
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec import client as sec_client
@@ -75,6 +79,38 @@ def test_build_fails_and_prints_digests_while_anything_holds(repo) -> None:
     assert "cik-0009990005:2025-06-27: no_release_filing, not retained" in (
         result.stdout
     )
+
+
+def test_build_names_each_blocking_finding_s_own_remedy(repo) -> None:
+    """Only a period_gap or no_slots is acknowledged. An acceptance_time_unknown
+    needs its filing's index page; an acceptance_time_mismatch has no remedy here.
+    Dynamo's 10-Q of 2026-04-03 loses its acceptanceDateTime, and its 8-K of
+    2026-07-21, whose index page is saved, gets one that follows neither convention."""
+    unknown, mismatch = "0009990005-26-000017", "0009990005-26-000018"
+    written = {unknown: "", mismatch: "2026-07-21T12:00:00.000Z"}
+    listed = [
+        replace(filing, written=written.get(filing.accession))
+        for filing, _ in filings(DYNAMO)
+    ]
+    body = submissions_file(
+        DYNAMO.cik, DYNAMO.name, listed, convention=DYNAMO.convention
+    )
+    store = ArtifactStore(repo / FIXTURE_DIR / "raw", repo)
+    later = RETRIEVED + timedelta(days=1)
+    save(store, submissions_url(DYNAMO.cik), body, "application/json", later)
+    (repo / FIXTURE_DIR / "overrides.toml").unlink()
+    result = run(repo, "build")
+    assert result.exit_code == 1, result.output
+    lines = result.stdout.splitlines()
+    acknowledged = [line for line in lines if line.startswith("acknowledge ")]
+    assert {line.split(":")[0] for line in acknowledged} == {"acknowledge period_gap"}
+    assert (
+        f"acceptance_time_unknown:{unknown}: run events discover --filing"
+        f" {DYNAMO.cik} {unknown}"
+    ) in lines
+    assert (
+        f"acceptance_time_mismatch:{mismatch}: no override or discover run answers it"
+    ) in lines
 
 
 def test_freeze_names_the_version_that_holds_the_content(repo) -> None:
