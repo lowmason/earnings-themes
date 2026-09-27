@@ -15,6 +15,10 @@ A §393-408 govern every client. Each request start, redirect hops included, pas
 the throttle. Timeouts are explicit, retries are bounded, with exponential backoff and
 jitter, and ``Retry-After`` is honoured. A 403 that persists stops the run and the
 identity is never changed. The identity is sent as the User-Agent and never recorded.
+
+Each package client holds its lock in ``machine_lock_dir()``, one directory per user
+outside every checkout, so one client runs per machine however many worktrees or
+clones exist.
 """
 
 import email.utils
@@ -22,6 +26,7 @@ import fcntl
 import os
 import random
 import re
+import sys
 import threading
 import time
 from collections.abc import Callable, Collection, Mapping
@@ -44,6 +49,7 @@ MAX_RETRY_AFTER_SECONDS = 300.0
 TIMEOUT = httpx.Timeout(30.0, connect=10.0)
 FORBIDDEN_LIMIT = 2  # a 403 on an attempt and again on its retry is "persistent"
 BLOCK_SCAN_BYTES = 20_000
+LOCK_DIR_VARIABLE = "EARNINGS_LOCK_DIR"
 
 _CONTACT = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
 
@@ -70,6 +76,25 @@ def require_identity(variable: str, environ: Mapping[str, str] | None = None) ->
             " jane@example.org'"
         )
     return value
+
+
+def machine_lock_dir() -> Path:
+    """Where every package client's lock lives: one directory per user, outside
+    every checkout (plan 7, P7-5).
+
+    ``$EARNINGS_LOCK_DIR`` overrides it, for tests. Otherwise it is the user's cache:
+    ``~/Library/Caches/earnings-themes/locks`` on macOS, and elsewhere
+    ``$XDG_CACHE_HOME/earnings-themes/locks``, or ``~/.cache`` when that variable is
+    unset or not absolute.
+    """
+    override = os.environ.get(LOCK_DIR_VARIABLE)
+    if override:
+        return Path(override)
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Caches" / "earnings-themes" / "locks"
+    xdg = os.environ.get("XDG_CACHE_HOME", "")
+    cache = Path(xdg) if xdg and Path(xdg).is_absolute() else Path.home() / ".cache"
+    return cache / "earnings-themes" / "locks"
 
 
 def retry_after_seconds(value: str | None, now: datetime) -> float | None:

@@ -1,6 +1,7 @@
 """Shared test data. Plan 5: a small completed capture, its layout payload, and
 builders for synthetic layout metadata. Plan 6: the synthetic cohort, and for
-pdftext-1 a PDF builder and the cohort with a PDF notice (Task 16b)."""
+pdftext-1 a PDF builder and the cohort with a PDF notice (Task 16b). Plan 7: every
+test's client locks live in a fresh directory, never in the user's cache."""
 
 import copy
 import shutil
@@ -29,6 +30,7 @@ from earnings_ingestion.cohort.synthetic import (
     build_options,
     write_synthetic_cohort,
 )
+from earnings_ingestion.fetch.client import LOCK_DIR_VARIABLE
 from earnings_ingestion.fetch.store import ArtifactStore
 
 ENVIRONMENT = CaptureEnvironment(
@@ -71,6 +73,15 @@ PAYLOAD = {
     ],
     "tables": [],
 }
+
+
+@pytest.fixture(autouse=True)
+def machine_locks(
+    tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The machine's lock directory, for this test only: a client opened by a test
+    never takes, or waits on, the lock a live run holds (plan 7, P7-5)."""
+    monkeypatch.setenv(LOCK_DIR_VARIABLE, str(tmp_path_factory.mktemp("locks")))
 
 
 def build_capture(**changes: object) -> RenderedCapture:

@@ -2,14 +2,20 @@
 hosts, and a stop on a persistent 403 without changing identity."""
 
 import random
+import subprocess
+import sys
 import threading
 from datetime import UTC, datetime
 from itertools import pairwise
 
 import httpx
 import pytest
-from earnings_ingestion.fetch.client import AccessStop
-from earnings_ingestion.sec.client import MIN_INTERVAL_SECONDS, open_sec_client
+from earnings_ingestion.fetch.client import AccessStop, machine_lock_dir
+from earnings_ingestion.sec.client import (
+    LOCK_NAME,
+    MIN_INTERVAL_SECONDS,
+    open_sec_client,
+)
 from earnings_ingestion.sec.identifiers import Cik, pad_cik, unpad_cik
 from earnings_ingestion.sec.urls import archive_url, is_sec_host, submissions_url
 from pydantic import TypeAdapter, ValidationError
@@ -29,10 +35,9 @@ class FakeClock:
         self.now += seconds
 
 
-def opened(tmp_path, handler, clock=None):
+def opened(handler, clock=None):
     clock = clock or FakeClock()
     return open_sec_client(
-        tmp_path,
         environ=ENVIRON,
         transport=httpx.MockTransport(handler),
         clock=clock.clock,
@@ -92,45 +97,79 @@ def test_a_trailing_dot_does_not_hide_a_sec_host() -> None:
     assert not is_sec_host("sec.gov.example.org.")
 
 
-def test_the_client_needs_an_identity(tmp_path) -> None:
+def test_the_client_needs_an_identity() -> None:
     with (
         pytest.raises(AccessStop, match="EDGAR_IDENTITY"),
-        open_sec_client(tmp_path, environ={}),
+        open_sec_client(environ={}),
     ):
         pass
 
 
-def test_one_client_per_machine(tmp_path) -> None:
-    def ok(request):
-        return httpx.Response(200, text="ok")
+def ok(request):
+    return httpx.Response(200, text="ok")
 
+
+def test_one_client_per_machine() -> None:
     with (
-        opened(tmp_path, ok),
+        opened(ok),
         pytest.raises(AccessStop, match="another client holds"),
-        opened(tmp_path, ok),
+        opened(ok),
     ):
         pass
-    with opened(tmp_path, ok):
+    with opened(ok):
         pass
 
 
-def test_the_client_reaches_sec_hosts_only(tmp_path) -> None:
+CHILD = """
+import sys
+from earnings_ingestion.fetch.client import AccessStop
+from earnings_ingestion.sec.client import open_sec_client
+try:
+    with open_sec_client(environ={"EDGAR_IDENTITY": sys.argv[1]}):
+        print("opened")
+except AccessStop as stop:
+    print(stop)
+"""
+
+
+def test_two_checkouts_share_one_lock(tmp_path, monkeypatch) -> None:
+    """A second worktree or clone is another process in another directory. It finds
+    the lock this one holds, in the machine's lock directory (plan 6's deferred item).
+    """
+    first, second = tmp_path / "checkout-a", tmp_path / "checkout-b"
+    first.mkdir()
+    second.mkdir()
+    monkeypatch.chdir(first)
+    with opened(ok):
+        child = subprocess.run(
+            [sys.executable, "-c", CHILD, IDENTITY],
+            cwd=second,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    assert child.stdout.strip() == (
+        f"another client holds {machine_lock_dir() / LOCK_NAME}"
+    )
+
+
+def test_the_client_reaches_sec_hosts_only() -> None:
     with (
-        opened(tmp_path, lambda request: httpx.Response(200)) as client,
+        opened(lambda request: httpx.Response(200)) as client,
         pytest.raises(AccessStop, match="outside this client's hosts"),
     ):
         client.get("https://www.example.org/x")
 
 
-def test_the_client_refuses_a_sec_host_written_with_a_trailing_dot(tmp_path) -> None:
+def test_the_client_refuses_a_sec_host_written_with_a_trailing_dot() -> None:
     with (
-        opened(tmp_path, lambda request: httpx.Response(200)) as client,
+        opened(lambda request: httpx.Response(200)) as client,
         pytest.raises(AccessStop, match="outside this client's hosts"),
     ):
         client.get("https://www.sec.gov./files/company_tickers.json")
 
 
-def test_concurrent_workers_stay_at_or_below_two_requests_per_second(tmp_path) -> None:
+def test_concurrent_workers_stay_at_or_below_two_requests_per_second() -> None:
     """Twelve workers alternate between www.sec.gov and data.sec.gov through the one
     client; every start is at least 0.5 s after the last."""
     seen_agents = []
@@ -139,7 +178,7 @@ def test_concurrent_workers_stay_at_or_below_two_requests_per_second(tmp_path) -
         seen_agents.append(request.headers["user-agent"])
         return httpx.Response(200, headers={"Content-Type": "application/json"})
 
-    with opened(tmp_path, handler) as client:
+    with opened(handler) as client:
         barrier = threading.Barrier(12)
 
         def worker(n: int) -> None:
@@ -160,7 +199,7 @@ def test_concurrent_workers_stay_at_or_below_two_requests_per_second(tmp_path) -
     assert set(seen_agents) == {IDENTITY}
 
 
-def test_a_persistent_403_stops_without_rotating_identity(tmp_path) -> None:
+def test_a_persistent_403_stops_without_rotating_identity() -> None:
     agents = []
 
     def handler(request):
@@ -168,14 +207,14 @@ def test_a_persistent_403_stops_without_rotating_identity(tmp_path) -> None:
         return httpx.Response(403)
 
     with (
-        opened(tmp_path, handler) as client,
+        opened(handler) as client,
         pytest.raises(AccessStop, match="403 persisted"),
     ):
         client.get(submissions_url("320193"))
     assert agents == [IDENTITY, IDENTITY]
 
 
-def test_sec_block_page_stops_the_run(tmp_path) -> None:
+def test_sec_block_page_stops_the_run() -> None:
     def handler(request):
         return httpx.Response(
             200,
@@ -184,7 +223,7 @@ def test_sec_block_page_stops_the_run(tmp_path) -> None:
         )
 
     with (
-        opened(tmp_path, handler) as client,
+        opened(handler) as client,
         pytest.raises(AccessStop, match="block or rate-limit page"),
     ):
         client.fetch(submissions_url("320193"), {"application/json"})

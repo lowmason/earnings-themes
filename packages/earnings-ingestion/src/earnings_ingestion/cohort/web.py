@@ -11,6 +11,8 @@
   before it is requested. A disallowed page is refused, never fetched: a person saves
   it in a browser and registers it instead (P §Membership evidence: live acquisition
   never bypasses robots restrictions).
+- **One per machine.** Its lock lives in ``machine_lock_dir()``, outside every
+  checkout, like the SEC client's.
 """
 
 import random
@@ -18,7 +20,6 @@ import time
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping
 from contextlib import contextmanager
 from datetime import UTC, datetime
-from pathlib import Path
 from urllib.parse import urlsplit
 
 import httpx
@@ -30,6 +31,7 @@ from earnings_ingestion.fetch.client import (
     PoliteClient,
     ProcessLock,
     Throttle,
+    machine_lock_dir,
     require_identity,
 )
 from earnings_ingestion.fetch.robots import RobotsGate
@@ -37,7 +39,8 @@ from earnings_ingestion.sec.urls import is_sec_host
 
 IDENTITY_ENV = "SOURCE_IDENTITY"
 MIN_INTERVAL_SECONDS = 1.0
-LOCK_PATH = Path("data") / "runs" / "cohort" / "web-client.lock"
+LOCK_NAME = "web-client.lock"
+"""In ``machine_lock_dir()``: every cohort web client on this machine takes it."""
 
 
 class RobotsRefusal(AccessStop):
@@ -68,7 +71,6 @@ def hosts_of(urls: Iterable[str]) -> frozenset[str]:
 
 @contextmanager
 def open_web_client(
-    repo: Path,
     hosts: Iterable[str],
     *,
     environ: Mapping[str, str] | None = None,
@@ -85,7 +87,7 @@ def open_web_client(
     if sec:
         raise ValueError(f"SEC hosts go through the shared SEC client: {sec}")
     identity = require_identity(IDENTITY_ENV, environ)
-    with ProcessLock(repo / LOCK_PATH):
+    with ProcessLock(machine_lock_dir() / LOCK_NAME):
         throttle = Throttle(
             min_interval=MIN_INTERVAL_SECONDS,
             max_requests=max_requests,

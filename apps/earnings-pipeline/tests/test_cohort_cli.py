@@ -127,7 +127,7 @@ def test_fetch_sec_goes_through_the_shared_client(repo, monkeypatch) -> None:
             raise cohort_cli.AccessStop(f"403 persisted for {url}")
 
     @contextmanager
-    def fake_open(repo_path):
+    def fake_open():
         yield FakeSec()
 
     monkeypatch.setattr(cohort_cli, "open_sec_client", fake_open)
@@ -161,7 +161,7 @@ def test_fetch_saves_pages_through_the_web_client(repo, monkeypatch) -> None:
             )
 
     @contextmanager
-    def fake_open(repo_path, hosts):
+    def fake_open(hosts):
         assert hosts == ["index.example"]
         yield FakeWeb()
 

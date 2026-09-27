@@ -2,6 +2,7 @@
 
 import gzip
 import random
+import sys
 import threading
 from datetime import UTC, datetime
 from itertools import pairwise
@@ -10,11 +11,13 @@ import httpx
 import pytest
 from earnings_core import sha256_hex
 from earnings_ingestion.fetch.client import (
+    LOCK_DIR_VARIABLE,
     AccessStop,
     PoliteClient,
     ProcessLock,
     Throttle,
     UnexpectedResponse,
+    machine_lock_dir,
     require_identity,
     retry_after_seconds,
 )
@@ -218,6 +221,25 @@ def test_only_one_lock_holder_at_a_time(tmp_path) -> None:
         pass
     with ProcessLock(path):
         pass
+
+
+def test_the_lock_directory_is_the_users_cache_outside_every_checkout(
+    tmp_path, monkeypatch
+) -> None:
+    monkeypatch.delenv(LOCK_DIR_VARIABLE)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setattr(sys, "platform", "darwin")
+    mac = tmp_path / "Library" / "Caches" / "earnings-themes" / "locks"
+    assert machine_lock_dir() == mac
+    monkeypatch.setattr(sys, "platform", "linux")
+    monkeypatch.delenv("XDG_CACHE_HOME", raising=False)
+    assert machine_lock_dir() == tmp_path / ".cache" / "earnings-themes" / "locks"
+    monkeypatch.setenv("XDG_CACHE_HOME", "relative/cache")
+    assert machine_lock_dir() == tmp_path / ".cache" / "earnings-themes" / "locks"
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "xdg"))
+    assert machine_lock_dir() == tmp_path / "xdg" / "earnings-themes" / "locks"
+    monkeypatch.setenv(LOCK_DIR_VARIABLE, str(tmp_path / "override"))
+    assert machine_lock_dir() == tmp_path / "override"
 
 
 def test_concurrent_workers_share_one_allowance() -> None:

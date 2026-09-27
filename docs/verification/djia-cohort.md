@@ -102,12 +102,11 @@ The rebuilt content hash equals the frozen one. The record is under
   - fund holdings are an ETF proxy;
   - SEC's identity records were retrieved after the cutoff;
   - intervals are resolved to the day.
-- **One checkout.** The SEC and web client locks live under each checkout's
-  `data/runs/`, so they coordinate the processes of one checkout, not the whole
-  machine. A second worktree or clone takes locks of its own, and two could together
-  send more than 2 requests per second. Until the locks move to one place per
-  machine (`specs/deferred_items.md`), send SEC requests from one checkout at a time.
-  Stage 1's harness client must never run live beside a package client.
+- **One machine.** The SEC and web client locks live in the user's cache directory,
+  outside every checkout (plan 7, which moved them from each checkout's `data/runs/`),
+  so every worktree and clone on a machine shares them. A lock coordinates one
+  machine's processes and no more. Stage 1's harness client keeps its own lock, so it
+  must never run live beside a package client.
 - **`acceptanceDateTime`.** The readers take SEC's offset as written. Whether the
   time is UTC or Eastern is unverified, and Stage 4 uses it only to order filings
   of one fund. Stage 5 must settle it before using it as a filing's acceptance time
