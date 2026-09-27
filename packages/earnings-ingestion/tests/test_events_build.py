@@ -20,6 +20,7 @@ from earnings_ingestion.events.layer import (
     DYNAMO,
     RETRIEVED,
     Registrant,
+    Report,
     filings,
     review,
     write_layer,
@@ -186,6 +187,39 @@ def test_record_fields_stay_separate_and_unknown_labels_stay_null(
     assert acme.reported_fiscal_quarter == "Q1"
     assert acme.filing_acceptance_time == datetime(2024, 9, 26, 20, 5, tzinfo=UTC)
     assert acme.first_publication_time == acme.filing_acceptance_time
+
+
+@pytest.mark.parametrize(
+    ("year", "period"),
+    [(2025, ""), (2025, "   "), (0, "Q3")],
+    ids=["blank-period", "whitespace-period", "zero-year"],
+)
+def test_a_blank_label_stays_null_with_its_finding(
+    universe, tmp_path, year, period
+) -> None:
+    """EV6: companyfacts' facts of Acme's report for 2025-02-28 agree on a blank
+    ``fp``, or on an ``fy`` of 0. That states no label: the row's labels stay null,
+    with a non-blocking ``fiscal_labels_unknown``, and the build does not fail."""
+    layer = write_layer(tmp_path / "data" / "raw" / "events", tmp_path)
+    report = accession(ACME, "2025-04-08 16:10:00")
+    stated = [
+        (filing.accession, *((year, period) if filing.accession == report else label))
+        for filing, entry in filings(ACME)
+        if isinstance(entry, Report)
+        for label in entry.labels
+    ]
+    body = companyfacts_file(ACME.cik, ACME.name, stated)
+    save(layer.store, companyfacts_url(ACME.cik), body, JSON, RETRIEVED.replace(day=29))
+    built = run(universe, layer)
+    row = {row.event_id: row for row in built.rows}[ACME_SET]
+    assert (row.reported_fiscal_year, row.reported_fiscal_quarter) == (None, None)
+    (finding,) = [
+        f for f in built.findings if f.finding_id == f"fiscal_labels_unknown:{ACME_SET}"
+    ]
+    assert not finding.holds_freeze
+    assert finding.detail == (
+        f"companyfacts' facts of {report} disagree on fy and fp, or leave one out"
+    )
 
 
 def test_two_securities_make_one_row_per_period(universe, layer) -> None:

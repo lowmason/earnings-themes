@@ -1196,7 +1196,7 @@ The first of `eligibility/1`'s checks that applies decides (S §Eligibility).
 | --- | --- |
 | `period_gap` | An in-window period end may be missing; blocking until acknowledged |
 | `no_slots` | A candidate issuer has no slot; blocking until acknowledged |
-| `fiscal_labels_unknown` | Companyfacts gives the periodic report no agreeing `fy` and `fp`; not blocking |
+| `fiscal_labels_unknown` | Companyfacts gives the periodic report no agreeing `fy` and `fp`, where a blank `fp` or an `fy` below 1 states none; not blocking |
 | `acceptance_time_mismatch` | A cross-checked `acceptanceDateTime` follows neither convention; blocking |
 | `acceptance_time_unknown` | A filing's side of the cutoff or range turns on a convention its file does not establish, or on a missing value; blocking until its index page is saved (P7-8) |
 

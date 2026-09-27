@@ -51,11 +51,37 @@ def test_each_accession_takes_the_labels_its_facts_state() -> None:
         [fact("a", 2025, "Q1"), fact("a", 2024, "Q1")],
         [fact("a", None, "Q1")],
         [fact("a", 2025, None)],
+        [fact("a", 2025, "")],
+        [fact("a", 2025, "   ")],
+        [fact("a", 0, "Q1")],
+        [fact("a", -1, "Q1")],
+        [fact("a", 2025, ""), fact("a", 2025, None)],
     ],
-    ids=["periods-disagree", "years-disagree", "no-year", "no-period"],
+    ids=[
+        "periods-disagree",
+        "years-disagree",
+        "no-year",
+        "no-period",
+        "blank-period",
+        "whitespace-period",
+        "zero-year",
+        "negative-year",
+        "blank-and-no-period",
+    ],
 )
 def test_disagreeing_or_missing_labels_are_no_labels(entries) -> None:
+    """A blank ``fp``, or an ``fy`` below 1, states no label."""
     assert read_companyfacts(facts(*entries)).labels == {"a": None}
+
+
+@pytest.mark.parametrize(
+    ("year", "period"), [(2025, "H2"), (2025, " Q1"), (1, "FY")], ids=str
+)
+def test_every_other_label_is_kept_as_written(year, period) -> None:
+    """EV6: a stated label is never renamed or judged here, only a blank one
+    dropped."""
+    (labels,) = read_companyfacts(facts(fact("a", year, period))).labels.values()
+    assert (labels.fiscal_year, labels.fiscal_period) == (year, period)
 
 
 def test_a_concept_name_is_escaped_in_its_pointer() -> None:

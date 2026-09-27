@@ -8,7 +8,9 @@ writes them: a 10-K's ``FY`` is never renamed ``Q4``.
 ``read_companyfacts`` is a pure function of the saved bytes. It checks the shape it
 relies on and raises ``SecDataError`` on any other (A §407). An accession whose facts
 disagree, or leave a label out, has no labels: only non-periodic filings such as
-8-Ks and S-8s did so in the files plan 7 read.
+8-Ks and S-8s did so in the files plan 7 read. A blank ``fp``, or an ``fy`` below 1,
+leaves its label out, so the slot's labels stay null with a ``fiscal_labels_unknown``
+finding; every other value is kept as written.
 """
 
 from dataclasses import dataclass
@@ -20,8 +22,9 @@ from earnings_ingestion.sec.identifiers import pad_cik
 @dataclass(frozen=True)
 class FiscalLabels:
     fiscal_year: int
+    """1 or more."""
     fiscal_period: str
-    """``Q1``, ``Q2``, ``Q3``, or ``FY``, as the source writes it."""
+    """``Q1``, ``Q2``, ``Q3``, or ``FY``, as the source writes it; never blank."""
     pointer: str
     """The JSON pointer of the first fact stating them."""
 
@@ -35,7 +38,8 @@ class CompanyFacts:
 
 
 def _statement(fact: object, pointer: str) -> tuple[str, int | None, str | None]:
-    """A fact's accession, ``fy``, and ``fp``."""
+    """A fact's accession, ``fy``, and ``fp``. A blank ``fp``, or an ``fy`` below 1,
+    states no label, so it is ``None``; any other value is kept as written."""
     if not isinstance(fact, dict) or not isinstance(fact.get("accn"), str):
         raise SecDataError(f"{pointer} is not a fact with an accession")
     year, period = fact.get("fy"), fact.get("fp")
@@ -43,6 +47,10 @@ def _statement(fact: object, pointer: str) -> tuple[str, int | None, str | None]
         raise SecDataError(f"{pointer}/fy is not a year")
     if period is not None and not isinstance(period, str):
         raise SecDataError(f"{pointer}/fp is not text")
+    if year is not None and year < 1:
+        year = None
+    if period is not None and not period.strip():
+        period = None
     return fact["accn"], year, period
 
 
