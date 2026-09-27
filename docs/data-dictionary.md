@@ -1136,3 +1136,215 @@ source.
   and the file's name, and needs no saved artifact.
 - **Saved artifacts.** The cohort's are under `data/raw/cohort/`, which is never
   committed; the synthetic cohort's are under `tests/fixtures/cohort/raw/`.
+
+## earnings-ingestion event records, schema version 1
+
+- **Package.** `earnings_ingestion.events`, in `packages/earnings-ingestion` (Stage 5,
+  plan 7): event discovery, eligibility, and the event and pilot freezes.
+- **Schema version.** These records join ingestion schema version `1`, since no
+  earlier record's fields changed. `EventManifest` and `EventEvidence` carry it as
+  `schema_version`; the nested parts do not.
+- **Facts, not incidental evidence** (EV11). An event row, finding, or override holds
+  facts only: never a retrieval time, or a pointer into one saved file. Citations and
+  retrieval times sit in the evidence record, outside the manifest's hash, so a
+  re-fetch never re-versions a manifest.
+- **Times.** Every time is a UTC instant. Every date judgment reads the instant's
+  date on the America/New_York calendar (EV10).
+
+### `Convention`
+
+How a submissions file writes `acceptanceDateTime` (S Finding 1).
+
+| Value | Meaning |
+| --- | --- |
+| `utc` | The true UTC instant |
+| `eastern_digits` | The instant's Eastern wall-clock digits, followed by `Z` |
+
+### `EventStatus`
+
+| Value | Meaning |
+| --- | --- |
+| `eligible` | The issuer was a member when the release was first published |
+| `ineligible` | Outside the window, published after the cutoff, or not a member |
+| `ambiguous` | Unidentified release filing, or membership unordered at publication |
+
+### `EventReason`
+
+The first of `eligibility/1`'s checks that applies decides (S §Eligibility).
+
+| Value | Meaning |
+| --- | --- |
+| `period_end_outside_window` | Check 1: `period_end` is outside `[2024-07-01, 2026-07-01)`; `ineligible` |
+| `no_release_filing` | Check 2: no candidate is left; `ambiguous` |
+| `several_release_filings` | Check 2: more than one candidate is left; `ambiguous` |
+| `published_after_cutoff` | Check 3: the release's Eastern date is after the cutoff; `ineligible` |
+| `member_at_publication` | Check 4: a security's interval holds the publication time; `eligible` |
+| `not_member_at_publication` | Check 4: no interval holds it, and none is unordered; `ineligible` |
+| `same_day_transition` | Check 4: a bound on the release's date leaves it unordered; `ambiguous` |
+
+### `IdentificationMethod`
+
+| Value | Meaning |
+| --- | --- |
+| `stated_period` | `release-id/1` left one candidate, whose Item 2.02 text states the slot's period |
+| `sole_candidate` | `release-id/1` left one candidate, whose text states no period that is judged |
+| `override` | A reviewer's `set_release_filing` named it |
+
+### `EventFindingKind`
+
+| Value | Meaning |
+| --- | --- |
+| `period_gap` | An in-window period end may be missing; blocking until acknowledged |
+| `no_slots` | A candidate issuer has no slot; blocking until acknowledged |
+| `fiscal_labels_unknown` | Companyfacts gives the periodic report no agreeing `fy` and `fp`; not blocking |
+| `acceptance_time_mismatch` | A cross-checked `acceptanceDateTime` follows neither convention; blocking |
+| `acceptance_time_unknown` | A filing's side of the cutoff or range turns on a convention its file does not establish, or on a missing value; blocking until its index page is saved (P7-8) |
+
+### `EventOverrideKind`
+
+| Value | Meaning |
+| --- | --- |
+| `set_release_filing` | Name an event's release filing, citing it |
+| `retain_unresolved` | Keep an `ambiguous` event with its reason, excluded from the pilot |
+| `acknowledge` | Accept one `period_gap` or `no_slots` finding, bound to its digest |
+
+### `EventRow`
+
+One slot: an issuer's period end, its release filing, and its eligibility. It serves
+as P's expected event and as Stage 15's ledger entry.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part | `<issuer_id>:<period_end>` |
+| `issuer_id` | ID part | The cohort's issuer |
+| `cik` | 10 digits | The issuer's CIK |
+| `period_end` | date | The periodic report's `reportDate` |
+| `reported_fiscal_year` | int or null | Companyfacts' `fy` for the periodic report; null when unknown |
+| `reported_fiscal_quarter` | string or null | Its `fp` as written, such as `Q1` or `FY`; null when unknown |
+| `periodic_accession` | accession | The original 10-Q, 10-K, 10-QT, or 10-KT that made the slot |
+| `periodic_form` | `10-Q`, `10-K`, `10-QT`, or `10-KT` | Its form |
+| `release_accession` | accession or null | The release filing; null when unidentified |
+| `candidate_accessions` | tuple of accession | The slot's candidates, by accession |
+| `identification_method` | `IdentificationMethod` or null | How the release filing was identified |
+| `filing_acceptance_time` | UTC datetime or null | The release filing's index-page Accepted value, read in America/New_York |
+| `first_publication_time` | UTC datetime or null | Equal to `filing_acceptance_time`: an upper bound on first availability (EV9) |
+| `source_timezone` | `America/New_York` | The zone the Accepted value is read in |
+| `first_publication_source_id` | `sec-edgar` or null | The source of `first_publication_time` |
+| `membership_assertion_id` | ID part or null | The assertion that decided check 4; null when an earlier check decided |
+| `eligibility_status` | `EventStatus` | The status |
+| `eligibility_reason` | `EventReason` | The reason, which implies the status |
+| `retained` | bool | An `ambiguous` event kept by `retain_unresolved`, and excluded from the pilot |
+| `override_ids` | tuple of ID part | The overrides applied to the event |
+
+### `EventFinding`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `finding_id` | ID part | `<kind>:<subject>` |
+| `kind` | `EventFindingKind` | What was found |
+| `blocking` | bool | It holds the freeze until resolved |
+| `issuer_id` | ID part or null | The issuer concerned, if one |
+| `detail` | string | What it says, in facts only |
+| `digest` | 64 lowercase hex | SHA-256 of the canonical JSON of the finding's kind, subject, detail, blocking flag, and issuer |
+| `resolved_by` | tuple of ID part | The acknowledgements that resolved it |
+
+### `EventOverride`
+
+A reviewer's decision (S §Review overrides). Exactly the targets its kind needs are
+set.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `override_id` | ID part | A curated slug |
+| `kind` | `EventOverrideKind` | The decision |
+| `event_id` | ID part or null | The event of `set_release_filing` and `retain_unresolved` |
+| `accession` | accession or null | `set_release_filing`'s filing: an 8-K or 8-K/A of the issuer, accepted by the cutoff, whose index page is saved |
+| `reason` | `EventReason` or null | `retain_unresolved`'s reason, one that makes the event `ambiguous` |
+| `finding_id` | ID part or null | `acknowledge`'s finding |
+| `finding_digest` | 64 lowercase hex or null | The digest of the finding as reviewed |
+| `citations` | tuple of `OverrideCitation` | The evidence; required for `set_release_filing` |
+| `rationale` | string | Why |
+| `reviewer` | string | Who decided; the user, never an agent |
+| `recorded_on` | date | When |
+
+### `EventOverridesFile`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | The file's version |
+| `overrides` | tuple of `EventOverride` | Unique `override_id`s, and at most one override of each kind per `event_id` |
+
+### `EventManifestDefinition`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `corpus_id` | ID part | `djia-2024q3-2026q2` |
+| `event_manifest_version` | int ≥ 1 | The version; a new one only when the content changes |
+| `universe_id` | ID part | The cohort read |
+| `universe_version` | int ≥ 1 | The cohort version read; outside the content hash (P7-2) |
+| `universe_operative_hash` | 64 lowercase hex | That version's `operative_hash` (EV4) |
+| `discovery_policy_version` | string | `release-id/1` |
+| `eligibility_policy_version` | string | `eligibility/1` |
+| `public_information_cutoff` | date | `2026-09-22`, on the Eastern calendar |
+| `content_hash` | 64 lowercase hex | See the frozen event manifests, below |
+| `created_at` | UTC datetime | When this version was frozen |
+
+### `EventManifest`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Ingestion record schema version |
+| `definition` | `EventManifestDefinition` | The definition |
+| `rows` | tuple of `EventRow` | One per slot, sorted by `event_id` |
+| `findings` | tuple of `EventFinding` | Every finding, sorted by `finding_id` |
+| `overrides` | tuple of `EventOverride` | Every override applied, sorted by `override_id` |
+
+### `FileEvidence`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `url` | string | A submissions file or older page the build read |
+| `sha256` | 64 lowercase hex | Its bytes' hash |
+| `retrieved_at` | UTC datetime | When they were retrieved |
+| `convention` | `Convention` or null | The convention its cross-checked rows share; null when none was cross-checked, or they follow both |
+| `rows_cross_checked` | int ≥ 0 | Its rows whose index page is saved |
+
+### `SkippedPage`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `url` | string | An older page the build did not read |
+| `filing_from` | date | Its first filing date |
+| `filing_to` | date | Its last. A page is skipped when this range misses `[2024-07-01, 2026-09-22]` |
+
+### `EventCitations`
+
+What one event rests on. Every citation is a Stage 4 `Citation`: an index page or
+primary document through `walker-1`'s text, and a JSON file by pointer.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part | The event |
+| `periodic_row` | `Citation` | The periodic report's submissions row |
+| `labels` | `Citation` or null | Its companyfacts `accn`, `fy`, and `fp`; null when unknown |
+| `candidates` | tuple of `Citation` | Each candidate's index page, at its Accepted value |
+| `amendments` | tuple of `Citation` | Each 8-K/A in the slot's range, at its Accepted value: recorded, never chosen by the rule |
+| `release` | `Citation` or null | The release filing's index page, at its Accepted value |
+| `item_text` | `Citation` or null | The release's Item 2.02 text; null when its primary document is not saved or states none |
+| `cross_check` | `Citation` or null | The release's submissions row, at `acceptanceDateTime` |
+
+### `EventEvidence`
+
+`events-v<N>.evidence.json`, written beside a frozen manifest and never replaced
+(EV11).
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Ingestion record schema version |
+| `corpus_id` | ID part | The corpus |
+| `event_manifest_version` | int ≥ 1 | The manifest it belongs to |
+| `event_manifest_hash` | 64 lowercase hex | That manifest's `content_hash` |
+| `limitations` | tuple of string | What the evidence cannot show |
+| `files` | tuple of `FileEvidence` | Every submissions file and older page read |
+| `skipped_pages` | tuple of `SkippedPage` | Every older page skipped by its dates |
+| `events` | tuple of `EventCitations` | One per row |
