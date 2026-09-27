@@ -87,8 +87,9 @@ def test_p_vi_replays_offline_to_the_frozen_manifests() -> None:
     now = datetime.now(UTC)
     assert not freeze_events(built, saved, ROOT, now=now).created
     pilot = select_pilot(events, universe)
-    assert not freeze_pilot(pilot, universe, ROOT, now=now).created
     frozen = load_pilot(ROOT / "pilot-v1.json", universe)
+    assert pilot.content_hash == frozen.definition.content_hash
+    assert not freeze_pilot(pilot, universe, ROOT, now=now).created
     assert (frozen.definition.target, frozen.definition.underfilled) == (27, True)
     assert [t.issuer_id for t in frozen.unmatched_transitions] == ["cik-0009990002"]
 
