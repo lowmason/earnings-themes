@@ -12,9 +12,11 @@ Item 2.02 8-K in the range is passed over, with the reason, for review.
 
 1. *Item text.* Each line that begins "Item 2.02" opens a section, which runs to the
    next line that begins "Item" and a number, or to the end of the text. A cover page
-   that lists the items makes a section of its heading alone, and the sections are
-   read together. A document walker-1 cannot read, one that is not HTML, and one with
-   no such heading state nothing.
+   that lists the items makes a section that runs to the next Item line: usually the
+   next entry, so that the heading stands alone, but when Item 2.02 is the list's last
+   entry, the section takes in whatever lies before the next Item line. The sections
+   are read together. A document walker-1 cannot read, one that is not HTML, and one
+   with no such heading state nothing.
 2. *Stated dates.* A full date after "ended" or "ending": a month's name or its
    abbreviation, the day, a comma, and the year. An announcement date or a signature
    date states no period (P7-7).

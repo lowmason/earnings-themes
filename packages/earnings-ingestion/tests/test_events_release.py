@@ -59,8 +59,8 @@ def test_the_policy_is_named() -> None:
 
 
 def test_item_text_runs_from_each_item_2_02_heading_to_the_next_heading() -> None:
-    """A cover page that lists the items gives Item 2.02 a heading with nothing under
-    it; the sections are read together."""
+    """A cover page's Item 2.02 section runs to the next Item line, here the next
+    entry, so it holds the heading alone; the sections are read together."""
     text = text_of(
         ("2.02", ["Acme Industrial Corp posted its third quarter of 2024 figures."]),
         ("8.01", ["Acme Industrial Corp moved its head office."]),
