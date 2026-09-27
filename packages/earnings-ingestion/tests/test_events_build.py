@@ -18,6 +18,7 @@ from earnings_ingestion.events.layer import (
     ACME,
     BOREALIS,
     DYNAMO,
+    RETRIEVED,
     Registrant,
     filings,
     review,
@@ -32,8 +33,13 @@ from earnings_ingestion.events.records import (
     IdentificationMethod,
 )
 from earnings_ingestion.events.saved import SavedResponses
-from earnings_ingestion.events.synthetic import SyntheticStore
-from earnings_ingestion.sec.urls import archive_url, filing_index_url
+from earnings_ingestion.events.synthetic import (
+    JSON,
+    SyntheticStore,
+    companyfacts_file,
+    save,
+)
+from earnings_ingestion.sec.urls import archive_url, companyfacts_url, filing_index_url
 
 ROOT = Path(__file__).resolve().parents[3]
 COHORT = ROOT / "tests" / "fixtures" / "cohort" / "manifests" / "djia-synthetic-v1.json"
@@ -327,6 +333,20 @@ def test_a_missing_response_stops_the_build(universe, tmp_path) -> None:
     assert problems[:2] == (
         f"nothing saved from {submissions}: run events discover",
         f"nothing saved from {facts}: run events discover",
+    )
+
+
+def test_a_companyfacts_file_of_another_registrant_stops_the_build(
+    universe, tmp_path
+) -> None:
+    """Each companyfacts file states its CIK. One saved under Acme's URL but naming
+    Borealis would label Acme's events with Borealis' facts, so it is refused."""
+    layer = write_layer(tmp_path / "data" / "raw" / "events", tmp_path)
+    url = companyfacts_url(ACME.cik)
+    body = companyfacts_file(BOREALIS.cik, BOREALIS.name, [])
+    save(layer.store, url, body, JSON, RETRIEVED.replace(day=29))
+    assert refused(universe, layer) == (
+        f"{url} is the companyfacts file of CIK {BOREALIS.cik}",
     )
 
 

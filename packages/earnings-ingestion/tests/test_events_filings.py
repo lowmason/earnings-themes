@@ -269,6 +269,21 @@ def test_an_index_page_of_another_filing_is_a_problem(saved) -> None:
     )
 
 
+def test_a_submissions_file_of_another_registrant_is_a_problem(saved) -> None:
+    """Each submissions file states its CIK, as each index page states its
+    accession: one saved under this issuer's URL but naming another is not read."""
+    filing = release(29, "2024-10-24 16:05:12")
+    body = submissions_file(
+        "0009990002", "Borealis Corp", [filing], convention=Convention.UTC
+    )
+    save(saved.store, submissions_url(CIK), body, JSON, RETRIEVED)
+    found = saved.read()
+    assert (found.registrant, found.releases, found.periodic) == (None, (), ())
+    assert found.problems == (
+        f"{submissions_url(CIK)} is the submissions file of CIK 0009990002",
+    )
+
+
 def test_the_newest_retrieval_of_each_url_is_read(saved) -> None:
     first = [release(29, "2024-10-24 16:05:12")]
     saved.submissions(first)

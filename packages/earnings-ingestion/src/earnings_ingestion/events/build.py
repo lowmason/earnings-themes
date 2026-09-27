@@ -237,10 +237,14 @@ def _companyfacts(
         if artifact is None:
             problems.append(f"nothing saved from {url}: run events discover")
             return None
-        return read_companyfacts(artifact.text.body)
+        facts = read_companyfacts(artifact.text.body)
     except (FileNotFoundError, ValueError) as exc:
         problems.append(f"{url}: {exc}")
         return None
+    if facts.cik != cik:
+        problems.append(f"{url} is the companyfacts file of CIK {facts.cik}")
+        return None
+    return facts
 
 
 def _named_filing(

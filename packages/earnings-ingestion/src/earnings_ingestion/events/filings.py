@@ -150,6 +150,11 @@ class _Reader:
         except SecDataError as exc:
             self.problems.append(f"{main.url}: {exc}")
             return None, [], []
+        if registrant.cik != cik:
+            self.problems.append(
+                f"{main.url} is the submissions file of CIK {registrant.cik}"
+            )
+            return None, [], []
         listed = [(main, registrant.filings)]
         skipped = []
         for page in registrant.older_pages:
