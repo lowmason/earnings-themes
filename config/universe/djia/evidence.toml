@@ -1,0 +1,422 @@
+# The point-in-time DJIA cohort's evidence (plan 6, P6-3): facts and citations only.
+schema_version = 1
+
+[[snapshots]]
+evidence_id = "wikipedia-rev-1230712338"
+source_id = "wikipedia-djia"
+role = "anchor"
+url = "https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average?oldid=1230712338"
+artifact_sha256 = "eac8df2ccf855e4f866f86df2271e88340c4cc03c626d691ff05edffe6405198"
+canonical_sha256 = "2986fe61599745a5c34ddb3b96e7b3d961d246d62fbb145162b3256fef7ac87c"
+as_of = 2024-06-24
+published_on = 2024-06-24
+
+[[snapshots.members]]
+security_id = "3m-common"
+name = "3M"
+ticker = "MMM"
+span = [4996, 5075]
+cited_sha256 = "1f0a4b0be92ad92be40058e4d8470573439e9e527f5248e0b49884eaed3c52a3"
+
+[[snapshots.members]]
+security_id = "american-express-common"
+name = "American Express"
+ticker = "AXP"
+span = [5076, 5137]
+cited_sha256 = "7f0f3a4465e69029b0e02b7b1c72577c22105e727c11769b3b0430ae22204707"
+
+[[snapshots.members]]
+security_id = "amgen-common"
+name = "Amgen"
+ticker = "AMGN"
+span = [5138, 5190]
+cited_sha256 = "9a83cc88acf14a68805d1e46fc58b7d755292252a955d537d349829f6d275e06"
+
+[[snapshots.members]]
+security_id = "amazon-common"
+name = "Amazon"
+ticker = "AMZN"
+span = [5191, 5236]
+cited_sha256 = "1fa15668d64d4d791b196d8cbf03b09ea90fa0ca039d7939472b37ec44a90089"
+
+[[snapshots.members]]
+security_id = "apple-common"
+name = "Apple"
+ticker = "AAPL"
+span = [5237, 5294]
+cited_sha256 = "e4bf23b45c91659c85ad05f67d8d8d04585bb0aca5a6ed5b007c27caf1d88ef1"
+
+[[snapshots.members]]
+security_id = "boeing-common"
+name = "Boeing"
+ticker = "BA"
+span = [5295, 5348]
+cited_sha256 = "e2416cbb65cbd89dd3d2ed171004e59434b04b63cb545fce1a34943286d80537"
+
+[[snapshots.members]]
+security_id = "caterpillar-common"
+name = "Caterpillar"
+ticker = "CAT"
+span = [5349, 5410]
+cited_sha256 = "4bd215900bb49ebac9cb4666a4f64fc6ac31981d1efec8c908276379f80e2d1e"
+
+[[snapshots.members]]
+security_id = "chevron-common"
+name = "Chevron"
+ticker = "CVX"
+span = [5411, 5493]
+cited_sha256 = "c87961cd2aebf3af06bc48d8141b03cc45fb2c33141149f560869023867a7c89"
+
+[[snapshots.members]]
+security_id = "cisco-common"
+name = "Cisco"
+ticker = "CSCO"
+span = [5494, 5551]
+cited_sha256 = "253314a1a2b8ff2c9966b9d5e5deb309c839ba0880f0d766d01aeb3ba4cc6300"
+
+[[snapshots.members]]
+security_id = "coca-cola-common"
+name = "Coca-Cola"
+ticker = "KO"
+span = [5552, 5631]
+cited_sha256 = "8745c8fb09dba827b1a3fe628a2e4468ffcd7f476c1c7eb15644cd1fedcf8ea8"
+
+[[snapshots.members]]
+security_id = "disney-common"
+name = "Disney"
+ticker = "DIS"
+span = [5632, 5695]
+cited_sha256 = "96af73b6d6c33429b988faba7062f7514140bfed3598798867bcad50e40b352c"
+
+[[snapshots.members]]
+security_id = "dow-common"
+name = "Dow"
+ticker = "DOW"
+span = [5696, 5743]
+cited_sha256 = "dc9afac30f211d9565cc6d715094776a4ac41133d0b873bb57d9b91c3fd71ed5"
+
+[[snapshots.members]]
+security_id = "goldman-sachs-common"
+name = "Goldman Sachs"
+ticker = "GS"
+span = [5744, 5801]
+cited_sha256 = "63eedd21c1ffa73fe50a71c746c90d0a7b7a5ba7e2c4be29e2a52bbf23b7c405"
+
+[[snapshots.members]]
+security_id = "home-depot-common"
+name = "Home Depot"
+ticker = "HD"
+span = [5802, 5854]
+cited_sha256 = "ec3cebaef7985b249e8263cb0451452a7490bfe638c46d2190888160fdb1558a"
+
+[[snapshots.members]]
+security_id = "honeywell-common"
+name = "Honeywell"
+ticker = "HON"
+span = [5855, 5932]
+cited_sha256 = "14aaf9bcd9ce626d39d7d9789d23ce99c991bb21b8d25097124be535ff689d17"
+
+[[snapshots.members]]
+security_id = "ibm-common"
+name = "IBM"
+ticker = "IBM"
+span = [5933, 6015]
+cited_sha256 = "2faccfd8b117192ed25355c8ebc73e44a75a73fa0279a8bfae9449ca314e98f6"
+
+[[snapshots.members]]
+security_id = "intel-common"
+name = "Intel"
+ticker = "INTC"
+span = [6016, 6073]
+cited_sha256 = "e51a603020c65644ab4cb825e9951a2cd494d424e1813d231064d799fd0facff"
+
+[[snapshots.members]]
+security_id = "johnson-johnson-common"
+name = "Johnson & Johnson"
+ticker = "JNJ"
+span = [6074, 6141]
+cited_sha256 = "f9cc676b3dd310ed327367f10779ec97c392531e1c1c85829136ff67b2fe82af"
+
+[[snapshots.members]]
+security_id = "jpmorgan-chase-common"
+name = "JPMorgan Chase"
+ticker = "JPM"
+span = [6142, 6201]
+cited_sha256 = "a745f039f4cea1c687e88048a6543629d6718fa9fb599f5f52455f578d24b022"
+
+[[snapshots.members]]
+security_id = "mcdonalds-common"
+name = "McDonald's"
+ticker = "MCD"
+span = [6202, 6252]
+cited_sha256 = "0893ee0143cd179e39a069dbcc45c667cdafb4b838345086c3d6155552ec18a9"
+
+[[snapshots.members]]
+security_id = "merck-common"
+name = "Merck"
+ticker = "MRK"
+span = [6253, 6308]
+cited_sha256 = "77aee5b72545722ffa3d704742d18ce4e64cec9a40d8577d28a1b34282072d2e"
+
+[[snapshots.members]]
+security_id = "microsoft-common"
+name = "Microsoft"
+ticker = "MSFT"
+span = [6309, 6370]
+cited_sha256 = "da5f5817234e1671b24034d4f4cb1751ddca1e478c97ea2d029834eccd8e90f4"
+
+[[snapshots.members]]
+security_id = "nike-common"
+name = "Nike"
+ticker = "NKE"
+span = [6371, 6419]
+cited_sha256 = "b127548f0e186e5e41e47391c47077bc284fb06febc0826c47d57664b2fa3879"
+
+[[snapshots.members]]
+security_id = "procter-gamble-common"
+name = "Procter & Gamble"
+ticker = "PG"
+span = [6420, 6488]
+cited_sha256 = "728738e5417245fa4b87ac74960456cbd4eaa66b7e99ac4f4333ffc66cacd6b6"
+
+[[snapshots.members]]
+security_id = "salesforce-common"
+name = "Salesforce"
+ticker = "CRM"
+span = [6489, 6548]
+cited_sha256 = "bae1db30eb214b522a7a9c6ed9d41136a412c42406b4072a8894b99964ddf76d"
+
+[[snapshots.members]]
+security_id = "travelers-common"
+name = "Travelers"
+ticker = "TRV"
+span = [6549, 6594]
+cited_sha256 = "6dca07408b7b774efe9cafedb0e7263ab4c463b3fe9494d69132f4abbf918646"
+
+[[snapshots.members]]
+security_id = "unitedhealth-group-common"
+name = "UnitedHealth Group"
+ticker = "UNH"
+span = [6595, 6659]
+cited_sha256 = "f210166fe5710b0b885db1519d4b6daa05dfe57974acb4bece4f31f25fd9ff29"
+
+[[snapshots.members]]
+security_id = "verizon-common"
+name = "Verizon"
+ticker = "VZ"
+span = [6660, 6720]
+cited_sha256 = "e705d73ec613554f1b68ff1f01034b3b32e07577ffc02557d247466f9030d9a4"
+
+[[snapshots.members]]
+security_id = "visa-common"
+name = "Visa"
+ticker = "V"
+span = [6721, 6768]
+cited_sha256 = "538bb31947a01a6164cf49a93ca194d3e147b98d68a2c3e41f186903e53caac3"
+
+[[snapshots.members]]
+security_id = "walmart-common"
+name = "Walmart"
+ticker = "WMT"
+span = [6769, 6812]
+cited_sha256 = "8a3f1c2cb482ec1679bb16dc38c2191b18722903f23b2c6c34b96f65f2db4c4d"
+
+[[changes]]
+evidence_id = "spdji-2024-11-01"
+source_id = "spdji-announcements"
+url = "https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20241101-1475162/1475162_djiadjuaintcdowaes.pdf"
+artifact_sha256 = "fd02c23edb53c87d5e478646a008d0971d9ffe7fa9a569158db64657a85d8d2a"
+canonical_sha256 = "db0d3de939f3c049b225e0f60dfce9b7802c74574278944ae94196c2480e0059"
+announced_on = 2024-11-01
+published_on = 2024-11-01
+effective_on = 2024-11-08
+timing = "before_open"
+date_span = [1931, 2014]
+date_cited_sha256 = "b33eb56fca0bff64277b5af76be754fb5f1759052c183655a8aa42ece63b104a"
+
+[[changes.entries]]
+action = "added"
+security_id = "nvidia-common"
+name = "NVIDIA"
+ticker = "NVDA"
+span = [1931, 2014]
+cited_sha256 = "b33eb56fca0bff64277b5af76be754fb5f1759052c183655a8aa42ece63b104a"
+
+[[changes.entries]]
+action = "added"
+security_id = "sherwin-williams-common"
+name = "Sherwin-Williams"
+ticker = "SHW"
+span = [2015, 2059]
+cited_sha256 = "02149a16cf7893d3380e321fd4c041ec3ed7a01d0451b18c19955a5639acf23f"
+
+[[changes.entries]]
+action = "removed"
+security_id = "intel-common"
+name = "Intel"
+ticker = "INTC"
+span = [2060, 2125]
+cited_sha256 = "068788c8b5c7a9f17ba1b233652e82798457bf0bc2887cac873780c4c94ca9a3"
+
+[[changes.entries]]
+action = "removed"
+security_id = "dow-common"
+name = "Dow"
+ticker = "DOW"
+span = [2126, 2157]
+cited_sha256 = "06752b8c0543e697669a69e3961d778ed5e9de0e7accd89a77e96ca802430ae8"
+
+[[changes]]
+evidence_id = "spdji-2026-06-23"
+source_id = "spdji-announcements"
+url = "https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20260623-1484126/1484126_djiavzjune2026.pdf"
+artifact_sha256 = "c022ddf1cc80472b66f32eca0f6c14dd404f4db3e49af0d2a244c0fa5d1b622c"
+canonical_sha256 = "b6cef5fc38439fd76da071cd7763f6d5e63ca468695fcdaed9ab16d3b7d9d5c9"
+announced_on = 2026-06-23
+published_on = 2026-06-23
+effective_on = 2026-06-29
+timing = "before_open"
+date_span = [2062, 2133]
+date_cited_sha256 = "51bcac4a9eb659df293effe7871b23981e0908d2da2388e7840d2207fa5f7c93"
+
+[[changes.entries]]
+action = "added"
+security_id = "alphabet-common"
+name = "Alphabet"
+ticker = "GOOGL"
+span = [2062, 2133]
+cited_sha256 = "51bcac4a9eb659df293effe7871b23981e0908d2da2388e7840d2207fa5f7c93"
+
+[[changes.entries]]
+action = "removed"
+security_id = "verizon-common"
+name = "Verizon Communications"
+ticker = "VZ"
+span = [2134, 2217]
+cited_sha256 = "30e8f7131434a94ee28cbe4dfa96a31298469fe888c12e50b6e242d84c6e708e"
+
+[[checks]]
+evidence_id = "user-list-2026-09-26"
+source_id = "user-djia-list"
+as_of = 2026-09-22
+published_on = 2026-09-26
+
+[[checks.members]]
+name = "Goldman Sachs Group Inc."
+ticker = "GS"
+
+[[checks.members]]
+name = "Caterpillar Inc."
+ticker = "CAT"
+
+[[checks.members]]
+name = "Microsoft Corp"
+ticker = "MSFT"
+
+[[checks.members]]
+name = "Amgen Inc"
+ticker = "AMGN"
+
+[[checks.members]]
+name = "UnitedHealth Group Incorporated"
+ticker = "UNH"
+
+[[checks.members]]
+name = "Visa Inc."
+ticker = "V"
+
+[[checks.members]]
+name = "The Travelers Companies, Inc."
+ticker = "TRV"
+
+[[checks.members]]
+name = "Alphabet Inc. (Class A)"
+ticker = "GOOGL"
+
+[[checks.members]]
+name = "JPMorgan Chase & Co."
+ticker = "JPM"
+
+[[checks.members]]
+name = "Apple Inc."
+ticker = "AAPL"
+
+[[checks.members]]
+name = "The Sherwin-Williams Company"
+ticker = "SHW"
+
+[[checks.members]]
+name = "American Express Company"
+ticker = "AXP"
+
+[[checks.members]]
+name = "Home Depot, Inc."
+ticker = "HD"
+
+[[checks.members]]
+name = "Johnson & Johnson"
+ticker = "JNJ"
+
+[[checks.members]]
+name = "Amazon.com Inc"
+ticker = "AMZN"
+
+[[checks.members]]
+name = "McDonald's Corporation"
+ticker = "MCD"
+
+[[checks.members]]
+name = "Salesforce, Inc."
+ticker = "CRM"
+
+[[checks.members]]
+name = "International Business Machines Corporation"
+ticker = "IBM"
+
+[[checks.members]]
+name = "Nvidia Corp"
+ticker = "NVDA"
+
+[[checks.members]]
+name = "Honeywell International, Inc."
+ticker = "HON"
+
+[[checks.members]]
+name = "Chevron Corporation"
+ticker = "CVX"
+
+[[checks.members]]
+name = "Boeing Company"
+ticker = "BA"
+
+[[checks.members]]
+name = "3M Company"
+ticker = "MMM"
+
+[[checks.members]]
+name = "Merck & Co., Inc."
+ticker = "MRK"
+
+[[checks.members]]
+name = "Procter & Gamble Company"
+ticker = "PG"
+
+[[checks.members]]
+name = "Walmart Inc."
+ticker = "WMT"
+
+[[checks.members]]
+name = "Cisco Systems, Inc."
+ticker = "CSCO"
+
+[[checks.members]]
+name = "The Walt Disney Company"
+ticker = "DIS"
+
+[[checks.members]]
+name = "Coca-Cola Company"
+ticker = "KO"
+
+[[checks.members]]
+name = "Nike, Inc."
+ticker = "NKE"

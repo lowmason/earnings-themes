@@ -1,0 +1,13 @@
+# Synthetic universe.
+universe_id = "djia-synthetic"
+universe_name = "djia"
+period_end_start = 2024-07-01
+period_end_stop = 2026-07-01
+public_information_cutoff = 2026-09-22
+membership_reference = "first_publication_time"
+selection_policy_version = "djia-pilot/1"
+expected_member_count = 4
+
+[etf_proxy]
+source_id = "synthetic-fund"
+cik = "0009990900"

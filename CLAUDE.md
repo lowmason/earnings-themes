@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Document status — read before trusting any file here
 
-This repo is documentation-first: its working code is the Stage 1 investigation harness in `expirements/parser-fidelity/`, the Stage 2 contracts in `packages/earnings-core`, and Stage 3's canonicalizer and browser diagnostic path in `packages/earnings-ingestion`; `earnings-themes` is still a `hello()` scaffold, and the rest is instructions.
+This repo is documentation-first: its working code is the Stage 1 investigation harness in `expirements/parser-fidelity/`, the Stage 2 contracts in `packages/earnings-core`, Stage 3's canonicalizer and browser diagnostic path in `packages/earnings-ingestion`, and Stage 4's point-in-time DJIA cohort and shared SEC client there too; `earnings-themes` is still a `hello()` scaffold, and the rest is instructions.
 Not all of it is binding.
 
 | File | Status |
@@ -13,7 +13,7 @@ Not all of it is binding.
 | `docs/earnings-ingestion.md`, `docs/earnings-themes.md` | Supplied source design notes. **Preserve them**; do not rewrite a learning exercise into a mandatory production dependency. |
 | `specs/evidence-linked-theme-extraction.md` | **The synthesized theme-extraction spec.** Amends `AGENTS.md` at three points and governs on each: R3.4 (boilerplate as overlay masks over canonical text), R10.1 (exhaustive structure-aware traversal replaces the whole-document default), and R12.2 (20-40 hand-coded documents are a feasibility pilot, not a validation set). `AGENTS.md` carries an inline **Amended:** pointer at each. Supersedes the Jev documents on the required-path question (R14.3). |
 | `specs/evidence-linked-theme-extraction-roadmap.md` | **Live staged roadmap** for that spec. Resume it via the `derive-roadmap` skill's reconcile step and route each unticked stage per its ROUTING line; never plan it wholesale. |
-| `specs/point-in-time-djia-cohort.md` | **Amends the theme-extraction spec and its roadmap** (adopted 2026-09-22, plan 2). Adds Stage 4, a versioned point-in-time DJIA cohort frozen before any document is acquired; moves the 40-event feasibility pilot into Stage 5 as a deterministic selection frozen before any acquisition or parse outcome is known; adds Stage 15, the full eight-quarter run. Governs on the firm universe, the event corpus, and pilot selection. Its window is `[2024-07-01, 2026-07-01)` and its public-information cutoff is `2026-09-22`. It is the stage spec for Stages 4 and 15 and binds Stage 5's eligibility and pilot-selection contracts; no stage is complete. |
+| `specs/point-in-time-djia-cohort.md` | **Amends the theme-extraction spec and its roadmap** (adopted 2026-09-22, plan 2). Adds Stage 4, a versioned point-in-time DJIA cohort frozen before any document is acquired; moves the 40-event feasibility pilot into Stage 5 as a deterministic selection frozen before any acquisition or parse outcome is known; adds Stage 15, the full eight-quarter run. Governs on the firm universe, the event corpus, and pilot selection. Its window is `[2024-07-01, 2026-07-01)` and its public-information cutoff is `2026-09-22`. It is the stage spec for Stages 4 and 15 and binds Stage 5's eligibility and pilot-selection contracts. Stage 4 is complete (plan 6); Stage 15 is not, so the spec stays live. |
 | `AGENTS-jev-addendum.md`, `specs/jev-integration-spec.md` | **Superseded on the required-path question** by the spec's R14.3; retained only as a proposal for an optional, separately authorized layer. Jev/TypeSafe is not an adopted dependency. Values like `backend = "disabled"` or `model = "jev-1.13.0"` are sketches, not settings. |
 
 **Not summarized below — go to `AGENTS.md` directly** for: §Source strategy (per-field source table), §Domain rules (membership/identifiers, industry classification, subsidiaries, employment, locations), §Shared data contracts and provenance (the dataset/grain table), §Models, orchestration, caching, and cost, §Tests and acceptance criteria (incl. the evaluation metric table), and §Delivery milestones. **Exception:** for the DJIA cohort, point-in-time index membership and security-to-issuer-to-CIK resolution are specified by `specs/point-in-time-djia-cohort.md`, which is consistent with and more specific than `AGENTS.md` §Domain rules; those rules still apply wherever the cohort spec is silent. Subsidiaries, employment, locations, and industry classification stay with `AGENTS.md` and out of the theme-extraction path.
@@ -22,7 +22,7 @@ Not all of it is binding.
 
 **Deliberately unresolved — do not silently pick one** (AGENTS.md §"Source basis and unresolved choices"): the production provider/model, the final theme taxonomy, and non-exactness quality thresholds. Record these in config or a decision record; do not invent agreement. The fourth such choice, an approved inference budget, is now recorded by `specs/evidence-linked-theme-extraction.md` R14.2: **$100, for the optional hosted-ceiling ablation only**, not prompt-optimizer compiles or any other billable call. The required path needs no billable inference: R14.1 limits it to open-weight, self-hosted models, which narrows the model choice without making it.
 
-## Current state: Stages 1–3 complete; `earnings-themes` still a scaffold
+## Current state: Stages 1–4 complete; `earnings-themes` still a scaffold
 
 Stage 1 of the roadmap (release parser fidelity, `specs/release-parser-fidelity.md`) is done:
 
@@ -46,7 +46,13 @@ Stage 3 (structure-aware canonicalization, `specs/completed/structure-aware-cano
 - `packages/earnings-ingestion/src/earnings_ingestion/browser/` captures a saved page in the pinned Chrome for Testing under capture policy `isolated/1`, behind the `browser-capture` extra. Only `browser/selenium_capture.py` imports a browser library, and `tests/contracts/test_import_scan.py` holds every other module to that. `earnings-pipeline browser setup` is the only command that downloads the browser, and browser tests carry the `browser` marker and run only with `-m browser`.
 - `packages/earnings-ingestion/src/earnings_ingestion/layout/` holds `layout-1`, which reads a capture's rendered layout and maps its elements onto `walker-1`'s text under `anchored-1`; `tests/fixtures/browser/` holds the committed captures. The comparison with `walker-1` was pre-registered (`expirements/parser-fidelity/layout1-preregistered.toml`) before any release was captured, and `docs/verification/layout-1.md` records it. ADR 0002 keeps the capture diagnostic-only: `walker-1` stays the canonicalization policy.
 
-`earnings-themes` still contains only a `hello()` stub, as do the top-level modules of `earnings-ingestion` and `apps/earnings-pipeline`; the application's one command is `earnings-pipeline browser setup`. `data/` is gitignored and holds only local, uncommitted material: fetched pages under `data/raw/`, and under `data/runs/` Stage 1's run outputs, the user's rendered copies, and the browser capture store; `config/`, `prompts/` and `codebooks/` are empty directories. `origin` is set to https://github.com/lowmason/earnings-themes, which is **public** — treat anything committed here as publicly visible.
+Stage 4 (point-in-time DJIA cohort, plan 6, `specs/point-in-time-djia-cohort.md`) is done:
+
+- `packages/earnings-ingestion/src/earnings_ingestion/fetch/` holds the retrieval record, the polite client ported from `pf_fetch.py`, the robots gate, and the content-addressed artifact store; `sec/` holds the shared SEC client, through which every SEC request goes (R1.3, D5), and SEC's record readers.
+- `packages/earnings-ingestion/src/earnings_ingestion/cohort/` builds the cohort from curated files and saved artifacts, fetching nothing, and freezes it as a versioned, content-hashed manifest. It cites an HTML page through `walker-1` and a PDF through `pdftext-1` (`cohort/pdftext.py`, with pypdf 6.19.0 pinned exactly). `earnings-pipeline cohort` holds its commands.
+- `docs/membership-source-register.toml` is the second source register, for index-membership sources. `config/universe/djia/` holds the curated files and the frozen manifests, which hold facts and citations, never source text. `tests/fixtures/cohort/` is the synthetic cohort, which regenerates byte for byte and replays offline. `docs/verification/djia-cohort.md` records the stage.
+
+`earnings-themes` still contains only a `hello()` stub, as do the top-level modules of `earnings-ingestion` and `apps/earnings-pipeline`; the application's commands are `earnings-pipeline browser setup` and the `earnings-pipeline cohort` group. `data/` is gitignored and holds only local, uncommitted material: fetched pages under `data/raw/`, the cohort's saved evidence under `data/raw/cohort/`, and under `data/runs/` Stage 1's run outputs, the user's rendered copies, the browser capture store, the client locks, and the cohort's live-verification records; `prompts/` and `codebooks/` are empty directories. `origin` is set to https://github.com/lowmason/earnings-themes, which is **public** — treat anything committed here as publicly visible.
 
 ### Workspace root is virtual — do not add `[project]` to it
 
@@ -61,11 +67,11 @@ non-package members too. Only the absence of `[project]` removes the root from t
 Application CLI entry points belong in `apps/earnings-pipeline`, never in the root.
 
 Verified working from a clean state at the root commit; lock and sync counts refreshed at
-`1fe96c3` via `uv lock --check` and `uv sync`:
+plan 6's Task 16b, which added `pypdf==6.19.0`, via `uv lock --check` and `uv sync`:
 
 ```
-$ uv lock                              # Resolved 151 packages
-$ uv sync --locked --all-packages      # 40 packages incl. earnings-{core,ingestion,pipeline,themes}; dev group synced by default
+$ uv lock                              # Resolved 152 packages
+$ uv sync --locked --all-packages      # 41 packages incl. earnings-{core,ingestion,pipeline,themes}; dev group synced by default
 $ uv run --locked python -c "import earnings_themes; print(earnings_themes.__file__)"
 .../packages/earnings-themes/src/earnings_themes/__init__.py
 ```
@@ -154,5 +160,6 @@ Default tests make **no network and no billable calls** — saved fixtures and f
 - `AGENTS.md` is cited by line number (`A §n`, `AGENTS.md:n`) throughout `specs/evidence-linked-theme-extraction.md` and its roadmap; the highest cited line is 780 (§Delivery milestones). Inserting or deleting any line before the end of the cited content silently breaks those citations: append to an existing line instead, as the three **Amended:** pointers do.
 - The directory is `expirements/` (sic). `AGENTS.md` calls it `experiments/`. Reuse the existing one rather than creating a second.
 - `.gitignore` ends with the credentials block, and it **must stay last**. Git applies the *last* matching pattern, so the `!tests/fixtures/**` negation above it would otherwise un-ignore `tests/fixtures/{.env,*.pem,credentials.json}`. Add new negations above that block, never below. (`data/*` is deliberately not `data/`, so a `!data/raw/.gitkeep` skeleton stays possible. `uv.lock` is tracked and must stay tracked — AGENTS.md requires one reviewed workspace lockfile. `.venv/` is also self-ignored by a uv-generated `.venv/.gitignore`.)
+- `EDGAR_IDENTITY` may be exported in your shell, so a `live` test's skip guard does not stop it: `-m live` really sends requests. Run live checks only with the user's go-ahead; check collection with `--collect-only`.
 - The root-level `src/earnings_themes/` orphan from `uv init` has been deleted. The package lives at `packages/earnings-themes/`; do not recreate a root-level `src/` or import from one.
 - `specs/` (with `plans/` and `completed/`) exists but is absent from the AGENTS.md layout sketch.

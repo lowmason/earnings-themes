@@ -1,10 +1,12 @@
 """The ``earnings-pipeline`` command line.
 
     uv run --locked --all-packages earnings-pipeline browser setup
+    uv run --locked --all-packages earnings-pipeline cohort --help
 
 ``browser setup`` is the only command that downloads the pinned Chrome for Testing and
 chromedriver (B8). It checks each archive against the committed manifest and installs
-into a cache outside the repository; a capture never downloads anything.
+into a cache outside the repository; a capture never downloads anything. ``cohort``
+holds Stage 4's commands (``earnings_pipeline.cohort_cli``).
 """
 
 from pathlib import Path
@@ -18,11 +20,14 @@ from earnings_ingestion.browser.install import (
     load_pin,
 )
 
+from earnings_pipeline.cohort_cli import cohort
+
 app = typer.Typer(no_args_is_help=True, help="The earnings pipeline.")
 browser = typer.Typer(
     no_args_is_help=True, help="The pinned browser for Stage 3's diagnostic path."
 )
 app.add_typer(browser, name="browser")
+app.add_typer(cohort, name="cohort")
 
 
 @browser.command()

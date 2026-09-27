@@ -1,0 +1,38 @@
+# Reviewed decisions for the real cohort (plan 6, P6-18). Each override records its
+# evidence, rationale, reviewer, and effective dates; the reviewer is the user.
+schema_version = 1
+
+[[overrides]]
+override_id = "ibm-issuer"
+kind = "set_issuer"
+security_id = "ibm-common"
+cik = "0000051143"
+rationale = "SEC's record for CIK 0000051143 lists the ticker IBM; IBM is the short name of International Business Machines Corp."
+reviewer = "Lowell Mason"
+recorded_on = 2026-09-26
+effective_from = 2024-07-01
+
+[[overrides.citations]]
+source_id = "sec-edgar"
+url = "https://data.sec.gov/submissions/CIK0000051143.json"
+artifact_sha256 = "0d698f754c7aa7f9373bc90b65d73d801e018ad176b6ffb5e4ec0f6d18fa984f"
+
+[overrides.citations.locator]
+kind = "json_pointer"
+pointer = "/tickers"
+cited_sha256 = "ef1b2949b942f0bd7eb1a6209c62e7835e154ca5f49561c4e410288a464e9532"
+
+[[overrides]]
+override_id = "alias-ibm"
+kind = "holding_alias"
+security_id = "ibm-common"
+holding_name = "International Business Machines Corp"
+rationale = "The fund lists IBM under its legal name, International Business Machines Corp."
+reviewer = "Lowell Mason"
+recorded_on = 2026-09-26
+effective_from = 2024-07-01
+
+[[overrides.citations]]
+source_id = "dia-nport"
+url = "https://www.sec.gov/Archives/edgar/data/1041130/000175272424219459/primary_doc.xml"
+artifact_sha256 = "4edde1a52c5eb2faa8760225ee2bee2759226a6557b5e6f16ff6d9f3e3c113c1"

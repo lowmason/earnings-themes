@@ -1,10 +1,13 @@
 # Point-in-time DJIA cohort and earnings corpus
 
-> For agentic workers: REQUIRED NEXT SKILL: writing-plans. Plan this specification
-> as an amendment to `specs/evidence-linked-theme-extraction.md` and
-> `specs/evidence-linked-theme-extraction-roadmap.md`, followed by the new cohort
-> stage. Do not begin document acquisition before the cohort artifacts described
-> here can be frozen.
+> For agentic workers: REQUIRED NEXT SKILL: writing-plans. This is the stage spec
+> for Stages 4 and 15 of `specs/evidence-linked-theme-extraction-roadmap.md`. Plan
+> each alone, scoped by its roadmap entry, when the roadmap routes it.
+> §Architecture and revised stages and §Roadmap amendment describe an amendment
+> that plan 2 made on 2026-09-22 (§Rollout); do not plan it again. Stage 5 is
+> routed to brainstorming, and its own spec must keep this spec's Stage 5 contracts
+> and ordering. Do not begin document acquisition before the cohort artifacts
+> described here can be frozen.
 
 This specification defines the firm universe and event corpus for the first
 longitudinal earnings-theme study. It adds an explicit, point-in-time Dow Jones
@@ -462,3 +465,6 @@ Stage 5 is routed to brainstorming. Its own stage spec carries its Roadmap line
 and must keep this specification's Stage 5 contracts and ordering. The roadmap
 amendment itself was carried out on 2026-09-22 by plan 2
 (`specs/plans/completed/2-point-in-time-djia-cohort.md`); it completed no stage.
+
+> Stage 4: COMPLETE (2026-09-26) — implemented by plan 6 (specs/plans/completed/6-point-in-time-djia-cohort.md).
+> Next: resume the roadmap. This spec stays live for Stage 15 (plan 6, P6-1).
