@@ -1090,7 +1090,7 @@ then canonical JSON, into strict models, so an unknown key is refused.
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `schema_version` | `1` | The file's version |
-| `overrides` | tuple of `Override` | Unique `override_id`s |
+| `overrides` | tuple of `Override` | Unique `override_id`s, and at most one `holding_alias` per `holding_name` |
 
 ### `MembershipRegister`
 

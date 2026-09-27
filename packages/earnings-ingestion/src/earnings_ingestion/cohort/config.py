@@ -31,7 +31,7 @@ from pydantic import (
 )
 
 from earnings_ingestion.cohort.digests import canonical_json
-from earnings_ingestion.cohort.records import BoundTiming, Override
+from earnings_ingestion.cohort.records import BoundTiming, Override, OverrideKind
 from earnings_ingestion.fetch.records import SourceId
 from earnings_ingestion.sec.identifiers import Cik
 
@@ -164,6 +164,14 @@ class OverridesFile(_Curated):
         ids = [override.override_id for override in self.overrides]
         if len(set(ids)) != len(ids):
             raise ValueError("override_id repeated")
+        names = Counter(
+            override.holding_name
+            for override in self.overrides
+            if override.kind is OverrideKind.HOLDING_ALIAS
+        )
+        repeated = sorted(name for name, count in names.items() if count > 1)
+        if repeated:
+            raise ValueError(f"holding_name repeated: {repeated}")
         return self
 
 

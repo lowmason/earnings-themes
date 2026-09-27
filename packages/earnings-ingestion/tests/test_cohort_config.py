@@ -111,6 +111,32 @@ def test_overrides_are_optional(tmp_path) -> None:
     assert load_cohort_config(write(tmp_path, overrides=None)).overrides.overrides == ()
 
 
+ALIAS = """
+[[overrides]]
+override_id = "{override_id}"
+kind = "holding_alias"
+security_id = "{security_id}"
+holding_name = "Acme Industrial Corp"
+citations = []
+rationale = "Reviewed."
+reviewer = "Reviewer Name"
+recorded_on = 2026-09-28
+effective_from = 2024-07-01
+"""
+
+
+@pytest.mark.parametrize(
+    "second", ["corvid-common", "acme-common"], ids=["conflicting", "agreeing"]
+)
+def test_a_holding_name_takes_one_alias(tmp_path, second) -> None:
+    first = ALIAS.format(override_id="alias-1", security_id="acme-common")
+    config = load_cohort_config(write(tmp_path, overrides=OVERRIDES + first))
+    assert config.overrides.overrides[-1].kind is OverrideKind.HOLDING_ALIAS
+    both = first + ALIAS.format(override_id="alias-2", security_id=second)
+    with pytest.raises(ValidationError, match="holding_name repeated"):
+        load_cohort_config(write(tmp_path, overrides=OVERRIDES + both))
+
+
 @pytest.mark.parametrize(
     ("old", "new", "message"),
     [
