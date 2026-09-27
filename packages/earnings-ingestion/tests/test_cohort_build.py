@@ -20,7 +20,11 @@ from earnings_ingestion.cohort.synthetic import FIXTURE_DIR, FUND_CIK, build_opt
 from earnings_ingestion.fetch.records import Retrieval, RetrievalMethod
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.data import FILING_COLUMNS
-from earnings_ingestion.sec.urls import COMPANY_TICKERS_URL, submissions_url
+from earnings_ingestion.sec.urls import (
+    COMPANY_TICKERS_URL,
+    submissions_page_url,
+    submissions_url,
+)
 
 DIRECTORY = FIXTURE_DIR
 OPTIONS = build_options()
@@ -129,6 +133,26 @@ def test_a_submissions_record_of_another_cik_stops_the_build(repo, cik) -> None:
     body = json.dumps(record | {"cik": "9990008"}).encode()
     save(store, "sec-edgar", url, body, "application/json")
     message = f"{url} is the submissions file of CIK 0009990008"
+    with pytest.raises(CohortError, match=re.escape(message)):
+        build(repo, **OPTIONS)
+
+
+def test_a_fund_page_of_another_count_stops_the_build(repo) -> None:
+    """The fund's older pages state no CIK either: each must hold the count its
+    entry in the fund's CIK-checked submissions record states."""
+    store = ArtifactStore(repo / DIRECTORY / "raw", repo)
+    url = submissions_url(FUND_CIK)
+    record = json.loads(store.latest("sec-edgar", url, **SYNTHETIC).body)
+    name = f"CIK{FUND_CIK}-submissions-001.json"
+    record["filings"]["files"] = [{"name": name, "filingCount": 1}]
+    save(store, "sec-edgar", url, json.dumps(record).encode(), "application/json")
+    page = {column: rows[:2] for column, rows in record["filings"]["recent"].items()}
+    older = submissions_page_url(name)
+    save(store, "sec-edgar", older, json.dumps(page).encode(), "application/json")
+    message = (
+        f"{url}: {name}'s filing count, 2, is not the 1 its entry at"
+        " /filings/files/0 states"
+    )
     with pytest.raises(CohortError, match=re.escape(message)):
         build(repo, **OPTIONS)
 

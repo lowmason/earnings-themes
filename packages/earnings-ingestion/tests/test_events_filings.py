@@ -284,6 +284,23 @@ def test_a_submissions_file_of_another_registrant_is_a_problem(saved) -> None:
     )
 
 
+def test_an_older_page_of_another_count_is_a_problem(saved) -> None:
+    """An older page states no CIK, so the count its entry in the CIK-checked
+    submissions file states binds it: a page holding another number is not read."""
+    recent = [periodic(40, date(2024, 9, 30), "2024-11-04 16:30:00")]
+    name = "CIK0009990001-submissions-001.json"
+    saved.submissions([], pages=[older_page_entry(name, recent)])
+    saved.page(name, [*recent, periodic(41, date(2024, 12, 31), "2025-02-04 16:30:00")])
+    found = saved.read()
+    assert found.periodic == ()
+    assert found.problems == (
+        (
+            f"{submissions_page_url(name)}: {name}'s filing count, 2, is not the 1"
+            " its entry at /filings/files/0 states"
+        ),
+    )
+
+
 def test_the_newest_retrieval_of_each_url_is_read(saved) -> None:
     first = [release(29, "2024-10-24 16:05:12")]
     saved.submissions(first)

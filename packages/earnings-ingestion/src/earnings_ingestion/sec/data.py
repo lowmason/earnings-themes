@@ -82,6 +82,9 @@ class OlderPage:
     filing_to: date | None
     """The filing dates the page covers, when the entry states them."""
     pointer: str
+    filing_count: int | None = None
+    """How many filings the page holds, when the entry states it. The page states no
+    CIK, so ``read_older_page`` binds it to this entry by the count."""
 
 
 @dataclass(frozen=True)
@@ -149,6 +152,14 @@ def _date(value: object, where: str) -> date | None:
         return date.fromisoformat(str(value))
     except ValueError as exc:
         raise SecDataError(f"{where}: {value!r} is not a date") from exc
+
+
+def _count(value: object, where: str) -> int | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise SecDataError(f"{where}: {value!r} is not a count")
+    return value
 
 
 def _datetime(value: object, where: str) -> datetime | None:
@@ -224,6 +235,7 @@ def _older_page(entry: object, index: int) -> OlderPage:
         filing_from=_date(entry.get("filingFrom"), f"{pointer}/filingFrom"),
         filing_to=_date(entry.get("filingTo"), f"{pointer}/filingTo"),
         pointer=pointer,
+        filing_count=_count(entry.get("filingCount"), f"{pointer}/filingCount"),
     )
 
 
@@ -271,6 +283,23 @@ def read_submissions(body: bytes) -> Registrant:
 def read_submissions_page(body: bytes) -> tuple[Filing, ...]:
     """An older filings page: the same columns, at the top level."""
     return read_filing_columns(load_json(body, "the filings page"), "")
+
+
+def read_older_page(body: bytes, page: OlderPage) -> tuple[Filing, ...]:
+    """The older page ``page`` names, refused unless it holds the count of filings
+    its entry states: the page states no CIK, so the count is what binds it to the
+    submissions file, whose CIK the reader checks."""
+    if page.filing_count is None:
+        raise SecDataError(
+            f"{page.name}'s entry at {page.pointer} states no filingCount"
+        )
+    filings = read_submissions_page(body)
+    if len(filings) != page.filing_count:
+        raise SecDataError(
+            f"{page.name}'s filing count, {len(filings)}, is not the"
+            f" {page.filing_count} its entry at {page.pointer} states"
+        )
+    return filings
 
 
 def raw_document_name(primary_document: str) -> str:

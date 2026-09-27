@@ -10,6 +10,7 @@ from earnings_ingestion.sec.data import (
     raw_document_name,
     read_company_tickers,
     read_nport_holdings,
+    read_older_page,
     read_submissions,
     read_submissions_page,
 )
@@ -163,6 +164,9 @@ def pages(entries: list) -> bytes:
         pages(["CIK0009990001-submissions-001.json"]),
         pages([{"filingCount": 3}]),
         pages([{"name": 3}]),
+        pages([{"name": "p.json", "filingCount": "2"}]),
+        pages([{"name": "p.json", "filingCount": True}]),
+        pages([{"name": "p.json", "filingCount": -1}]),
     ],
     ids=[
         "former-name-not-an-object",
@@ -173,6 +177,9 @@ def pages(entries: list) -> bytes:
         "page-not-an-object",
         "page-without-a-name",
         "page-name-not-text",
+        "page-count-text",
+        "page-count-a-boolean",
+        "page-count-negative",
     ],
 )
 def test_a_malformed_registrant_is_refused_as_sec_data(body) -> None:
@@ -194,6 +201,28 @@ def test_an_older_page_has_the_columns_at_the_top_level() -> None:
     filings = read_submissions_page(json.dumps(page).encode())
     assert [filing.form for filing in filings] == ["10-K", "8-K"]
     assert filings[0].pointer("form") == "/form/0"
+
+
+def test_an_older_page_must_hold_the_count_its_entry_states() -> None:
+    """An older page states no CIK, so the count its entry in the CIK-checked
+    submissions file states is what binds the page to that file."""
+    body = json.dumps(json.loads(submissions())["filings"]["recent"]).encode()
+
+    def entry(**fields) -> OlderPage:
+        (page,) = read_submissions(pages([{"name": "p.json", **fields}])).older_pages
+        return page
+
+    filings = read_older_page(body, entry(filingCount=2))
+    assert [filing.form for filing in filings] == ["10-K", "8-K"]
+    with pytest.raises(
+        SecDataError,
+        match=r"p\.json's filing count, 2, is not the 3 its entry at /filings/files/0",
+    ):
+        read_older_page(body, entry(filingCount=3))
+    with pytest.raises(
+        SecDataError, match=r"p\.json's entry at /filings/files/0 states no filingCount"
+    ):
+        read_older_page(body, entry())
 
 
 def test_the_rendered_view_is_not_the_filed_document() -> None:

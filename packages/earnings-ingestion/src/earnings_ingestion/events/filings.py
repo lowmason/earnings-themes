@@ -49,8 +49,8 @@ from earnings_ingestion.sec.data import (
     Filing,
     Registrant,
     SecDataError,
+    read_older_page,
     read_submissions,
-    read_submissions_page,
 )
 from earnings_ingestion.sec.filing_index import FilingIndex, read_filing_index
 from earnings_ingestion.sec.urls import (
@@ -171,7 +171,7 @@ class _Reader:
             if artifact is None:
                 continue
             try:
-                listed.append((artifact, read_submissions_page(artifact.text.body)))
+                listed.append((artifact, read_older_page(artifact.text.body, page)))
             except SecDataError as exc:
                 self.problems.append(f"{url}: {exc}")
         return registrant, listed, skipped
