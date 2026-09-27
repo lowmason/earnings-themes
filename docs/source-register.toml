@@ -9,7 +9,8 @@ owner = "U.S. Securities and Exchange Commission (SEC)"
 url = "https://www.sec.gov/edgar"
 access_method = """HTTPS GET of EDGAR quarterly full-index files (www.sec.gov/Archives/edgar/full-index/), \
 SEC's company ticker list (www.sec.gov/files/company_tickers.json), submissions JSON \
-(data.sec.gov/submissions/), filing index pages, and filed documents, N-PORT reports included. \
+(data.sec.gov/submissions/), companyfacts JSON (data.sec.gov/api/xbrl/companyfacts/), filing \
+index pages, and filed documents, N-PORT reports included. \
 Every package request goes through the shared SEC client, earnings_ingestion.sec.client (R1.3, \
 decision D5 of the roadmap), with a descriptive User-Agent read from EDGAR_IDENTITY, which is \
 configured outside Git. Stage 1's frozen harness keeps its own client, \
@@ -24,7 +25,9 @@ specs/release-parser-fidelity.md."""
 coverage = """EDGAR electronic filings. Stage 1 samples Form 8-K filings that report Item 2.02 \
 (Results of Operations and Financial Condition), which dates from August 2004, and their \
 press-release exhibits. Stage 4 reads the company ticker list, which maps current tickers to CIKs, \
-registrants' submissions records, and a fund's N-PORT holdings reports."""
+registrants' submissions records, and a fund's N-PORT holdings reports. Stage 5 reads \
+registrants' submissions records and companyfacts, and the index pages and primary documents of \
+their Item 2.02 8-Ks, before any release exhibit."""
 expected_update_pattern = """Filings arrive as the SEC accepts them. Amendments and corrections \
 arrive as new accessions rather than edits to filed documents. A quarter's full-index files grow \
 until the quarter ends."""

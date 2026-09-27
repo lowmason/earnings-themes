@@ -22,7 +22,8 @@ It then places each filing the build reads (plan 7, P7-8):
   filed on or after ``start``, is ``acceptance_time_unknown`` in the same way.
 
 A saved response that is missing, unreadable, or for another accession is a
-problem: no review can settle it, so the build stops and lists it.
+problem: no review can settle it, so the build stops and lists it. Each missing
+response's URL is also listed in ``missing``, which discovery fetches next.
 """
 
 from dataclasses import dataclass
@@ -101,6 +102,8 @@ class IssuerFilings:
     """Item 2.02 8-Ks and 8-K/As accepted in ``[start, cutoff]``, with index pages."""
     findings: tuple[EventFinding, ...]
     problems: tuple[str, ...]
+    missing: tuple[str, ...]
+    """The URLs of responses the build reads that are not saved."""
 
 
 def _unknown(issuer_id: str, filing: Filing, why: str) -> EventFinding:
@@ -118,6 +121,7 @@ class _Reader:
     def __init__(self, saved: SavedResponses) -> None:
         self.saved = saved
         self.problems: list[str] = []
+        self.missing: list[str] = []
 
     def get(self, url: str) -> CitableArtifact | None:
         try:
@@ -127,6 +131,7 @@ class _Reader:
             return None
         if artifact is None:
             self.problems.append(f"nothing saved from {url}: run events discover")
+            self.missing.append(url)
         return artifact
 
     def files(
@@ -249,6 +254,7 @@ def issuer_filings(
                         reader.problems.append(
                             f"nothing saved from {url}: run events discover"
                         )
+                        reader.missing.append(url)
     return IssuerFilings(
         cik=cik,
         registrant=registrant,
@@ -258,6 +264,7 @@ def issuer_filings(
         releases=tuple(sorted(releases, key=lambda p: p.filing.accession)),
         findings=tuple(sorted(findings, key=lambda f: f.finding_id)),
         problems=tuple(reader.problems),
+        missing=tuple(reader.missing),
     )
 
 
