@@ -25,6 +25,7 @@ from earnings_ingestion.events.pilot import (
     PilotRefusal,
     PilotRefused,
     freeze_pilot,
+    frozen_pilots,
     load_pilot,
     ordering,
     pilot_path,
@@ -585,6 +586,9 @@ def test_loading_rechecks_the_chain(
         )
     with pytest.raises(ValueError, match=message):
         load_pilot(path, reader)
+    if tamper in ("rename", "edit"):
+        with pytest.raises(ValueError, match=message):
+            frozen_pilots(path.parent)
 
 
 def rehashed(manifest: EventManifest) -> EventManifest:
@@ -671,3 +675,35 @@ def test_a_new_event_manifest_version_gives_the_next_pilot(corpus, universe) -> 
     assert frozen.manifest.definition.event_manifest_version == 2
     assert load_pilot(first.path, universe) == first.manifest
     assert pilot_path(corpus, 2) == frozen.path
+
+
+def test_a_refrozen_universe_gives_the_next_pilot_beside_the_old_ones(
+    corpus, universe
+) -> None:
+    """A cohort refrozen with changed facts has a new operative hash. Its pilot
+    freezes as the next version beside the old universe's, and each loads with its
+    own universe only."""
+    first = freeze_pilot(
+        select_pilot(events_of(corpus), universe), universe, corpus, now=NOW
+    )
+    refrozen = moved(universe)
+    events = events_of(corpus)
+    definition = events.definition.model_copy(
+        update={
+            "event_manifest_version": 2,
+            "universe_operative_hash": operative_hash(refrozen),
+        }
+    )
+    second = rehashed(events.model_copy(update={"definition": definition}))
+    (corpus / "events-v2.json").write_bytes(serialize(second))
+    frozen = freeze_pilot(select_pilot(second, refrozen), refrozen, corpus, now=NOW)
+    assert (frozen.created, frozen.path.name) == (True, "pilot-v2.json")
+    again = freeze_pilot(
+        select_pilot(events_of(corpus), universe), universe, corpus, now=NOW
+    )
+    assert (again.created, again.path) == (False, first.path)
+    assert frozen_pilots(corpus) == [first.manifest, frozen.manifest]
+    assert load_pilot(first.path, universe) == first.manifest
+    assert load_pilot(frozen.path, refrozen) == frozen.manifest
+    with pytest.raises(ValueError, match="operative hash"):
+        load_pilot(first.path, refrozen)

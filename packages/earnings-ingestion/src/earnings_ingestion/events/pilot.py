@@ -424,21 +424,29 @@ def check_chain(
     return events
 
 
-def load_pilot(path: Path, universe: UniverseManifest) -> PilotManifest:
-    """A frozen pilot, refused unless its hash, its name, and its chain check."""
+def _read_pilot(path: Path) -> PilotManifest:
+    """A frozen pilot, refused unless its hash and its name check."""
     manifest = PilotManifest.model_validate_json(path.read_bytes())
     definition = manifest.definition
     if pilot_content_hash(manifest) != definition.content_hash:
         raise ValueError(f"{path} does not hash to its content_hash")
     if path.name != pilot_path(path.parent, definition.pilot_version).name:
         raise ValueError(f"{path} holds version {definition.pilot_version}")
+    return manifest
+
+
+def load_pilot(path: Path, universe: UniverseManifest) -> PilotManifest:
+    """A frozen pilot, refused unless its hash, its name, and its chain check."""
+    manifest = _read_pilot(path)
     check_chain(manifest, path.parent, universe)
     return manifest
 
 
-def frozen_pilots(directory: Path, universe: UniverseManifest) -> list[PilotManifest]:
-    """Every frozen pilot in ``directory``, oldest first."""
-    pilots = [load_pilot(path, universe) for path in directory.glob("pilot-v*.json")]
+def frozen_pilots(directory: Path) -> list[PilotManifest]:
+    """Every frozen version in ``directory``, oldest first, each refused unless its
+    hash and its name check. Versions may have read different universes, so their
+    chains are not checked here: ``load_pilot`` checks one's."""
+    pilots = [_read_pilot(path) for path in directory.glob("pilot-v*.json")]
     return sorted(pilots, key=lambda m: m.definition.pilot_version)
 
 
@@ -446,10 +454,12 @@ def freeze_pilot(
     pilot: Pilot, universe: UniverseManifest, directory: Path, *, now: datetime
 ) -> FrozenPilot:
     """Freeze ``pilot`` beside the event manifest it names, or return the version
-    that holds it."""
-    existing = frozen_pilots(directory, universe)
+    that holds it. Either way, the chain of the version returned checks against
+    ``universe``; earlier versions read under another universe do not block."""
+    existing = frozen_pilots(directory)
     for manifest in existing:
         if manifest.definition.content_hash == pilot.content_hash:
+            check_chain(manifest, directory, universe)
             version = manifest.definition.pilot_version
             return FrozenPilot(manifest, pilot_path(directory, version), created=False)
     version = 1 + max((m.definition.pilot_version for m in existing), default=0)
