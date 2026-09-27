@@ -14,6 +14,10 @@ fetch for the synthetic cohort's five candidate issuers, all retrieved at
 It saves no exhibit (EV2). Every company, filing, and word is invented; each case
 takes its shape from the real filings plan 7 read, never their wording.
 
+``review(first)`` gives the overrides a reviewer records against the layer's first
+build: three acknowledged period gaps, Acme's release set by review, and two events
+retained unresolved.
+
 The cases, by issuer:
 
 - **Acme Industrial**, a fiscal year ending in May like Nike's, which trips no guard.
@@ -40,8 +44,16 @@ The cases, by issuer:
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
+from earnings_ingestion.cohort.records import OverrideCitation
+from earnings_ingestion.cohort.register import SEC_SOURCE_ID
 from earnings_ingestion.events.acceptance import Convention
+from earnings_ingestion.events.records import (
+    EventOverride,
+    EventOverrideKind,
+    EventReason,
+)
 from earnings_ingestion.events.synthetic import (
     SyntheticFiling,
     SyntheticStore,
@@ -49,7 +61,12 @@ from earnings_ingestion.events.synthetic import (
     older_page_entry,
 )
 
+if TYPE_CHECKING:
+    from earnings_ingestion.events.build import EventBuild
+
 RETRIEVED = datetime(2026, 9, 28, 12, 0, tzinfo=UTC)
+REVIEWER = "Synthetic Reviewer"
+REVIEWED_ON = date(2026, 9, 28)
 
 
 @dataclass(frozen=True)
@@ -461,3 +478,98 @@ def write_layer(root: Path, repo: Path) -> SyntheticStore:
             body = eight_k(registrant.name, items, signed=filing.filing_date)
             store.document(registrant.cik, filing, body)
     return store
+
+
+def _override(
+    override_id: str, kind: EventOverrideKind, rationale: str, **fields
+) -> EventOverride:
+    return EventOverride(
+        override_id=override_id,
+        kind=kind,
+        **fields,
+        rationale=rationale,
+        reviewer=REVIEWER,
+        recorded_on=REVIEWED_ON,
+    )
+
+
+GAPS = {
+    "gap-borealis": (
+        "period_gap:cik-0009990002:2025-03-31:2026-07-01",
+        (
+            "Borealis Air was acquired, and files nothing after its report for"
+            " 2025-03-31."
+        ),
+    ),
+    "gap-corvid": (
+        "period_gap:cik-0009990003:2024-07-01:2024-12-31",
+        (
+            "Corvid Systems registered late in 2024; its first periodic report"
+            " covers 2024-12-31."
+        ),
+    ),
+    "gap-eastfield": (
+        "period_gap:cik-0009990006:2025-03-31:2025-09-30",
+        "Eastfield Bank filed no 10-Q for the quarter ended 2025-06-30.",
+    ),
+}
+
+
+def review(first: "EventBuild") -> tuple[EventOverride, ...]:
+    """The overrides a reviewer records against the layer's first build, sorted."""
+    digests = {finding.finding_id: finding.digest for finding in first.findings}
+    overrides = [
+        _override(
+            override_id,
+            EventOverrideKind.ACKNOWLEDGE,
+            rationale,
+            finding_id=finding_id,
+            finding_digest=digests[finding_id],
+        )
+        for override_id, (finding_id, rationale) in GAPS.items()
+    ]
+    (release,) = [
+        placed
+        for placed in first.issuers["cik-0009990001"].releases
+        if placed.index.accepted == "2025-03-20 16:05:00"
+    ]
+    page = release.index_artifact
+    overrides.append(
+        _override(
+            "release-acme-2025-02-28",
+            EventOverrideKind.SET_RELEASE_FILING,
+            "The 8-K of 2025-03-11 estimates a sale's effect on the quarter; the"
+            " 8-K of 2025-03-20 furnishes the quarter's results.",
+            event_id="cik-0009990001:2025-02-28",
+            accession=release.filing.accession,
+            citations=(
+                OverrideCitation(
+                    source_id=SEC_SOURCE_ID,
+                    url=page.url,
+                    artifact_sha256=page.artifact.content_sha256,
+                    locator=page.text.find(release.index.accepted),
+                ),
+            ),
+        )
+    )
+    overrides.append(
+        _override(
+            "keep-borealis-same-day",
+            EventOverrideKind.RETAIN_UNRESOLVED,
+            "EDGAR alone cannot order a 07:00 release against a change before the"
+            " open on the same day (EV9).",
+            event_id="cik-0009990002:2024-09-30",
+            reason=EventReason.SAME_DAY_TRANSITION,
+        )
+    )
+    overrides.append(
+        _override(
+            "keep-dynamo-no-release",
+            EventOverrideKind.RETAIN_UNRESOLVED,
+            "Dynamo Motors furnished no results under Item 2.02 for the quarter"
+            " ended 2025-06-27.",
+            event_id="cik-0009990005:2025-06-27",
+            reason=EventReason.NO_RELEASE_FILING,
+        )
+    )
+    return tuple(sorted(overrides, key=lambda override: override.override_id))
