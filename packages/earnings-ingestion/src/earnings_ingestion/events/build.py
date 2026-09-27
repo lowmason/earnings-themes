@@ -288,16 +288,15 @@ def _named_filing(
 def _citations_refused(
     override: EventOverride, saved: SavedResponses, folder: str | None
 ) -> list[str]:
-    """Why an override's citations fail: none in the named filing's folder, or a
-    stored locator that no longer cites what it hashed."""
+    """Why an override's citations fail: a stored locator that no longer cites what it
+    hashed; or, with the named filing's ``folder``, no citation there of an SEC
+    artifact retrieved from its own URL, at a locator that verifies."""
     refused = []
-    if folder is not None and not any(
-        citation.url.startswith(folder) for citation in override.citations
-    ):
-        refused.append(f"{override.override_id}: no citation is in {folder}")
+    grounded = failed = False
     for citation in override.citations:
         if citation.artifact_sha256 is None or citation.source_id != SEC_SOURCE_ID:
             continue
+        inside = folder is not None and citation.url.startswith(folder)
         try:
             stored = saved.store.get(
                 SEC_SOURCE_ID,
@@ -311,6 +310,21 @@ def _citations_refused(
                 )
         except (FileNotFoundError, ValueError, LocatorError) as exc:
             refused.append(f"{override.override_id}: {exc}")
+            failed |= inside
+            continue
+        grounded |= (
+            inside
+            and citation.locator is not None
+            and any(r.request_url == citation.url for r in stored.retrievals)
+        )
+    if folder is not None and not (grounded or failed):
+        if any(citation.url.startswith(folder) for citation in override.citations):
+            refused.append(
+                f"{override.override_id}: no citation in {folder} is a saved SEC"
+                " artifact, retrieved from its URL, with a locator"
+            )
+        else:
+            refused.append(f"{override.override_id}: no citation is in {folder}")
     return refused
 
 

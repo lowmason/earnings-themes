@@ -307,6 +307,36 @@ def test_a_set_release_filing_must_cite_the_filing_verifiably(universe, layer) -
     )
 
 
+def test_a_citation_in_the_folder_must_be_a_saved_sec_artifact_with_a_locator(
+    universe, layer
+) -> None:
+    """A citation grounds a set_release_filing only as an SEC artifact retrieved from
+    its own URL in the filing's folder, at a locator that verifies. A URL alone,
+    another source, no locator, or another URL's artifact verifies nothing."""
+    good = choose(layer, ACME_SET, ACME, "2025-03-20 16:05:00")
+    (citation,) = good.citations
+    ((filing, _),) = [
+        (f, e) for f, e in filings(ACME) if f.accepted == "2025-03-20 16:05:00"
+    ]
+    document = archive_url(ACME.cik, good.accession, filing.primary_document)
+    cases = [
+        citation.model_copy(update={"artifact_sha256": None, "locator": None}),
+        citation.model_copy(update={"source_id": "synthetic-index"}),
+        citation.model_copy(update={"locator": None}),
+        citation.model_copy(update={"url": document}),
+    ]
+    folder = archive_url(ACME.cik, good.accession, "")
+    expected = (
+        (
+            f"release-cik-0009990001-2025-02-28: no citation in {folder} is a saved"
+            " SEC artifact, retrieved from its URL, with a locator"
+        ),
+    )
+    for case in cases:
+        override = good.model_copy(update={"citations": (case,)})
+        assert refused(universe, layer, override) == expected, case
+
+
 def test_a_filing_accepted_after_the_cutoff_is_refused(universe, tmp_path) -> None:
     """P-C4. The layer saves no index page for Acme's late release; this test saves
     one, so that the cutoff itself refuses it."""

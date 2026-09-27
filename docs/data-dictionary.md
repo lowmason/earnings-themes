@@ -1262,7 +1262,7 @@ set.
 | `reason` | `EventReason` or null | `retain_unresolved`'s reason, one that makes the event `ambiguous` |
 | `finding_id` | ID part or null | `acknowledge`'s finding |
 | `finding_digest` | 64 lowercase hex or null | The digest of the finding as reviewed |
-| `citations` | tuple of `OverrideCitation` | The evidence; required for `set_release_filing` |
+| `citations` | tuple of `OverrideCitation` | The evidence; required for `set_release_filing`, where at least one cites an SEC artifact in the filing's folder, retrieved from its own URL, at a locator that verifies |
 | `rationale` | string | Why |
 | `reviewer` | string | Who decided; the user, never an agent |
 | `recorded_on` | date | When |
