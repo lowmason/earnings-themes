@@ -1144,10 +1144,13 @@ source.
 - **Schema version.** These records join ingestion schema version `1`, since no
   earlier record's fields changed. `EventManifest` and `EventEvidence` carry it as
   `schema_version`; the nested parts do not.
-- **Facts, not incidental evidence** (EV11). An event row, finding, or override holds
-  facts only: never a retrieval time, or a pointer into one saved file. Citations and
-  retrieval times sit in the evidence record, outside the manifest's hash, so a
-  re-fetch never re-versions a manifest.
+- **Facts, not incidental evidence** (EV11). An event row or finding holds facts
+  only: never a retrieval time, or a pointer into one saved file. What each row rests
+  on, cited with its retrieval time, sits in the evidence record, outside the
+  manifest's hash. An override is hashed whole, and its citations carry the cited
+  artifact's hash and a locator. So a re-fetch re-versions no manifest while the store
+  keeps each cited artifact; in a fresh store, a cited page served with other bytes
+  must be re-cited, which re-versions the manifest and re-seeds the pilot.
 - **Times.** Every time is a UTC instant. Every date judgment reads the instant's
   date on the America/New_York calendar (EV10).
 

@@ -164,6 +164,16 @@ runtime, and `test_stage_5_imports_no_acquisition_library` checks their source.
   longer reproduces v1's content hash, and `earnings-pipeline cohort verify-live`
   reports the difference. Its operative hash, which Stage 5 keys on, is unchanged
   (P7-3).
+- **A fresh store** (EV11). Each of the 12 overrides cites an index page by its
+  artifact hash and a locator, and the manifest hashes each override whole, with its
+  citations. `data/raw/events/` is never committed, so a rebuild on another machine,
+  or from a fresh discovery, finds a cited page only if SEC serves the same bytes. If
+  it serves other bytes, even with the same `walker-1` text, the build refuses that
+  override until it is re-cited, and the re-cited override changes the content hash:
+  a new events version and a re-seeded pilot, though no fact changed. The committed v1
+  files load without the store. Hashing only an override's decision fields, or giving
+  the event manifest an operative identity, would close this, under a new events
+  version (`specs/deferred_items.md`).
 - **One machine.** The SEC and web client locks coordinate one machine's processes.
   Stage 1's harness client keeps its own lock, so it must never run live beside a
   package client.

@@ -477,3 +477,26 @@
       Size: quick-fix. Done when: loading an evidence record checks its
       `corpus_id` and `event_manifest_hash` against the manifest of its version,
       with a test.
+
+## PR #6 review (plan 7) — 2026-09-27
+- [ ] Decide what identifies the event manifest when a store is rebuilt (PR #6's
+      review, F27): `EventManifest`'s content hash in `events/records.py` hashes
+      each override whole, and each `set_release_filing` cites an index page by its
+      artifact hash and a locator, which `_citations_refused` in `events/build.py`
+      looks up in the store. `data/raw/events/` is never committed, so on another
+      machine, or after a fresh discovery, SEC serving a cited page with other
+      bytes, even with the same `walker-1` text, refuses the override until it is
+      re-cited, and the re-cited override re-versions the manifest and re-seeds the
+      pilot (`pilot_seed` in `events/pilot.py` takes the content hash), though no
+      fact changed. That falls short of EV11's aim that a re-fetch never re-versions
+      a manifest; `docs/verification/djia-events.md` records it under Limitations.
+      Stage 4 closed the same gap with an operative hash (`cohort/identity.py`) that
+      leaves overrides out. Options: hash only an override's decision fields (its
+      kind, targets, and reason, not its citations), or give the event manifest an
+      operative identity for the pilot's seed to key on. Either changes events v1's
+      content hash or its pilot's seed, so it lands only with a new events version,
+      and the committed v1 must stay loadable. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: design. Done
+      when: the decision is recorded, and a test shows that re-citing an override's
+      page from other bytes leaves the chosen identity and the pilot's seed
+      unchanged.

@@ -9,7 +9,8 @@ selection).
   and the overrides applied. Its content hash covers them, less the definition's
   version, hash, creation time, and ``universe_version`` (plan 7, P7-2).
 - **Evidence.** ``EventEvidence`` sits beside a frozen manifest, outside its hash, and
-  cites what each row rests on (EV11). A re-fetch changes it and nothing else.
+  cites what each row rests on (EV11). A re-fetch changes it and nothing else, while
+  the store keeps what the overrides cite (below).
 - **Overrides.** ``EventOverride`` is a reviewer's signed decision, read strictly from
   ``overrides.toml`` like Stage 4's (P6-18).
 - **The pilot.** ``PilotManifest`` is ``djia-pilot/1``'s frozen selection: its rows in
@@ -18,8 +19,12 @@ selection).
 
 These are ingestion records and join ingestion schema version 1 (P6-5). A committed
 record carries facts, URLs, hashes, and locators, never a source's wording (P6-3).
-Rows, findings, and overrides carry facts only, never a retrieval time or a pointer
-into one saved file, so a re-fetch never re-versions a manifest.
+Rows and findings carry facts only, never a retrieval time or a pointer into one saved
+file. An override's citations do carry the cited artifact's hash and a locator, and
+the manifest hashes each override whole, with its citations. So a re-fetch
+re-versions no manifest while the store keeps each cited artifact; in a fresh store,
+a cited page served with other bytes must be re-cited, and that re-versions the
+manifest (docs/verification/djia-events.md, Limitations).
 docs/data-dictionary.md documents every field and value.
 """
 
