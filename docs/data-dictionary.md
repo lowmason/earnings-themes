@@ -1258,7 +1258,7 @@ set.
 | `override_id` | ID part | A curated slug |
 | `kind` | `EventOverrideKind` | The decision |
 | `event_id` | ID part or null | The event of `set_release_filing` and `retain_unresolved` |
-| `accession` | accession or null | `set_release_filing`'s filing: an 8-K or 8-K/A of the issuer, accepted by the cutoff, whose index page is saved |
+| `accession` | accession or null | `set_release_filing`'s filing: an 8-K or 8-K/A of the issuer, accepted after the event's period end and by the cutoff, whose index page is saved, and the release of no other event |
 | `reason` | `EventReason` or null | `retain_unresolved`'s reason, one that makes the event `ambiguous` |
 | `finding_id` | ID part or null | `acknowledge`'s finding |
 | `finding_digest` | 64 lowercase hex or null | The digest of the finding as reviewed |

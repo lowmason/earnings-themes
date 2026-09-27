@@ -321,6 +321,57 @@ def test_a_set_release_filing_must_name_a_saved_8_k_of_the_issuer(
     ]
 
 
+def test_a_set_release_filing_must_follow_the_event_s_period_end(
+    universe, layer
+) -> None:
+    """A release follows its quarter (S §Review overrides, amended 2026-09-27). A
+    filing accepted on or before the event's period end, on the Eastern calendar, is
+    refused: Acme's release for the quarter before, and an earlier 8-K that is no
+    event's release."""
+    cases = [
+        choose(layer, ACME_SET, ACME, "2024-12-19 16:05:00"),
+        choose(layer, "cik-0009990001:2025-05-31", ACME, "2025-03-11 08:00:00"),
+    ]
+    problems = [refused(universe, layer, case) for case in cases]
+    assert problems == [
+        (
+            (
+                f"release-cik-0009990001-2025-02-28: {cases[0].accession} was accepted"
+                " on 2024-12-19, on or before the event's period end 2025-02-28"
+            ),
+        ),
+        (
+            (
+                f"release-cik-0009990001-2025-05-31: {cases[1].accession} was accepted"
+                " on 2025-03-11, on or before the event's period end 2025-05-31"
+            ),
+        ),
+    ]
+
+
+def test_two_events_never_share_a_release(universe, layer) -> None:
+    """A filing accepted after the event's period end can still be another event's
+    release. An override naming the next quarter's release, or two overrides naming
+    one filing, is refused."""
+    early = "cik-0009990001:2024-08-31"
+    later = choose(layer, early, ACME, "2024-12-19 16:05:00")
+    assert refused(universe, layer, later) == (
+        (
+            f"release-cik-0009990001-2024-08-31: {later.accession} would be the"
+            f" release of {early} and cik-0009990001:2024-11-30"
+        ),
+    )
+    good = choose(layer, ACME_SET, ACME, "2025-03-20 16:05:00")
+    again = choose(layer, "cik-0009990001:2024-11-30", ACME, "2025-03-20 16:05:00")
+    assert refused(universe, layer, good, again) == (
+        (
+            "release-cik-0009990001-2024-11-30, release-cik-0009990001-2025-02-28:"
+            f" {good.accession} would be the release of cik-0009990001:2024-11-30"
+            f" and {ACME_SET}"
+        ),
+    )
+
+
 def test_a_set_release_filing_must_cite_the_filing_verifiably(universe, layer) -> None:
     good = choose(layer, ACME_SET, ACME, "2025-03-20 16:05:00")
     (citation,) = good.citations

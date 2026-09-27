@@ -8,10 +8,14 @@ filing by ``release-id/1``, and decides its eligibility by ``eligibility/1``. Th
 applies the overrides:
 
 - ``set_release_filing`` names an 8-K or 8-K/A of the event's issuer, listed in the
-  issuer's read files, whose index page is saved and which was accepted by the
-  cutoff. One of its citations is in that filing's folder. The event takes the
-  filing's acceptance time and the method ``override``, and its eligibility is
-  decided again, with any outcome.
+  issuer's read files, whose index page is saved and which was accepted after the
+  event's period end P and by the cutoff, on the Eastern calendar. One of its
+  citations is in that filing's folder. The event takes the filing's acceptance time
+  and the method ``override``, and its eligibility is decided again, with any
+  outcome. No two events share a release, so a filing that would also be another
+  event's is refused. No bound applies after P': a late release can be legitimate,
+  and that refusal catches the harmful case, the next event's release (S §Review
+  overrides, amended 2026-09-27).
 - ``retain_unresolved`` keeps an event that is ``ambiguous`` with the override's
   reason. It is judged after any ``set_release_filing`` of the same event.
 - ``acknowledge`` answers a ``period_gap`` or ``no_slots`` finding whose digest it
@@ -248,10 +252,14 @@ def _companyfacts(
 
 
 def _named_filing(
-    filings: IssuerFilings, saved: SavedResponses, accession: str, cutoff: date
+    filings: IssuerFilings,
+    saved: SavedResponses,
+    accession: str,
+    slot: Slot,
+    cutoff: date,
 ) -> tuple[Placed | None, str | None]:
-    """The filing a ``set_release_filing`` names, placed by its index page; or why
-    the override is refused."""
+    """The filing a ``set_release_filing`` names for ``slot``, placed by its index
+    page; or why the override is refused."""
     listed = [
         (filing, file)
         for file in filings.files
@@ -277,6 +285,11 @@ def _named_filing(
         return None, f"{url}: {exc}"
     if index.accession != accession:
         return None, f"{url} is the index page of {index.accession}"
+    if eastern_date(instant) <= slot.period_end:
+        return None, (
+            f"{accession} was accepted on {eastern_date(instant)}, on or before the"
+            f" event's period end {slot.period_end}"
+        )
     if eastern_date(instant) > cutoff:
         return None, (
             f"{accession} was accepted on {eastern_date(instant)}, after the cutoff"
@@ -325,6 +338,29 @@ def _citations_refused(
             )
         else:
             refused.append(f"{override.override_id}: no citation is in {folder}")
+    return refused
+
+
+def _shared_releases(
+    rows: Sequence[EventRow], sets: dict[str, tuple[EventOverride, Placed]]
+) -> list[str]:
+    """A refusal for each filing that two rows take as their release, naming the
+    ``set_release_filing`` overrides that chose it. The rule's candidate ranges
+    ``(P, P']`` never meet, so only an override can make one."""
+    events: dict[str, list[str]] = {}
+    for row in rows:
+        if row.release_accession is not None:
+            events.setdefault(row.release_accession, []).append(row.event_id)
+    refused = []
+    for accession, sharing in sorted(events.items()):
+        if len(sharing) < 2:
+            continue
+        named = sorted(sharing)
+        chosen = [sets[event][0].override_id for event in named if event in sets]
+        refused.append(
+            f"{', '.join(chosen) or RELEASE_POLICY}: {accession} would be the"
+            f" release of {' and '.join(named)}"
+        )
     return refused
 
 
@@ -396,7 +432,7 @@ def build_events(
             continue
         slot, _ = by_event[override.event_id]
         placed, why = _named_filing(
-            read[slot.issuer_id], saved, override.accession, cutoff
+            read[slot.issuer_id], saved, override.accession, slot, cutoff
         )
         if placed is None:
             problems.append(f"{override.override_id}: {why}")
@@ -475,6 +511,9 @@ def build_events(
             )
         )
         details[slot.event_id] = EventDetail(slot, found, release, decision)
+    problems.extend(_shared_releases(rows, sets))
+    if problems:
+        raise EventBuildError(problems)
     resolved = tuple(
         finding.model_copy(
             update={"resolved_by": tuple(sorted(acknowledged[finding.finding_id]))}
