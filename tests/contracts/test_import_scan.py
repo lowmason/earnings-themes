@@ -7,7 +7,9 @@ every module under each member's ``src/`` with ``ast`` and refuses:
 - a sibling import the dependency table in ``CLAUDE.md`` forbids;
 - a browser import (Selenium, websocket-client, Playwright, pyppeteer) anywhere but
   ``earnings_ingestion.browser.selenium_capture``, the one adapter behind the
-  ``browser-capture`` extra.
+  ``browser-capture`` extra;
+- an acquisition library (edgartools, pandas, pyarrow) in any of Stage 5's modules
+  (R14.5).
 """
 
 import ast
@@ -85,3 +87,27 @@ def test_the_scan_sees_imports_inside_functions(tmp_path: Path) -> None:
 
 def test_the_adapter_is_the_one_module_that_imports_a_browser() -> None:
     assert any(module.startswith("selenium") for _, module in imported(ADAPTER))
+
+
+ACQUISITION = frozenset({"edgar", "pandas", "pyarrow"})
+
+
+def test_stage_5_imports_no_acquisition_library() -> None:
+    """R14.5: Stage 5's readers are the package's own, so no acquisition library's
+    output reaches the ingestion boundary, and there is nothing to cast."""
+    ingestion = SOURCES["earnings_ingestion"]
+    paths = [
+        *sorted((ingestion / "events").glob("*.py")),
+        ingestion / "sec" / "companyfacts.py",
+        ingestion / "sec" / "filing_index.py",
+        ingestion / "cohort" / "identity.py",
+        SOURCES["earnings_pipeline"] / "events_cli.py",
+    ]
+    assert len(paths) > 5
+    found = [
+        f"{path.relative_to(ROOT)}:{line} imports {name}"
+        for path in paths
+        for line, name in imported(path)
+        if name.partition(".")[0] in ACQUISITION
+    ]
+    assert not found
