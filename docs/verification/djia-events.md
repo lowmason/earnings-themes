@@ -2,7 +2,7 @@
 
 This record verifies plan A of roadmap Stage 5: event discovery, eligibility, and the
 freezes, which `specs/event-discovery-eligibility-and-acquisition.md` specifies. Plan 7
-(`specs/plans/7-event-discovery-eligibility-and-acquisition-plan-a.md`) built it.
+(`specs/plans/completed/7-event-discovery-eligibility-and-acquisition-plan-a.md`) built it.
 Plan B, which acquires the pilot's releases, adds its own sections.
 
 ## What was verified
