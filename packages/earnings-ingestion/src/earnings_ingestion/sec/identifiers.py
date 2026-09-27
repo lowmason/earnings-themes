@@ -9,10 +9,11 @@ from typing import Annotated
 
 from pydantic import StringConstraints
 
-Cik = Annotated[str, StringConstraints(pattern=r"^\d{10}$")]
-"""A CIK written as exactly 10 decimal digits, zero-padded."""
+Cik = Annotated[str, StringConstraints(pattern=r"^[0-9]{10}$")]
+"""A CIK written as exactly 10 ASCII decimal digits, zero-padded. ``\\d`` would also
+admit other scripts' digits, such as fullwidth or Arabic-Indic ones."""
 
-_DIGITS = re.compile(r"^\d{1,10}$")
+_DIGITS = re.compile(r"^[0-9]{1,10}$")
 
 
 def pad_cik(value: int | str) -> str:

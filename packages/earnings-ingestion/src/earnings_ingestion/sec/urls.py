@@ -12,8 +12,12 @@ COMPANY_TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
 
 
 def is_sec_host(host: str) -> bool:
-    """True for sec.gov and every host under it: only the SEC client may reach them."""
-    host = host.lower()
+    """True for sec.gov and every host under it: only the SEC client may reach them.
+
+    DNS's trailing root dot is ignored, so ``www.sec.gov.`` is an SEC host too and
+    goes to the SEC client, whose exact match on ``SEC_HOSTS`` then refuses it.
+    """
+    host = host.lower().rstrip(".")
     return host == "sec.gov" or host.endswith(".sec.gov")
 
 

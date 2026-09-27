@@ -10,8 +10,9 @@ import httpx
 import pytest
 from earnings_ingestion.fetch.client import AccessStop
 from earnings_ingestion.sec.client import MIN_INTERVAL_SECONDS, open_sec_client
-from earnings_ingestion.sec.identifiers import pad_cik, unpad_cik
+from earnings_ingestion.sec.identifiers import Cik, pad_cik, unpad_cik
 from earnings_ingestion.sec.urls import archive_url, is_sec_host, submissions_url
+from pydantic import TypeAdapter, ValidationError
 
 IDENTITY = "Jane Doe earnings-themes research jane@example.org"
 ENVIRON = {"EDGAR_IDENTITY": IDENTITY}
@@ -57,6 +58,19 @@ def test_a_non_cik_is_refused(value) -> None:
         pad_cik(value)
 
 
+def _digits(text: str, zero: int) -> str:
+    """``text``'s digits written in the script whose zero is code point ``zero``."""
+    return "".join(chr(zero + int(digit)) for digit in text)
+
+
+@pytest.mark.parametrize("zero", [0xFF10, 0x0660], ids=["fullwidth", "arabic-indic"])
+def test_a_cik_is_written_in_ascii_digits_only(zero) -> None:
+    with pytest.raises(ValueError, match="not a CIK"):
+        pad_cik(_digits("320193", zero))
+    with pytest.raises(ValidationError):
+        TypeAdapter(Cik).validate_python(_digits("0000320193", zero))
+
+
 def test_urls_use_each_endpoints_cik_form() -> None:
     assert (
         submissions_url("320193")
@@ -71,6 +85,11 @@ def test_urls_use_each_endpoints_cik_form() -> None:
 def test_only_sec_hosts_are_sec_hosts() -> None:
     assert is_sec_host("www.sec.gov") and is_sec_host("DATA.SEC.GOV")
     assert not is_sec_host("sec.gov.example.org")
+
+
+def test_a_trailing_dot_does_not_hide_a_sec_host() -> None:
+    assert is_sec_host("www.sec.gov.") and is_sec_host("DATA.SEC.GOV.")
+    assert not is_sec_host("sec.gov.example.org.")
 
 
 def test_the_client_needs_an_identity(tmp_path) -> None:
@@ -101,6 +120,14 @@ def test_the_client_reaches_sec_hosts_only(tmp_path) -> None:
         pytest.raises(AccessStop, match="outside this client's hosts"),
     ):
         client.get("https://www.example.org/x")
+
+
+def test_the_client_refuses_a_sec_host_written_with_a_trailing_dot(tmp_path) -> None:
+    with (
+        opened(tmp_path, lambda request: httpx.Response(200)) as client,
+        pytest.raises(AccessStop, match="outside this client's hosts"),
+    ):
+        client.get("https://www.sec.gov./files/company_tickers.json")
 
 
 def test_concurrent_workers_stay_at_or_below_two_requests_per_second(tmp_path) -> None:

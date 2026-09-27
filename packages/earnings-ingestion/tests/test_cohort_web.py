@@ -64,10 +64,13 @@ def test_an_unregistered_host_is_refused(tmp_path) -> None:
         web.fetch("https://elsewhere.example/page", {"text/html"})
 
 
-def test_sec_hosts_belong_to_the_sec_client(tmp_path) -> None:
+@pytest.mark.parametrize(
+    "sec", ["www.sec.gov", "www.sec.gov."], ids=["bare", "trailing-dot"]
+)
+def test_sec_hosts_belong_to_the_sec_client(tmp_path, sec) -> None:
     with (
         pytest.raises(ValueError, match="shared SEC client"),
-        opened(tmp_path, site, hosts=("roster.example", "www.sec.gov")),
+        opened(tmp_path, site, hosts=("roster.example", sec)),
     ):
         pass
 
