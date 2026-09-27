@@ -10,6 +10,8 @@
   to a temporary file linked into place: a manifest never appears without its
   evidence, and neither is ever replaced.
 - Loading reads the committed JSON alone and rechecks the content hash and the name.
+  An evidence record loads only with its manifest: the same ``corpus_id``, version,
+  and content hash, and one citation per row, in the rows' order.
 """
 
 import json
@@ -80,11 +82,32 @@ def load_event_manifest(path: Path) -> EventManifest:
     return manifest
 
 
-def load_event_evidence(path: Path) -> EventEvidence:
-    """A committed evidence record, refused if its name disagrees."""
+def load_event_evidence(path: Path, manifest: EventManifest) -> EventEvidence:
+    """A committed evidence record, refused if its name disagrees, or unless it is
+    ``manifest``'s: the same ``corpus_id``, version, and content hash, and one
+    citation per row, in the rows' order."""
     evidence = EventEvidence.model_validate_json(path.read_bytes())
     if path.name != evidence_path(path.parent, evidence.event_manifest_version).name:
         raise ValueError(f"{path} holds version {evidence.event_manifest_version}")
+    definition = manifest.definition
+    for field, found, expected in (
+        ("corpus_id", evidence.corpus_id, definition.corpus_id),
+        (
+            "event_manifest_version",
+            evidence.event_manifest_version,
+            definition.event_manifest_version,
+        ),
+        ("event_manifest_hash", evidence.event_manifest_hash, definition.content_hash),
+    ):
+        if found != expected:
+            raise ValueError(
+                f"{path}: {field} {found} is not the manifest's {expected}"
+            )
+    cited = [citations.event_id for citations in evidence.events]
+    if cited != [row.event_id for row in manifest.rows]:
+        raise ValueError(
+            f"{path}: the event_ids of its events are not the manifest's rows, in order"
+        )
     return evidence
 
 

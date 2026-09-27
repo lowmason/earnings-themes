@@ -94,7 +94,8 @@ def test_p_vi_replays_offline_to_the_frozen_manifests() -> None:
 
 
 def test_every_citation_verifies_against_the_committed_store() -> None:
-    evidence = load_event_evidence(ROOT / "events-v1.evidence.json")
+    manifest = load_event_manifest(ROOT / "events-v1.json")
+    evidence = load_event_evidence(ROOT / "events-v1.evidence.json", manifest)
     assert check_evidence(evidence, ArtifactStore(ROOT / "raw", REPO)) == ()
     assert len(evidence.events) == 32
 

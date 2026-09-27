@@ -16,6 +16,7 @@ from earnings_ingestion.events.freeze import (
     freeze_events,
     load_event_evidence,
     load_event_manifest,
+    serialize,
 )
 from earnings_ingestion.events.layer import (
     ACME,
@@ -122,7 +123,7 @@ def test_a_reviewed_build_freezes_with_evidence_that_verifies(
         "events-v1.evidence.json",
     )
     assert load_event_manifest(frozen.path) == frozen.manifest
-    evidence = load_event_evidence(frozen.evidence_path)
+    evidence = load_event_evidence(frozen.evidence_path, frozen.manifest)
     assert evidence.event_manifest_hash == frozen.manifest.definition.content_hash
     assert check_evidence(evidence, layer.store) == ()
     assert len(evidence.events) == 32
@@ -210,6 +211,54 @@ def test_loading_rechecks_the_hash_and_the_name(universe, layer, tmp_path) -> No
     changed.write_text(text)
     with pytest.raises(ValueError, match="does not hash"):
         load_event_manifest(changed)
+
+
+@pytest.mark.parametrize(
+    ("tamper", "message"),
+    [
+        ("corpus", "corpus_id other is not"),
+        ("version", "event_manifest_version 2 is not"),
+        ("other content", "event_manifest_hash"),
+        ("truncated", "event_ids of its events"),
+        ("swapped", "event_ids of its events"),
+    ],
+)
+def test_loading_evidence_binds_it_to_its_manifest(
+    universe, layer, tmp_path, tamper, message
+) -> None:
+    """Corvid's companyfacts, fetched again with agreeing labels, give a second v1 of
+    the same corpus, with the same event IDs and other content (D8)."""
+    before = reviewed(universe, layer)
+    frozen = freeze(before, layer, tmp_path / "a")
+    evidence = load_event_evidence(frozen.evidence_path, frozen.manifest)
+    assert evidence.event_manifest_hash == frozen.manifest.definition.content_hash
+    path = frozen.evidence_path
+    if tamper == "other content":
+        again = SyntheticStore(layer.store.root, layer.store.repo, LATER)
+        facts = [
+            (filing.accession, report.labels[0][0], report.labels[0][1])
+            for filing, report in filings(CORVID)
+            if report in REPORTS[CORVID]
+        ]
+        again.companyfacts(CORVID.cik, CORVID.name, facts)
+        other = freeze(build(universe, again, before.overrides), again, tmp_path / "b")
+        rows = [row.event_id for row in other.manifest.rows]
+        assert other.path.name == frozen.path.name
+        assert rows == [row.event_id for row in frozen.manifest.rows]
+        path = other.evidence_path
+    else:
+        events = evidence.events
+        update = {
+            "corpus": {"corpus_id": "other"},
+            "version": {"event_manifest_version": 2},
+            "truncated": {"events": events[:-1]},
+            "swapped": {"events": (events[1], events[0], *events[2:])},
+        }[tamper]
+        name = "events-v2.evidence.json" if tamper == "version" else path.name
+        path = tmp_path / name
+        path.write_bytes(serialize(evidence.model_copy(update=update)))
+    with pytest.raises(ValueError, match=message):
+        load_event_evidence(path, frozen.manifest)
 
 
 def test_a_changed_interval_or_policy_changes_the_hash_and_a_version_alone_does_not(
