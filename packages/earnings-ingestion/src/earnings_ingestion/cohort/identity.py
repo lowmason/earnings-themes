@@ -15,6 +15,10 @@ eligibility can read, and Stage 5's records key on it:
 
 A security named only by evidence the cutoff withholds has no interval, so its
 mapping decides no event and is left out (plan 7, P7-4).
+
+The assertions themselves are left out too, but not their actions, which
+``eligibility.span`` reads: ``reconstruct`` derives each interval from its
+assertions' actions, and the interval lists them by IDs that end in the action.
 """
 
 from earnings_ingestion.cohort.digests import digest

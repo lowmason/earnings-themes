@@ -121,6 +121,34 @@ def test_a_changed_mapping_changes_both(repo) -> None:
     assert after[1] != before[1]
 
 
+def test_a_changed_action_changes_both(repo) -> None:
+    """The projection holds no assertion, but each interval is reconstructed from
+    its assertions' actions and lists them by IDs that end in the action, so the
+    actions eligibility reads are in the identity."""
+    before = hashes(repo)
+    edit(
+        repo,
+        "evidence.toml",
+        'action = "removed"\nsecurity_id = "borealis-common"',
+        'action = "added"\nsecurity_id = "borealis-common"',
+    )
+    after = hashes(repo)
+    assert after[0] != before[0]
+    assert after[1] != before[1]
+
+
+def test_each_interval_names_its_assertions_actions() -> None:
+    """``eligibility.span`` splits an interval's assertions by action; each ID it
+    looks up ends in the action it finds, in v1 and in the synthetic cohort."""
+    for manifest in (load_manifest(V1), load_manifest(SYNTHETIC)):
+        actions = {
+            a.membership_assertion_id: a.asserted_action for a in manifest.assertions
+        }
+        for interval in manifest.intervals:
+            for assertion_id in interval.assertion_ids:
+                assert assertion_id.endswith(f":{actions[assertion_id]}")
+
+
 def test_a_new_supporting_assertion_changes_both(repo) -> None:
     """A second notice restating the change of 2024-11-01 merges into its intervals,
     which then rest on one more assertion."""
