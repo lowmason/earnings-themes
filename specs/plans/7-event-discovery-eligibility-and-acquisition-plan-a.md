@@ -1,5 +1,7 @@
 # Event Discovery, Eligibility, and the Freezes (Stage 5, plan A) — Implementation Plan
 
+**Status: COMPLETE (2026-09-27)** — executed via executing-plans; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > Roadmap: specs/evidence-linked-theme-extraction-roadmap.md, Stage 5 — on plan
@@ -837,7 +839,7 @@ two checkouts on one machine could each hold "the" SEC client and together excee
 
   Every later task that opens a client calls these signatures.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 The new conftest for the application's tests holds only the lock fixture.
 
@@ -1362,14 +1364,14 @@ for path, (text, count) in written.items():
 
 Apply `task1-tests`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_fetch_client.py packages/earnings-ingestion/tests/test_sec_client.py packages/earnings-ingestion/tests/test_cohort_web.py apps -q`
 
 Expected: an `ImportError while loading conftest`, ending
 `E   ImportError: cannot import name 'LOCK_DIR_VARIABLE' from 'earnings_ingestion.fetch.client'`.
 
-- [ ] **Step 3: Move the locks**
+- [x] **Step 3: Move the locks**
 
 Create `/tmp/plan7-task1-source.py`:
 
@@ -1635,13 +1637,13 @@ for path, (text, count) in written.items():
 
 Apply `task1-source`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_fetch_client.py packages/earnings-ingestion/tests/test_sec_client.py packages/earnings-ingestion/tests/test_cohort_web.py apps -q`
 
 Expected: `60 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan7-escapes.py packages/earnings-ingestion/src/earnings_ingestion/fetch/client.py packages/earnings-ingestion/src/earnings_ingestion/sec/client.py packages/earnings-ingestion/src/earnings_ingestion/cohort/web.py packages/earnings-ingestion/src/earnings_ingestion/cohort/live.py apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py apps/earnings-pipeline/tests/*.py packages/earnings-ingestion/tests/conftest.py packages/earnings-ingestion/tests/test_fetch_client.py packages/earnings-ingestion/tests/test_sec_client.py packages/earnings-ingestion/tests/test_cohort_web.py tests/integration/test_sec_formats_live.py
@@ -1652,7 +1654,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `939 passed, 24 deselected`; `All checks passed!` and
 `212 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -1696,7 +1698,7 @@ Completion restates it as its own open item (S §Deferred items).
   `_optional_text(value, where) -> str | None`, and `_former_name(entry, index)`,
   which Task 4's `_older_page` reuses.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `/tmp/plan7-task2-tests.py`:
 
@@ -1789,7 +1791,7 @@ for path, (text, count) in written.items():
 
 Apply `task2-tests`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_sec_data.py packages/earnings-ingestion/tests/test_fetch_client.py -q`
 
@@ -1798,7 +1800,7 @@ or `KeyError: 'name'`, or read without complaint (`DID NOT RAISE SecDataError`).
 superscript two raises `ValueError: could not convert string to float`, and the other
 two digit strings are obeyed (`assert 12.0 is None`, `assert 10.0 is None`).
 
-- [ ] **Step 3: Refuse the malformed shapes, and ignore the digits**
+- [x] **Step 3: Refuse the malformed shapes, and ignore the digits**
 
 Create `/tmp/plan7-task2-source.py`:
 
@@ -1917,13 +1919,13 @@ for path, (text, count) in written.items():
 
 Apply `task2-source`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_sec_data.py packages/earnings-ingestion/tests/test_fetch_client.py -q`
 
 Expected: `40 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan7-escapes.py packages/earnings-ingestion/src/earnings_ingestion/sec/data.py packages/earnings-ingestion/src/earnings_ingestion/fetch/client.py packages/earnings-ingestion/tests/test_sec_data.py packages/earnings-ingestion/tests/test_fetch_client.py
@@ -1934,7 +1936,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `950 passed, 24 deselected`; `All checks passed!` and
 `212 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -1985,7 +1987,7 @@ covers only the facts an event's eligibility can read.
   synthetic cohort's is
   `57dcc2eb3d5f98e38717c54f9e2dc5419beca02f15fda04d2cb384d93358ae5c`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_cohort_identity.py`:
 
@@ -2164,13 +2166,13 @@ def test_v1_loads_unchanged_and_has_an_operative_hash() -> None:
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/tests/test_cohort_identity.py`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_identity.py -q`
 
 Expected: FAIL: `ModuleNotFoundError: No module named 'earnings_ingestion.cohort.identity'`.
 
-- [ ] **Step 3: Write the projection**
+- [x] **Step 3: Write the projection**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/cohort/identity.py`:
 
@@ -2240,13 +2242,13 @@ def operative_hash(manifest: UniverseManifest) -> str:
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/src/earnings_ingestion/cohort/identity.py`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_identity.py -q`
 
 Expected: `8 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan7-escapes.py packages/earnings-ingestion/src/earnings_ingestion/cohort/identity.py packages/earnings-ingestion/tests/test_cohort_identity.py
@@ -2257,7 +2259,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `958 passed, 24 deselected`; `All checks passed!` and
 `214 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -2338,7 +2340,7 @@ older-page entries carry both dates. The three probe companyfacts files read, wi
       accession;
     - `read_companyfacts(body: bytes) -> CompanyFacts`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 The index-page tests build a page inline, shaped as EDGAR writes them: a header of
 `infoHead` and `info` pairs, then the Document Format Files table, then a Data Files
@@ -2725,7 +2727,7 @@ for path, (text, count) in written.items():
 
 Apply `task4-tests`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_sec_data.py packages/earnings-ingestion/tests/test_sec_filing_index.py packages/earnings-ingestion/tests/test_sec_companyfacts.py -q`
 
@@ -2734,7 +2736,7 @@ Expected: FAIL: `3 errors during collection`:
 and `ModuleNotFoundError` for `earnings_ingestion.sec.filing_index` and
 `earnings_ingestion.sec.companyfacts`.
 
-- [ ] **Step 3: Write the readers**
+- [x] **Step 3: Write the readers**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/sec/filing_index.py`:
 
@@ -3232,13 +3234,13 @@ for path, (text, count) in written.items():
 
 Apply `task4-source`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_sec_data.py packages/earnings-ingestion/tests/test_sec_filing_index.py packages/earnings-ingestion/tests/test_sec_companyfacts.py -q`
 
 Expected: `57 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan7-escapes.py packages/earnings-ingestion/src/earnings_ingestion/sec/*.py packages/earnings-ingestion/src/earnings_ingestion/cohort/acquire.py packages/earnings-ingestion/src/earnings_ingestion/cohort/build.py packages/earnings-ingestion/tests/test_sec_*.py tests/integration/test_sec_formats_live.py
@@ -3249,7 +3251,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `994 passed, 24 deselected`; `All checks passed!` and
 `218 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -3320,7 +3322,7 @@ S §Acceptance time (EV10), S Finding 1, and S §Prerequisites, item 3.
     `mixed`, and `mismatches`;
   - `survey(name: str, filings: Iterable[Filing], instants: Mapping[str, datetime]) -> FileSurvey`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_events_acceptance.py`:
 
@@ -3464,13 +3466,13 @@ def test_a_file_with_no_cross_checked_row_has_no_convention() -> None:
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/tests/test_events_acceptance.py`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_acceptance.py -q`
 
 Expected: FAIL: `ModuleNotFoundError: No module named 'earnings_ingestion.events'`.
 
-- [ ] **Step 3: Write the acceptance-time module**
+- [x] **Step 3: Write the acceptance-time module**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/events/__init__.py`:
 
@@ -3625,13 +3627,13 @@ def survey(
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/src/earnings_ingestion/events/acceptance.py`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_acceptance.py -q`
 
 Expected: `16 passed`.
 
-- [ ] **Step 5: Write and run the record's script**
+- [x] **Step 5: Write and run the record's script**
 
 Create `tests/integration/regenerate_acceptance_time_record.py`:
 
@@ -3932,7 +3934,7 @@ Its verdict reads "Every cross-checked row follows one of the two conventions, a
 file follows both." These are S Finding 1's numbers. If any differs, stop and report
 it: the saved pages have changed, or the rule does not hold.
 
-- [ ] **Step 6: Run the checks**
+- [x] **Step 6: Run the checks**
 
 ```bash
 python3 /tmp/plan7-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/*.py packages/earnings-ingestion/tests/test_events_acceptance.py tests/integration/regenerate_acceptance_time_record.py
@@ -3943,7 +3945,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1010 passed, 24 deselected`; `All checks passed!` and
 `222 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -4014,7 +4016,7 @@ records come first, so every later task builds and tests against their validator
   - `event_finding(kind, subject, detail, *, issuer_id=None) -> EventFinding`;
   - `content_hash(manifest: EventManifest) -> str`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_events_records.py`:
 
@@ -4334,13 +4336,13 @@ def test_rows_are_unique_and_sorted_by_event_id() -> None:
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/tests/test_events_records.py`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_records.py -q`
 
 Expected: FAIL: `ModuleNotFoundError: No module named 'earnings_ingestion.events.records'`.
 
-- [ ] **Step 3: Write the records**
+- [x] **Step 3: Write the records**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/events/records.py`:
 
@@ -4760,13 +4762,13 @@ class EventEvidence(IngestionRecord):
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/src/earnings_ingestion/events/records.py`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_records.py -q`
 
 Expected: `20 passed`.
 
-- [ ] **Step 5: Document the records**
+- [x] **Step 5: Document the records**
 
 Register every new model and enum in the drift test:
 
@@ -5072,7 +5074,7 @@ Run: `uv run --locked --all-packages pytest tests/contracts/test_data_dictionary
 
 Expected: `94 passed`.
 
-- [ ] **Step 6: Run the checks**
+- [x] **Step 6: Run the checks**
 
 ```bash
 python3 /tmp/plan7-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/records.py packages/earnings-ingestion/tests/test_events_records.py tests/contracts/test_data_dictionary.py
@@ -5083,7 +5085,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1046 passed, 24 deselected`; `All checks passed!` and
 `224 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -5172,7 +5174,7 @@ pages that discovery must fetch, which match S Finding 2 and S §Gates (plan A).
     - `IssuerFilings(cik, registrant, files, skipped, periodic, releases, findings, problems)`;
     - `issuer_filings(saved, cik, issuer_id, *, start, cutoff) -> IssuerFilings`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 The tests keep one issuer's responses in a temporary store, built with the synthetic
 formats.
@@ -5465,13 +5467,13 @@ def test_the_newest_retrieval_of_each_url_is_read(saved) -> None:
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/tests/test_events_filings.py`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_filings.py -q`
 
 Expected: FAIL: `ModuleNotFoundError: No module named 'earnings_ingestion.events.filings'`.
 
-- [ ] **Step 3: Write the saved responses, the formats, and the placement**
+- [x] **Step 3: Write the saved responses, the formats, and the placement**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/events/saved.py`:
 
@@ -6128,13 +6130,13 @@ def _why(filing: Filing, cutoff: date) -> str:
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/src/earnings_ingestion/events/filings.py`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_filings.py -q`
 
 Expected: `13 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan7-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/*.py packages/earnings-ingestion/tests/test_events_filings.py
@@ -6145,7 +6147,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1059 passed, 24 deselected`; `All checks passed!` and
 `228 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -6202,7 +6204,7 @@ step works slot by slot.
     `facts` is a sequence of `(accession, fy, fp)`, one fact each; and
     `SyntheticStore.companyfacts(cik, name, facts)`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_events_slots.py`:
 
@@ -6415,13 +6417,13 @@ def test_the_window_is_half_open(tmp_path) -> None:
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/tests/test_events_slots.py`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_slots.py -q`
 
 Expected: FAIL: `ModuleNotFoundError: No module named 'earnings_ingestion.events.slots'`.
 
-- [ ] **Step 3: Write the slots, and the companyfacts format**
+- [x] **Step 3: Write the slots, and the companyfacts format**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/events/slots.py`:
 
@@ -6680,13 +6682,13 @@ for path, (text, count) in written.items():
 
 Apply `task8-synthetic`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_slots.py -q`
 
 Expected: `11 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan7-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/*.py packages/earnings-ingestion/tests/test_events_slots.py
@@ -6697,7 +6699,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1070 passed, 24 deselected`; `All checks passed!` and
 `230 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -6804,7 +6806,7 @@ The result, as a prediction for Task 20:
       under `archive_url(cik, accession, primary_document)`. Task 11's layer writes
       its 8-Ks through it.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_events_release.py`:
 
@@ -7355,13 +7357,13 @@ def test_the_release_cites_its_item_text(acme) -> None:
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/tests/test_events_release.py`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_release.py -q`
 
 Expected: FAIL: `ModuleNotFoundError: No module named 'earnings_ingestion.events.release'`.
 
-- [ ] **Step 3: Write the rule, and the 8-K format**
+- [x] **Step 3: Write the rule, and the 8-K format**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/events/release.py`:
 
@@ -7813,13 +7815,13 @@ for path, (text, count) in written.items():
 
 Apply `task9-synthetic`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_release.py -q`
 
 Expected: `55 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan7-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/*.py packages/earnings-ingestion/tests/test_events_release.py
@@ -7830,7 +7832,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1125 passed, 24 deselected`; `All checks passed!` and
 `232 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -7906,7 +7908,7 @@ leave, and Sherwin-Williams and Nvidia come out unordered as they join. At
     `unidentified` is `release-id/1`'s reason when there is no release. Task 12's
     build calls `decide` for each slot, and again after a `set_release_filing`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_events_eligibility.py`:
 
@@ -8248,13 +8250,13 @@ def test_an_event_without_a_release_needs_its_identification_reason(issuers) -> 
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/tests/test_events_eligibility.py`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_eligibility.py -q`
 
 Expected: FAIL: `ModuleNotFoundError: No module named 'earnings_ingestion.events.eligibility'`.
 
-- [ ] **Step 3: Write eligibility**
+- [x] **Step 3: Write eligibility**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/events/eligibility.py`:
 
@@ -8534,13 +8536,13 @@ def decide(
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/src/earnings_ingestion/events/eligibility.py`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_eligibility.py -q`
 
 Expected: `43 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan7-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/*.py packages/earnings-ingestion/tests/test_events_eligibility.py
@@ -8551,7 +8553,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1168 passed, 24 deselected`; `All checks passed!` and
 `234 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -8660,7 +8662,7 @@ documents of the candidates, and regenerates byte for byte.
   - `write_layer(root, repo) -> SyntheticStore`, which Task 12's tests read and
     Task 15's generator writes into the fixture.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_events_layer.py`:
 
@@ -8911,13 +8913,13 @@ def test_the_layer_regenerates_byte_for_byte(layer, tmp_path) -> None:
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/tests/test_events_layer.py`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_layer.py -q`
 
 Expected: FAIL: `ModuleNotFoundError: No module named 'earnings_ingestion.events.layer'`.
 
-- [ ] **Step 3: Write the layer**
+- [x] **Step 3: Write the layer**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/events/layer.py`:
 
@@ -9389,13 +9391,13 @@ def write_layer(root: Path, repo: Path) -> SyntheticStore:
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/src/earnings_ingestion/events/layer.py`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_layer.py -q`
 
 Expected: `9 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan7-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/*.py packages/earnings-ingestion/tests/test_events_layer.py
@@ -9406,7 +9408,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1177 passed, 24 deselected`; `All checks passed!` and
 `236 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -9515,7 +9517,7 @@ the freeze (P7-15).
   `review(first: EventBuild) -> tuple[EventOverride, ...]`, sorted by
   `override_id`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_events_build.py`:
 
@@ -9878,13 +9880,13 @@ def test_the_content_hash_leaves_out_the_version_and_time(universe, layer) -> No
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/tests/test_events_build.py`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_build.py -q`
 
 Expected: FAIL: `ModuleNotFoundError: No module named 'earnings_ingestion.events.build'`.
 
-- [ ] **Step 3: Write the build**
+- [x] **Step 3: Write the build**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/events/build.py`:
 
@@ -10539,13 +10541,13 @@ for path, (text, count) in written.items():
 
 Apply `task12-layer`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_build.py -q`
 
 Expected: `15 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan7-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/*.py packages/earnings-ingestion/tests/test_events_build.py
@@ -10556,7 +10558,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1192 passed, 24 deselected`; `All checks passed!` and
 `238 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -10635,7 +10637,7 @@ S §Verification (plan A), items 8, 9, and 11 for the event manifest.
     - `freeze_events(build, saved, directory, *, now) -> FrozenEvents`. Tasks 14,
       15, and 17 call it.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_events_freeze.py`:
 
@@ -10887,13 +10889,13 @@ def test_a_changed_interval_or_policy_changes_the_hash_and_a_version_alone_does_
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/tests/test_events_freeze.py`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_freeze.py -q`
 
 Expected: FAIL: `ModuleNotFoundError: No module named 'earnings_ingestion.events.evidence'`.
 
-- [ ] **Step 3: Write the evidence record and the freeze**
+- [x] **Step 3: Write the evidence record and the freeze**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/events/evidence.py`:
 
@@ -11238,13 +11240,13 @@ Append to `docs/data-dictionary.md`:
 
 Extract it with `python3 /tmp/plan7-extract.py docs/data-dictionary.md 2`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_freeze.py -q`
 
 Expected: `9 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan7-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/*.py packages/earnings-ingestion/tests/test_events_freeze.py
@@ -11255,7 +11257,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1201 passed, 24 deselected`; `All checks passed!` and
 `241 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -11395,7 +11397,7 @@ Dynamo's class B, joining a member issuer, is not a transition.
   - `freeze_pilot(pilot, universe, directory, *, now) -> FrozenPilot`. Tasks 15 and
     17 call it.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_events_pilot.py`:
 
@@ -12077,13 +12079,15 @@ def test_a_new_event_manifest_version_gives_the_next_pilot(corpus, universe) -> 
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/tests/test_events_pilot.py`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_pilot.py -q`
 
 Expected: FAIL: `ModuleNotFoundError: No module named 'earnings_ingestion.events.pilot'`.
 
-- [ ] **Step 3: Write the records and the policy**
+- [x] **Step 3: Write the records and the policy**
+
+> Deviation: the final review found that `freeze_pilot` listed earlier versions with `frozen_pilots(directory, universe)`, which checked each one's chain against the caller's universe, so after a cohort refreeze with changed facts every later pilot freeze would refuse. The user chose to fix it before Completion (`17ce98e`): `frozen_pilots(directory)` checks each version's hash and name only, as `frozen_event_manifests` does; `load_pilot` still checks a pilot's whole chain, and `freeze_pilot` checks it for the version it returns or writes. No committed output changed.
 
 Create `/tmp/plan7-task14-records.py`:
 
@@ -12706,13 +12710,13 @@ def freeze_pilot(
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/src/earnings_ingestion/events/pilot.py`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_pilot.py -q`
 
 Expected: `28 passed`.
 
-- [ ] **Step 5: Document the records**
+- [x] **Step 5: Document the records**
 
 Register the four models and two enums in the drift test:
 
@@ -12879,7 +12883,7 @@ Run: `uv run --locked --all-packages pytest tests/contracts/test_data_dictionary
 
 Expected: `100 passed`.
 
-- [ ] **Step 6: Run the checks**
+- [x] **Step 6: Run the checks**
 
 ```bash
 python3 /tmp/plan7-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/*.py packages/earnings-ingestion/tests/test_events_pilot.py tests/contracts/test_data_dictionary.py
@@ -12890,7 +12894,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1235 passed, 24 deselected`; `All checks passed!` and
 `243 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -12967,7 +12971,7 @@ and P6-3 for the committed records. It follows Stage 4's committed synthetic coh
     signed decisions;
   - `write_fixture(repo, universe, directory=FIXTURE_DIR) -> FrozenPilot`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `tests/integration/test_event_fixtures.py`:
 
@@ -13135,13 +13139,13 @@ def test_git_keeps_every_fixture_byte() -> None:
 
 Extract it with `python3 /tmp/plan7-extract.py tests/integration/test_event_fixtures.py`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest tests/integration/test_event_fixtures.py -q`
 
 Expected: FAIL: `ModuleNotFoundError: No module named 'earnings_ingestion.events.fixture'`.
 
-- [ ] **Step 3: Write the fixture writer and its script**
+- [x] **Step 3: Write the fixture writer and its script**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/events/fixture.py`:
 
@@ -13283,7 +13287,7 @@ tests/fixtures/events/** -text
 
 Extract it with `python3 /tmp/plan7-extract.py .gitattributes`.
 
-- [ ] **Step 4: Write the fixture**
+- [x] **Step 4: Write the fixture**
 
 ```bash
 uv run --locked --all-packages python tests/integration/regenerate_event_fixtures.py
@@ -13296,13 +13300,13 @@ Expected: `wrote tests/fixtures/events/pilot-v1.json`; `172`;
 `pilot-v1.json 71c6ac4fabc3b7e727da88b4ee74048a0ee3559c8e5ce26c02227376d820333c`.
 If a hash differs, stop: an earlier task's code differs from the plan's.
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest tests/integration/test_event_fixtures.py -q`
 
 Expected: `6 passed`.
 
-- [ ] **Step 6: Run the checks**
+- [x] **Step 6: Run the checks**
 
 ```bash
 python3 /tmp/plan7-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/*.py tests/integration/test_event_fixtures.py tests/integration/regenerate_event_fixtures.py
@@ -13313,7 +13317,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1241 passed, 24 deselected`; `All checks passed!` and
 `246 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -13408,7 +13412,7 @@ older page lists.
 
   Task 17 calls both.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_events_discover.py`:
 
@@ -13673,13 +13677,13 @@ def test_a_response_saved_under_another_url_stops_discovery(
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/tests/test_events_discover.py`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_discover.py -q`
 
 Expected: FAIL: `ModuleNotFoundError: No module named 'earnings_ingestion.events.discover'`.
 
-- [ ] **Step 3: Write discovery**
+- [x] **Step 3: Write discovery**
 
 Create `/tmp/plan7-task16-filings.py`:
 
@@ -13942,13 +13946,13 @@ def discover_filing(
 
 Extract it with `python3 /tmp/plan7-extract.py packages/earnings-ingestion/src/earnings_ingestion/events/discover.py`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_discover.py -q`
 
 Expected: `6 passed`.
 
-- [ ] **Step 5: Name companyfacts in the register, and check v1**
+- [x] **Step 5: Name companyfacts in the register, and check v1**
 
 Create `/tmp/plan7-task16-register.py`:
 
@@ -14011,7 +14015,7 @@ The second command reads `data/raw/cohort/` and sends no request. If the first h
 equals v1's, the register edit did not apply. If the operative hashes differ, stop and
 ask: v1's facts would have changed.
 
-- [ ] **Step 6: Run the checks**
+- [x] **Step 6: Run the checks**
 
 ```bash
 python3 /tmp/plan7-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/*.py packages/earnings-ingestion/tests/test_events_discover.py
@@ -14023,7 +14027,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1247 passed, 24 deselected`; `280 passed`;
 `All checks passed!` and `248 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -14088,7 +14092,7 @@ earnings-pipeline events [--repo] [--universe-dir] [--corpus-dir] [--store] [--c
 - Produces `earnings_pipeline.events_cli.events`, a `typer.Typer` that `cli.app`
   mounts as `events`. Tasks 19, 20, and 21 run its commands.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `apps/earnings-pipeline/tests/test_events_cli.py`:
 
@@ -14303,13 +14307,13 @@ def test_discover_filing_spends_at_most_two_requests(repo, monkeypatch) -> None:
 
 Extract it with `python3 /tmp/plan7-extract.py apps/earnings-pipeline/tests/test_events_cli.py`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_events_cli.py -q`
 
 Expected: FAIL: `ImportError: cannot import name 'events_cli' from 'earnings_pipeline'`.
 
-- [ ] **Step 3: Write the commands**
+- [x] **Step 3: Write the commands**
 
 Create `apps/earnings-pipeline/src/earnings_pipeline/events_cli.py`:
 
@@ -14614,13 +14618,13 @@ for path, (text, count) in written.items():
 
 Apply `task17-cli`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_events_cli.py -q`
 
 Expected: `10 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan7-escapes.py apps/earnings-pipeline/src/earnings_pipeline/*.py apps/earnings-pipeline/tests/test_events_cli.py
@@ -14633,7 +14637,7 @@ Expected: `escapes intact`; `1257 passed, 24 deselected`; `All checks passed!` a
 `250 files already formatted`; the help lists `discover`, `build`, `freeze`, and
 `select`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -14677,7 +14681,7 @@ that edgartools' paths would need casts.
 - Consumes: the modules of Tasks 3 to 17.
 - Produces: no code. Task 22's record cites these tests for SV 13.
 
-- [ ] **Step 1: Write the tests**
+- [x] **Step 1: Write the tests**
 
 Create `/tmp/plan7-task18-boundaries.py`:
 
@@ -14797,13 +14801,13 @@ for path, (text, count) in written.items():
 
 Apply `task18-boundaries`.
 
-- [ ] **Step 2: Run the tests**
+- [x] **Step 2: Run the tests**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_import_boundaries.py tests/contracts/test_import_scan.py -q`
 
 Expected: `64 passed`.
 
-- [ ] **Step 3: See them fail when the boundary breaks, then restore**
+- [x] **Step 3: See them fail when the boundary breaks, then restore**
 
 ```bash
 printf 'import pyarrow\n' >> packages/earnings-ingestion/src/earnings_ingestion/events/records.py
@@ -14818,7 +14822,7 @@ Expected: the scan fails with
 the runtime check gives `12 failed, 6 passed, 39 deselected`; then the status lists
 only the two test files.
 
-- [ ] **Step 4: Run the checks**
+- [x] **Step 4: Run the checks**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q
@@ -14828,7 +14832,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `1293 passed, 24 deselected`; `All checks passed!` and
 `250 files already formatted`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git log --oneline -3
@@ -14863,7 +14867,7 @@ S §Exit criteria (plan A), item 3: the acceptance-time record, with both legs.
     read;
   - the record's second leg.
 
-- [ ] **Step 1: Run the record's second leg offline, on the synthetic store**
+- [x] **Step 1: Run the record's second leg offline, on the synthetic store**
 
 Before any request, check that the record's script reads a Stage 5 store. A scratch
 repository links Stage 1's pages, and the committed synthetic store in place of
@@ -14909,7 +14913,7 @@ a companyfacts file as a submissions file, since both are named
 `CIK##########.json`. If this step fails, stop: nothing should be requested until the
 record can read what discovery saves.
 
-- [ ] **Step 2 (gate): Ask the user to approve discovery's requests**
+- [x] **Step 2 (gate): Ask the user to approve discovery's requests**
 
 Check the identity without printing it:
 
@@ -14939,7 +14943,9 @@ Then put the request to the user, with its count:
 
 Wait for a clear yes. If the user approves another cap, use it in Step 3.
 
-- [ ] **Step 3: Run discovery**
+- [x] **Step 3: Run discovery**
+
+> Deviation: predictions only; every check matched. Discovery sent 642 requests, not the 677 predicted, under the approved cap of 700: its first phase's 63 and the older-page passes' 314, 10, and 0 matched, but it fetched 255 primary documents, not 290. No retry, 403, or rerun was needed.
 
 Run: `uv run --locked --all-packages earnings-pipeline events discover --max-requests 700`
 
@@ -14992,7 +14998,7 @@ Expected:
 - `data/raw/events/sec-edgar`, so the store is ignored. This is a check.
 - nothing from `git status`. This is a check.
 
-- [ ] **Step 4: Regenerate the record with both legs**
+- [x] **Step 4: Regenerate the record with both legs**
 
 ```bash
 uv run --locked --all-packages python tests/integration/regenerate_acceptance_time_record.py
@@ -15021,7 +15027,7 @@ table and the verdict.
   regenerated since early April 2026. Every candidate issuer has filed since then,
   so expect all 33 files in true UTC. The older pages may be in either convention.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q
@@ -15035,7 +15041,7 @@ Expected, checks:
 - `All checks passed!` and `250 files already formatted`;
 - only ` M docs/verification/edgar-acceptance-time.md`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -15089,7 +15095,9 @@ reviews what the real build reports, and approves the event manifest's freeze
   load_event_manifest(Path("config/corpus/djia-2024q3-2026q2/events-v1.json"))
   ```
 
-- [ ] **Step 1: Build, and read the report**
+- [x] **Step 1: Build, and read the report**
+
+> Deviation: predictions only; no `problem:` line or acceptance-time finding arose, and the 263 events, the 24 ineligible ones, and the absence of `period_gap` matched. The build found 12 `ambiguous` events, not 3, so 227 `eligible`, not 236. Caterpillar's 2024-09-30 and Honeywell's 2026-03-31 were `several_release_filings` as predicted, but Goldman Sachs' 2025-12-31 was not: its other Item 2.02 8-K, `0000886982-26-000004`, lists no `EX-99*` exhibit and was passed over, as was Chevron's `0000093410-26-000108`, which the plan expected the preliminary rule to drop. Ten `no_release_filing` events were not predicted: JPMorgan's eight, 3M's 2024-09-30, and Verizon's 2024-12-31. In each, `release-id/1` dropped the only candidate, the release itself, because every period it read in the Item 2.02 text was another one: its year-first pattern needs "fiscal" before the year, which P7-7's example shows but its prose does not require (deferred as `release-id/2`). Two `fiscal_labels_unknown` findings, Visa's and Dow's for 2026-06-30, were reported only (EV6).
 
 Save the helpers that this task and the next use. Each reads saved responses and
 committed files, and sends nothing.
@@ -15301,7 +15309,9 @@ Expected on the real data, before any override, a prediction:
 A `problem:` line stops the task. A saved response is missing or unreadable, which no
 review settles. Report it to the user.
 
-- [ ] **Step 2 (gate): Review each blocking finding and each `ambiguous` event with the user**
+- [x] **Step 2 (gate): Review each blocking finding and each `ambiguous` event with the user**
+
+> Deviation: the review decided 12 events, not the 3 predicted, each by a `set_release_filing` naming one of the rule's candidates: Caterpillar's `0000018230-24-000050`, Honeywell's `0000773840-26-000055`, and the only candidate of each of the ten `no_release_filing` events. The user gave five rationales in their own words and signed as reviewer. No `--filing` run, `retain_unresolved`, or `acknowledge` was needed: no `acceptance_time_unknown`, `same_day_transition`, `period_gap`, or `no_slots` arose.
 
 Put each to the user, one at a time or in one batch, with its lines from
 `/tmp/plan7-build.txt` and the decision it needs. For an `ambiguous` event, show its
@@ -15412,7 +15422,7 @@ recorded_on = [GATE: today's date]
 - **From records.** Task 15's `write_overrides(path, overrides)` writes this file
   from `EventOverride` records, as the synthetic fixture's is written.
 
-- [ ] **Step 3: Rebuild until nothing holds**
+- [x] **Step 3: Rebuild until nothing holds**
 
 ```bash
 uv run --locked --all-packages earnings-pipeline events build > /tmp/plan7-build.txt 2>&1; echo "exit $?"
@@ -15435,7 +15445,7 @@ Repeat Steps 2 and 3 until then.
 - **No overrides.** If the review needs none, skip the file: `build` reads a missing
   file as no overrides, and the check then runs on nothing.
 
-- [ ] **Step 4 (gate): The user approves the event manifest**
+- [x] **Step 4 (gate): The user approves the event manifest**
 
 Show the user the approval view:
 
@@ -15451,7 +15461,7 @@ Expected:
 
 Freeze only after the user's clear yes.
 
-- [ ] **Step 5: Freeze**
+- [x] **Step 5: Freeze**
 
 ```bash
 uv run --locked --all-packages earnings-pipeline events freeze
@@ -15481,7 +15491,7 @@ Expected:
 - **A prediction:** the evidence record is about 2 MB. Task 15's held 32 events in
   221 KB.
 
-- [ ] **Step 6: Check that nothing committed quotes a saved page (P6-3)**
+- [x] **Step 6: Check that nothing committed quotes a saved page (P6-3)**
 
 Run: `uv run --locked --all-packages python /tmp/plan7-quotes.py data/raw/events config/corpus/djia-2024q3-2026q2/overrides.toml config/corpus/djia-2024q3-2026q2/events-v1.json config/corpus/djia-2024q3-2026q2/events-v1.evidence.json`
 
@@ -15494,7 +15504,7 @@ Expected, a check: `<n> strings checked against <m> saved pages`, then
   and the check exited 1.
 - **If it lists a string,** stop and ask. The repository is public.
 
-- [ ] **Step 7: Run the checks**
+- [x] **Step 7: Run the checks**
 
 ```bash
 git check-ignore data/raw/events/sec-edgar
@@ -15510,7 +15520,7 @@ Expected, checks:
 - `All checks passed!` and `250 files already formatted`;
 - only `?? config/corpus/`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git log --oneline -3
@@ -15564,7 +15574,7 @@ frozen before plan B acquires anything (P-C7).
   load_pilot(Path("config/corpus/djia-2024q3-2026q2/pilot-v1.json"), universe)
   ```
 
-- [ ] **Step 1 (gate): Preview the pilot, and ask the user to approve its freeze**
+- [x] **Step 1 (gate): Preview the pilot, and ask the user to approve its freeze**
 
 Create `/tmp/plan7-preview.py`:
 
@@ -15658,7 +15668,7 @@ policy.
 
 Show the user the preview, and freeze only after a clear yes.
 
-- [ ] **Step 2: Select and freeze**
+- [x] **Step 2: Select and freeze**
 
 ```bash
 uv run --locked --all-packages earnings-pipeline events select
@@ -15685,7 +15695,7 @@ Expected: `pilot loads, and its chain holds: 40 rows of target 40`. The load is 
 check, and the counts are the prediction. On the synthetic corpus, it printed
 `27 rows of target 27`.
 
-- [ ] **Step 3: Check that the pilot quotes no saved page (P6-3)**
+- [x] **Step 3: Check that the pilot quotes no saved page (P6-3)**
 
 Run: `uv run --locked --all-packages python /tmp/plan7-quotes.py data/raw/events config/corpus/djia-2024q3-2026q2/pilot-v1.json`
 
@@ -15693,7 +15703,7 @@ Expected, a check: `<n> strings checked against <m> saved pages`, then
 `no saved page is quoted`. If `/tmp/plan7-quotes.py` is gone, extract it again from
 Task 20.
 
-- [ ] **Step 4: Run the checks**
+- [x] **Step 4: Run the checks**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q
@@ -15707,7 +15717,7 @@ Expected, checks:
 - `All checks passed!` and `250 files already formatted`;
 - only `?? config/corpus/djia-2024q3-2026q2/pilot-v1.json`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git log --oneline -3
@@ -15743,7 +15753,9 @@ state.
 - Consumes: everything this plan built, and the outputs of Tasks 19 to 21.
 - Produces: documentation only. The test counts stay at Task 18's.
 
-- [ ] **Step 1 (gate): Write the record, and have the user read it**
+- [x] **Step 1 (gate): Write the record, and have the user read it**
+
+> Deviation: the user approved the record with four additions beyond its slots: the ineligible events by issuer, the two passed-over 8-Ks, a sentence on the ten `no_release_filing` events, and a limitation on `release-id/1`'s year-first pattern. After the final review, the user approved one more Limitations sentence, added at Completion: the three events whose earlier Item 2.02 8-K the rule dropped as preliminary.
 
 Create `docs/verification/djia-events.md`:
 
@@ -15905,7 +15917,7 @@ Run: `grep -n 'GATE:' docs/verification/djia-events.md`
 Expected: no output. Show the user the record, and apply their corrections before
 Step 2.
 
-- [ ] **Step 2: Record the current state**
+- [x] **Step 2: Record the current state**
 
 Create `/tmp/plan7-task22-state.py`:
 
@@ -16089,7 +16101,7 @@ wc -l AGENTS.md
 
 Expected: no `grep` output, then `837 AGENTS.md`, since `AGENTS.md` is untouched.
 
-- [ ] **Step 3: Final verification**
+- [x] **Step 3: Final verification**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q
@@ -16111,7 +16123,7 @@ Expected:
 - no output from `git diff`, since `uv.lock` has not changed;
 - no `git grep` output.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git log --oneline -3
@@ -16138,6 +16150,8 @@ the real manifests frozen (P7-1).
     latest version wins. `frozen_pilots(directory, universe)` lists them.
   - The synthetic one, `tests/fixtures/events/pilot-v1.json`, is underfilled at 27
     events.
+
+  > Deviation: after the final review, `frozen_pilots` takes only the directory (`17ce98e`). It lists every version, each checked for its hash and name but not its chain, since versions may have read different universes; plan B reads the one it picks with `load_pilot(path, universe)`, which checks the chain.
 - **Each pilot event's facts.** They are in its event manifest row:
   - `release_accession` and `cik`;
   - `period_end` and the fiscal labels;

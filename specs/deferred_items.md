@@ -265,7 +265,7 @@
       a `walker-2` is planned for another reason.
 
 ## 6-point-in-time-djia-cohort — 2026-09-26
-- [ ] Give the universe manifest an operative identity (final review, Important
+- [x] Give the universe manifest an operative identity (final review, Important
       #1; the user corrected the wording and deferred the design): P6-12 said
       evidence published after the cutoff cannot change a manifest's content, but
       `content_hash` in
@@ -280,8 +280,8 @@
       pinned by hash in the curated files, or both; the committed v1 must stay
       loadable. Size: design. Done when: Stage 5's spec or plan decides what
       identifies the universe for its manifests, and a test shows that a withheld
-      notice and a re-fetched SEC record leave that identity unchanged.
-- [ ] Hold the SEC and web client locks once per machine (final review, Important
+      notice and a re-fetched SEC record leave that identity unchanged. → done in plan 7
+- [x] Hold the SEC and web client locks once per machine (final review, Important
       #2): `LOCK_PATH` in
       `packages/earnings-ingestion/src/earnings_ingestion/sec/client.py` and in
       `packages/earnings-ingestion/src/earnings_ingestion/cohort/web.py` resolves
@@ -294,8 +294,8 @@
       the user's cache directory, with a test that two repository roots share one
       lock. Size: quick-fix. Done when: both locks are machine-wide and tested, and
       the record says one machine again, before a second checkout or Stage 5's
-      EDGAR adapter sends SEC requests.
-- [ ] Three robustness fixes in the cohort path (final review, Minor; paths under
+      EDGAR adapter sends SEC requests. → done in plan 7
+- [x] Three robustness fixes in the cohort path (final review, Minor; paths under
       `packages/earnings-ingestion/src/earnings_ingestion/` unless given in full):
       - `_build` in `apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py`
         catches only `CohortError`, but a bad override makes `reconstruct`
@@ -312,7 +312,7 @@
         value, so a non-ASCII digit such as a superscript two reaches `float()`
         and raises `ValueError` rather than being ignored.
       Size: quick-fix. Done when: each case has a test, and each ends as a
-      `problem:` line, a `SecDataError`, or an ignored header.
+      `problem:` line, a `SecDataError`, or an ignored header. → parts 2 and 3 done in plan 7; part 1 restated under plan 7
 - [ ] Four stale claims (final review, Minor; paths under
       `packages/earnings-ingestion/src/earnings_ingestion/` unless given in full):
       - `fetch/robots.py`'s docstring says a response the client gives up on
@@ -370,3 +370,110 @@
       decision on whether AGENTS.md's stop on a persistent 403 covers the run or
       one host. Size: design. Done when: that decision is recorded, and a test
       shows that a refusal on one host leaves the other hosts' checks requested.
+
+## 7-event-discovery-eligibility-and-acquisition-plan-a — 2026-09-27
+- [ ] Report the cohort CLI's override and terms errors as `problem:` lines
+      (plan 6's "Three robustness fixes", part 1, restated by plan 7): `_build`
+      in `apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py` catches
+      only `CohortError`, but a bad override makes `reconstruct`
+      (`cohort/intervals.py`), `resolve` (`cohort/resolution.py`), or
+      `acknowledge` (`cohort/findings.py`) raise `ValueError`, which prints a
+      traceback. `terms_digest` also runs outside any `try` in `cohort_cli.py`'s
+      `terms` and in `cohort/live.py`, so a terms page that `walker-1` cannot
+      read aborts `verify-live` before its record is written. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/` unless given in
+      full. Size: quick-fix. Done when: each case has a test, and each ends as a
+      `problem:` line or in `verify-live`'s record.
+- [ ] Show the operative hashes in `verify-live` (plan 7, P7-3): plan 7's Task
+      16 named companyfacts in the `sec-edgar` entry of
+      `docs/source-register.toml`, and a universe manifest's content hash
+      covers that entry through `source_register_version`. So a rebuild of
+      cohort v1 no longer reproduces v1's content hash, although its operative
+      hash (`cohort/identity.py`), on which Stage 5 keys, is unchanged.
+      `earnings-pipeline cohort verify-live` prints and records only
+      `rebuilt_content_hash` and `frozen_content_hash` (`cohort/live.py`, and
+      `LiveVerification` in `cohort/records.py`), so every run from now on shows
+      a difference that no fact explains. Record both versions' operative
+      hashes beside them. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: quick-fix.
+      Done when: `verify-live`'s output and record tell a register-only change
+      from a changed fact, with a test.
+- [ ] Write `release-id/2` (plan 7's Task 20 review, and its final review):
+      `release-id/1` in
+      `packages/earnings-ingestion/src/earnings_ingestion/events/release.py`
+      dropped the only candidate of ten real events, each the release itself, so
+      each needed a `set_release_filing` override in
+      `config/corpus/djia-2024q3-2026q2/overrides.toml`:
+      - its year-first quarter pattern requires "fiscal" before the year, which
+        P7-7's prose ("in either order") does not, so in JPMorgan's eight
+        releases, which write the year first without it, the rule read only the
+        prior-year comparison and the report dates after "ended", none of them
+        the slot's period;
+      - 3M's release for 2024-09-30 names its quarter without a year and its
+        full year with one, which the rule read as FY 2024; Verizon's for
+        2024-12-31 names its quarter and full year together in a form outside
+        the rule's list, while the older quarters in its long Item 2.02 section
+        were read;
+      - the drop rule judges every stated period against a sole candidate, so a
+        prior-year comparison, a boilerplate report date, or a full-year figure
+        can drop the release itself.
+      The rule is fixed (the Stage 5 spec, §Candidates): a change is
+      `release-id/2`, and so a new event manifest version, with the spec's
+      drop rule decided again. Size: plan. Done when: a rebuild under
+      `release-id/2` identifies these ten releases with no override, the
+      synthetic corpus's identifications are unchanged or re-versioned, and the
+      frozen v1 still loads.
+- [ ] Report `events freeze`'s citation errors as `problem:` lines (plan 7's
+      final review, Minor): `freeze_command` in
+      `apps/earnings-pipeline/src/earnings_pipeline/events_cli.py` catches only
+      `EventFreezeRefused`, but `freeze_events` (`events/freeze.py`) builds the
+      evidence record with `evidence_of` (`events/evidence.py`), which raises
+      `LocatorError`, a `ValueError`, when a value it cites is not in a saved
+      page's `walker-1` text, so the command prints a traceback. Nothing is
+      written, since the record is built before either file. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`
+      unless given in full. Size: quick-fix. Done when: such a case has a test
+      and ends as a `problem:` line.
+- [ ] Cite the Item 2.02 text of a release an override names outside the
+      candidates (plan 7's final review, Minor): `_event` in `events/evidence.py`
+      sets `item_text` only when the event's release is one of `release-id/1`'s
+      candidates, as plan 7's Task 13 specified, but the Stage 5 spec's evidence
+      record cites each release's Item 2.02 span, and plan 7's review table lets
+      a `set_release_filing` name an 8-K the rule passed over. Such an event
+      would freeze with `item_text` null, and its primary document may not be
+      saved. Every event of `config/corpus/djia-2024q3-2026q2/events-v1.json`
+      has its span. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`.
+      Size: quick-fix. Done when: an override naming a passed-over 8-K either
+      freezes with its Item 2.02 span cited or is refused by `build`, with a
+      test.
+- [ ] Bound the periodic reports that can block on acceptance time (plan 7's
+      final review, Minor): `issuer_filings` in `events/filings.py` passes every
+      periodic report with a `reportDate` to `_visible`, so one whose index page
+      is not saved and whose `acceptanceDateTime` is empty becomes an
+      `acceptance_time_unknown` finding that holds the freeze, however old it
+      is. A release 8-K is reported for a missing `acceptanceDateTime` only when
+      filed on or after the window's start. None arose in v1. A bound must keep
+      the reports that the slots and their `period_gap` guards read, including
+      the last one before the window (`events/slots.py`). Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`.
+      Size: quick-fix. Done when: a test shows that an old periodic report with
+      no `acceptanceDateTime` neither holds the freeze nor changes a slot.
+- [ ] Refuse a repeated acknowledgement (plan 7's final review, Minor):
+      `EventOverridesFile._distinct` in `events/records.py` refuses a repeated
+      `override_id` and, per P7-14, a second override of one kind for one
+      `event_id`, but an `acknowledge` override names a `finding_id`, not an
+      `event_id`, so two acknowledgements of one finding both load. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`.
+      Size: quick-fix. Done when: `EventOverridesFile` refuses a `finding_id`
+      repeated among acknowledgements, with a test.
+- [ ] Bind an evidence record to its manifest when loading (plan 7's final
+      review, Minor): `load_event_evidence` in `events/freeze.py` checks only
+      that the file's name matches its `event_manifest_version`. Nothing
+      compares its `event_manifest_hash` with the `content_hash` of the manifest
+      beside it, so an evidence record from another corpus, or from other
+      content under the same version, would load. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`.
+      Size: quick-fix. Done when: loading an evidence record checks its
+      `corpus_id` and `event_manifest_hash` against the manifest of its version,
+      with a test.

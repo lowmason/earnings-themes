@@ -142,7 +142,11 @@ runtime, and `test_stage_5_imports_no_acquisition_library` checks their source.
 
 - **First publication is an upper bound** (EV9). `first_publication_time` is the
   release filing's EDGAR acceptance. A company that put its release on a newswire
-  first published it earlier.
+  first published it earlier. For three events, the rule dropped an earlier Item
+  2.02 8-K as preliminary, so `first_publication_time` is the later release's
+  acceptance: Boeing's `0000012927-24-000067` of 2024-10-11, for 2024-09-30; IBM's
+  `0000051143-26-000070` of 2026-07-14, for 2026-06-30; and Nike's
+  `0000320187-26-000070` of 2026-06-23, for 2026-05-31.
 - **Same-day ordering.** EDGAR alone cannot order a release against a membership
   change on the same day. None arose in v1.
 - **`release-id/1` is fixed.** It reads a stated date only after "ended" or "ending"

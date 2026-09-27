@@ -897,3 +897,5 @@ handoff, state:
 - which commands ran;
 - every live request, by gate, with its count;
 - that no model was called.
+
+> Plan A: COMPLETE (2026-09-27) — implemented by plan 7 (specs/plans/completed/7-event-discovery-eligibility-and-acquisition-plan-a.md). Next: write plan B.
