@@ -165,6 +165,17 @@ def test_retry_after_accepts_seconds_and_http_dates() -> None:
     assert retry_after_seconds("soon", NOW) is None
 
 
+@pytest.mark.parametrize(
+    "value",
+    [chr(0xB2), chr(0xFF11) + chr(0xFF12), chr(0x0661) + chr(0x0660)],
+    ids=["superscript-two", "fullwidth-twelve", "arabic-indic-ten"],
+)
+def test_retry_after_ignores_non_ascii_digits(value) -> None:
+    """Plan 6's deferred robustness fix: a header of other scripts' digits is
+    unreadable, so it is ignored, never obeyed and never an error."""
+    assert retry_after_seconds(value, NOW) is None
+
+
 def test_fetch_returns_decoded_bytes_and_a_retrieval() -> None:
     body = b'{"a": 1}'
 

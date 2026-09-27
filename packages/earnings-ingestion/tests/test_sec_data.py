@@ -96,6 +96,43 @@ def test_submissions_give_name_former_names_tickers_and_filings() -> None:
     assert registrant.older_pages == ("CIK0009990001-submissions-001.json",)
 
 
+def pages(entries: list) -> bytes:
+    """The submissions file with ``entries`` as its ``filings.files``."""
+    data = json.loads(submissions())
+    data["filings"]["files"] = entries
+    return json.dumps(data).encode()
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        submissions(formerNames=["ACME WIDGETS INC"]),
+        submissions(formerNames=[{"from": "2001-01-01T00:00:00.000Z"}]),
+        submissions(formerNames=[{"name": 7}]),
+        submissions(tickers="ACME"),
+        submissions(tickers=["ACME", 7]),
+        pages(["CIK0009990001-submissions-001.json"]),
+        pages([{"filingCount": 3}]),
+        pages([{"name": 3}]),
+    ],
+    ids=[
+        "former-name-not-an-object",
+        "former-name-without-a-name",
+        "former-name-not-text",
+        "tickers-a-string",
+        "ticker-not-text",
+        "page-not-an-object",
+        "page-without-a-name",
+        "page-name-not-text",
+    ],
+)
+def test_a_malformed_registrant_is_refused_as_sec_data(body) -> None:
+    """Plan 6's deferred robustness fix: a changed shape raises SecDataError, never
+    KeyError or TypeError, and a string of tickers is not read as characters."""
+    with pytest.raises(SecDataError):
+        read_submissions(body)
+
+
 def test_ragged_filing_columns_are_refused() -> None:
     body = json.loads(submissions())
     body["filings"]["recent"]["form"] = ["10-K"]

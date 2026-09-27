@@ -180,6 +180,30 @@ def read_filing_columns(columns: object, pointer: str) -> tuple[Filing, ...]:
     return tuple(filings)
 
 
+def _named(entry: object, where: str) -> dict:
+    """``entry`` if it is an object whose ``name`` is text."""
+    if not isinstance(entry, dict) or not isinstance(entry.get("name"), str):
+        raise SecDataError(f"{where} is not an object with a text name")
+    return entry
+
+
+def _optional_text(value: object, where: str) -> str | None:
+    if value is not None and not isinstance(value, str):
+        raise SecDataError(f"{where} is not text")
+    return value
+
+
+def _former_name(entry: object, index: int) -> FormerName:
+    pointer = f"/formerNames/{index}"
+    entry = _named(entry, pointer)
+    return FormerName(
+        name=entry["name"],
+        valid_from=_optional_text(entry.get("from"), f"{pointer}/from"),
+        valid_to=_optional_text(entry.get("to"), f"{pointer}/to"),
+        pointer=pointer,
+    )
+
+
 def read_submissions(body: bytes) -> Registrant:
     data = _load(body, "the submissions file")
     if not isinstance(data, dict) or not {"cik", "name", "tickers", "filings"} <= set(
@@ -189,6 +213,9 @@ def read_submissions(body: bytes) -> Registrant:
     filings = data["filings"]
     if not isinstance(filings, dict) or "recent" not in filings:
         raise SecDataError("the submissions file has no filings.recent")
+    tickers = data["tickers"]
+    if not isinstance(tickers, list) or not all(isinstance(t, str) for t in tickers):
+        raise SecDataError("tickers is not a list of text")
     former = data.get("formerNames") or []
     if not isinstance(former, list):
         raise SecDataError("formerNames is not a list")
@@ -198,18 +225,15 @@ def read_submissions(body: bytes) -> Registrant:
     return Registrant(
         cik=pad_cik(data["cik"]),
         name=str(data["name"]),
-        tickers=tuple(str(ticker) for ticker in data["tickers"]),
+        tickers=tuple(tickers),
         former_names=tuple(
-            FormerName(
-                name=str(entry["name"]),
-                valid_from=entry.get("from"),
-                valid_to=entry.get("to"),
-                pointer=f"/formerNames/{index}",
-            )
-            for index, entry in enumerate(former)
+            _former_name(entry, index) for index, entry in enumerate(former)
         ),
         filings=read_filing_columns(filings["recent"], "/filings/recent"),
-        older_pages=tuple(str(page["name"]) for page in older),
+        older_pages=tuple(
+            _named(page, f"/filings/files/{index}")["name"]
+            for index, page in enumerate(older)
+        ),
     )
 
 

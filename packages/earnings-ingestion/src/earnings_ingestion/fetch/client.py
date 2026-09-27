@@ -98,11 +98,15 @@ def machine_lock_dir() -> Path:
 
 
 def retry_after_seconds(value: str | None, now: datetime) -> float | None:
-    """The wait a ``Retry-After`` header asks for, in seconds, or None if unreadable."""
+    """The wait a ``Retry-After`` header asks for, in seconds, or None if unreadable.
+
+    Only ASCII digits are seconds: ``str.isdigit`` also admits other scripts' digits,
+    which ``float`` would read or refuse, and HTTP means neither.
+    """
     if not value:
         return None
     value = value.strip()
-    if value.isdigit():
+    if value.isascii() and value.isdigit():
         return float(value)
     try:
         when = email.utils.parsedate_to_datetime(value)
