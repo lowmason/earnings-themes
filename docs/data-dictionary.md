@@ -1355,6 +1355,10 @@ primary document through `walker-1`'s text, and a JSON file by pointer.
   and `events-v<N>.evidence.json` beside it holds that version's `EventEvidence`. Each
   is indented JSON with sorted keys, written once and never replaced, and the evidence
   record is written first. The synthetic corpus's are in `tests/fixtures/events/`.
+- **One corpus a directory.** A file names its version, not its corpus, so
+  `frozen_event_manifests` refuses a directory whose manifests name more than one
+  `corpus_id`, and `freeze_events` refuses a build of a corpus other than the one
+  the directory holds.
 - **The content hash.** `content_hash` covers the canonical JSON of the definition,
   less `event_manifest_version`, `universe_version`, `content_hash`, and `created_at`,
   with the rows, the findings, and the overrides. Identical content keeps its version,
@@ -1451,6 +1455,10 @@ and nor is a same-day handoff between two of its securities.
 - **Where.** `config/corpus/<corpus_id>/pilot-v<N>.json` holds one `PilotManifest`,
   beside the event manifest it names. It is indented JSON with sorted keys, written
   once and never replaced. The synthetic corpus's is in `tests/fixtures/events/`.
+- **One corpus a directory.** `pilot_id` names the corpus alone, whatever the
+  policy, so a later policy's pilot shares it. `frozen_pilots` refuses a directory
+  whose pilots name more than one `pilot_id`, and `freeze_pilot` refuses a pilot of
+  a corpus other than the one the directory holds.
 - **The content hash.** `content_hash` covers the canonical JSON of the definition,
   less `pilot_version`, `universe_version`, `content_hash`, and `created_at`, with the
   rows and the unmatched transitions. Identical content keeps its version; new

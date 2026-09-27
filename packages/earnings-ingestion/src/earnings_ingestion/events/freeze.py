@@ -9,6 +9,8 @@
 - ``events-v<N>.evidence.json`` is written first and ``events-v<N>.json`` second, each
   to a temporary file linked into place: a manifest never appears without its
   evidence, and neither is ever replaced.
+- A directory holds one corpus's versions: freezing refuses a build of another, and
+  loading refuses a directory that holds two.
 - Loading reads the committed JSON alone and rechecks the content hash and the name.
   An evidence record loads only with its manifest: the same ``corpus_id``, version,
   and content hash, and one citation per row, in the rows' order.
@@ -112,22 +114,28 @@ def load_event_evidence(path: Path, manifest: EventManifest) -> EventEvidence:
 
 
 def frozen_event_manifests(directory: Path) -> list[EventManifest]:
-    """Every frozen version in ``directory``, oldest first."""
+    """Every frozen version in ``directory``, oldest first, refused if they name more
+    than one corpus: a file names its version, not its corpus."""
     manifests = [
         load_event_manifest(path)
         for path in directory.glob("events-v*.json")
         if not path.name.endswith(".evidence.json")
     ]
+    if len(corpora := sorted({m.definition.corpus_id for m in manifests})) > 1:
+        raise ValueError(f"{directory} holds more than one corpus: {corpora}")
     return sorted(manifests, key=lambda m: m.definition.event_manifest_version)
 
 
 def freeze_events(
     build: EventBuild, saved: SavedResponses, directory: Path, *, now: datetime
 ) -> FrozenEvents:
-    """Freeze ``build`` into ``directory``, or return the version that holds it."""
+    """Freeze ``build`` into ``directory``, or return the version that holds it.
+    Refused if ``directory`` holds another corpus."""
     if build.holds_freeze:
         raise EventFreezeRefused(build)
     existing = frozen_event_manifests(directory)
+    if existing and (held := existing[0].definition.corpus_id) != build.corpus_id:
+        raise ValueError(f"{directory} holds corpus {held}, not {build.corpus_id}")
     for manifest in existing:
         if manifest.definition.content_hash == build.content_hash:
             version = manifest.definition.event_manifest_version

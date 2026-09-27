@@ -14,6 +14,7 @@ from earnings_ingestion.events.evidence import check_evidence, evidence_of
 from earnings_ingestion.events.freeze import (
     EventFreezeRefused,
     freeze_events,
+    frozen_event_manifests,
     load_event_evidence,
     load_event_manifest,
     serialize,
@@ -26,9 +27,12 @@ from earnings_ingestion.events.layer import (
     review,
     write_layer,
 )
+from earnings_ingestion.events.pilot import freeze_pilot, frozen_pilots, select_pilot
 from earnings_ingestion.events.records import (
+    EventManifest,
     EventOverridesFile,
     content_hash,
+    pilot_content_hash,
 )
 from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.events.synthetic import SyntheticStore
@@ -290,3 +294,67 @@ def test_a_changed_interval_or_policy_changes_the_hash_and_a_version_alone_does_
     assert content_hash(manifest.model_copy(update={"definition": policy})) != (
         manifest.definition.content_hash
     )
+
+
+def of_corpus(manifest: EventManifest, corpus_id: str, version: int) -> EventManifest:
+    """``manifest`` as another corpus's version, hashed as frozen."""
+    moved = manifest.model_copy(
+        update={
+            "definition": manifest.definition.model_copy(
+                update={"corpus_id": corpus_id, "event_manifest_version": version}
+            )
+        }
+    )
+    hashed = moved.definition.model_copy(update={"content_hash": content_hash(moved)})
+    return moved.model_copy(update={"definition": hashed})
+
+
+def test_the_freeze_refuses_a_build_of_another_corpus(
+    universe, layer, tmp_path
+) -> None:
+    directory = tmp_path / "corpus"
+    built = reviewed(universe, layer)
+    freeze(built, layer, directory)
+    other = build_events(
+        universe,
+        SavedResponses(layer.store),
+        EventOverridesFile(schema_version=1, overrides=built.overrides),
+        corpus_id="djia-other",
+    )
+    assert not other.holds_freeze
+    with pytest.raises(ValueError, match="holds corpus djia-synthetic, not djia-other"):
+        freeze(other, layer, directory)
+    assert sorted(path.name for path in directory.iterdir()) == [
+        "events-v1.evidence.json",
+        "events-v1.json",
+    ]
+
+
+def test_a_directory_of_two_corpora_or_two_pilots_is_refused(
+    universe, layer, tmp_path
+) -> None:
+    """Each frozen file names its version, not its corpus: the directory is the only
+    tie, so the loaders refuse one that holds two. ``pilot_id`` is
+    ``<corpus_id>-pilot``, whatever the policy, so a later policy's pilot shares it."""
+    directory = tmp_path / "corpus"
+    frozen = freeze(reviewed(universe, layer), layer, directory)
+    pilot = freeze_pilot(
+        select_pilot(frozen.manifest, universe), universe, directory, now=NOW
+    )
+    other = of_corpus(frozen.manifest, "djia-other", 2)
+    (directory / "events-v2.json").write_bytes(serialize(other))
+    with pytest.raises(ValueError, match=r"more than one corpus: \['djia-other', 'dj"):
+        frozen_event_manifests(directory)
+    with pytest.raises(ValueError, match="holds djia-synthetic-pilot, not djia-other"):
+        freeze_pilot(select_pilot(other, universe), universe, directory, now=NOW)
+    assert not (directory / "pilot-v2.json").exists()
+    manifest = pilot.manifest
+    renamed = manifest.definition.model_copy(
+        update={"pilot_id": "djia-other-pilot", "pilot_version": 2}
+    )
+    stray = manifest.model_copy(update={"definition": renamed})
+    hashed = renamed.model_copy(update={"content_hash": pilot_content_hash(stray)})
+    stray = stray.model_copy(update={"definition": hashed})
+    (directory / "pilot-v2.json").write_bytes(serialize(stray))
+    with pytest.raises(ValueError, match=r"more than one pilot: \['djia-other-pilot'"):
+        frozen_pilots(directory)

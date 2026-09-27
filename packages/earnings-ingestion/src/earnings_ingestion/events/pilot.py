@@ -312,11 +312,16 @@ class Pilot:
     seed: str
     selection: Selection
 
+    @property
+    def pilot_id(self) -> str:
+        """``<corpus_id>-pilot``: the corpus alone, whatever the policy."""
+        return f"{self.events.corpus_id}-pilot"
+
     def manifest(self, version: int, created_at: datetime) -> PilotManifest:
         events, selection = self.events, self.selection
         draft = PilotManifest(
             definition=PilotDefinition(
-                pilot_id=f"{events.corpus_id}-pilot",
+                pilot_id=self.pilot_id,
                 pilot_version=version,
                 universe_version=self.universe_version,
                 universe_operative_hash=events.universe_operative_hash,
@@ -445,8 +450,12 @@ def load_pilot(path: Path, universe: UniverseManifest) -> PilotManifest:
 def frozen_pilots(directory: Path) -> list[PilotManifest]:
     """Every frozen version in ``directory``, oldest first, each refused unless its
     hash and its name check. Versions may have read different universes, so their
-    chains are not checked here: ``load_pilot`` checks one's."""
+    chains are not checked here: ``load_pilot`` checks one's. Refused if they name
+    more than one ``pilot_id``, which is ``<corpus_id>-pilot`` whatever the policy:
+    a file names its version, not its corpus."""
     pilots = [_read_pilot(path) for path in directory.glob("pilot-v*.json")]
+    if len(named := sorted({m.definition.pilot_id for m in pilots})) > 1:
+        raise ValueError(f"{directory} holds more than one pilot: {named}")
     return sorted(pilots, key=lambda m: m.definition.pilot_version)
 
 
@@ -455,8 +464,11 @@ def freeze_pilot(
 ) -> FrozenPilot:
     """Freeze ``pilot`` beside the event manifest it names, or return the version
     that holds it. Either way, the chain of the version returned checks against
-    ``universe``; earlier versions read under another universe do not block."""
+    ``universe``; earlier versions read under another universe do not block. Refused
+    if ``directory`` holds another corpus's pilot."""
     existing = frozen_pilots(directory)
+    if existing and (held := existing[0].definition.pilot_id) != pilot.pilot_id:
+        raise ValueError(f"{directory} holds {held}, not {pilot.pilot_id}")
     for manifest in existing:
         if manifest.definition.content_hash == pilot.content_hash:
             check_chain(manifest, directory, universe)

@@ -15,6 +15,8 @@ holds the freeze.
 
 The universe is the latest frozen manifest in ``--universe-dir``, which holds one
 universe's versions; ``select`` reads the version its event manifest read.
+``--corpus-dir`` holds one corpus's versions: ``freeze`` refuses a build of another
+corpus, and ``select`` refuses unless the latest event manifest is ``--corpus-id``'s.
 """
 
 from dataclasses import dataclass
@@ -186,6 +188,8 @@ def freeze_command(context: typer.Context) -> None:
         for reason in error.reasons:
             typer.echo(f"HOLDS  {reason}", err=True)
         raise typer.Exit(1) from error
+    except ValueError as error:
+        _fail(f"Refused: {error}")
     definition = frozen.manifest.definition
     verb = "froze" if frozen.created else "unchanged:"
     typer.echo(f"{verb} {definition.corpus_id} v{definition.event_manifest_version}")
@@ -197,11 +201,19 @@ def freeze_command(context: typer.Context) -> None:
 def select_command(context: typer.Context) -> None:
     """Run djia-pilot/1 on the latest frozen event manifest, and freeze the pilot."""
     layout: Layout = context.obj
-    manifests = frozen_event_manifests(layout.corpus())
+    try:
+        manifests = frozen_event_manifests(layout.corpus())
+    except ValueError as error:
+        _fail(f"Refused: {error}")
     if not manifests:
         _fail(f"Refused: no frozen event manifest in {layout.corpus_dir}")
     frozen_events = manifests[-1]
     read = frozen_events.definition
+    if read.corpus_id != layout.corpus_id:
+        _fail(
+            f"Refused: {layout.corpus_dir} holds corpus {read.corpus_id},"
+            f" not {layout.corpus_id}"
+        )
     matching = [
         m
         for m in layout.universes()
