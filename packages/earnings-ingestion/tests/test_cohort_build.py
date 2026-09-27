@@ -16,7 +16,7 @@ from earnings_ingestion.cohort.freeze import (
     load_manifest,
 )
 from earnings_ingestion.cohort.locators import ArtifactText
-from earnings_ingestion.cohort.synthetic import FIXTURE_DIR, build_options
+from earnings_ingestion.cohort.synthetic import FIXTURE_DIR, FUND_CIK, build_options
 from earnings_ingestion.fetch.records import Retrieval, RetrievalMethod
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.data import FILING_COLUMNS
@@ -115,6 +115,21 @@ def test_a_missing_artifact_stops_the_build(repo) -> None:
     for path in (repo / DIRECTORY / "raw" / "synthetic-roster").glob("*.html"):
         path.unlink()
     with pytest.raises(CohortError, match="no artifact"):
+        build(repo, **OPTIONS)
+
+
+@pytest.mark.parametrize("cik", ["0009990001", FUND_CIK], ids=["issuer", "fund"])
+def test_a_submissions_record_of_another_cik_stops_the_build(repo, cik) -> None:
+    """Each submissions record states its CIK. One saved under another CIK's URL is
+    refused, as Stage 5's event build refuses one, rather than lending that CIK its
+    names or its filings."""
+    store = ArtifactStore(repo / DIRECTORY / "raw", repo)
+    url = submissions_url(cik)
+    record = json.loads(store.latest("sec-edgar", url, **SYNTHETIC).body)
+    body = json.dumps(record | {"cik": "9990008"}).encode()
+    save(store, "sec-edgar", url, body, "application/json")
+    message = f"{url} is the submissions file of CIK 0009990008"
+    with pytest.raises(CohortError, match=re.escape(message)):
         build(repo, **OPTIONS)
 
 

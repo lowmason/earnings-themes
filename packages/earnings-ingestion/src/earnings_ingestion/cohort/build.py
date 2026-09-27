@@ -442,6 +442,11 @@ class _Builder:
             except (SecDataError, ValueError) as exc:
                 self.problems.append(f"{url}: {exc}")
                 continue
+            if registrant.cik != cik:
+                self.problems.append(
+                    f"{url} is the submissions file of CIK {registrant.cik}"
+                )
+                continue
             registrants[cik] = (registrant, self._citable(SEC_SOURCE_ID, url, stored))
         return SecEvidence(
             tickers=self._citable(SEC_SOURCE_ID, COMPANY_TICKERS_URL, tickers),
@@ -472,6 +477,11 @@ class _Builder:
             return []
         try:
             registrant = read_submissions(stored.body)
+            if registrant.cik != proxy.cik:
+                self.problems.append(
+                    f"{url} is the submissions file of CIK {registrant.cik}"
+                )
+                return []
             filings = list(registrant.filings)
             for page in registrant.older_pages:
                 older = self._latest(SEC_SOURCE_ID, submissions_page_url(page.name))
