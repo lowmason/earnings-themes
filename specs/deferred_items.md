@@ -329,14 +329,36 @@
         `djia-cohort` record, ADR 0002, and the Stage 3 records.
       Size: quick-fix. Done when: each claim matches the code, or `fetch_page`
       checks the URL's host against its source, with a test.
-- [ ] Decide what an override's dates mean (final review, Minor): every `Override`
+- [ ] Decide what an override's dates mean (final review, Minor, and Codex's
+      review of PR #5): every `Override`
       records `effective_from`, and optionally `effective_to`, and
       `docs/data-dictionary.md` describes them as the period the decision covers,
       but nothing under
       `packages/earnings-ingestion/src/earnings_ingestion/cohort/` reads them, so
-      a `holding_alias` or `set_issuer` applies on every date. Size: design.
+      a `holding_alias` or `set_issuer` applies on every date. The frozen v1 shows
+      it: `ibm-common`'s interval and anchor assertion start on 2024-06-24, the
+      anchor's date, but `ibm-issuer` and `alias-ibm` take effect on 2024-07-01.
+      IBM's CIK is the same on both dates, so nothing is misattributed, but a rule
+      that scopes overrides must say whether an override covers the part of an
+      interval inside the window or its whole span. `OverridesFile` also refuses a
+      `holding_name` that two `holding_alias` overrides share; scoping could relax
+      that to periods that do not overlap. Size: design.
       Done when: the dictionary says the dates are a record only, or the build
       scopes each override by them, with a test.
+- [ ] Decide whether a fund report's holdings match only names cited by its date
+      (Codex's review of PR #5): `match_holdings` in
+      `packages/earnings-ingestion/src/earnings_ingestion/cohort/corroboration.py`
+      matches each holding against every name published by the cutoff, including
+      names whose `observed_on` falls after the report's date, so a later name
+      could match an earlier holding and hide a difference. Filtering by
+      `observed_on` changes nothing in v1: rebuilt in memory with the filter, which
+      drops as many as six names from a report, no reconciliation and not the
+      content hash changes. But a name's first citation is not its start, so the
+      filter would turn a rename cited only after a report into a blocking
+      difference until a reviewer adds a `holding_alias`. Decide it with the
+      override dates above, so that names and overrides are scoped alike.
+      Size: design. Done when: the decision is recorded, and a test shows whether a
+      name cited after a report's date matches that report's holding.
 - [ ] Let `verify-live` re-read the other hosts after one refuses (final review,
       recommendation; P6-20): `verify_live` in
       `packages/earnings-ingestion/src/earnings_ingestion/cohort/live.py` sends
