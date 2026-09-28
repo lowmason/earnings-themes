@@ -76,6 +76,21 @@ def test_freeze_refuses_with_the_blocking_findings(repo) -> None:
     assert "BLOCKING  membership_conflict:corvid-common" in result.stderr
 
 
+def test_freeze_refuses_a_revert(repo) -> None:
+    universe = repo / FIXTURE_DIR / "universe.toml"
+    text = universe.read_text(encoding="utf-8")
+    one, two = (f'selection_policy_version = "djia-pilot/{n}"' for n in (1, 2))
+    universe.write_text(text.replace(one, two, 1), encoding="utf-8")
+    assert "froze djia-synthetic v2" in run(repo, "freeze").stdout
+    universe.write_text(text, encoding="utf-8")
+    result = run(repo, "freeze")
+    assert result.exit_code == 1
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert "Refused: the build is djia-synthetic-v1.json's content, but v2" in (
+        result.stderr
+    )
+
+
 def test_cite_keeps_the_cited_text_off_stdout(repo) -> None:
     page = next(
         path

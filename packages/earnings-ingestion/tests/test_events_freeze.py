@@ -13,6 +13,7 @@ from earnings_ingestion.events.build import EventBuild, build_events
 from earnings_ingestion.events.evidence import check_evidence, evidence_of
 from earnings_ingestion.events.freeze import (
     EventFreezeRefused,
+    current_events,
     freeze_events,
     frozen_event_manifests,
     load_event_evidence,
@@ -27,7 +28,12 @@ from earnings_ingestion.events.layer import (
     review,
     write_layer,
 )
-from earnings_ingestion.events.pilot import freeze_pilot, frozen_pilots, select_pilot
+from earnings_ingestion.events.pilot import (
+    current_pilot,
+    freeze_pilot,
+    frozen_pilots,
+    select_pilot,
+)
 from earnings_ingestion.events.records import (
     EventManifest,
     EventOverridesFile,
@@ -42,6 +48,7 @@ ROOT = Path(__file__).resolve().parents[3]
 COHORT = ROOT / "tests" / "fixtures" / "cohort" / "manifests" / "djia-synthetic-v1.json"
 NOW = datetime(2026, 9, 28, 18, 0, tzinfo=UTC)
 LATER = datetime(2026, 9, 29, 12, 0, tzinfo=UTC)
+LATEST = datetime(2026, 9, 30, 12, 0, tzinfo=UTC)
 
 
 @pytest.fixture(scope="module")
@@ -181,18 +188,23 @@ def test_a_refetch_with_the_same_facts_writes_nothing(
     assert len(list((tmp_path / "corpus").iterdir())) == 2
 
 
+def corvid_facts(*, agreeing: bool) -> list[tuple[str, int, str]]:
+    """Corvid's companyfacts facts: each report's labels, as the layer saves them, or
+    only its first, so that they agree."""
+    return [
+        (filing.accession, year, period)
+        for filing, report in filings(CORVID)
+        if report in REPORTS[CORVID]
+        for year, period in (report.labels[:1] if agreeing else report.labels)
+    ]
+
+
 def test_a_changed_fact_writes_the_next_version(universe, layer, tmp_path) -> None:
     """Corvid's companyfacts, fetched again with agreeing labels, changes a row."""
     before = reviewed(universe, layer)
     first = freeze(before, layer, tmp_path / "corpus")
     again = SyntheticStore(layer.store.root, layer.store.repo, LATER)
-    listed = filings(CORVID)
-    facts = [
-        (filing.accession, report.labels[0][0], report.labels[0][1])
-        for filing, report in listed
-        if report in REPORTS[CORVID]
-    ]
-    again.companyfacts(CORVID.cik, CORVID.name, facts)
+    again.companyfacts(CORVID.cik, CORVID.name, corvid_facts(agreeing=True))
     frozen = freeze(
         build(universe, again, before.overrides), again, tmp_path / "corpus"
     )
@@ -408,3 +420,39 @@ def test_a_manifest_without_its_evidence_is_refused(universe, layer, tmp_path) -
     frozen.evidence_path.unlink()
     with pytest.raises(ValueError, match="events-v1.json has no events-v1.evidence"):
         frozen_event_manifests(directory)
+
+
+def test_the_build_decides_which_version_is_current(universe, layer, tmp_path) -> None:
+    """A change frozen as v2 and then reverted leaves v1 current, and the pilot
+    frozen over v1 with it (PR #6's review, F4)."""
+    directory = tmp_path / "corpus"
+    before = reviewed(universe, layer)
+    first = freeze(before, layer, directory)
+    first_pilot = freeze_pilot(
+        select_pilot(first.manifest, universe), universe, directory, now=NOW
+    )
+    changed = SyntheticStore(layer.store.root, layer.store.repo, LATER)
+    changed.companyfacts(CORVID.cik, CORVID.name, corvid_facts(agreeing=True))
+    second = freeze(build(universe, changed, before.overrides), changed, directory)
+    freeze_pilot(select_pilot(second.manifest, universe), universe, directory, now=NOW)
+    assert (second.path.name, len(frozen_pilots(directory))) == ("events-v2.json", 2)
+    reverted = SyntheticStore(layer.store.root, layer.store.repo, LATEST)
+    reverted.companyfacts(CORVID.cik, CORVID.name, corvid_facts(agreeing=False))
+    current = current_events(build(universe, reverted, before.overrides), directory)
+    assert (current.path, current.created) == (first.path, False)
+    pilot = current_pilot(directory, current.manifest, universe)
+    assert (pilot.path, pilot.manifest) == (first_pilot.path, first_pilot.manifest)
+
+
+def test_no_current_version_without_a_frozen_one_that_holds_the_build(
+    universe, layer, tmp_path
+) -> None:
+    directory = tmp_path / "corpus"
+    before = reviewed(universe, layer)
+    with pytest.raises(EventFreezeRefused):
+        current_events(build(universe, layer), directory)
+    with pytest.raises(ValueError, match="no frozen event manifest holds this build"):
+        current_events(before, directory)
+    frozen = freeze(before, layer, directory)
+    with pytest.raises(ValueError, match="no pilot is frozen over events-v1.json"):
+        current_pilot(directory, frozen.manifest, universe)

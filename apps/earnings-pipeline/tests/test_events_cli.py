@@ -12,9 +12,9 @@ import httpx
 import pytest
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
 from earnings_ingestion.events.fixture import COHORT_MANIFEST, FIXTURE_DIR
-from earnings_ingestion.events.layer import DYNAMO, RETRIEVED, filings
+from earnings_ingestion.events.layer import CORVID, DYNAMO, REPORTS, RETRIEVED, filings
 from earnings_ingestion.events.saved import SavedResponses
-from earnings_ingestion.events.synthetic import save, submissions_file
+from earnings_ingestion.events.synthetic import SyntheticStore, save, submissions_file
 from earnings_ingestion.fetch.records import Retrieval
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec import client as sec_client
@@ -147,12 +147,16 @@ def test_select_names_the_pilot_that_holds_the_selection(repo) -> None:
     result = run(repo, "select")
     assert result.exit_code == 0, result.output
     lines = result.stdout.splitlines()
-    assert lines[0] == "  1  cik-0009990003:2026-03-31  issuer_coverage"
-    assert lines[27] == (
+    assert lines[:2] == [
+        "reads djia-synthetic v1",
+        f"tests/fixtures/events/events-v1.json  {EVENTS_HASH}",
+    ]
+    assert lines[2] == "  1  cik-0009990003:2026-03-31  issuer_coverage"
+    assert lines[29] == (
         "reported: cik-0009990002's exit on 2024-11-08 has no eligible event on its"
         " member side"
     )
-    assert lines[28:] == [
+    assert lines[30:] == [
         "unchanged: djia-synthetic-pilot v1: 27 of target 27, underfilled",
         f"tests/fixtures/events/pilot-v1.json  {PILOT_HASH}",
     ]
@@ -163,9 +167,45 @@ def test_select_refuses_without_a_frozen_event_manifest(repo) -> None:
         (repo / FIXTURE_DIR / name).unlink()
     result = run(repo, "select")
     assert result.exit_code == 1
-    assert "Refused: no frozen event manifest in tests/fixtures/events" in (
+    assert "Refused: no frozen event manifest holds this build's content" in (
         result.stderr
     )
+
+
+def test_select_reads_the_version_the_build_reproduces(repo) -> None:
+    """Freeze v1, freeze a changed v2, revert, and select: the build decides which
+    version is current, so select reads v1 and names pilot v1 again (PR #6's
+    review, F4)."""
+    raw = repo / FIXTURE_DIR / "raw"
+
+    def corvid(days: int, *, agreeing: bool) -> None:
+        facts = [
+            (filing.accession, year, period)
+            for filing, report in filings(CORVID)
+            if report in REPORTS[CORVID]
+            for year, period in (report.labels[:1] if agreeing else report.labels)
+        ]
+        at = RETRIEVED + timedelta(days=days)
+        SyntheticStore(raw, repo, at).companyfacts(CORVID.cik, CORVID.name, facts)
+
+    corvid(1, agreeing=True)
+    assert run(repo, "freeze").stdout.splitlines()[0] == "froze djia-synthetic v2"
+    changed = run(repo, "select").stdout.splitlines()
+    assert changed[0] == "reads djia-synthetic v2"
+    assert changed[-2].startswith("froze djia-synthetic-pilot v2: ")
+    corvid(2, agreeing=False)
+    assert run(repo, "freeze").stdout.splitlines()[0] == "unchanged: djia-synthetic v1"
+    result = run(repo, "select")
+    assert result.exit_code == 0, result.output
+    lines = result.stdout.splitlines()
+    assert lines[:2] == [
+        "reads djia-synthetic v1",
+        f"tests/fixtures/events/events-v1.json  {EVENTS_HASH}",
+    ]
+    assert lines[-2:] == [
+        "unchanged: djia-synthetic-pilot v1: 27 of target 27, underfilled",
+        f"tests/fixtures/events/pilot-v1.json  {PILOT_HASH}",
+    ]
 
 
 def served() -> dict[str, tuple[bytes, str]]:

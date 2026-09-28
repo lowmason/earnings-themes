@@ -3,8 +3,11 @@
 - Freezing refuses while any blocking finding is unresolved, or any
   acknowledgement no longer matches its finding, and names each one.
 - The content hash covers everything except the version, the hash itself, and the
-  creation time. A build whose content matches a frozen manifest *is* that version,
-  and nothing is written; different content is the next version.
+  creation time. A build whose content matches the latest frozen manifest *is* that
+  version, and nothing is written; different content is the next version. Every
+  consumer reads a universe's latest version, so a build that holds an older
+  version's content is refused: a universe is never reverted (PR #6's review, F4;
+  plan 8, P8-4).
 - The manifest is written to a temporary file and linked into place, so a partial
   manifest never appears and an existing one is never replaced.
 - Loading reads the committed JSON alone, with no saved artifact, and rechecks the
@@ -108,13 +111,20 @@ def freeze(build: CohortBuild, directory: Path, *, now: datetime) -> Frozen:
     universe_id = build.config.universe.universe_id
     existing = frozen_manifests(directory, universe_id)
     target = build.content_hash
+    newest = max((m.definition.universe_version for m in existing), default=0)
     for manifest in existing:
         if manifest.definition.content_hash == target:
             path = manifest_path(
                 directory, universe_id, manifest.definition.universe_version
             )
+            if manifest.definition.universe_version != newest:
+                raise ValueError(
+                    f"the build is {path.name}'s content, but v{newest} is newer:"
+                    " every consumer reads a universe's latest version, so a revert"
+                    " is refused"
+                )
             return Frozen(manifest=manifest, path=path, created=False)
-    version = 1 + max((m.definition.universe_version for m in existing), default=0)
+    version = 1 + newest
     manifest = build.manifest(version, now)
     path = manifest_path(directory, universe_id, version)
     write_new(path, serialize(manifest))

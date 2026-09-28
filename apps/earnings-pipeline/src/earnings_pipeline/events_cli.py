@@ -26,7 +26,10 @@ any client opens, and every command prints a path outside the repository in full
 The universe is the latest frozen manifest in ``--universe-dir``, which holds one
 universe's versions; ``select`` reads the version its event manifest read.
 ``--corpus-dir`` holds one corpus's versions: ``freeze`` refuses a build of another
-corpus, and ``select`` refuses unless the latest event manifest is ``--corpus-id``'s.
+corpus, and ``select`` one whose ``--corpus-id`` is not the directory's. The build
+decides which event manifest is current: ``select`` builds offline and reads the
+version that holds the build's content, which a revert makes an earlier one, and
+prints the version and hash it read (PR #6's review, F4; plan 8, P8-4).
 """
 
 from dataclasses import dataclass
@@ -50,8 +53,9 @@ from earnings_ingestion.events.build import (
 from earnings_ingestion.events.discover import discover, discover_filing
 from earnings_ingestion.events.freeze import (
     EventFreezeRefused,
+    FrozenEvents,
+    current_events,
     freeze_events,
-    frozen_event_manifests,
 )
 from earnings_ingestion.events.pilot import freeze_pilot, select_pilot
 from earnings_ingestion.events.records import (
@@ -255,9 +259,7 @@ def freeze_command(context: typer.Context) -> None:
     try:
         frozen = freeze_events(built, saved, layout.corpus(), now=datetime.now(UTC))
     except EventFreezeRefused as error:
-        for reason in error.reasons:
-            typer.echo(f"HOLDS  {reason}", err=True)
-        raise typer.Exit(1) from error
+        _holds(error)
     except ValueError as error:
         _fail(f"Refused: {error}")
     definition = frozen.manifest.definition
@@ -267,23 +269,25 @@ def freeze_command(context: typer.Context) -> None:
     typer.echo(shown(frozen.evidence_path, layout.repo))
 
 
-@events.command("select")
-def select_command(context: typer.Context) -> None:
-    """Run djia-pilot/1 on the latest frozen event manifest, and freeze the pilot."""
-    layout: Layout = context.obj
+def _holds(error: EventFreezeRefused) -> NoReturn:
+    for reason in error.reasons:
+        typer.echo(f"HOLDS  {reason}", err=True)
+    raise typer.Exit(1) from error
+
+
+def _current(layout: Layout) -> tuple[FrozenEvents, UniverseManifest]:
+    """The event manifest the build reproduces, printed with its version and hash,
+    and the universe version it read (plan 8, P8-4)."""
+    built, _ = _build(layout)
     try:
-        manifests = frozen_event_manifests(layout.corpus())
+        current = current_events(built, layout.corpus())
+    except EventFreezeRefused as error:
+        _holds(error)
     except ValueError as error:
         _fail(f"Refused: {error}")
-    if not manifests:
-        _fail(f"Refused: no frozen event manifest in {layout.corpus_dir}")
-    frozen_events = manifests[-1]
-    read = frozen_events.definition
-    if read.corpus_id != layout.corpus_id:
-        _fail(
-            f"Refused: {layout.corpus_dir} holds corpus {read.corpus_id},"
-            f" not {layout.corpus_id}"
-        )
+    read = current.manifest.definition
+    typer.echo(f"reads {read.corpus_id} v{read.event_manifest_version}")
+    typer.echo(f"{shown(current.path, layout.repo)}  {read.content_hash}")
     matching = [
         m
         for m in layout.universes()
@@ -295,9 +299,17 @@ def select_command(context: typer.Context) -> None:
             f"Refused: {layout.universe_dir} holds no {read.universe_id}"
             f" v{read.universe_version}, which the event manifest read"
         )
-    universe = matching[0]
+    return current, matching[0]
+
+
+@events.command("select")
+def select_command(context: typer.Context) -> None:
+    """Run djia-pilot/1 on the event manifest the build reproduces, and freeze the
+    pilot."""
+    layout: Layout = context.obj
+    current, universe = _current(layout)
     try:
-        pilot = select_pilot(frozen_events, universe)
+        pilot = select_pilot(current.manifest, universe)
         frozen = freeze_pilot(pilot, universe, layout.corpus(), now=datetime.now(UTC))
     except ValueError as error:
         _fail(f"Refused: {error}")

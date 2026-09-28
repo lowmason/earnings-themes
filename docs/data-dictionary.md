@@ -1132,8 +1132,9 @@ source.
   replaced. The synthetic cohort's is under `tests/fixtures/cohort/manifests/`.
 - **The content hash.** `content_hash` covers the manifest's canonical JSON without
   `universe_version`, `content_hash`, and `created_at`. Identical content keeps its
-  version; new content takes the next. `frozen_manifests` refuses two versions of one
-  content (PR #6's review, F22).
+  version; new content takes the next. Every consumer reads the latest version, so
+  `freeze` refuses a build that holds an older version's content, and
+  `frozen_manifests` refuses two versions of one content (PR #6's review, F4, F22).
 - **Reading.** `earnings_ingestion.cohort.freeze.load_manifest` rechecks that hash
   and the file's name, and needs no saved artifact.
 - **Saved artifacts.** The cohort's are under `data/raw/cohort/`, which is never
@@ -1365,6 +1366,11 @@ primary document through `walker-1`'s text, and a JSON file by pointer.
   `corpus_id`, and `freeze_events` refuses a build of a corpus other than the one
   the directory holds. Listing the versions also refuses two that hold one content,
   and a manifest whose evidence record is missing (PR #6's review, F22).
+- **The current version.** The build decides it: `current_events(build, directory)`
+  is the version that holds the build's content, which a revert makes an earlier
+  one. It refuses while the build holds the freeze, and when no version holds the
+  content. `events select` and `events acquire` read it, and print its version and
+  hash (PR #6's review, F4; plan 8, P8-4).
 - **The content hash.** `content_hash` covers the canonical JSON of the definition,
   less `event_manifest_version`, `universe_version`, `content_hash`, and `created_at`,
   with the rows, the findings, and the overrides. Identical content keeps its version,
@@ -1479,3 +1485,5 @@ and nor is a same-day handoff between two of its securities.
   then selects again: the pilot must name `djia-pilot/1`, and the policy run over
   its event manifest and universe must reproduce its `content_hash` (PR #6's review,
   F10).
+- **The current pilot.** `current_pilot(directory, events, universe)` is the pilot
+  frozen over the current event manifest, loaded by `load_pilot` (F4).

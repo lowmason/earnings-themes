@@ -18,7 +18,9 @@ on stderr only, so no source wording is pasted into a committed file by accident
 approved, and print the requests they sent on every exit (PR #6's review, F35).
 ``fetch`` and ``fetch-sec`` refuse a ``--store`` that does not resolve under
 ``data/raw``, before any client opens, and every command prints a path outside the
-repository in full (``earnings_pipeline.paths``).
+repository in full (``earnings_pipeline.paths``). ``freeze`` refuses a revert, a build
+that holds an older version's content, since every consumer reads a universe's
+latest version (PR #6's review, F4).
 """
 
 from dataclasses import dataclass
@@ -274,7 +276,8 @@ def build_command(context: typer.Context) -> None:
 
 @cohort.command("freeze")
 def freeze_command(context: typer.Context) -> None:
-    """Freeze the build as a new version, or name the version that already holds it."""
+    """Freeze the build as a new version, or name the latest version when it already
+    holds the build; refuse a build that holds an older version (plan 8, P8-4)."""
     layout: Layout = context.obj
     built = _build(layout)
     try:
@@ -289,6 +292,8 @@ def freeze_command(context: typer.Context) -> None:
         for override_id in error.stale:
             typer.echo(f"STALE  {override_id}", err=True)
         raise typer.Exit(1) from error
+    except ValueError as error:
+        _fail(f"Refused: {error}")
     verb = "froze" if frozen.created else "unchanged:"
     definition = frozen.manifest.definition
     typer.echo(f"{verb} {definition.universe_id} v{definition.universe_version}")

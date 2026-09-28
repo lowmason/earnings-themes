@@ -36,6 +36,10 @@ reproduce its content hash, so a hand-edited pilot with its hash recomputed is
 refused (PR #6's review, F10; plan 8, P8-3). A frozen pilot's loading so depends on
 this code, and a change in what the policy selects must come as a new policy name,
 as the spec's §Pilot selection requires.
+
+The current pilot is the one frozen over the current event manifest, which the
+build decides (``current_pilot``; PR #6's review, F4; plan 8, P8-4), never the
+highest-numbered.
 """
 
 from collections import Counter
@@ -477,6 +481,32 @@ def load_pilot(path: Path, universe: UniverseManifest) -> PilotManifest:
             f" selects {derived}, not {path.name}"
         )
     return manifest
+
+
+def current_pilot(
+    directory: Path, events: EventManifest, universe: UniverseManifest
+) -> FrozenPilot:
+    """The pilot frozen over ``events``, the current event manifest, loaded: its
+    chain checked against ``universe``, and reselected. Refused unless exactly one
+    version in ``directory`` names ``events``."""
+    definition = events.definition
+    name = manifest_path(directory, definition.event_manifest_version).name
+    over = [
+        pilot
+        for pilot in frozen_pilots(directory)
+        if (
+            pilot.definition.event_manifest_version,
+            pilot.definition.eligible_event_manifest_hash,
+        )
+        == (definition.event_manifest_version, definition.content_hash)
+    ]
+    if not over:
+        raise ValueError(f"no pilot is frozen over {name}: run events select")
+    if len(over) > 1:
+        versions = [pilot.definition.pilot_version for pilot in over]
+        raise ValueError(f"pilot versions {versions} are all frozen over {name}")
+    path = pilot_path(directory, over[0].definition.pilot_version)
+    return FrozenPilot(load_pilot(path, universe), path, created=False)
 
 
 def frozen_pilots(directory: Path) -> list[PilotManifest]:

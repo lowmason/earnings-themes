@@ -603,8 +603,20 @@ their names and flags.
 - **`events build`** is offline. It prints the slots, identification, eligibility,
   and findings, and exits 1 while anything blocks.
 - **`events freeze`** freezes the event manifest, refusing as `build` does.
-- **`events select`** runs `djia-pilot/1` on the latest frozen event manifest and
-  freezes the pilot.
+- **`events select`** runs `djia-pilot/1` on the current event manifest and freezes
+  the pilot.
+- *Amended 2026-09-28, by the user's decision on PR #6's review, F4 (plan 8, P8-4):*
+  the build decides which version is current. `events select` and `events acquire`
+  rebuild offline and read the frozen event manifest whose content hash the build
+  reproduces. They refuse while the build holds the freeze, or when no version holds
+  its content, and each prints the version and hash it read. The current pilot is
+  the one frozen over that manifest. So a change frozen as v2 and then reverted makes
+  v1 current again, where "the latest frozen event manifest", which this section
+  said before and plan 7's P7-18 followed, would have drawn a pilot from the
+  withdrawn v2. A universe stays "the latest version" for every consumer, since the
+  real cohort's rebuild no longer reproduces v1's content hash (plan 7, P7-3). So
+  `cohort freeze` refuses a build that holds an older version's content: a universe
+  is never reverted.
 
 ### The synthetic event layer
 
