@@ -456,6 +456,8 @@
       Since PR #6 bounds a `set_release_filing` to `(P, P′]`, no override can give
       it back to its own event, and no override can take a rule's pick away from
       an event that is not `ambiguous`. `release-id/2` decides both.
+      Before it freezes a new events version, the per-candidate citations item
+      under PR #6's review lands too.
 - [ ] Report `events freeze`'s citation errors as `problem:` lines (plan 7's
       final review, Minor): `freeze_command` in
       `apps/earnings-pipeline/src/earnings_pipeline/events_cli.py` catches only
@@ -530,6 +532,8 @@
       Size: quick-fix. Done when: an override naming a passed-over 8-K either
       freezes with its Item 2.02 span cited or is refused by `build`, with a
       test.
+      The per-candidate citations item under PR #6's review touches the same
+      `item_text` code; land the two together.
 - [ ] Bound the periodic reports that can block on acceptance time (plan 7's
       final review, Minor): `issuer_filings` in `events/filings.py` passes every
       periodic report with a `reportDate` to `_visible`, so one whose index page
@@ -977,3 +981,33 @@
       after the user's decision. Done when: the user chooses per-issuer or
       corpus-wide, the spec says which, and a synthetic co-registrant 8-K shows
       the chosen behavior in a test.
+- [ ] Cite each candidate's qualifying fields and primary document (PR #6's Codex
+      round 5, comment 4117725089): the Stage 5 spec's evidence list (§The event
+      manifest), which `_event` in `events/evidence.py` follows, cites a candidate
+      only by its index page at its Accepted value, and the Item 2.02 text of the
+      release alone; P7-15 keeps readings out of the record. AGENTS.md asks each
+      assertion for a checksum and a field-level locator, and keeps conflicting
+      observations. So no locator cites what qualified a candidate (Item 2.02 in
+      its submissions row, an `EX-99*` row on its index page), no hash pins a
+      non-release candidate's primary document or the text that dropped it, and a
+      filing passed over for want of an `EX-99*` exhibit is in no record. In v1
+      that is six candidates and two filings, which the Limitations of
+      `docs/verification/djia-events.md` name; no v1 row is wrong, and v1's
+      evidence record is never replaced. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: plan. It lands
+      before the next events version is frozen (see the `release-id/2` item),
+      together with the item on the Item 2.02 text of a release an override names
+      outside the candidates, which touches the same code. Done when: the spec's
+      evidence list is amended; `EventCitations` gains an optional per-candidate
+      field, absent when not recorded so that v1 still loads, whose entries cite
+      each candidate's submissions row at `form`, `items`, and `primaryDocument`,
+      its index page's Item 2.02 line and each `EX-99*` row, its primary document
+      by hash with its Item 2.02 spans (with no locator when the rule could not
+      read it), and `release-id/1`'s outcome for it; a passed-over list cites each
+      such filing's index page and reason; `check_evidence` and
+      `load_event_evidence` cover the new fields, binding them to each row's
+      `candidate_accessions`; the data dictionary and its drift test follow; and
+      the synthetic evidence fixture regenerates, with tests for a dropped
+      co-candidate, an unread candidate, and a passed-over filing. Recording each
+      candidate's reading as a fact would reverse P7-15, so that is the user's
+      open choice; if adopted, the readings are marked as inferred.

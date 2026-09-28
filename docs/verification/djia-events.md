@@ -174,6 +174,20 @@ runtime, and `test_stage_5_imports_no_acquisition_library` checks their source.
   files load without the store. Hashing only an override's decision fields, or giving
   the event manifest an operative identity, would close this, under a new events
   version (`specs/deferred_items.md`).
+- **What the evidence record cites for a candidate** (Codex's fifth review of PR #6).
+  As the Stage 5 spec's evidence list and P7-15 have it, `events-v1.evidence.json`
+  cites each candidate by its index page at its Accepted value, and the Item 2.02 text
+  of the release alone. So in the six two-candidate events, no hash pins the other
+  candidate's primary document: Boeing's `0000012927-24-000067`, IBM's
+  `0000051143-26-000070`, and Nike's `0000320187-26-000070`, each dropped as
+  preliminary; Honeywell's `0000773840-25-000125`, dropped as stating another period;
+  and Caterpillar's `0000018230-24-000047` and Honeywell's `0000773840-26-000084`,
+  which the rule kept and the review's overrides did not choose. The two 8-Ks passed
+  over for want of an `EX-99*` exhibit, above, are in neither JSON file. These
+  decisions are recorded only here. A replay of the pinned rule over re-fetched pages
+  can re-derive them, but it cannot show that a re-fetched document is the one the
+  rule read. The evidence record is never replaced, so a later events version carries
+  these citations (`specs/deferred_items.md`).
 - **One machine.** The SEC and web client locks coordinate one machine's processes.
   Stage 1's harness client keeps its own lock, so it must never run live beside a
   package client.
