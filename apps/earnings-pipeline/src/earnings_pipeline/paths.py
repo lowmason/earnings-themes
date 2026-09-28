@@ -5,6 +5,9 @@
   client opens: ``tests/fixtures/`` is committed, so fetched SEC or index pages saved
   there would reach this public repository. Paths are resolved only for the check;
   the store keeps the root as given, so a symlinked ``data/`` still works.
+- **Where run outputs go.** ``events acquire`` refuses a runs directory that does not
+  resolve under ``<repo>/data/runs``: the canonical documents it writes hold
+  filings' text, which is local-only and never committed (plan 8, P8-13).
 - **What a command prints.** A path under the repository prints relative to it, and
   any other path, such as a corpus directory outside it or one spelled through a
   symlinked prefix, prints in full.
@@ -13,6 +16,7 @@
 from pathlib import Path
 
 RAW = Path("data") / "raw"
+RUNS = Path("data") / "runs"
 
 
 def raw_store_refusal(repo: Path, store: Path) -> str | None:
@@ -22,6 +26,16 @@ def raw_store_refusal(repo: Path, store: Path) -> str | None:
     return (
         f"Refused: {store} does not resolve under {RAW}, where fetched bytes are"
         " kept out of Git"
+    )
+
+
+def runs_refusal(repo: Path, runs: Path) -> str | None:
+    """Why run outputs may not be written under ``repo / runs``, or ``None``."""
+    if (repo / runs).resolve().is_relative_to((repo / RUNS).resolve()):
+        return None
+    return (
+        f"Refused: {runs} does not resolve under {RUNS}, where canonical documents,"
+        " which hold filings' text, are kept out of Git"
     )
 
 

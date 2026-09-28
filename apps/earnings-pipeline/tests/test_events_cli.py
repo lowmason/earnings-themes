@@ -12,6 +12,7 @@ import httpx
 import pytest
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
 from earnings_ingestion.events.fixture import COHORT_MANIFEST, FIXTURE_DIR
+from earnings_ingestion.events.freeze import serialize
 from earnings_ingestion.events.layer import (
     CORVID,
     DYNAMO,
@@ -20,7 +21,10 @@ from earnings_ingestion.events.layer import (
     exhibit_bodies,
     filings,
 )
+from earnings_ingestion.events.records import PilotManifest, pilot_content_hash
 from earnings_ingestion.events.saved import SavedResponses
+from earnings_ingestion.events.state_table import read_runs
+from earnings_ingestion.events.states import DocumentState
 from earnings_ingestion.events.synthetic import SyntheticStore, save, submissions_file
 from earnings_ingestion.fetch.records import Retrieval
 from earnings_ingestion.fetch.store import ArtifactStore
@@ -514,3 +518,164 @@ def test_discover_prints_its_count_on_ctrl_c(repo, monkeypatch) -> None:
     assert result.exit_code == 130
     assert calls
     assert "requests sent: 1; a rerun fetches only what is missing" in result.stdout
+
+
+MISSING = "dyna-20250422-ex991.htm"
+"""The one exhibit of the synthetic pilot that SEC never served."""
+
+
+def forget_exhibits(store: Path) -> list[str]:
+    """Delete the retrieval records of every saved exhibit, so acquisition lacks
+    them; return their URLs."""
+    exhibits = exhibit_bodies()
+    gone = []
+    for path in sorted((store / SEC_SOURCE_ID / "retrievals").glob("*/*.json")):
+        record = Retrieval.model_validate_json(path.read_text(encoding="utf-8"))
+        if record.request_url in exhibits:
+            path.unlink()
+            gone.append(record.request_url)
+    return gone
+
+
+def acquire_lines(result) -> list[str]:
+    return result.stdout.splitlines()
+
+
+def test_acquire_reads_the_current_records_and_states_its_count(
+    repo, moved, monkeypatch
+) -> None:
+    """Every saved exhibit is read from the store; only the one SEC never served is
+    requested, through the shared client, within the approved count."""
+    budgets = client(monkeypatch, served())
+    result = run(repo, "acquire", "--max-requests", "1", store=EVENTS_STORE)
+    assert result.exit_code == 0, result.output
+    assert budgets == [1]
+    lines = acquire_lines(result)
+    assert lines[:5] == [
+        "reads djia-synthetic v1",
+        f"tests/fixtures/events/events-v1.json  {EVENTS_HASH}",
+        "pilot djia-synthetic-pilot v1",
+        f"tests/fixtures/events/pilot-v1.json  {PILOT_HASH}",
+        "at most 1 requests to SEC, through the shared client; 1 first choices",
+    ]
+    assert lines[5] == "  1  cik-0009990003:2026-03-31:release  parsed"
+    assert lines[12] == (
+        "  8  cik-0009990003:2025-06-30:release  unavailable, no_confirmed_release"
+    )
+    assert lines[-3:] == [
+        "parsed 24, unavailable 2, failed 1",
+        "fetched 0; requests sent: 1",
+        lines[-1],
+    ]
+    assert lines[-1].startswith("data/runs/events/states/acquire-")
+    again = run(repo, "acquire", store=EVENTS_STORE)
+    assert again.exit_code == 0, again.output
+    assert budgets == [1]
+    assert acquire_lines(again)[4] == "nothing to fetch; the client stays closed"
+    assert acquire_lines(again)[-2:] == [
+        "parsed 24, unavailable 2, failed 1",
+        "fetched 0; requests sent: 0",
+    ]
+
+
+def test_acquire_fetches_through_the_shared_client_within_its_count(
+    repo, moved, monkeypatch
+) -> None:
+    """D5: every exhibit goes through the shared client, whose budget is the approved
+    count; acquisition has no throttle of its own."""
+    assert len(forget_exhibits(moved)) == 27
+    budgets = client(monkeypatch, {**served(), **exhibit_bodies()})
+    result = run(repo, "acquire", "--max-requests", "28", store=EVENTS_STORE)
+    assert result.exit_code == 0, result.output
+    assert budgets == [28]
+    lines = acquire_lines(result)
+    assert lines[4] == (
+        "at most 28 requests to SEC, through the shared client; 27 first choices"
+    )
+    assert lines[-2] == "fetched 27; requests sent: 28"
+
+
+def test_acquire_needs_the_approved_count_when_it_would_fetch(
+    repo, moved, monkeypatch
+) -> None:
+    budgets = client(monkeypatch, served())
+    result = run(repo, "acquire", store=EVENTS_STORE)
+    assert result.exit_code == 1
+    assert budgets == []
+    assert result.stderr == (
+        "Refused: pass --max-requests, the request count the user approved\n"
+    )
+    assert "requests sent" not in result.stdout
+
+
+def test_acquire_stops_on_a_persistent_403_and_leaves_the_rest_expected(
+    repo, moved, monkeypatch
+) -> None:
+    forget_exhibits(moved)
+    client(monkeypatch, {**served(), **exhibit_bodies()}, status=403)
+    result = run(repo, "acquire", "--max-requests", "28", store=EVENTS_STORE)
+    assert result.exit_code == 1
+    assert "Stopped: 403 persisted" in result.stderr
+    assert "requests sent: 2; a rerun attempts what is left" in result.stdout
+    (path,) = (repo / "data" / "runs" / "events" / "states").glob("*.parquet")
+    states = {t.to_state for t in read_runs(path.parent)}
+    assert states == {DocumentState.EXPECTED}
+
+
+def test_acquire_refuses_without_a_pilot_over_the_current_manifest(
+    repo, moved, monkeypatch
+) -> None:
+    budgets = client(monkeypatch, served())
+    (repo / FIXTURE_DIR / "pilot-v1.json").unlink()
+    result = run(repo, "acquire", "--max-requests", "1", store=EVENTS_STORE)
+    assert result.exit_code == 1
+    assert budgets == []
+    assert "Refused: no pilot is frozen over events-v1.json: run events select" in (
+        result.stderr
+    )
+
+
+def test_acquire_refuses_a_pilot_djia_pilot_1_does_not_reselect(
+    repo, moved, monkeypatch
+) -> None:
+    """F10: a hand-edited pilot whose hash is recomputed is refused at the gate."""
+    budgets = client(monkeypatch, served())
+    path = repo / FIXTURE_DIR / "pilot-v1.json"
+    pilot = PilotManifest.model_validate_json(path.read_bytes())
+    one, two, *rest = pilot.rows
+    rows = (
+        one.model_copy(update={"event_id": two.event_id}),
+        two.model_copy(update={"event_id": one.event_id}),
+        *rest,
+    )
+    swapped = pilot.model_copy(update={"rows": rows})
+    hashed = swapped.definition.model_copy(
+        update={"content_hash": pilot_content_hash(swapped)}
+    )
+    path.write_bytes(serialize(swapped.model_copy(update={"definition": hashed})))
+    result = run(repo, "acquire", "--max-requests", "1", store=EVENTS_STORE)
+    assert result.exit_code == 1
+    assert budgets == []
+    assert "djia-pilot/1 over events-v1.json selects" in result.stderr
+
+
+@pytest.mark.parametrize(
+    ("option", "value", "refusal"),
+    [
+        ("--store", "tests/fixtures/events/raw", "does not resolve under data/raw"),
+        ("--runs-dir", "tests/fixtures/runs", "does not resolve under data/runs"),
+    ],
+)
+def test_acquire_refuses_a_path_git_would_keep(
+    repo, moved, monkeypatch, option, value, refusal
+) -> None:
+    budgets = client(monkeypatch, served())
+    args = ["acquire", "--max-requests", "1"]
+    if option == "--runs-dir":
+        args += [option, value]
+        result = run(repo, *args, store=EVENTS_STORE)
+    else:
+        result = run(repo, *args, store=Path(value))
+    assert result.exit_code == 1
+    assert budgets == []
+    assert refusal in result.stderr

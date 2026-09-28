@@ -165,23 +165,47 @@ def _filing(saved: SavedResponses, row: EventRow) -> _Filing:
     return _Filing(exhibit_order(index, text))
 
 
+def _pending(
+    state: StateTransition | None, override: AcquisitionOverride | None
+) -> str | None:
+    """What a run does with a document: ``override`` applies its override,
+    ``attempt`` tries its exhibits, ``refused`` reports an override of a document
+    no override moves, and ``None`` leaves it."""
+    current = DocumentState.EXPECTED if state is None else state.to_state
+    if override is not None:
+        applied = state is not None and state.override_id == override.override_id
+        if applied and current not in ATTEMPTED:
+            return None
+        return "override" if current in OVERRIDDEN else "refused"
+    return "attempt" if current in ATTEMPTED else None
+
+
 def planned_requests(
     events: EventManifest,
     pilot: PilotManifest,
     store: ArtifactStore,
     states_dir: Path,
+    overrides: AcquisitionOverridesFile | None = None,
 ) -> tuple[int, int]:
     """What a run would fetch: the first choices not saved, and every candidate not
-    saved, over the documents it would attempt. The second is the most it can send."""
+    saved, over the documents it would attempt, an override's document counting as
+    both. The second is the most it can send."""
     saved = SavedResponses(store)
     rows = {row.event_id: row for row in events.rows}
     current = current_states(read_runs(states_dir), pilot.definition.content_hash)
+    named = {} if overrides is None else {o.event_id: o for o in overrides.overrides}
     first = most = 0
     for pilot_row in pilot.rows:
-        state = current.get(document_id(pilot_row.event_id))
-        if state is not None and state.to_state not in ATTEMPTED:
-            continue
         row = rows[pilot_row.event_id]
+        override = named.get(row.event_id)
+        pending = _pending(current.get(document_id(row.event_id)), override)
+        if pending == "override":
+            url = archive_url(row.cik, override.accession, override.exhibit)
+            if url not in saved:
+                first, most = first + 1, most + 1
+            continue
+        if pending != "attempt":
+            continue
         try:
             candidates = _filing(saved, row).candidates
         except ValueError:
@@ -581,16 +605,14 @@ def acquire(
             key, row = document_id(pilot_row.event_id), rows[pilot_row.event_id]
             state = current[key]
             override = named.get(row.event_id)
-            if override is not None:
-                applied = state.override_id == override.override_id
-                if applied and state.to_state not in ATTEMPTED:
-                    continue
-                if state.to_state not in OVERRIDDEN:
-                    problems.append(
-                        f"{override.override_id}: {key} is {state.to_state}, which no"
-                        " override changes"
-                    )
-                    continue
+            pending = _pending(state, override)
+            if pending == "refused":
+                problems.append(
+                    f"{override.override_id}: {key} is {state.to_state}, which no"
+                    " override changes"
+                )
+                continue
+            if pending == "override":
                 try:
                     found = _named(
                         saved, row, override, members[row.issuer_id], universe
@@ -610,7 +632,7 @@ def acquire(
                 except (_Unusable, ValueError) as problem:
                     problems.append(str(problem))
                 continue
-            if state.to_state not in ATTEMPTED:
+            if pending != "attempt":
                 continue
             try:
                 candidates = _filing(saved, row).candidates

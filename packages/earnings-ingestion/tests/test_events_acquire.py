@@ -414,6 +414,8 @@ def test_an_override_of_the_frozen_filing_or_a_member_s_filing_marks_no_error(
         "acme-20250311-ex991.htm",
         "cik-0009990001:2025-02-28",
     )
+    file = AcquisitionOverridesFile(schema_version=1, overrides=(second, earlier))
+    assert planned_requests(*frozen[1:], store, tmp_path / "states", file) == (27, 27)
     result = run(frozen, store, Served(), tmp_path, overrides=(second, earlier))
     for override in (second, earlier):
         state = result.states[f"{override.event_id}:release"]

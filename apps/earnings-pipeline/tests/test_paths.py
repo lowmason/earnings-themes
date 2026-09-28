@@ -1,9 +1,9 @@
-"""Where fetched bytes may be saved, and how paths print (PR #6's review, F19 and
-F38)."""
+"""Where fetched bytes and run outputs may be written, and how paths print (PR #6's
+review, F19 and F38; plan 8, P8-13)."""
 
 from pathlib import Path
 
-from earnings_pipeline.paths import raw_store_refusal, shown
+from earnings_pipeline.paths import raw_store_refusal, runs_refusal, shown
 
 
 def test_a_store_under_a_symlinked_data_directory_is_under_data_raw(
@@ -25,3 +25,10 @@ def test_a_path_prints_relative_under_the_repo_and_in_full_elsewhere(
     assert shown(tmp_path / "other" / "x.json", repo) == str(
         tmp_path / "other" / "x.json"
     )
+
+
+def test_run_outputs_stay_under_data_runs(tmp_path) -> None:
+    assert runs_refusal(tmp_path, Path("data/runs/events")) is None
+    refusal = runs_refusal(tmp_path, Path("data/raw/../runs-elsewhere"))
+    assert refusal is not None
+    assert "does not resolve under data/runs" in refusal
