@@ -41,7 +41,7 @@ and approved with it.
 | ID | Decision |
 | --- | --- |
 | GS1 | One spec, one plan. The code comes first, and the plan's last tasks are the gates: the split and coverage freeze, codebook v0's approval, and three signed gold bundles (§Gates). No step sends an SEC request or calls a model from code. |
-| GS2 | **The pin.** Stage 6 binds to pilot v1 by content hash, `3839c800151cc646f11064efdce583f988e511265f8893c90e9a2f2549145926`, over events v1, `2348671b3ae8021d644df12ae2f539258670546970c918f8edb231ba1885c3b7`. It loads the pilot with `load_pilot`, never `current_pilot`. The split, codebook v0's discovery corpus, and every gold file name the pin, and Stages 11 and 14 evaluate that pilot. A later events or pilot version is a new sample, for Stage 15 or a future validation set, and never replaces it. The rule is fixed here, before any annotation, so it stays outcome-blind (P-C7). F27 is therefore not a precondition for annotation. It, `release-id/2`, and the per-candidate citations stay deferred to the next events version, which re-seeds the pilot under the Stage 5 spec's invalidation rule (§Pilot selection) whenever it comes; settling F27 first would only move that re-seed earlier. |
+| GS2 | **The pin.** Stage 6 binds to pilot v1 by content hash, `3839c800151cc646f11064efdce583f988e511265f8893c90e9a2f2549145926`, over events v1, `2348671b3ae8021d644df12ae2f539258670546970c918f8edb231ba1885c3b7`, and universe v1, whose operative hash is `c350923422d9bf2e65a0b5929f4c0d45370458c6a044c3de012a1dfeb116e573`. It loads the pilot with `load_pilot`, never `current_pilot`, against universe v1 by path, never the latest universe. The split, codebook v0's discovery corpus, and every gold file name the pin, and Stages 11 and 14 evaluate that pilot. A later events or pilot version is a new sample, for Stage 15 or a future validation set, and never replaces it. The rule is fixed here, before any annotation, so it stays outcome-blind (P-C7). F27 is therefore not a precondition for annotation. It, `release-id/2`, and the per-candidate citations stay deferred to the next events version, which re-seeds the pilot under the Stage 5 spec's invalidation rule (§Pilot selection) whenever it comes; settling F27 first would only move that re-seed earlier. |
 | GS3 | **The public repository.** Committed files hold IDs, offsets, labels, and hashes, never release text. A quote is committed as its `doc_id`, `[start, end)`, `element_id`, and the SHA-256 of its text and of its locator context. Claims, definitions, rules, and notes are the user's own words, and every committed free-text field passes F20's check (§Wording guard). A codebook example is a pointer, or is labeled synthetic (A §611). Quote text lives only in local drafts and views under `data/`. |
 | GS4 | **Gold authorship.** This amends D2 for Stage 6's gold, as F9 did for Stage 1's. A Claude session drafts each bundle's gold under a committed brief. The user verifies every item, reads the whole bundle for omissions, and signs. F9's mechanics carry over: the drafter leaves `annotator` blank, so a draft fails validation until the user signs; the signature reads "Lowell Mason (verified a Claude draft)"; and each original draft is kept, uncommitted. Drafting is outside the required path. It runs in an interactive session, and no model SDK, API key, or call enters the code (R14.1). The limitation, gold anchored to one model family's reading, is recorded. |
 | GS5 | **Origins and the omission pass.** Each gold item records its origin: `drafted_accepted`, `drafted_edited`, or `annotator_added`. It is derived by comparing the signed file with its kept draft, and each file counts the drafted items the user rejected. A bundle counts as annotated only after the omission pass. Stage 11 reports the edited, rejected, and added shares. |
@@ -80,10 +80,11 @@ Out:
 
 ## Inputs
 
-- **Pilot v1 and events v1.** `load_pilot(path, universe)`, against the current
-  universe, rechecks the pilot's chain and reselects it (P8-3), whichever events
-  version is current. Pilot v1 holds 40 events over 33 issuers and all eight
-  quarters.
+- **Pilot v1, events v1, and universe v1.** `load_pilot(path, universe)` rechecks
+  the pilot's chain, including the universe's operative hash, and reselects it
+  (P8-3), whichever events version is current. The universe is
+  `config/universe/djia/manifests/djia-2024q3-2026q2-v1.json`, loaded by path. Pilot
+  v1 holds 40 events over 33 issuers and all eight quarters.
 - **The processing states.** `read_runs(data/runs/events/states)` gives the
   transitions, and `current_states(transitions, pilot_hash)` each document's state,
   with runs in `in_order`'s order. All 40 of pilot v1's documents are `parsed`. One,
@@ -109,10 +110,18 @@ Out:
 ## The pin
 
 Every Stage 6 record carries the pin: `pilot_id`, `pilot_version` 1, the pilot's
-content hash, and events v1's version and content hash. Each command loads pilot v1
-by its path, and refuses to run if the pilot's content hash is not the pin's. None
-calls `current_pilot`. A later pilot version under
-`config/corpus/djia-2024q3-2026q2/` changes nothing here.
+content hash, events v1's version and content hash, and universe v1's version and
+operative hash. Each command loads pilot v1 by its path, against universe v1 by its
+path, and refuses to run if the pilot's content hash is not the pin's. None calls
+`current_pilot` or takes the latest universe. A later pilot, events, or universe
+version changes nothing here: `check_chain` compares the universe's operative hash,
+so pilot v1 loads only against a universe that keeps v1's operative facts.
+
+The pin's guard is the default-suite test
+`tests/integration/test_event_corpus_v1.py::test_pilot_v1_loads_unchanged_and_djia_pilot_1_reselects_it`.
+`load_pilot` refuses a pilot whose policy is not the code's, and reselects with the
+current code. If a later change to the policy or the selection code breaks that
+test, the fix keeps pilot v1 loading, and never moves the pin.
 
 ## Order of work
 
@@ -174,7 +183,9 @@ pin. It holds:
   reselecting;
 - each override applied to a pilot document, by ID, with the verdict its attempt
   kept: `release-doc-dis-2026-03-28`, `not_confirmed`;
-- the run IDs it read, so that it reproduces;
+- the run IDs it read. A rebuild reads only those runs, so the later runs Stage 7
+  onward record under pilot v1's hash, such as `partial` or `completed`, never
+  change it;
 - `no_theme`, empty until Stage 11 adds it (R12.4);
 - the pin, and a content hash.
 
@@ -307,7 +318,8 @@ never by its text:
   flag;
 - a committed free-text field that shares a 40-character window with the text;
 - a gold file naming another pin, split, or codebook version;
-- an event in two partitions, or a pilot whose content hash is not the pin's;
+- an event in two partitions, a pilot whose content hash is not the pin's, or a
+  universe whose operative hash is not the pin's;
 - `status = "approved"` unless ADR 0003 exists and cites the codebook's content
   hash.
 
