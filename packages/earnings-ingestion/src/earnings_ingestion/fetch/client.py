@@ -82,13 +82,19 @@ def machine_lock_dir() -> Path:
     """Where every package client's lock lives: one directory per user, outside
     every checkout (plan 7, P7-5).
 
-    ``$EARNINGS_LOCK_DIR`` overrides it, for tests. Otherwise it is the user's cache:
+    ``$EARNINGS_LOCK_DIR`` overrides it, for tests, and must be absolute: a relative
+    value would resolve against each process's working directory, so two checkouts
+    would take two locks (PR #6's review, F29). Otherwise it is the user's cache:
     ``~/Library/Caches/earnings-themes/locks`` on macOS, and elsewhere
     ``$XDG_CACHE_HOME/earnings-themes/locks``, or ``~/.cache`` when that variable is
     unset or not absolute.
     """
     override = os.environ.get(LOCK_DIR_VARIABLE)
     if override:
+        if not Path(override).is_absolute():
+            raise AccessStop(
+                f"{LOCK_DIR_VARIABLE} must be an absolute path, not {override!r}"
+            )
         return Path(override)
     if sys.platform == "darwin":
         return Path.home() / "Library" / "Caches" / "earnings-themes" / "locks"

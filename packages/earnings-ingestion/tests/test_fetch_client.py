@@ -253,6 +253,15 @@ def test_the_lock_directory_is_the_users_cache_outside_every_checkout(
     assert machine_lock_dir() == tmp_path / "override"
 
 
+def test_a_relative_lock_directory_is_refused(monkeypatch) -> None:
+    """A relative override would resolve against each process's working directory,
+    so two checkouts would hold two SEC locks and could send twice the project's
+    rate between them (PR #6's review, F29)."""
+    monkeypatch.setenv(LOCK_DIR_VARIABLE, ".locks")
+    with pytest.raises(AccessStop, match=LOCK_DIR_VARIABLE):
+        machine_lock_dir()
+
+
 def test_concurrent_workers_share_one_allowance() -> None:
     """Eight threads through one client: starts at least 0.5 s apart, so no more
     than two start in any second (R1.3's 2 requests per second)."""
