@@ -1475,4 +1475,7 @@ and nor is a same-day handoff between two of its securities.
 - **Reading.** `earnings_ingestion.events.pilot.load_pilot` rechecks the chain: the
   pilot's hash and name; the event manifest it names, in the same directory, by its
   content hash; the universe's operative hash, computed again from the universe
-  manifest; the seed; and that every row is an eligible event of that manifest.
+  manifest; the seed; and that every row is an eligible event of that manifest. It
+  then selects again: the pilot must name `djia-pilot/1`, and the policy run over
+  its event manifest and universe must reproduce its `content_hash` (PR #6's review,
+  F10).

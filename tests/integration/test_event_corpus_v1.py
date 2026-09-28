@@ -6,8 +6,10 @@ and ``regenerate_event_fixtures.py`` rewrites only the synthetic one. The overri
 file only has to load, since a later plan may add an override to it.
 """
 
+import shutil
 from pathlib import Path
 
+import pytest
 from earnings_ingestion.cohort.freeze import load_manifest
 from earnings_ingestion.cohort.identity import operative_hash
 from earnings_ingestion.events.build import load_overrides
@@ -15,8 +17,10 @@ from earnings_ingestion.events.freeze import (
     frozen_event_manifests,
     load_event_evidence,
     load_event_manifest,
+    serialize,
 )
 from earnings_ingestion.events.pilot import frozen_pilots, load_pilot, select_pilot
+from earnings_ingestion.events.records import EventStatus, pilot_content_hash
 
 REPO = Path(__file__).resolve().parents[2]
 CORPUS = REPO / "config" / "corpus" / "djia-2024q3-2026q2"
@@ -50,6 +54,33 @@ def test_pilot_v1_loads_unchanged_and_djia_pilot_1_reselects_it() -> None:
     assert frozen_pilots(CORPUS)[0] == pilot
     events = load_event_manifest(CORPUS / "events-v1.json")
     assert select_pilot(events, universe).content_hash == PILOT_V1
+
+
+def test_a_pilot_with_a_row_swapped_for_another_eligible_event_is_refused(
+    tmp_path,
+) -> None:
+    """Hashes, seed, and eligibility all check for a pilot whose row is swapped for an
+    unselected eligible event, its hash recomputed; only selecting again refuses it
+    (PR #6's review, F10)."""
+    universe = load_manifest(UNIVERSE)
+    events = load_event_manifest(CORPUS / "events-v1.json")
+    pilot = load_pilot(CORPUS / "pilot-v1.json", universe)
+    taken = {row.event_id for row in pilot.rows}
+    other = next(
+        row.event_id
+        for row in events.rows
+        if row.eligibility_status is EventStatus.ELIGIBLE and row.event_id not in taken
+    )
+    first = pilot.rows[0].model_copy(update={"event_id": other})
+    swapped = pilot.model_copy(update={"rows": (first, *pilot.rows[1:])})
+    definition = swapped.definition.model_copy(
+        update={"content_hash": pilot_content_hash(swapped)}
+    )
+    swapped = swapped.model_copy(update={"definition": definition})
+    shutil.copy(CORPUS / "events-v1.json", tmp_path / "events-v1.json")
+    (tmp_path / "pilot-v1.json").write_bytes(serialize(swapped))
+    with pytest.raises(ValueError, match="djia-pilot/1 over events-v1.json selects"):
+        load_pilot(tmp_path / "pilot-v1.json", universe)
 
 
 def test_the_overrides_load() -> None:

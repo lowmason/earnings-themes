@@ -695,6 +695,48 @@ def test_loading_rechecks_the_chain(
             frozen_pilots(path.parent)
 
 
+@pytest.mark.parametrize("tamper", ["exchanged", "policy", "pilot_id", "underfilled"])
+def test_loading_selects_again(corpus, universe, tmp_path, tamper) -> None:
+    """A hand-edited pilot whose content hash is recomputed is refused, because
+    djia-pilot/1 over its event manifest and universe selects another (PR #6's
+    review, F10). A pilot naming another policy is refused before selecting."""
+    frozen = freeze_pilot(
+        select_pilot(events_of(corpus), universe), universe, corpus, now=NOW
+    )
+    manifest, definition = frozen.manifest, frozen.manifest.definition
+    if tamper == "exchanged":
+        one, two, *rest = manifest.rows
+        rows = (
+            one.model_copy(update={"event_id": two.event_id}),
+            two.model_copy(update={"event_id": one.event_id}),
+            *rest,
+        )
+        manifest = manifest.model_copy(update={"rows": rows})
+    elif tamper == "policy":
+        seed = pilot_seed(
+            definition.eligible_event_manifest_hash,
+            definition.universe_operative_hash,
+            "djia-pilot/2",
+        )
+        definition = definition.model_copy(
+            update={"selection_policy_version": "djia-pilot/2", "selection_seed": seed}
+        )
+    elif tamper == "pilot_id":
+        definition = definition.model_copy(update={"pilot_id": "djia-other-pilot"})
+    else:
+        definition = definition.model_copy(update={"underfilled": False})
+    manifest = manifest.model_copy(update={"definition": definition})
+    hashed = definition.model_copy(
+        update={"content_hash": pilot_content_hash(manifest)}
+    )
+    frozen.path.write_bytes(
+        serialize(manifest.model_copy(update={"definition": hashed}))
+    )
+    message = "names djia-pilot/2, not" if tamper == "policy" else "selects "
+    with pytest.raises(ValueError, match=message):
+        load_pilot(frozen.path, universe)
+
+
 def rehashed(manifest: EventManifest) -> EventManifest:
     definition = manifest.definition.model_copy(
         update={"content_hash": content_hash(manifest)}

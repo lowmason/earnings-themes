@@ -30,7 +30,12 @@
 
 Freezing follows the event manifest's rules (P6-14). Loading rechecks the chain: the
 pilot's hash and name, the event manifest it names, and that manifest's universe,
-whose operative hash is computed again.
+whose operative hash is computed again. It then selects again: the pilot must name
+``djia-pilot/1``, and the policy run over its event manifest and universe must
+reproduce its content hash, so a hand-edited pilot with its hash recomputed is
+refused (PR #6's review, F10; plan 8, P8-3). A frozen pilot's loading so depends on
+this code, and a change in what the policy selects must come as a new policy name,
+as the spec's §Pilot selection requires.
 """
 
 from collections import Counter
@@ -455,9 +460,22 @@ def _read_pilot(path: Path) -> PilotManifest:
 
 
 def load_pilot(path: Path, universe: UniverseManifest) -> PilotManifest:
-    """A frozen pilot, refused unless its hash, its name, and its chain check."""
+    """A frozen pilot, refused unless its hash, its name, and its chain check, and
+    unless ``djia-pilot/1`` reselects it."""
     manifest = _read_pilot(path)
-    check_chain(manifest, path.parent, universe)
+    events = check_chain(manifest, path.parent, universe)
+    definition = manifest.definition
+    if definition.selection_policy_version != PILOT_POLICY:
+        raise ValueError(
+            f"{path.name} names {definition.selection_policy_version}, not"
+            f" {PILOT_POLICY}, the policy this code runs"
+        )
+    derived = select_pilot(events, universe).content_hash
+    if derived != definition.content_hash:
+        raise ValueError(
+            f"{PILOT_POLICY} over events-v{definition.event_manifest_version}.json"
+            f" selects {derived}, not {path.name}"
+        )
     return manifest
 
 
