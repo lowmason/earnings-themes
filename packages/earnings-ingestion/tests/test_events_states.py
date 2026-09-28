@@ -213,3 +213,24 @@ def test_later_runs_follow_earlier_ones_by_time_then_run_then_sequence() -> None
     check_histories([*rerun, *first])
     (current,) = current_states([*rerun, *first], PILOT).values()
     assert (current.run_id, current.to_state) == ("run-2", P)
+
+
+def test_a_document_is_its_event_s_release() -> None:
+    """P8-6: each pilot event expects one document, ``<event_id>:release``."""
+    with pytest.raises(ValidationError, match="expects cik-0009990001:2025-08-31"):
+        step(E, None, document_id="cik-0009990002:2025-08-31:release")
+
+
+def test_a_clock_that_steps_back_during_a_run_cannot_reorder_it() -> None:
+    """Each run's transitions follow its sequence, whatever the clock read, and a
+    later run still follows by its earliest time (plan 8's final review)."""
+    back = AT - timedelta(minutes=5)
+    first = [
+        step(E, None),
+        step(A, E, sequence=1).model_copy(update={"recorded_at": back}),
+        step(P, A, sequence=2).model_copy(update={"recorded_at": back}),
+    ]
+    other = step(E, None, event="cik-0009990001:2025-11-30", run="run-2")
+    check_histories([*first, other])
+    current = current_states([other, *first], PILOT)
+    assert current["cik-0009990001:2025-08-31:release"].to_state is P

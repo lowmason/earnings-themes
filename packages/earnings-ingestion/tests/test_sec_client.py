@@ -251,3 +251,31 @@ def test_a_redirected_response_is_refused_before_it_is_saved() -> None:
         ),
     ):
         client.fetch("https://www.sec.gov/moved.htm", {"text/html"})
+
+
+@pytest.mark.parametrize(
+    ("served", "refusal"),
+    [
+        (
+            {"headers": {"Content-Encoding": "gzip"}, "content": b"not gzip"},
+            "sent a body that cannot be decoded",
+        ),
+        ({"loop": True}, "was redirected without end"),
+    ],
+    ids=["undecodable", "redirect-loop"],
+)
+def test_a_response_httpx_cannot_finish_is_refused_as_unexpected(
+    served, refusal
+) -> None:
+    """httpx's ``DecodingError`` and ``TooManyRedirects`` are neither transport
+    errors nor refusals, so the client refuses them as it refuses a redirect, and
+    each caller records the exhibit's attempt (plan 8's final review)."""
+
+    def handler(request):
+        if served.get("loop"):
+            return httpx.Response(301, headers={"Location": str(request.url)})
+        headers = {"Content-Type": "text/html", **served["headers"]}
+        return httpx.Response(200, headers=headers, content=served["content"])
+
+    with opened(handler) as client, pytest.raises(UnexpectedResponse, match=refusal):
+        client.fetch("https://www.sec.gov/x.htm", {"text/html"})

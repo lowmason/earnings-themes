@@ -2,6 +2,7 @@
 committed synthetic event manifest and pilot, with a fetch that serves the layer's
 exhibits and counts each request."""
 
+import json
 import shutil
 from collections import Counter
 from datetime import UTC, date, datetime
@@ -224,14 +225,8 @@ def test_a_persistent_403_stops_the_run_and_leaves_the_rest_expected(
     assert not set(served.requested) & set(stopped.requested)
 
 
-def test_a_saved_exhibit_that_cannot_be_read_is_a_problem_never_fetched_again(
-    frozen, store, tmp_path
-) -> None:
-    served = Served()
-    first = frozen[2].rows[0].event_id
-    row = next(row for row in frozen[1].rows if row.event_id == first)
-    folder = row.release_accession.replace("-", "")
-    url = next(url for url in served.bodies if f"/{folder}/" in url)
+def save_unreadable(store, served: Served, url: str) -> None:
+    """Save the exhibit at ``url``, then change its saved bytes."""
     fetched = served(url, EXHIBIT_TYPES)
     store.put(
         SEC_SOURCE_ID,
@@ -243,12 +238,89 @@ def test_a_saved_exhibit_that_cannot_be_read_is_a_problem_never_fetched_again(
     saved_path = next((store.root / "sec-edgar").glob(f"{fetched.retrieval.sha256}.*"))
     saved_path.write_bytes(b"changed")
     served.requested.clear()
+
+
+def test_a_saved_exhibit_that_cannot_be_read_is_a_problem_never_fetched_again(
+    frozen, store, tmp_path
+) -> None:
+    served = Served()
+    first = frozen[2].rows[0].event_id
+    row = next(row for row in frozen[1].rows if row.event_id == first)
+    folder = row.release_accession.replace("-", "")
+    url = next(url for url in served.bodies if f"/{folder}/" in url)
+    save_unreadable(store, served, url)
     result = run(frozen, store, served, tmp_path)
     (problem,) = result.problems
     assert problem.startswith(f"{url}: ")
     assert "repair the store by hand" in problem
     assert url not in served.requested
     assert result.states[f"{first}:release"].to_state is E
+
+
+ACME_Q3 = "cik-0009990001:2025-08-31"
+"""Acme's release for 2025-08-31: its first named exhibit is not confirmed, and its
+second is."""
+
+
+def test_a_problem_after_the_first_exhibit_leaves_the_state_the_run_recorded(
+    frozen, store, tmp_path
+) -> None:
+    """Acme's first exhibit is fetched and not confirmed, and its second is saved
+    but cannot be read: the document stays acquired, as the run file says, to be
+    attempted again once the store is repaired (plan 8's final review)."""
+    served = Served()
+    url = next(u for u in served.bodies if u.endswith("acme-20250925-ex992.htm"))
+    save_unreadable(store, served, url)
+    result = run(frozen, store, served, tmp_path)
+    assert [p for p in result.problems if p.startswith(f"{url}: ")]
+    key = f"{ACME_Q3}:release"
+    assert result.states[key].to_state is A
+    pilot_hash = frozen[2].definition.content_hash
+    recorded = current_states(read_runs(tmp_path / "states"), pilot_hash)
+    assert recorded[key] == result.states[key]
+
+
+def test_an_index_page_never_saved_names_discover_not_a_repair(
+    frozen, store, tmp_path, monkeypatch
+) -> None:
+    first = frozen[2].rows[0].event_id
+    row = next(row for row in frozen[1].rows if row.event_id == first)
+    url = filing_index_url(row.cik, row.release_accession)
+    get = SavedResponses.get
+    monkeypatch.setattr(
+        SavedResponses, "get", lambda self, u: None if u == url else get(self, u)
+    )
+    result = run(frozen, store, Served(), tmp_path)
+    assert f"{url} is not saved: run events discover" in result.problems
+    assert result.states[f"{first}:release"].to_state is E
+
+
+@pytest.mark.parametrize(("part", "kept"), [("manifest", True), ("elements", False)])
+def test_a_canonical_document_already_written_is_kept_when_only_its_manifest_differs(
+    frozen, store, tmp_path, part, kept
+) -> None:
+    """A canonical file is named by its ``doc_id``, which hashes its text. One
+    written in another environment differs in its manifest alone, and is kept; one
+    whose elements differ is a problem, and its document stays acquired."""
+    first = run(frozen, store, Served(), tmp_path / "first")
+    key = f"{ACME_Q3}:release"
+    name = f"{first.states[key].doc_id}.json"
+    written = json.loads((tmp_path / "first" / "canonical" / name).read_text())
+    if part == "manifest":
+        written["manifest"]["python_version"] = "3.14.1"
+    else:
+        written["elements"] = written["elements"][1:]
+    (tmp_path / "canonical").mkdir()
+    (tmp_path / "canonical" / name).write_text(json.dumps(written))
+    result = run(frozen, store, Served(), tmp_path)
+    assert json.loads((tmp_path / "canonical" / name).read_text()) == written
+    if kept:
+        assert result.problems == ()
+        assert result.states[key].to_state is P
+    else:
+        (problem,) = result.problems
+        assert name in problem
+        assert result.states[key].to_state is A
 
 
 def test_acquisition_changes_no_frozen_record_and_the_build_still_decides(
@@ -474,6 +546,66 @@ def test_an_override_of_a_parsed_document_is_a_problem(frozen, store, tmp_path) 
             " which no override changes"
         ),
     )
+
+
+EDITED = "an applied override is not edited in place"
+
+
+def test_an_applied_override_edited_in_place_is_a_problem(
+    frozen, store, tmp_path
+) -> None:
+    """An override that parsed its document, then named another exhibit under the
+    same ID, is reported, never silently kept (plan 8's final review)."""
+    accession = accession_of("0009990001", "2025-09-25 16:05:00")
+    override = document_override(
+        store, "0009990001", accession, "acme-20250925-ex992.htm", ACME_Q3
+    )
+    first = run(frozen, store, Served(), tmp_path, overrides=(override,))
+    assert first.states[f"{ACME_Q3}:release"].override_id == override.override_id
+    edited = override.model_copy(update={"exhibit": "acme-20250925-ex991.htm"})
+    file = AcquisitionOverridesFile(schema_version=1, overrides=(edited,))
+    assert planned_requests(*frozen[1:], store, tmp_path / "states", file) == (0, 0)
+    again = run(
+        frozen, store, refuse, tmp_path, run_id="acquire-2", overrides=(edited,)
+    )
+    assert again.transitions == ()
+    (problem,) = again.problems
+    assert problem.startswith(f"{override.override_id} was applied to {accession}")
+    assert problem.endswith(EDITED)
+
+
+def test_an_override_that_failed_edited_in_place_is_a_problem(
+    frozen, store, tmp_path
+) -> None:
+    """Eastfield's image exhibit, named by an override, fails again; naming its
+    next release under the same ID is reported, since the failed transition names
+    no exhibit and the acquisition before it does."""
+    first = run(frozen, store, Served(), tmp_path)
+    failed = first.states[f"{EASTFIELD_Q1}:release"]
+    (image,) = failed.attempts
+    override = document_override(
+        store, "0009990006", failed.frozen_accession, image.filename, EASTFIELD_Q1
+    )
+    second = run(
+        frozen, store, refuse, tmp_path, run_id="acquire-2", overrides=(override,)
+    )
+    assert second.states[f"{EASTFIELD_Q1}:release"].to_state is F
+    late = accession_of("0009990006", LATE)
+    edited = override.model_copy(
+        update={
+            "accession": late,
+            "exhibit": "efb-20260717-ex991.htm",
+            "citations": document_override(
+                store, "0009990006", late, "efb-20260717-ex991.htm", EASTFIELD_Q1
+            ).citations,
+        }
+    )
+    third = run(
+        frozen, store, refuse, tmp_path, run_id="acquire-3", overrides=(edited,)
+    )
+    assert third.transitions == ()
+    (problem,) = third.problems
+    assert problem.endswith(EDITED)
 
 
 def test_the_overrides_file_loads_or_is_empty(tmp_path) -> None:

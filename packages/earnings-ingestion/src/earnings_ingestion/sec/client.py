@@ -11,7 +11,9 @@
 - **Refusals.** A 403 that persists, or SEC's block page, stops the run without
   changing identity (A §404). A response SEC serves from another URL than the one
   requested is refused before it is saved, so no saved response is ever read under a
-  URL it was not served from (PR #6's review, F13).
+  URL it was not served from (PR #6's review, F13). So are a redirect without end and
+  a body that cannot be decoded, which httpx raises as neither (plan 8's final
+  review).
 
 Two limits remain, because A §398 asks for coordination across the outbound network.
 The lock lives in ``machine_lock_dir()``, outside every checkout, so it coordinates the
@@ -73,8 +75,19 @@ class SecClient(PoliteClient):
 
     def fetch(self, url: str, expected_types: Collection[str]) -> Fetched:
         """``PoliteClient.fetch``, refused with ``UnexpectedResponse`` when SEC served
-        the response from another URL."""
-        fetched = super().fetch(url, expected_types)
+        the response from another URL, redirected it without end, or sent a body
+        that cannot be decoded."""
+        try:
+            fetched = super().fetch(url, expected_types)
+        except httpx.TooManyRedirects as exc:
+            raise UnexpectedResponse(
+                f"{url} was redirected without end; a redirected response is never"
+                " saved"
+            ) from exc
+        except httpx.DecodingError as exc:
+            raise UnexpectedResponse(
+                f"{url} sent a body that cannot be decoded: {exc}"
+            ) from exc
         if fetched.retrieval.final_url != url:
             raise UnexpectedResponse(
                 f"{url} was redirected to {fetched.retrieval.final_url}; a redirected"

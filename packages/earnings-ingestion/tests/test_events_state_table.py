@@ -131,3 +131,9 @@ def test_reading_refuses_another_schema_or_a_broken_history(tmp_path) -> None:
 
 def test_no_directory_is_no_run(tmp_path) -> None:
     assert read_runs(tmp_path / "absent") == []
+
+
+def test_a_run_file_that_cannot_be_read_is_refused_by_name(tmp_path) -> None:
+    (tmp_path / "acquire-x.parquet").write_bytes(b"not parquet")
+    with pytest.raises(ValueError, match="acquire-x.parquet cannot be read"):
+        read_runs(tmp_path)

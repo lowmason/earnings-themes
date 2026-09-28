@@ -15,9 +15,10 @@ and a rerun fetches only what the store lacks. Its budget is ``--max-requests``,
 count the user approved. ``--filing`` caps itself at 2, or at ``--max-requests`` if
 that is smaller, so no approval is ever exceeded. It names one filing, since each is
 approved on its own, and a second ``--filing`` is refused. It prints the requests it
-sent on every exit, a stop or a Ctrl-C included (PR #6's review, F31). ``discover``
-exits 1 and names each saved submissions file, older page, index page, or primary
-document the build cannot read, which no rerun fetches again, since it is saved.
+sent on every exit, a stop, a Ctrl-C, or an error no stop names included (PR #6's
+review, F31; plan 8's final review). ``discover`` exits 1 and names each saved
+submissions file, older page, index page, or primary document the build cannot read,
+which no rerun fetches again, since it is saved.
 ``build``, ``freeze``, and ``select`` read committed files and saved responses alone.
 ``build`` exits 1 while anything holds the freeze.
 
@@ -25,9 +26,12 @@ document the build cannot read, which no rerun fetches again, since it is saved.
 it, which ``load_pilot`` checks and reselects, and refuses otherwise. It states what
 it would send before it opens the client: at most N requests, one per exhibit not
 saved, and how many are first choices. With nothing to fetch the client stays
-closed; otherwise ``--max-requests``, the count the user approved, is required and is
-the client's cap. It prints each pilot document's state, and its request count on
-every exit. It writes its run under ``--runs-dir``, and exits 1 on a problem.
+closed; otherwise ``--max-requests``, the count the user approved, is required, and
+the client's cap is it or N, whichever is smaller, so neither is ever exceeded. It
+holds a lock on ``--runs-dir`` while it counts and acquires, so two runs never record
+at once. It prints each pilot document's state, and its request count on every exit.
+It writes its run under ``--runs-dir``, and exits 1 on a problem (plan 8's final
+review).
 
 ``discover`` and ``acquire`` refuse a ``--store`` that does not resolve under
 ``data/raw``, and ``acquire`` a ``--runs-dir`` outside ``data/runs``, before any
@@ -44,6 +48,7 @@ prints the version and hash it read (PR #6's review, F4; plan 8, P8-4).
 """
 
 from collections import Counter
+from contextlib import ExitStack
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -82,7 +87,11 @@ from earnings_ingestion.events.records import (
     EventStatus,
 )
 from earnings_ingestion.events.saved import SavedResponses
-from earnings_ingestion.fetch.client import AccessStop, UnexpectedResponse
+from earnings_ingestion.fetch.client import (
+    AccessStop,
+    ProcessLock,
+    UnexpectedResponse,
+)
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.client import open_sec_client
 from typer.core import TyperCommand
@@ -100,6 +109,8 @@ STOPS = (AccessStop, UnexpectedResponse, OSError, ValueError, RuntimeError)
 """What ends a live run with ``Stopped:`` and its request count; ``OSError`` covers a
 full disk and a saved body that is gone."""
 RUNS_DIR = Path("data") / "runs" / "events"
+ACQUIRE_LOCK = ".acquire.lock"
+"""In ``--runs-dir``: every ``acquire`` run holds it while it counts and records."""
 
 
 @dataclass(frozen=True)
@@ -214,7 +225,7 @@ def discover_command(
     except STOPS as error:
         typer.echo(f"requests sent: {sent}; a rerun fetches only what is missing")
         _fail(f"Stopped: {error}")
-    except KeyboardInterrupt:
+    except BaseException:
         typer.echo(f"requests sent: {sent}; a rerun fetches only what is missing")
         raise
     typer.echo(f"fetched {len(result.fetched)}; requests sent: {sent}")
@@ -359,7 +370,10 @@ def acquire_command(
     context: typer.Context,
     max_requests: Annotated[
         int | None,
-        typer.Option(help="The request count approved at the gate; the client's cap."),
+        typer.Option(
+            help="The request count approved at the gate; with the stated count, the"
+            " client's cap."
+        ),
     ] = None,
     runs_dir: Annotated[
         Path, typer.Option(help="Where the state table and canonical documents go.")
@@ -387,34 +401,45 @@ def acquire_command(
         "canonical_dir": runs / "canonical",
         "run_id": f"acquire-{datetime.now(UTC):%Y%m%dT%H%M%S%fZ}",
     }
-    first, most = planned_requests(
-        current.manifest, pilot.manifest, layout.store(), runs / "states", overrides
-    )
-    if most == 0:
-        typer.echo("nothing to fetch; the client stays closed")
-    else:
-        typer.echo(
-            f"at most {most} requests to SEC, through the shared client;"
-            f" {first} first choices"
-        )
-        if max_requests is None:
-            _fail("Refused: pass --max-requests, the request count the user approved")
-    sent = 0
-    try:
+    with ExitStack() as held:
+        try:
+            held.enter_context(ProcessLock(runs / ACQUIRE_LOCK))
+            first, most = planned_requests(
+                current.manifest,
+                pilot.manifest,
+                layout.store(),
+                runs / "states",
+                overrides,
+            )
+        except (AccessStop, ValueError) as error:
+            _fail(f"Refused: {error}")
         if most == 0:
-            result = acquire(*arguments, _closed, **options)
+            typer.echo("nothing to fetch; the client stays closed")
         else:
-            with open_sec_client(max_requests=max_requests) as sec:
-                try:
-                    result = acquire(*arguments, sec.fetch, **options)
-                finally:
-                    sent = sec.throttle.count
-    except STOPS as error:
-        typer.echo(f"requests sent: {sent}; a rerun attempts what is left")
-        _fail(f"Stopped: {error}")
-    except KeyboardInterrupt:
-        typer.echo(f"requests sent: {sent}; a rerun attempts what is left")
-        raise
+            typer.echo(
+                f"at most {most} requests to SEC, through the shared client;"
+                f" {first} first choices"
+            )
+            if max_requests is None:
+                _fail(
+                    "Refused: pass --max-requests, the request count the user approved"
+                )
+        sent = 0
+        try:
+            if most == 0:
+                result = acquire(*arguments, _closed, **options)
+            else:
+                with open_sec_client(max_requests=min(max_requests, most)) as sec:
+                    try:
+                        result = acquire(*arguments, sec.fetch, **options)
+                    finally:
+                        sent = sec.throttle.count
+        except STOPS as error:
+            typer.echo(f"requests sent: {sent}; a rerun attempts what is left")
+            _fail(f"Stopped: {error}")
+        except BaseException:
+            typer.echo(f"requests sent: {sent}; a rerun attempts what is left")
+            raise
     for row in pilot.manifest.rows:
         state = result.states[f"{row.event_id}:release"]
         reasons = [str(r) for r in (state.missing_reason, state.failure_reason) if r]

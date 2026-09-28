@@ -83,11 +83,14 @@ def write_run(directory: Path, transitions: Sequence[StateTransition]) -> Path:
 
 
 def read_runs(directory: Path) -> list[StateTransition]:
-    """Every transition of every run in ``directory``, refused unless each file has
-    ``SCHEMA`` and each document's transitions chain."""
+    """Every transition of every run in ``directory``; raises ``ValueError`` unless
+    each file reads, has ``SCHEMA``, and each document's transitions chain."""
     transitions = []
     for path in sorted(directory.glob("*.parquet")):
-        frame = pl.read_parquet(path)
+        try:
+            frame = pl.read_parquet(path)
+        except pl.exceptions.PolarsError as exc:
+            raise ValueError(f"{path.name} cannot be read: {exc}") from exc
         if frame.schema != SCHEMA:
             raise ValueError(f"{path.name} does not have the state table's schema")
         transitions += [

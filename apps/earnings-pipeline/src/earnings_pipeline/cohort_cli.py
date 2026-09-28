@@ -193,7 +193,7 @@ def fetch_sec_command(
     except STOPS as error:
         typer.echo(f"requests sent: {sent}")
         _fail(f"Stopped: {error}")
-    except KeyboardInterrupt:
+    except BaseException:
         typer.echo(f"requests sent: {sent}")
         raise
     typer.echo(f"fetched {len(result.fetched)}, already saved {len(result.kept)}")
@@ -353,7 +353,7 @@ def verify_live_command(
     except STOPS as error:
         typer.echo(f"requests sent: {sent.count}")
         _fail(f"Stopped: {error}")
-    except KeyboardInterrupt:
+    except BaseException:
         typer.echo(f"requests sent: {sent.count}")
         raise
     for check in result.checks:

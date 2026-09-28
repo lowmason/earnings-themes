@@ -26,6 +26,7 @@ from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.events.state_table import read_runs
 from earnings_ingestion.events.states import DocumentState
 from earnings_ingestion.events.synthetic import SyntheticStore, save, submissions_file
+from earnings_ingestion.fetch.client import ProcessLock
 from earnings_ingestion.fetch.records import Retrieval
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec import client as sec_client
@@ -620,6 +621,74 @@ def test_acquire_stops_on_a_persistent_403_and_leaves_the_rest_expected(
     (path,) = (repo / "data" / "runs" / "events" / "states").glob("*.parquet")
     states = {t.to_state for t in read_runs(path.parent)}
     assert states == {DocumentState.EXPECTED}
+
+
+def test_acquire_caps_the_client_at_the_count_it_states(
+    repo, moved, monkeypatch
+) -> None:
+    """A larger approval never lets retries pass the count the run stated, as
+    discover --filing caps itself (plan 8's final review)."""
+    forget_exhibits(moved)
+    budgets = client(monkeypatch, {**served(), **exhibit_bodies()})
+    result = run(repo, "acquire", "--max-requests", "56", store=EVENTS_STORE)
+    assert result.exit_code == 0, result.output
+    assert budgets == [28]
+
+
+def test_acquire_refuses_a_run_file_it_cannot_read(repo, moved, monkeypatch) -> None:
+    budgets = client(monkeypatch, served())
+    states = repo / "data" / "runs" / "events" / "states"
+    states.mkdir(parents=True)
+    (states / "acquire-x.parquet").write_bytes(b"not parquet")
+    result = run(repo, "acquire", "--max-requests", "1", store=EVENTS_STORE)
+    assert result.exit_code == 1
+    assert budgets == []
+    assert result.stderr.startswith("Refused: acquire-x.parquet cannot be read")
+
+
+def test_acquire_refuses_while_another_run_holds_its_runs(
+    repo, moved, monkeypatch
+) -> None:
+    """Two runs never record at once, offline ones included (plan 8's final
+    review)."""
+    budgets = client(monkeypatch, served())
+    runs = repo / "data" / "runs" / "events"
+    with ProcessLock(runs / events_cli.ACQUIRE_LOCK):
+        result = run(repo, "acquire", "--max-requests", "1", store=EVENTS_STORE)
+    assert result.exit_code == 1
+    assert budgets == []
+    assert result.stderr.startswith("Refused: another client holds")
+    assert not (runs / "states").exists()
+
+
+def unforeseen(*args, **kwargs):
+    """An error no stop names, as httpx raises one."""
+    raise LookupError("unforeseen")
+
+
+def test_discover_prints_its_count_on_an_unforeseen_error(repo, monkeypatch) -> None:
+    """The count ends every exit, not only a stop or a Ctrl-C (plan 8's final
+    review)."""
+    client(monkeypatch, served())
+    monkeypatch.setattr(ArtifactStore, "put", unforeseen)
+    result = run(repo, "discover", "--max-requests", "90", store=EVENTS_STORE)
+    assert isinstance(result.exception, LookupError)
+    assert result.stdout.splitlines()[-1] == (
+        "requests sent: 1; a rerun fetches only what is missing"
+    )
+
+
+def test_acquire_prints_its_count_on_an_unforeseen_error(
+    repo, moved, monkeypatch
+) -> None:
+    forget_exhibits(moved)
+    client(monkeypatch, {**served(), **exhibit_bodies()})
+    monkeypatch.setattr(ArtifactStore, "put", unforeseen)
+    result = run(repo, "acquire", "--max-requests", "28", store=EVENTS_STORE)
+    assert isinstance(result.exception, LookupError)
+    assert result.stdout.splitlines()[-1] == (
+        "requests sent: 1; a rerun attempts what is left"
+    )
 
 
 def test_acquire_refuses_without_a_pilot_over_the_current_manifest(

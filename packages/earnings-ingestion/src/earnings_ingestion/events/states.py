@@ -14,9 +14,11 @@
   ``missing_reason``: ``expected``, ``unavailable``, ``restricted``, and ``failed``.
   Every other state carries none, so a document that is expected but absent always
   says why (R1.4; A §376).
-- **Order.** A document's transitions are ordered by ``recorded_at``, then
-  ``run_id``, then ``sequence``, the position in its run, and must chain: the first
-  starts at ``expected``, and each comes from the state the one before it reached.
+- **Order.** Runs are ordered by their earliest ``recorded_at``, then ``run_id``,
+  and each run's transitions by ``sequence``, the position in its run, so a clock
+  that steps back during a run cannot reorder it (plan 8's final review). A
+  document's transitions must chain: the first starts at ``expected``, and each
+  comes from the state the one before it reached.
 - **The current state.** A document's current state is its latest transition among
   those recorded under the current pilot's content hash, and each pilot's
   transitions chain on their own. So a revert to an earlier pilot never inherits a
@@ -27,6 +29,7 @@ documents every field and value.
 """
 
 from collections.abc import Iterable
+from datetime import datetime
 from enum import StrEnum
 from typing import Self
 
@@ -185,6 +188,11 @@ class StateTransition(IngestionRecord):
 
     @model_validator(mode="after")
     def _state(self) -> Self:
+        if self.document_id != f"{self.event_id}:release":
+            raise ValueError(
+                f"{self.event_id} expects {self.event_id}:release, not"
+                f" {self.document_id}"
+            )
         before = "the start" if self.from_state is None else self.from_state.value
         if self.to_state not in NEXT[self.from_state]:
             raise ValueError(f"{before} cannot become {self.to_state}")
@@ -221,8 +229,16 @@ class StateTransition(IngestionRecord):
         return self
 
 
-def _order(transition: StateTransition) -> tuple:
-    return (transition.recorded_at, transition.run_id, transition.sequence)
+def in_order(transitions: Iterable[StateTransition]) -> list[StateTransition]:
+    """``transitions`` as they were recorded: runs by their earliest
+    ``recorded_at``, then ``run_id``, and each run's by ``sequence``."""
+    transitions = list(transitions)
+    starts: dict[str, datetime] = {}
+    for transition in transitions:
+        start = starts.get(transition.run_id)
+        if start is None or transition.recorded_at < start:
+            starts[transition.run_id] = transition.recorded_at
+    return sorted(transitions, key=lambda t: (starts[t.run_id], t.run_id, t.sequence))
 
 
 def check_histories(transitions: Iterable[StateTransition]) -> None:
@@ -230,7 +246,7 @@ def check_histories(transitions: Iterable[StateTransition]) -> None:
     pilot, that do not chain from ``expected``."""
     seen: set[tuple[str, int]] = set()
     histories: dict[tuple[str, str], list[StateTransition]] = {}
-    for transition in transitions:
+    for transition in in_order(transitions):
         position = (transition.run_id, transition.sequence)
         if position in seen:
             raise ValueError(
@@ -241,7 +257,7 @@ def check_histories(transitions: Iterable[StateTransition]) -> None:
         histories.setdefault(key, []).append(transition)
     for (_, document), history in histories.items():
         state: DocumentState | None = None
-        for transition in sorted(history, key=_order):
+        for transition in history:
             if transition.from_state != state:
                 if state is None:
                     raise ValueError(
@@ -261,7 +277,7 @@ def current_states(
     """Each document's latest transition recorded under the pilot of ``pilot_hash``,
     by ``document_id``."""
     current: dict[str, StateTransition] = {}
-    for transition in sorted(transitions, key=_order):
+    for transition in in_order(transitions):
         if transition.pilot_hash == pilot_hash:
             current[transition.document_id] = transition
     return current

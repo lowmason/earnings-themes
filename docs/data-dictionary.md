@@ -1582,7 +1582,7 @@ Why an exhibit was tried, in R1.2's order.
 | `outcome` | `AttemptOutcome` | What the attempt came to |
 | `artifact_sha256` | 64 lowercase hex or null | The saved bytes' SHA-256; exactly when it was fetched |
 | `failure_reason` | `FailureReason` or null | Exactly when canonicalization failed |
-| `detail` | string or null | What confirmation lacked, or the client's refusal |
+| `detail` | string or null | What confirmation lacked, `walker-1`'s failure detail, or the client's refusal |
 
 ### `StateTransition`
 
@@ -1616,10 +1616,13 @@ Why an exhibit was tried, in R1.2's order.
 - **Where.** `data/runs/events/states/<run_id>.parquet` holds one run's transitions
   as a Polars frame of `state_table.SCHEMA`. It is written once, atomically, and
   never replaced or committed.
-- **Order.** A document's transitions are ordered by `recorded_at`, `run_id`, and
-  `sequence`, and must chain from `expected`.
+- **Order.** Runs are ordered by their earliest `recorded_at`, then `run_id`, and
+  each run's transitions by `sequence`, so a clock that steps back during a run
+  cannot reorder it. A document's transitions must chain from `expected`.
 - **The current state.** A document's current state is its latest transition among
   those recorded under the current pilot's `pilot_hash`, so a revert to an earlier
   pilot never inherits a later pilot's history.
 - **Canonical documents.** `data/runs/events/canonical/<doc_id>.json` holds each
-  parsed release's `walker-1` document in the canonical fixture format.
+  parsed release's `walker-1` document in the canonical fixture format. It is
+  written once; a later run keeps one that differs only in its manifest, as another
+  environment writes it, and reports any other difference as a problem.

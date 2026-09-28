@@ -185,6 +185,20 @@ def test_verify_live_prints_its_count_when_it_stops(repo, monkeypatch) -> None:
     assert "Stopped: another client holds the lock" in result.stderr
 
 
+def test_verify_live_prints_its_count_on_an_unforeseen_error(repo, monkeypatch) -> None:
+    """An error no stop names, such as one httpx raises, still ends with the count
+    (plan 8's final review)."""
+
+    def unforeseen(repo, *, max_requests, sent):
+        sent.count = 4
+        raise LookupError("unforeseen")
+
+    monkeypatch.setattr(cohort_cli, "run_live", unforeseen)
+    result = run(repo, "verify-live", "--max-requests", "30")
+    assert isinstance(result.exception, LookupError)
+    assert result.stdout.splitlines() == ["requests sent: 4"]
+
+
 def test_fetch_saves_pages_through_the_web_client(repo, monkeypatch) -> None:
     body = b"<p>A notice.</p>"
 
