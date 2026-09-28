@@ -205,7 +205,7 @@ Key planning documents:
   — the firm universe, event corpus, and deterministic pilot selection; the
   stage specification for roadmap Stages 4 and 15, and binding on Stage 5's
   event-eligibility and pilot-selection design.
-- [Event discovery, eligibility, and acquisition specification](specs/event-discovery-eligibility-and-acquisition.md)
+- [Event discovery, eligibility, and acquisition specification](specs/completed/event-discovery-eligibility-and-acquisition.md)
   — Stage 5's two plans: discovery, eligibility, and the freezes; then
   acquisition and processing states.
 - [Earnings-theme learning path](docs/earnings-themes.md) — the original staged

@@ -90,7 +90,7 @@ bear on the universe identity Stage 5 decides. No other stage changes.
 Reconciled 2026-09-28, on resuming the roadmap before Stage 5's plan B. Plan A
 (plan 7, `specs/plans/completed/7-event-discovery-eligibility-and-acquisition-plan-a.md`)
 shipped in PR #6, merged at `0379fd5`, and the stage spec,
-`specs/event-discovery-eligibility-and-acquisition.md`, carries its Plan A stamp.
+`specs/completed/event-discovery-eligibility-and-acquisition.md`, carries its Plan A stamp.
 Stage 5 stays unticked until plan B completes (that spec's EV1 and Rollout). The
 real event manifest, `events-v1` (263 events, 239 eligible), and the 40-event
 pilot, `pilot-v1`, are frozen under `config/corpus/djia-2024q3-2026q2/`

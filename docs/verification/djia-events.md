@@ -1,7 +1,7 @@
 # DJIA earnings events and the pilot: verification record
 
 This record verifies plan A of roadmap Stage 5: event discovery, eligibility, and the
-freezes, which `specs/event-discovery-eligibility-and-acquisition.md` specifies. Plan 7
+freezes, which `specs/completed/event-discovery-eligibility-and-acquisition.md` specifies. Plan 7
 (`specs/plans/completed/7-event-discovery-eligibility-and-acquisition-plan-a.md`) built it.
 Plan B, which acquired the pilot's releases, has its own sections, from "Plan B:
 acquisition and processing states" on.
@@ -195,7 +195,7 @@ runtime, and `test_stage_5_imports_no_acquisition_library` checks their source.
 
 ## Plan B: acquisition and processing states
 
-Plan 8 (`specs/plans/8-event-discovery-eligibility-and-acquisition-plan-b.md`) built
+Plan 8 (`specs/plans/completed/8-event-discovery-eligibility-and-acquisition-plan-b.md`) built
 plan B of the Stage 5 spec: the processing states, R1.2's exhibit choice,
 `release-content/1`, acquisition through the shared SEC client, and
 `earnings-pipeline events acquire`. It then acquired the pilot's releases.

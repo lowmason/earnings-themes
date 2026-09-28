@@ -1,5 +1,7 @@
 # Event discovery, eligibility, and acquisition
 
+**Status: COMPLETE (2026-09-28)** — Stage 5; implemented by plans 7 and 8; retired to specs/completed/.
+
 > For agentic workers: REQUIRED NEXT SKILL: writing-plans. This is the stage spec
 > for Stage 5 of `specs/evidence-linked-theme-extraction-roadmap.md`. Plan it as two
 > plans, in order: plan A (§Plan A) first, and plan B (§Plan B) only after plan A
