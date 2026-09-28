@@ -71,6 +71,7 @@ from earnings_ingestion.events.filings import (
 )
 from earnings_ingestion.events.records import (
     ACKNOWLEDGEABLE,
+    AcquisitionOverride,
     EventFinding,
     EventManifest,
     EventManifestDefinition,
@@ -334,8 +335,10 @@ def release_refusal(
     return None
 
 
-def _citations_refused(
-    override: EventOverride, saved: SavedResponses, folder: str | None
+def citations_refused(
+    override: EventOverride | AcquisitionOverride,
+    saved: SavedResponses,
+    folder: str | None,
 ) -> list[str]:
     """Why an override's citations fail: a stored locator that no longer cites what it
     hashed, or a cited URL whose retrievals were all redirected (F13); or, with the
@@ -482,14 +485,14 @@ def build_events(
             problems.append(f"{override.override_id}: {why}")
             continue
         folder = archive_url(slot.cik, override.accession, "")
-        refused = _citations_refused(override, saved, folder)
+        refused = citations_refused(override, saved, folder)
         if refused:
             problems.extend(refused)
             continue
         sets[override.event_id] = (override, placed)
     for override in overrides.overrides:
         if override.kind is not EventOverrideKind.SET_RELEASE_FILING:
-            problems.extend(_citations_refused(override, saved, None))
+            problems.extend(citations_refused(override, saved, None))
     if problems:
         raise EventBuildError(problems)
 

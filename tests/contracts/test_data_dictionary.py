@@ -86,6 +86,8 @@ MODELS = [
     events.EventFinding,
     events.EventOverride,
     events.EventOverridesFile,
+    events.AcquisitionOverride,
+    events.AcquisitionOverridesFile,
     events.EventManifestDefinition,
     events.EventManifest,
     events.FileEvidence,

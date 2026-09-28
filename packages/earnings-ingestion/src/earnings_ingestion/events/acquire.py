@@ -25,6 +25,16 @@ P8-6 to P8-12).
   ``AccessStop`` ends the run: its transitions so far are written, and each document
   not attempted stays ``expected``. Acquisition saves exhibits only, never an index
   page or a primary document, so it never changes what the event build reads.
+- **Overrides.** A ``set_release_document`` in ``acquisition-overrides.toml`` names
+  an event's document: an exhibit of the frozen release filing, or of another filing
+  by the issuer whose index page is saved (``events discover --filing`` saves one),
+  cited as ``build.citations_refused`` checks. Its document, once it canonicalizes,
+  is the release, and ``release-content/1``'s verdict is recorded without deciding.
+  An override applies to a document that is ``expected``, ``acquired``,
+  ``unavailable``, or ``failed``, and each of its transitions names it. When the
+  other filing's acceptance would change the event's eligibility, each marks a
+  ``corpus_error`` for the next corpus version, and nothing is fixed in place (P8-11).
+  An override that does not check is a problem, and its document is not attempted.
 - **Problems.** A saved response that cannot be read is a problem naming its repair;
   it is never fetched again, and its document keeps its state.
 - **The run.** Each run writes its transitions to ``<run_id>.parquet`` under
@@ -42,12 +52,27 @@ from earnings_ingestion.canonical import (
     canonicalize,
 )
 from earnings_ingestion.canonical.serialize import to_fixture_json
+from earnings_ingestion.cohort.config import load_toml
 from earnings_ingestion.cohort.locators import ArtifactText, CitableArtifact
+from earnings_ingestion.cohort.records import UniverseManifest
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
+from earnings_ingestion.events.acceptance import (
+    EASTERN,
+    AcceptanceTimeError,
+    accepted_instant,
+)
+from earnings_ingestion.events.build import citations_refused
 from earnings_ingestion.events.content import confirm
+from earnings_ingestion.events.eligibility import IssuerMembership, decide, memberships
 from earnings_ingestion.events.exhibits import ExhibitCandidate, exhibit_order
 from earnings_ingestion.events.freeze import manifest_path
-from earnings_ingestion.events.records import EventManifest, EventRow, PilotManifest
+from earnings_ingestion.events.records import (
+    AcquisitionOverride,
+    AcquisitionOverridesFile,
+    EventManifest,
+    EventRow,
+    PilotManifest,
+)
 from earnings_ingestion.events.release import read_document
 from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.events.state_table import read_runs, write_run
@@ -55,6 +80,7 @@ from earnings_ingestion.events.states import (
     AttemptOutcome,
     DocumentState,
     ExhibitAttempt,
+    ExhibitChoice,
     MissingReason,
     StateTransition,
     current_states,
@@ -62,12 +88,15 @@ from earnings_ingestion.events.states import (
 from earnings_ingestion.fetch.responses import Fetched, UnexpectedResponse
 from earnings_ingestion.fetch.store import ArtifactStore, write_new
 from earnings_ingestion.sec.data import SecDataError
-from earnings_ingestion.sec.filing_index import read_filing_index
+from earnings_ingestion.sec.filing_index import FilingIndex, read_filing_index
 from earnings_ingestion.sec.urls import archive_url, filing_index_url
 
 Fetch = Callable[[str, Collection[str]], Fetched]
 EXHIBIT_TYPES = frozenset({"text/html", "text/plain"})
 ATTEMPTED = frozenset({DocumentState.EXPECTED, DocumentState.ACQUIRED})
+OVERRIDDEN = ATTEMPTED | {DocumentState.UNAVAILABLE, DocumentState.FAILED}
+"""The states from which an acquisition override moves a document."""
+OVERRIDES_FILE = "acquisition-overrides.toml"
 REPAIR = (
     "repair the store by hand: a saved response is never fetched again (PR #6's"
     " review, P2.1)"
@@ -76,6 +105,14 @@ REPAIR = (
 
 def document_id(event_id: str) -> str:
     return f"{event_id}:release"
+
+
+def load_acquisition_overrides(path: Path) -> AcquisitionOverridesFile:
+    """The corpus's ``acquisition-overrides.toml``, read strictly; empty when
+    absent."""
+    if not path.exists():
+        return AcquisitionOverridesFile(schema_version=1)
+    return load_toml(path, AcquisitionOverridesFile)
 
 
 @dataclass(frozen=True)
@@ -344,19 +381,170 @@ def _attempt(
     )
 
 
+@dataclass(frozen=True)
+class _Named:
+    """An override's filing, checked, and what it would do to eligibility."""
+
+    index: FilingIndex
+    corpus_error: str | None
+
+
+def corpus_error(
+    row: EventRow,
+    instant: datetime,
+    membership: IssuerMembership,
+    universe: UniverseManifest,
+) -> str | None:
+    """Why a release accepted at ``instant`` would change ``row``'s eligibility, for
+    the next corpus version; ``None`` when eligibility/1 decides it as before."""
+    definition = universe.definition
+    decision = decide(
+        row.period_end,
+        instant,
+        None,
+        membership,
+        start=definition.period_end_start,
+        stop=definition.period_end_stop,
+        cutoff=definition.public_information_cutoff,
+    )
+    if (decision.status, decision.reason) == (
+        row.eligibility_status,
+        row.eligibility_reason,
+    ):
+        return None
+    return (
+        f"accepted {instant.astimezone(EASTERN):%Y-%m-%d %H:%M:%S} Eastern, the"
+        f" filing would make the event {decision.status}, {decision.reason}, not"
+        f" {row.eligibility_status}, {row.eligibility_reason}: the next corpus"
+        " version corrects it"
+    )
+
+
+def _named(
+    saved: SavedResponses,
+    row: EventRow,
+    override: AcquisitionOverride,
+    membership: IssuerMembership,
+    universe: UniverseManifest,
+) -> _Named:
+    """The override's filing, from its saved index page; raises ``ValueError``,
+    naming the override, when the page is not saved or does not check."""
+    tag = override.override_id
+    url = filing_index_url(row.cik, override.accession)
+    try:
+        artifact = saved.get(url)
+        if artifact is None:
+            raise ValueError(
+                f"{tag}: {url} is not saved: run events discover --filing"
+                f" {row.cik} {override.accession}"
+            )
+        index = read_filing_index(artifact.text.body)
+        instant = accepted_instant(index.accepted)
+    except (FileNotFoundError, SecDataError, AcceptanceTimeError) as exc:
+        raise ValueError(f"{tag}: {url}: {exc}") from exc
+    if index.accession != override.accession:
+        raise ValueError(f"{tag}: {url} is the index page of {index.accession}")
+    if override.exhibit not in {document.filename for document in index.documents}:
+        raise ValueError(f"{tag}: {url} lists no {override.exhibit}")
+    folder = archive_url(row.cik, override.accession, "")
+    if refused := citations_refused(override, saved, folder):
+        raise ValueError("; ".join(refused))
+    error = None
+    if override.accession != row.release_accession:
+        error = corpus_error(row, instant, membership, universe)
+    return _Named(index, error)
+
+
+def _apply(
+    run: _Run,
+    state: StateTransition,
+    row: EventRow,
+    override: AcquisitionOverride,
+    named: _Named,
+    saved: SavedResponses,
+    store: ArtifactStore,
+    fetch: Fetch,
+    canonical_dir: Path,
+    fetched: list[str],
+) -> StateTransition:
+    """Take the override's document as the release, once it canonicalizes."""
+    (document,) = [d for d in named.index.documents if d.filename == override.exhibit]
+    url = archive_url(row.cik, override.accession, override.exhibit)
+    try:
+        artifact = _exhibit(saved, store, fetch, url, fetched)
+    except UnexpectedResponse as refused:
+        raise ValueError(f"{override.override_id}: {refused}") from refused
+    marks = {"override_id": override.override_id, "corpus_error": named.corpus_error}
+    acquired = {
+        "accession": override.accession,
+        "exhibit": override.exhibit,
+        "artifact_sha256": artifact.artifact.content_sha256,
+        "retrieved_at": artifact.retrieved_at,
+    }
+    if state.to_state is not DocumentState.ACQUIRED:
+        state = run.record(state, row, DocumentState.ACQUIRED, **acquired, **marks)
+    tried = {
+        "accession": override.accession,
+        "filename": override.exhibit,
+        "exhibit_type": document.doc_type.strip() or "(none)",
+        "choice": ExhibitChoice.OVERRIDE,
+        "artifact_sha256": artifact.artifact.content_sha256,
+    }
+    result = canonicalize(
+        artifact.text.body,
+        source_document_id=f"{override.accession}_{override.exhibit}",
+        media_type=artifact.text.media_type,
+    )
+    if isinstance(result, CanonicalizationFailure):
+        attempt = ExhibitAttempt(
+            **tried,
+            outcome=AttemptOutcome.CANONICALIZATION_FAILED,
+            failure_reason=result.reason,
+            detail=result.detail,
+        )
+        return run.record(
+            state,
+            row,
+            DocumentState.FAILED,
+            missing_reason=MissingReason.PARSE_FAILED,
+            failure_reason=result.reason,
+            attempts=(attempt,),
+            **marks,
+        )
+    check = confirm(
+        result, row.period_end, row.reported_fiscal_year, row.reported_fiscal_quarter
+    )
+    outcome = (
+        AttemptOutcome.CONFIRMED if check.confirmed else AttemptOutcome.NOT_CONFIRMED
+    )
+    attempt = ExhibitAttempt(**tried, outcome=outcome, detail=check.detail)
+    _write(canonical_dir, result)
+    return run.record(
+        state,
+        row,
+        DocumentState.PARSED,
+        **acquired,
+        doc_id=result.document.doc_id,
+        attempts=(attempt,),
+        **marks,
+    )
+
+
 def acquire(
     events: EventManifest,
     pilot: PilotManifest,
+    universe: UniverseManifest,
     store: ArtifactStore,
     fetch: Fetch,
     *,
+    overrides: AcquisitionOverridesFile,
     states_dir: Path,
     canonical_dir: Path,
     run_id: str,
     now: Callable[[], datetime] = lambda: datetime.now(UTC),
 ) -> Acquisition:
     """Acquire the release of each pilot event of ``pilot``, which must be frozen
-    over ``events``."""
+    over ``events``; ``universe`` is the one ``events`` read."""
     definition, read = pilot.definition, events.definition
     if (definition.event_manifest_version, definition.eligible_event_manifest_hash) != (
         read.event_manifest_version,
@@ -371,7 +559,14 @@ def acquire(
     saved = SavedResponses(store)
     run = _Run(pilot, run_id, now)
     fetched: list[str] = []
-    problems: list[str] = []
+    selected = {row.event_id for row in pilot.rows}
+    problems = [
+        f"{override.override_id}: {override.event_id} is not a pilot event"
+        for override in overrides.overrides
+        if override.event_id not in selected
+    ]
+    named = {override.event_id: override for override in overrides.overrides}
+    members = memberships(universe)
     try:
         for pilot_row in pilot.rows:
             key = document_id(pilot_row.event_id)
@@ -384,7 +579,38 @@ def acquire(
                 )
         for pilot_row in pilot.rows:
             key, row = document_id(pilot_row.event_id), rows[pilot_row.event_id]
-            if current[key].to_state not in ATTEMPTED:
+            state = current[key]
+            override = named.get(row.event_id)
+            if override is not None:
+                applied = state.override_id == override.override_id
+                if applied and state.to_state not in ATTEMPTED:
+                    continue
+                if state.to_state not in OVERRIDDEN:
+                    problems.append(
+                        f"{override.override_id}: {key} is {state.to_state}, which no"
+                        " override changes"
+                    )
+                    continue
+                try:
+                    found = _named(
+                        saved, row, override, members[row.issuer_id], universe
+                    )
+                    current[key] = _apply(
+                        run,
+                        state,
+                        row,
+                        override,
+                        found,
+                        saved,
+                        store,
+                        fetch,
+                        canonical_dir,
+                        fetched,
+                    )
+                except (_Unusable, ValueError) as problem:
+                    problems.append(str(problem))
+                continue
+            if state.to_state not in ATTEMPTED:
                 continue
             try:
                 candidates = _filing(saved, row).candidates

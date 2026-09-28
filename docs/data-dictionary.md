@@ -1280,6 +1280,32 @@ set.
 | `schema_version` | `1` | The file's version |
 | `overrides` | tuple of `EventOverride` | Unique `override_id`s, and at most one override of each kind per `event_id` |
 
+### `AcquisitionOverride`
+
+A reviewer's choice of an event's release document (S §What acquisition can change;
+plan 8, P8-11). `events acquire` applies it; no manifest hashes it.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `override_id` | ID part | A curated slug |
+| `kind` | `"set_release_document"` | The decision |
+| `event_id` | ID part | A pilot event |
+| `accession` | accession | The filing: the event's frozen release filing, or another filing by the issuer, whose index page is saved |
+| `exhibit` | string | The document's file name on that filing's index page |
+| `citations` | tuple of `OverrideCitation` | At least one; one cites an SEC artifact in the filing's folder, retrieved from its own URL, at a locator that verifies |
+| `rationale` | string | Why |
+| `reviewer` | string | Who decided; the user, never an agent |
+| `recorded_on` | date | When |
+
+### `AcquisitionOverridesFile`
+
+`config/corpus/<corpus_id>/acquisition-overrides.toml`.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | The file's version |
+| `overrides` | tuple of `AcquisitionOverride` | Unique `override_id`s and `event_id`s |
+
 ### `EventManifestDefinition`
 
 | Field | Type | Meaning |

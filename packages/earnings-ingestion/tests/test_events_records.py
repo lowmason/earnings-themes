@@ -1,10 +1,13 @@
-"""Stage 5's records: event rows, findings, overrides, and the manifest's hash."""
+"""Stage 5's records: event rows, findings, overrides, acquisition overrides, and the
+manifest's hash."""
 
 from datetime import UTC, date, datetime
 
 import pytest
 from earnings_ingestion.cohort.records import OverrideCitation
 from earnings_ingestion.events.records import (
+    AcquisitionOverride,
+    AcquisitionOverridesFile,
     EventFindingKind,
     EventManifest,
     EventManifestDefinition,
@@ -311,3 +314,42 @@ def test_rows_are_unique_and_sorted_by_event_id() -> None:
         manifest(rows=(later, row()))
     with pytest.raises(ValidationError, match="sorted"):
         manifest(rows=(row(), row()))
+
+
+def document_override(**changes: object) -> AcquisitionOverride:
+    values = {
+        "override_id": "release-doc-acme-2025-08-31",
+        "kind": "set_release_document",
+        "event_id": "cik-0009990001:2025-08-31",
+        "accession": "0009990001-25-000012",
+        "exhibit": "acme-20250925-ex992.htm",
+        "citations": (
+            OverrideCitation(
+                source_id="sec-edgar",
+                url="https://www.sec.gov/Archives/edgar/data/9990001/"
+                "000999000125000012/0009990001-25-000012-index.htm",
+            ),
+        ),
+        "rationale": "The press release is the second exhibit.",
+        "reviewer": "Synthetic Reviewer",
+        "recorded_on": date(2026, 9, 29),
+    }
+    return AcquisitionOverride(**{**values, **changes})
+
+
+def test_an_acquisition_override_names_a_document_and_cites_its_filing() -> None:
+    assert document_override().exhibit == "acme-20250925-ex992.htm"
+    with pytest.raises(ValidationError, match="cites the filing's index page"):
+        document_override(citations=())
+    with pytest.raises(ValidationError, match="set_release_document"):
+        document_override(kind="set_release_filing")
+
+
+def test_an_acquisition_overrides_file_holds_one_override_per_event() -> None:
+    one = document_override()
+    AcquisitionOverridesFile(schema_version=1, overrides=(one,))
+    with pytest.raises(ValidationError, match="override_id repeated"):
+        AcquisitionOverridesFile(schema_version=1, overrides=(one, one))
+    other = document_override(override_id="release-doc-acme-again")
+    with pytest.raises(ValidationError, match="event_id repeated"):
+        AcquisitionOverridesFile(schema_version=1, overrides=(one, other))

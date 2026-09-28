@@ -4,16 +4,18 @@ exhibits and counts each request."""
 
 import shutil
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
 from earnings_core import sha256_hex
 from earnings_ingestion.cohort.freeze import load_manifest
+from earnings_ingestion.cohort.records import OverrideCitation
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
 from earnings_ingestion.events.acquire import (
     EXHIBIT_TYPES,
     acquire,
+    load_acquisition_overrides,
     planned_requests,
 )
 from earnings_ingestion.events.build import build_events, load_overrides
@@ -23,8 +25,17 @@ from earnings_ingestion.events.fixture import (
     SYNTHETIC_CORPUS,
 )
 from earnings_ingestion.events.freeze import current_events, load_event_manifest
-from earnings_ingestion.events.layer import exhibit_bodies, write_layer
+from earnings_ingestion.events.layer import (
+    REGISTRANTS,
+    exhibit_bodies,
+    filings,
+    write_layer,
+)
 from earnings_ingestion.events.pilot import current_pilot, load_pilot
+from earnings_ingestion.events.records import (
+    AcquisitionOverride,
+    AcquisitionOverridesFile,
+)
 from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.events.state_table import read_runs
 from earnings_ingestion.events.states import (
@@ -37,6 +48,8 @@ from earnings_ingestion.events.states import (
 from earnings_ingestion.fetch.client import AccessStop, Fetched, UnexpectedResponse
 from earnings_ingestion.fetch.records import Retrieval, RetrievalMethod
 from earnings_ingestion.fetch.store import ArtifactStore
+from earnings_ingestion.sec.filing_index import read_filing_index
+from earnings_ingestion.sec.urls import filing_index_url
 
 REPO = Path(__file__).resolve().parents[3]
 FETCHED = datetime(2026, 9, 29, 15, 0, tzinfo=UTC)
@@ -99,13 +112,15 @@ def store(tmp_path) -> ArtifactStore:
     return write_layer(tmp_path / "data" / "raw" / "events", tmp_path).store
 
 
-def run(frozen, store, fetch, tmp_path, run_id: str = "acquire-1"):
-    _, events, pilot = frozen
+def run(frozen, store, fetch, tmp_path, run_id: str = "acquire-1", overrides=()):
+    universe, events, pilot = frozen
     return acquire(
         events,
         pilot,
+        universe,
         store,
         fetch,
+        overrides=AcquisitionOverridesFile(schema_version=1, overrides=overrides),
         states_dir=tmp_path / "states",
         canonical_dir=tmp_path / "canonical",
         run_id=run_id,
@@ -276,9 +291,199 @@ def test_a_pilot_not_frozen_over_the_manifest_is_refused(frozen, store, tmp_path
         acquire(
             events,
             other,
+            frozen[0],
             store,
             refuse,
+            overrides=AcquisitionOverridesFile(schema_version=1),
             states_dir=tmp_path / "states",
             canonical_dir=tmp_path / "canonical",
             run_id="acquire-1",
         )
+
+
+def document_override(
+    store, cik: str, accession: str, exhibit: str, event_id: str, **changes
+) -> AcquisitionOverride:
+    """A ``set_release_document`` citing its filing's saved index page by the
+    Accepted value's locator, as a reviewer would."""
+    page = SavedResponses(store).get(filing_index_url(cik, accession))
+    accepted = read_filing_index(page.text.body).accepted
+    values = {
+        "override_id": f"release-doc-{event_id.replace(':', '-')}",
+        "kind": "set_release_document",
+        "event_id": event_id,
+        "accession": accession,
+        "exhibit": exhibit,
+        "citations": (
+            OverrideCitation(
+                source_id=SEC_SOURCE_ID,
+                url=page.url,
+                artifact_sha256=page.artifact.content_sha256,
+                locator=page.text.find(accepted),
+            ),
+        ),
+        "rationale": "Chosen by review.",
+        "reviewer": "Synthetic Reviewer",
+        "recorded_on": date(2026, 9, 29),
+    }
+    return AcquisitionOverride(**{**values, **changes})
+
+
+def accession_of(registrant_cik: str, accepted: str) -> str:
+    (registrant,) = [r for r in REGISTRANTS if r.cik == registrant_cik]
+    (filing,) = [f for f, _ in filings(registrant) if f.accepted == accepted]
+    return filing.accession
+
+
+EASTFIELD_Q1 = "cik-0009990006:2026-03-31"
+LATE = "2026-07-17 07:30:00"
+"""Eastfield's release for 2026-06-30, accepted after it left on 2026-06-22."""
+
+
+def test_an_override_takes_another_filing_s_exhibit_and_marks_a_corpus_error(
+    frozen, store, tmp_path
+) -> None:
+    """Eastfield's release for 2026-03-31 failed: its exhibit is an image. A
+    reviewer names its next release's exhibit, accepted after Eastfield left, so the
+    record marks a corpus_error and fixes nothing in place; the exhibit is taken
+    though release-content/1 does not confirm it for the quarter (P8-11)."""
+    first = run(frozen, store, Served(), tmp_path)
+    assert first.states[f"{EASTFIELD_Q1}:release"].to_state is F
+    late = accession_of("0009990006", LATE)
+    override = document_override(
+        store, "0009990006", late, "efb-20260717-ex991.htm", EASTFIELD_Q1
+    )
+    corpus = tmp_path / "corpus"
+    shutil.copytree(REPO / FIXTURE_DIR, corpus, ignore=shutil.ignore_patterns("raw"))
+    served = Served()
+    second = run(
+        frozen, store, served, tmp_path, run_id="acquire-2", overrides=(override,)
+    )
+    assert second.problems == ()
+    acquired, parsed = second.transitions
+    assert (acquired.from_state, acquired.to_state) == (F, A)
+    assert (parsed.to_state, parsed.accession, parsed.frozen_accession) == (
+        P,
+        late,
+        frozen[1]
+        .rows[[r.event_id for r in frozen[1].rows].index(EASTFIELD_Q1)]
+        .release_accession,
+    )
+    assert {acquired.override_id, parsed.override_id} == {override.override_id}
+    assert parsed.corpus_error == acquired.corpus_error
+    assert "not_member_at_publication" in parsed.corpus_error
+    (attempt,) = parsed.attempts
+    assert (attempt.choice, attempt.outcome) == (
+        ExhibitChoice.OVERRIDE,
+        AttemptOutcome.NOT_CONFIRMED,
+    )
+    assert served.requested == [
+        url for url in served.bodies if url.endswith("efb-20260717-ex991.htm")
+    ]
+    universe, events, pilot = frozen
+    built = build_events(
+        universe,
+        SavedResponses(store),
+        load_overrides(corpus / "overrides.toml"),
+        corpus_id=SYNTHETIC_CORPUS,
+    )
+    assert current_events(built, corpus).manifest == events
+    assert current_pilot(corpus, events, universe).manifest == pilot
+    third = run(
+        frozen, store, refuse, tmp_path, run_id="acquire-3", overrides=(override,)
+    )
+    assert third.transitions == ()
+
+
+def test_an_override_of_the_frozen_filing_or_a_member_s_filing_marks_no_error(
+    frozen, store, tmp_path
+) -> None:
+    """Acme's release for 2025-08-31 is its second exhibit, and its release for
+    2025-02-28 is named from the 8-K of 2025-03-11, while Acme is a member."""
+    second = document_override(
+        store,
+        "0009990001",
+        accession_of("0009990001", "2025-09-25 16:05:00"),
+        "acme-20250925-ex992.htm",
+        "cik-0009990001:2025-08-31",
+    )
+    earlier = document_override(
+        store,
+        "0009990001",
+        accession_of("0009990001", "2025-03-11 08:00:00"),
+        "acme-20250311-ex991.htm",
+        "cik-0009990001:2025-02-28",
+    )
+    result = run(frozen, store, Served(), tmp_path, overrides=(second, earlier))
+    for override in (second, earlier):
+        state = result.states[f"{override.event_id}:release"]
+        assert (state.to_state, state.exhibit, state.override_id) == (
+            P,
+            override.exhibit,
+            override.override_id,
+        )
+        assert state.corpus_error is None
+        assert [a.choice for a in state.attempts] == [ExhibitChoice.OVERRIDE]
+
+
+@pytest.mark.parametrize(
+    ("change", "problem"),
+    [
+        ({"accession": "0009990006-26-000099"}, "is not saved: run events discover"),
+        ({"exhibit": "efb-absent.htm"}, "lists no efb-absent.htm"),
+        ({"event_id": "cik-0009990002:2024-09-30"}, "is not a pilot event"),
+        ({"citations": ("wrong",)}, "no citation is in"),
+    ],
+)
+def test_an_override_that_does_not_check_is_a_problem(
+    frozen, store, tmp_path, change, problem
+) -> None:
+    late = accession_of("0009990006", LATE)
+    override = document_override(
+        store, "0009990006", late, "efb-20260717-ex991.htm", EASTFIELD_Q1
+    )
+    if change.get("citations") == ("wrong",):
+        wrong = override.citations[0].model_copy(
+            update={"url": "https://www.sec.gov/Archives/edgar/data/1/x-index.htm"}
+        )
+        change = {"citations": (wrong,)}
+    changed = override.model_copy(update=change)
+    result = run(frozen, store, Served(), tmp_path, overrides=(changed,))
+    assert any(problem in found for found in result.problems), result.problems
+    if "event_id" not in change:
+        assert result.states[f"{EASTFIELD_Q1}:release"].override_id is None
+
+
+def test_an_override_of_a_parsed_document_is_a_problem(frozen, store, tmp_path) -> None:
+    run(frozen, store, Served(), tmp_path)
+    override = document_override(
+        store,
+        "0009990001",
+        accession_of("0009990001", "2025-09-25 16:05:00"),
+        "acme-20250925-ex991.htm",
+        "cik-0009990001:2025-08-31",
+    )
+    result = run(
+        frozen, store, refuse, tmp_path, run_id="acquire-2", overrides=(override,)
+    )
+    assert result.problems == (
+        (
+            f"{override.override_id}: cik-0009990001:2025-08-31:release is parsed,"
+            " which no override changes"
+        ),
+    )
+
+
+def test_the_overrides_file_loads_or_is_empty(tmp_path) -> None:
+    assert load_acquisition_overrides(tmp_path / "absent.toml").overrides == ()
+    path = tmp_path / "acquisition-overrides.toml"
+    path.write_text(
+        'schema_version = 1\n\n[[overrides]]\noverride_id = "x"\n'
+        'kind = "set_release_document"\nevent_id = "cik-0009990006:2026-03-31"\n'
+        'accession = "0009990006-26-000016"\nexhibit = "efb.htm"\n'
+        'rationale = "r"\nreviewer = "v"\nrecorded_on = 2026-09-29\n\n'
+        '[[overrides.citations]]\nsource_id = "sec-edgar"\nurl = "u"\n',
+        encoding="utf-8",
+    )
+    (loaded,) = load_acquisition_overrides(path).overrides
+    assert (loaded.override_id, loaded.recorded_on) == ("x", date(2026, 9, 29))
