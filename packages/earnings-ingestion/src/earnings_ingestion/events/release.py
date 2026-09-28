@@ -210,12 +210,38 @@ def read_document(document: CitableArtifact) -> Reading:
     return read_text(text)
 
 
+def _wanted(fiscal_period: str) -> frozenset[str] | None:
+    """The periods that match labels of ``fiscal_period``; ``None`` when unjudged."""
+    if fiscal_period not in _JUDGED:
+        return None
+    return frozenset({"Q4", "FY"} if fiscal_period == "FY" else {fiscal_period})
+
+
 def _matches(period: FiscalPeriod, labels: FiscalLabels | None) -> bool | None:
     """Whether a fiscal period matches the slot's labels; ``None`` when unjudged."""
-    if labels is None or labels.fiscal_period not in _JUDGED:
+    wanted = None if labels is None else _wanted(labels.fiscal_period)
+    if wanted is None:
         return None
-    wanted = {"Q4", "FY"} if labels.fiscal_period == "FY" else {labels.fiscal_period}
     return period.year == labels.fiscal_year and period.period in wanted
+
+
+def states_period(
+    text: str, period_end: date, fiscal_year: int | None, fiscal_period: str | None
+) -> bool:
+    """Whether ``text`` states the period ending ``period_end`` as the rule reads a
+    statement: a full date after "ended" or "ending" that is ``period_end``, or a
+    fiscal period that matches the labels ``fiscal_year`` and ``fiscal_period``,
+    judged only for ``Q1``, ``Q2``, ``Q3``, and ``FY``. ``release-content/1`` reads
+    an exhibit's whole text this way (plan 8, P8-9)."""
+    if period_end in _dates(text):
+        return True
+    wanted = None if fiscal_period is None else _wanted(fiscal_period)
+    if fiscal_year is None or wanted is None:
+        return False
+    return any(
+        period.year == fiscal_year and period.period in wanted
+        for period in _periods(text)
+    )
 
 
 @dataclass(frozen=True)
