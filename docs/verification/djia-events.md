@@ -210,7 +210,7 @@ plan B of the Stage 5 spec: the processing states, R1.2's exhibit choice,
 | 4. P-C7: the frozen records unchanged, and every selected event still selected, after acquisition, a failed parse, and later stages' states | `test_acquisition_changes_no_frozen_record_and_the_build_still_decides`; `test_p_vi_replays_the_acquisition_offline`; after the live run, the rebuild below |
 | 5. Only the shared client, with no throttle of its own; a persistent 403 stops the run and leaves the rest `expected` | `test_stage_5_opens_no_client_of_its_own`; `test_stage_5_has_no_client_or_throttle_of_its_own`; `test_acquire_fetches_through_the_shared_client_within_its_count`; `test_a_persistent_403_stops_the_run_and_leaves_the_rest_expected`; `test_acquire_stops_on_a_persistent_403_and_leaves_the_rest_expected` |
 | 6. Offline replay reproduces the states | `test_p_vi_replays_the_acquisition_offline`, on the synthetic store; `test_offline_replay_reproduces_the_live_acquisition`, on the real store |
-| 7. The suites | The default suite, 1541 passed, 1 skipped, 24 deselected, after the final review's fixes; the harness suite, 280 passed; Ruff; `uv.lock` unchanged |
+| 7. The suites | The default suite, 1544 passed, 1 skipped, 24 deselected, after the final review's fixes; the harness suite, 280 passed; Ruff; `uv.lock` unchanged |
 
 ### Before any acquisition
 
