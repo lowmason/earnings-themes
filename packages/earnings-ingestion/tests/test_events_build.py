@@ -356,11 +356,14 @@ def test_a_set_release_filing_must_lie_before_the_next_period_end(
     universe, layer
 ) -> None:
     """The override chooses within the range ``release-id/1`` reads, ``(P, P']``
-    (S §Review overrides, amended 2026-09-27): the next quarter's release, and the
-    next event's candidate that its own override passed over, are both refused."""
+    (S §Review overrides, amended 2026-09-27). Refused: the next quarter's release;
+    the next event's candidate that its own override passed over; and, at the
+    window's edge, Dynamo's release for a quarter that ends after the window and so
+    has no event, where P' is that quarter's end."""
     cases = [
         choose(layer, "cik-0009990001:2024-08-31", ACME, "2024-12-19 16:05:00"),
         choose(layer, "cik-0009990001:2024-11-30", ACME, "2025-03-11 08:00:00"),
+        choose(layer, "cik-0009990005:2026-04-03", DYNAMO, "2026-07-21 06:45:00"),
     ]
     problems = [
         refused(
@@ -381,6 +384,12 @@ def test_a_set_release_filing_must_lie_before_the_next_period_end(
                 " on 2025-03-11, after the issuer's next period end 2025-02-28"
             ),
         ),
+        (
+            (
+                f"release-cik-0009990005-2026-04-03: {cases[2].accession} was accepted"
+                " on 2026-07-21, after the issuer's next period end 2026-07-03"
+            ),
+        ),
     ]
 
 
@@ -398,6 +407,10 @@ def test_a_set_release_filing_must_lie_before_the_next_period_end(
         (datetime(2025, 3, 1, 5, 30, tzinfo=UTC), None),
         (datetime(2025, 6, 1, 0, 30, tzinfo=UTC), None),
         (datetime(2025, 6, 1, 4, 30, tzinfo=UTC), "after the issuer's next period end"),
+        (
+            datetime(2026, 9, 23, 4, 30, tzinfo=UTC),
+            "after the cutoff 2026-09-22 (P-C4)",
+        ),
     ],
     ids=[
         "P-evening-eastern",
@@ -405,6 +418,7 @@ def test_a_set_release_filing_must_lie_before_the_next_period_end(
         "P+1-after-midnight",
         "Pprime-evening-eastern",
         "Pprime+1-after-midnight",
+        "after-Pprime-and-the-cutoff",
     ],
 )
 def test_a_release_s_range_is_read_on_the_eastern_calendar(accepted, refusal) -> None:
@@ -455,6 +469,10 @@ def test_two_events_never_share_a_release() -> None:
     assert shared_releases(rows, {}) == [f"release-id/1: {shared}"]
     chosen = {"cik-0000000002:2025-03-31": (SimpleNamespace(override_id="set-b"), None)}
     assert shared_releases(rows, chosen) == [f"set-b: {shared}"]
+    both = chosen | {
+        "cik-0000000001:2025-03-31": (SimpleNamespace(override_id="set-a"), None)
+    }
+    assert shared_releases(rows, both) == [f"set-a, set-b: {shared}"]
 
 
 def test_a_set_release_filing_must_cite_the_filing_verifiably(universe, layer) -> None:

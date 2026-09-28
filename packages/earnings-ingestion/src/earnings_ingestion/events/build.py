@@ -13,8 +13,10 @@ applies the overrides:
   P and by the issuer's next period end P', or by the cutoff when none is visible. One
   of its citations is in that filing's folder. The event takes the filing's acceptance
   time and the method ``override``, and its eligibility is decided again, with any
-  outcome. A release accepted after P' has no override; its event stays unresolved. No
-  two events share a release (S §Review overrides, amended 2026-09-27).
+  outcome. A release accepted after P' has no override: the event keeps what the rule
+  gives it, which ``retain_unresolved`` can keep when it is ``ambiguous`` (the
+  ``release-id/2`` item in specs/deferred_items.md). No two events share a release (S
+  §Review overrides, amended 2026-09-27).
 - ``retain_unresolved`` keeps an event that is ``ambiguous`` with the override's
   reason. It is judged after any ``set_release_filing`` of the same event.
 - ``acknowledge`` answers a ``period_gap`` or ``no_slots`` finding whose digest it
@@ -375,8 +377,8 @@ def shared_releases(
     ``set_release_filing`` overrides that chose it, or else ``release-id/1``. Within
     one issuer every release lies in its own event's range ``(P, P']``, by the rule
     or an override, and those ranges never meet; so only a filing that two issuers
-    list, such as a co-registrant's 8-K, can be shared, and the rule alone can share
-    it (see specs/deferred_items.md)."""
+    list, such as a co-registrant's 8-K, can be shared, and the rule can share it
+    without any override (see specs/deferred_items.md)."""
     events: dict[str, list[str]] = {}
     for row in rows:
         if row.release_accession is not None:

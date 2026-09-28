@@ -403,7 +403,9 @@ These are plan A's first tasks, done before any Stage 5 request.
     follows its quarter, as §Candidates has it.
   - A filing accepted after P′, on the Eastern calendar, is refused: an override
     chooses within the range the rule reads, `(P, P′]`. A release accepted later has
-    no override; its event stays unresolved, and `retain_unresolved` can keep it.
+    no override: the event keeps what the rule gives it. When that is `ambiguous`,
+    `retain_unresolved` can keep it; when the rule takes another filing in range, no
+    override corrects it (the `release-id/2` item in `specs/deferred_items.md`).
   - No two events share a release. A filing that would be the release of two events,
     whether an override or the rule names it for each, is refused. Within one issuer
     the ranges never meet, so only a filing two issuers list, such as a
@@ -414,12 +416,14 @@ These are plan A's first tasks, done before any Stage 5 request.
     Before the change, an override could give an event a release from an earlier
     quarter, the next quarter's release (including one past the window, whose quarter
     has no event), or another event's release or candidate, and flip its eligibility
-    with no finding. The first review kept a P′ bound out, on the view that the
-    shared-release refusal caught the next quarter's release; the combined review
-    showed it does not when that quarter has no event, or when the filing is a
-    candidate its event did not take. All twelve overrides behind events v1 name a
-    filing inside their event's range, no two v1 events share a release, and the
-    rebuild reproduces v1's content hash.
+    with no finding. Across a period gap, `(P, P′]` still spans the missing quarter,
+    so an override can name its release; the gap's blocking `period_gap` finding flags
+    it. The first review kept a P′ bound out, on the view that the shared-release
+    refusal caught the next quarter's release; the combined review showed it does not
+    when that quarter has no event, or when the filing is a candidate its event did
+    not take. All twelve overrides behind events v1 name a filing inside their event's
+    range, no two v1 events share a release, and the rebuild reproduces v1's content
+    hash.
 - **`retain_unresolved`** names an `ambiguous` event and its reason.
   - The event keeps its status and reason, is marked retained, and is excluded from the
     pilot's eligible set.
