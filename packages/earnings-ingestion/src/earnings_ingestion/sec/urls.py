@@ -30,9 +30,19 @@ def submissions_page_url(name: str) -> str:
     return f"https://data.sec.gov/submissions/{name}"
 
 
+def companyfacts_url(cik: str | int) -> str:
+    """The XBRL facts SEC holds for a registrant, with each fact's fiscal labels."""
+    return f"https://data.sec.gov/api/xbrl/companyfacts/CIK{pad_cik(cik)}.json"
+
+
 def archive_url(cik: str | int, accession: str, filename: str) -> str:
     """A filed document under EDGAR's archive, which uses the unpadded CIK."""
     folder = accession.replace("-", "")
     return (
         f"https://www.sec.gov/Archives/edgar/data/{unpad_cik(cik)}/{folder}/{filename}"
     )
+
+
+def filing_index_url(cik: str | int, accession: str) -> str:
+    """A filing's EDGAR index page, ``<accession>-index.htm``."""
+    return archive_url(cik, accession, f"{accession}-index.htm")

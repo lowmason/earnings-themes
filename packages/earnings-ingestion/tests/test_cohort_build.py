@@ -16,11 +16,15 @@ from earnings_ingestion.cohort.freeze import (
     load_manifest,
 )
 from earnings_ingestion.cohort.locators import ArtifactText
-from earnings_ingestion.cohort.synthetic import FIXTURE_DIR, build_options
+from earnings_ingestion.cohort.synthetic import FIXTURE_DIR, FUND_CIK, build_options
 from earnings_ingestion.fetch.records import Retrieval, RetrievalMethod
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.data import FILING_COLUMNS
-from earnings_ingestion.sec.urls import COMPANY_TICKERS_URL, submissions_url
+from earnings_ingestion.sec.urls import (
+    COMPANY_TICKERS_URL,
+    submissions_page_url,
+    submissions_url,
+)
 
 DIRECTORY = FIXTURE_DIR
 OPTIONS = build_options()
@@ -115,6 +119,41 @@ def test_a_missing_artifact_stops_the_build(repo) -> None:
     for path in (repo / DIRECTORY / "raw" / "synthetic-roster").glob("*.html"):
         path.unlink()
     with pytest.raises(CohortError, match="no artifact"):
+        build(repo, **OPTIONS)
+
+
+@pytest.mark.parametrize("cik", ["0009990001", FUND_CIK], ids=["issuer", "fund"])
+def test_a_submissions_record_of_another_cik_stops_the_build(repo, cik) -> None:
+    """Each submissions record states its CIK. One saved under another CIK's URL is
+    refused, as Stage 5's event build refuses one, rather than lending that CIK its
+    names or its filings."""
+    store = ArtifactStore(repo / DIRECTORY / "raw", repo)
+    url = submissions_url(cik)
+    record = json.loads(store.latest("sec-edgar", url, **SYNTHETIC).body)
+    body = json.dumps(record | {"cik": "9990008"}).encode()
+    save(store, "sec-edgar", url, body, "application/json")
+    message = f"{url} is the submissions file of CIK 0009990008"
+    with pytest.raises(CohortError, match=re.escape(message)):
+        build(repo, **OPTIONS)
+
+
+def test_a_fund_page_of_another_count_stops_the_build(repo) -> None:
+    """The fund's older pages state no CIK either: each must hold the count its
+    entry in the fund's CIK-checked submissions record states."""
+    store = ArtifactStore(repo / DIRECTORY / "raw", repo)
+    url = submissions_url(FUND_CIK)
+    record = json.loads(store.latest("sec-edgar", url, **SYNTHETIC).body)
+    name = f"CIK{FUND_CIK}-submissions-001.json"
+    record["filings"]["files"] = [{"name": name, "filingCount": 1}]
+    save(store, "sec-edgar", url, json.dumps(record).encode(), "application/json")
+    page = {column: rows[:2] for column, rows in record["filings"]["recent"].items()}
+    older = submissions_page_url(name)
+    save(store, "sec-edgar", older, json.dumps(page).encode(), "application/json")
+    message = (
+        f"{url}: {name}'s filing count, 2, is not the 1 its entry at"
+        " /filings/files/0 states"
+    )
+    with pytest.raises(CohortError, match=re.escape(message)):
         build(repo, **OPTIONS)
 
 

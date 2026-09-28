@@ -102,16 +102,15 @@ The rebuilt content hash equals the frozen one. The record is under
   - fund holdings are an ETF proxy;
   - SEC's identity records were retrieved after the cutoff;
   - intervals are resolved to the day.
-- **One checkout.** The SEC and web client locks live under each checkout's
-  `data/runs/`, so they coordinate the processes of one checkout, not the whole
-  machine. A second worktree or clone takes locks of its own, and two could together
-  send more than 2 requests per second. Until the locks move to one place per
-  machine (`specs/deferred_items.md`), send SEC requests from one checkout at a time.
-  Stage 1's harness client must never run live beside a package client.
-- **`acceptanceDateTime`.** The readers take SEC's offset as written. Whether the
-  time is UTC or Eastern is unverified, and Stage 4 uses it only to order filings
-  of one fund. Stage 5 must settle it before using it as a filing's acceptance time
-  (R1.5).
+- **One machine.** The SEC and web client locks live in the user's cache directory,
+  outside every checkout (plan 7, which moved them from each checkout's `data/runs/`),
+  so every worktree and clone on a machine shares them. A lock coordinates one
+  machine's processes and no more. Stage 1's harness client keeps its own lock, so it
+  must never run live beside a package client.
+- **`acceptanceDateTime`.** The readers take SEC's offset as written, and Stage 4
+  uses it only to order filings of one fund. Stage 5 found that SEC writes it in
+  two conventions, one per file, and takes a filing's acceptance time from its
+  index page instead (plan 7; `docs/verification/edgar-acceptance-time.md`).
 - **Secondary anchor.** A Wikipedia revision can lag or err. The official changes
   and the fund's holdings check it, and each disagreement was reviewed.
 - **`pdftext-1`.** It has no OCR, so a PDF without a text layer cannot be cited. It
@@ -126,8 +125,10 @@ The rebuilt content hash equals the frozen one. The record is under
   including withheld evidence and the SEC files that identities cite. So a refreeze
   after a notice published past the cutoff is curated, or after `fetch-sec` saves
   newer SEC records, makes a new version whose intervals, mappings, and candidate
-  issuers are unchanged. Stage 5 should key on those, not on the content hash
-  (`specs/deferred_items.md`).
+  issuers are unchanged. Stage 5 keys on those, through the universe's operative
+  hash (plan 7, `cohort/identity.py`). Plan 7's edit of the `sec-edgar` register
+  entry changes a rebuild's content hash the same way, so `cohort verify-live` now
+  reports a difference while the operative hash is v1's.
 - **Citation checks.** The build checks that each cited row's name and ticker occur
   in its cited text, which a one- or two-letter ticker meets easily, and nothing ties
   an effective date or its timing to the date span mechanically. Each cited row and

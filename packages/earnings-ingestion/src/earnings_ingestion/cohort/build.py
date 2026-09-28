@@ -79,8 +79,8 @@ from earnings_ingestion.sec.data import (
     raw_document_name,
     read_company_tickers,
     read_nport_holdings,
+    read_older_page,
     read_submissions,
-    read_submissions_page,
 )
 from earnings_ingestion.sec.urls import (
     COMPANY_TICKERS_URL,
@@ -442,6 +442,11 @@ class _Builder:
             except (SecDataError, ValueError) as exc:
                 self.problems.append(f"{url}: {exc}")
                 continue
+            if registrant.cik != cik:
+                self.problems.append(
+                    f"{url} is the submissions file of CIK {registrant.cik}"
+                )
+                continue
             registrants[cik] = (registrant, self._citable(SEC_SOURCE_ID, url, stored))
         return SecEvidence(
             tickers=self._citable(SEC_SOURCE_ID, COMPANY_TICKERS_URL, tickers),
@@ -472,11 +477,16 @@ class _Builder:
             return []
         try:
             registrant = read_submissions(stored.body)
+            if registrant.cik != proxy.cik:
+                self.problems.append(
+                    f"{url} is the submissions file of CIK {registrant.cik}"
+                )
+                return []
             filings = list(registrant.filings)
             for page in registrant.older_pages:
-                older = self._latest(SEC_SOURCE_ID, submissions_page_url(page))
+                older = self._latest(SEC_SOURCE_ID, submissions_page_url(page.name))
                 if older is not None:
-                    filings.extend(read_submissions_page(older.body))
+                    filings.extend(read_older_page(older.body, page))
         except (SecDataError, ValueError) as exc:
             self.problems.append(f"{url}: {exc}")
             return []

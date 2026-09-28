@@ -1,0 +1,69 @@
+# Synthetic review.
+schema_version = 1
+
+[[overrides]]
+override_id = "gap-borealis"
+kind = "acknowledge"
+finding_id = "period_gap:cik-0009990002:2025-03-31:2026-07-01"
+finding_digest = "7938929ed9cb747475518afcd0e40f14cf9de358311613478a4264cdd8b562b2"
+rationale = "Borealis Air was acquired, and files nothing after its report for 2025-03-31."
+reviewer = "Synthetic Reviewer"
+recorded_on = 2026-09-28
+
+[[overrides]]
+override_id = "gap-corvid"
+kind = "acknowledge"
+finding_id = "period_gap:cik-0009990003:2024-07-01:2024-12-31"
+finding_digest = "b6787303110f5ad9967e93c6140a79db0425d1ac99e4a67d3a67a82fd77f200e"
+rationale = "Corvid Systems registered late in 2024; its first periodic report covers 2024-12-31."
+reviewer = "Synthetic Reviewer"
+recorded_on = 2026-09-28
+
+[[overrides]]
+override_id = "gap-eastfield"
+kind = "acknowledge"
+finding_id = "period_gap:cik-0009990006:2025-03-31:2025-09-30"
+finding_digest = "dfad5265c75688c9e099eb644467664be4aeb490446e0729c531829a51540ac0"
+rationale = "Eastfield Bank filed no 10-Q for the quarter ended 2025-06-30."
+reviewer = "Synthetic Reviewer"
+recorded_on = 2026-09-28
+
+[[overrides]]
+override_id = "keep-borealis-same-day"
+kind = "retain_unresolved"
+event_id = "cik-0009990002:2024-09-30"
+reason = "same_day_transition"
+rationale = "EDGAR alone cannot order a 07:00 release against a change before the open on the same day (EV9)."
+reviewer = "Synthetic Reviewer"
+recorded_on = 2026-09-28
+
+[[overrides]]
+override_id = "keep-dynamo-no-release"
+kind = "retain_unresolved"
+event_id = "cik-0009990005:2025-06-27"
+reason = "no_release_filing"
+rationale = "Dynamo Motors furnished no results under Item 2.02 for the quarter ended 2025-06-27."
+reviewer = "Synthetic Reviewer"
+recorded_on = 2026-09-28
+
+[[overrides]]
+override_id = "release-acme-2025-02-28"
+kind = "set_release_filing"
+event_id = "cik-0009990001:2025-02-28"
+accession = "0009990001-25-000008"
+rationale = "The 8-K of 2025-03-11 estimates a sale's effect on the quarter; the 8-K of 2025-03-20 furnishes the quarter's results."
+reviewer = "Synthetic Reviewer"
+recorded_on = 2026-09-28
+
+[[overrides.citations]]
+source_id = "sec-edgar"
+url = "https://www.sec.gov/Archives/edgar/data/9990001/000999000125000008/0009990001-25-000008-index.htm"
+artifact_sha256 = "024e830f50ab50e05787eb0889d7b5024052cfdae56a4e06979ca4c53cf53758"
+
+[overrides.citations.locator]
+kind = "text_span"
+canonicalization_version = "walker-1"
+canonical_sha256 = "42cd4f1db14dc89bb2ca3f8ccd361c5cbe904e7a923a16cea5d95c4cc6087660"
+start = 89
+end = 108
+cited_sha256 = "5a7c7ed15534b4177d2c61c0945821405ac166908b4edc96e99a5b80107174f6"

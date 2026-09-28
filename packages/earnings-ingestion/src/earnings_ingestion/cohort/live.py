@@ -161,8 +161,8 @@ def run_live(
     hosts = {urlsplit(url).hostname or "" for _, _, url, _ in _targets(repo, options)}
     web_hosts = sorted(host for host in hosts if host and not is_sec_host(host))
     with (
-        open_web_client(repo, web_hosts, environ=environ) as web,
-        open_sec_client(repo, environ=environ) as sec,
+        open_web_client(web_hosts, environ=environ) as web,
+        open_sec_client(environ=environ) as sec,
     ):
         result = verify_live(
             repo,

@@ -1,0 +1,164 @@
+{
+ "definition": {
+  "content_hash": "71c6ac4fabc3b7e727da88b4ee74048a0ee3559c8e5ce26c02227376d820333c",
+  "created_at": "2026-09-29T12:00:00Z",
+  "eligible_event_manifest_hash": "438bfec835dee07c119e1b0b24e985fb549dc712564850dc3f73914b557bfe58",
+  "event_manifest_version": 1,
+  "pilot_id": "djia-synthetic-pilot",
+  "pilot_version": 1,
+  "selection_policy_version": "djia-pilot/1",
+  "selection_seed": "50d34b317cb002cae2856c7b7df03a184aca06ec0c04dbc502974d22730945d0",
+  "target": 27,
+  "underfilled": true,
+  "universe_operative_hash": "57dcc2eb3d5f98e38717c54f9e2dc5419beca02f15fda04d2cb384d93358ae5c",
+  "universe_version": 1
+ },
+ "rows": [
+  {
+   "event_id": "cik-0009990003:2026-03-31",
+   "selection_order": 1,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0009990005:2024-12-31",
+   "selection_order": 2,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0009990001:2025-02-28",
+   "selection_order": 3,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0009990006:2025-09-30",
+   "selection_order": 4,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0009990003:2024-12-31",
+   "selection_order": 5,
+   "selection_reason": "membership_boundary"
+  },
+  {
+   "event_id": "cik-0009990006:2026-03-31",
+   "selection_order": 6,
+   "selection_reason": "membership_boundary"
+  },
+  {
+   "event_id": "cik-0009990001:2024-08-31",
+   "selection_order": 7,
+   "selection_reason": "quarter_coverage"
+  },
+  {
+   "event_id": "cik-0009990003:2025-06-30",
+   "selection_order": 8,
+   "selection_reason": "quarter_coverage"
+  },
+  {
+   "event_id": "cik-0009990005:2025-12-31",
+   "selection_order": 9,
+   "selection_reason": "quarter_coverage"
+  },
+  {
+   "event_id": "cik-0009990001:2026-05-31",
+   "selection_order": 10,
+   "selection_reason": "quarter_coverage"
+  },
+  {
+   "event_id": "cik-0009990006:2024-09-30",
+   "selection_order": 11,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0009990005:2025-09-26",
+   "selection_order": 12,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0009990001:2025-08-31",
+   "selection_order": 13,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0009990006:2025-03-31",
+   "selection_order": 14,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0009990005:2024-09-27",
+   "selection_order": 15,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0009990003:2025-09-30",
+   "selection_order": 16,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0009990005:2026-04-03",
+   "selection_order": 17,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0009990001:2026-02-28",
+   "selection_order": 18,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0009990003:2026-06-30",
+   "selection_order": 19,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0009990006:2025-12-31",
+   "selection_order": 20,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0009990001:2025-05-31",
+   "selection_order": 21,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0009990006:2024-12-31",
+   "selection_order": 22,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0009990003:2025-12-31",
+   "selection_order": 23,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0009990005:2025-03-28",
+   "selection_order": 24,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0009990001:2024-11-30",
+   "selection_order": 25,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0009990003:2025-03-31",
+   "selection_order": 26,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0009990001:2025-11-30",
+   "selection_order": 27,
+   "selection_reason": "longitudinal_fill"
+  }
+ ],
+ "schema_version": 1,
+ "unmatched_transitions": [
+  {
+   "assertion_ids": [
+    "index-2024-11-01:borealis-common:removed"
+   ],
+   "effective_date": "2024-11-08",
+   "issuer_id": "cik-0009990002",
+   "kind": "exit"
+  }
+ ]
+}

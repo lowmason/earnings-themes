@@ -2,6 +2,7 @@
 
 import gzip
 import random
+import sys
 import threading
 from datetime import UTC, datetime
 from itertools import pairwise
@@ -10,11 +11,13 @@ import httpx
 import pytest
 from earnings_core import sha256_hex
 from earnings_ingestion.fetch.client import (
+    LOCK_DIR_VARIABLE,
     AccessStop,
     PoliteClient,
     ProcessLock,
     Throttle,
     UnexpectedResponse,
+    machine_lock_dir,
     require_identity,
     retry_after_seconds,
 )
@@ -162,6 +165,17 @@ def test_retry_after_accepts_seconds_and_http_dates() -> None:
     assert retry_after_seconds("soon", NOW) is None
 
 
+@pytest.mark.parametrize(
+    "value",
+    [chr(0xB2), chr(0xFF11) + chr(0xFF12), chr(0x0661) + chr(0x0660)],
+    ids=["superscript-two", "fullwidth-twelve", "arabic-indic-ten"],
+)
+def test_retry_after_ignores_non_ascii_digits(value) -> None:
+    """Plan 6's deferred robustness fix: a header of other scripts' digits is
+    unreadable, so it is ignored, never obeyed and never an error."""
+    assert retry_after_seconds(value, NOW) is None
+
+
 def test_fetch_returns_decoded_bytes_and_a_retrieval() -> None:
     body = b'{"a": 1}'
 
@@ -218,6 +232,25 @@ def test_only_one_lock_holder_at_a_time(tmp_path) -> None:
         pass
     with ProcessLock(path):
         pass
+
+
+def test_the_lock_directory_is_the_users_cache_outside_every_checkout(
+    tmp_path, monkeypatch
+) -> None:
+    monkeypatch.delenv(LOCK_DIR_VARIABLE)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setattr(sys, "platform", "darwin")
+    mac = tmp_path / "Library" / "Caches" / "earnings-themes" / "locks"
+    assert machine_lock_dir() == mac
+    monkeypatch.setattr(sys, "platform", "linux")
+    monkeypatch.delenv("XDG_CACHE_HOME", raising=False)
+    assert machine_lock_dir() == tmp_path / ".cache" / "earnings-themes" / "locks"
+    monkeypatch.setenv("XDG_CACHE_HOME", "relative/cache")
+    assert machine_lock_dir() == tmp_path / ".cache" / "earnings-themes" / "locks"
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "xdg"))
+    assert machine_lock_dir() == tmp_path / "xdg" / "earnings-themes" / "locks"
+    monkeypatch.setenv(LOCK_DIR_VARIABLE, str(tmp_path / "override"))
+    assert machine_lock_dir() == tmp_path / "override"
 
 
 def test_concurrent_workers_share_one_allowance() -> None:

@@ -1136,3 +1136,339 @@ source.
   and the file's name, and needs no saved artifact.
 - **Saved artifacts.** The cohort's are under `data/raw/cohort/`, which is never
   committed; the synthetic cohort's are under `tests/fixtures/cohort/raw/`.
+
+## earnings-ingestion event records, schema version 1
+
+- **Package.** `earnings_ingestion.events`, in `packages/earnings-ingestion` (Stage 5,
+  plan 7): event discovery, eligibility, and the event and pilot freezes.
+- **Schema version.** These records join ingestion schema version `1`, since no
+  earlier record's fields changed. `EventManifest` and `EventEvidence` carry it as
+  `schema_version`; the nested parts do not.
+- **Facts, not incidental evidence** (EV11). An event row or finding holds facts
+  only: never a retrieval time, or a pointer into one saved file. What each row rests
+  on, cited with its retrieval time, sits in the evidence record, outside the
+  manifest's hash. An override is hashed whole, and its citations carry the cited
+  artifact's hash and a locator. So a re-fetch re-versions no manifest while the store
+  keeps each cited artifact; in a fresh store, a cited page served with other bytes
+  must be re-cited, which re-versions the manifest and re-seeds the pilot.
+- **Times.** Every time is a UTC instant. Every date judgment reads the instant's
+  date on the America/New_York calendar (EV10).
+
+### `Convention`
+
+How a submissions file writes `acceptanceDateTime` (S Finding 1).
+
+| Value | Meaning |
+| --- | --- |
+| `utc` | The true UTC instant |
+| `eastern_digits` | The instant's Eastern wall-clock digits, followed by `Z` |
+
+### `EventStatus`
+
+| Value | Meaning |
+| --- | --- |
+| `eligible` | The issuer was a member when the release was first published |
+| `ineligible` | Outside the window, published after the cutoff, or not a member |
+| `ambiguous` | Unidentified release filing, or membership unordered at publication |
+
+### `EventReason`
+
+The first of `eligibility/1`'s checks that applies decides (S §Eligibility).
+
+| Value | Meaning |
+| --- | --- |
+| `period_end_outside_window` | Check 1: `period_end` is outside `[2024-07-01, 2026-07-01)`; `ineligible` |
+| `no_release_filing` | Check 2: no candidate is left; `ambiguous` |
+| `several_release_filings` | Check 2: more than one candidate is left; `ambiguous` |
+| `published_after_cutoff` | Check 3: the release's Eastern date is after the cutoff; `ineligible` |
+| `member_at_publication` | Check 4: a security's interval holds the publication time; `eligible` |
+| `not_member_at_publication` | Check 4: no interval holds it, and none is unordered; `ineligible` |
+| `same_day_transition` | Check 4: a bound on the release's date leaves it unordered; `ambiguous` |
+
+### `IdentificationMethod`
+
+| Value | Meaning |
+| --- | --- |
+| `stated_period` | `release-id/1` left one candidate, whose Item 2.02 text states the slot's period |
+| `sole_candidate` | `release-id/1` left one candidate, whose text states no period that is judged |
+| `override` | A reviewer's `set_release_filing` named it |
+
+### `EventFindingKind`
+
+| Value | Meaning |
+| --- | --- |
+| `period_gap` | An in-window period end may be missing; blocking until acknowledged |
+| `no_slots` | A candidate issuer has no slot; blocking until acknowledged |
+| `fiscal_labels_unknown` | Companyfacts gives the periodic report no agreeing `fy` and `fp`, where a blank `fp` or an `fy` below 1 states none; not blocking |
+| `acceptance_time_mismatch` | A cross-checked `acceptanceDateTime` follows neither convention; blocking |
+| `acceptance_time_unknown` | A filing's side of the cutoff or range turns on a convention its file does not establish, or on a missing value; blocking until its index page is saved (P7-8) |
+
+### `EventOverrideKind`
+
+| Value | Meaning |
+| --- | --- |
+| `set_release_filing` | Name an event's release filing, citing it |
+| `retain_unresolved` | Keep an `ambiguous` event with its reason, excluded from the pilot |
+| `acknowledge` | Accept one `period_gap` or `no_slots` finding, bound to its digest |
+
+### `EventRow`
+
+One slot: an issuer's period end, its release filing, and its eligibility. It serves
+as P's expected event and as Stage 15's ledger entry.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part | `<issuer_id>:<period_end>` |
+| `issuer_id` | ID part | The cohort's issuer |
+| `cik` | 10 digits | The issuer's CIK |
+| `period_end` | date | The periodic report's `reportDate` |
+| `reported_fiscal_year` | int or null | Companyfacts' `fy` for the periodic report; null when unknown |
+| `reported_fiscal_quarter` | string or null | Its `fp` as written, such as `Q1` or `FY`; null when unknown |
+| `periodic_accession` | accession | The original 10-Q, 10-K, 10-QT, or 10-KT that made the slot |
+| `periodic_form` | `10-Q`, `10-K`, `10-QT`, or `10-KT` | Its form |
+| `release_accession` | accession or null | The release filing; null when unidentified |
+| `candidate_accessions` | tuple of accession | The slot's candidates, by accession, each once |
+| `identification_method` | `IdentificationMethod` or null | How the release filing was identified |
+| `filing_acceptance_time` | UTC datetime or null | The release filing's index-page Accepted value, read in America/New_York |
+| `first_publication_time` | UTC datetime or null | Equal to `filing_acceptance_time`: an upper bound on first availability (EV9) |
+| `source_timezone` | `America/New_York` | The zone the Accepted value is read in |
+| `first_publication_source_id` | `sec-edgar` or null | The source of `first_publication_time` |
+| `membership_assertion_id` | ID part or null | The assertion that decided check 4; null when an earlier check decided |
+| `eligibility_status` | `EventStatus` | The status |
+| `eligibility_reason` | `EventReason` | The reason, which implies the status |
+| `retained` | bool | An `ambiguous` event kept by `retain_unresolved`, and excluded from the pilot |
+| `override_ids` | tuple of ID part | The overrides applied to the event |
+
+### `EventFinding`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `finding_id` | ID part | `<kind>:<subject>` |
+| `kind` | `EventFindingKind` | What was found |
+| `blocking` | bool | It holds the freeze until resolved |
+| `issuer_id` | ID part or null | The issuer concerned, if one |
+| `detail` | string | What it says, in facts only |
+| `digest` | 64 lowercase hex | SHA-256 of the canonical JSON of the finding's kind, subject, detail, blocking flag, and issuer |
+| `resolved_by` | tuple of ID part | The acknowledgements that resolved it |
+
+### `EventOverride`
+
+A reviewer's decision (S §Review overrides). Exactly the targets its kind needs are
+set.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `override_id` | ID part | A curated slug |
+| `kind` | `EventOverrideKind` | The decision |
+| `event_id` | ID part or null | The event of `set_release_filing` and `retain_unresolved` |
+| `accession` | accession or null | `set_release_filing`'s filing: an 8-K or 8-K/A of the issuer, accepted, on the Eastern calendar, after the event's period end and by the issuer's next period end (by the cutoff when none is visible), whose index page is saved, and the release of no other event |
+| `reason` | `EventReason` or null | `retain_unresolved`'s reason, one that makes the event `ambiguous` |
+| `finding_id` | ID part or null | `acknowledge`'s finding |
+| `finding_digest` | 64 lowercase hex or null | The digest of the finding as reviewed |
+| `citations` | tuple of `OverrideCitation` | The evidence; required for `set_release_filing`, where at least one cites an SEC artifact in the filing's folder, retrieved from its own URL, at a locator that verifies |
+| `rationale` | string | Why |
+| `reviewer` | string | Who decided; the user, never an agent |
+| `recorded_on` | date | When |
+
+### `EventOverridesFile`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | The file's version |
+| `overrides` | tuple of `EventOverride` | Unique `override_id`s, and at most one override of each kind per `event_id` |
+
+### `EventManifestDefinition`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `corpus_id` | ID part | `djia-2024q3-2026q2` |
+| `event_manifest_version` | int ≥ 1 | The version; a new one only when the content changes |
+| `universe_id` | ID part | The cohort read |
+| `universe_version` | int ≥ 1 | The cohort version read; outside the content hash (P7-2) |
+| `universe_operative_hash` | 64 lowercase hex | That version's `operative_hash` (EV4) |
+| `discovery_policy_version` | string | `release-id/1` |
+| `eligibility_policy_version` | string | `eligibility/1` |
+| `public_information_cutoff` | date | `2026-09-22`, on the Eastern calendar |
+| `content_hash` | 64 lowercase hex | See the frozen event manifests, below |
+| `created_at` | UTC datetime | When this version was frozen |
+
+### `EventManifest`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Ingestion record schema version |
+| `definition` | `EventManifestDefinition` | The definition |
+| `rows` | tuple of `EventRow` | One per slot, sorted by `event_id` |
+| `findings` | tuple of `EventFinding` | Every finding, sorted by `finding_id` |
+| `overrides` | tuple of `EventOverride` | Every override applied, sorted by `override_id` |
+
+### `FileEvidence`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `url` | string | A submissions file or older page the build read |
+| `sha256` | 64 lowercase hex | Its bytes' hash |
+| `retrieved_at` | UTC datetime | When they were retrieved |
+| `convention` | `Convention` or null | The convention its cross-checked rows share; null when none was cross-checked, or they follow both |
+| `rows_cross_checked` | int ≥ 0 | Its rows whose index page is saved |
+
+### `SkippedPage`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `url` | string | An older page the build did not read |
+| `filing_from` | date | Its first filing date |
+| `filing_to` | date | Its last. A page is skipped when this range misses `[2024-07-01, 2026-09-22]` |
+
+### `EventCitations`
+
+What one event rests on. Every citation is a Stage 4 `Citation`: an index page or
+primary document through `walker-1`'s text, and a JSON file by pointer.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part | The event |
+| `periodic_row` | `Citation` | The periodic report's submissions row |
+| `labels` | `Citation` or null | Its companyfacts `accn`, `fy`, and `fp`; null when unknown |
+| `candidates` | tuple of `Citation` | Each candidate's index page, at its Accepted value |
+| `amendments` | tuple of `Citation` | Each 8-K/A in the slot's range, at its Accepted value: recorded, never chosen by the rule |
+| `release` | `Citation` or null | The release filing's index page, at its Accepted value |
+| `item_text` | `Citation` or null | The release's Item 2.02 text; null when its primary document is not saved or states none |
+| `cross_check` | `Citation` or null | The release's submissions row, at `acceptanceDateTime` |
+
+### `EventEvidence`
+
+`events-v<N>.evidence.json`, written beside a frozen manifest and never replaced
+(EV11).
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Ingestion record schema version |
+| `corpus_id` | ID part | The corpus |
+| `event_manifest_version` | int ≥ 1 | The manifest it belongs to |
+| `event_manifest_hash` | 64 lowercase hex | That manifest's `content_hash` |
+| `limitations` | tuple of string | What the evidence cannot show |
+| `files` | tuple of `FileEvidence` | Every submissions file and older page read |
+| `skipped_pages` | tuple of `SkippedPage` | Every older page skipped by its dates |
+| `events` | tuple of `EventCitations` | One per row |
+
+## Frozen event manifests
+
+- **Where.** `config/corpus/<corpus_id>/events-v<N>.json` holds one `EventManifest`,
+  and `events-v<N>.evidence.json` beside it holds that version's `EventEvidence`. Each
+  is indented JSON with sorted keys, written once and never replaced, and the evidence
+  record is written first. The synthetic corpus's are in `tests/fixtures/events/`.
+- **One corpus a directory.** A file names its version, not its corpus, so
+  `frozen_event_manifests` refuses a directory whose manifests name more than one
+  `corpus_id`, and `freeze_events` refuses a build of a corpus other than the one
+  the directory holds.
+- **The content hash.** `content_hash` covers the canonical JSON of the definition,
+  less `event_manifest_version`, `universe_version`, `content_hash`, and `created_at`,
+  with the rows, the findings, and the overrides. Identical content keeps its version,
+  whatever its evidence record would say; new content takes the next.
+- **Reading.** `earnings_ingestion.events.freeze.load_event_manifest` rechecks that
+  hash and the file's name. `load_event_evidence(path, manifest)` rechecks the
+  evidence record's name and the manifest's content hash, and refuses the record,
+  naming the field, unless its `corpus_id`,
+  `event_manifest_version`, and `event_manifest_hash` are the manifest's `corpus_id`,
+  version, and `content_hash`, and its events' `event_id`s are the manifest's rows in
+  order. `earnings_ingestion.events.evidence.check_evidence` verifies every citation
+  against a store's saved bytes.
+- **Saved artifacts.** Discovery's are under `data/raw/events/`, which is never
+  committed; the synthetic layer's are under `tests/fixtures/events/raw/`.
+
+## earnings-ingestion pilot records, schema version 1
+
+- **Package.** The records are in `earnings_ingestion.events.records`, and the policy,
+  `djia-pilot/1`, in `earnings_ingestion.events.pilot` (Stage 5, plan 7).
+- **Schema version.** These records join ingestion schema version `1`.
+  `PilotManifest` carries it as `schema_version`; the nested parts do not.
+- **Inputs.** The pilot reads a frozen event manifest's `eligible` rows, and the
+  membership transitions of the universe manifest that event manifest read (P7-20).
+  No acquisition, parse, or later outcome is an input.
+
+### `SelectionReason`
+
+Why `djia-pilot/1` took an event (S §Pilot selection).
+
+| Value | Meaning |
+| --- | --- |
+| `issuer_coverage` | Step 1: the issuer's event from the quarter with the fewest selections so far |
+| `membership_boundary` | Step 2: the nearest eligible event on a transition's member side |
+| `quarter_coverage` | Step 3: an event of a quarter with no selection, from the issuer with the fewest |
+| `longitudinal_fill` | Step 5: the event farthest, in days, from its issuer's nearest selected `period_end` |
+
+### `TransitionKind`
+
+| Value | Meaning |
+| --- | --- |
+| `entry` | The issuer's membership starts: a start, not an `anchor_snapshot`, whose day before no interval of the issuer holds |
+| `exit` | The issuer's membership ends: an end whose day no interval of the issuer holds |
+
+### `PilotRow`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part | An `eligible` event of the event manifest the pilot names |
+| `selection_order` | int ≥ 1 | The order taken, from 1 |
+| `selection_reason` | `SelectionReason` | The step that took it |
+
+### `MembershipTransition`
+
+An issuer-level entry or exit dated in `[2024-07-01, 2026-09-22]`, read from the
+universe's intervals by day. A second security joining a member issuer is not one,
+and nor is a same-day handoff between two of its securities.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `issuer_id` | ID part | The issuer |
+| `kind` | `TransitionKind` | Entry or exit |
+| `effective_date` | date | The bound's date |
+| `assertion_ids` | tuple of ID part | The assertions that set the bound |
+
+### `PilotDefinition`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `pilot_id` | ID part | `<corpus_id>-pilot`, such as `djia-2024q3-2026q2-pilot` |
+| `pilot_version` | int ≥ 1 | The version; a new one only when the content changes |
+| `universe_version` | int ≥ 1 | The cohort version read; outside the content hash (P7-2) |
+| `universe_operative_hash` | 64 lowercase hex | Its `operative_hash`, which the event manifest records too (EV4) |
+| `event_manifest_version` | int ≥ 1 | The event manifest drawn from |
+| `eligible_event_manifest_hash` | 64 lowercase hex | That manifest's `content_hash` |
+| `selection_policy_version` | string | `djia-pilot/1` |
+| `selection_seed` | 64 lowercase hex | SHA-256 of the canonical JSON of `eligible_event_manifest_hash`, `selection_policy_version`, and `universe_operative_hash` |
+| `target` | int ≥ 1 | 40, or every eligible event when there are fewer |
+| `underfilled` | bool | Fewer than 40 eligible events, so the target is all of them |
+| `content_hash` | 64 lowercase hex | See the frozen pilots, below |
+| `created_at` | UTC datetime | When this version was frozen |
+
+### `PilotManifest`
+
+`pilot-v<N>.json`: the frozen selection.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Ingestion record schema version |
+| `definition` | `PilotDefinition` | The definition |
+| `rows` | tuple of `PilotRow` | The selected events in `selection_order`, as many as `target` |
+| `unmatched_transitions` | tuple of `MembershipTransition` | Each transition with no eligible event on its member side, within the membership spell it opens or closes (a clarification under `djia-pilot/1`, 2026-09-27): reported, not refused. Sorted by date, issuer, and kind |
+
+## Frozen pilots
+
+- **Where.** `config/corpus/<corpus_id>/pilot-v<N>.json` holds one `PilotManifest`,
+  beside the event manifest it names. It is indented JSON with sorted keys, written
+  once and never replaced. The synthetic corpus's is in `tests/fixtures/events/`.
+- **One corpus a directory.** `pilot_id` names the corpus alone, whatever the
+  policy, so a later policy's pilot shares it. `frozen_pilots` refuses a directory
+  whose pilots name more than one `pilot_id`, and `freeze_pilot` refuses a pilot of
+  a corpus other than the one the directory holds.
+- **The content hash.** `content_hash` covers the canonical JSON of the definition,
+  less `pilot_version`, `universe_version`, `content_hash`, and `created_at`, with the
+  rows and the unmatched transitions. Identical content keeps its version; new
+  content takes the next. A new event manifest or a new policy gives a new seed, and
+  so a new version.
+- **Reading.** `earnings_ingestion.events.pilot.load_pilot` rechecks the chain: the
+  pilot's hash and name; the event manifest it names, in the same directory, by its
+  content hash; the universe's operative hash, computed again from the universe
+  manifest; the seed; and that every row is an eligible event of that manifest.

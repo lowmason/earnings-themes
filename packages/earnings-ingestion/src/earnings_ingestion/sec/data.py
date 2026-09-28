@@ -3,8 +3,9 @@
 - ``company_tickers.json`` is SEC's current ticker list. Its tickers only propose
   candidates; they never establish identity (A §268).
 - A registrant's submissions JSON holds its conformed name, former names, current
-  tickers, and filings. Older filings sit in separate pages that ``filings.files``
-  names.
+  tickers, and filings, with each filing's 8-K items where the file has that column.
+  Older filings sit in separate pages that ``filings.files`` names, each with the
+  filing dates it covers.
 - An N-PORT primary document holds a fund's holdings on its report date.
 
 Each reader checks the shape it relies on and raises ``SecDataError`` on any other, so
@@ -62,10 +63,28 @@ class Filing:
     columns: str
     """The JSON pointer of the column arrays holding this filing, e.g. ``/filings/recent``."""
     index: int
+    items: tuple[str, ...] = ()
+    """The 8-K items SEC lists for the filing, e.g. ``("2.02", "9.01")``; empty for
+    other forms, and for files with no ``items`` column, such as Stage 4's synthetic
+    ones."""
 
     def pointer(self, column: str) -> str:
         """The JSON pointer of one of this filing's values."""
         return f"{self.columns}/{json_pointer_token(column)}/{self.index}"
+
+
+@dataclass(frozen=True)
+class OlderPage:
+    """An older filings page, which is fetched separately when needed."""
+
+    name: str
+    filing_from: date | None
+    filing_to: date | None
+    """The filing dates the page covers, when the entry states them."""
+    pointer: str
+    filing_count: int | None = None
+    """How many filings the page holds, when the entry states it. The page states no
+    CIK, so ``read_older_page`` binds it to this entry by the count."""
 
 
 @dataclass(frozen=True)
@@ -75,8 +94,7 @@ class Registrant:
     tickers: tuple[str, ...]
     former_names: tuple[FormerName, ...]
     filings: tuple[Filing, ...]
-    older_pages: tuple[str, ...]
-    """Names of the older filing pages, fetched separately when needed."""
+    older_pages: tuple[OlderPage, ...]
 
 
 @dataclass(frozen=True)
@@ -99,7 +117,7 @@ def json_pointer_token(key: str) -> str:
     return key.replace("~", "~0").replace("/", "~1")
 
 
-def _load(body: bytes, what: str) -> object:
+def load_json(body: bytes, what: str) -> object:
     try:
         return json.loads(body)
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -107,7 +125,7 @@ def _load(body: bytes, what: str) -> object:
 
 
 def read_company_tickers(body: bytes) -> tuple[TickerEntry, ...]:
-    data = _load(body, "company_tickers.json")
+    data = load_json(body, "company_tickers.json")
     if not isinstance(data, dict) or not data:
         raise SecDataError("company_tickers.json is not a non-empty object")
     entries = []
@@ -136,6 +154,14 @@ def _date(value: object, where: str) -> date | None:
         raise SecDataError(f"{where}: {value!r} is not a date") from exc
 
 
+def _count(value: object, where: str) -> int | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise SecDataError(f"{where}: {value!r} is not a count")
+    return value
+
+
 def _datetime(value: object, where: str) -> datetime | None:
     if value in (None, ""):
         return None
@@ -158,9 +184,16 @@ def read_filing_columns(columns: object, pointer: str) -> tuple[Filing, ...]:
         or len({len(array) for array in arrays}) != 1
     ):
         raise SecDataError(f"{pointer}'s columns are not arrays of one length")
+    items = columns.get("items", [""] * len(arrays[0]))
+    if (
+        not isinstance(items, list)
+        or len(items) != len(arrays[0])
+        or not all(isinstance(value, str) for value in items)
+    ):
+        raise SecDataError(f"{pointer}'s items are not text, one per filing")
     filings = []
-    for index, row in enumerate(zip(*arrays, strict=True)):
-        accession, filed, reported, accepted, form, document = row
+    for index, row in enumerate(zip(*arrays, items, strict=True)):
+        accession, filed, reported, accepted, form, document, listed = row
         where = f"{pointer} index {index}"
         filing_date = _date(filed, where)
         if filing_date is None:
@@ -175,13 +208,50 @@ def read_filing_columns(columns: object, pointer: str) -> tuple[Filing, ...]:
                 primary_document=str(document),
                 columns=pointer,
                 index=index,
+                items=tuple(item.strip() for item in listed.split(",") if item.strip()),
             )
         )
     return tuple(filings)
 
 
+def _named(entry: object, where: str) -> dict:
+    """``entry`` if it is an object whose ``name`` is text."""
+    if not isinstance(entry, dict) or not isinstance(entry.get("name"), str):
+        raise SecDataError(f"{where} is not an object with a text name")
+    return entry
+
+
+def _optional_text(value: object, where: str) -> str | None:
+    if value is not None and not isinstance(value, str):
+        raise SecDataError(f"{where} is not text")
+    return value
+
+
+def _older_page(entry: object, index: int) -> OlderPage:
+    pointer = f"/filings/files/{index}"
+    entry = _named(entry, pointer)
+    return OlderPage(
+        name=entry["name"],
+        filing_from=_date(entry.get("filingFrom"), f"{pointer}/filingFrom"),
+        filing_to=_date(entry.get("filingTo"), f"{pointer}/filingTo"),
+        pointer=pointer,
+        filing_count=_count(entry.get("filingCount"), f"{pointer}/filingCount"),
+    )
+
+
+def _former_name(entry: object, index: int) -> FormerName:
+    pointer = f"/formerNames/{index}"
+    entry = _named(entry, pointer)
+    return FormerName(
+        name=entry["name"],
+        valid_from=_optional_text(entry.get("from"), f"{pointer}/from"),
+        valid_to=_optional_text(entry.get("to"), f"{pointer}/to"),
+        pointer=pointer,
+    )
+
+
 def read_submissions(body: bytes) -> Registrant:
-    data = _load(body, "the submissions file")
+    data = load_json(body, "the submissions file")
     if not isinstance(data, dict) or not {"cik", "name", "tickers", "filings"} <= set(
         data
     ):
@@ -189,6 +259,9 @@ def read_submissions(body: bytes) -> Registrant:
     filings = data["filings"]
     if not isinstance(filings, dict) or "recent" not in filings:
         raise SecDataError("the submissions file has no filings.recent")
+    tickers = data["tickers"]
+    if not isinstance(tickers, list) or not all(isinstance(t, str) for t in tickers):
+        raise SecDataError("tickers is not a list of text")
     former = data.get("formerNames") or []
     if not isinstance(former, list):
         raise SecDataError("formerNames is not a list")
@@ -198,24 +271,35 @@ def read_submissions(body: bytes) -> Registrant:
     return Registrant(
         cik=pad_cik(data["cik"]),
         name=str(data["name"]),
-        tickers=tuple(str(ticker) for ticker in data["tickers"]),
+        tickers=tuple(tickers),
         former_names=tuple(
-            FormerName(
-                name=str(entry["name"]),
-                valid_from=entry.get("from"),
-                valid_to=entry.get("to"),
-                pointer=f"/formerNames/{index}",
-            )
-            for index, entry in enumerate(former)
+            _former_name(entry, index) for index, entry in enumerate(former)
         ),
         filings=read_filing_columns(filings["recent"], "/filings/recent"),
-        older_pages=tuple(str(page["name"]) for page in older),
+        older_pages=tuple(_older_page(page, index) for index, page in enumerate(older)),
     )
 
 
 def read_submissions_page(body: bytes) -> tuple[Filing, ...]:
     """An older filings page: the same columns, at the top level."""
-    return read_filing_columns(_load(body, "the filings page"), "")
+    return read_filing_columns(load_json(body, "the filings page"), "")
+
+
+def read_older_page(body: bytes, page: OlderPage) -> tuple[Filing, ...]:
+    """The older page ``page`` names, refused unless it holds the count of filings
+    its entry states: the page states no CIK, so the count is what binds it to the
+    submissions file, whose CIK the reader checks."""
+    if page.filing_count is None:
+        raise SecDataError(
+            f"{page.name}'s entry at {page.pointer} states no filingCount"
+        )
+    filings = read_submissions_page(body)
+    if len(filings) != page.filing_count:
+        raise SecDataError(
+            f"{page.name}'s filing count, {len(filings)}, is not the"
+            f" {page.filing_count} its entry at {page.pointer} states"
+        )
+    return filings
 
 
 def raw_document_name(primary_document: str) -> str:

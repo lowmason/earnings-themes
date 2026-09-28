@@ -265,7 +265,7 @@
       a `walker-2` is planned for another reason.
 
 ## 6-point-in-time-djia-cohort — 2026-09-26
-- [ ] Give the universe manifest an operative identity (final review, Important
+- [x] Give the universe manifest an operative identity (final review, Important
       #1; the user corrected the wording and deferred the design): P6-12 said
       evidence published after the cutoff cannot change a manifest's content, but
       `content_hash` in
@@ -280,8 +280,8 @@
       pinned by hash in the curated files, or both; the committed v1 must stay
       loadable. Size: design. Done when: Stage 5's spec or plan decides what
       identifies the universe for its manifests, and a test shows that a withheld
-      notice and a re-fetched SEC record leave that identity unchanged.
-- [ ] Hold the SEC and web client locks once per machine (final review, Important
+      notice and a re-fetched SEC record leave that identity unchanged. → done in plan 7
+- [x] Hold the SEC and web client locks once per machine (final review, Important
       #2): `LOCK_PATH` in
       `packages/earnings-ingestion/src/earnings_ingestion/sec/client.py` and in
       `packages/earnings-ingestion/src/earnings_ingestion/cohort/web.py` resolves
@@ -294,8 +294,8 @@
       the user's cache directory, with a test that two repository roots share one
       lock. Size: quick-fix. Done when: both locks are machine-wide and tested, and
       the record says one machine again, before a second checkout or Stage 5's
-      EDGAR adapter sends SEC requests.
-- [ ] Three robustness fixes in the cohort path (final review, Minor; paths under
+      EDGAR adapter sends SEC requests. → done in plan 7
+- [x] Three robustness fixes in the cohort path (final review, Minor; paths under
       `packages/earnings-ingestion/src/earnings_ingestion/` unless given in full):
       - `_build` in `apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py`
         catches only `CohortError`, but a bad override makes `reconstruct`
@@ -312,7 +312,7 @@
         value, so a non-ASCII digit such as a superscript two reaches `float()`
         and raises `ValueError` rather than being ignored.
       Size: quick-fix. Done when: each case has a test, and each ends as a
-      `problem:` line, a `SecDataError`, or an ignored header.
+      `problem:` line, a `SecDataError`, or an ignored header. → parts 2 and 3 done in plan 7; part 1 restated under plan 7
 - [ ] Four stale claims (final review, Minor; paths under
       `packages/earnings-ingestion/src/earnings_ingestion/` unless given in full):
       - `fetch/robots.py`'s docstring says a response the client gives up on
@@ -370,3 +370,644 @@
       decision on whether AGENTS.md's stop on a persistent 403 covers the run or
       one host. Size: design. Done when: that decision is recorded, and a test
       shows that a refusal on one host leaves the other hosts' checks requested.
+
+## 7-event-discovery-eligibility-and-acquisition-plan-a — 2026-09-27
+- [ ] Report the cohort CLI's override and terms errors as `problem:` lines
+      (plan 6's "Three robustness fixes", part 1, restated by plan 7): `_build`
+      in `apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py` catches
+      only `CohortError`, but a bad override makes `reconstruct`
+      (`cohort/intervals.py`), `resolve` (`cohort/resolution.py`), or
+      `acknowledge` (`cohort/findings.py`) raise `ValueError`, which prints a
+      traceback. `terms_digest` also runs outside any `try` in `cohort_cli.py`'s
+      `terms` and in `cohort/live.py`, so a terms page that `walker-1` cannot
+      read aborts `verify-live` before its record is written. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/` unless given in
+      full. Size: quick-fix. Done when: each case has a test, and each ends as a
+      `problem:` line or in `verify-live`'s record.
+- [ ] Show the operative hashes in `verify-live` (plan 7, P7-3): plan 7's Task
+      16 named companyfacts in the `sec-edgar` entry of
+      `docs/source-register.toml`, and a universe manifest's content hash
+      covers that entry through `source_register_version`. So a rebuild of
+      cohort v1 no longer reproduces v1's content hash, although its operative
+      hash (`cohort/identity.py`), on which Stage 5 keys, is unchanged.
+      `earnings-pipeline cohort verify-live` prints and records only
+      `rebuilt_content_hash` and `frozen_content_hash` (`cohort/live.py`, and
+      `LiveVerification` in `cohort/records.py`), so every run from now on shows
+      a difference that no fact explains. Record both versions' operative
+      hashes beside them. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: quick-fix.
+      Done when: `verify-live`'s output and record tell a register-only change
+      from a changed fact, with a test.
+- [ ] Write `release-id/2` (plan 7's Task 20 review, and its final review):
+      `release-id/1` in
+      `packages/earnings-ingestion/src/earnings_ingestion/events/release.py`
+      dropped the only candidate of ten real events, each the release itself, so
+      each needed a `set_release_filing` override in
+      `config/corpus/djia-2024q3-2026q2/overrides.toml`:
+      - its year-first quarter pattern requires "fiscal" before the year, which
+        P7-7's prose ("in either order") does not, so in JPMorgan's eight
+        releases, which write the year first without it, the rule read only the
+        prior-year comparison and the report dates after "ended", none of them
+        the slot's period;
+      - 3M's release for 2024-09-30 names its quarter without a year and its
+        full year with one, which the rule read as FY 2024; Verizon's for
+        2024-12-31 names its quarter and full year together in a form outside
+        the rule's list, while the older quarters in its long Item 2.02 section
+        were read;
+      - the drop rule judges every stated period against a sole candidate, so a
+        prior-year comparison, a boilerplate report date, or a full-year figure
+        can drop the release itself.
+      The rule is fixed (the Stage 5 spec, §Candidates): a change is
+      `release-id/2`, and so a new event manifest version, with the spec's
+      drop rule decided again. Size: plan. Done when: a rebuild under
+      `release-id/2` identifies these ten releases with no override, the
+      synthetic corpus's identifications are unchanged or re-versioned, and the
+      frozen v1 still loads.
+      Amended by PR #6's review (2026-09-27, F2 and F15). A false drop can also
+      pass the release to another candidate silently. A candidate that states no
+      judged period is never dropped, so when the rule drops the true release, an
+      unread co-candidate, such as an 8-K that SEC lists with Item 2.02 but whose
+      document has no Item 2.02 heading (Caterpillar's `0000018230-24-000047` for
+      2024-09-30 is one), becomes the release as `sole_candidate`, with no
+      finding and no review. Its earlier acceptance time can change the event's
+      eligibility, and an event that turns ineligible is never acquired, so plan
+      B's content check never sees it. Both halves occur in v1, though never
+      together: each of v1's `sole_candidate` rows had one candidate, and no v1 row
+      is wrong. Plan 7 expects a correct `sole_candidate` after a drop when the
+      survivor's Item 2.02 text was read but states no judged period, so the case
+      to catch is a survivor with no Item 2.02 section. Any rebuild under
+      `release-id/1` before this lands adds that build-level gate first. Also, a
+      `set_release_filing` outranks the rule and is never stale, as the spec and
+      P7-16 intend, but nothing reports whether the rule agrees with it; once
+      `release-id/2` exists, a signed override could silently contradict a pick
+      the rule now makes. Done when, in addition: a slot where the rule drops a
+      candidate and keeps one with no Item 2.02 section either holds the freeze (a
+      finding answered by a `set_release_filing`, or an acknowledgement bound to
+      its digest) or comes out `ambiguous`, with a sibling of
+      `test_a_candidate_with_no_item_2_02_heading_stays` (in
+      `packages/earnings-ingestion/tests/test_events_release.py`) in which the
+      true release is dropped, and a build-level test that the case holds the
+      freeze; and `events build` reports, for each `set_release_filing`, whether
+      the rule agrees, names another filing, or resolves nothing, with
+      `release-id/2` deciding whether a contradiction holds the freeze. Also
+      (PR #6's combined review): a release accepted after its event's next period
+      end P′ lies in the next event's range, and when its text states no judged
+      period, `release-id/1` makes it that event's release as `sole_candidate`.
+      Since PR #6 bounds a `set_release_filing` to `(P, P′]`, no override can give
+      it back to its own event, and no override can take a rule's pick away from
+      an event that is not `ambiguous`. `release-id/2` decides both.
+      Before it freezes a new events version, the per-candidate citations item
+      under PR #6's review lands too.
+- [ ] Report `events freeze`'s citation errors as `problem:` lines (plan 7's
+      final review, Minor): `freeze_command` in
+      `apps/earnings-pipeline/src/earnings_pipeline/events_cli.py` catches only
+      `EventFreezeRefused`, but `freeze_events` (`events/freeze.py`) builds the
+      evidence record with `evidence_of` (`events/evidence.py`), which raises
+      `LocatorError`, a `ValueError`, when a value it cites is not in a saved
+      page's `walker-1` text, so the command prints a traceback. Nothing is
+      written, since the record is built before either file. PR #6's corpus fix
+      (F5) then gave `freeze_command` an `except ValueError` after
+      `EventFreezeRefused`, so this case now ends as `Refused: <error>` with exit
+      1, not a traceback; it is still untested, and it says `Refused:` where the
+      done-when asks for `problem:`. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`
+      unless given in full. Size: quick-fix. Done when: such a case has a test
+      and ends as a `problem:` line.
+      Widened by PR #6's review (2026-09-27, F23, F36, and F37). Every `events`
+      command has loads and writes outside any handler for their error type, so
+      each case below ends in a traceback, not a `problem:` or `Refused:` line.
+      Each fails closed, with no partial file and no request after the failure,
+      except a freeze that fails between its two writes (the third bullet), which
+      leaves its evidence record behind.
+      - `load_overrides` (`events/build.py`) raises `TOMLDecodeError`, or a
+        pydantic `ValidationError` for a repeated `override_id`, a second
+        override of one kind, or an extra key, and `_build` in `events_cli.py`
+        catches only `EventBuildError`. Wrap only the `load_overrides` call in
+        `except (OSError, ValueError)` and print `problem: <path>: <error>`; do not
+        widen the handler around `build_events`, since `EventBuildError` and
+        `LocatorError` are `ValueError`s too. Treat the cohort's overrides loader
+        in `cohort_cli.py` the same way, with the first item of this section.
+      - `Layout.universes()` runs outside any handler in every command,
+        `SavedResponses` in build and freeze, and `write_new` in freeze and select
+        (PR #6's F5 fix put select's `frozen_event_manifests` inside a `ValueError`
+        handler, so a tampered event manifest already ends as `Refused:`). So a
+        tampered universe manifest, an empty or
+        truncated retrieval record (a `ValidationError` that names no file), or
+        two racing selects (`FileExistsError`) print tracebacks, and `events
+        discover` advises a rerun that meets the same stop. `universes()` should
+        refuse with `Refused: <path>: <error>`; select's loads move inside its
+        `try`, which also catches `FileExistsError` and says to rerun `events
+        select` (PR #6's F5 fix moved `frozen_event_manifests` inside a
+        `ValueError` handler; `FileExistsError` is still uncaught); an
+        unreadable retrieval record becomes a `problem:` line naming
+        its path, which discover names instead of advising a rerun; and
+        `freeze_command` catches `(OSError, ValueError)` after `EventBuildError`.
+        `ArtifactStore.retrievals` and `latest` can follow, or wait for the
+        store-recovery item under PR #6's review below.
+      - `freeze_events` (`events/freeze.py`) writes the evidence record first, so
+        a crash before the manifest is written leaves `events-v<N>.evidence.json`
+        alone. An unchanged retry heals it, but a retry after a re-fetch or a
+        changed fact raises a `FileExistsError` that does not name the cause, on
+        every later freeze. When the evidence file exists without its manifest and
+        its bytes differ, raise a named refusal that tells the user to delete the
+        leftover file; never overwrite it.
+      Size, as widened: plan. Done when, in addition: a repeated `override_id`, a
+      second override of one kind, and a TOML syntax error each end `events build`
+      and `events freeze` with a `problem:` line; a tampered universe manifest
+      makes build refuse cleanly; an empty retrieval record ends build with a
+      `problem:` line naming
+      its path; and a leftover evidence file with other bytes gives the named
+      refusal while an identical one still completes the freeze; each with a test
+      and no traceback.
+- [ ] Cite the Item 2.02 text of a release an override names outside the
+      candidates (plan 7's final review, Minor): `_event` in `events/evidence.py`
+      sets `item_text` only when the event's release is one of `release-id/1`'s
+      candidates, as plan 7's Task 13 specified, but the Stage 5 spec's evidence
+      record cites each release's Item 2.02 span, and plan 7's review table lets
+      a `set_release_filing` name an 8-K the rule passed over. Such an event
+      would freeze with `item_text` null, and its primary document may not be
+      saved. Every event of `config/corpus/djia-2024q3-2026q2/events-v1.json`
+      has its span. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`.
+      Size: quick-fix. Done when: an override naming a passed-over 8-K either
+      freezes with its Item 2.02 span cited or is refused by `build`, with a
+      test.
+      The per-candidate citations item under PR #6's review touches the same
+      `item_text` code; land the two together.
+- [ ] Bound the periodic reports that can block on acceptance time (plan 7's
+      final review, Minor): `issuer_filings` in `events/filings.py` passes every
+      periodic report with a `reportDate` to `_visible`, so one whose index page
+      is not saved and whose `acceptanceDateTime` is empty becomes an
+      `acceptance_time_unknown` finding that holds the freeze, however old it
+      is. A release 8-K is reported for a missing `acceptanceDateTime` only when
+      filed on or after the window's start. None arose in v1. A bound must keep
+      the reports that the slots and their `period_gap` guards read, including
+      the last one before the window (`events/slots.py`). Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`.
+      Size: quick-fix. Done when: a test shows that an old periodic report with
+      no `acceptanceDateTime` neither holds the freeze nor changes a slot.
+      Amended by PR #6's review (2026-09-27, F7). The remedy P7-8 gives for
+      `acceptance_time_unknown`, saving the filing's index page with
+      `earnings-pipeline events discover --filing` and rebuilding, does not clear
+      a row with no `acceptanceDateTime`. Once the page is saved, `survey` in
+      `events/acceptance.py` cross-checks the row, `convention_of` finds no
+      convention for the missing value, and `issuer_filings` makes it a blocking
+      `acceptance_time_mismatch`, which no override can acknowledge. So an
+      in-window periodic report, or an Item 2.02 8-K, with no value holds the
+      freeze for good, and a date bound does not help. The 8-K trigger in
+      `issuer_filings` also has no upper bound: a no-value Item 2.02 8-K filed on
+      or after the window's start blocks even when it was filed after the cutoff,
+      and can never be an event. None arose in v1: none of the 112,236 rows the v1
+      build reads has an empty value. The user chooses between two readings:
+      - (a) a missing value is nothing to cross-check: the index page places the
+        filing, and its cross-check is null, recorded beside EV10 and P7-8; or
+      - (b) it stays a permanent block, and P7-8, the module docstrings of
+        `events/discover.py` and `events/filings.py`, the `build_command`
+        docstring in `apps/earnings-pipeline/src/earnings_pipeline/events_cli.py`
+        and the `events discover --filing` hint it prints for each
+        `acceptance_time_unknown` finding (both added by PR #6's P4.4 fix), and
+        the `acceptance_time_unknown` row of `docs/data-dictionary.md` stop
+        promising that saved data clears it. PR #6's
+        `test_build_names_each_blocking_finding_s_own_remedy` (in
+        `apps/earnings-pipeline/tests/test_events_cli.py`) builds its unknown from
+        a row with no value, the one case where the `--filing` hint cannot clear
+        it; under either reading, move its hint assertion to a value whose file
+        establishes no convention, and pin the chosen wording for a no-value
+        row.
+      With either, bound the 8-K trigger from above with a margin past the
+      cutoff: a filing accepted after 17:30 takes the next business day's filing
+      date, so its filing date can fall after its acceptance date. Size, as
+      amended: design until the user chooses, then quick-fix. Done when, in
+      addition: the chosen reading is recorded;
+      `test_a_missing_value_is_unknown_unless_filed_before_the_range` (in
+      `packages/earnings-ingestion/tests/test_events_filings.py`) goes on to save
+      each unknown filing's index page and asserts the chosen outcome (under (a),
+      no finding, the report among the periodic reports, and the 8-K among the
+      releases); a build-level test takes an emptied 10-Q through its saved index
+      page to the freeze; and a no-value Item 2.02 8-K filed past the cutoff's
+      margin raises no finding.
+- [ ] Refuse a repeated acknowledgement (plan 7's final review, Minor):
+      `EventOverridesFile._distinct` in `events/records.py` refuses a repeated
+      `override_id` and, per P7-14, a second override of one kind for one
+      `event_id`, but an `acknowledge` override names a `finding_id`, not an
+      `event_id`, so two acknowledgements of one finding both load. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`.
+      Size: quick-fix. Done when: `EventOverridesFile` refuses a `finding_id`
+      repeated among acknowledgements, with a test.
+- [x] Bind an evidence record to its manifest when loading (plan 7's final
+      review, Minor): `load_event_evidence` in `events/freeze.py` checks only
+      that the file's name matches its `event_manifest_version`. Nothing
+      compares its `event_manifest_hash` with the `content_hash` of the manifest
+      beside it, so an evidence record from another corpus, or from other
+      content under the same version, would load. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`.
+      Size: quick-fix. Done when: loading an evidence record checks its
+      `corpus_id` and `event_manifest_hash` against the manifest of its version,
+      with a test. → fixed in PR #6 (Codex round 4, C1)
+
+## PR #6 review (plan 7) — 2026-09-27
+- [ ] Decide what identifies the event manifest when a store is rebuilt (PR #6's
+      review, F27): `EventManifest`'s content hash in `events/records.py` hashes
+      each override whole, and each `set_release_filing` cites an index page by its
+      artifact hash and a locator, which `_citations_refused` in `events/build.py`
+      looks up in the store. `data/raw/events/` is never committed, so on another
+      machine, or after a fresh discovery, SEC serving a cited page with other
+      bytes, even with the same `walker-1` text, refuses the override until it is
+      re-cited, and the re-cited override re-versions the manifest and re-seeds the
+      pilot (`pilot_seed` in `events/pilot.py` takes the content hash), though no
+      fact changed. That falls short of EV11's aim that a re-fetch never re-versions
+      a manifest; `docs/verification/djia-events.md` records it under Limitations.
+      Stage 4 closed the same gap with an operative hash (`cohort/identity.py`) that
+      leaves overrides out. Options: hash only an override's decision fields (its
+      kind, targets, and reason, not its citations), or give the event manifest an
+      operative identity for the pilot's seed to key on. Either changes events v1's
+      content hash or its pilot's seed, so it lands only with a new events version,
+      and the committed v1 must stay loadable. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: design. Done
+      when: the decision is recorded, and a test shows that re-citing an override's
+      page from other bytes leaves the chosen identity and the pilot's seed
+      unchanged.
+- [ ] Decide which frozen version is current after a revert (PR #6's review,
+      F4): `freeze_events` in `events/freeze.py` returns an older version when the
+      build's content matches it, but `select_command` in
+      `apps/earnings-pipeline/src/earnings_pipeline/events_cli.py` always reads the
+      highest-numbered event manifest, and prints neither the version nor the hash
+      it read. So after a change is frozen as v2 and then reverted, `events
+      freeze` says "unchanged: v1" while `events select` draws a new pilot from
+      the withdrawn v2. The code follows the spec's §Commands ("the latest frozen
+      event manifest") and P7-18, so this is a gap in the versioning model, shared
+      by every consumer that takes the latest version, plan B's pilot pick among
+      them. The pilot records the event manifest version and hash it read, so the
+      chain can be audited. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/` unless given in full.
+      Size: design. Done when: the rule for the current version after a revert,
+      for event manifests, universes, and pilots, is recorded as an amendment to
+      the spec's §Commands and P7-18; `events select`, and plan B's pilot pick,
+      read the version the current build matches or refuse when a newer one
+      exists, and print the version and hash they read; and a test freezes v1,
+      freezes a changed v2, reverts, and runs select.
+- [ ] Refuse a frozen version that repeats another's content or lacks its
+      evidence (PR #6's review, F22): `event_manifest_version` is not hashed, so a
+      hand-renumbered copy of `events-v1.json` loads beside v1 with the same
+      content hash, and `frozen_event_manifests` in `events/freeze.py` loads a
+      manifest whose `events-v<N>.evidence.json` is missing. In that state `events
+      freeze` names v1 while `events select` binds a new pilot to the copy, which
+      has no evidence record. No code path writes either state, since the freeze
+      writes the evidence first and matches on content. Stage 4's
+      `frozen_manifests` in `cohort/freeze.py` has the same shape (P6-14). Check
+      the evidence file in `frozen_event_manifests`, not in
+      `load_event_manifest`, which the pilot's chain check and a tamper test use.
+      Paths are under `packages/earnings-ingestion/src/earnings_ingestion/`.
+      Size: quick-fix. Done when: `frozen_event_manifests` refuses a manifest
+      whose evidence file is missing; it and `frozen_pilots` in `events/pilot.py`
+      refuse two versions that share a content hash, each with a test; and
+      Stage 4's `frozen_manifests` does the same, or the reason it does not is
+      recorded.
+- [ ] Bind each evidence citation to its artifact's retrievals (PR #6's review,
+      F21; the rest of plan 7's "Bind an evidence record to its manifest when
+      loading", which PR #6 closed): `check_evidence` in `events/evidence.py`
+      verifies each citation's bytes and locator only, so a record passes with a
+      citation or `files[]` URL re-pointed to another URL, a `source_id` other
+      than `sec-edgar`, or a `retrieved_at` that matches no retrieval. PR #6 made
+      loading bind the record to its manifest's rows. Records are built from the
+      store and only tests read them, so this hardens the audit trail.
+      `cohort/build.py` and `_citations_refused` in `events/build.py` already
+      check a citation's URL against its artifact's retrievals. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: quick-fix.
+      Done when: `check_evidence` refuses a citation or `files[]` URL that is
+      not among its artifact's retrievals' request URLs, a `source_id` other than
+      `sec-edgar`, and a `retrieved_at` that matches no retrieval, and each row's
+      release citation is its release's index page, unless loading already
+      checks it; each with a test, while the real and synthetic v1 records still
+      pass.
+- [ ] Decide whether loading a pilot re-derives its selection (PR #6's review,
+      F10): `check_chain` in `events/pilot.py` rechecks the hashes, the seed, and
+      eligibility, as the spec's §Pilot selection and plan 7's Task 14 list, but
+      not that `djia-pilot/1` produces the rows. So a hand-edited pilot with its
+      content hash recomputed loads: one with a row swapped for another eligible
+      event, or one naming another policy, another `pilot_id`, or `underfilled`
+      at target 40. Plan B's gate is that the pilot loads and its chain checks.
+      Re-deriving at load time makes a frozen pilot's loading depend on the
+      current selection code, so plan B should choose it deliberately. Do not
+      compare `universe_version`: a universe re-versioned with the same operative
+      hash differs there legitimately. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: design. Done
+      when: plan B records the choice, and, if it re-derives, `load_pilot`
+      compares the selection policy version and requires that `select_pilot`
+      over its event manifest and universe reproduce its content hash, with
+      tamper tests (a swapped row, the policy, the `pilot_id`, and
+      `underfilled`), each rehashed and refused, while the real and synthetic v1
+      pilots still load.
+- [ ] Bind older submissions pages to their dates, and pad the page skip (PR #6's
+      review, F11 and F24): `read_older_page` in `sec/data.py` binds a page to
+      its entry by `filingCount` alone (PR #6's third Codex round), and
+      `issuer_filings` in `events/filings.py` skips a page whose `filingTo` is
+      before the window's start or whose `filingFrom` is after the cutoff, as the
+      Stage 5 spec's §Store, client, and readers "Older pages" bullet says.
+      - SEC can re-cut page boundaries between runs, and discovery never
+        re-fetches a saved main file, so a resumed run can pair a main file of one
+        day with pages of another, and a re-cut page with the same count passes.
+        A filing then listed in two files would become two candidates, which PR
+        #6 now reports as a problem, but a filing that drifts into a skipped page
+        drops out with no problem raised, and only a `period_gap` guard can catch
+        it. Every observed outcome fails loudly or holds the freeze, and the 19
+        pages behind v1 have distinct counts, so a re-cut would almost surely
+        change one.
+      - `filingFrom` and `filingTo` are filing dates, not acceptance dates. A
+        filing accepted after 17:30 takes the next business day's filing date, so
+        a page can hold filings accepted one to three days before its
+        `filingFrom` (15 of the 19 pages behind v1 do), and a page skipped for
+        starting the day after the cutoff can hide a filing accepted on the
+        cutoff's evening. On all 19 pages, `filingTo` is the next-newer page's
+        `filingFrom` less two days, a day off the page's last filing date either
+        way, while the `SkippedPage.filing_to` row of `docs/data-dictionary.md`
+        calls it the page's last. This is reachable only by discovery from a
+        fresh store about a year after 2026-09-22, or under a cutoff deep in the
+        older pages.
+      Do not require the latest date within a day of `filingTo`: a long weekend
+      breaks that. Recovering from a caught re-cut needs a fresh store (see the
+      store-recovery item below). Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: plan. Done
+      when: each page's dates must stay below the next-newer page's
+      `filingFrom`, or the recent block's earliest date, and optionally its
+      earliest date must equal its `filingFrom`, so that a page with the right
+      count but shifted dates is refused; the spec's bullet is amended to read a
+      page unless its `filingTo` is before the start less a few days or its
+      `filingFrom` is after the cutoff plus about seven days, and a synthetic
+      older page whose only filing was accepted on the cutoff at 18:00 ET, with
+      `filingFrom` the next business day, is read and its filing stays visible;
+      the dictionary's `filing_to` row is corrected; and events v1 still rebuilds
+      unchanged.
+- [ ] Cross-check an index page against its submissions row beyond the
+      accession (PR #6's review, F12): the build and discovery take a filing's
+      form and primary document from its submissions row, and the index page's
+      form and document table, which `sec/filing_index.py` reads, are compared
+      with the row on the accession alone. If SEC's two records disagreed, a
+      page for an 8-K/A listed as an 8-K could become a candidate the rule
+      chooses, and a row whose `primaryDocument` names the EX-99 file, or is
+      empty, would have discovery (`events/discover.py`) fetch an exhibit before
+      the freeze, against EV2, and read as an unread candidate that can freeze as
+      the release. None of v1's 269 candidates disagrees. Slots take the row's
+      report date by design (P7-9), and an unread candidate staying is the spec's
+      rule. Plan B reads each index page's document table for the EX-99 exhibits
+      anyway. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: plan. Done
+      when: the index page's form must equal the row's, and the row's primary
+      document, compared by its base name, must be listed in the index typed as
+      the form, each a problem otherwise, checked in the build and in discovery
+      before it fetches, with synthetic cases for both disagreements.
+- [ ] Refuse a redirected response (PR #6's review, F13): the shared client
+      (`fetch/client.py`) follows redirects within SEC's hosts and records
+      `final_url`, but nothing reads it. `SavedResponses` in `events/saved.py`,
+      like Stage 4's `ArtifactStore.latest` in `fetch/store.py`, serves each
+      retrieval under its `request_url`, and `_citations_refused` in
+      `events/build.py` accepts a citation grounded in a redirected record. So a
+      primary document that redirects to another page is read as the
+      candidate's 8-K and cited under the URL requested. None of the 661 records
+      saved behind v1 was redirected; plan B's exhibits, which become canonical
+      text and quotes, raise the stakes. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: quick-fix.
+      Done when: a fetch whose `final_url` differs from its `request_url` is
+      refused before it is saved, and `SavedResponses.get` and
+      `_citations_refused` refuse one already saved, by raising, never by
+      skipping it, which would make discovery refetch it on every run, each with
+      a synthetic redirected record; before plan B's first acquisition.
+- [ ] Read a primary document with no Item line as unread (PR #6's review, found
+      with F13): `read_text` in `events/release.py` pairs each Item heading with the
+      one after it through `zip(..., strict=True)`, which raises `ValueError` when
+      the text has no line that begins "Item" and a number at all, so it never
+      returns its `Reading(unread=...)`. Text with some other Item line but no Item
+      2.02 reads as unread, as it should. The module docstring promises that a
+      document with no such heading states nothing. `read_document` does not catch
+      the error, and `identify` wraps only `saved.get`, so it escapes `build_events`
+      in `events/build.py`, which `events build` and `events freeze` print as a
+      traceback, and the documents phase of `discover` in `events/discover.py`,
+      where `discover_command` in
+      `apps/earnings-pipeline/src/earnings_pipeline/events_cli.py` catches it as a
+      `ValueError` and says a rerun fetches only what is missing, and every rerun
+      meets the same stop. A primary document that redirects to a page with no Item
+      line (F13), or one whose Item headings `walker-1` does not start a line with,
+      can reach it through plan A's commands today. v1 does not: the build over the
+      saved responses behind v1 reads each of its candidates without raising. Paths
+      are under `packages/earnings-ingestion/src/earnings_ingestion/` unless given
+      in full. Size: quick-fix. Done when: `read_text` returns `Reading(unread=...)`
+      for text with no Item line, with a unit test in
+      `packages/earnings-ingestion/tests/test_events_release.py`, and `events build`
+      over a synthetic candidate whose primary document has no Item line ends
+      without a traceback.
+- [ ] Cite the index page that places a periodic report (PR #6's review, P5.4):
+      after P7-8's `--filing` remedy, `_visible` in `events/filings.py` places a
+      periodic report by its saved index page, but `_event` in
+      `events/evidence.py` cites only its submissions row, whose
+      `acceptanceDateTime` was the ambiguous value, and `EventCitations` has no
+      field for the page. So the page's URL, hash, and retrieval time appear
+      nowhere in the evidence record. The spec's list of citations is met to the
+      letter, and v1 never took this path. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: quick-fix.
+      Done when: `EventCitations` gains `periodic_accepted: Citation | None =
+      None`, whose default keeps the committed v1 evidence loading, filled with
+      the page at its Accepted value when the page placed the report and among
+      the citations `check_evidence` verifies; `docs/data-dictionary.md`
+      documents it; the synthetic evidence fixture is regenerated for its new
+      null field; and a synthetic build whose report is placed by a saved index
+      page cites that page.
+- [ ] Refuse two findings that share one `finding_id` (PR #6's review, P4.3):
+      each copy of a filing row that follows no convention, or has no value,
+      emits its own `acceptance_time_mismatch` or `acceptance_time_unknown`
+      finding under one ID, and `EventManifest` refuses the repeated ID with a
+      pydantic `ValidationError`, which `events build` prints as a traceback,
+      because it reads the content hash before its exit on a held freeze.
+      `events freeze` refuses cleanly first, so nothing corrupt can freeze. PR #6
+      refused an accession listed twice in one issuer's files, but a finding's ID
+      names no issuer, so an accession listed under two cohort issuers can still
+      collide. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: quick-fix.
+      Done when: `build_events` in `events/build.py` counts finding IDs before it
+      resolves them and reports each repeat as an `EventBuildError` problem, and
+      `events build` over a store with a repeated mismatch row exits 1 with a
+      `problem:` line and no traceback, with tests.
+- [ ] Recover a saved response that is present but unusable (PR #6's review, P2.1
+      and P2.2): discovery (`events/discover.py`) fetches only URLs with no
+      retrieval record, and `issuer_filings` in `events/filings.py` reports a
+      file whose bytes are gone or changed, or that a reader refuses, as a
+      problem, never as missing. So `events discover` fetches nothing for it,
+      `--filing` cannot refetch a saved index page, `discover_filing`'s hint to
+      run `events discover` cannot help, and the build stops on the file for
+      good; the only way out is deleting store files by hand, which the
+      append-only store forbids. Worse, `write_new` in `fetch/store.py` treats an
+      artifact whose bytes no longer hash to its name as a conflict, so once an
+      artifact is truncated and its record lost, every refetch spends a request
+      and ends in an uncaught `FileExistsError`. With no fsync before the link,
+      an OS crash or power loss can leave that state, though killing the process
+      cannot. It fails closed, and the trigger is local damage or a wrong-shape
+      response that is not a block page. Meanwhile, document the manual repair in
+      `docs/verification/djia-events.md`. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: plan. Done
+      when: `issuer_filings` and identification tell an unusable response from a
+      missing one; an explicit opt-in refetch states its count first and can
+      refetch a submissions file with its older pages; the store quarantines
+      bytes that no longer hash to their name by renaming them, never deleting or
+      replacing a valid file, `cohort/acquire.py` included, and syncs before the
+      link; each problem line names a remedy that works; and a test truncates a
+      fixture index page, runs the opt-in refetch over a fake fetch, sees exactly
+      that URL fetched, and rebuilds the synthetic events v1 content hash.
+- [ ] Read companyfacts in discovery through the problem-collecting reader (PR
+      #6's review, P2.3): in the documents phase of `discover` in
+      `events/discover.py`, the saved read of each issuer's companyfacts and
+      `read_companyfacts` run outside the reader that collects problems, so one
+      gone, changed, or wrong-shape companyfacts file ends the phase, for every
+      issuer, before any primary document is fetched. A `SecDataError` stops with
+      a message naming no URL and a rerun hint no rerun can satisfy, and a
+      missing body raises `FileNotFoundError`, a traceback that also loses the
+      requests-sent line (see the request-count item below). Discovery also skips
+      the build's companyfacts CIK check. The read-back that PR #6's F18 fix
+      added, `_unreadable` in the same file, repeats that unguarded read, so
+      guard both. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: quick-fix.
+      Done when: discovery reads companyfacts through a shared version of the
+      build's tolerant read with its CIK check (`_companyfacts` in
+      `events/build.py`), records the problem with the discovery problems PR #6
+      added, skips that issuer, and reports it after the documents phase; with
+      one synthetic issuer's companyfacts truncated, discovery still fetches
+      another issuer's missing primary document and names the companyfacts URL;
+      and a vanished companyfacts artifact ends as a handled stop with the count
+      printed.
+- [ ] Print the request count on every stop, and take an approved count in every
+      live cohort command (PR #6's review, F31 and F35); paths are under
+      `apps/earnings-pipeline/src/earnings_pipeline/`:
+      - `discover_command` in `events_cli.py` reads the count in a `finally` but
+        prints it only when it catches `AccessStop`, `UnexpectedResponse`,
+        `ValueError`, or `RuntimeError`, so an `OSError` from
+        `ArtifactStore.put` (a full disk, permissions), a `FileNotFoundError` for
+        a saved body that is gone, and a Ctrl-C end with a traceback and no
+        count, though each live gate records the count. `cohort_cli.py`'s
+        handlers share the pattern.
+      - `cohort fetch-sec` prints no count when a 403, a block page, or an
+        unexpected response stops it, and `cohort verify-live` never prints one,
+        though plan 6's gate table records the requests sent. Both run under the
+        client's default cap of 500 (P6-16), where `events discover` takes the
+        count the user approved (P7-10); committed config fixes fetch-sec's
+        volume, 44 requests in v1's run.
+      Fix: add `OSError` to the stop tuple, and a separate `except
+      KeyboardInterrupt` that prints the count and re-raises (a bare outer
+      `finally` would print it twice), in both CLIs; give `fetch-sec` and
+      `verify-live` a required `--max-requests` (`terms` sends one request and
+      can keep the default), print their requests sent on every exit, and add
+      the count to the `verify-live` record. Size: quick-fix. Done when: with a
+      monkeypatched fake client, never `open_sec_client`, a `put` raising
+      `OSError` and a deleted companyfacts body each end `events discover` with
+      "Stopped:" and "requests sent: N"; and `fetch-sec` without the flag exits 1
+      before it opens the client, and a stop prints its count; with tests, before
+      the next live cohort run or plan B's first live request.
+- [ ] Check the CLIs' store and corpus paths before anything runs (PR #6's
+      review, F19 and F38): `events_cli.py` and `cohort_cli.py`, under
+      `apps/earnings-pipeline/src/earnings_pipeline/`, resolve only `--repo`.
+      - `--store` accepts any repo-relative directory, and `tests/fixtures/**` is
+        un-ignored, so `events --store tests/fixtures/... discover` would save
+        real SEC responses where `git add -A` publishes them to this public
+        repository, and a later freeze would cite them as `local_only` bytes kept
+        under `data/raw/`. That takes a non-default flag and a commit, and the
+        flag is documented design (P7-18), as Stage 4's is.
+      - With an absolute `--corpus-dir` outside the repo, or a path inside it
+        spelled through a symlinked prefix (`/var` for `/private/var`), `events
+        freeze` and `events select` write their frozen files and then crash on
+        `relative_to` while printing them, and a rerun prints "unchanged:" and
+        crashes again. `cohort_cli.py` has had the same code since Stage 4.
+      Fix: in every command that writes fetched bytes (`events discover`, plan
+      B's `events acquire`, `cohort fetch`, and `cohort fetch-sec`), refuse a
+      store root that does not resolve under `<repo>/data/raw`, in the callback,
+      before any client opens, leaving build, freeze, and select unguarded;
+      resolve paths only for such checks, never the stored root, which would
+      break a symlinked `data/`; and print paths relative to the repo when
+      possible and absolute otherwise. `test_discover_filing_spends_at_most_two_requests`
+      then needs `store=data/raw/events`. Size: quick-fix. Done when: `events
+      --store tests/fixtures/x discover --max-requests 1`, with `open_sec_client`
+      patched to fail, exits 1 with "Refused" and never opens the client, and so
+      do the cohort's fetching commands; and `events freeze` and `events select`
+      with an absolute corpus directory outside the repo exit 0 and print its
+      absolute path; each with a test, before plan B's first acquisition.
+- [ ] Refuse a relative `EARNINGS_LOCK_DIR` (PR #6's review, F29):
+      `machine_lock_dir` in `fetch/client.py` returns the override as given, so a
+      relative value resolves against each process's working directory, and two
+      checkouts would take two SEC locks and could together send 4 requests per
+      second, against the project's 2 per machine (R1.3). Three lines later the
+      same function ignores a relative `XDG_CACHE_HOME`. The variable is a test
+      override (P7-5), which only the test fixtures set, to an absolute
+      directory, so only a hand-made export triggers this. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: quick-fix.
+      Done when: a relative value makes `machine_lock_dir` raise `AccessStop`
+      naming the variable, or is ignored as the XDG rule does, with a test using
+      `monkeypatch.setenv(LOCK_DIR_VARIABLE, ".locks")`, before plan B's first
+      live SEC request.
+- [ ] Commit the check that the real frozen records hold no source wording (PR
+      #6's review, F20): the committed P6-3 test in
+      `tests/integration/test_event_fixtures.py` scans only the synthetic
+      corpus's pages. The real v1 records were checked at plan 7's gates with a
+      scratch script whose source is in plan 7, and plan 7's handoff points plan
+      B at it. Plan B's exhibit acquisition is where a reviewer is likeliest to
+      copy wording, into an override's rationale for instance, and the default
+      suite reads only `tests/fixtures/events/`. A 30-character window would flag
+      a generic date phrase in v1's `overrides.toml`, so compare whole strings, or
+      long shingles that allow for facts. Size: quick-fix. Done when: an offline
+      test, skipped when `data/raw/events/sec-edgar/` is absent, compares
+      `config/corpus/*/events-v*.json`, `*.evidence.json`, `pilot-v*.json`, and
+      `overrides.toml` with the saved HTML, text, and exhibit pages; a temporary
+      corpus whose rationale copies 40 characters of a synthetic saved page fails
+      it while the real v1 records pass; and each freeze's gate runs it, since a
+      test that skips without the store does not protect CI.
+- [ ] Refuse a fund filing listed twice in the cohort build (PR #6's review,
+      P4.1): `_fund_filings` in `cohort/build.py` joins the fund's recent block
+      and its saved older pages without checking for a repeated accession, so
+      `current_filings` in `cohort/corroboration.py` emits a non-blocking finding
+      that names the filing as its own replacement, or, for a late filing,
+      repeated withheld findings and reconciliations under one ID. The cohort then
+      freezes a new content version carrying a false statement, though its
+      operative hash does not move. This Stage 4 code predates PR #6, and DIA's
+      saved file has no older pages and no repeats. PR #6 refused the same repeat
+      among an issuer's files in the event build. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: quick-fix.
+      Done when: a synthetic fund whose recent block and older page share one
+      N-PORT makes the cohort build raise `CohortError` naming that accession and
+      each copy's pointer, never deduplicating it, with a test.
+- [ ] Decide whether two issuers' events may share one release (PR #6's review
+      of its F1 fix): `shared_releases` in `events/build.py` refuses a
+      `release_accession` that two rows share anywhere in the corpus, as the
+      Stage 5 spec says ("No two events share a release"). A co-registrant 8-K
+      that `release-id/1` identifies as two cohort issuers' release would then
+      stop the build with a problem that no override can settle, since each
+      issuer's own files list it. No two v1 issuers are co-registrants, so v1 is
+      unaffected. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: quick-fix,
+      after the user's decision. Done when: the user chooses per-issuer or
+      corpus-wide, the spec says which, and a synthetic co-registrant 8-K shows
+      the chosen behavior in a test.
+- [ ] Cite each candidate's qualifying fields and primary document (PR #6's Codex
+      round 5, comment 4117725089): the Stage 5 spec's evidence list (§The event
+      manifest), which `_event` in `events/evidence.py` follows, cites a candidate
+      only by its index page at its Accepted value, and the Item 2.02 text of the
+      release alone; P7-15 keeps readings out of the record. AGENTS.md asks each
+      assertion for a checksum and a field-level locator, and keeps conflicting
+      observations. So no locator cites what qualified a candidate (Item 2.02 in
+      its submissions row, an `EX-99*` row on its index page), no hash pins a
+      non-release candidate's primary document or the text that dropped it, and a
+      filing passed over for want of an `EX-99*` exhibit is in no record. In v1
+      that is six candidates and two filings, which the Limitations of
+      `docs/verification/djia-events.md` name; no v1 row is wrong, and v1's
+      evidence record is never replaced. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: plan. It lands
+      before the next events version is frozen (see the `release-id/2` item),
+      together with the item on the Item 2.02 text of a release an override names
+      outside the candidates, which touches the same code. Done when: the spec's
+      evidence list is amended; `EventCitations` gains an optional per-candidate
+      field, absent when not recorded so that v1 still loads, whose entries cite
+      each candidate's submissions row at `form`, `items`, and `primaryDocument`,
+      its index page's Item 2.02 line and each `EX-99*` row, its primary document
+      by hash with its Item 2.02 spans (with no locator when the rule could not
+      read it), and `release-id/1`'s outcome for it; a passed-over list cites each
+      such filing's index page and reason; `check_evidence` and
+      `load_event_evidence` cover the new fields, binding them to each row's
+      `candidate_accessions`; the data dictionary and its drift test follow; and
+      the synthetic evidence fixture regenerates, with tests for a dropped
+      co-candidate, an unread candidate, and a passed-over filing. Recording each
+      candidate's reading as a fact would reverse P7-15, so that is the user's
+      open choice; if adopted, the readings are marked as inferred.

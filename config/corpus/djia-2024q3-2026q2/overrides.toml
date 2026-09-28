@@ -1,0 +1,267 @@
+# Reviewed decisions for the real event corpus (plan 7; the Stage 5 spec, §Review
+# overrides). Each records its rationale, reviewer, and date; the reviewer is the user.
+schema_version = 1
+
+[[overrides]]
+override_id = "release-cat-2024-09-30"
+kind = "set_release_filing"
+event_id = "cik-0000018230:2024-09-30"
+accession = "0000018230-24-000050"
+rationale = "This is the press release for the quarter ended September 30, 2024."
+reviewer = "Lowell Mason"
+recorded_on = 2026-09-27
+
+[[overrides.citations]]
+source_id = "sec-edgar"
+url = "https://www.sec.gov/Archives/edgar/data/18230/000001823024000050/0000018230-24-000050-index.htm"
+artifact_sha256 = "0fbc49b8a8fbbe01da310d89720bc23fabb9e5df9489195de29c15bb02c709a3"
+
+[overrides.citations.locator]
+kind = "text_span"
+canonicalization_version = "walker-1"
+canonical_sha256 = "0dfd47e8901ee7b44be905d82194bd6c2aa3774fcc474dda3979d318b2baabee"
+start = 203
+end = 222
+cited_sha256 = "7aa2d20c79aa7b1f5db8dae74d64fd38e2b5c945dcd480920ffe1e2022b561fe"
+
+[[overrides]]
+override_id = "release-hon-2026-03-31"
+kind = "set_release_filing"
+event_id = "cik-0000773840:2026-03-31"
+accession = "0000773840-26-000055"
+rationale = "This is the release filed before the spin-off."
+reviewer = "Lowell Mason"
+recorded_on = 2026-09-27
+
+[[overrides.citations]]
+source_id = "sec-edgar"
+url = "https://www.sec.gov/Archives/edgar/data/773840/000077384026000055/0000773840-26-000055-index.htm"
+artifact_sha256 = "ce76cfc825f2cb5d95e65bc97d9e317168ff102da2b4fa41c7450546e6685698"
+
+[overrides.citations.locator]
+kind = "text_span"
+canonicalization_version = "walker-1"
+canonical_sha256 = "9b0b655a50ac2bdc787f6749d9251e40fc698de74bd9e286f247a74d14bdfc55"
+start = 203
+end = 222
+cited_sha256 = "78edd4d50ac2afdbcb24cf1f3ddd8f474a8a2048fa734887d7d11ae82f69d1ed"
+
+[[overrides]]
+override_id = "release-jpm-2024-09-30"
+kind = "set_release_filing"
+event_id = "cik-0000019617:2024-09-30"
+accession = "0000019617-24-000555"
+rationale = "These are the correct releases; fixed bad prose that would not select them."
+reviewer = "Lowell Mason"
+recorded_on = 2026-09-27
+
+[[overrides.citations]]
+source_id = "sec-edgar"
+url = "https://www.sec.gov/Archives/edgar/data/19617/000001961724000555/0000019617-24-000555-index.htm"
+artifact_sha256 = "654acf57c1482ffd4c21aefcf3ae2e71ba8d9fb1169300c4795cdbd16659cfa2"
+
+[overrides.citations.locator]
+kind = "text_span"
+canonicalization_version = "walker-1"
+canonical_sha256 = "f5d9d7dec98631ed152cef43a5c0dd99f57c91192fc63157067437cdc0bba16f"
+start = 203
+end = 222
+cited_sha256 = "c849f8c5748119108fbb8bee9188b60995716ae8e20f6fe41c4be11a3d167951"
+
+[[overrides]]
+override_id = "release-jpm-2024-12-31"
+kind = "set_release_filing"
+event_id = "cik-0000019617:2024-12-31"
+accession = "0000019617-25-000040"
+rationale = "These are the correct releases; fixed bad prose that would not select them."
+reviewer = "Lowell Mason"
+recorded_on = 2026-09-27
+
+[[overrides.citations]]
+source_id = "sec-edgar"
+url = "https://www.sec.gov/Archives/edgar/data/19617/000001961725000040/0000019617-25-000040-index.htm"
+artifact_sha256 = "161f1405b75337c899c55d1c8a3c7cd69115971be7d56ca26690b1ec60b2e5bc"
+
+[overrides.citations.locator]
+kind = "text_span"
+canonicalization_version = "walker-1"
+canonical_sha256 = "62195cf8a264be7dc9efbb2a59b711df0fd0c0195d9d3863e0c0d941f9d7b7f2"
+start = 203
+end = 222
+cited_sha256 = "164091845eb848ed810773566c9a458dad4d73d3df6870bf1febaadb0f94f3dc"
+
+[[overrides]]
+override_id = "release-jpm-2025-03-31"
+kind = "set_release_filing"
+event_id = "cik-0000019617:2025-03-31"
+accession = "0000019617-25-000332"
+rationale = "These are the correct releases; fixed bad prose that would not select them."
+reviewer = "Lowell Mason"
+recorded_on = 2026-09-27
+
+[[overrides.citations]]
+source_id = "sec-edgar"
+url = "https://www.sec.gov/Archives/edgar/data/19617/000001961725000332/0000019617-25-000332-index.htm"
+artifact_sha256 = "cf13da81cd8c0f72c55ae8b1bbb6d8675fbd3555df868a6aa6df4f4f9a197ded"
+
+[overrides.citations.locator]
+kind = "text_span"
+canonicalization_version = "walker-1"
+canonical_sha256 = "b157481573e97fac1382fcd3c7439041bfb2aeb2769e1776942b8569a12b429f"
+start = 203
+end = 222
+cited_sha256 = "8e06dc55c95c1c5833a665a3a2634633cc24951d3fe03b997470f37d382f8f4d"
+
+[[overrides]]
+override_id = "release-jpm-2025-06-30"
+kind = "set_release_filing"
+event_id = "cik-0000019617:2025-06-30"
+accession = "0000019617-25-000518"
+rationale = "These are the correct releases; fixed bad prose that would not select them."
+reviewer = "Lowell Mason"
+recorded_on = 2026-09-27
+
+[[overrides.citations]]
+source_id = "sec-edgar"
+url = "https://www.sec.gov/Archives/edgar/data/19617/000001961725000518/0000019617-25-000518-index.htm"
+artifact_sha256 = "b2e7395545f5d6db3fa1b0e05311949dabff17b9d015625d2b892712c896cfa9"
+
+[overrides.citations.locator]
+kind = "text_span"
+canonicalization_version = "walker-1"
+canonical_sha256 = "54724e43767ebe80d3397250360850dcbcf6802cb68637481a3a206952d792da"
+start = 203
+end = 222
+cited_sha256 = "612df11781e861c4b2acb55d5955e5a088c9faa3029fb4c037a418820d14bc83"
+
+[[overrides]]
+override_id = "release-jpm-2025-09-30"
+kind = "set_release_filing"
+event_id = "cik-0000019617:2025-09-30"
+accession = "0001628280-25-044845"
+rationale = "These are the correct releases; fixed bad prose that would not select them."
+reviewer = "Lowell Mason"
+recorded_on = 2026-09-27
+
+[[overrides.citations]]
+source_id = "sec-edgar"
+url = "https://www.sec.gov/Archives/edgar/data/19617/000162828025044845/0001628280-25-044845-index.htm"
+artifact_sha256 = "4717a14acaec6f20389f9e9fd88b9856c305eb1cbac00714d130d4e6c4d182af"
+
+[overrides.citations.locator]
+kind = "text_span"
+canonicalization_version = "walker-1"
+canonical_sha256 = "250576fc89369aa261339ff50b0acde1e965d8ea25b6168de01351af4cd1d982"
+start = 203
+end = 222
+cited_sha256 = "93eff5e6f5028756b52625df48c6a1abcf0dd5c14a272433490a0f39935d600d"
+
+[[overrides]]
+override_id = "release-jpm-2025-12-31"
+kind = "set_release_filing"
+event_id = "cik-0000019617:2025-12-31"
+accession = "0001628280-26-001902"
+rationale = "These are the correct releases; fixed bad prose that would not select them."
+reviewer = "Lowell Mason"
+recorded_on = 2026-09-27
+
+[[overrides.citations]]
+source_id = "sec-edgar"
+url = "https://www.sec.gov/Archives/edgar/data/19617/000162828026001902/0001628280-26-001902-index.htm"
+artifact_sha256 = "69f63c49e555e5179c4369de8a6263e9321949fd525d5818ff742c6ea87c5f8c"
+
+[overrides.citations.locator]
+kind = "text_span"
+canonicalization_version = "walker-1"
+canonical_sha256 = "af639847be55392a2b6dcbf770952effbf6174f945163a17bbe792b54cfc6996"
+start = 203
+end = 222
+cited_sha256 = "d01bfa64d50097459f20562720d0904ba6d1de2daae52840f564d501b2caaf8a"
+
+[[overrides]]
+override_id = "release-jpm-2026-03-31"
+kind = "set_release_filing"
+event_id = "cik-0000019617:2026-03-31"
+accession = "0001628280-26-024990"
+rationale = "These are the correct releases; fixed bad prose that would not select them."
+reviewer = "Lowell Mason"
+recorded_on = 2026-09-27
+
+[[overrides.citations]]
+source_id = "sec-edgar"
+url = "https://www.sec.gov/Archives/edgar/data/19617/000162828026024990/0001628280-26-024990-index.htm"
+artifact_sha256 = "96af8ffadf0535950d6ab3aa0569124ee1d1beb4c5f664dc4ef7f0652f22828c"
+
+[overrides.citations.locator]
+kind = "text_span"
+canonicalization_version = "walker-1"
+canonical_sha256 = "16d71d442cde7e738a74af19025fdf95a78409c32381dad2b1403430bfef9659"
+start = 203
+end = 222
+cited_sha256 = "311d0d6f8e10d4e8730fd37fd6f0c71c9e80c132827854bc80c6aacf9f457f82"
+
+[[overrides]]
+override_id = "release-jpm-2026-06-30"
+kind = "set_release_filing"
+event_id = "cik-0000019617:2026-06-30"
+accession = "0001628280-26-048078"
+rationale = "These are the correct releases; fixed bad prose that would not select them."
+reviewer = "Lowell Mason"
+recorded_on = 2026-09-27
+
+[[overrides.citations]]
+source_id = "sec-edgar"
+url = "https://www.sec.gov/Archives/edgar/data/19617/000162828026048078/0001628280-26-048078-index.htm"
+artifact_sha256 = "ab08d03151657aa41d13a1474958543fe7c2ce6222ce228574b7322958464c53"
+
+[overrides.citations.locator]
+kind = "text_span"
+canonicalization_version = "walker-1"
+canonical_sha256 = "c810bb57e1ee272439fa64cd28bc17414ab9628addb408c6ff8c3c875c6d3d09"
+start = 203
+end = 222
+cited_sha256 = "96303fa476aab06fa22197332532b0dcbe3efe798aa38b99bdbb7d4d0fd0549a"
+
+[[overrides]]
+override_id = "release-mmm-2024-09-30"
+kind = "set_release_filing"
+event_id = "cik-0000066740:2024-09-30"
+accession = "0000066740-24-000098"
+rationale = "Correct release even though year wasn't given."
+reviewer = "Lowell Mason"
+recorded_on = 2026-09-27
+
+[[overrides.citations]]
+source_id = "sec-edgar"
+url = "https://www.sec.gov/Archives/edgar/data/66740/000006674024000098/0000066740-24-000098-index.htm"
+artifact_sha256 = "679b28d8b340d1d40e6c829a7b7290a0d052ca94ce7f215023fad0e4a81bf74e"
+
+[overrides.citations.locator]
+kind = "text_span"
+canonicalization_version = "walker-1"
+canonical_sha256 = "575e1168898709e9be198487819179ab4fa40feb92efbb8408349e6e0d39e175"
+start = 203
+end = 222
+cited_sha256 = "e8d1e6e93fad75e3f9ec1643d5d7e02abd147e70c228d14461ab03b8fb4667e2"
+
+[[overrides]]
+override_id = "release-vz-2024-12-31"
+kind = "set_release_filing"
+event_id = "cik-0000732712:2024-12-31"
+accession = "0000732712-25-000003"
+rationale = "Only candidate."
+reviewer = "Lowell Mason"
+recorded_on = 2026-09-27
+
+[[overrides.citations]]
+source_id = "sec-edgar"
+url = "https://www.sec.gov/Archives/edgar/data/732712/000073271225000003/0000732712-25-000003-index.htm"
+artifact_sha256 = "af16c59b8c009c3fbf0fd95200559a590186ac6eefb28d73fc01dd561dc29239"
+
+[overrides.citations.locator]
+kind = "text_span"
+canonicalization_version = "walker-1"
+canonical_sha256 = "9562aa201d427be641ea91b377e6887af4eef29acae990f899731124936ecadc"
+start = 203
+end = 222
+cited_sha256 = "b5b7ab63b424cf6f601ded88bbf9f6335fff09d47c7ae9418b50a739dde161bb"

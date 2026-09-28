@@ -1,8 +1,9 @@
 """The shared SEC client (R1.3, D5): every SEC request in the monorepo goes through it.
 
 - **One per machine.** ``open_sec_client`` holds the SEC lock while the client is open,
-  so a second client stops instead of opening, in this process or another. Share the
-  one instance across workers: its throttle is thread-safe.
+  so a second client stops instead of opening, in this process or another, from this
+  checkout or any other. Share the one instance across workers: its throttle is
+  thread-safe.
 - **2 requests per second.** Request starts are spaced 0.5 s apart across every SEC
   host, redirect hops included (A §397), within a per-run budget.
 - **Identity.** The User-Agent is the descriptive identity in ``EDGAR_IDENTITY``,
@@ -11,8 +12,10 @@
   changing identity (A §404).
 
 Two limits remain, because A §398 asks for coordination across the outbound network.
-The lock coordinates the processes of one machine only. Stage 1's frozen harness keeps
-its own client and lock, so it must never run live at the same time.
+The lock lives in ``machine_lock_dir()``, outside every checkout, so it coordinates the
+processes of one machine, every worktree and clone included, and no more. Stage 1's
+frozen harness keeps its own client and lock, so it must never run live at the same
+time.
 """
 
 import random
@@ -20,7 +23,6 @@ import time
 from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from datetime import UTC, datetime
-from pathlib import Path
 
 import httpx
 
@@ -29,6 +31,7 @@ from earnings_ingestion.fetch.client import (
     PoliteClient,
     ProcessLock,
     Throttle,
+    machine_lock_dir,
     require_identity,
 )
 from earnings_ingestion.sec.urls import SEC_HOSTS
@@ -36,8 +39,8 @@ from earnings_ingestion.sec.urls import SEC_HOSTS
 IDENTITY_ENV = "EDGAR_IDENTITY"
 MIN_INTERVAL_SECONDS = 0.5  # the project default of 2 requests per second (A §397)
 BLOCK_MARKERS = (b"undeclared automated tool", b"request rate threshold exceeded")
-LOCK_PATH = Path("data") / "runs" / "sec" / "sec-client.lock"
-"""Relative to the repository root. Every package client uses this one path."""
+LOCK_NAME = "sec-client.lock"
+"""In ``machine_lock_dir()``: every SEC client on this machine takes this one lock."""
 
 
 class SecClient(PoliteClient):
@@ -67,7 +70,6 @@ class SecClient(PoliteClient):
 
 @contextmanager
 def open_sec_client(
-    repo: Path,
     *,
     environ: Mapping[str, str] | None = None,
     max_requests: int = DEFAULT_MAX_REQUESTS,
@@ -77,9 +79,9 @@ def open_sec_client(
     rng: random.Random | None = None,
     now: Callable[[], datetime] = lambda: datetime.now(UTC),
 ) -> Iterator[SecClient]:
-    """The machine's one SEC client, holding the SEC lock under ``repo`` while open."""
+    """The machine's one SEC client, holding the SEC lock while open."""
     identity = require_identity(IDENTITY_ENV, environ)
-    with ProcessLock(repo / LOCK_PATH):
+    with ProcessLock(machine_lock_dir() / LOCK_NAME):
         throttle = Throttle(
             min_interval=MIN_INTERVAL_SECONDS,
             max_requests=max_requests,

@@ -8,7 +8,6 @@ curated file names its CIK. It never runs by default.
 """
 
 import os
-from pathlib import Path
 
 import pytest
 from earnings_ingestion.sec.client import open_sec_client
@@ -27,7 +26,6 @@ from earnings_ingestion.sec.urls import (
 )
 
 pytestmark = pytest.mark.live
-REPO = Path(__file__).resolve().parents[2]
 JSON = frozenset({"application/json"})
 XML = frozenset({"application/xml", "text/xml"})
 NPORT = frozenset({"NPORT-P", "NPORT-P/A"})
@@ -46,7 +44,7 @@ def test_sec_formats_match_the_readers() -> None:
     if not os.environ.get("EDGAR_IDENTITY"):
         pytest.skip("set EDGAR_IDENTITY outside Git to run this check")
     ticker, cik, name = COMPANY
-    with open_sec_client(REPO, max_requests=MAX_REQUESTS) as client:
+    with open_sec_client(max_requests=MAX_REQUESTS) as client:
         entries = read_company_tickers(client.fetch(COMPANY_TICKERS_URL, JSON).body)
         company = read_submissions(client.fetch(submissions_url(cik), JSON).body)
         fund = read_submissions(client.fetch(submissions_url(FUND_CIK), JSON).body)
@@ -54,7 +52,7 @@ def test_sec_formats_match_the_readers() -> None:
             filing
             for page in fund.older_pages[:1]
             for filing in read_submissions_page(
-                client.fetch(submissions_page_url(page), JSON).body
+                client.fetch(submissions_page_url(page.name), JSON).body
             )
         ]
         reports = [f for f in fund.filings if f.form in NPORT]
@@ -76,7 +74,7 @@ def test_sec_formats_match_the_readers() -> None:
     print(
         f"fund recent filings: {len(fund.filings)}, from"
         f" {min(f.filing_date for f in fund.filings)}; older pages:"
-        f" {list(fund.older_pages)}; first older page: {len(older)} filings"
+        f" {[page.name for page in fund.older_pages]}; first older page: {len(older)} filings"
     )
     print(
         f"latest N-PORT: {latest.accession} {latest.form} filed {latest.filing_date},"

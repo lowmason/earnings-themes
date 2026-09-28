@@ -112,7 +112,7 @@ def fetch_command(
     registers = layout.registers()
     hosts = sorted({urlsplit(url).hostname or "" for url in urls})
     try:
-        with open_web_client(layout.repo, hosts) as web:
+        with open_web_client(hosts) as web:
             for url in urls:
                 ref = fetch_page(web.fetch, layout.store(), registers, source_id, url)
                 typer.echo(f"{ref.content_sha256}  {ref.storage_ref}  {url}")
@@ -158,7 +158,7 @@ def fetch_sec_command(context: typer.Context) -> None:
     layout: Layout = context.obj
     config = load_cohort_config(layout.repo / layout.config_dir)
     try:
-        with open_sec_client(layout.repo) as sec:
+        with open_sec_client() as sec:
             result = fetch_sec(sec.fetch, layout.store(), layout.registers(), config)
             requests = sec.throttle.count
     except (AccessStop, UnexpectedResponse, ValueError) as error:
@@ -287,14 +287,13 @@ def terms_command(
             _fail(f"Refused: {error}")
         typer.echo(f'terms_sha256 = "{digest}"')
         return
-    layout: Layout = context.obj
     host = urlsplit(url).hostname or ""
     try:
         if is_sec_host(host):
-            with open_sec_client(layout.repo) as sec:
+            with open_sec_client() as sec:
                 fetched = sec.fetch(url, ANY)
         else:
-            with open_web_client(layout.repo, [host]) as web:
+            with open_web_client([host]) as web:
                 fetched = web.fetch(url, ANY)
     except (AccessStop, UnexpectedResponse, ValueError) as error:
         _fail(f"Stopped: {error}")

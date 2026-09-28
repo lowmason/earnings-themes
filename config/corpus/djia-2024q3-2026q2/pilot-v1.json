@@ -1,0 +1,220 @@
+{
+ "definition": {
+  "content_hash": "3839c800151cc646f11064efdce583f988e511265f8893c90e9a2f2549145926",
+  "created_at": "2026-09-27T19:55:58.504040Z",
+  "eligible_event_manifest_hash": "2348671b3ae8021d644df12ae2f539258670546970c918f8edb231ba1885c3b7",
+  "event_manifest_version": 1,
+  "pilot_id": "djia-2024q3-2026q2-pilot",
+  "pilot_version": 1,
+  "selection_policy_version": "djia-pilot/1",
+  "selection_seed": "fd4bd5429c7c01515f9efbe1fbfccb2107ce748e882021553a538e84518b9ee8",
+  "target": 40,
+  "underfilled": false,
+  "universe_operative_hash": "c350923422d9bf2e65a0b5929f4c0d45370458c6a044c3de012a1dfeb116e573",
+  "universe_version": 1
+ },
+ "rows": [
+  {
+   "event_id": "cik-0000051143:2024-12-31",
+   "selection_order": 1,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000021344:2025-12-31",
+   "selection_order": 2,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000093410:2025-03-31",
+   "selection_order": 3,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000318154:2025-09-30",
+   "selection_order": 4,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000310158:2025-06-30",
+   "selection_order": 5,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000354950:2026-02-01",
+   "selection_order": 6,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000858877:2026-04-25",
+   "selection_order": 7,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000320187:2024-08-31",
+   "selection_order": 8,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000731766:2026-06-30",
+   "selection_order": 9,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000732712:2025-12-31",
+   "selection_order": 10,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000063908:2025-09-30",
+   "selection_order": 11,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000089800:2025-03-31",
+   "selection_order": 12,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000200406:2024-12-29",
+   "selection_order": 13,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000080424:2025-06-30",
+   "selection_order": 14,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000789019:2026-03-31",
+   "selection_order": 15,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0001403161:2024-09-30",
+   "selection_order": 16,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000086312:2026-06-30",
+   "selection_order": 17,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000004962:2024-09-30",
+   "selection_order": 18,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0001018724:2025-03-31",
+   "selection_order": 19,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0001652044:2026-06-30",
+   "selection_order": 20,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000050863:2024-09-28",
+   "selection_order": 21,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000019617:2025-09-30",
+   "selection_order": 22,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000012927:2025-12-31",
+   "selection_order": 23,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000104169:2025-04-30",
+   "selection_order": 24,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000886982:2024-12-31",
+   "selection_order": 25,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0001744489:2026-03-28",
+   "selection_order": 26,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000773840:2025-12-31",
+   "selection_order": 27,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000320193:2025-09-27",
+   "selection_order": 28,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0001108524:2026-01-31",
+   "selection_order": 29,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0001751788:2024-09-30",
+   "selection_order": 30,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0001045810:2025-04-27",
+   "selection_order": 31,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000066740:2025-03-31",
+   "selection_order": 32,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0000018230:2024-12-31",
+   "selection_order": 33,
+   "selection_reason": "issuer_coverage"
+  },
+  {
+   "event_id": "cik-0001045810:2024-10-27",
+   "selection_order": 34,
+   "selection_reason": "membership_boundary"
+  },
+  {
+   "event_id": "cik-0000089800:2024-12-31",
+   "selection_order": 35,
+   "selection_reason": "membership_boundary"
+  },
+  {
+   "event_id": "cik-0000732712:2026-03-31",
+   "selection_order": 36,
+   "selection_reason": "membership_boundary"
+  },
+  {
+   "event_id": "cik-0000004962:2026-06-30",
+   "selection_order": 37,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0000731766:2024-09-30",
+   "selection_order": 38,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0000320187:2026-05-31",
+   "selection_order": 39,
+   "selection_reason": "longitudinal_fill"
+  },
+  {
+   "event_id": "cik-0001403161:2026-06-30",
+   "selection_order": 40,
+   "selection_reason": "longitudinal_fill"
+  }
+ ],
+ "schema_version": 1,
+ "unmatched_transitions": []
+}
