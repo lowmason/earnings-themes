@@ -1149,7 +1149,7 @@ record (`Failed: DID NOT RAISE ValueError`).
 
 - [x] **Step 3: Refuse a redirect when fetched and when read**
 
-> Deviation: after the final review (`55ea811`), `SecClient.fetch` also refuses a redirect without end (httpx's `TooManyRedirects`) and a body that cannot be decoded (`DecodingError`) as `UnexpectedResponse`, since httpx raises them as neither a transport error nor a refusal any caller caught.
+> Deviation: after the final review, `SecClient.fetch` also refuses a body that cannot be decoded (httpx's `DecodingError`) as `UnexpectedResponse`, since httpx raises it as neither a transport error nor a refusal any caller caught (`55ea811`). Since every redirected SEC response is refused, the SEC client no longer follows one: a redirect costs one request and is refused from its `Location`, and one off SEC's hosts still stops the run (`8633b63`, after Codex's second pass).
 
 Create `/tmp/plan8-task2-source.py`:
 
@@ -7303,7 +7303,7 @@ Expected: FAIL: `2 errors`, collecting `test_events_acquire.py` and
 
 - [x] **Step 3: Write the acquisition**
 
-> Deviation: after the final review (`55ea811`), a canonical file already under its `doc_id` that differs only in its manifest is kept, and any other difference is a problem, not a stop; `Acquisition.states` returns the state the run recorded when a problem follows a document's first exhibit; and an index page never saved names `events discover`, without the repair hint.
+> Deviation: after the final review (`55ea811`, narrowed in `8633b63`), a canonical file already under its `doc_id` that differs only in the Python, lxml, and libxml2 versions its manifest records is kept, and any other difference is a problem, not a stop; `Acquisition.states` returns the state the run recorded when a problem follows a document's first exhibit; and an index page never saved names `events discover`, without the repair hint.
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/events/acquire.py`:
 
@@ -8163,7 +8163,7 @@ and, in the dictionary's drift test,
 
 - [x] **Step 3: Write the overrides, and apply them**
 
-> Deviation: after the final review (`55ea811`), an override applied under its ID that now names another exhibit than the document's last acquisition is a problem: an applied override is not edited in place.
+> Deviation: after the final review (`55ea811`, keyed by ID in `8633b63`), an override whose ID was applied to another event, filing, or exhibit than it now names is a problem: an applied override is not edited in place.
 
 Create `/tmp/plan8-task17-source.py`:
 
@@ -9438,7 +9438,7 @@ with `ImportError: cannot import name 'runs_refusal' from 'earnings_pipeline.pat
 
 - [x] **Step 3: Write the command**
 
-> Deviation: after the final review (`55ea811`), `events acquire` caps the client at the smaller of `--max-requests` and the count it states, as `discover --filing` does. It holds `.acquire.lock` in `--runs-dir` while it counts and records, so two runs, offline ones included, never fork a history. It refuses an unreadable run file or a held lock with `Refused:` before any client opens, and prints its count on any exit. A redirect loop, 21 requests under httpx's limit, now stops the run at the cap unless the cap leaves room for it, when it is recorded `not_fetched`.
+> Deviation: after the final review (`55ea811`), `events acquire` holds `.acquire.lock` in `--runs-dir` while it counts and records, so two runs, offline ones included, never fork a history. It refuses an unreadable run file or a held lock with `Refused:` before any client opens, and prints its count on any exit. `--max-requests`, the approved count, stays the client's cap: `55ea811` capped it at the stated count too, which left a redirect hop no room and stalled every rerun, and `8633b63` reverted that once the SEC client stopped following redirects.
 
 Create `/tmp/plan8-task19-source.py`:
 
@@ -10581,7 +10581,7 @@ Apply `task21-source`.
 
 - [x] **Step 2 (gate): Fill the slots, and have the user read the record**
 
-> Deviation: after the final review, the user chose (`a06e2d0`) to quote the override's signed rationale exactly, where the record had paraphrased it, and to give check 7 the suite count after the review's fixes, 1535 passed and 1 skipped.
+> Deviation: after the final review, the user chose (`a06e2d0`) to quote the override's signed rationale exactly, where the record had paraphrased it, and to give check 7 the suite count after the review's fixes, 1541 passed and 1 skipped once Codex's second pass was fixed (`8633b63`).
 
 Fill every `[GATE: …]` slot in the three files from Tasks 20 and 21's outputs. Then:
 
