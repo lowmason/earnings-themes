@@ -13,8 +13,8 @@ and a rerun fetches only what the store lacks. Its budget is ``--max-requests``,
 count the user approved. ``--filing`` caps itself at 2, or at ``--max-requests`` if
 that is smaller, so no approval is ever exceeded. It names one filing, since each is
 approved on its own, and a second ``--filing`` is refused. ``discover`` exits 1 and
-names each saved response the build cannot read, which no rerun fetches again, since
-it is saved. ``build``, ``freeze``, and ``select`` read committed files and saved
+names each saved submissions file, older page, index page, or primary document the
+build cannot read, which no rerun fetches again, since it is saved. ``build``, ``freeze``, and ``select`` read committed files and saved
 responses alone. ``build`` exits 1 while anything holds the freeze.
 
 The universe is the latest frozen manifest in ``--universe-dir``, which holds one

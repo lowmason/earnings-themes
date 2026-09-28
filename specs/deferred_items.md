@@ -457,7 +457,11 @@
       evidence record with `evidence_of` (`events/evidence.py`), which raises
       `LocatorError`, a `ValueError`, when a value it cites is not in a saved
       page's `walker-1` text, so the command prints a traceback. Nothing is
-      written, since the record is built before either file. Paths are under
+      written, since the record is built before either file. PR #6's corpus fix
+      (F5) then gave `freeze_command` an `except ValueError` after
+      `EventFreezeRefused`, so this case now ends as `Refused: <error>` with exit
+      1, not a traceback; it is still untested, and it says `Refused:` where the
+      done-when asks for `problem:`. Paths are under
       `packages/earnings-ingestion/src/earnings_ingestion/`
       unless given in full. Size: quick-fix. Done when: such a case has a test
       and ends as a `problem:` line.
@@ -483,7 +487,9 @@
         discover` advises a rerun that meets the same stop. `universes()` should
         refuse with `Refused: <path>: <error>`; select's loads move inside its
         `try`, which also catches `FileExistsError` and says to rerun `events
-        select`; an unreadable retrieval record becomes a `problem:` line naming
+        select` (PR #6's F5 fix moved `frozen_event_manifests` inside a
+        `ValueError` handler; `FileExistsError` is still uncaught); an
+        unreadable retrieval record becomes a `problem:` line naming
         its path, which discover names instead of advising a rerun; and
         `freeze_command` catches `(OSError, ValueError)` after `EventBuildError`.
         `ArtifactStore.retrievals` and `latest` can follow, or wait for the
@@ -544,9 +550,12 @@
       - (a) a missing value is nothing to cross-check: the index page places the
         filing, and its cross-check is null, recorded beside EV10 and P7-8; or
       - (b) it stays a permanent block, and P7-8, the module docstrings of
-        `events/discover.py` and `events/filings.py`, and the
-        `acceptance_time_unknown` row of `docs/data-dictionary.md` stop promising
-        that saved data clears it.
+        `events/discover.py` and `events/filings.py`, the `build_command`
+        docstring in `apps/earnings-pipeline/src/earnings_pipeline/events_cli.py`
+        and the `events discover --filing` hint it prints for each
+        `acceptance_time_unknown` finding (both added by PR #6's P4.4 fix), and
+        the `acceptance_time_unknown` row of `docs/data-dictionary.md` stop
+        promising that saved data clears it.
       With either, bound the 8-K trigger from above with a margin past the
       cutoff: a filing accepted after 17:30 takes the next business day's filing
       date, so its filing date can fall after its acceptance date. Size, as
@@ -833,7 +842,9 @@
       a message naming no URL and a rerun hint no rerun can satisfy, and a
       missing body raises `FileNotFoundError`, a traceback that also loses the
       requests-sent line (see the request-count item below). Discovery also skips
-      the build's companyfacts CIK check. Paths are under
+      the build's companyfacts CIK check. The read-back that PR #6's F18 fix
+      added, `_unreadable` in the same file, repeats that unguarded read, so
+      guard both. Paths are under
       `packages/earnings-ingestion/src/earnings_ingestion/`. Size: quick-fix.
       Done when: discovery reads companyfacts through a shared version of the
       build's tolerant read with its CIK check (`_companyfacts` in
@@ -940,3 +951,15 @@
       Done when: a synthetic fund whose recent block and older page share one
       N-PORT makes the cohort build raise `CohortError` naming that accession and
       each copy's pointer, never deduplicating it, with a test.
+- [ ] Decide whether two issuers' events may share one release (PR #6's review
+      of its F1 fix): `_shared_releases` in `events/build.py` refuses a
+      `release_accession` that two rows share anywhere in the corpus, as the
+      Stage 5 spec says ("No two events share a release"). A co-registrant 8-K
+      that `release-id/1` identifies as two cohort issuers' release would then
+      stop the build with a problem that no override can settle, since each
+      issuer's own files list it. No two v1 issuers are co-registrants, so v1 is
+      unaffected. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: quick-fix,
+      after the user's decision. Done when: the user chooses per-issuer or
+      corpus-wide, the spec says which, and a synthetic co-registrant 8-K shows
+      the chosen behavior in a test.

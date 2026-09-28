@@ -29,15 +29,15 @@ whose event is no longer ``ambiguous`` with its reason. A stale override holds t
 freeze, and ``events build`` names it.
 
 What no review can settle stops the build with ``EventBuildError``, which lists every
-problem: a missing or unreadable response, and a refused override. Every row and
-finding the manifest hashes is a fact: no retrieval time, file hash, or pointer into a
-saved file. An override is hashed whole, with its citations, and a
-``set_release_filing``'s citation carries its artifact's hash and a locator, which the
-build looks up in the store. So a re-fetch re-versions no manifest while the store
-keeps each cited artifact; in a fresh store, a cited page served with other bytes
-refuses the override until it is re-cited, and the re-cited override re-versions the
-manifest. What each row rests on stays on the build, outside the hash, for the
-evidence record and the report.
+problem: a missing or unreadable response, a filing an issuer's files list more than
+once, and a refused override. Every row and finding the manifest hashes is a fact: no
+retrieval time, file hash, or pointer into a saved file. An override is hashed whole,
+with its citations, and a ``set_release_filing``'s citation carries its artifact's
+hash and a locator, which the build looks up in the store. So a re-fetch re-versions
+no manifest while the store keeps each cited artifact; in a fresh store, a cited page
+served with other bytes refuses the override until it is re-cited, and the re-cited
+override re-versions the manifest. What each row rests on stays on the build, outside
+the hash, for the evidence record and the report.
 """
 
 from collections.abc import Sequence

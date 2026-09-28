@@ -14,10 +14,14 @@ resumes where a stopped run left off. Each phase reads what the one before saved
 
 So discovery fetches exactly what the build reads, and never an exhibit (EV2).
 
-Last, it reads what it saved as the build does. A saved response the build cannot
-read, because its bytes are gone or changed or it is not the response its URL names,
-is never fetched again, since it is saved. ``Discovery.problems`` names each one, and
-``events discover`` exits 1.
+Last, it reads back what it saved as the build does: each issuer's submissions
+file, older pages, and index pages, and each candidate's primary document. A saved
+response among them that the build cannot read, because its bytes are gone or changed
+or it is not the response its URL names, is never fetched again, since it is saved.
+``Discovery.problems`` names each one, and ``events discover`` exits 1. The read-back
+does not check a companyfacts file's CIK, which the build refuses, and it reads a
+companyfacts file outside any handler, as phase 3 does; ``discover_filing`` reads
+nothing back.
 
 ``discover_filing`` saves one filing's index page, and an 8-K's or 8-K/A's primary
 document. It is the remedy for an ``acceptance_time_unknown`` finding, and for a

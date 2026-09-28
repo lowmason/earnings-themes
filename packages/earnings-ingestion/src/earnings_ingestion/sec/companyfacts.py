@@ -24,7 +24,7 @@ class FiscalLabels:
     fiscal_year: int
     """1 or more."""
     fiscal_period: str
-    """``Q1``, ``Q2``, ``Q3``, or ``FY``, as the source writes it; never blank."""
+    """As the source writes it, such as ``Q1`` or ``FY``; never blank."""
     pointer: str
     """The JSON pointer of the first fact stating them."""
 

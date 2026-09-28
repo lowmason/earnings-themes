@@ -199,6 +199,8 @@ These are plan A's first tasks, done before any Stage 5 request.
    - Tests on the synthetic cohort's builder:
      - a withheld notice and a re-fetched SEC record each change `content_hash` but
        not the operative hash;
+     - a `set_issuer` on a security that only withheld evidence names changes
+       `content_hash` but not the operative hash (P7-4, extended 2026-09-27);
      - a moved bound, a changed mapping, and a new supporting assertion each change
        both;
      - v1 loads unchanged and has an operative hash.
@@ -518,9 +520,10 @@ Every field keeps its own column, and no record substitutes one time for another
    - For each transition, the target is the nearest eligible event on the member side,
      within the membership spell the transition opens or closes.
      After an entry, that is the issuer's eligible event with the earliest
-     `first_publication_time` after the entry and up to the issuer's next exit. Before
-     an exit, it is the one with the latest `first_publication_time` before the exit
-     and since the issuer's previous entry. Both ends of the spell are included.
+     `first_publication_time` after the entry and up to the issuer's next exit in
+     scope. Before an exit, it is the one with the latest `first_publication_time`
+     before the exit and since the issuer's previous entry in scope. Both ends of the
+     spell are included.
      - *Clarified 2026-09-27, under `djia-pilot/1`.* The earlier text set no bound at
        the spell's far end, so a transition bounding a spell with no eligible event
        could take an event from another of the issuer's spells. Such an event does

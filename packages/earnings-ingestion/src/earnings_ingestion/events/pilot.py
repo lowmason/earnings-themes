@@ -25,7 +25,7 @@
   eligibility has already placed each release against the bound's timing. It stays
   within the membership spell the transition opens or closes, so an event of another
   spell never represents it: an entry's reaches up to the issuer's next exit in
-  scope, and an exit's back to its previous entry, both ends included. This
+  scope, and an exit's back to its previous entry in scope, both ends included. This
   clarifies ``djia-pilot/1`` (2026-09-27); it moves no v1 record.
 
 Freezing follows the event manifest's rules (P6-14). Loading rechecks the chain: the
