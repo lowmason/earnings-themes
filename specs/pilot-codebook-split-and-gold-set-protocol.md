@@ -52,11 +52,12 @@ and approved with it.
 | GS10 | **Curated hard negatives** (R12.5, D4) point into Stage 1's committed canonical fixtures, with claims in the user's words, drafted and verified under GS4. Stage 1's fixture events are `train_or_exclude`, never held out. |
 | GS11 | **The workflow** is files, commands, and a rendered view (§Drafting and tools). An anchor step turns each drafted quote into an exact span through Stage 2's checks, or refuses it. No offset comes from a browser. |
 | GS12 | The user keeps a backup of `data/` outside the repository before drafting starts. It holds the only copy of pilot v1's saved exhibits and canonical documents. |
-| GS13 | *(design)* **Blinding**, after F9. A drafting session starts fresh. It sees only its brief, the contracts and validator, the frozen codebook when it drafts gold, and the text it is given: the 20 training bundles for the codebook, or one bundle for gold. It never sees Stages 7–9's code, prompts, or outputs, or another bundle's gold. No session reads a dev or test bundle before v0 is approved. The session that implements this spec never prints or opens pilot document text. |
+| GS13 | *(design)* **Blinding**, after F9. A drafting session starts fresh. It sees only its brief, the contracts and validator, the frozen codebook when it drafts gold, and the text it is given: the 20 training bundles for the codebook, or one bundle for gold. It never sees Stages 7–9's code, prompts, or outputs, or another bundle's gold. No session reads a dev or test bundle before v0 is approved, and none reads a test bundle before Stage 14 freezes its configuration (GS18). The session that implements this spec never prints or opens pilot document text. |
 | GS14 | *(design)* **Homes.** `evaluation/djia-2024q3-2026q2/pilot-v1/` holds the split, the coverage report, the gold, and the briefs. `codebooks/djia-pilot/` holds codebook v0, and `tests/fixtures/gold/` the curated hard negatives. Drafts and views stay in `data/runs/gold/`, which is gitignored. The briefs stay out of `prompts/`, which is the pipeline's. |
 | GS15 | *(design)* A gold quote sits only in an element Stage 7 treats as narrative, never in a `table`, `table_cell`, `page_artifact`, or `other` element (R4.2). A quote under a boilerplate mask is allowed, and its masks are recorded. |
 | GS16 | *(design)* `sector_applicability` is `all` or a list of the codebook's own tags, mapped to no issuer. Industry classification stays out of the theme path (`CLAUDE.md`), and D1 leaves sector prevalence descriptive. |
 | GS17 | *(design)* **Units.** `earnings-themes` holds the split rule, the codebook, and the gold, and imports only `earnings-core`. `earnings-ingestion` holds the coverage report, over the state table it owns. The application loads the records and passes them on. `earnings-core` is unchanged, and no dependency is added. |
+| GS18 | **Test gold waits**, decided at the spec's review. The 7 test bundles are drafted and verified only after Stage 14 freezes its selected configuration, just before the single held-out run. Stage 11 uses the 28 train and dev bundles. No one reads test content while thresholds are set or configurations compared (A §749, R13.3). |
 
 ## Scope
 
@@ -71,7 +72,7 @@ In:
 - three signed gold bundles, as the roadmap's Exit asks.
 
 Out:
-- the rest of the annotation: the other 32 partitioned bundles continue alongside Stages 7–10, and Stage 11 needs all 35;
+- the rest of the annotation: the other 25 train and dev bundles continue alongside Stages 7–10, and Stage 11 needs all 28; the 7 test bundles wait for Stage 14's frozen configuration (GS18);
 - R8.4's support labels, which Stage 11 collects; who writes them is decided there;
 - any metric, threshold, or model (Stages 7–11);
 - sector classification (GS16);
@@ -136,8 +137,8 @@ test, the fix keeps pilot v1 loading, and never moves the pin.
 
 The steps run in that order. No session reads a pilot document before the split is
 frozen, and none reads a dev or test bundle before step 3 ends (R12.3). Stage 6 is
-complete once three bundles, from any partition, pass step 5. Annotation of the rest
-continues after it.
+complete once three train or dev bundles pass step 5. Annotation of the other train
+and dev bundles continues after it, and the test bundles wait for Stage 14 (GS18).
 
 ## The split
 
@@ -186,7 +187,8 @@ pin. It holds:
 - the run IDs it read. A rebuild reads only those runs, so the later runs Stage 7
   onward record under pilot v1's hash, such as `partial` or `completed`, never
   change it;
-- `no_theme`, empty until Stage 11 adds it (R12.4);
+- `no_theme`, empty until Stage 11 adds it for train and dev, and Stage 14 for test
+  (R12.4, GS18);
 - the pin, and a content hash.
 
 On pilot v1 it gives 40 `parsed` and three gaps. The synthetic acquisition's report
@@ -353,8 +355,8 @@ D2), verifying drafts from one model family (GS4).
 3. **Codebook v0.** The user edits the draft and approves it. ADR 0003 and the frozen
    codebook are committed.
 4. **The curated hard negatives,** verified and committed.
-5. **Three bundles,** each drafted, verified, read for omissions, signed, validated,
-   and committed.
+5. **Three train or dev bundles,** each drafted, verified, read for omissions,
+   signed, validated, and committed.
 
 ## Deferred items
 
@@ -371,11 +373,11 @@ D2), verifying drafts from one model family (GS4).
 | Clause | Met by |
 | --- | --- |
 | A test places each bundle, with all copies and revisions, in exactly one issuer-and-time split (R12.1/R12.3) | §The split, and its tests |
-| The coverage report states the observed count of unavailable, restricted, and parser-failure bundles, and reports a missing class as a coverage gap, never repaired by reselecting; the no-theme count joins at Stage 11 (R12.4, D4) | §The coverage report |
+| The coverage report states the observed count of unavailable, restricted, and parser-failure bundles, and reports a missing class as a coverage gap, never repaired by reselecting; the no-theme count joins at Stage 11 for train and dev, and at Stage 14 for test (R12.4, D4) | §The coverage report |
 | A test shows the split and the report changing no row of the pilot manifest (P-C7) | §Verification |
 | Curated hard negatives exist as fixtures outside the pilot manifest, and the annotation validator accepts hard-negative claims (R12.5, D4) | §Curated hard negatives |
 | Codebook v0's decision record names its training-partition discovery corpus (R9.2/R9.7) | ADR 0003 (§The codebook) |
-| Annotations on at least three bundles, including release-identification labels, pass the validator | Gate 5 |
+| Annotations on at least three bundles, including release-identification labels, pass the validator | Gate 5, on train or dev bundles (GS18) |
 | The single-annotator limitation is recorded (R12.6, D2) | The verification record, with GS4's drafting limitation |
 
 ## Handoffs to later stages
@@ -385,9 +387,9 @@ D2), verifying drafts from one model family (GS4).
 | 7 | Train gold may inform its prompts; dev and test gold never may (A §749) |
 | 8 | The curated hard negatives, for R8.1's misattribution fixtures |
 | 9 | The codebook contract and the frozen v0 |
-| 11 | The pin, the split, and the coverage report; the signed gold for all 35 partitioned events, once complete; the kept drafts, for GS5's shares; and the limitations. Its release-identification labels give precision over the annotated events. Who writes R8.4's labels is decided there. |
+| 11 | The pin, the split, and the coverage report; the signed gold for the 28 train and dev events, once complete; the kept drafts, for GS5's shares; and the limitations. Its release-identification labels give precision over the annotated events. Who writes R8.4's labels is decided there. |
 | 12 | The training partition only (R12.3) |
-| 14 | Dev for the comparisons, and test scored once (R13.3) |
+| 14 | Dev for the comparisons; the test gold, drafted and verified only after its configuration is frozen, then scored once (R13.3, GS18) |
 | 16 | The gold was drafted by a Claude model, so a Claude ceiling records that conflict |
 
 ## Rollout
