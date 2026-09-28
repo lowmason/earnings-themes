@@ -63,9 +63,15 @@ from earnings_ingestion.events.eligibility import (
     decide,
     memberships,
 )
-from earnings_ingestion.events.filings import IssuerFilings, Placed, issuer_filings
+from earnings_ingestion.events.filings import (
+    IssuerFilings,
+    Placed,
+    index_disagreement,
+    issuer_filings,
+)
 from earnings_ingestion.events.records import (
     ACKNOWLEDGEABLE,
+    AcquisitionOverride,
     EventFinding,
     EventManifest,
     EventManifestDefinition,
@@ -291,6 +297,8 @@ def _named_filing(
         return None, f"{url}: {exc}"
     if index.accession != accession:
         return None, f"{url} is the index page of {index.accession}"
+    if (why := index_disagreement(filing, index)) is not None:
+        return None, f"{url}: {why}"
     why = release_refusal(
         accession, instant, slot.period_end, slot.next_period_end, cutoff
     )
@@ -327,12 +335,15 @@ def release_refusal(
     return None
 
 
-def _citations_refused(
-    override: EventOverride, saved: SavedResponses, folder: str | None
+def citations_refused(
+    override: EventOverride | AcquisitionOverride,
+    saved: SavedResponses,
+    folder: str | None,
 ) -> list[str]:
     """Why an override's citations fail: a stored locator that no longer cites what it
-    hashed; or, with the named filing's ``folder``, no citation there of an SEC
-    artifact retrieved from its own URL, at a locator that verifies."""
+    hashed, or a cited URL whose retrievals were all redirected (F13); or, with the
+    named filing's ``folder``, no citation there of an SEC artifact retrieved from its
+    own URL, unredirected, at a locator that verifies."""
     refused = []
     grounded = failed = False
     for citation in override.citations:
@@ -354,11 +365,15 @@ def _citations_refused(
             refused.append(f"{override.override_id}: {exc}")
             failed |= inside
             continue
-        grounded |= (
-            inside
-            and citation.locator is not None
-            and any(r.request_url == citation.url for r in stored.retrievals)
-        )
+        own = [r for r in stored.retrievals if r.request_url == citation.url]
+        if own and all(r.final_url != r.request_url for r in own):
+            refused.append(
+                f"{override.override_id}: {citation.url} was redirected to"
+                f" {own[-1].final_url}"
+            )
+            failed |= inside
+            continue
+        grounded |= inside and citation.locator is not None and bool(own)
     if folder is not None and not (grounded or failed):
         if any(citation.url.startswith(folder) for citation in override.citations):
             refused.append(
@@ -470,14 +485,14 @@ def build_events(
             problems.append(f"{override.override_id}: {why}")
             continue
         folder = archive_url(slot.cik, override.accession, "")
-        refused = _citations_refused(override, saved, folder)
+        refused = citations_refused(override, saved, folder)
         if refused:
             problems.extend(refused)
             continue
         sets[override.event_id] = (override, placed)
     for override in overrides.overrides:
         if override.kind is not EventOverrideKind.SET_RELEASE_FILING:
-            problems.extend(_citations_refused(override, saved, None))
+            problems.extend(citations_refused(override, saved, None))
     if problems:
         raise EventBuildError(problems)
 

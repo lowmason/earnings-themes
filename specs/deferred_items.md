@@ -627,7 +627,7 @@
       when: the decision is recorded, and a test shows that re-citing an override's
       page from other bytes leaves the chosen identity and the pilot's seed
       unchanged.
-- [ ] Decide which frozen version is current after a revert (PR #6's review,
+- [x] Decide which frozen version is current after a revert (PR #6's review,
       F4): `freeze_events` in `events/freeze.py` returns an older version when the
       build's content matches it, but `select_command` in
       `apps/earnings-pipeline/src/earnings_pipeline/events_cli.py` always reads the
@@ -645,8 +645,8 @@
       the spec's §Commands and P7-18; `events select`, and plan B's pilot pick,
       read the version the current build matches or refuse when a newer one
       exists, and print the version and hash they read; and a test freezes v1,
-      freezes a changed v2, reverts, and runs select.
-- [ ] Refuse a frozen version that repeats another's content or lacks its
+      freezes a changed v2, reverts, and runs select. → done in plan 8
+- [x] Refuse a frozen version that repeats another's content or lacks its
       evidence (PR #6's review, F22): `event_manifest_version` is not hashed, so a
       hand-renumbered copy of `events-v1.json` loads beside v1 with the same
       content hash, and `frozen_event_manifests` in `events/freeze.py` loads a
@@ -662,7 +662,7 @@
       whose evidence file is missing; it and `frozen_pilots` in `events/pilot.py`
       refuse two versions that share a content hash, each with a test; and
       Stage 4's `frozen_manifests` does the same, or the reason it does not is
-      recorded.
+      recorded. → done in plan 8
 - [ ] Bind each evidence citation to its artifact's retrievals (PR #6's review,
       F21; the rest of plan 7's "Bind an evidence record to its manifest when
       loading", which PR #6 closed): `check_evidence` in `events/evidence.py`
@@ -680,7 +680,7 @@
       release citation is its release's index page, unless loading already
       checks it; each with a test, while the real and synthetic v1 records still
       pass.
-- [ ] Decide whether loading a pilot re-derives its selection (PR #6's review,
+- [x] Decide whether loading a pilot re-derives its selection (PR #6's review,
       F10): `check_chain` in `events/pilot.py` rechecks the hashes, the seed, and
       eligibility, as the spec's §Pilot selection and plan 7's Task 14 list, but
       not that `djia-pilot/1` produces the rows. So a hand-edited pilot with its
@@ -697,7 +697,7 @@
       over its event manifest and universe reproduce its content hash, with
       tamper tests (a swapped row, the policy, the `pilot_id`, and
       `underfilled`), each rehashed and refused, while the real and synthetic v1
-      pilots still load.
+      pilots still load. → done in plan 8
 - [ ] Bind older submissions pages to their dates, and pad the page skip (PR #6's
       review, F11 and F24): `read_older_page` in `sec/data.py` binds a page to
       its entry by `filingCount` alone (PR #6's third Codex round), and
@@ -738,7 +738,7 @@
       `filingFrom` the next business day, is read and its filing stays visible;
       the dictionary's `filing_to` row is corrected; and events v1 still rebuilds
       unchanged.
-- [ ] Cross-check an index page against its submissions row beyond the
+- [x] Cross-check an index page against its submissions row beyond the
       accession (PR #6's review, F12): the build and discovery take a filing's
       form and primary document from its submissions row, and the index page's
       form and document table, which `sec/filing_index.py` reads, are compared
@@ -755,8 +755,8 @@
       when: the index page's form must equal the row's, and the row's primary
       document, compared by its base name, must be listed in the index typed as
       the form, each a problem otherwise, checked in the build and in discovery
-      before it fetches, with synthetic cases for both disagreements.
-- [ ] Refuse a redirected response (PR #6's review, F13): the shared client
+      before it fetches, with synthetic cases for both disagreements. → done in plan 8
+- [x] Refuse a redirected response (PR #6's review, F13): the shared client
       (`fetch/client.py`) follows redirects within SEC's hosts and records
       `final_url`, but nothing reads it. `SavedResponses` in `events/saved.py`,
       like Stage 4's `ArtifactStore.latest` in `fetch/store.py`, serves each
@@ -771,8 +771,8 @@
       refused before it is saved, and `SavedResponses.get` and
       `_citations_refused` refuse one already saved, by raising, never by
       skipping it, which would make discovery refetch it on every run, each with
-      a synthetic redirected record; before plan B's first acquisition.
-- [ ] Read a primary document with no Item line as unread (PR #6's review, found
+      a synthetic redirected record; before plan B's first acquisition. → done in plan 8
+- [x] Read a primary document with no Item line as unread (PR #6's review, found
       with F13): `read_text` in `events/release.py` pairs each Item heading with the
       one after it through `zip(..., strict=True)`, which raises `ValueError` when
       the text has no line that begins "Item" and a number at all, so it never
@@ -794,7 +794,7 @@
       for text with no Item line, with a unit test in
       `packages/earnings-ingestion/tests/test_events_release.py`, and `events build`
       over a synthetic candidate whose primary document has no Item line ends
-      without a traceback.
+      without a traceback. → done in plan 8
 - [ ] Cite the index page that places a periodic report (PR #6's review, P5.4):
       after P7-8's `--filing` remedy, `_visible` in `events/filings.py` places a
       periodic report by its saved index page, but `_event` in
@@ -872,7 +872,7 @@
       another issuer's missing primary document and names the companyfacts URL;
       and a vanished companyfacts artifact ends as a handled stop with the count
       printed.
-- [ ] Print the request count on every stop, and take an approved count in every
+- [x] Print the request count on every stop, and take an approved count in every
       live cohort command (PR #6's review, F31 and F35); paths are under
       `apps/earnings-pipeline/src/earnings_pipeline/`:
       - `discover_command` in `events_cli.py` reads the count in a `finally` but
@@ -898,8 +898,8 @@
       `OSError` and a deleted companyfacts body each end `events discover` with
       "Stopped:" and "requests sent: N"; and `fetch-sec` without the flag exits 1
       before it opens the client, and a stop prints its count; with tests, before
-      the next live cohort run or plan B's first live request.
-- [ ] Check the CLIs' store and corpus paths before anything runs (PR #6's
+      the next live cohort run or plan B's first live request. → done in plan 8
+- [x] Check the CLIs' store and corpus paths before anything runs (PR #6's
       review, F19 and F38): `events_cli.py` and `cohort_cli.py`, under
       `apps/earnings-pipeline/src/earnings_pipeline/`, resolve only `--repo`.
       - `--store` accepts any repo-relative directory, and `tests/fixtures/**` is
@@ -925,8 +925,8 @@
       patched to fail, exits 1 with "Refused" and never opens the client, and so
       do the cohort's fetching commands; and `events freeze` and `events select`
       with an absolute corpus directory outside the repo exit 0 and print its
-      absolute path; each with a test, before plan B's first acquisition.
-- [ ] Refuse a relative `EARNINGS_LOCK_DIR` (PR #6's review, F29):
+      absolute path; each with a test, before plan B's first acquisition. → done in plan 8
+- [x] Refuse a relative `EARNINGS_LOCK_DIR` (PR #6's review, F29):
       `machine_lock_dir` in `fetch/client.py` returns the override as given, so a
       relative value resolves against each process's working directory, and two
       checkouts would take two SEC locks and could together send 4 requests per
@@ -938,8 +938,8 @@
       Done when: a relative value makes `machine_lock_dir` raise `AccessStop`
       naming the variable, or is ignored as the XDG rule does, with a test using
       `monkeypatch.setenv(LOCK_DIR_VARIABLE, ".locks")`, before plan B's first
-      live SEC request.
-- [ ] Commit the check that the real frozen records hold no source wording (PR
+      live SEC request. → done in plan 8
+- [x] Commit the check that the real frozen records hold no source wording (PR
       #6's review, F20): the committed P6-3 test in
       `tests/integration/test_event_fixtures.py` scans only the synthetic
       corpus's pages. The real v1 records were checked at plan 7's gates with a
@@ -954,7 +954,7 @@
       `overrides.toml` with the saved HTML, text, and exhibit pages; a temporary
       corpus whose rationale copies 40 characters of a synthetic saved page fails
       it while the real v1 records pass; and each freeze's gate runs it, since a
-      test that skips without the store does not protect CI.
+      test that skips without the store does not protect CI. → done in plan 8
 - [ ] Refuse a fund filing listed twice in the cohort build (PR #6's review,
       P4.1): `_fund_filings` in `cohort/build.py` joins the fund's recent block
       and its saved older pages without checking for a repeated accession, so

@@ -10,7 +10,15 @@
   to a temporary file linked into place: a manifest never appears without its
   evidence, and neither is ever replaced.
 - A directory holds one corpus's versions: freezing refuses a build of another, and
-  loading refuses a directory that holds two.
+  loading refuses a directory that holds two. Listing them also refuses two versions
+  of one content, and a manifest whose evidence record is missing (PR #6's review,
+  F22); loading one file checks neither, since the pilot's chain check reads it
+  alone.
+- The build decides which version is current (PR #6's review, F4; plan 8, P8-4):
+  ``current_events`` is the version that holds the build's content, so a change
+  frozen as v2 and then reverted makes v1 current again. It refuses while the build
+  holds the freeze, and when no version holds its content. ``events select`` and
+  ``events acquire`` read it, never the highest-numbered version.
 - Loading reads the committed JSON alone and rechecks the content hash and the name.
   An evidence record loads only with its manifest: the same ``corpus_id``, version,
   and content hash, and one citation per row, in the rows' order.
@@ -23,6 +31,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from earnings_ingestion.cohort.freeze import repeated_content
 from earnings_ingestion.events.build import EventBuild
 from earnings_ingestion.events.evidence import evidence_of
 from earnings_ingestion.events.records import (
@@ -117,27 +126,49 @@ def load_event_evidence(path: Path, manifest: EventManifest) -> EventEvidence:
 
 def frozen_event_manifests(directory: Path) -> list[EventManifest]:
     """Every frozen version in ``directory``, oldest first, refused if they name more
-    than one corpus: a file names its version, not its corpus."""
-    manifests = [
-        load_event_manifest(path)
-        for path in directory.glob("events-v*.json")
-        if not path.name.endswith(".evidence.json")
-    ]
+    than one corpus (a file names its version, not its corpus), if two hold one
+    content, or if a manifest's evidence record is missing."""
+    manifests = sorted(
+        (
+            load_event_manifest(path)
+            for path in directory.glob("events-v*.json")
+            if not path.name.endswith(".evidence.json")
+        ),
+        key=lambda m: m.definition.event_manifest_version,
+    )
     if len(corpora := sorted({m.definition.corpus_id for m in manifests})) > 1:
         raise ValueError(f"{directory} holds more than one corpus: {corpora}")
-    return sorted(manifests, key=lambda m: m.definition.event_manifest_version)
+    versions = [m.definition.event_manifest_version for m in manifests]
+    repeated_content(
+        [
+            (manifest_path(directory, version).name, m.definition.content_hash)
+            for version, m in zip(versions, manifests, strict=True)
+        ]
+    )
+    for version in versions:
+        if not evidence_path(directory, version).exists():
+            raise ValueError(
+                f"{manifest_path(directory, version).name} has no"
+                f" {evidence_path(directory, version).name}"
+            )
+    return manifests
 
 
-def freeze_events(
-    build: EventBuild, saved: SavedResponses, directory: Path, *, now: datetime
-) -> FrozenEvents:
-    """Freeze ``build`` into ``directory``, or return the version that holds it.
-    Refused if ``directory`` holds another corpus."""
+def _versions(build: EventBuild, directory: Path) -> list[EventManifest]:
+    """The versions in ``directory``, refused while ``build`` holds the freeze, or
+    if ``directory`` holds another corpus."""
     if build.holds_freeze:
         raise EventFreezeRefused(build)
     existing = frozen_event_manifests(directory)
     if existing and (held := existing[0].definition.corpus_id) != build.corpus_id:
         raise ValueError(f"{directory} holds corpus {held}, not {build.corpus_id}")
+    return existing
+
+
+def _holding(
+    build: EventBuild, directory: Path, existing: list[EventManifest]
+) -> FrozenEvents | None:
+    """The version among ``existing`` that holds ``build``'s content."""
     for manifest in existing:
         if manifest.definition.content_hash == build.content_hash:
             version = manifest.definition.event_manifest_version
@@ -147,6 +178,30 @@ def freeze_events(
                 evidence_path=evidence_path(directory, version),
                 created=False,
             )
+    return None
+
+
+def current_events(build: EventBuild, directory: Path) -> FrozenEvents:
+    """The frozen version that holds ``build``'s content: the current version, which
+    need not be the highest-numbered. Refused while ``build`` holds the freeze, and
+    when no version holds its content, since then it is not frozen."""
+    held = _holding(build, directory, _versions(build, directory))
+    if held is None:
+        raise ValueError(
+            f"no frozen event manifest holds this build's content,"
+            f" {build.content_hash}: run events freeze"
+        )
+    return held
+
+
+def freeze_events(
+    build: EventBuild, saved: SavedResponses, directory: Path, *, now: datetime
+) -> FrozenEvents:
+    """Freeze ``build`` into ``directory``, or return the version that holds it.
+    Refused if ``directory`` holds another corpus."""
+    existing = _versions(build, directory)
+    if (held := _holding(build, directory, existing)) is not None:
+        return held
     version = 1 + max(
         (m.definition.event_manifest_version for m in existing), default=0
     )

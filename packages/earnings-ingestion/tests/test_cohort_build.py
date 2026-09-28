@@ -220,6 +220,35 @@ def test_changed_evidence_is_a_new_version_beside_the_old(repo) -> None:
     assert versions == [1, 2]
 
 
+def test_a_revert_to_an_older_version_is_refused(repo) -> None:
+    """Every consumer reads a universe's latest version, so a build that holds an
+    older version's content while a newer one exists is refused, not named (PR #6's
+    review, F4)."""
+    manifests = repo / DIRECTORY / "manifests"
+    one, two = (f'selection_policy_version = "djia-pilot/{n}"' for n in (1, 2))
+    edit(repo, "universe.toml", one, two)
+    assert freeze(build(repo, **OPTIONS), manifests, now=LATER).created
+    edit(repo, "universe.toml", two, one)
+    with pytest.raises(ValueError, match="is djia-synthetic-v1.json's content, but v2"):
+        freeze(build(repo, **OPTIONS), manifests, now=LATER)
+    assert sorted(path.name for path in manifests.iterdir()) == [
+        "djia-synthetic-v1.json",
+        "djia-synthetic-v2.json",
+    ]
+
+
+def test_two_versions_of_one_content_are_refused(repo) -> None:
+    """Stage 4's versions follow the same rule as Stage 5's (PR #6's review, F22)."""
+    manifests = repo / DIRECTORY / "manifests"
+    text = (manifests / "djia-synthetic-v1.json").read_text(encoding="utf-8")
+    copy = text.replace('"universe_version": 1', '"universe_version": 2', 1)
+    (manifests / "djia-synthetic-v2.json").write_text(copy, encoding="utf-8")
+    with pytest.raises(
+        ValueError, match="djia-synthetic-v1.json and djia-synthetic-v2.json hold one"
+    ):
+        frozen_manifests(manifests, "djia-synthetic")
+
+
 def test_a_frozen_manifest_loads_without_any_saved_artifact(repo) -> None:
     shutil.rmtree(repo / DIRECTORY / "raw")
     manifest = load_manifest(repo / DIRECTORY / "manifests" / "djia-synthetic-v1.json")

@@ -25,7 +25,10 @@ nothing back.
 
 ``discover_filing`` saves one filing's index page, and an 8-K's or 8-K/A's primary
 document. It is the remedy for an ``acceptance_time_unknown`` finding, and for a
-``set_release_filing`` that names a filing discovery did not read.
+``set_release_filing`` that names a filing discovery did not read. It reads the
+index page before it fetches the document, and fetches nothing more when the page
+describes another filing than the issuer's submissions row does (F12), which
+``Discovery.problems`` then names.
 """
 
 from collections.abc import Callable, Iterable
@@ -33,13 +36,18 @@ from dataclasses import dataclass, field
 
 from earnings_ingestion.cohort.records import UniverseManifest
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
-from earnings_ingestion.events.filings import RELEASE_FORMS, issuer_filings
+from earnings_ingestion.events.filings import (
+    RELEASE_FORMS,
+    index_disagreement,
+    issuer_filings,
+)
 from earnings_ingestion.events.release import identify
 from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.events.slots import issuer_slots
-from earnings_ingestion.fetch.client import Fetched
+from earnings_ingestion.fetch.responses import Fetched
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.companyfacts import read_companyfacts
+from earnings_ingestion.sec.filing_index import read_filing_index
 from earnings_ingestion.sec.urls import (
     archive_url,
     companyfacts_url,
@@ -216,9 +224,23 @@ def discover_filing(
             f"the saved filings of CIK {cik} list no {accession}: run events discover"
         )
     filing = listed[0]
-    wanted = [(filing_index_url(cik, accession), HTML)]
-    if filing.form in RELEASE_FORMS:
-        wanted.append((archive_url(cik, accession, filing.primary_document), DOCUMENT))
+    index = filing_index_url(cik, accession)
     run = _Run(fetch, store, say)
-    run.phase(f"{filing.form} {accession}", wanted)
+    run.phase(f"{filing.form} {accession}", [(index, HTML)])
+    if filing.form not in RELEASE_FORMS:
+        return run.result
+    try:
+        page = read_filing_index(SavedResponses(store).get(index).text.body)
+    except (FileNotFoundError, ValueError) as exc:
+        run.result.problems.append(f"{index}: {exc}")
+        return run.result
+    if page.accession != accession:
+        why = f"it is the index page of {page.accession}"
+    else:
+        why = index_disagreement(filing, page)
+    if why is not None:
+        run.result.problems.append(f"{index}: {why}")
+        return run.result
+    document = archive_url(cik, accession, filing.primary_document)
+    run.phase(f"{filing.form} {accession}'s document", [(document, DOCUMENT)])
     return run.result

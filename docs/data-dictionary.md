@@ -972,6 +972,7 @@ The opt-in live verification's result (P-VL), saved under `data/runs/cohort/live
 | `rebuilt_content_hash` | 64 lowercase hex or null | The rebuilt cohort's content hash |
 | `frozen_content_hash` | 64 lowercase hex or null | The latest frozen version's |
 | `blocking_finding_ids` | tuple of ID part | Findings that would hold a freeze now |
+| `requests_sent` | non-negative integer or null | The requests both clients sent, each capped at the approved `--max-requests`; null in a record saved before plan 8 kept it |
 
 ## Curated cohort files
 
@@ -1131,7 +1132,9 @@ source.
   replaced. The synthetic cohort's is under `tests/fixtures/cohort/manifests/`.
 - **The content hash.** `content_hash` covers the manifest's canonical JSON without
   `universe_version`, `content_hash`, and `created_at`. Identical content keeps its
-  version; new content takes the next.
+  version; new content takes the next. Every consumer reads the latest version, so
+  `freeze` refuses a build that holds an older version's content, and
+  `frozen_manifests` refuses two versions of one content (PR #6's review, F4, F22).
 - **Reading.** `earnings_ingestion.cohort.freeze.load_manifest` rechecks that hash
   and the file's name, and needs no saved artifact.
 - **Saved artifacts.** The cohort's are under `data/raw/cohort/`, which is never
@@ -1277,6 +1280,32 @@ set.
 | `schema_version` | `1` | The file's version |
 | `overrides` | tuple of `EventOverride` | Unique `override_id`s, and at most one override of each kind per `event_id` |
 
+### `AcquisitionOverride`
+
+A reviewer's choice of an event's release document (S §What acquisition can change;
+plan 8, P8-11). `events acquire` applies it; no manifest hashes it.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `override_id` | ID part | A curated slug |
+| `kind` | `"set_release_document"` | The decision |
+| `event_id` | ID part | A pilot event |
+| `accession` | accession | The filing: the event's frozen release filing, or another filing by the issuer, whose index page is saved |
+| `exhibit` | string | The document's file name on that filing's index page |
+| `citations` | tuple of `OverrideCitation` | At least one; one cites an SEC artifact in the filing's folder, retrieved from its own URL, at a locator that verifies |
+| `rationale` | string | Why |
+| `reviewer` | string | Who decided; the user, never an agent |
+| `recorded_on` | date | When |
+
+### `AcquisitionOverridesFile`
+
+`config/corpus/<corpus_id>/acquisition-overrides.toml`.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | The file's version |
+| `overrides` | tuple of `AcquisitionOverride` | Unique `override_id`s and `event_id`s |
+
 ### `EventManifestDefinition`
 
 | Field | Type | Meaning |
@@ -1361,7 +1390,13 @@ primary document through `walker-1`'s text, and a JSON file by pointer.
 - **One corpus a directory.** A file names its version, not its corpus, so
   `frozen_event_manifests` refuses a directory whose manifests name more than one
   `corpus_id`, and `freeze_events` refuses a build of a corpus other than the one
-  the directory holds.
+  the directory holds. Listing the versions also refuses two that hold one content,
+  and a manifest whose evidence record is missing (PR #6's review, F22).
+- **The current version.** The build decides it: `current_events(build, directory)`
+  is the version that holds the build's content, which a revert makes an earlier
+  one. It refuses while the build holds the freeze, and when no version holds the
+  content. `events select` and `events acquire` read it, and print its version and
+  hash (PR #6's review, F4; plan 8, P8-4).
 - **The content hash.** `content_hash` covers the canonical JSON of the definition,
   less `event_manifest_version`, `universe_version`, `content_hash`, and `created_at`,
   with the rows, the findings, and the overrides. Identical content keeps its version,
@@ -1461,8 +1496,9 @@ and nor is a same-day handoff between two of its securities.
   once and never replaced. The synthetic corpus's is in `tests/fixtures/events/`.
 - **One corpus a directory.** `pilot_id` names the corpus alone, whatever the
   policy, so a later policy's pilot shares it. `frozen_pilots` refuses a directory
-  whose pilots name more than one `pilot_id`, and `freeze_pilot` refuses a pilot of
-  a corpus other than the one the directory holds.
+  whose pilots name more than one `pilot_id`, or two versions of one content (F22),
+  and `freeze_pilot` refuses a pilot of a corpus other than the one the directory
+  holds.
 - **The content hash.** `content_hash` covers the canonical JSON of the definition,
   less `pilot_version`, `universe_version`, `content_hash`, and `created_at`, with the
   rows and the unmatched transitions. Identical content keeps its version; new
@@ -1471,4 +1507,123 @@ and nor is a same-day handoff between two of its securities.
 - **Reading.** `earnings_ingestion.events.pilot.load_pilot` rechecks the chain: the
   pilot's hash and name; the event manifest it names, in the same directory, by its
   content hash; the universe's operative hash, computed again from the universe
-  manifest; the seed; and that every row is an eligible event of that manifest.
+  manifest; the seed; and that every row is an eligible event of that manifest. It
+  then selects again: the pilot must name `djia-pilot/1`, and the policy run over
+  its event manifest and universe must reproduce its `content_hash` (PR #6's review,
+  F10).
+- **The current pilot.** `current_pilot(directory, events, universe)` is the pilot
+  frozen over the current event manifest, loaded by `load_pilot` (F4).
+
+## earnings-ingestion processing-state records, schema version 1
+
+- **Package.** The records, and the transitions R1.4 allows, are in
+  `earnings_ingestion.events.states`; the table's Parquet schema is in
+  `earnings_ingestion.events.state_table` (Stage 5, plan 8).
+- **Schema version.** These records join ingestion schema version `1`.
+  `StateTransition` carries it as `schema_version`; `ExhibitAttempt` does not.
+- **Documents.** Each pilot event expects one document, its release, whose
+  `document_id` is `<event_id>:release`.
+
+### `DocumentState`
+
+R1.4's processing states. A §644's `available` is `acquired`, and its `processed` is
+`completed` or `completed-no-theme`.
+
+| Value | Meaning |
+| --- | --- |
+| `expected` | A pilot event's release, before it is attempted |
+| `acquired` | A candidate exhibit's bytes are saved |
+| `parsed` | A candidate canonicalized, and `release-content/1` confirmed it or an acquisition override named it |
+| `failed` | No candidate was confirmed, and one failed to canonicalize |
+| `unavailable` | No candidate could be fetched, or every one fetched canonicalized and none was confirmed |
+| `restricted` | The source's rights forbid local processing; fixtures only, since SEC documents are public |
+| `partial` | Set by a later stage; fixtures only in Stage 5 |
+| `completed` | Set by a later stage; fixtures only in Stage 5 |
+| `completed-no-theme` | Set by a later stage, which found no theme; fixtures only in Stage 5 |
+
+### `MissingReason`
+
+| Value | Meaning |
+| --- | --- |
+| `not_yet_checked` | `expected`: not attempted yet |
+| `not_found` | `unavailable`: no candidate exhibit could be fetched |
+| `no_confirmed_release` | `unavailable`: every candidate fetched canonicalized, and none was confirmed |
+| `rights_restricted` | `restricted`: the source's rights forbid local processing |
+| `parse_failed` | `failed`: `failure_reason` gives Stage 3's reason |
+
+### `ExhibitChoice`
+
+Why an exhibit was tried, in R1.2's order.
+
+| Value | Meaning |
+| --- | --- |
+| `named` | The Item 2.02 text names its number, such as "Exhibit 99.1" |
+| `described` | Its description on the index page names a release |
+| `lowest_sequence` | Neither: the rest, lowest sequence first |
+| `override` | A `set_release_document` override names it |
+
+### `AttemptOutcome`
+
+| Value | Meaning |
+| --- | --- |
+| `confirmed` | It canonicalized, and `release-content/1` confirmed it |
+| `not_confirmed` | It canonicalized, and `release-content/1` did not confirm it |
+| `canonicalization_failed` | `walker-1` refused it, with a `FailureReason` |
+| `not_fetched` | The client refused its response: a status other than 200, an unexpected media type, or a redirect |
+
+### `ExhibitAttempt`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `accession` | accession | The filing that lists the exhibit |
+| `filename` | string | The exhibit's file name on the index page |
+| `exhibit_type` | string | Its type on the index page, such as `EX-99.1` |
+| `choice` | `ExhibitChoice` | Why it was tried |
+| `outcome` | `AttemptOutcome` | What the attempt came to |
+| `artifact_sha256` | 64 lowercase hex or null | The saved bytes' SHA-256; exactly when it was fetched |
+| `failure_reason` | `FailureReason` or null | Exactly when canonicalization failed |
+| `detail` | string or null | What confirmation lacked, `walker-1`'s failure detail, or the client's refusal |
+
+### `StateTransition`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Ingestion record schema version |
+| `document_id` | ID part | `<event_id>:release` |
+| `event_id` | ID part | The pilot event |
+| `run_id` | ID part | The run that recorded it, and its file's name |
+| `sequence` | int ≥ 0 | Its position in its run |
+| `recorded_at` | UTC datetime | When it was recorded |
+| `from_state` | `DocumentState` or null | The state before; null at the start |
+| `to_state` | `DocumentState` | The state after; `NEXT` allows it from `from_state` |
+| `missing_reason` | `MissingReason` or null | Exactly for `expected`, `unavailable`, `restricted`, and `failed` |
+| `failure_reason` | `FailureReason` or null | Exactly for `failed` |
+| `pilot_id` | ID part | The pilot the run read |
+| `pilot_version` | int ≥ 1 | Its version |
+| `pilot_hash` | 64 lowercase hex | Its `content_hash`, which scopes the current state |
+| `frozen_accession` | accession | The event manifest's `release_accession` for the event |
+| `accession` | accession or null | The filing whose exhibit was acquired: the frozen one, or an override's |
+| `exhibit` | string or null | The acquired exhibit's file name |
+| `artifact_sha256` | 64 lowercase hex or null | Its saved bytes' SHA-256 |
+| `retrieved_at` | UTC datetime or null | When those bytes were retrieved |
+| `doc_id` | string or null | Its `walker-1` canonical document, for `parsed` |
+| `override_id` | ID part or null | The acquisition override applied; needed to leave `failed` or `unavailable` |
+| `corpus_error` | string or null | Set when the override's filing would change the event's eligibility, for the next corpus version |
+| `attempts` | tuple of `ExhibitAttempt` | Every exhibit tried, in order, on the transition that concludes them |
+
+## Processing-state runs
+
+- **Where.** `data/runs/events/states/<run_id>.parquet` holds one run's transitions
+  as a Polars frame of `state_table.SCHEMA`. It is written once, atomically, and
+  never replaced or committed.
+- **Order.** Runs are ordered by their earliest `recorded_at`, then `run_id`, and
+  each run's transitions by `sequence`, so a clock that steps back during a run
+  cannot reorder it. A document's transitions must chain from `expected`.
+- **The current state.** A document's current state is its latest transition among
+  those recorded under the current pilot's `pilot_hash`, so a revert to an earlier
+  pilot never inherits a later pilot's history.
+- **Canonical documents.** `data/runs/events/canonical/<doc_id>.json` holds each
+  parsed release's `walker-1` document in the canonical fixture format. It is
+  written once; a later run keeps one that differs only in the Python, lxml, and
+  libxml2 versions its manifest records, as another environment writes it, and
+  reports any other difference as a problem.

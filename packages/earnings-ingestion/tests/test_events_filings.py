@@ -269,6 +269,41 @@ def test_an_index_page_of_another_filing_is_a_problem(saved) -> None:
     )
 
 
+def test_an_index_page_of_another_form_is_a_problem(saved) -> None:
+    """The index page's form must be the submissions row's: a page for an 8-K/A
+    listed as an 8-K would make it a candidate the rule may choose (PR #6's review,
+    F12)."""
+    filing = release(29, "2024-10-24 16:05:12")
+    saved.submissions([filing])
+    body = index_page(CIK, replace(filing, form="8-K/A"), EXHIBIT)
+    url = filing_index_url(CIK, filing.accession)
+    save(saved.store, url, body, HTML, RETRIEVED)
+    read = saved.read()
+    assert read.problems == (f"{url}: its form is 8-K/A, but its row's is 8-K",)
+    assert read.releases == ()
+
+
+@pytest.mark.parametrize("named", ["acme-ex991.htm", ""])
+def test_a_row_whose_primary_document_the_index_does_not_type_as_its_form(
+    saved, named
+) -> None:
+    """The row's primary document must be listed in the index, typed as the form: a
+    row naming the EX-99 file, or none, would have discovery fetch an exhibit before
+    the freeze (EV2) (PR #6's review, F12)."""
+    filing = release(29, "2024-10-24 16:05:12")
+    saved.submissions([replace(filing, primary_document=named)])
+    saved.index(filing)
+    read = saved.read()
+    url = filing_index_url(CIK, filing.accession)
+    assert read.problems == (
+        (
+            f"{url}: it lists no {named or '(none)'} typed 8-K, its row's primary"
+            " document"
+        ),
+    )
+    assert read.releases == ()
+
+
 def test_a_submissions_file_of_another_registrant_is_a_problem(saved) -> None:
     """Each submissions file states its CIK, as each index page states its
     accession: one saved under this issuer's URL but naming another is not read."""

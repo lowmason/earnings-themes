@@ -1,9 +1,10 @@
 # DJIA earnings events and the pilot: verification record
 
 This record verifies plan A of roadmap Stage 5: event discovery, eligibility, and the
-freezes, which `specs/event-discovery-eligibility-and-acquisition.md` specifies. Plan 7
+freezes, which `specs/completed/event-discovery-eligibility-and-acquisition.md` specifies. Plan 7
 (`specs/plans/completed/7-event-discovery-eligibility-and-acquisition-plan-a.md`) built it.
-Plan B, which acquires the pilot's releases, adds its own sections.
+Plan B, which acquired the pilot's releases, has its own sections, from "Plan B:
+acquisition and processing states" on.
 
 ## What was verified
 
@@ -191,3 +192,137 @@ runtime, and `test_stage_5_imports_no_acquisition_library` checks their source.
 - **One machine.** The SEC and web client locks coordinate one machine's processes.
   Stage 1's harness client keeps its own lock, so it must never run live beside a
   package client.
+
+## Plan B: acquisition and processing states
+
+Plan 8 (`specs/plans/completed/8-event-discovery-eligibility-and-acquisition-plan-b.md`) built
+plan B of the Stage 5 spec: the processing states, R1.2's exhibit choice,
+`release-content/1`, acquisition through the shared SEC client, and
+`earnings-pipeline events acquire`. It then acquired the pilot's releases.
+
+### What was verified (plan B)
+
+| Item (S §Verification, plan B) | Evidence |
+| --- | --- |
+| 1. `events acquire` refuses without a frozen pilot whose chain checks | `test_acquire_refuses_without_a_pilot_over_the_current_manifest`; `test_acquire_refuses_a_pilot_djia_pilot_1_does_not_reselect`; `test_a_pilot_not_frozen_over_the_manifest_is_refused`; `test_loading_selects_again`; `test_the_build_decides_which_version_is_current` |
+| 2. Exhibit choice and confirmation: `EX-99`, `EX-99.1`, and `EX-99.01`; a narrative-only release; a first choice that fails and a next exhibit that confirms; the AMC-like overview, which fails | `test_each_numbering_is_named`; `test_plan_b_s_exhibit_numbering`; `test_the_narrative_release_has_no_table`; `test_named_exhibits_come_first_by_sequence`; `test_an_overview_that_announces_nothing_is_not_confirmed`; `test_each_case_comes_to_its_state` |
+| 3. Every R1.4 state from fixtures, each expected but absent document with its `missing_reason` | `test_every_state_is_represented_from_fixtures`; `test_a_state_carries_its_own_details`; `test_only_the_transitions_r1_4_allows`; `test_a_history_must_chain` |
+| 4. P-C7: the frozen records unchanged, and every selected event still selected, after acquisition, a failed parse, and later stages' states | `test_acquisition_changes_no_frozen_record_and_the_build_still_decides`; `test_p_vi_replays_the_acquisition_offline`; after the live run, the rebuild below |
+| 5. Only the shared client, with no throttle of its own; a persistent 403 stops the run and leaves the rest `expected` | `test_stage_5_opens_no_client_of_its_own`; `test_stage_5_has_no_client_or_throttle_of_its_own`; `test_acquire_fetches_through_the_shared_client_within_its_count`; `test_a_persistent_403_stops_the_run_and_leaves_the_rest_expected`; `test_acquire_stops_on_a_persistent_403_and_leaves_the_rest_expected` |
+| 6. Offline replay reproduces the states | `test_p_vi_replays_the_acquisition_offline`, on the synthetic store; `test_offline_replay_reproduces_the_live_acquisition`, on the real store |
+| 7. The suites | The default suite, 1544 passed, 1 skipped, 24 deselected, after the final review's fixes; the harness suite, 280 passed; Ruff; `uv.lock` unchanged |
+
+### Before any acquisition
+
+The deferred items from PR #6's review that named plan B landed first (plan 8,
+P8-2): a relative lock directory is refused (F29); a redirected response is refused
+when fetched and when read (F13); a primary document with no Item line reads as
+unread; an index page must agree with its submissions row (F12); every fetching
+command refuses a store outside `data/raw` (F19, F38); every stop prints its request
+count, and `cohort fetch-sec` and `verify-live` take an approved count (F31, F35);
+two frozen versions of one content are refused (F22); and
+`tests/integration/test_corpus_quotes.py` checks that no committed record quotes a
+saved page (F20). Two were the user's design choices:
+
+- **The build decides which frozen version is current** (F4). `events select` and
+  `events acquire` read the event manifest whose content hash the rebuild
+  reproduces, and the pilot frozen over it. The spec's §Commands records the rule.
+- **Loading a pilot selects it again** (F10). `djia-pilot/1` over the pilot's event
+  manifest and universe must reproduce its content hash.
+
+Recovering a saved response that is present but unusable (P2.1, P2.2) stays
+deferred; "Repairing the store" below gives the manual repair.
+
+### The acquisition
+
+- **What it read.** events v1, content hash
+  `2348671b3ae8021d644df12ae2f539258670546970c918f8edb231ba1885c3b7`, and pilot v1,
+  `3839c800151cc646f11064efdce583f988e511265f8893c90e9a2f2549145926`, which
+  `events acquire` printed before it sent anything.
+- **The runs.** Two, both on 2026-09-28, under `data/runs/events/states/`:
+  - `acquire-20260928T153046989675Z.parquet`, the first acquisition: 120 transitions,
+    `expected` for each of the 40 documents, then each one's attempt. It ended
+    `parsed 39, unavailable 1`, and exited 0 with no `problem:` line.
+  - `acquire-20260928T153714715420Z.parquet`, the override's acquisition: 2
+    transitions, which took Disney's release from `unavailable` through `acquired` to
+    `parsed` under `release-doc-dis-2026-03-28`. Its exhibit was already saved, so
+    `events acquire` stated "nothing to fetch; the client stays closed" and ran
+    offline.
+- **The states.** `parsed 40`, of the pilot's 40 release documents. Their canonical
+  documents are under `data/runs/events/canonical/`, named by `doc_id`.
+- **Exhibit choice.** The first run tried one exhibit for each document, its first
+  choice in R1.2's order: 37 `named` and 3 `lowest_sequence`, as P8-8 predicted.
+  `release-content/1` confirmed 39 of the 40 first choices, 36 `named` and 3
+  `lowest_sequence`, so no document needed a later exhibit. The one it did not
+  confirm was its filing's only `EX-99` exhibit.
+- **Documents not parsed.** After the first run, one:
+  - #26, `cik-0001744489:2026-03-28:release` (Disney, the quarter ended 2026-03-28),
+    `unavailable, no_confirmed_release`. Release filing `0001744489-26-000036`;
+    `EX-99.1 fy2026_q2xprxex991.htm (named), not_confirmed: its opening announces no
+    results`. The index page describes the exhibit as the earnings release, Item
+    2.02 names it, and its text states the period, but it is written as a letter to
+    shareholders, so its first 12 blocks hold no verb-then-results phrase. The review
+    named it in an override, and the override's acquisition parsed it.
+
+  None remains.
+- **Overrides.** One, in
+  `config/corpus/djia-2024q3-2026q2/acquisition-overrides.toml`:
+  `release-doc-dis-2026-03-28`, for `cik-0001744489:2026-03-28`, naming
+  `fy2026_q2xprxex991.htm` of the frozen release filing `0001744489-26-000036`, and
+  citing that filing's index page at its Accepted value. Its rationale, as signed:
+  "Misstated as shareholder letter". Signed by Lowell Mason, 2026-09-28. It marked
+  no `corpus_error`, since it names the frozen filing. The attempt keeps
+  `release-content/1`'s verdict, `not_confirmed`, and the reviewer's decision stands
+  (P8-11).
+- **Replay.** `test_offline_replay_reproduces_the_live_acquisition` acquired again
+  from the saved store, refusing every exhibit that was never saved, as SEC refused
+  it, and reproduced each document's state (SV 6).
+- **P-C7.** After acquisition, `events build` still reproduced events v1's content
+  hash, and no frozen record changed: acquisition writes only under `data/`.
+
+### The requests (plan B)
+
+| Step | Client | Requests |
+| --- | --- | --- |
+| Plan 8, Task 20, `events acquire --max-requests 56` | SEC | 40 sent and 40 fetched, under the approved cap of 56, of the stated 56 and 40 first choices |
+| Plan 8, Task 20, reruns | SEC | None: the run did not stop |
+| Plan 8, Task 21, `events discover --filing` | SEC | None: the override names the frozen filing, whose index page was saved |
+| Plan 8, Task 21, the overrides' acquisition | SEC | None: its exhibit was saved, so `events acquire` stated nothing to fetch and never opened the client |
+
+No `-m live` test ran. No model was called, and no billable service was used.
+
+### Repairing the store
+
+Acquisition never fetches a response it has saved, and the store is append-only. So a
+saved exhibit whose bytes are gone or changed, or that a reader refuses, stops its
+document with a `problem:` line that ends "repair the store by hand". Until the
+deferred recovery lands (P2.1, P2.2), the repair moves files out of the store, and
+never deletes one:
+
+1. Find the response's retrieval records by its URL:
+   `grep -l '"request_url":"<URL>"' data/raw/events/sec-edgar/retrievals/*/*.json`.
+2. Move each record's directory, `retrievals/<sha256>/`, and the artifact it names,
+   `<sha256>.<extension>`, from `data/raw/events/sec-edgar/` to a dated directory
+   under `data/quarantine/`, outside the store.
+3. Rerun `events acquire`. Its stated count now includes that URL, and the rerun is
+   a gate of its own.
+
+No repair was needed in plan 8's runs.
+
+### Limitations (plan B)
+
+- **`release-content/1` is fixed.** Its vocabulary came from Stage 1's 168 saved
+  exhibits, where it rejects the six that are not releases and misses six of the 162
+  releases, whose openings announce nothing the pattern reads. A release it misses
+  is `unavailable` with `no_confirmed_release` until a reviewed override names it,
+  and the rule changes only as `release-content/2`. It missed one of the pilot's 40
+  releases: Disney's for the quarter ended 2026-03-28, written as a letter to
+  shareholders, which the reviewed override names.
+- **Exhibits only.** Acquisition saves exhibits, never an index page or a primary
+  document, so the event build reads what it read before.
+- **The first count is pinned once.** `test_the_first_acquisition_sends_40_to_56_requests`
+  pins the gate's count, and skips once an acquisition run is saved. This record keeps
+  the count.
+- **`restricted` is represented by fixtures only.** SEC documents are public, so no
+  real document is `restricted`. `partial`, `completed`, and `completed-no-theme`
+  wait for later stages.

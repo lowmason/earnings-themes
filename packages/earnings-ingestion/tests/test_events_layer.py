@@ -8,11 +8,23 @@ from datetime import date
 from pathlib import Path
 
 import pytest
+from earnings_ingestion.canonical import CanonicalizationFailure, canonicalize
+from earnings_ingestion.canonical.records import FailureReason
 from earnings_ingestion.cohort.freeze import load_manifest
 from earnings_ingestion.events.acceptance import Convention
+from earnings_ingestion.events.content import confirm
 from earnings_ingestion.events.eligibility import decide, memberships
 from earnings_ingestion.events.filings import IssuerFilings, issuer_filings
-from earnings_ingestion.events.layer import ACME, filings, write_layer
+from earnings_ingestion.events.layer import (
+    ACME,
+    CORVID,
+    DYNAMO,
+    EASTFIELD,
+    exhibit_bodies,
+    exhibit_name,
+    filings,
+    write_layer,
+)
 from earnings_ingestion.events.release import Identification, identify
 from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.events.slots import Slot, issuer_slots
@@ -185,6 +197,71 @@ def test_exhibit_numbering_and_the_amendment(read) -> None:
     assert [d.doc_type for d in corvid.release.placed.index.exhibits_99()] == [
         "EX-99.01"
     ]
+
+
+def test_plan_b_s_exhibit_numbering(read) -> None:
+    """Acme's release for 2025-08-31 lists a supplement as EX-99.1 before the release
+    as EX-99.2, and Eastfield's for 2025-09-30, an eligible event, is typed EX-99."""
+    acme = read["cik-0009990001"].identified["cik-0009990001:2025-08-31"]
+    assert [
+        (d.doc_type, d.description) for d in acme.release.placed.index.exhibits_99()
+    ] == [("EX-99.1", "Supplemental information"), ("EX-99.2", "Press release")]
+    eastfield = read["cik-0009990006"].identified["cik-0009990006:2025-09-30"]
+    assert [d.doc_type for d in eastfield.release.placed.index.exhibits_99()] == [
+        "EX-99"
+    ]
+
+
+def exhibit_url(registrant, accepted: str, kind: str) -> str:
+    (filing,) = [f for f, _ in filings(registrant) if f.accepted == accepted]
+    return archive_url(
+        registrant.cik, filing.accession, exhibit_name(registrant, filing, kind)
+    )
+
+
+CASES = [
+    (ACME, "2025-09-25 16:05:00", "EX-99.1", date(2025, 8, 31), 2026, "Q1", False),
+    (ACME, "2025-09-25 16:05:00", "EX-99.2", date(2025, 8, 31), 2026, "Q1", True),
+    (EASTFIELD, "2025-10-17 07:30:00", "EX-99", date(2025, 9, 30), 2025, "Q3", True),
+    (CORVID, "2025-07-30 16:05:00", "EX-99.01", date(2025, 6, 30), None, None, False),
+    (DYNAMO, "2025-10-21 06:45:00", "EX-99.1", date(2025, 9, 26), 2025, "Q3", True),
+    (CORVID, "2025-04-30 16:05:00", "EX-99.01", date(2025, 3, 31), 2025, "Q1", True),
+]
+
+
+@pytest.mark.parametrize(
+    ("registrant", "accepted", "kind", "period_end", "year", "period", "confirmed"),
+    CASES,
+)
+def test_each_exhibit_is_what_its_case_needs(
+    registrant, accepted, kind, period_end, year, period, confirmed
+) -> None:
+    """The supplement and the AMC-like overview state the period and announce
+    nothing; each release, the narrative-only one too, is confirmed."""
+    body, media_type = exhibit_bodies()[exhibit_url(registrant, accepted, kind)]
+    result = canonicalize(body, source_document_id="x", media_type=media_type)
+    assert not isinstance(result, CanonicalizationFailure)
+    check = confirm(result, period_end, year, period)
+    assert (check.period, check.confirmed) == (True, confirmed)
+
+
+def test_the_narrative_release_has_no_table() -> None:
+    body, _ = exhibit_bodies()[exhibit_url(DYNAMO, "2025-10-21 06:45:00", "EX-99.1")]
+    assert b"<table" not in body
+    other, _ = exhibit_bodies()[exhibit_url(DYNAMO, "2025-02-11 06:45:00", "EX-99.1")]
+    assert b"<table" in other
+
+
+def test_an_image_only_exhibit_and_one_sec_does_not_serve() -> None:
+    """Eastfield's release for 2026-03-31 is an image, which walker-1 refuses, and
+    Dynamo's for 2025-03-28 is listed on its index page but never served."""
+    body, media_type = exhibit_bodies()[
+        exhibit_url(EASTFIELD, "2026-04-17 07:30:00", "EX-99.1")
+    ]
+    result = canonicalize(body, source_document_id="x", media_type=media_type)
+    assert isinstance(result, CanonicalizationFailure)
+    assert result.reason is FailureReason.NO_NATIVE_TEXT
+    assert exhibit_url(DYNAMO, "2025-04-22 06:45:00", "EX-99.1") not in exhibit_bodies()
 
 
 def test_the_conventions_and_the_older_pages(read) -> None:

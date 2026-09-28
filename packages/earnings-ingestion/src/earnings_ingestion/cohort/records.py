@@ -532,3 +532,5 @@ class LiveVerification(IngestionRecord):
     rebuilt_content_hash: Sha256Hex | None
     frozen_content_hash: Sha256Hex | None
     blocking_finding_ids: tuple[IdPart, ...]
+    requests_sent: NonNegativeInt | None = None
+    """What both clients sent; ``None`` in a record saved before it was kept."""

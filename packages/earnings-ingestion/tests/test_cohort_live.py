@@ -1,9 +1,13 @@
 """The live verification's logic, offline: fake fetches stand in for the clients."""
 
+from contextlib import contextmanager
 from datetime import UTC, datetime
+from types import SimpleNamespace
 
 from earnings_core import RightsStatus, sha256_hex
+from earnings_ingestion.cohort import live
 from earnings_ingestion.cohort.live import verify_live
+from earnings_ingestion.cohort.records import LiveVerification
 from earnings_ingestion.cohort.synthetic import FIXTURE_DIR, build_options
 from earnings_ingestion.cohort.web import RobotsRefusal
 from earnings_ingestion.fetch.client import AccessStop, Fetched
@@ -120,3 +124,44 @@ def test_the_evidence_refetch_accepts_an_unchanged_pdf(pdf_cohort) -> None:
         "application/pdf",
     )
     assert result.build_problems == ()
+
+
+def test_run_live_caps_each_client_and_records_what_both_sent(
+    tmp_path, monkeypatch
+) -> None:
+    """Each client is capped at the approved count, and the record keeps the
+    requests both sent (PR #6's review, F35)."""
+
+    class Fake:
+        def __init__(self, count: int) -> None:
+            self.throttle = SimpleNamespace(count=count)
+            self.client = self
+            self.fetch = None
+
+    @contextmanager
+    def web(hosts, *, environ, max_requests):
+        assert max_requests == 7
+        yield Fake(2)
+
+    @contextmanager
+    def sec(*, environ, max_requests):
+        assert max_requests == 7
+        yield Fake(1)
+
+    empty = LiveVerification(
+        checked_at=datetime(2026, 9, 29, tzinfo=UTC),
+        checks=(),
+        build_problems=(),
+        rebuilt_content_hash=None,
+        frozen_content_hash=None,
+        blocking_finding_ids=(),
+    )
+    assert empty.requests_sent is None
+    monkeypatch.setattr(live, "_targets", lambda repo, options: [])
+    monkeypatch.setattr(live, "open_web_client", web)
+    monkeypatch.setattr(live, "open_sec_client", sec)
+    monkeypatch.setattr(live, "verify_live", lambda repo, **kwargs: empty)
+    result, path = live.run_live(tmp_path, max_requests=7)
+    assert result.requests_sent == 3
+    saved = LiveVerification.model_validate_json(path.read_text(encoding="utf-8"))
+    assert saved.requests_sent == 3

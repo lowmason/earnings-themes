@@ -4,7 +4,7 @@
 
 Stage 5 takes a filing's acceptance time from its EDGAR index page's
 "Accepted" value, read as America/New_York wall time (EV10 of
-`specs/event-discovery-eligibility-and-acquisition.md`). SEC's submissions
+`specs/completed/event-discovery-eligibility-and-acquisition.md`). SEC's submissions
 `acceptanceDateTime` only cross-checks it. SEC writes that value in one of
 two conventions: the true UTC instant, or the instant's Eastern wall-clock
 digits followed by `Z`.

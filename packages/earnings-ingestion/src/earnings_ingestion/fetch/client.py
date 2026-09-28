@@ -9,7 +9,8 @@ Ported from Stage 1's live-fetch client, ``expirements/parser-fidelity/pf_fetch.
 - A text/html body carrying a block page stops the run before the content type is
   checked, so a block page served where JSON was expected also stops it.
 - ``fetch`` returns the bytes and a ``Retrieval`` and writes nothing. The artifact
-  store decides where bytes live.
+  store decides where bytes live. ``Fetched`` and ``UnexpectedResponse`` live in
+  ``fetch.responses``, which loads no network library.
 
 A §393-408 govern every client. Each request start, redirect hops included, passes
 the throttle. Timeouts are explicit, retries are bounded, with exponential backoff and
@@ -30,7 +31,6 @@ import sys
 import threading
 import time
 from collections.abc import Callable, Collection, Mapping
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import IO, Self
@@ -40,6 +40,7 @@ import httpx
 from earnings_core import sha256_hex
 
 from earnings_ingestion.fetch.records import Retrieval, RetrievalMethod
+from earnings_ingestion.fetch.responses import Fetched, UnexpectedResponse
 
 DEFAULT_MAX_REQUESTS = 500
 MAX_ATTEMPTS = 4
@@ -62,10 +63,6 @@ class AccessStop(RuntimeError):
     """
 
 
-class UnexpectedResponse(RuntimeError):
-    """A response that must not be kept; the caller may skip the item and go on."""
-
-
 def require_identity(variable: str, environ: Mapping[str, str] | None = None) -> str:
     """The descriptive User-Agent in ``variable``, which lives outside Git."""
     value = (os.environ if environ is None else environ).get(variable, "").strip()
@@ -82,13 +79,19 @@ def machine_lock_dir() -> Path:
     """Where every package client's lock lives: one directory per user, outside
     every checkout (plan 7, P7-5).
 
-    ``$EARNINGS_LOCK_DIR`` overrides it, for tests. Otherwise it is the user's cache:
+    ``$EARNINGS_LOCK_DIR`` overrides it, for tests, and must be absolute: a relative
+    value would resolve against each process's working directory, so two checkouts
+    would take two locks (PR #6's review, F29). Otherwise it is the user's cache:
     ``~/Library/Caches/earnings-themes/locks`` on macOS, and elsewhere
     ``$XDG_CACHE_HOME/earnings-themes/locks``, or ``~/.cache`` when that variable is
     unset or not absolute.
     """
     override = os.environ.get(LOCK_DIR_VARIABLE)
     if override:
+        if not Path(override).is_absolute():
+            raise AccessStop(
+                f"{LOCK_DIR_VARIABLE} must be an absolute path, not {override!r}"
+            )
         return Path(override)
     if sys.platform == "darwin":
         return Path.home() / "Library" / "Caches" / "earnings-themes" / "locks"
@@ -185,20 +188,13 @@ class ProcessLock:
             self._handle = None
 
 
-@dataclass(frozen=True)
-class Fetched:
-    """A validated response body and the record of its retrieval."""
-
-    body: bytes
-    retrieval: Retrieval
-
-
 class PoliteClient:
     """GET under the access policy of A §393-408. Share one instance across workers.
 
     ``host_allowed`` decides which hosts the client may reach; ``block_markers`` are
     lowercase byte strings whose presence in an HTML body means the server refused
-    automated access.
+    automated access; ``follow_redirects`` is off for a client that refuses every
+    redirected response anyway.
     """
 
     def __init__(
@@ -208,6 +204,7 @@ class PoliteClient:
         throttle: Throttle,
         host_allowed: Callable[[str], bool] = lambda host: True,
         block_markers: Collection[bytes] = (),
+        follow_redirects: bool = True,
         transport: httpx.BaseTransport | None = None,
         sleep: Callable[[float], None] = time.sleep,
         rng: random.Random | None = None,
@@ -222,7 +219,7 @@ class PoliteClient:
         self._client = httpx.Client(
             headers={"User-Agent": identity, "Accept-Encoding": "gzip, deflate"},
             timeout=TIMEOUT,
-            follow_redirects=True,
+            follow_redirects=follow_redirects,
             transport=transport,
             event_hooks={"request": [self._before_request]},
         )

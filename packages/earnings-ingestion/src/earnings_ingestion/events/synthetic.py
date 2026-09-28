@@ -11,7 +11,7 @@ through them regenerates byte for byte.
 """
 
 import json
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime
 from html import escape
@@ -22,6 +22,7 @@ from earnings_core import sha256_hex
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
 from earnings_ingestion.events.acceptance import Convention, accepted_instant
 from earnings_ingestion.fetch.records import Retrieval, RetrievalMethod
+from earnings_ingestion.fetch.responses import Fetched, UnexpectedResponse
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.identifiers import unpad_cik
 from earnings_ingestion.sec.urls import (
@@ -268,15 +269,65 @@ def eight_k(
     ).encode()
 
 
-def save(
-    store: ArtifactStore,
-    url: str,
-    body: bytes,
-    media_type: str,
-    retrieved_at: datetime,
-) -> None:
-    """Save ``body`` as a retrieval of ``url`` under the ``sec-edgar`` source."""
-    retrieval = Retrieval(
+def _written(day: date) -> str:
+    return f"{day:%B} {day.day}, {day.year}"
+
+
+def exhibit_page(page: str, registrant: str, period_end: date) -> bytes:
+    """An invented EX-99 exhibit for the quarter ending ``period_end``:
+
+    - ``release``: a headline and a paragraph that report the quarter's results,
+      and a table of figures;
+    - ``narrative``: the same without a table, like Stage 1's narrative-only class;
+    - ``supplement``: supplemental tables under a heading, announcing nothing;
+    - ``overview``: a pro forma overview, like V2's AMC case, announcing nothing;
+    - ``image``: an image and no text, which walker-1 refuses.
+    """
+    name, ended = escape(registrant), _written(period_end)
+    table = (
+        "<table><tr><td>Net sales</td><td>1,000</td></tr>"
+        "<tr><td>Net income</td><td>100</td></tr></table>"
+    )
+    parts = {
+        "release": [
+            f"<h1>{name} Reports Results for the Quarter Ended {ended}</h1>",
+            (
+                f"<p>{name} today reported net sales of $1,000 million for the"
+                f" quarter ended {ended}.</p>"
+            ),
+            table,
+        ],
+        "narrative": [
+            f"<h1>{name} Reports Results for the Quarter Ended {ended}</h1>",
+            (
+                f"<p>{name} today reported higher deliveries for the quarter ended"
+                f" {ended}.</p>"
+            ),
+            "<p>The company will discuss the quarter on a call this morning.</p>",
+        ],
+        "supplement": [
+            "<h1>Supplemental Financial Information</h1>",
+            f"<p>Quarter ended {ended}</p>",
+            table,
+        ],
+        "overview": [
+            "<h1>Pro Forma Financial Overview</h1>",
+            f"<p>Twelve months ended {ended}</p>",
+            table,
+        ],
+        "image": ['<p><img src="release.png" alt=""></p>'],
+    }[page]
+    return (
+        "<!DOCTYPE html><html><head><title>Exhibit 99</title></head><body>"
+        f"{''.join(parts)}</body></html>\n"
+    ).encode()
+
+
+def retrieval_of(
+    url: str, body: bytes, media_type: str, retrieved_at: datetime
+) -> Retrieval:
+    """A 200 response's retrieval record, served from ``url`` itself."""
+    return Retrieval(
         request_url=url,
         final_url=url,
         retrieved_at=retrieved_at,
@@ -287,13 +338,40 @@ def save(
         byte_count=len(body),
         sha256=sha256_hex(body),
     )
+
+
+def save(
+    store: ArtifactStore,
+    url: str,
+    body: bytes,
+    media_type: str,
+    retrieved_at: datetime,
+) -> None:
+    """Save ``body`` as a retrieval of ``url`` under the ``sec-edgar`` source."""
     store.put(
         SEC_SOURCE_ID,
         body,
-        retrieval,
+        retrieval_of(url, body, media_type, retrieved_at),
         rights_status=SEC_RIGHTS.rights_status,
         rights_basis=SEC_RIGHTS.rights_basis,
     )
+
+
+def serve(
+    bodies: Mapping[str, tuple[bytes, str]], retrieved_at: datetime
+) -> Callable[[str, Collection[str]], Fetched]:
+    """SEC as ``bodies``, invented responses by URL, retrieved at ``retrieved_at``:
+    any other URL is refused as the shared client reports a 404 (plan 8, P8-10)."""
+
+    def fetch(url: str, types: Collection[str]) -> Fetched:
+        if url not in bodies:
+            raise UnexpectedResponse(f"HTTP 404 for {url}")
+        body, media_type = bodies[url]
+        if media_type not in types:
+            raise UnexpectedResponse(f"content type {media_type!r} for {url}")
+        return Fetched(body, retrieval_of(url, body, media_type, retrieved_at))
+
+    return fetch
 
 
 class SyntheticStore:

@@ -22,8 +22,10 @@ It then places each filing the build reads (plan 7, P7-8):
   filed on or after ``start``, is ``acceptance_time_unknown`` in the same way.
 
 A saved response that is missing, unreadable, or for another accession is a
-problem: no review can settle it, so the build stops and lists it. So is an accession
-that the issuer's files list more than once, in one block or two: it is refused,
+problem, and so is an index page whose form is not its submissions row's, or that
+does not list the row's primary document typed as that form (PR #6's review, F12):
+no review can settle it, so the build stops and lists it. So is an accession that
+the issuer's files list more than once, in one block or two: it is refused,
 never deduplicated, and the problem names each copy's pointer. The check is per
 issuer, since one filing, such as a schedule one registrant files about another, can
 be listed under both. Each missing response's URL is also listed in ``missing``,
@@ -108,6 +110,25 @@ class IssuerFilings:
     problems: tuple[str, ...]
     missing: tuple[str, ...]
     """The URLs of responses the build reads that are not saved."""
+
+
+def index_disagreement(filing: Filing, index: FilingIndex) -> str | None:
+    """Why ``index``, the index page of ``filing``'s accession, describes another
+    filing than its submissions row does, or ``None``: its form must be the row's,
+    and it must list the row's primary document, by its base name, typed as that
+    form (PR #6's review, F12)."""
+    if index.form != filing.form:
+        return f"its form is {index.form}, but its row's is {filing.form}"
+    name = filing.primary_document.rsplit("/", 1)[-1]
+    if not any(
+        document.filename == name and document.doc_type == filing.form
+        for document in index.documents
+    ):
+        return (
+            f"it lists no {name or '(none)'} typed {filing.form}, its row's primary"
+            " document"
+        )
+    return None
 
 
 def _unknown(issuer_id: str, filing: Filing, why: str) -> EventFinding:
@@ -216,6 +237,9 @@ class _Reader:
                 continue
             if index.accession != filing.accession:
                 self.problems.append(f"{url} is the index page of {index.accession}")
+                continue
+            if (why := index_disagreement(filing, index)) is not None:
+                self.problems.append(f"{url}: {why}")
                 continue
             found[filing.accession] = (index, artifact, instant)
         return found

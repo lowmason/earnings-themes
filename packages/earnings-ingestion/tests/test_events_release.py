@@ -103,6 +103,15 @@ def test_a_document_with_no_item_2_02_heading_states_nothing() -> None:
     assert (reading.dates, reading.periods, reading.preliminary) == ((), (), False)
 
 
+def test_a_text_with_no_item_line_at_all_states_nothing() -> None:
+    """A document whose text has no line that begins "Item" and a number reads as
+    unread, as one with other Item headings does, and never raises (PR #6's
+    review)."""
+    reading = read_text("Form 8-K\nAcme Industrial Corp\nIt posted its results.")
+    assert reading.sections == ()
+    assert reading.unread == "it has no Item 2.02 heading"
+
+
 @pytest.mark.parametrize(
     ("phrase", "dates"),
     [

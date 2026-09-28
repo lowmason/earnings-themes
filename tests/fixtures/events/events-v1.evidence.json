@@ -740,16 +740,16 @@
    "candidates": [
     {
      "artifact": {
-      "content_sha256": "4953fa8a45c29b140b9ede83d9f0d6008c83ce044cf787dfa24c48554a888037",
+      "content_sha256": "ce2d87349936de216d5b2cb199b1b8cdd745407c0fe1edd7a77df5e053ad038b",
       "media_type": "text/html",
       "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
       "rights_status": "local_only",
       "schema_version": 2,
-      "storage_ref": "tests/fixtures/events/raw/sec-edgar/4953fa8a45c29b140b9ede83d9f0d6008c83ce044cf787dfa24c48554a888037.html"
+      "storage_ref": "tests/fixtures/events/raw/sec-edgar/ce2d87349936de216d5b2cb199b1b8cdd745407c0fe1edd7a77df5e053ad038b.html"
      },
      "locators": [
       {
-       "canonical_sha256": "efc45178c636b388d3b30f6e5d76d5f689e1d58663f111780aec2410cb1959ac",
+       "canonical_sha256": "09e05c4ab6ac8822af806cc5e88e36288f970a3ee7f9c1b733a77d80e5353072",
        "canonicalization_version": "walker-1",
        "cited_sha256": "5b0f9bb93d7d3775ea22123dc61d9760b9929f9cc7a01b68160cc94afba6f9f4",
        "end": 108,
@@ -790,19 +790,19 @@
    "event_id": "cik-0009990001:2025-08-31",
    "item_text": {
     "artifact": {
-     "content_sha256": "43074a7755fb49f7cda946589648b211d45c76b2d5c2d5e4409d93fa0366752a",
+     "content_sha256": "1b79bced23938d91b1527c6162aaf3d790f8ba81ea3db4fb936c0efc413712a1",
      "media_type": "text/html",
      "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
      "rights_status": "local_only",
      "schema_version": 2,
-     "storage_ref": "tests/fixtures/events/raw/sec-edgar/43074a7755fb49f7cda946589648b211d45c76b2d5c2d5e4409d93fa0366752a.html"
+     "storage_ref": "tests/fixtures/events/raw/sec-edgar/1b79bced23938d91b1527c6162aaf3d790f8ba81ea3db4fb936c0efc413712a1.html"
     },
     "locators": [
      {
-      "canonical_sha256": "b63e9d9d09c07c261e198849a47f085c0093853dbf8584fc071824613d0d6ffa",
+      "canonical_sha256": "fcb15e75176ccf1b3242c13c79c50c479834613b0ce28b802d1abc9fd182f3bf",
       "canonicalization_version": "walker-1",
-      "cited_sha256": "51b86ebc3ef21204cb68eff8cc71d2842eb17b3877fb4925506170125282f484",
-      "end": 223,
+      "cited_sha256": "0981697b62356ae2e70c9f4f2eb48c4f7d867ed1bbc025eac96a34492c7a13ac",
+      "end": 280,
       "kind": "text_span",
       "pointer": null,
       "start": 45
@@ -889,16 +889,16 @@
    },
    "release": {
     "artifact": {
-     "content_sha256": "4953fa8a45c29b140b9ede83d9f0d6008c83ce044cf787dfa24c48554a888037",
+     "content_sha256": "ce2d87349936de216d5b2cb199b1b8cdd745407c0fe1edd7a77df5e053ad038b",
      "media_type": "text/html",
      "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
      "rights_status": "local_only",
      "schema_version": 2,
-     "storage_ref": "tests/fixtures/events/raw/sec-edgar/4953fa8a45c29b140b9ede83d9f0d6008c83ce044cf787dfa24c48554a888037.html"
+     "storage_ref": "tests/fixtures/events/raw/sec-edgar/ce2d87349936de216d5b2cb199b1b8cdd745407c0fe1edd7a77df5e053ad038b.html"
     },
     "locators": [
      {
-      "canonical_sha256": "efc45178c636b388d3b30f6e5d76d5f689e1d58663f111780aec2410cb1959ac",
+      "canonical_sha256": "09e05c4ab6ac8822af806cc5e88e36288f970a3ee7f9c1b733a77d80e5353072",
       "canonicalization_version": "walker-1",
       "cited_sha256": "5b0f9bb93d7d3775ea22123dc61d9760b9929f9cc7a01b68160cc94afba6f9f4",
       "end": 108,
@@ -4944,16 +4944,16 @@
    "candidates": [
     {
      "artifact": {
-      "content_sha256": "325d60d97b130d15fc86fe49c7ac6e1e4af3c5b238366e73e894f27df0c7d818",
+      "content_sha256": "3760ccec8b41ab2b44394ba9e3e1415e077c385758e5bfab9c2251be9c7a113d",
       "media_type": "text/html",
       "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
       "rights_status": "local_only",
       "schema_version": 2,
-      "storage_ref": "tests/fixtures/events/raw/sec-edgar/325d60d97b130d15fc86fe49c7ac6e1e4af3c5b238366e73e894f27df0c7d818.html"
+      "storage_ref": "tests/fixtures/events/raw/sec-edgar/3760ccec8b41ab2b44394ba9e3e1415e077c385758e5bfab9c2251be9c7a113d.html"
      },
      "locators": [
       {
-       "canonical_sha256": "0df5ae3ff1ce525079b8d170bf9e3eb383bbd1a26d7c394992c992ae48e164d3",
+       "canonical_sha256": "36382d1582191726cd7745ed1d1b7f3d2731307fea6097ccfd3ba1693e347ab7",
        "canonicalization_version": "walker-1",
        "cited_sha256": "deb96dc6227d661ff5689d8027b34b75eea3204a02bb37bb811830bca67fde24",
        "end": 108,
@@ -4994,19 +4994,19 @@
    "event_id": "cik-0009990006:2025-09-30",
    "item_text": {
     "artifact": {
-     "content_sha256": "b68cc4ce4deec8b068b91c415dc63924db851ab4a779f206a93ca260a8890ab4",
+     "content_sha256": "792f2a377b59a379ce584ded2c69c571596610975278424d2c6e4e1e3f0b3022",
      "media_type": "text/html",
      "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
      "rights_status": "local_only",
      "schema_version": 2,
-     "storage_ref": "tests/fixtures/events/raw/sec-edgar/b68cc4ce4deec8b068b91c415dc63924db851ab4a779f206a93ca260a8890ab4.html"
+     "storage_ref": "tests/fixtures/events/raw/sec-edgar/792f2a377b59a379ce584ded2c69c571596610975278424d2c6e4e1e3f0b3022.html"
     },
     "locators": [
      {
-      "canonical_sha256": "eb98d44e51afff386d2b38be61e88f390fa47656ffd2b064dcfcad9cc72de5f5",
+      "canonical_sha256": "f68be31d1c50ff19edb4ccc7153755d6f8bf0fad2cdb8c9b0289ff05ab8cfac8",
       "canonicalization_version": "walker-1",
-      "cited_sha256": "c0aa6b1a8676630849119d2f4cac233fb321848d4c28eed3e214efdfa8ed6378",
-      "end": 203,
+      "cited_sha256": "99f11db80ee33efc617e660fed28ebaa15c6d1873e5f338b305dc70df7e8d7e6",
+      "end": 201,
       "kind": "text_span",
       "pointer": null,
       "start": 44
@@ -5093,16 +5093,16 @@
    },
    "release": {
     "artifact": {
-     "content_sha256": "325d60d97b130d15fc86fe49c7ac6e1e4af3c5b238366e73e894f27df0c7d818",
+     "content_sha256": "3760ccec8b41ab2b44394ba9e3e1415e077c385758e5bfab9c2251be9c7a113d",
      "media_type": "text/html",
      "rights_basis": "docs/source-register.toml entry sec-edgar; SEC records are kept local under data/raw/",
      "rights_status": "local_only",
      "schema_version": 2,
-     "storage_ref": "tests/fixtures/events/raw/sec-edgar/325d60d97b130d15fc86fe49c7ac6e1e4af3c5b238366e73e894f27df0c7d818.html"
+     "storage_ref": "tests/fixtures/events/raw/sec-edgar/3760ccec8b41ab2b44394ba9e3e1415e077c385758e5bfab9c2251be9c7a113d.html"
     },
     "locators": [
      {
-      "canonical_sha256": "0df5ae3ff1ce525079b8d170bf9e3eb383bbd1a26d7c394992c992ae48e164d3",
+      "canonical_sha256": "36382d1582191726cd7745ed1d1b7f3d2731307fea6097ccfd3ba1693e347ab7",
       "canonicalization_version": "walker-1",
       "cited_sha256": "deb96dc6227d661ff5689d8027b34b75eea3204a02bb37bb811830bca67fde24",
       "end": 108,

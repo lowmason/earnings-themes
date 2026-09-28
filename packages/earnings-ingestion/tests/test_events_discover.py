@@ -7,6 +7,7 @@ request exactly the responses the build reads, each once, and never an exhibit.
 
 import re
 import shutil
+from dataclasses import replace
 from datetime import timedelta
 from pathlib import Path
 
@@ -29,6 +30,7 @@ from earnings_ingestion.events.layer import (
     CORVID,
     DYNAMO,
     Release,
+    exhibit_bodies,
     filings,
 )
 from earnings_ingestion.events.saved import SavedResponses
@@ -51,11 +53,15 @@ EVENTS_PACKAGE = REPO / "packages/earnings-ingestion/src/earnings_ingestion/even
 
 
 def served(root: Path, repo: Path) -> dict[str, tuple[bytes, str]]:
-    """Every response saved under ``root``, by URL."""
+    """Every response saved under ``root``, by URL, but the exhibits acquisition
+    saved (plan 8): discovery fetches the rest."""
     store = ArtifactStore(root, repo)
     found = {}
+    exhibits = exhibit_bodies()
     for path in sorted((root / SEC_SOURCE_ID / "retrievals").glob("*/*.json")):
         record = Retrieval.model_validate_json(path.read_text(encoding="utf-8"))
+        if record.request_url in exhibits:
+            continue
         stored = store.get(
             SEC_SOURCE_ID,
             record.sha256,
@@ -242,6 +248,34 @@ def test_discover_filing_saves_one_filing_and_an_8ks_document(
         run(universe, recorder, store, filing=(DYNAMO.cik, "0009990005-99-000001"))
     with pytest.raises(ValueError, match="has CIK 0009990004"):
         run(universe, recorder, store, filing=("0009990004", filing.accession))
+
+
+def test_discover_filing_checks_the_index_page_before_it_fetches_the_document(
+    universe, layer, tmp_path
+) -> None:
+    """An index page that disagrees with its submissions row stops ``--filing``
+    before the primary document is fetched (PR #6's review, F12)."""
+    (filing,) = [
+        filing
+        for filing, entry in filings(DYNAMO)
+        if isinstance(entry, Release) and "7.01" in entry.items
+    ]
+    index = filing_index_url(DYNAMO.cik, filing.accession)
+    responses = dict(layer)
+    responses[index] = (
+        index_page(DYNAMO.cik, replace(filing, form="8-K/A")),
+        "text/html",
+    )
+    root = Path(shutil.copytree(RAW, tmp_path / "data" / "raw" / "events"))
+    recorder = Recorder(responses)
+    result, _, _ = run(
+        universe,
+        recorder,
+        ArtifactStore(root, tmp_path),
+        filing=(DYNAMO.cik, filing.accession),
+    )
+    assert recorder.requested == [index]
+    assert result.problems == [f"{index}: its form is 8-K/A, but its row's is 8-K"]
 
 
 def test_issuer_filings_lists_what_the_build_reads_and_lacks(tmp_path) -> None:

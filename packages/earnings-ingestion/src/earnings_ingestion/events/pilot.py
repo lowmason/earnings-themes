@@ -30,7 +30,16 @@
 
 Freezing follows the event manifest's rules (P6-14). Loading rechecks the chain: the
 pilot's hash and name, the event manifest it names, and that manifest's universe,
-whose operative hash is computed again.
+whose operative hash is computed again. It then selects again: the pilot must name
+``djia-pilot/1``, and the policy run over its event manifest and universe must
+reproduce its content hash, so a hand-edited pilot with its hash recomputed is
+refused (PR #6's review, F10; plan 8, P8-3). A frozen pilot's loading so depends on
+this code, and a change in what the policy selects must come as a new policy name,
+as the spec's §Pilot selection requires.
+
+The current pilot is the one frozen over the current event manifest, which the
+build decides (``current_pilot``; PR #6's review, F4; plan 8, P8-4), never the
+highest-numbered.
 """
 
 from collections import Counter
@@ -43,6 +52,7 @@ from pathlib import Path
 from earnings_core import sha256_hex
 
 from earnings_ingestion.cohort.digests import digest
+from earnings_ingestion.cohort.freeze import repeated_content
 from earnings_ingestion.cohort.identity import operative_hash
 from earnings_ingestion.cohort.records import UniverseManifest
 from earnings_ingestion.events.acceptance import EASTERN
@@ -454,22 +464,74 @@ def _read_pilot(path: Path) -> PilotManifest:
 
 
 def load_pilot(path: Path, universe: UniverseManifest) -> PilotManifest:
-    """A frozen pilot, refused unless its hash, its name, and its chain check."""
+    """A frozen pilot, refused unless its hash, its name, and its chain check, and
+    unless ``djia-pilot/1`` reselects it."""
     manifest = _read_pilot(path)
-    check_chain(manifest, path.parent, universe)
+    events = check_chain(manifest, path.parent, universe)
+    definition = manifest.definition
+    if definition.selection_policy_version != PILOT_POLICY:
+        raise ValueError(
+            f"{path.name} names {definition.selection_policy_version}, not"
+            f" {PILOT_POLICY}, the policy this code runs"
+        )
+    derived = select_pilot(events, universe).content_hash
+    if derived != definition.content_hash:
+        raise ValueError(
+            f"{PILOT_POLICY} over events-v{definition.event_manifest_version}.json"
+            f" selects {derived}, not {path.name}"
+        )
     return manifest
+
+
+def current_pilot(
+    directory: Path, events: EventManifest, universe: UniverseManifest
+) -> FrozenPilot:
+    """The pilot frozen over ``events``, the current event manifest, loaded: its
+    chain checked against ``universe``, and reselected. Refused unless exactly one
+    version in ``directory`` names ``events``."""
+    definition = events.definition
+    name = manifest_path(directory, definition.event_manifest_version).name
+    over = [
+        pilot
+        for pilot in frozen_pilots(directory)
+        if (
+            pilot.definition.event_manifest_version,
+            pilot.definition.eligible_event_manifest_hash,
+        )
+        == (definition.event_manifest_version, definition.content_hash)
+    ]
+    if not over:
+        raise ValueError(f"no pilot is frozen over {name}: run events select")
+    if len(over) > 1:
+        versions = [pilot.definition.pilot_version for pilot in over]
+        raise ValueError(f"pilot versions {versions} are all frozen over {name}")
+    path = pilot_path(directory, over[0].definition.pilot_version)
+    return FrozenPilot(load_pilot(path, universe), path, created=False)
 
 
 def frozen_pilots(directory: Path) -> list[PilotManifest]:
     """Every frozen version in ``directory``, oldest first, each refused unless its
     hash and its name check. Versions may have read different universes, so their
     chains are not checked here: ``load_pilot`` checks one's. Refused if they name
-    more than one ``pilot_id``, which is ``<corpus_id>-pilot`` whatever the policy:
-    a file names its version, not its corpus."""
-    pilots = [_read_pilot(path) for path in directory.glob("pilot-v*.json")]
+    more than one ``pilot_id``, which is ``<corpus_id>-pilot`` whatever the policy
+    (a file names its version, not its corpus), or if two hold one content (PR #6's
+    review, F22)."""
+    pilots = sorted(
+        (_read_pilot(path) for path in directory.glob("pilot-v*.json")),
+        key=lambda m: m.definition.pilot_version,
+    )
     if len(named := sorted({m.definition.pilot_id for m in pilots})) > 1:
         raise ValueError(f"{directory} holds more than one pilot: {named}")
-    return sorted(pilots, key=lambda m: m.definition.pilot_version)
+    repeated_content(
+        [
+            (
+                pilot_path(directory, m.definition.pilot_version).name,
+                m.definition.content_hash,
+            )
+            for m in pilots
+        ]
+    )
+    return pilots
 
 
 def freeze_pilot(

@@ -28,7 +28,10 @@ def repo(generated: Path, tmp_path: Path) -> Path:
     return tmp_path
 
 
-def run(repo: Path, *args: str):
+COHORT_STORE = Path("data") / "raw" / "cohort"
+
+
+def run(repo: Path, *args: str, store: Path = FIXTURE_DIR / "raw"):
     layout = [
         "cohort",
         "--repo",
@@ -36,7 +39,7 @@ def run(repo: Path, *args: str):
         "--config-dir",
         str(FIXTURE_DIR),
         "--store",
-        str(FIXTURE_DIR / "raw"),
+        str(store),
         "--register",
         str(FIXTURE_DIR / "membership-source-register.toml"),
         "--sec-register",
@@ -71,6 +74,21 @@ def test_freeze_refuses_with_the_blocking_findings(repo) -> None:
     result = run(repo, "freeze")
     assert result.exit_code == 1
     assert "BLOCKING  membership_conflict:corvid-common" in result.stderr
+
+
+def test_freeze_refuses_a_revert(repo) -> None:
+    universe = repo / FIXTURE_DIR / "universe.toml"
+    text = universe.read_text(encoding="utf-8")
+    one, two = (f'selection_policy_version = "djia-pilot/{n}"' for n in (1, 2))
+    universe.write_text(text.replace(one, two, 1), encoding="utf-8")
+    assert "froze djia-synthetic v2" in run(repo, "freeze").stdout
+    universe.write_text(text, encoding="utf-8")
+    result = run(repo, "freeze")
+    assert result.exit_code == 1
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert "Refused: the build is djia-synthetic-v1.json's content, but v2" in (
+        result.stderr
+    )
 
 
 def test_cite_keeps_the_cited_text_off_stdout(repo) -> None:
@@ -127,14 +145,58 @@ def test_fetch_sec_goes_through_the_shared_client(repo, monkeypatch) -> None:
             raise cohort_cli.AccessStop(f"403 persisted for {url}")
 
     @contextmanager
-    def fake_open():
+    def fake_open(*, max_requests):
+        assert max_requests == 5
         yield FakeSec()
 
     monkeypatch.setattr(cohort_cli, "open_sec_client", fake_open)
-    result = run(repo, "fetch-sec")
+    result = run(repo, "fetch-sec", "--max-requests", "5", store=COHORT_STORE)
     assert result.exit_code == 1
     assert "Stopped: 403 persisted" in result.stderr
+    assert result.stdout.splitlines() == ["requests sent: 1"]
     assert requested == ["https://www.sec.gov/files/company_tickers.json"]
+
+
+@pytest.mark.parametrize("command", ["fetch-sec", "verify-live"])
+def test_a_live_command_needs_the_approved_count(repo, monkeypatch, command) -> None:
+    """fetch-sec and verify-live take the count the user approved, as events
+    discover does, and refuse before any client opens (PR #6's review, F35)."""
+
+    def refuse(*args, **kwargs):
+        raise AssertionError("a client opened")
+
+    monkeypatch.setattr(cohort_cli, "open_sec_client", refuse)
+    monkeypatch.setattr(cohort_cli, "run_live", refuse)
+    result = run(repo, command, store=COHORT_STORE)
+    assert result.exit_code == 1
+    assert "Refused: pass --max-requests" in result.stderr
+
+
+def test_verify_live_prints_its_count_when_it_stops(repo, monkeypatch) -> None:
+    def stopped(repo, *, max_requests, sent):
+        assert max_requests == 30
+        sent.count = 4
+        raise cohort_cli.AccessStop("another client holds the lock")
+
+    monkeypatch.setattr(cohort_cli, "run_live", stopped)
+    result = run(repo, "verify-live", "--max-requests", "30")
+    assert result.exit_code == 1
+    assert result.stdout.splitlines() == ["requests sent: 4"]
+    assert "Stopped: another client holds the lock" in result.stderr
+
+
+def test_verify_live_prints_its_count_on_an_unforeseen_error(repo, monkeypatch) -> None:
+    """An error no stop names, such as one httpx raises, still ends with the count
+    (plan 8's final review)."""
+
+    def unforeseen(repo, *, max_requests, sent):
+        sent.count = 4
+        raise LookupError("unforeseen")
+
+    monkeypatch.setattr(cohort_cli, "run_live", unforeseen)
+    result = run(repo, "verify-live", "--max-requests", "30")
+    assert isinstance(result.exception, LookupError)
+    assert result.stdout.splitlines() == ["requests sent: 4"]
 
 
 def test_fetch_saves_pages_through_the_web_client(repo, monkeypatch) -> None:
@@ -166,7 +228,13 @@ def test_fetch_saves_pages_through_the_web_client(repo, monkeypatch) -> None:
         yield FakeWeb()
 
     monkeypatch.setattr(cohort_cli, "open_web_client", fake_open)
-    result = run(repo, "fetch", "synthetic-index", "https://index.example/notices/new")
+    result = run(
+        repo,
+        "fetch",
+        "synthetic-index",
+        "https://index.example/notices/new",
+        store=COHORT_STORE,
+    )
     assert result.exit_code == 0, result.output
     assert sha256_hex(body) in result.stdout
 
@@ -216,3 +284,55 @@ def test_terms_hashes_a_saved_copy_without_a_client(
     refused = run(repo, *terms, "--media-type", "application/pdf")
     assert refused.exit_code == 1
     assert "Refused: application/pdf contradicts the bytes" in refused.stderr
+
+
+@pytest.mark.parametrize(
+    "command",
+    [["fetch-sec"], ["fetch", "synthetic-index", "https://index.example/notices/n"]],
+)
+def test_a_fetching_command_refuses_a_store_outside_data_raw(
+    repo, monkeypatch, command
+) -> None:
+    """Fetched bytes are saved only under data/raw, which Git ignores; the check
+    comes before any client opens (PR #6's review, F19)."""
+
+    def refuse(*args, **kwargs):
+        raise AssertionError("a client opened")
+
+    monkeypatch.setattr(cohort_cli, "open_sec_client", refuse)
+    monkeypatch.setattr(cohort_cli, "open_web_client", refuse)
+    result = run(repo, *command)
+    assert result.exit_code == 1
+    assert result.stderr.splitlines() == [
+        (
+            f"Refused: {FIXTURE_DIR / 'raw'} does not resolve under data/raw, where"
+            " fetched bytes are kept out of Git"
+        )
+    ]
+
+
+def test_freeze_prints_a_manifest_outside_the_repo_in_full(
+    repo, tmp_path_factory
+) -> None:
+    outside = tmp_path_factory.mktemp("elsewhere") / "cohort"
+    shutil.copytree(repo / FIXTURE_DIR, outside)
+    result = RUNNER.invoke(
+        cli.app,
+        [
+            "cohort",
+            "--repo",
+            str(repo),
+            "--config-dir",
+            str(outside),
+            "--store",
+            str(FIXTURE_DIR / "raw"),
+            "--register",
+            str(outside / "membership-source-register.toml"),
+            "--sec-register",
+            str(outside / "source-register.toml"),
+            "freeze",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    (line,) = [line for line in result.stdout.splitlines() if "-v1.json" in line]
+    assert line.startswith(str(outside / "manifests" / "djia-synthetic-v1.json"))

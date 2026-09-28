@@ -12,7 +12,9 @@ selection).
   cites what each row rests on (EV11). A re-fetch changes it and nothing else, while
   the store keeps what the overrides cite (below).
 - **Overrides.** ``EventOverride`` is a reviewer's signed decision, read strictly from
-  ``overrides.toml`` like Stage 4's (P6-18).
+  ``overrides.toml`` like Stage 4's (P6-18). ``AcquisitionOverride`` names an event's
+  release document, from ``acquisition-overrides.toml``, which no manifest hashes
+  (plan 8, P8-11).
 - **The pilot.** ``PilotManifest`` is ``djia-pilot/1``'s frozen selection: its rows in
   the order taken, each with its reason, and the transitions it could not cover. Its
   content hash leaves out the same fields as the event manifest's.
@@ -314,6 +316,45 @@ class EventOverridesFile(_Part):
         repeated = [f"{event} ({kind})" for (event, kind), n in events.items() if n > 1]
         if repeated:
             raise ValueError(f"event_id repeated in one kind: {sorted(repeated)}")
+        return self
+
+
+class AcquisitionOverride(_Part):
+    """A reviewer's signed choice of an event's release document (S §What acquisition
+    can change; plan 8, P8-11): an exhibit of the frozen release filing, or of
+    another filing by the issuer, citing that filing's index page."""
+
+    override_id: IdPart
+    kind: Literal["set_release_document"]
+    event_id: IdPart
+    accession: Accession
+    exhibit: NonBlankStr
+    """The document's file name on the filing's index page."""
+    citations: tuple[OverrideCitation, ...]
+    rationale: NonBlankStr
+    reviewer: NonBlankStr
+    recorded_on: date
+
+    @model_validator(mode="after")
+    def _cited(self) -> Self:
+        if not self.citations:
+            raise ValueError("a set_release_document cites the filing's index page")
+        return self
+
+
+class AcquisitionOverridesFile(_Part):
+    """``config/corpus/<corpus_id>/acquisition-overrides.toml``, which no manifest
+    hashes: acquisition never re-versions a frozen record (P-C7)."""
+
+    schema_version: Literal[1]
+    overrides: tuple[AcquisitionOverride, ...] = ()
+
+    @model_validator(mode="after")
+    def _distinct(self) -> Self:
+        for field in ("override_id", "event_id"):
+            counts = Counter(getattr(override, field) for override in self.overrides)
+            if repeated := sorted(name for name, n in counts.items() if n > 1):
+                raise ValueError(f"{field} repeated: {repeated}")
         return self
 
 
