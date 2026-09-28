@@ -10,9 +10,10 @@ every module under each member's ``src/`` with ``ast`` and refuses:
   ``browser-capture`` extra;
 - an acquisition library (edgartools, pandas, pyarrow) in any of Stage 5's modules
   (R14.5);
-- a network client (httpx, the SEC client, the polite client, the web client) in any of
-  Stage 5's package modules, since only the CLI opens the client (P6-22). Discovery
-  may import the polite client's ``Fetched`` record, and nothing else from it.
+- a network client (httpx, the SEC client, the polite client, the web client, or the
+  cohort's live check, which opens the SEC and web clients itself) in any of Stage 5's
+  package modules, since only the CLI opens the client (P6-22). Discovery may import
+  the polite client's ``Fetched`` record, and nothing else from it.
 """
 
 import ast
@@ -125,6 +126,7 @@ NETWORK = (
     "earnings_ingestion.sec.client",
     "earnings_ingestion.fetch.client",
     "earnings_ingestion.cohort.web",
+    "earnings_ingestion.cohort.live",
 )
 DISCOVER = SOURCES["earnings_ingestion"] / "events" / "discover.py"
 FETCHED = "earnings_ingestion.fetch.client.Fetched"
@@ -139,8 +141,9 @@ def imported_names(path: Path) -> list[tuple[int, str]]:
         if isinstance(node, ast.Import):
             found += [(node.lineno, alias.name) for alias in node.names]
         elif isinstance(node, ast.ImportFrom):
-            module = "." * node.level + (node.module or "")
-            found += [(node.lineno, f"{module}.{alias.name}") for alias in node.names]
+            dots = "." * node.level
+            module = f"{dots}{node.module}." if node.module else dots
+            found += [(node.lineno, f"{module}{alias.name}") for alias in node.names]
     return found
 
 
@@ -190,6 +193,8 @@ def test_the_client_scan_sees_imports_inside_functions(tmp_path: Path) -> None:
         "    from earnings_ingestion.cohort.web import open_web_client\n"
         "    import httpx\n"
         "    from ..sec import client as relative\n"
+        "    from . import client\n"
+        "    from earnings_ingestion.cohort.live import verify_live\n"
         "    from earnings_ingestion.sec.urls import archive_url\n",
         encoding="utf-8",
     )
@@ -201,4 +206,6 @@ def test_the_client_scan_sees_imports_inside_functions(tmp_path: Path) -> None:
         (5, "earnings_ingestion.cohort.web.open_web_client"),
         (6, "httpx"),
         (7, "..sec.client"),
+        (8, ".client"),
+        (9, "earnings_ingestion.cohort.live.verify_live"),
     ]
