@@ -68,12 +68,37 @@ def load_manifest(path: Path) -> UniverseManifest:
     return manifest
 
 
+def repeated_content(named: list[tuple[str, str]]) -> None:
+    """Refuse two frozen files, named in ``(name, content hash)`` pairs, that hold one
+    content: a version is its content (P6-14), so a copy renumbered by hand would load
+    beside it, and a consumer taking the latest version would read the copy (PR #6's
+    review, F22)."""
+    first: dict[str, str] = {}
+    for name, digest in named:
+        if digest in first:
+            raise ValueError(f"{first[digest]} and {name} hold one content, {digest}")
+        first[digest] = name
+
+
 def frozen_manifests(directory: Path, universe_id: str) -> list[UniverseManifest]:
-    """Every frozen version of ``universe_id``, oldest first."""
-    manifests = [
-        load_manifest(path) for path in sorted(directory.glob(f"{universe_id}-v*.json"))
-    ]
-    return sorted(manifests, key=lambda m: m.definition.universe_version)
+    """Every frozen version of ``universe_id``, oldest first; refused if two hold one
+    content."""
+    manifests = sorted(
+        (load_manifest(path) for path in directory.glob(f"{universe_id}-v*.json")),
+        key=lambda m: m.definition.universe_version,
+    )
+    repeated_content(
+        [
+            (
+                manifest_path(
+                    directory, universe_id, m.definition.universe_version
+                ).name,
+                m.definition.content_hash,
+            )
+            for m in manifests
+        ]
+    )
+    return manifests
 
 
 def freeze(build: CohortBuild, directory: Path, *, now: datetime) -> Frozen:

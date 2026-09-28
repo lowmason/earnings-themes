@@ -367,3 +367,44 @@ def test_a_directory_of_two_corpora_or_two_pilots_is_refused(
     (directory / "pilot-v2.json").write_bytes(serialize(stray))
     with pytest.raises(ValueError, match=r"more than one pilot: \['djia-other-pilot'"):
         frozen_pilots(directory)
+
+
+def renumbered(path: Path, version: int) -> Path:
+    """A hand-made copy of the frozen file at ``path`` under ``version``, which
+    neither content hash covers."""
+    text = path.read_text(encoding="utf-8")
+    field = (
+        "pilot_version" if path.name.startswith("pilot") else "event_manifest_version"
+    )
+    copy = text.replace(f'"{field}": 1', f'"{field}": {version}', 1)
+    target = path.with_name(path.name.replace("-v1", f"-v{version}"))
+    target.write_text(copy, encoding="utf-8")
+    return target
+
+
+def test_two_versions_of_one_content_are_refused(universe, layer, tmp_path) -> None:
+    """A copy renumbered by hand loads on its own, and listing the versions refuses
+    it, so no consumer reads it as the latest (PR #6's review, F22)."""
+    directory = tmp_path / "corpus"
+    frozen = freeze(reviewed(universe, layer), layer, directory)
+    pilot = freeze_pilot(
+        select_pilot(frozen.manifest, universe), universe, directory, now=NOW
+    )
+    copy = renumbered(frozen.path, 2)
+    shutil.copy(frozen.evidence_path, directory / "events-v2.evidence.json")
+    assert load_event_manifest(copy).definition.content_hash == (
+        frozen.manifest.definition.content_hash
+    )
+    with pytest.raises(ValueError, match="events-v1.json and events-v2.json hold one"):
+        frozen_event_manifests(directory)
+    renumbered(pilot.path, 2)
+    with pytest.raises(ValueError, match="pilot-v1.json and pilot-v2.json hold one"):
+        frozen_pilots(directory)
+
+
+def test_a_manifest_without_its_evidence_is_refused(universe, layer, tmp_path) -> None:
+    directory = tmp_path / "corpus"
+    frozen = freeze(reviewed(universe, layer), layer, directory)
+    frozen.evidence_path.unlink()
+    with pytest.raises(ValueError, match="events-v1.json has no events-v1.evidence"):
+        frozen_event_manifests(directory)

@@ -1132,7 +1132,8 @@ source.
   replaced. The synthetic cohort's is under `tests/fixtures/cohort/manifests/`.
 - **The content hash.** `content_hash` covers the manifest's canonical JSON without
   `universe_version`, `content_hash`, and `created_at`. Identical content keeps its
-  version; new content takes the next.
+  version; new content takes the next. `frozen_manifests` refuses two versions of one
+  content (PR #6's review, F22).
 - **Reading.** `earnings_ingestion.cohort.freeze.load_manifest` rechecks that hash
   and the file's name, and needs no saved artifact.
 - **Saved artifacts.** The cohort's are under `data/raw/cohort/`, which is never
@@ -1362,7 +1363,8 @@ primary document through `walker-1`'s text, and a JSON file by pointer.
 - **One corpus a directory.** A file names its version, not its corpus, so
   `frozen_event_manifests` refuses a directory whose manifests name more than one
   `corpus_id`, and `freeze_events` refuses a build of a corpus other than the one
-  the directory holds.
+  the directory holds. Listing the versions also refuses two that hold one content,
+  and a manifest whose evidence record is missing (PR #6's review, F22).
 - **The content hash.** `content_hash` covers the canonical JSON of the definition,
   less `event_manifest_version`, `universe_version`, `content_hash`, and `created_at`,
   with the rows, the findings, and the overrides. Identical content keeps its version,
@@ -1462,8 +1464,9 @@ and nor is a same-day handoff between two of its securities.
   once and never replaced. The synthetic corpus's is in `tests/fixtures/events/`.
 - **One corpus a directory.** `pilot_id` names the corpus alone, whatever the
   policy, so a later policy's pilot shares it. `frozen_pilots` refuses a directory
-  whose pilots name more than one `pilot_id`, and `freeze_pilot` refuses a pilot of
-  a corpus other than the one the directory holds.
+  whose pilots name more than one `pilot_id`, or two versions of one content (F22),
+  and `freeze_pilot` refuses a pilot of a corpus other than the one the directory
+  holds.
 - **The content hash.** `content_hash` covers the canonical JSON of the definition,
   less `pilot_version`, `universe_version`, `content_hash`, and `created_at`, with the
   rows and the unmatched transitions. Identical content keeps its version; new

@@ -220,6 +220,18 @@ def test_changed_evidence_is_a_new_version_beside_the_old(repo) -> None:
     assert versions == [1, 2]
 
 
+def test_two_versions_of_one_content_are_refused(repo) -> None:
+    """Stage 4's versions follow the same rule as Stage 5's (PR #6's review, F22)."""
+    manifests = repo / DIRECTORY / "manifests"
+    text = (manifests / "djia-synthetic-v1.json").read_text(encoding="utf-8")
+    copy = text.replace('"universe_version": 1', '"universe_version": 2', 1)
+    (manifests / "djia-synthetic-v2.json").write_text(copy, encoding="utf-8")
+    with pytest.raises(
+        ValueError, match="djia-synthetic-v1.json and djia-synthetic-v2.json hold one"
+    ):
+        frozen_manifests(manifests, "djia-synthetic")
+
+
 def test_a_frozen_manifest_loads_without_any_saved_artifact(repo) -> None:
     shutil.rmtree(repo / DIRECTORY / "raw")
     manifest = load_manifest(repo / DIRECTORY / "manifests" / "djia-synthetic-v1.json")

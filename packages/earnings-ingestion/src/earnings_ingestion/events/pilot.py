@@ -43,6 +43,7 @@ from pathlib import Path
 from earnings_core import sha256_hex
 
 from earnings_ingestion.cohort.digests import digest
+from earnings_ingestion.cohort.freeze import repeated_content
 from earnings_ingestion.cohort.identity import operative_hash
 from earnings_ingestion.cohort.records import UniverseManifest
 from earnings_ingestion.events.acceptance import EASTERN
@@ -464,12 +465,25 @@ def frozen_pilots(directory: Path) -> list[PilotManifest]:
     """Every frozen version in ``directory``, oldest first, each refused unless its
     hash and its name check. Versions may have read different universes, so their
     chains are not checked here: ``load_pilot`` checks one's. Refused if they name
-    more than one ``pilot_id``, which is ``<corpus_id>-pilot`` whatever the policy:
-    a file names its version, not its corpus."""
-    pilots = [_read_pilot(path) for path in directory.glob("pilot-v*.json")]
+    more than one ``pilot_id``, which is ``<corpus_id>-pilot`` whatever the policy
+    (a file names its version, not its corpus), or if two hold one content (PR #6's
+    review, F22)."""
+    pilots = sorted(
+        (_read_pilot(path) for path in directory.glob("pilot-v*.json")),
+        key=lambda m: m.definition.pilot_version,
+    )
     if len(named := sorted({m.definition.pilot_id for m in pilots})) > 1:
         raise ValueError(f"{directory} holds more than one pilot: {named}")
-    return sorted(pilots, key=lambda m: m.definition.pilot_version)
+    repeated_content(
+        [
+            (
+                pilot_path(directory, m.definition.pilot_version).name,
+                m.definition.content_hash,
+            )
+            for m in pilots
+        ]
+    )
+    return pilots
 
 
 def freeze_pilot(
