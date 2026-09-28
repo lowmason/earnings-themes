@@ -393,25 +393,33 @@ These are plan A's first tasks, done before any Stage 5 request.
   - Each override records its ID, kind, rationale, reviewer, and recording date.
   - The reviewer is the user; the implementer never fills that field in.
 - **`set_release_filing`** names an event and an 8-K or 8-K/A of its issuer that was
-  accepted after the event's period end P and by the cutoff, and whose index page is
+  accepted in the range `release-id/1` reads, after the event's period end P and by
+  its next period end P′ (by the cutoff when none is visible), and whose index page is
   saved, and cites it.
   - The event takes that filing's acceptance time, and its method becomes `override`.
   - Its eligibility is computed again, and may come out as any status.
   - A filing accepted after the cutoff is refused (P-C4).
   - A filing accepted on or before P, on the Eastern calendar, is refused: a release
     follows its quarter, as §Candidates has it.
+  - A filing accepted after P′, on the Eastern calendar, is refused: an override
+    chooses within the range the rule reads, `(P, P′]`. A release accepted later has
+    no override; its event stays unresolved, and `retain_unresolved` can keep it.
   - No two events share a release. A filing that would be the release of two events,
-    whether another override or the rule names it for the other, is refused.
-  - No bound applies after P′. A late release can be legitimate, and the
-    shared-release refusal catches the harmful case, an override naming the next
-    event's release.
-  - *Amended 2026-09-27, by the user's decision after the PR #6 review:* the three
-    bullets above replace plan 7 Task 12's "no P or P′ bound applies". A P bound now
-    applies, and a P′ bound still does not. Before the change, an override could give
-    an event a release from an earlier quarter, or another event's release, and flip
-    its eligibility with no finding. All twelve overrides behind events v1 name a
-    filing accepted after their event's period end, no two v1 events share a
-    release, and the rebuild reproduces v1's content hash.
+    whether an override or the rule names it for each, is refused. Within one issuer
+    the ranges never meet, so only a filing two issuers list, such as a
+    co-registrant's 8-K, can be shared.
+  - *Amended 2026-09-27, by the user's decisions after the PR #6 review and its
+    combined review:* the bullets above replace plan 7 Task 12's "no P or P′ bound
+    applies". A named filing must now lie in the range the rule reads, `(P, P′]`.
+    Before the change, an override could give an event a release from an earlier
+    quarter, the next quarter's release (including one past the window, whose quarter
+    has no event), or another event's release or candidate, and flip its eligibility
+    with no finding. The first review kept a P′ bound out, on the view that the
+    shared-release refusal caught the next quarter's release; the combined review
+    showed it does not when that quarter has no event, or when the filing is a
+    candidate its event did not take. All twelve overrides behind events v1 name a
+    filing inside their event's range, no two v1 events share a release, and the
+    rebuild reproduces v1's content hash.
 - **`retain_unresolved`** names an `ambiguous` event and its reason.
   - The event keeps its status and reason, is marked retained, and is excluded from the
     pilot's eligible set.

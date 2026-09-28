@@ -8,14 +8,13 @@ filing by ``release-id/1``, and decides its eligibility by ``eligibility/1``. Th
 applies the overrides:
 
 - ``set_release_filing`` names an 8-K or 8-K/A of the event's issuer, listed in the
-  issuer's read files, whose index page is saved and which was accepted after the
-  event's period end P and by the cutoff, on the Eastern calendar. One of its
-  citations is in that filing's folder. The event takes the filing's acceptance time
-  and the method ``override``, and its eligibility is decided again, with any
-  outcome. No two events share a release, so a filing that would also be another
-  event's is refused. No bound applies after P': a late release can be legitimate,
-  and that refusal catches the harmful case, the next event's release (S §Review
-  overrides, amended 2026-09-27).
+  issuer's read files, whose index page is saved and which was accepted, on the
+  Eastern calendar, in the range ``release-id/1`` reads: after the event's period end
+  P and by the issuer's next period end P', or by the cutoff when none is visible. One
+  of its citations is in that filing's folder. The event takes the filing's acceptance
+  time and the method ``override``, and its eligibility is decided again, with any
+  outcome. A release accepted after P' has no override; its event stays unresolved. No
+  two events share a release (S §Review overrides, amended 2026-09-27).
 - ``retain_unresolved`` keeps an event that is ``ambiguous`` with the override's
   reason. It is judged after any ``set_release_filing`` of the same event.
 - ``acknowledge`` answers a ``period_gap`` or ``no_slots`` finding whose digest it
@@ -290,17 +289,40 @@ def _named_filing(
         return None, f"{url}: {exc}"
     if index.accession != accession:
         return None, f"{url} is the index page of {index.accession}"
-    if eastern_date(instant) <= slot.period_end:
-        return None, (
-            f"{accession} was accepted on {eastern_date(instant)}, on or before the"
-            f" event's period end {slot.period_end}"
-        )
-    if eastern_date(instant) > cutoff:
-        return None, (
-            f"{accession} was accepted on {eastern_date(instant)}, after the cutoff"
-            f" {cutoff} (P-C4)"
-        )
+    why = release_refusal(
+        accession, instant, slot.period_end, slot.next_period_end, cutoff
+    )
+    if why is not None:
+        return None, why
     return Placed(filing, file, index, artifact, instant), None
+
+
+def release_refusal(
+    accession: str,
+    instant: datetime,
+    period_end: date,
+    next_period_end: date | None,
+    cutoff: date,
+) -> str | None:
+    """Why a filing accepted at ``instant`` cannot be a ``set_release_filing``'s
+    choice for the event of ``period_end``, or ``None``. It must fall, on the Eastern
+    calendar, in the range ``release-id/1`` reads, ``(P, P']``, where P' is the
+    issuer's next period end, or the cutoff when none is visible; and never after the
+    cutoff (P-C4)."""
+    day = eastern_date(instant)
+    if day <= period_end:
+        return (
+            f"{accession} was accepted on {day}, on or before the event's period end"
+            f" {period_end}"
+        )
+    if day > cutoff:
+        return f"{accession} was accepted on {day}, after the cutoff {cutoff} (P-C4)"
+    if next_period_end is not None and day > next_period_end:
+        return (
+            f"{accession} was accepted on {day}, after the issuer's next period end"
+            f" {next_period_end}"
+        )
+    return None
 
 
 def _citations_refused(
@@ -346,12 +368,15 @@ def _citations_refused(
     return refused
 
 
-def _shared_releases(
+def shared_releases(
     rows: Sequence[EventRow], sets: dict[str, tuple[EventOverride, Placed]]
 ) -> list[str]:
     """A refusal for each filing that two rows take as their release, naming the
-    ``set_release_filing`` overrides that chose it. The rule's candidate ranges
-    ``(P, P']`` never meet, so only an override can make one."""
+    ``set_release_filing`` overrides that chose it, or else ``release-id/1``. Within
+    one issuer every release lies in its own event's range ``(P, P']``, by the rule
+    or an override, and those ranges never meet; so only a filing that two issuers
+    list, such as a co-registrant's 8-K, can be shared, and the rule alone can share
+    it (see specs/deferred_items.md)."""
     events: dict[str, list[str]] = {}
     for row in rows:
         if row.release_accession is not None:
@@ -516,7 +541,7 @@ def build_events(
             )
         )
         details[slot.event_id] = EventDetail(slot, found, release, decision)
-    problems.extend(_shared_releases(rows, sets))
+    problems.extend(shared_releases(rows, sets))
     if problems:
         raise EventBuildError(problems)
     resolved = tuple(

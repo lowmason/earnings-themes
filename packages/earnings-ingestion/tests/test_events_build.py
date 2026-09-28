@@ -4,6 +4,7 @@ P7-15 and P7-16), over the synthetic event layer and Stage 4's synthetic cohort.
 
 from datetime import UTC, date, datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from earnings_ingestion.cohort.freeze import load_manifest
@@ -13,6 +14,8 @@ from earnings_ingestion.events.build import (
     EventBuild,
     EventBuildError,
     build_events,
+    release_refusal,
+    shared_releases,
 )
 from earnings_ingestion.events.layer import (
     ACME,
@@ -349,27 +352,109 @@ def test_a_set_release_filing_must_follow_the_event_s_period_end(
     ]
 
 
-def test_two_events_never_share_a_release(universe, layer) -> None:
-    """A filing accepted after the event's period end can still be another event's
-    release. An override naming the next quarter's release, or two overrides naming
-    one filing, is refused."""
-    early = "cik-0009990001:2024-08-31"
-    later = choose(layer, early, ACME, "2024-12-19 16:05:00")
-    assert refused(universe, layer, later) == (
+def test_a_set_release_filing_must_lie_before_the_next_period_end(
+    universe, layer
+) -> None:
+    """The override chooses within the range ``release-id/1`` reads, ``(P, P']``
+    (S §Review overrides, amended 2026-09-27): the next quarter's release, and the
+    next event's candidate that its own override passed over, are both refused."""
+    cases = [
+        choose(layer, "cik-0009990001:2024-08-31", ACME, "2024-12-19 16:05:00"),
+        choose(layer, "cik-0009990001:2024-11-30", ACME, "2025-03-11 08:00:00"),
+    ]
+    problems = [
+        refused(
+            universe, layer, choose(layer, ACME_SET, ACME, "2025-03-20 16:05:00"), case
+        )
+        for case in cases
+    ]
+    assert problems == [
         (
-            f"release-cik-0009990001-2024-08-31: {later.accession} would be the"
-            f" release of {early} and cik-0009990001:2024-11-30"
+            (
+                f"release-cik-0009990001-2024-08-31: {cases[0].accession} was accepted"
+                " on 2024-12-19, after the issuer's next period end 2024-11-30"
+            ),
         ),
-    )
-    good = choose(layer, ACME_SET, ACME, "2025-03-20 16:05:00")
-    again = choose(layer, "cik-0009990001:2024-11-30", ACME, "2025-03-20 16:05:00")
-    assert refused(universe, layer, good, again) == (
         (
-            "release-cik-0009990001-2024-11-30, release-cik-0009990001-2025-02-28:"
-            f" {good.accession} would be the release of cik-0009990001:2024-11-30"
-            f" and {ACME_SET}"
+            (
+                f"release-cik-0009990001-2024-11-30: {cases[1].accession} was accepted"
+                " on 2025-03-11, after the issuer's next period end 2025-02-28"
+            ),
         ),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("accepted", "refusal"),
+    [
+        (
+            datetime(2025, 3, 1, 1, 30, tzinfo=UTC),
+            "on or before the event's period end",
+        ),
+        (
+            datetime(2025, 2, 28, 17, 0, tzinfo=UTC),
+            "on or before the event's period end",
+        ),
+        (datetime(2025, 3, 1, 5, 30, tzinfo=UTC), None),
+        (datetime(2025, 6, 1, 0, 30, tzinfo=UTC), None),
+        (datetime(2025, 6, 1, 4, 30, tzinfo=UTC), "after the issuer's next period end"),
+    ],
+    ids=[
+        "P-evening-eastern",
+        "P-midday",
+        "P+1-after-midnight",
+        "Pprime-evening-eastern",
+        "Pprime+1-after-midnight",
+    ],
+)
+def test_a_release_s_range_is_read_on_the_eastern_calendar(accepted, refusal) -> None:
+    """P is 2025-02-28 (EST) and P' is 2025-05-31 (EDT). An acceptance on P at 20:30
+    Eastern is 01:30 UTC the next day, and still on P; one on P' at 20:30 Eastern is
+    00:30 UTC the next day, and still on P'."""
+    found = release_refusal(
+        "0009990001-25-000009",
+        accepted,
+        date(2025, 2, 28),
+        date(2025, 5, 31),
+        date(2026, 9, 22),
     )
+    if refusal is None:
+        assert found is None
+    else:
+        assert refusal in found
+
+
+def test_with_no_next_period_end_the_range_runs_to_the_cutoff() -> None:
+    cutoff = date(2026, 9, 22)
+    evening = datetime(2026, 9, 23, 0, 30, tzinfo=UTC)
+    after = datetime(2026, 9, 23, 4, 30, tzinfo=UTC)
+    args = (date(2026, 6, 30), None, cutoff)
+    assert release_refusal("0009990001-26-000001", evening, *args) is None
+    assert "after the cutoff 2026-09-22" in release_refusal(
+        "0009990001-26-000001", after, *args
+    )
+
+
+def test_two_events_never_share_a_release() -> None:
+    """Within one issuer each release lies in its own event's range, so only a filing
+    that two issuers list, such as a co-registrant's 8-K, can be two events' release.
+    It is refused whether the rule or an override names it."""
+    rows = [
+        SimpleNamespace(event_id=event_id, release_accession=release)
+        for event_id, release in [
+            ("cik-0000000001:2025-03-31", "0000000001-25-000001"),
+            ("cik-0000000002:2025-03-31", "0000000001-25-000001"),
+            ("cik-0000000003:2025-03-31", None),
+            ("cik-0000000004:2025-03-31", "0000000004-25-000001"),
+        ]
+    ]
+    shared = (
+        "0000000001-25-000001 would be the release of cik-0000000001:2025-03-31 and"
+        " cik-0000000002:2025-03-31"
+    )
+    assert shared_releases(rows, {}) == [f"release-id/1: {shared}"]
+    chosen = {"cik-0000000002:2025-03-31": (SimpleNamespace(override_id="set-b"), None)}
+    assert shared_releases(rows, chosen) == [f"set-b: {shared}"]
 
 
 def test_a_set_release_filing_must_cite_the_filing_verifiably(universe, layer) -> None:
