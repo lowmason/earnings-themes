@@ -3,13 +3,13 @@
 Evidence-linked research infrastructure for company data and earnings themes.
 
 > [!IMPORTANT]
-> **Project status (2026-09-27): Stages 1 to 4 complete, and the
-> first of Stage 5's two plans.** The `uv` workspace, package boundaries,
-> specifications, and staged roadmap exist. `earnings-core` holds the shared
-> evidence contracts, and `earnings-ingestion` canonicalizes releases, rebuilds the
-> point-in-time DJIA cohort, and discovers and freezes its earnings events and pilot,
-> each with offline tests. `earnings-themes` still contains a placeholder API; there
-> is no theme extraction, approved theme codebook, or published dataset yet.
+> **Project status (2026-09-28): Stages 1 to 5 complete.**
+> The `uv` workspace, package boundaries, specifications, and staged roadmap exist.
+> `earnings-core` holds the shared evidence contracts, and `earnings-ingestion`
+> canonicalizes releases, rebuilds the point-in-time DJIA cohort, discovers and
+> freezes its earnings events and pilot, and acquires the pilot's releases, each with
+> offline tests. `earnings-themes` still contains a placeholder API; there is no theme
+> extraction, approved theme codebook, or published dataset yet.
 
 ## Purpose
 
@@ -128,7 +128,7 @@ using those primitives.
 ## Current roadmap
 
 The implementation is organized as a staged, evidence-first roadmap of sixteen
-stages. Stages 1 to 4 are complete, and so is the first of Stage 5's two plans.
+stages. Stages 1 to 5 are complete.
 
 The roadmap was amended on 2026-09-22 by
 [the point-in-time DJIA cohort specification](specs/point-in-time-djia-cohort.md).
@@ -182,14 +182,16 @@ acquired. Every SEC request goes through one shared client at 2 requests per
 second. The [verification record](docs/verification/djia-cohort.md) has the
 details.
 
-**Stage 5: event discovery, eligibility, and acquisition** is half done. Its first
+**Stage 5: event discovery, eligibility, and acquisition** is complete. Its first
 plan finds each cohort issuer's quarterly earnings releases in SEC's filing
 metadata, and judges each one's eligibility by point-in-time membership at its
 EDGAR acceptance time. It freezes the reviewed event manifest and a deterministic
 pilot selection in `config/corpus/djia-2024q3-2026q2/` before any release is
-acquired. The [verification record](docs/verification/djia-events.md) has the
-details. The next milestone is Stage 5's second plan, which acquires the pilot's
-releases.
+acquired. Its second plan then acquires the pilot's releases from EDGAR through the
+shared client, chooses and confirms each release exhibit, and records each document's
+processing state. The [verification record](docs/verification/djia-events.md) has
+the details. The roadmap resumes with Stage 6: the pilot codebook, split, and
+gold-set protocol.
 
 Key planning documents:
 
