@@ -11,8 +11,10 @@ fetch for the synthetic cohort's five candidate issuers, all retrieved at
   ``[2024-07-01, 2026-09-22]``;
 - the primary document of every candidate.
 
-It saves no exhibit (EV2). Every company, filing, and word is invented; each case
-takes its shape from the real filings plan 7 read, never their wording.
+It saves no exhibit (EV2): ``exhibit_bodies()`` gives each candidate's exhibits,
+which plan B's acquisition fetches (plan 8, P8-10). Every company, filing, and word
+is invented; each case takes its shape from the real filings plans 7 and 8 read,
+never their wording.
 
 ``review(first)`` gives the overrides a reviewer records against the layer's first
 build: three acknowledged period gaps, Acme's release set by review, and two events
@@ -23,7 +25,9 @@ The cases, by issuer:
 - **Acme Industrial**, a fiscal year ending in May like Nike's, which trips no guard.
   Its submissions give Eastern digits. The quarter ended 2025-02-28 has two
   candidates the rule cannot separate, a sale's effect on the quarter and the
-  release. A release and a 10-Q accepted after the cutoff are never read.
+  release. A release and a 10-Q accepted after the cutoff are never read. Its release
+  for 2025-08-31 lists a supplement as ``EX-99.1`` before the release as ``EX-99.2``,
+  and its Item 2.02 text names both, so the first choice fails and the next confirms.
 - **Borealis Air** leaves the index before the open on 2024-11-08, and releases its
   third quarter at 07:00 that day, a ``same_day_transition``. Its exhibit is typed
   ``EX-99``, and an 8-K/A follows. It is acquired and files nothing after its report
@@ -35,10 +39,12 @@ The cases, by issuer:
 - **Dynamo Motors** holds two securities and makes one slot per period. Its calendar
   ends 2026-07-03, outside the window. Its fourth quarter of 2024 has a preliminary
   filing and then the release. Its quarter ended 2025-06-27 has no candidate, and its
-  release for 2025-09-26 is narrative-only.
+  release for 2025-09-26 is narrative-only, in its Item 2.02 text and in its exhibit,
+  which has no table. The exhibit of its release for 2025-03-28 is never served.
 - **Eastfield Bank** leaves on 2026-06-22. It has no 10-Q for 2025-06-30, the first
   ``period_gap`` case. Its submissions give true UTC. One older page is read, and one
-  is skipped by its dates.
+  is skipped by its dates. Its release for 2025-09-30 is typed ``EX-99``, and the
+  exhibit of its release for 2026-03-31 is an image, which walker-1 refuses.
 """
 
 from dataclasses import dataclass
@@ -55,11 +61,14 @@ from earnings_ingestion.events.records import (
     EventReason,
 )
 from earnings_ingestion.events.synthetic import (
+    HTML,
     SyntheticFiling,
     SyntheticStore,
     eight_k,
+    exhibit_page,
     older_page_entry,
 )
+from earnings_ingestion.sec.urls import archive_url
 
 if TYPE_CHECKING:
     from earnings_ingestion.events.build import EventBuild
@@ -89,6 +98,21 @@ class Report:
 
 
 @dataclass(frozen=True)
+class Exhibit:
+    """An exhibit on a release filing's index page, and the invented page it is."""
+
+    kind: str
+    """Its type, such as ``EX-99.1``."""
+    description: str
+    page: str = "release"
+    """``release``, ``narrative``, ``supplement``, ``overview``, or ``image``, as
+    ``synthetic.exhibit_page`` writes them; ``missing`` when SEC never serves it."""
+
+
+RELEASE_EXHIBIT = (Exhibit("EX-99.1", "Earnings release"),)
+
+
+@dataclass(frozen=True)
 class Release:
     """An 8-K. ``text`` is its Item 2.02 section; ``None`` when discovery never
     fetches its document, because it is no candidate."""
@@ -97,8 +121,9 @@ class Release:
     text: tuple[str, ...] | None
     items: tuple[str, ...] = ("2.02", "9.01")
     form: str = "8-K"
-    exhibit: tuple[str, str] = ("EX-99.1", "Earnings release")
-    """The index page's only exhibit: its type and description."""
+    exhibits: tuple["Exhibit", ...] = ()
+    """The index page's exhibits, in sequence; an earnings release typed ``EX-99.1``
+    when none is given."""
     other: tuple[tuple[str, tuple[str, ...]], ...] = ()
     """The document's other items, before 9.01."""
 
@@ -182,8 +207,8 @@ _BOREALIS = "Borealis Air Inc"
 _CORVID = "Corvid Systems Inc"
 _DYNAMO = "Dynamo Motors Co"
 _EASTFIELD = "Eastfield Bank Corp"
-_BOREALIS_EXHIBIT = ("EX-99", "Earnings release")
-_CORVID_EXHIBIT = ("EX-99.01", "Earnings release")
+_BOREALIS_EXHIBIT = (Exhibit("EX-99", "Earnings release"),)
+_CORVID_EXHIBIT = (Exhibit("EX-99.01", "Earnings release"),)
 
 RELEASES = {
     ACME: (
@@ -206,7 +231,7 @@ RELEASES = {
                 ),
             ),
             items=("2.02", "8.01", "9.01"),
-            exhibit=("EX-99.1", "Press release"),
+            exhibits=(Exhibit("EX-99.1", "Press release"),),
             other=(("8.01", ("The sale awaits regulatory approval.",)),),
         ),
         Release(
@@ -219,7 +244,17 @@ RELEASES = {
         ),
         Release(
             "2025-09-25 16:05:00",
-            _said(_ACME, "its results for the first quarter of fiscal 2026"),
+            (
+                (
+                    f"{_ACME} announced its results for the first quarter of fiscal"
+                    " 2026, in the release furnished as Exhibit 99.2, with"
+                    " supplemental information furnished as Exhibit 99.1."
+                ),
+            ),
+            exhibits=(
+                Exhibit("EX-99.1", "Supplemental information", "supplement"),
+                Exhibit("EX-99.2", "Press release"),
+            ),
         ),
         Release(
             "2025-12-18 16:05:00",
@@ -236,61 +271,61 @@ RELEASES = {
         Release("2026-09-24 16:05:00", None),
     ),
     BOREALIS: (
-        Release("2024-07-25 07:00:00", None, exhibit=_BOREALIS_EXHIBIT),
+        Release("2024-07-25 07:00:00", None, exhibits=_BOREALIS_EXHIBIT),
         Release(
             "2024-11-08 07:00:00",
             _said(
                 _BOREALIS, "its results for the quarter ended September 30, 2024", "99"
             ),
-            exhibit=_BOREALIS_EXHIBIT,
+            exhibits=_BOREALIS_EXHIBIT,
         ),
-        Release("2024-11-12 09:00:00", None, form="8-K/A", exhibit=_BOREALIS_EXHIBIT),
+        Release("2024-11-12 09:00:00", None, form="8-K/A", exhibits=_BOREALIS_EXHIBIT),
         Release(
             "2025-02-06 07:00:00",
             _said(_BOREALIS, "its fourth quarter and full year 2024 results", "99"),
-            exhibit=_BOREALIS_EXHIBIT,
+            exhibits=_BOREALIS_EXHIBIT,
         ),
         Release(
             "2025-04-24 07:00:00",
             _said(_BOREALIS, "its results for the first quarter of 2025", "99"),
-            exhibit=_BOREALIS_EXHIBIT,
+            exhibits=_BOREALIS_EXHIBIT,
         ),
     ),
     CORVID: (
         Release(
             "2025-02-13 16:05:00",
             _said(_CORVID, "its full-year 2024 results", "99.01"),
-            exhibit=_CORVID_EXHIBIT,
+            exhibits=_CORVID_EXHIBIT,
         ),
         Release(
             "2025-04-30 16:05:00",
             _said(_CORVID, "its Q1 2025 results", "99.01"),
-            exhibit=_CORVID_EXHIBIT,
+            exhibits=_CORVID_EXHIBIT,
         ),
         Release(
             "2025-07-30 16:05:00",
             _said(_CORVID, "its second quarter of 2025 results", "99.01"),
-            exhibit=("EX-99.01", "Pro forma overview"),
+            exhibits=(Exhibit("EX-99.01", "Pro forma overview", "overview"),),
         ),
         Release(
             "2025-10-29 16:05:00",
             _said(_CORVID, "its third-quarter 2025 results", "99.01"),
-            exhibit=_CORVID_EXHIBIT,
+            exhibits=_CORVID_EXHIBIT,
         ),
         Release(
             "2026-02-12 16:05:00",
             _said(_CORVID, "its fourth quarter and full year 2025 results", "99.01"),
-            exhibit=_CORVID_EXHIBIT,
+            exhibits=_CORVID_EXHIBIT,
         ),
         Release(
             "2026-04-29 16:05:00",
             _said(_CORVID, "its first quarter of 2026 results", "99.01"),
-            exhibit=_CORVID_EXHIBIT,
+            exhibits=_CORVID_EXHIBIT,
         ),
         Release(
             "2026-07-29 16:05:00",
             _said(_CORVID, "its results for the quarter ended June 30, 2026", "99.01"),
-            exhibit=_CORVID_EXHIBIT,
+            exhibits=_CORVID_EXHIBIT,
         ),
     ),
     DYNAMO: (
@@ -315,11 +350,13 @@ RELEASES = {
         Release(
             "2025-04-22 06:45:00",
             _said(_DYNAMO, "its first quarter of 2025 earnings"),
+            exhibits=(Exhibit("EX-99.1", "Earnings release", "missing"),),
         ),
         Release("2025-07-22 06:45:00", None, items=("7.01", "9.01")),
         Release(
             "2025-10-21 06:45:00",
             (f"{_DYNAMO} furnished its quarterly earnings release as Exhibit 99.1.",),
+            exhibits=(Exhibit("EX-99.1", "Earnings release", "narrative"),),
         ),
         Release(
             "2026-02-10 06:45:00",
@@ -352,7 +389,8 @@ RELEASES = {
         ),
         Release(
             "2025-10-17 07:30:00",
-            _said(_EASTFIELD, "third quarter of 2025 earnings"),
+            _said(_EASTFIELD, "third quarter of 2025 earnings", "99"),
+            exhibits=(Exhibit("EX-99", "Earnings release"),),
         ),
         Release(
             "2026-01-16 07:30:00",
@@ -361,6 +399,7 @@ RELEASES = {
         Release(
             "2026-04-17 07:30:00",
             _said(_EASTFIELD, "first quarter 2026 earnings"),
+            exhibits=(Exhibit("EX-99.1", "Earnings release", "image"),),
         ),
         Release(
             "2026-07-17 07:30:00",
@@ -415,11 +454,25 @@ def filings(
     return filings
 
 
-def _exhibit(registrant: Registrant, filing: SyntheticFiling, release: Release):
-    kind, description = release.exhibit
+def exhibit_name(registrant: Registrant, filing: SyntheticFiling, kind: str) -> str:
+    """The file name of ``filing``'s exhibit of type ``kind``."""
     digits = kind.removeprefix("EX-").replace(".", "")
-    name = f"{registrant.stem}-{filing.filing_date:%Y%m%d}-ex{digits}.htm"
-    return ((description, name, kind),)
+    return f"{registrant.stem}-{filing.filing_date:%Y%m%d}-ex{digits}.htm"
+
+
+def _exhibits(release: Release) -> tuple[Exhibit, ...]:
+    return release.exhibits or RELEASE_EXHIBIT
+
+
+def _exhibit(registrant: Registrant, filing: SyntheticFiling, release: Release):
+    return tuple(
+        (
+            exhibit.description,
+            exhibit_name(registrant, filing, exhibit.kind),
+            exhibit.kind,
+        )
+        for exhibit in _exhibits(release)
+    )
 
 
 def _in_range(filing: SyntheticFiling) -> bool:
@@ -469,15 +522,44 @@ def write_layer(root: Path, repo: Path) -> SyntheticStore:
             store.index(registrant.cik, filing, _exhibit(registrant, filing, entry))
             if entry.text is None:
                 continue
-            number = entry.exhibit[0].removeprefix("EX-")
-            items = [
-                ("2.02", entry.text),
-                *entry.other,
-                ("9.01", (f"Exhibit {number}: {entry.exhibit[1]}.",)),
-            ]
+            listed = tuple(
+                f"Exhibit {exhibit.kind.removeprefix('EX-')}: {exhibit.description}."
+                for exhibit in _exhibits(entry)
+            )
+            items = [("2.02", entry.text), *entry.other, ("9.01", listed)]
             body = eight_k(registrant.name, items, signed=filing.filing_date)
             store.document(registrant.cik, filing, body)
     return store
+
+
+def _period_end(registrant: Registrant, filing: SyntheticFiling) -> date:
+    """The latest period end before ``filing``: the one its release reports."""
+    return max(r.period for r in REPORTS[registrant] if r.period < filing.filing_date)
+
+
+def exhibit_bodies() -> dict[str, tuple[bytes, str]]:
+    """Each candidate release filing's exhibits, by URL, with their media type: what
+    SEC serves when plan B's acquisition fetches them. An exhibit whose page is
+    ``missing`` is listed on its index page and never served."""
+    bodies = {}
+    for registrant in REGISTRANTS:
+        for filing, entry in filings(registrant):
+            if isinstance(entry, Report) or entry.text is None:
+                continue
+            if "2.02" not in entry.items or not _in_range(filing):
+                continue
+            period_end = _period_end(registrant, filing)
+            for exhibit in _exhibits(entry):
+                if exhibit.page == "missing":
+                    continue
+                url = archive_url(
+                    registrant.cik,
+                    filing.accession,
+                    exhibit_name(registrant, filing, exhibit.kind),
+                )
+                page = exhibit_page(exhibit.page, registrant.name, period_end)
+                bodies[url] = (page, HTML)
+    return bodies
 
 
 def _override(

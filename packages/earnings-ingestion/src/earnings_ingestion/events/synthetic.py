@@ -268,6 +268,60 @@ def eight_k(
     ).encode()
 
 
+def _written(day: date) -> str:
+    return f"{day:%B} {day.day}, {day.year}"
+
+
+def exhibit_page(page: str, registrant: str, period_end: date) -> bytes:
+    """An invented EX-99 exhibit for the quarter ending ``period_end``:
+
+    - ``release``: a headline and a paragraph that report the quarter's results,
+      and a table of figures;
+    - ``narrative``: the same without a table, like Stage 1's narrative-only class;
+    - ``supplement``: supplemental tables under a heading, announcing nothing;
+    - ``overview``: a pro forma overview, like V2's AMC case, announcing nothing;
+    - ``image``: an image and no text, which walker-1 refuses.
+    """
+    name, ended = escape(registrant), _written(period_end)
+    table = (
+        "<table><tr><td>Net sales</td><td>1,000</td></tr>"
+        "<tr><td>Net income</td><td>100</td></tr></table>"
+    )
+    parts = {
+        "release": [
+            f"<h1>{name} Reports Results for the Quarter Ended {ended}</h1>",
+            (
+                f"<p>{name} today reported net sales of $1,000 million for the"
+                f" quarter ended {ended}.</p>"
+            ),
+            table,
+        ],
+        "narrative": [
+            f"<h1>{name} Reports Results for the Quarter Ended {ended}</h1>",
+            (
+                f"<p>{name} today reported higher deliveries for the quarter ended"
+                f" {ended}.</p>"
+            ),
+            "<p>The company will discuss the quarter on a call this morning.</p>",
+        ],
+        "supplement": [
+            "<h1>Supplemental Financial Information</h1>",
+            f"<p>Quarter ended {ended}</p>",
+            table,
+        ],
+        "overview": [
+            "<h1>Pro Forma Financial Overview</h1>",
+            f"<p>Twelve months ended {ended}</p>",
+            table,
+        ],
+        "image": ['<p><img src="release.png" alt=""></p>'],
+    }[page]
+    return (
+        "<!DOCTYPE html><html><head><title>Exhibit 99</title></head><body>"
+        f"{''.join(parts)}</body></html>\n"
+    ).encode()
+
+
 def save(
     store: ArtifactStore,
     url: str,
