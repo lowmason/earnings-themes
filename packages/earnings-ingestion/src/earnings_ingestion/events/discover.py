@@ -44,7 +44,7 @@ from earnings_ingestion.events.filings import (
 from earnings_ingestion.events.release import identify
 from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.events.slots import issuer_slots
-from earnings_ingestion.fetch.client import Fetched
+from earnings_ingestion.fetch.responses import Fetched
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.companyfacts import read_companyfacts
 from earnings_ingestion.sec.filing_index import read_filing_index

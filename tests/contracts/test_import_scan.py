@@ -129,7 +129,6 @@ NETWORK = (
     "earnings_ingestion.cohort.live",
 )
 DISCOVER = SOURCES["earnings_ingestion"] / "events" / "discover.py"
-FETCHED = "earnings_ingestion.fetch.client.Fetched"
 
 
 def imported_names(path: Path) -> list[tuple[int, str]]:
@@ -150,7 +149,8 @@ def imported_names(path: Path) -> list[tuple[int, str]]:
 def client_imports(path: Path) -> list[tuple[int, str]]:
     """What a Stage 5 package module imports that could reach a network client: a
     name in or under ``NETWORK``, or any relative import, which the scan cannot
-    resolve. Only discovery's import of ``Fetched`` is allowed."""
+    resolve. None is allowed: ``Fetched`` and ``UnexpectedResponse`` come from
+    ``fetch.responses``, which holds no client (plan 8, P8-12)."""
     return [
         (line, name)
         for line, name in imported_names(path)
@@ -160,7 +160,6 @@ def client_imports(path: Path) -> list[tuple[int, str]]:
                 name == module or name.startswith(f"{module}.") for module in NETWORK
             )
         )
-        and (path, name) != (DISCOVER, FETCHED)
     ]
 
 
@@ -176,11 +175,6 @@ def test_stage_5_opens_no_client_of_its_own() -> None:
         for line, name in client_imports(path)
     ]
     assert not found
-
-
-def test_discovery_imports_the_fetched_record_it_is_allowed() -> None:
-    """The one allowance is still in use, so it cannot outlive its import."""
-    assert FETCHED in {name for _, name in imported_names(DISCOVER)}
 
 
 def test_the_client_scan_sees_imports_inside_functions(tmp_path: Path) -> None:

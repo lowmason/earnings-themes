@@ -9,7 +9,8 @@ Ported from Stage 1's live-fetch client, ``expirements/parser-fidelity/pf_fetch.
 - A text/html body carrying a block page stops the run before the content type is
   checked, so a block page served where JSON was expected also stops it.
 - ``fetch`` returns the bytes and a ``Retrieval`` and writes nothing. The artifact
-  store decides where bytes live.
+  store decides where bytes live. ``Fetched`` and ``UnexpectedResponse`` live in
+  ``fetch.responses``, which loads no network library.
 
 A §393-408 govern every client. Each request start, redirect hops included, passes
 the throttle. Timeouts are explicit, retries are bounded, with exponential backoff and
@@ -30,7 +31,6 @@ import sys
 import threading
 import time
 from collections.abc import Callable, Collection, Mapping
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import IO, Self
@@ -40,6 +40,7 @@ import httpx
 from earnings_core import sha256_hex
 
 from earnings_ingestion.fetch.records import Retrieval, RetrievalMethod
+from earnings_ingestion.fetch.responses import Fetched, UnexpectedResponse
 
 DEFAULT_MAX_REQUESTS = 500
 MAX_ATTEMPTS = 4
@@ -60,10 +61,6 @@ class AccessStop(RuntimeError):
     Raised for a missing identity, a spent budget, a held lock, a persistent 403,
     exhausted retries, a block page, or a host outside the client's filter.
     """
-
-
-class UnexpectedResponse(RuntimeError):
-    """A response that must not be kept; the caller may skip the item and go on."""
 
 
 def require_identity(variable: str, environ: Mapping[str, str] | None = None) -> str:
@@ -189,14 +186,6 @@ class ProcessLock:
             fcntl.flock(self._handle, fcntl.LOCK_UN)
             self._handle.close()
             self._handle = None
-
-
-@dataclass(frozen=True)
-class Fetched:
-    """A validated response body and the record of its retrieval."""
-
-    body: bytes
-    retrieval: Retrieval
 
 
 class PoliteClient:

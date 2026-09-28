@@ -98,6 +98,7 @@ ACQUISITION = {"edgar", "pandas", "pyarrow"}
 EVENTS = [
     "earnings_ingestion.events.acceptance",
     "earnings_ingestion.events.build",
+    "earnings_ingestion.events.discover",
     "earnings_ingestion.events.eligibility",
     "earnings_ingestion.events.evidence",
     "earnings_ingestion.events.filings",
@@ -116,7 +117,7 @@ EVENTS = [
 ]
 
 
-@pytest.mark.parametrize("module", [*EVENTS, "earnings_ingestion.events.discover"])
+@pytest.mark.parametrize("module", EVENTS)
 def test_stage_5_loads_no_acquisition_library(module: str) -> None:
     """R14.5: no edgartools, pandas, or pyarrow output crosses the boundary."""
     assert modules_loaded_by(module) & (ACQUISITION | FORBIDDEN) == set()
@@ -124,5 +125,7 @@ def test_stage_5_loads_no_acquisition_library(module: str) -> None:
 
 @pytest.mark.parametrize("module", EVENTS)
 def test_the_offline_event_path_loads_no_network_client(module: str) -> None:
-    """Building, freezing, and selecting read saved responses (A §410)."""
+    """Building, freezing, and selecting read saved responses (A §410), and
+    discovery takes a fetch callable, so it loads no client; only the CLI opens one
+    (P6-22; plan 8, P8-12)."""
     assert full_modules_loaded_by(module) & NETWORK == set()
