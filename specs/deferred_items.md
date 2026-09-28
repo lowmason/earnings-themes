@@ -464,7 +464,9 @@
       Widened by PR #6's review (2026-09-27, F23, F36, and F37). Every `events`
       command has loads and writes outside any handler for their error type, so
       each case below ends in a traceback, not a `problem:` or `Refused:` line.
-      Each fails closed: nothing is written or sent.
+      Each fails closed, with no partial file and no request after the failure,
+      except a freeze that fails between its two writes (the third bullet), which
+      leaves its evidence record behind.
       - `load_overrides` (`events/build.py`) raises `TOMLDecodeError`, or a
         pydantic `ValidationError` for a repeated `override_id`, a second
         override of one kind, or an extra key, and `_build` in `events_cli.py`
@@ -736,16 +738,36 @@
       primary document that redirects to another page is read as the
       candidate's 8-K and cited under the URL requested. None of the 661 records
       saved behind v1 was redirected; plan B's exhibits, which become canonical
-      text and quotes, raise the stakes. The same review saw that a page with no
-      "Item" line at all makes `read_text` in `events/release.py` raise
-      `ValueError` rather than read as unread. Paths are under
+      text and quotes, raise the stakes. Paths are under
       `packages/earnings-ingestion/src/earnings_ingestion/`. Size: quick-fix.
       Done when: a fetch whose `final_url` differs from its `request_url` is
       refused before it is saved, and `SavedResponses.get` and
       `_citations_refused` refuse one already saved, by raising, never by
       skipping it, which would make discovery refetch it on every run, each with
-      a synthetic redirected record; and `read_text` reads a page with no "Item"
-      line as unread, with a test; before plan B's first acquisition.
+      a synthetic redirected record; before plan B's first acquisition.
+- [ ] Read a primary document with no Item line as unread (PR #6's review, found
+      with F13): `read_text` in `events/release.py` pairs each Item heading with the
+      one after it through `zip(..., strict=True)`, which raises `ValueError` when
+      the text has no line that begins "Item" and a number at all, so it never
+      returns its `Reading(unread=...)`. Text with some other Item line but no Item
+      2.02 reads as unread, as it should. The module docstring promises that a
+      document with no such heading states nothing. `read_document` does not catch
+      the error, and `identify` wraps only `saved.get`, so it escapes `build_events`
+      in `events/build.py`, which `events build` and `events freeze` print as a
+      traceback, and the documents phase of `discover` in `events/discover.py`,
+      where `discover_command` in
+      `apps/earnings-pipeline/src/earnings_pipeline/events_cli.py` catches it as a
+      `ValueError` and says a rerun fetches only what is missing, and every rerun
+      meets the same stop. A primary document that redirects to a page with no Item
+      line (F13), or one whose Item headings `walker-1` does not start a line with,
+      can reach it through plan A's commands today. v1 does not: the build over the
+      saved responses behind v1 reads each of its candidates without raising. Paths
+      are under `packages/earnings-ingestion/src/earnings_ingestion/` unless given
+      in full. Size: quick-fix. Done when: `read_text` returns `Reading(unread=...)`
+      for text with no Item line, with a unit test in
+      `packages/earnings-ingestion/tests/test_events_release.py`, and `events build`
+      over a synthetic candidate whose primary document has no Item line ends
+      without a traceback.
 - [ ] Cite the index page that places a periodic report (PR #6's review, P5.4):
       after P7-8's `--filing` remedy, `_visible` in `events/filings.py` places a
       periodic report by its saved index page, but `_event` in
