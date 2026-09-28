@@ -92,6 +92,8 @@ def load_event_evidence(path: Path, manifest: EventManifest) -> EventEvidence:
     if path.name != evidence_path(path.parent, evidence.event_manifest_version).name:
         raise ValueError(f"{path} holds version {evidence.event_manifest_version}")
     definition = manifest.definition
+    if content_hash(manifest) != definition.content_hash:
+        raise ValueError(f"{path}: its manifest does not hash to its content_hash")
     for field, found, expected in (
         ("corpus_id", evidence.corpus_id, definition.corpus_id),
         (

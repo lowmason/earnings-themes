@@ -217,6 +217,15 @@ def test_loading_rechecks_the_hash_and_the_name(universe, layer, tmp_path) -> No
         load_event_manifest(changed)
 
 
+def test_loading_evidence_rechecks_its_manifest(universe, layer, tmp_path) -> None:
+    """The evidence binds to a manifest only as that manifest hashes, so one changed
+    since it was loaded is refused, as ``load_event_manifest`` refuses its file."""
+    frozen = freeze(reviewed(universe, layer), layer, tmp_path / "corpus")
+    changed = frozen.manifest.model_copy(update={"rows": frozen.manifest.rows[:-1]})
+    with pytest.raises(ValueError, match="does not hash"):
+        load_event_evidence(frozen.evidence_path, changed)
+
+
 @pytest.mark.parametrize(
     ("tamper", "message"),
     [

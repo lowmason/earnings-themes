@@ -1368,7 +1368,8 @@ primary document through `walker-1`'s text, and a JSON file by pointer.
   whatever its evidence record would say; new content takes the next.
 - **Reading.** `earnings_ingestion.events.freeze.load_event_manifest` rechecks that
   hash and the file's name. `load_event_evidence(path, manifest)` rechecks the
-  evidence record's name, and refuses it, naming the field, unless its `corpus_id`,
+  evidence record's name and the manifest's content hash, and refuses the record,
+  naming the field, unless its `corpus_id`,
   `event_manifest_version`, and `event_manifest_hash` are the manifest's `corpus_id`,
   version, and `content_hash`, and its events' `event_id`s are the manifest's rows in
   order. `earnings_ingestion.events.evidence.check_evidence` verifies every citation
