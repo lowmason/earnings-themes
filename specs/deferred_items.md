@@ -449,7 +449,13 @@
       true release is dropped, and a build-level test that the case holds the
       freeze; and `events build` reports, for each `set_release_filing`, whether
       the rule agrees, names another filing, or resolves nothing, with
-      `release-id/2` deciding whether a contradiction holds the freeze.
+      `release-id/2` deciding whether a contradiction holds the freeze. Also
+      (PR #6's combined review): a release accepted after its event's next period
+      end P′ lies in the next event's range, and when its text states no judged
+      period, `release-id/1` makes it that event's release as `sole_candidate`.
+      Since PR #6 bounds a `set_release_filing` to `(P, P′]`, no override can give
+      it back to its own event, and no override can take a rule's pick away from
+      an event that is not `ambiguous`. `release-id/2` decides both.
 - [ ] Report `events freeze`'s citation errors as `problem:` lines (plan 7's
       final review, Minor): `freeze_command` in
       `apps/earnings-pipeline/src/earnings_pipeline/events_cli.py` catches only
@@ -480,8 +486,10 @@
         `LocatorError` are `ValueError`s too. Treat the cohort's overrides loader
         in `cohort_cli.py` the same way, with the first item of this section.
       - `Layout.universes()` runs outside any handler in every command,
-        `SavedResponses` in build and freeze, `frozen_event_manifests` in select,
-        and `write_new` in freeze and select. So a tampered manifest, an empty or
+        `SavedResponses` in build and freeze, and `write_new` in freeze and select
+        (PR #6's F5 fix put select's `frozen_event_manifests` inside a `ValueError`
+        handler, so a tampered event manifest already ends as `Refused:`). So a
+        tampered universe manifest, an empty or
         truncated retrieval record (a `ValidationError` that names no file), or
         two racing selects (`FileExistsError`) print tracebacks, and `events
         discover` advises a rerun that meets the same stop. `universes()` should
@@ -504,8 +512,8 @@
       Size, as widened: plan. Done when, in addition: a repeated `override_id`, a
       second override of one kind, and a TOML syntax error each end `events build`
       and `events freeze` with a `problem:` line; a tampered universe manifest
-      makes build refuse cleanly; a tampered `events-v1.json` makes select refuse
-      cleanly; an empty retrieval record ends build with a `problem:` line naming
+      makes build refuse cleanly; an empty retrieval record ends build with a
+      `problem:` line naming
       its path; and a leftover evidence file with other bytes gives the named
       refusal while an identical one still completes the freeze; each with a test
       and no traceback.
@@ -555,7 +563,13 @@
         and the `events discover --filing` hint it prints for each
         `acceptance_time_unknown` finding (both added by PR #6's P4.4 fix), and
         the `acceptance_time_unknown` row of `docs/data-dictionary.md` stop
-        promising that saved data clears it.
+        promising that saved data clears it. PR #6's
+        `test_build_names_each_blocking_finding_s_own_remedy` (in
+        `apps/earnings-pipeline/tests/test_events_cli.py`) builds its unknown from
+        a row with no value, the one case where the `--filing` hint cannot clear
+        it; under either reading, move its hint assertion to a value whose file
+        establishes no convention, and pin the chosen wording for a no-value
+        row.
       With either, bound the 8-K trigger from above with a margin past the
       cutoff: a filing accepted after 17:30 takes the next business day's filing
       date, so its filing date can fall after its acceptance date. Size, as
@@ -952,7 +966,7 @@
       N-PORT makes the cohort build raise `CohortError` naming that accession and
       each copy's pointer, never deduplicating it, with a test.
 - [ ] Decide whether two issuers' events may share one release (PR #6's review
-      of its F1 fix): `_shared_releases` in `events/build.py` refuses a
+      of its F1 fix): `shared_releases` in `events/build.py` refuses a
       `release_accession` that two rows share anywhere in the corpus, as the
       Stage 5 spec says ("No two events share a release"). A co-registrant 8-K
       that `release-id/1` identifies as two cohort issuers' release would then
