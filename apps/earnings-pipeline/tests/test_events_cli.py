@@ -26,6 +26,7 @@ RUNNER = CliRunner()
 REPO = Path(__file__).resolve().parents[3]
 UNIVERSES = COHORT_MANIFEST.parent
 IDENTITY = {"EDGAR_IDENTITY": "Plan 7 synthetic discovery test@example.com"}
+EVENTS_STORE = Path("data") / "raw" / "events"
 EVENTS_HASH = "438bfec835dee07c119e1b0b24e985fb549dc712564850dc3f73914b557bfe58"
 PILOT_HASH = "71c6ac4fabc3b7e727da88b4ee74048a0ee3559c8e5ce26c02227376d820333c"
 
@@ -36,6 +37,15 @@ def repo(tmp_path: Path) -> Path:
     for directory in (UNIVERSES, FIXTURE_DIR):
         shutil.copytree(REPO / directory, tmp_path / directory)
     return tmp_path
+
+
+@pytest.fixture
+def moved(repo: Path) -> Path:
+    """The corpus's saved responses, moved under data/raw, where a command that
+    fetches may save."""
+    (repo / EVENTS_STORE).parent.mkdir(parents=True)
+    shutil.move(repo / FIXTURE_DIR / "raw", repo / EVENTS_STORE)
+    return repo / EVENTS_STORE
 
 
 def run(repo: Path, *args: str, store: Path = FIXTURE_DIR / "raw"):
@@ -237,16 +247,16 @@ def test_discover_stops_on_a_persistent_403_and_says_how_to_resume(
 
 
 def test_discover_names_a_saved_response_it_cannot_read_and_fails(
-    repo, monkeypatch
+    repo, moved, monkeypatch
 ) -> None:
     """A saved response whose bytes are gone is never fetched again: discover names
     it and exits 1, and promises nothing of a rerun, which cannot mend it."""
     url = submissions_url("0009990001")
-    saved = SavedResponses(ArtifactStore(repo / FIXTURE_DIR / "raw", repo))
+    saved = SavedResponses(ArtifactStore(moved, repo))
     artifact = saved.get(url).artifact
     (repo / artifact.storage_ref).unlink()
     client(monkeypatch, served())
-    result = run(repo, "discover", "--max-requests", "5")
+    result = run(repo, "discover", "--max-requests", "5", store=EVENTS_STORE)
     assert result.exit_code == 1
     assert result.stdout.splitlines()[1:] == [
         "submissions and companyfacts: 0 to fetch",
@@ -264,7 +274,14 @@ def test_discover_names_a_saved_response_it_cannot_read_and_fails(
 
 def test_discover_filing_spends_at_most_two_requests(repo, monkeypatch) -> None:
     budgets = client(monkeypatch, served())
-    result = run(repo, "discover", "--filing", "0009990005", "0009990005-99-000001")
+    result = run(
+        repo,
+        "discover",
+        "--filing",
+        "0009990005",
+        "0009990005-99-000001",
+        store=EVENTS_STORE,
+    )
     assert result.exit_code == 1
     assert budgets == [2]
     assert "Stopped: the saved filings of CIK 0009990005 list no" in result.stderr
@@ -278,7 +295,7 @@ def unsave(repo: Path, cik: str, accession: str) -> tuple[str, str]:
     """Delete the retrieval records of a filing's saved index page and primary
     document, so that discovery lacks both; return the two URLs."""
     folder = f"/{int(cik)}/{accession.replace('-', '')}/"
-    root = repo / FIXTURE_DIR / "raw" / SEC_SOURCE_ID / "retrievals"
+    root = repo / EVENTS_STORE / SEC_SOURCE_ID / "retrievals"
     gone = []
     for path in sorted(root.glob("*/*.json")):
         record = Retrieval.model_validate_json(path.read_text(encoding="utf-8"))
@@ -291,12 +308,14 @@ def unsave(repo: Path, cik: str, accession: str) -> tuple[str, str]:
     return index, document
 
 
-def test_discover_filing_keeps_a_smaller_approved_cap(repo, monkeypatch) -> None:
+def test_discover_filing_keeps_a_smaller_approved_cap(repo, moved, monkeypatch) -> None:
     """An approved --max-requests is a hard ceiling with --filing too: the run stops
     at it, and a rerun fetches only what is left."""
     index, document = unsave(repo, *FILED)
     budgets = client(monkeypatch, served())
-    result = run(repo, "discover", "--max-requests", "1", "--filing", *FILED)
+    result = run(
+        repo, "discover", "--max-requests", "1", "--filing", *FILED, store=EVENTS_STORE
+    )
     assert result.exit_code == 1
     assert budgets == [1]
     assert result.stdout.splitlines() == [
@@ -306,9 +325,9 @@ def test_discover_filing_keeps_a_smaller_approved_cap(repo, monkeypatch) -> None
         "requests sent: 1; a rerun fetches only what is missing",
     ]
     assert "Stopped: request budget of 1 reached" in result.stderr
-    saved = SavedResponses(ArtifactStore(repo / FIXTURE_DIR / "raw", repo))
+    saved = SavedResponses(ArtifactStore(moved, repo))
     assert index in saved and document not in saved
-    result = run(repo, "discover", "--filing", *FILED)
+    result = run(repo, "discover", "--filing", *FILED, store=EVENTS_STORE)
     assert result.exit_code == 0, result.output
     assert budgets == [1, 2]
     assert result.stdout.splitlines()[1:] == [
@@ -318,10 +337,12 @@ def test_discover_filing_keeps_a_smaller_approved_cap(repo, monkeypatch) -> None
     ]
 
 
-def test_discover_filing_never_raises_its_cap(repo, monkeypatch) -> None:
+def test_discover_filing_never_raises_its_cap(repo, moved, monkeypatch) -> None:
     unsave(repo, *FILED)
     budgets = client(monkeypatch, served())
-    result = run(repo, "discover", "--max-requests", "5", "--filing", *FILED)
+    result = run(
+        repo, "discover", "--max-requests", "5", "--filing", *FILED, store=EVENTS_STORE
+    )
     assert result.exit_code == 0, result.output
     assert budgets == [2]
     assert result.stdout.splitlines()[-1] == "fetched 2; requests sent: 2"
@@ -338,8 +359,57 @@ def test_discover_refuses_a_second_filing(repo, monkeypatch, second) -> None:
     """Each filing's requests are approved on their own: a second --filing is refused
     before any client opens, never dropped."""
     budgets = client(monkeypatch, served())
-    result = run(repo, "discover", "--filing", *FILED, *second)
+    result = run(repo, "discover", "--filing", *FILED, *second, store=EVENTS_STORE)
     assert result.exit_code == 1
     assert budgets == []
     assert result.stdout == ""
     assert "Refused: pass one --filing" in result.stderr
+
+
+def test_discover_refuses_a_store_outside_data_raw(repo, monkeypatch) -> None:
+    """tests/fixtures/ is committed, so fetched SEC pages saved there would reach this
+    public repository: discover refuses before any client opens (PR #6's review,
+    F19)."""
+
+    def refuse(**kwargs):
+        raise AssertionError("the client opened")
+
+    monkeypatch.setattr(events_cli, "open_sec_client", refuse)
+    result = run(
+        repo, "discover", "--max-requests", "1", store=Path("tests/fixtures/x")
+    )
+    assert result.exit_code == 1
+    assert result.stderr.splitlines() == [
+        (
+            "Refused: tests/fixtures/x does not resolve under data/raw, where"
+            " fetched bytes are kept out of Git"
+        )
+    ]
+
+
+def test_freeze_and_select_print_a_corpus_outside_the_repo_in_full(
+    repo, tmp_path_factory
+) -> None:
+    """A corpus directory outside the repository, or spelled through a symlinked
+    prefix, prints in full rather than crashing after the write (F38)."""
+    outside = tmp_path_factory.mktemp("elsewhere") / "corpus"
+    shutil.copytree(repo / FIXTURE_DIR, outside, ignore=shutil.ignore_patterns("raw"))
+    layout = ["--corpus-dir", str(outside), "--store", str(FIXTURE_DIR / "raw")]
+
+    def invoke(command: str):
+        args = ["events", "--repo", str(repo), "--universe-dir", str(UNIVERSES)]
+        return RUNNER.invoke(
+            cli.app, [*args, *layout, "--corpus-id", "djia-synthetic", command]
+        )
+
+    froze = invoke("freeze")
+    assert froze.exit_code == 0, froze.output
+    assert froze.stdout.splitlines()[1:] == [
+        f"{outside / 'events-v1.json'}  {EVENTS_HASH}",
+        str(outside / "events-v1.evidence.json"),
+    ]
+    selected = invoke("select")
+    assert selected.exit_code == 0, selected.output
+    assert selected.stdout.splitlines()[-1] == (
+        f"{outside / 'pilot-v1.json'}  {PILOT_HASH}"
+    )

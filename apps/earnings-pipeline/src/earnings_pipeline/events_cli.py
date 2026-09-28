@@ -17,6 +17,10 @@ names each saved submissions file, older page, index page, or primary document t
 build cannot read, which no rerun fetches again, since it is saved. ``build``, ``freeze``, and ``select`` read committed files and saved
 responses alone. ``build`` exits 1 while anything holds the freeze.
 
+``discover`` refuses a ``--store`` that does not resolve under ``data/raw``, before
+any client opens, and every command prints a path outside the repository in full
+(``earnings_pipeline.paths``).
+
 The universe is the latest frozen manifest in ``--universe-dir``, which holds one
 universe's versions; ``select`` reads the version its event manifest read.
 ``--corpus-dir`` holds one corpus's versions: ``freeze`` refuses a build of another
@@ -59,11 +63,15 @@ from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.client import open_sec_client
 from typer.core import TyperCommand
 
+from earnings_pipeline.paths import raw_store_refusal, shown
+
 events = typer.Typer(
     no_args_is_help=True, help="Stage 5's events: discovery, eligibility, the pilot."
 )
 FILING_REQUESTS = 2
 """What ``discover --filing`` fetches at most: an index page and an 8-K document."""
+FETCHING = frozenset({"discover"})
+"""The commands that save fetched bytes under ``--store``."""
 
 
 @dataclass(frozen=True)
@@ -107,7 +115,12 @@ def main(
     corpus_id: Annotated[str, typer.Option(help="The corpus.")] = CORPUS_ID,
 ) -> None:
     """Paths are relative to --repo; the defaults are the real corpus's."""
-    context.obj = Layout(repo.resolve(), universe_dir, corpus_dir, store, corpus_id)
+    layout = Layout(repo.resolve(), universe_dir, corpus_dir, store, corpus_id)
+    if context.invoked_subcommand in FETCHING and (
+        refusal := raw_store_refusal(layout.repo, store)
+    ):
+        _fail(refusal)
+    context.obj = layout
 
 
 def _fail(message: str) -> NoReturn:
@@ -242,8 +255,8 @@ def freeze_command(context: typer.Context) -> None:
     definition = frozen.manifest.definition
     verb = "froze" if frozen.created else "unchanged:"
     typer.echo(f"{verb} {definition.corpus_id} v{definition.event_manifest_version}")
-    typer.echo(f"{frozen.path.relative_to(layout.repo)}  {definition.content_hash}")
-    typer.echo(f"{frozen.evidence_path.relative_to(layout.repo)}")
+    typer.echo(f"{shown(frozen.path, layout.repo)}  {definition.content_hash}")
+    typer.echo(shown(frozen.evidence_path, layout.repo))
 
 
 @events.command("select")
@@ -295,4 +308,4 @@ def select_command(context: typer.Context) -> None:
         f"{verb} {definition.pilot_id} v{definition.pilot_version}:"
         f" {len(manifest.rows)} of target {definition.target}{filled}"
     )
-    typer.echo(f"{frozen.path.relative_to(layout.repo)}  {definition.content_hash}")
+    typer.echo(f"{shown(frozen.path, layout.repo)}  {definition.content_hash}")

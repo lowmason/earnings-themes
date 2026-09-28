@@ -28,7 +28,10 @@ def repo(generated: Path, tmp_path: Path) -> Path:
     return tmp_path
 
 
-def run(repo: Path, *args: str):
+COHORT_STORE = Path("data") / "raw" / "cohort"
+
+
+def run(repo: Path, *args: str, store: Path = FIXTURE_DIR / "raw"):
     layout = [
         "cohort",
         "--repo",
@@ -36,7 +39,7 @@ def run(repo: Path, *args: str):
         "--config-dir",
         str(FIXTURE_DIR),
         "--store",
-        str(FIXTURE_DIR / "raw"),
+        str(store),
         "--register",
         str(FIXTURE_DIR / "membership-source-register.toml"),
         "--sec-register",
@@ -131,7 +134,7 @@ def test_fetch_sec_goes_through_the_shared_client(repo, monkeypatch) -> None:
         yield FakeSec()
 
     monkeypatch.setattr(cohort_cli, "open_sec_client", fake_open)
-    result = run(repo, "fetch-sec")
+    result = run(repo, "fetch-sec", store=COHORT_STORE)
     assert result.exit_code == 1
     assert "Stopped: 403 persisted" in result.stderr
     assert requested == ["https://www.sec.gov/files/company_tickers.json"]
@@ -166,7 +169,13 @@ def test_fetch_saves_pages_through_the_web_client(repo, monkeypatch) -> None:
         yield FakeWeb()
 
     monkeypatch.setattr(cohort_cli, "open_web_client", fake_open)
-    result = run(repo, "fetch", "synthetic-index", "https://index.example/notices/new")
+    result = run(
+        repo,
+        "fetch",
+        "synthetic-index",
+        "https://index.example/notices/new",
+        store=COHORT_STORE,
+    )
     assert result.exit_code == 0, result.output
     assert sha256_hex(body) in result.stdout
 
@@ -216,3 +225,55 @@ def test_terms_hashes_a_saved_copy_without_a_client(
     refused = run(repo, *terms, "--media-type", "application/pdf")
     assert refused.exit_code == 1
     assert "Refused: application/pdf contradicts the bytes" in refused.stderr
+
+
+@pytest.mark.parametrize(
+    "command",
+    [["fetch-sec"], ["fetch", "synthetic-index", "https://index.example/notices/n"]],
+)
+def test_a_fetching_command_refuses_a_store_outside_data_raw(
+    repo, monkeypatch, command
+) -> None:
+    """Fetched bytes are saved only under data/raw, which Git ignores; the check
+    comes before any client opens (PR #6's review, F19)."""
+
+    def refuse(*args, **kwargs):
+        raise AssertionError("a client opened")
+
+    monkeypatch.setattr(cohort_cli, "open_sec_client", refuse)
+    monkeypatch.setattr(cohort_cli, "open_web_client", refuse)
+    result = run(repo, *command)
+    assert result.exit_code == 1
+    assert result.stderr.splitlines() == [
+        (
+            f"Refused: {FIXTURE_DIR / 'raw'} does not resolve under data/raw, where"
+            " fetched bytes are kept out of Git"
+        )
+    ]
+
+
+def test_freeze_prints_a_manifest_outside_the_repo_in_full(
+    repo, tmp_path_factory
+) -> None:
+    outside = tmp_path_factory.mktemp("elsewhere") / "cohort"
+    shutil.copytree(repo / FIXTURE_DIR, outside)
+    result = RUNNER.invoke(
+        cli.app,
+        [
+            "cohort",
+            "--repo",
+            str(repo),
+            "--config-dir",
+            str(outside),
+            "--store",
+            str(FIXTURE_DIR / "raw"),
+            "--register",
+            str(outside / "membership-source-register.toml"),
+            "--sec-register",
+            str(outside / "source-register.toml"),
+            "freeze",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    (line,) = [line for line in result.stdout.splitlines() if "-v1.json" in line]
+    assert line.startswith(str(outside / "manifests" / "djia-synthetic-v1.json"))

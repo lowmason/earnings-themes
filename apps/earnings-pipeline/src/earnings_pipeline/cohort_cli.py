@@ -14,6 +14,9 @@ through its client's access policy, and ``terms --saved`` hashes a copy saved in
 browser without it; ``build`` and ``freeze`` read committed files and saved
 artifacts alone. ``cite`` prints the TOML to commit on stdout and the cited text
 on stderr only, so no source wording is pasted into a committed file by accident.
+``fetch`` and ``fetch-sec`` refuse a ``--store`` that does not resolve under
+``data/raw``, before any client opens, and every command prints a path outside the
+repository in full (``earnings_pipeline.paths``).
 """
 
 from dataclasses import dataclass
@@ -53,7 +56,11 @@ from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.client import open_sec_client
 from earnings_ingestion.sec.urls import is_sec_host
 
+from earnings_pipeline.paths import raw_store_refusal, shown
+
 cohort = typer.Typer(no_args_is_help=True, help="Stage 4's point-in-time DJIA cohort.")
+FETCHING = frozenset({"fetch", "fetch-sec"})
+"""The commands that save fetched bytes under ``--store``."""
 
 
 @dataclass(frozen=True)
@@ -93,7 +100,12 @@ def main(
     ] = SEC_REGISTER,
 ) -> None:
     """Paths are relative to --repo; the defaults are the real cohort's."""
-    context.obj = Layout(repo.resolve(), config_dir, store, register, sec_register)
+    layout = Layout(repo.resolve(), config_dir, store, register, sec_register)
+    if context.invoked_subcommand in FETCHING and (
+        refusal := raw_store_refusal(layout.repo, store)
+    ):
+        _fail(refusal)
+    context.obj = layout
 
 
 def _fail(message: str) -> NoReturn:
@@ -261,7 +273,7 @@ def freeze_command(context: typer.Context) -> None:
     verb = "froze" if frozen.created else "unchanged:"
     definition = frozen.manifest.definition
     typer.echo(f"{verb} {definition.universe_id} v{definition.universe_version}")
-    typer.echo(f"{frozen.path.relative_to(layout.repo)}  {definition.content_hash}")
+    typer.echo(f"{shown(frozen.path, layout.repo)}  {definition.content_hash}")
 
 
 @cohort.command("terms")
@@ -316,4 +328,4 @@ def verify_live_command(context: typer.Context) -> None:
     typer.echo(
         f"rebuilt {result.rebuilt_content_hash}; frozen {result.frozen_content_hash}"
     )
-    typer.echo(f"record: {path.relative_to(layout.repo)}")
+    typer.echo(f"record: {shown(path, layout.repo)}")
