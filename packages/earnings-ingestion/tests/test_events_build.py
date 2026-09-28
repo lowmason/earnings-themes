@@ -592,6 +592,28 @@ def test_a_redirected_record_is_refused_where_it_is_read(universe, tmp_path) -> 
     ) in problems
 
 
+def test_a_candidate_with_no_item_line_builds(universe, tmp_path) -> None:
+    """A primary document with no Item line at all is read as unread, and the build
+    goes on (PR #6's review, "Read a primary document with no Item line as
+    unread")."""
+    layer = write_layer(tmp_path / "data" / "raw" / "events", tmp_path)
+    number = accession(DYNAMO, "2024-10-22 06:45:00")
+    ((filing, _),) = [(f, e) for f, e in filings(DYNAMO) if f.accession == number]
+    body = b"<html><body><p>Dynamo Motors Co posted its results.</p></body></html>"
+    save(
+        layer.store,
+        archive_url(DYNAMO.cik, number, filing.primary_document),
+        body,
+        "text/html",
+        datetime(2026, 9, 29, tzinfo=UTC),
+    )
+    built = run(universe, layer)
+    detail = built.details["cik-0009990005:2024-09-27"]
+    (candidate,) = detail.identification.candidates
+    assert candidate.reading.unread == "it has no Item 2.02 heading"
+    assert detail.identification.method is IdentificationMethod.SOLE_CANDIDATE
+
+
 def test_a_filing_accepted_after_the_cutoff_is_refused(universe, tmp_path) -> None:
     """P-C4. The layer saves no index page for Acme's late release; this test saves
     one, so that the cutoff itself refuses it."""

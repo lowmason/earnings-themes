@@ -174,9 +174,10 @@ def read_text(text: str) -> Reading:
     """Read walker-1's text of a primary document."""
     headings = list(_HEADING.finditer(text))
     sections = []
-    for heading, following in zip(headings, [*headings[1:], None], strict=True):
+    for number, heading in enumerate(headings):
         if heading.group(1) != RESULTS_ITEM:
             continue
+        following = headings[number + 1] if number + 1 < len(headings) else None
         end = len(text) if following is None else following.start()
         body = text[heading.start() : end].rstrip()
         sections.append((heading.start(), heading.start() + len(body)))
