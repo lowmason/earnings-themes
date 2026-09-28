@@ -301,7 +301,8 @@ def test_discover_filing_keeps_a_smaller_approved_cap(repo, monkeypatch) -> None
     assert budgets == [1]
     assert result.stdout.splitlines() == [
         "at most 1 requests to SEC, through the shared client",
-        f"8-K {FILED[1]}: 2 to fetch",
+        f"8-K {FILED[1]}: 1 to fetch",
+        f"8-K {FILED[1]}'s document: 1 to fetch",
         "requests sent: 1; a rerun fetches only what is missing",
     ]
     assert "Stopped: request budget of 1 reached" in result.stderr
@@ -311,7 +312,8 @@ def test_discover_filing_keeps_a_smaller_approved_cap(repo, monkeypatch) -> None
     assert result.exit_code == 0, result.output
     assert budgets == [1, 2]
     assert result.stdout.splitlines()[1:] == [
-        f"8-K {FILED[1]}: 1 to fetch",
+        f"8-K {FILED[1]}: 0 to fetch",
+        f"8-K {FILED[1]}'s document: 1 to fetch",
         "fetched 1; requests sent: 1",
     ]
 

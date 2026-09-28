@@ -63,7 +63,12 @@ from earnings_ingestion.events.eligibility import (
     decide,
     memberships,
 )
-from earnings_ingestion.events.filings import IssuerFilings, Placed, issuer_filings
+from earnings_ingestion.events.filings import (
+    IssuerFilings,
+    Placed,
+    index_disagreement,
+    issuer_filings,
+)
 from earnings_ingestion.events.records import (
     ACKNOWLEDGEABLE,
     EventFinding,
@@ -291,6 +296,8 @@ def _named_filing(
         return None, f"{url}: {exc}"
     if index.accession != accession:
         return None, f"{url} is the index page of {index.accession}"
+    if (why := index_disagreement(filing, index)) is not None:
+        return None, f"{url}: {why}"
     why = release_refusal(
         accession, instant, slot.period_end, slot.next_period_end, cutoff
     )
