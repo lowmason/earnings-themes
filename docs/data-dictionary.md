@@ -1487,3 +1487,113 @@ and nor is a same-day handoff between two of its securities.
   F10).
 - **The current pilot.** `current_pilot(directory, events, universe)` is the pilot
   frozen over the current event manifest, loaded by `load_pilot` (F4).
+
+## earnings-ingestion processing-state records, schema version 1
+
+- **Package.** The records, and the transitions R1.4 allows, are in
+  `earnings_ingestion.events.states`; the table's Parquet schema is in
+  `earnings_ingestion.events.state_table` (Stage 5, plan 8).
+- **Schema version.** These records join ingestion schema version `1`.
+  `StateTransition` carries it as `schema_version`; `ExhibitAttempt` does not.
+- **Documents.** Each pilot event expects one document, its release, whose
+  `document_id` is `<event_id>:release`.
+
+### `DocumentState`
+
+R1.4's processing states. A §644's `available` is `acquired`, and its `processed` is
+`completed` or `completed-no-theme`.
+
+| Value | Meaning |
+| --- | --- |
+| `expected` | A pilot event's release, before it is attempted |
+| `acquired` | A candidate exhibit's bytes are saved |
+| `parsed` | A candidate canonicalized, and `release-content/1` confirmed it or an acquisition override named it |
+| `failed` | No candidate was confirmed, and one failed to canonicalize |
+| `unavailable` | No candidate could be fetched, or every one fetched canonicalized and none was confirmed |
+| `restricted` | The source's rights forbid local processing; fixtures only, since SEC documents are public |
+| `partial` | Set by a later stage; fixtures only in Stage 5 |
+| `completed` | Set by a later stage; fixtures only in Stage 5 |
+| `completed-no-theme` | Set by a later stage, which found no theme; fixtures only in Stage 5 |
+
+### `MissingReason`
+
+| Value | Meaning |
+| --- | --- |
+| `not_yet_checked` | `expected`: not attempted yet |
+| `not_found` | `unavailable`: no candidate exhibit could be fetched |
+| `no_confirmed_release` | `unavailable`: every candidate fetched canonicalized, and none was confirmed |
+| `rights_restricted` | `restricted`: the source's rights forbid local processing |
+| `parse_failed` | `failed`: `failure_reason` gives Stage 3's reason |
+
+### `ExhibitChoice`
+
+Why an exhibit was tried, in R1.2's order.
+
+| Value | Meaning |
+| --- | --- |
+| `named` | The Item 2.02 text names its number, such as "Exhibit 99.1" |
+| `described` | Its description on the index page names a release |
+| `lowest_sequence` | Neither: the rest, lowest sequence first |
+| `override` | A `set_release_document` override names it |
+
+### `AttemptOutcome`
+
+| Value | Meaning |
+| --- | --- |
+| `confirmed` | It canonicalized, and `release-content/1` confirmed it |
+| `not_confirmed` | It canonicalized, and `release-content/1` did not confirm it |
+| `canonicalization_failed` | `walker-1` refused it, with a `FailureReason` |
+| `not_fetched` | The client refused its response: a status other than 200, an unexpected media type, or a redirect |
+
+### `ExhibitAttempt`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `accession` | accession | The filing that lists the exhibit |
+| `filename` | string | The exhibit's file name on the index page |
+| `exhibit_type` | string | Its type on the index page, such as `EX-99.1` |
+| `choice` | `ExhibitChoice` | Why it was tried |
+| `outcome` | `AttemptOutcome` | What the attempt came to |
+| `artifact_sha256` | 64 lowercase hex or null | The saved bytes' SHA-256; exactly when it was fetched |
+| `failure_reason` | `FailureReason` or null | Exactly when canonicalization failed |
+| `detail` | string or null | What confirmation lacked, or the client's refusal |
+
+### `StateTransition`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Ingestion record schema version |
+| `document_id` | ID part | `<event_id>:release` |
+| `event_id` | ID part | The pilot event |
+| `run_id` | ID part | The run that recorded it, and its file's name |
+| `sequence` | int ≥ 0 | Its position in its run |
+| `recorded_at` | UTC datetime | When it was recorded |
+| `from_state` | `DocumentState` or null | The state before; null at the start |
+| `to_state` | `DocumentState` | The state after; `NEXT` allows it from `from_state` |
+| `missing_reason` | `MissingReason` or null | Exactly for `expected`, `unavailable`, `restricted`, and `failed` |
+| `failure_reason` | `FailureReason` or null | Exactly for `failed` |
+| `pilot_id` | ID part | The pilot the run read |
+| `pilot_version` | int ≥ 1 | Its version |
+| `pilot_hash` | 64 lowercase hex | Its `content_hash`, which scopes the current state |
+| `frozen_accession` | accession | The event manifest's `release_accession` for the event |
+| `accession` | accession or null | The filing whose exhibit was acquired: the frozen one, or an override's |
+| `exhibit` | string or null | The acquired exhibit's file name |
+| `artifact_sha256` | 64 lowercase hex or null | Its saved bytes' SHA-256 |
+| `retrieved_at` | UTC datetime or null | When those bytes were retrieved |
+| `doc_id` | string or null | Its `walker-1` canonical document, for `parsed` |
+| `override_id` | ID part or null | The acquisition override applied; needed to leave `failed` or `unavailable` |
+| `corpus_error` | string or null | Set when the override's filing would change the event's eligibility, for the next corpus version |
+| `attempts` | tuple of `ExhibitAttempt` | Every exhibit tried, in order, on the transition that concludes them |
+
+## Processing-state runs
+
+- **Where.** `data/runs/events/states/<run_id>.parquet` holds one run's transitions
+  as a Polars frame of `state_table.SCHEMA`. It is written once, atomically, and
+  never replaced or committed.
+- **Order.** A document's transitions are ordered by `recorded_at`, `run_id`, and
+  `sequence`, and must chain from `expected`.
+- **The current state.** A document's current state is its latest transition among
+  those recorded under the current pilot's `pilot_hash`, so a revert to an earlier
+  pilot never inherits a later pilot's history.
+- **Canonical documents.** `data/runs/events/canonical/<doc_id>.json` holds each
+  parsed release's `walker-1` document in the canonical fixture format.

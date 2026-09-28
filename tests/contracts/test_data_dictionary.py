@@ -1,7 +1,7 @@
 """docs/data-dictionary.md documents every field and value of the core contracts
 and of the ingestion records: the canonicalizer's, the capture's, layout-1's, the
-retrieval metadata, the cohort's records and curated files, and Stage 5's event
-and pilot records.
+retrieval metadata, the cohort's records and curated files, and Stage 5's event,
+pilot, and processing-state records.
 
 AGENTS.md §191: document public interfaces and update the data dictionary in the
 same change. A contract that gains, loses, or renames a field fails here.
@@ -18,7 +18,7 @@ from earnings_ingestion import browser, layout
 from earnings_ingestion.cohort import config as cohort_config
 from earnings_ingestion.cohort import records as cohort
 from earnings_ingestion.cohort import register as cohort_register
-from earnings_ingestion.events import acceptance
+from earnings_ingestion.events import acceptance, states
 from earnings_ingestion.events import records as events
 from earnings_ingestion.fetch import records as fetch
 from pydantic import BaseModel
@@ -96,6 +96,8 @@ MODELS = [
     events.MembershipTransition,
     events.PilotDefinition,
     events.PilotManifest,
+    states.ExhibitAttempt,
+    states.StateTransition,
 ]
 ENUMS = [
     core.RightsStatus,
@@ -126,6 +128,10 @@ ENUMS = [
     events.EventOverrideKind,
     events.SelectionReason,
     events.TransitionKind,
+    states.DocumentState,
+    states.MissingReason,
+    states.ExhibitChoice,
+    states.AttemptOutcome,
 ]
 
 
