@@ -30,6 +30,7 @@ from earnings_ingestion.events.layer import (
     CORVID,
     DYNAMO,
     Release,
+    exhibit_bodies,
     filings,
 )
 from earnings_ingestion.events.saved import SavedResponses
@@ -52,11 +53,15 @@ EVENTS_PACKAGE = REPO / "packages/earnings-ingestion/src/earnings_ingestion/even
 
 
 def served(root: Path, repo: Path) -> dict[str, tuple[bytes, str]]:
-    """Every response saved under ``root``, by URL."""
+    """Every response saved under ``root``, by URL, but the exhibits acquisition
+    saved (plan 8): discovery fetches the rest."""
     store = ArtifactStore(root, repo)
     found = {}
+    exhibits = exhibit_bodies()
     for path in sorted((root / SEC_SOURCE_ID / "retrievals").glob("*/*.json")):
         record = Retrieval.model_validate_json(path.read_text(encoding="utf-8"))
+        if record.request_url in exhibits:
+            continue
         stored = store.get(
             SEC_SOURCE_ID,
             record.sha256,

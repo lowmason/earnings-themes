@@ -12,7 +12,14 @@ import httpx
 import pytest
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
 from earnings_ingestion.events.fixture import COHORT_MANIFEST, FIXTURE_DIR
-from earnings_ingestion.events.layer import CORVID, DYNAMO, REPORTS, RETRIEVED, filings
+from earnings_ingestion.events.layer import (
+    CORVID,
+    DYNAMO,
+    REPORTS,
+    RETRIEVED,
+    exhibit_bodies,
+    filings,
+)
 from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.events.synthetic import SyntheticStore, save, submissions_file
 from earnings_ingestion.fetch.records import Retrieval
@@ -209,11 +216,15 @@ def test_select_reads_the_version_the_build_reproduces(repo) -> None:
 
 
 def served() -> dict[str, tuple[bytes, str]]:
+    """The fixture's saved responses, but the exhibits acquisition saved."""
     root = REPO / FIXTURE_DIR / "raw"
     store = ArtifactStore(root, REPO)
     found = {}
+    exhibits = exhibit_bodies()
     for path in sorted((root / SEC_SOURCE_ID / "retrievals").glob("*/*.json")):
         record = Retrieval.model_validate_json(path.read_text(encoding="utf-8"))
+        if record.request_url in exhibits:
+            continue
         stored = store.get(
             SEC_SOURCE_ID,
             record.sha256,
@@ -336,10 +347,11 @@ def unsave(repo: Path, cik: str, accession: str) -> tuple[str, str]:
     document, so that discovery lacks both; return the two URLs."""
     folder = f"/{int(cik)}/{accession.replace('-', '')}/"
     root = repo / EVENTS_STORE / SEC_SOURCE_ID / "retrievals"
+    exhibits = exhibit_bodies()
     gone = []
     for path in sorted(root.glob("*/*.json")):
         record = Retrieval.model_validate_json(path.read_text(encoding="utf-8"))
-        if folder in record.request_url:
+        if folder in record.request_url and record.request_url not in exhibits:
             path.unlink()
             gone.append(record.request_url)
     index = filing_index_url(cik, accession)

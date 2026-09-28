@@ -11,7 +11,7 @@ through them regenerates byte for byte.
 """
 
 import json
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime
 from html import escape
@@ -22,6 +22,7 @@ from earnings_core import sha256_hex
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
 from earnings_ingestion.events.acceptance import Convention, accepted_instant
 from earnings_ingestion.fetch.records import Retrieval, RetrievalMethod
+from earnings_ingestion.fetch.responses import Fetched, UnexpectedResponse
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.identifiers import unpad_cik
 from earnings_ingestion.sec.urls import (
@@ -322,15 +323,11 @@ def exhibit_page(page: str, registrant: str, period_end: date) -> bytes:
     ).encode()
 
 
-def save(
-    store: ArtifactStore,
-    url: str,
-    body: bytes,
-    media_type: str,
-    retrieved_at: datetime,
-) -> None:
-    """Save ``body`` as a retrieval of ``url`` under the ``sec-edgar`` source."""
-    retrieval = Retrieval(
+def retrieval_of(
+    url: str, body: bytes, media_type: str, retrieved_at: datetime
+) -> Retrieval:
+    """A 200 response's retrieval record, served from ``url`` itself."""
+    return Retrieval(
         request_url=url,
         final_url=url,
         retrieved_at=retrieved_at,
@@ -341,13 +338,40 @@ def save(
         byte_count=len(body),
         sha256=sha256_hex(body),
     )
+
+
+def save(
+    store: ArtifactStore,
+    url: str,
+    body: bytes,
+    media_type: str,
+    retrieved_at: datetime,
+) -> None:
+    """Save ``body`` as a retrieval of ``url`` under the ``sec-edgar`` source."""
     store.put(
         SEC_SOURCE_ID,
         body,
-        retrieval,
+        retrieval_of(url, body, media_type, retrieved_at),
         rights_status=SEC_RIGHTS.rights_status,
         rights_basis=SEC_RIGHTS.rights_basis,
     )
+
+
+def serve(
+    bodies: Mapping[str, tuple[bytes, str]], retrieved_at: datetime
+) -> Callable[[str, Collection[str]], Fetched]:
+    """SEC as ``bodies``, invented responses by URL, retrieved at ``retrieved_at``:
+    any other URL is refused as the shared client reports a 404 (plan 8, P8-10)."""
+
+    def fetch(url: str, types: Collection[str]) -> Fetched:
+        if url not in bodies:
+            raise UnexpectedResponse(f"HTTP 404 for {url}")
+        body, media_type = bodies[url]
+        if media_type not in types:
+            raise UnexpectedResponse(f"content type {media_type!r} for {url}")
+        return Fetched(body, retrieval_of(url, body, media_type, retrieved_at))
+
+    return fetch
 
 
 class SyntheticStore:

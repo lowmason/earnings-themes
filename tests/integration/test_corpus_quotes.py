@@ -8,7 +8,8 @@ pilots, and overrides occurs in the text of a saved page.
   masked, no 30-character window of v1 occurs in a saved page, so 40 leaves a
   margin, and still catches a phrase copied into a longer rationale, which a
   whole-string comparison misses.
-- **The pages.** HTML is read as walker-1 text, and plain text as written. JSON
+- **The pages.** HTML is read as walker-1 text, and plain text as written; a page
+  walker-1 cannot read, such as an image-only exhibit, has no text to quote. JSON
   responses, the submissions and companyfacts files, hold facts, not wording, and
   are not read.
 - **Where it runs.** The real records are checked against Stage 5's saved store,
@@ -24,7 +25,7 @@ from pathlib import Path
 
 import pytest
 import tomllib
-from earnings_ingestion.cohort.locators import ArtifactText
+from earnings_ingestion.cohort.locators import ArtifactText, LocatorError
 from earnings_ingestion.events.fixture import FIXTURE_DIR
 
 REPO = Path(__file__).resolve().parents[2]
@@ -70,10 +71,13 @@ def pages(root: Path) -> list[str]:
     found = []
     for path in sorted([*root.glob("*.html"), *root.glob("*.txt")]):
         body = path.read_bytes()
-        if path.suffix == ".html":
-            text = ArtifactText(body, "text/html").canonical[0]
-        else:
+        if path.suffix != ".html":
             text = body.decode("utf-8", errors="replace")
+        else:
+            try:
+                text = ArtifactText(body, "text/html").canonical[0]
+            except LocatorError:
+                continue
         found.append(masked(text))
     return found
 
