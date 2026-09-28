@@ -129,6 +129,7 @@ NETWORK = (
     "earnings_ingestion.cohort.live",
 )
 DISCOVER = SOURCES["earnings_ingestion"] / "events" / "discover.py"
+ACQUIRE = SOURCES["earnings_ingestion"] / "events" / "acquire.py"
 
 
 def imported_names(path: Path) -> list[tuple[int, str]]:
@@ -166,9 +167,9 @@ def client_imports(path: Path) -> list[tuple[int, str]]:
 def test_stage_5_opens_no_client_of_its_own() -> None:
     """P6-22: the package functions take saved bytes and a fetch callable, and only
     the CLI opens the client, so ``events build`` stays offline and ``events
-    discover`` spends only the count the CLI's gate approved."""
+    discover`` and ``events acquire`` spend only the count the CLI's gate approved."""
     paths = stage_5_modules()
-    assert DISCOVER in paths
+    assert {DISCOVER, ACQUIRE} <= set(paths)
     found = [
         f"{path.relative_to(ROOT)}:{line} imports {name}"
         for path in paths

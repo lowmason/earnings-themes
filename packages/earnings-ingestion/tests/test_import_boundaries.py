@@ -97,10 +97,13 @@ def test_the_offline_cohort_path_loads_no_network_client(module: str) -> None:
 ACQUISITION = {"edgar", "pandas", "pyarrow"}
 EVENTS = [
     "earnings_ingestion.events.acceptance",
+    "earnings_ingestion.events.acquire",
     "earnings_ingestion.events.build",
+    "earnings_ingestion.events.content",
     "earnings_ingestion.events.discover",
     "earnings_ingestion.events.eligibility",
     "earnings_ingestion.events.evidence",
+    "earnings_ingestion.events.exhibits",
     "earnings_ingestion.events.filings",
     "earnings_ingestion.events.fixture",
     "earnings_ingestion.events.freeze",
@@ -110,6 +113,8 @@ EVENTS = [
     "earnings_ingestion.events.release",
     "earnings_ingestion.events.saved",
     "earnings_ingestion.events.slots",
+    "earnings_ingestion.events.state_table",
+    "earnings_ingestion.events.states",
     "earnings_ingestion.events.synthetic",
     "earnings_ingestion.sec.companyfacts",
     "earnings_ingestion.sec.filing_index",
@@ -119,13 +124,14 @@ EVENTS = [
 
 @pytest.mark.parametrize("module", EVENTS)
 def test_stage_5_loads_no_acquisition_library(module: str) -> None:
-    """R14.5: no edgartools, pandas, or pyarrow output crosses the boundary."""
+    """R14.5: no edgartools, pandas, or pyarrow output crosses the boundary; the
+    state table is Polars alone."""
     assert modules_loaded_by(module) & (ACQUISITION | FORBIDDEN) == set()
 
 
 @pytest.mark.parametrize("module", EVENTS)
 def test_the_offline_event_path_loads_no_network_client(module: str) -> None:
     """Building, freezing, and selecting read saved responses (A §410), and
-    discovery takes a fetch callable, so it loads no client; only the CLI opens one
-    (P6-22; plan 8, P8-12)."""
+    discovery and acquisition take a fetch callable, so none loads a client; only
+    the CLI opens one (P6-22; plan 8, P8-12)."""
     assert full_modules_loaded_by(module) & NETWORK == set()
