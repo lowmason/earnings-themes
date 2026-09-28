@@ -1,0 +1,27 @@
+# Reviewed acquisition decisions for the real pilot (plan 8, P8-11; the Stage 5 spec,
+# §What acquisition can change). No manifest hashes this file. Each records its
+# rationale, reviewer, and date; the reviewer is the user.
+schema_version = 1
+
+[[overrides]]
+override_id = "release-doc-dis-2026-03-28"
+kind = "set_release_document"
+event_id = "cik-0001744489:2026-03-28"
+accession = "0001744489-26-000036"
+exhibit = "fy2026_q2xprxex991.htm"
+rationale = "Misstated as shareholder letter"
+reviewer = "Lowell Mason"
+recorded_on = 2026-09-28
+
+[[overrides.citations]]
+source_id = "sec-edgar"
+url = "https://www.sec.gov/Archives/edgar/data/1744489/000174448926000036/0001744489-26-000036-index.htm"
+artifact_sha256 = "51f973775f70d1c21a5a8f858bfc02b93c0f7e43b84ddf37170494ccdd45142b"
+
+[overrides.citations.locator]
+kind = "text_span"
+canonicalization_version = "walker-1"
+canonical_sha256 = "a4d8c4d9b58498c425c174052ad932d8dd4217712e3ba32d703292a390e3d3af"
+start = 203
+end = 222
+cited_sha256 = "a1bc02c60a2c9ce41bc697b0d0b11c6b7fd44d2fc7597917dcfdf4cdbb0f874f"
