@@ -972,6 +972,7 @@ The opt-in live verification's result (P-VL), saved under `data/runs/cohort/live
 | `rebuilt_content_hash` | 64 lowercase hex or null | The rebuilt cohort's content hash |
 | `frozen_content_hash` | 64 lowercase hex or null | The latest frozen version's |
 | `blocking_finding_ids` | tuple of ID part | Findings that would hold a freeze now |
+| `requests_sent` | non-negative integer or null | The requests both clients sent, each capped at the approved `--max-requests`; null in a record saved before plan 8 kept it |
 
 ## Curated cohort files
 

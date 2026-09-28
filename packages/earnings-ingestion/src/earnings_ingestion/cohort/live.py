@@ -13,11 +13,13 @@
   and its content hash is compared with the latest frozen manifest's.
 
 SEC hosts go through the shared SEC client and every other host through the web
-client, and each check keeps its retrieval metadata. Nothing here runs in the
-default suite.
+client, and each check keeps its retrieval metadata. Each client is capped at the
+count the user approved, and the record keeps the requests both sent (PR #6's review,
+F35). Nothing here runs in the default suite.
 """
 
 from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -144,6 +146,13 @@ def verify_live(
     )
 
 
+@dataclass
+class Sent:
+    """The requests a live run has sent so far, kept current as it stops."""
+
+    count: int = 0
+
+
 def default_options() -> dict[str, Path]:
     return {
         "config_dir": UNIVERSE_DIR,
@@ -154,23 +163,34 @@ def default_options() -> dict[str, Path]:
 
 
 def run_live(
-    repo: Path, *, environ: Mapping[str, str] | None = None
+    repo: Path,
+    *,
+    max_requests: int,
+    environ: Mapping[str, str] | None = None,
+    sent: Sent | None = None,
 ) -> tuple[LiveVerification, Path]:
-    """Open both clients, verify, and save the result under data/runs/cohort/live/."""
+    """Open both clients, each capped at ``max_requests``, verify, and save the result
+    under data/runs/cohort/live/. ``sent`` keeps the count both clients sent, even
+    when the run stops."""
+    sent = Sent() if sent is None else sent
     options = default_options()
     hosts = {urlsplit(url).hostname or "" for _, _, url, _ in _targets(repo, options)}
     web_hosts = sorted(host for host in hosts if host and not is_sec_host(host))
     with (
-        open_web_client(web_hosts, environ=environ) as web,
-        open_sec_client(environ=environ) as sec,
+        open_web_client(web_hosts, environ=environ, max_requests=max_requests) as web,
+        open_sec_client(environ=environ, max_requests=max_requests) as sec,
     ):
-        result = verify_live(
-            repo,
-            fetch_web=web.fetch,
-            fetch_sec=sec.fetch,
-            now=datetime.now(UTC),
-            options=options,
-        )
+        try:
+            result = verify_live(
+                repo,
+                fetch_web=web.fetch,
+                fetch_sec=sec.fetch,
+                now=datetime.now(UTC),
+                options=options,
+            )
+        finally:
+            sent.count = web.client.throttle.count + sec.throttle.count
+    result = result.model_copy(update={"requests_sent": sent.count})
     stamp = result.checked_at.strftime("%Y%m%dT%H%M%SZ")
     path = repo / LIVE_RUNS / f"{stamp}.json"
     write_new(path, result.model_dump_json(indent=1).encode("utf-8") + b"\n")

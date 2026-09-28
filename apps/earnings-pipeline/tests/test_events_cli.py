@@ -413,3 +413,52 @@ def test_freeze_and_select_print_a_corpus_outside_the_repo_in_full(
     assert selected.stdout.splitlines()[-1] == (
         f"{outside / 'pilot-v1.json'}  {PILOT_HASH}"
     )
+
+
+def test_discover_prints_its_count_when_saving_fails(repo, monkeypatch) -> None:
+    """A full disk, or permissions, stops the run with its count, never a traceback
+    (PR #6's review, F31)."""
+    client(monkeypatch, served())
+
+    def full(*args, **kwargs):
+        raise OSError(28, "No space left on device")
+
+    monkeypatch.setattr(ArtifactStore, "put", full)
+    result = run(repo, "discover", "--max-requests", "90", store=EVENTS_STORE)
+    assert result.exit_code == 1
+    assert result.stdout.splitlines()[-1] == (
+        "requests sent: 1; a rerun fetches only what is missing"
+    )
+    assert "Stopped: [Errno 28] No space left on device" in result.stderr
+
+
+def test_discover_prints_its_count_when_a_saved_body_is_gone(
+    repo, moved, monkeypatch
+) -> None:
+    """A companyfacts file whose body is gone stops the documents phase with the
+    count, never a traceback (F31)."""
+    url = "https://data.sec.gov/api/xbrl/companyfacts/CIK0009990001.json"
+    artifact = SavedResponses(ArtifactStore(moved, repo)).get(url).artifact
+    (repo / artifact.storage_ref).unlink()
+    client(monkeypatch, served())
+    result = run(repo, "discover", "--max-requests", "5", store=EVENTS_STORE)
+    assert result.exit_code == 1
+    assert result.stdout.splitlines()[-1] == (
+        "requests sent: 0; a rerun fetches only what is missing"
+    )
+    assert "Stopped: no artifact" in result.stderr
+
+
+def test_discover_prints_its_count_on_ctrl_c(repo, monkeypatch) -> None:
+    client(monkeypatch, served())
+    calls = []
+
+    def interrupted(*args, **kwargs):
+        calls.append(args)
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(ArtifactStore, "put", interrupted)
+    result = run(repo, "discover", "--max-requests", "90", store=EVENTS_STORE)
+    assert result.exit_code == 130
+    assert calls
+    assert "requests sent: 1; a rerun fetches only what is missing" in result.stdout

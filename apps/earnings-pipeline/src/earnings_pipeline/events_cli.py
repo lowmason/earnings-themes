@@ -12,10 +12,12 @@ request budget before it sends anything, and each phase's count before that phas
 and a rerun fetches only what the store lacks. Its budget is ``--max-requests``, the
 count the user approved. ``--filing`` caps itself at 2, or at ``--max-requests`` if
 that is smaller, so no approval is ever exceeded. It names one filing, since each is
-approved on its own, and a second ``--filing`` is refused. ``discover`` exits 1 and
-names each saved submissions file, older page, index page, or primary document the
-build cannot read, which no rerun fetches again, since it is saved. ``build``, ``freeze``, and ``select`` read committed files and saved
-responses alone. ``build`` exits 1 while anything holds the freeze.
+approved on its own, and a second ``--filing`` is refused. It prints the requests it
+sent on every exit, a stop or a Ctrl-C included (PR #6's review, F31). ``discover``
+exits 1 and names each saved submissions file, older page, index page, or primary
+document the build cannot read, which no rerun fetches again, since it is saved.
+``build``, ``freeze``, and ``select`` read committed files and saved responses alone.
+``build`` exits 1 while anything holds the freeze.
 
 ``discover`` refuses a ``--store`` that does not resolve under ``data/raw``, before
 any client opens, and every command prints a path outside the repository in full
@@ -72,6 +74,9 @@ FILING_REQUESTS = 2
 """What ``discover --filing`` fetches at most: an index page and an 8-K document."""
 FETCHING = frozenset({"discover"})
 """The commands that save fetched bytes under ``--store``."""
+STOPS = (AccessStop, UnexpectedResponse, OSError, ValueError, RuntimeError)
+"""What ends a live run with ``Stopped:`` and its request count; ``OSError`` covers a
+full disk and a saved body that is gone."""
 
 
 @dataclass(frozen=True)
@@ -183,9 +188,12 @@ def discover_command(
                     )
             finally:
                 sent = sec.throttle.count
-    except (AccessStop, UnexpectedResponse, ValueError, RuntimeError) as error:
+    except STOPS as error:
         typer.echo(f"requests sent: {sent}; a rerun fetches only what is missing")
         _fail(f"Stopped: {error}")
+    except KeyboardInterrupt:
+        typer.echo(f"requests sent: {sent}; a rerun fetches only what is missing")
+        raise
     typer.echo(f"fetched {len(result.fetched)}; requests sent: {sent}")
     for problem in result.problems:
         typer.echo(f"problem: {problem}", err=True)

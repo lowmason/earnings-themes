@@ -130,14 +130,44 @@ def test_fetch_sec_goes_through_the_shared_client(repo, monkeypatch) -> None:
             raise cohort_cli.AccessStop(f"403 persisted for {url}")
 
     @contextmanager
-    def fake_open():
+    def fake_open(*, max_requests):
+        assert max_requests == 5
         yield FakeSec()
 
     monkeypatch.setattr(cohort_cli, "open_sec_client", fake_open)
-    result = run(repo, "fetch-sec", store=COHORT_STORE)
+    result = run(repo, "fetch-sec", "--max-requests", "5", store=COHORT_STORE)
     assert result.exit_code == 1
     assert "Stopped: 403 persisted" in result.stderr
+    assert result.stdout.splitlines() == ["requests sent: 1"]
     assert requested == ["https://www.sec.gov/files/company_tickers.json"]
+
+
+@pytest.mark.parametrize("command", ["fetch-sec", "verify-live"])
+def test_a_live_command_needs_the_approved_count(repo, monkeypatch, command) -> None:
+    """fetch-sec and verify-live take the count the user approved, as events
+    discover does, and refuse before any client opens (PR #6's review, F35)."""
+
+    def refuse(*args, **kwargs):
+        raise AssertionError("a client opened")
+
+    monkeypatch.setattr(cohort_cli, "open_sec_client", refuse)
+    monkeypatch.setattr(cohort_cli, "run_live", refuse)
+    result = run(repo, command, store=COHORT_STORE)
+    assert result.exit_code == 1
+    assert "Refused: pass --max-requests" in result.stderr
+
+
+def test_verify_live_prints_its_count_when_it_stops(repo, monkeypatch) -> None:
+    def stopped(repo, *, max_requests, sent):
+        assert max_requests == 30
+        sent.count = 4
+        raise cohort_cli.AccessStop("another client holds the lock")
+
+    monkeypatch.setattr(cohort_cli, "run_live", stopped)
+    result = run(repo, "verify-live", "--max-requests", "30")
+    assert result.exit_code == 1
+    assert result.stdout.splitlines() == ["requests sent: 4"]
+    assert "Stopped: another client holds the lock" in result.stderr
 
 
 def test_fetch_saves_pages_through_the_web_client(repo, monkeypatch) -> None:

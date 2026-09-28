@@ -2,18 +2,20 @@
 
     earnings-pipeline cohort fetch SOURCE_ID URL...        # through robots.txt
     earnings-pipeline cohort register SOURCE_ID FILE --url URL
-    earnings-pipeline cohort fetch-sec                      # the shared SEC client
+    earnings-pipeline cohort fetch-sec --max-requests N     # the shared SEC client
     earnings-pipeline cohort cite SOURCE_ID SHA256 --find TEXT [--line]
     earnings-pipeline cohort build
     earnings-pipeline cohort freeze
     earnings-pipeline cohort terms URL [--saved FILE]
-    earnings-pipeline cohort verify-live
+    earnings-pipeline cohort verify-live --max-requests N
 
 Only ``fetch``, ``fetch-sec``, ``terms``, and ``verify-live`` use the network, each
 through its client's access policy, and ``terms --saved`` hashes a copy saved in a
 browser without it; ``build`` and ``freeze`` read committed files and saved
 artifacts alone. ``cite`` prints the TOML to commit on stdout and the cited text
 on stderr only, so no source wording is pasted into a committed file by accident.
+``fetch-sec`` and ``verify-live`` need ``--max-requests``, the count the user
+approved, and print the requests they sent on every exit (PR #6's review, F35).
 ``fetch`` and ``fetch-sec`` refuse a ``--store`` that does not resolve under
 ``data/raw``, before any client opens, and every command prints a path outside the
 repository in full (``earnings_pipeline.paths``).
@@ -42,7 +44,7 @@ from earnings_ingestion.cohort.build import (
 )
 from earnings_ingestion.cohort.config import UNIVERSE_DIR, load_cohort_config
 from earnings_ingestion.cohort.freeze import FreezeRefused, freeze
-from earnings_ingestion.cohort.live import ANY, run_live
+from earnings_ingestion.cohort.live import ANY, Sent, run_live
 from earnings_ingestion.cohort.records import LocatorKind
 from earnings_ingestion.cohort.register import (
     MEMBERSHIP_REGISTER,
@@ -61,6 +63,9 @@ from earnings_pipeline.paths import raw_store_refusal, shown
 cohort = typer.Typer(no_args_is_help=True, help="Stage 4's point-in-time DJIA cohort.")
 FETCHING = frozenset({"fetch", "fetch-sec"})
 """The commands that save fetched bytes under ``--store``."""
+STOPS = (AccessStop, UnexpectedResponse, OSError, ValueError)
+"""What ends a live command with ``Stopped:``; ``OSError`` covers a full disk."""
+APPROVED = typer.Option(help="The request count approved at the gate; the cap.")
 
 
 @dataclass(frozen=True)
@@ -128,7 +133,7 @@ def fetch_command(
             for url in urls:
                 ref = fetch_page(web.fetch, layout.store(), registers, source_id, url)
                 typer.echo(f"{ref.content_sha256}  {ref.storage_ref}  {url}")
-    except (AccessStop, UnexpectedResponse, ValueError) as error:
+    except STOPS as error:
         _fail(f"Stopped: {error}")
 
 
@@ -165,18 +170,32 @@ def register_command(
 
 
 @cohort.command("fetch-sec")
-def fetch_sec_command(context: typer.Context) -> None:
+def fetch_sec_command(
+    context: typer.Context,
+    max_requests: Annotated[int | None, APPROVED] = None,
+) -> None:
     """Save the SEC records the build reads, through the shared SEC client."""
     layout: Layout = context.obj
+    if max_requests is None:
+        _fail("Refused: pass --max-requests, the request count the user approved")
     config = load_cohort_config(layout.repo / layout.config_dir)
+    sent = 0
     try:
-        with open_sec_client() as sec:
-            result = fetch_sec(sec.fetch, layout.store(), layout.registers(), config)
-            requests = sec.throttle.count
-    except (AccessStop, UnexpectedResponse, ValueError) as error:
+        with open_sec_client(max_requests=max_requests) as sec:
+            try:
+                result = fetch_sec(
+                    sec.fetch, layout.store(), layout.registers(), config
+                )
+            finally:
+                sent = sec.throttle.count
+    except STOPS as error:
+        typer.echo(f"requests sent: {sent}")
         _fail(f"Stopped: {error}")
+    except KeyboardInterrupt:
+        typer.echo(f"requests sent: {sent}")
+        raise
     typer.echo(f"fetched {len(result.fetched)}, already saved {len(result.kept)}")
-    typer.echo(f"requests sent: {requests}")
+    typer.echo(f"requests sent: {sent}")
 
 
 @cohort.command("cite")
@@ -307,20 +326,31 @@ def terms_command(
         else:
             with open_web_client([host]) as web:
                 fetched = web.fetch(url, ANY)
-    except (AccessStop, UnexpectedResponse, ValueError) as error:
+    except STOPS as error:
         _fail(f"Stopped: {error}")
     digest = terms_digest(fetched.body, fetched.retrieval.media_type)
     typer.echo(f'terms_sha256 = "{digest}"')
 
 
 @cohort.command("verify-live")
-def verify_live_command(context: typer.Context) -> None:
-    """The opt-in live verification (P-VL); saves its record under data/runs/."""
+def verify_live_command(
+    context: typer.Context,
+    max_requests: Annotated[int | None, APPROVED] = None,
+) -> None:
+    """The opt-in live verification (P-VL); saves its record under data/runs/. Each
+    client is capped at --max-requests."""
     layout: Layout = context.obj
+    if max_requests is None:
+        _fail("Refused: pass --max-requests, the request count the user approved")
+    sent = Sent()
     try:
-        result, path = run_live(layout.repo)
-    except (AccessStop, ValueError) as error:
+        result, path = run_live(layout.repo, max_requests=max_requests, sent=sent)
+    except STOPS as error:
+        typer.echo(f"requests sent: {sent.count}")
         _fail(f"Stopped: {error}")
+    except KeyboardInterrupt:
+        typer.echo(f"requests sent: {sent.count}")
+        raise
     for check in result.checks:
         typer.echo(
             f"{check.outcome:9}  {check.purpose:8}  {check.source_id}  {check.url}"
@@ -328,4 +358,5 @@ def verify_live_command(context: typer.Context) -> None:
     typer.echo(
         f"rebuilt {result.rebuilt_content_hash}; frozen {result.frozen_content_hash}"
     )
+    typer.echo(f"requests sent: {result.requests_sent}")
     typer.echo(f"record: {shown(path, layout.repo)}")
