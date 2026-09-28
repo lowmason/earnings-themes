@@ -1624,5 +1624,6 @@ Why an exhibit was tried, in R1.2's order.
   pilot never inherits a later pilot's history.
 - **Canonical documents.** `data/runs/events/canonical/<doc_id>.json` holds each
   parsed release's `walker-1` document in the canonical fixture format. It is
-  written once; a later run keeps one that differs only in its manifest, as another
-  environment writes it, and reports any other difference as a problem.
+  written once; a later run keeps one that differs only in the Python, lxml, and
+  libxml2 versions its manifest records, as another environment writes it, and
+  reports any other difference as a problem.

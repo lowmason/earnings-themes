@@ -253,29 +253,39 @@ def test_a_redirected_response_is_refused_before_it_is_saved() -> None:
         client.fetch("https://www.sec.gov/moved.htm", {"text/html"})
 
 
-@pytest.mark.parametrize(
-    ("served", "refusal"),
-    [
-        (
-            {"headers": {"Content-Encoding": "gzip"}, "content": b"not gzip"},
-            "sent a body that cannot be decoded",
-        ),
-        ({"loop": True}, "was redirected without end"),
-    ],
-    ids=["undecodable", "redirect-loop"],
-)
-def test_a_response_httpx_cannot_finish_is_refused_as_unexpected(
-    served, refusal
-) -> None:
-    """httpx's ``DecodingError`` and ``TooManyRedirects`` are neither transport
-    errors nor refusals, so the client refuses them as it refuses a redirect, and
-    each caller records the exhibit's attempt (plan 8's final review)."""
+def test_an_undecodable_body_is_refused_as_unexpected() -> None:
+    """httpx's ``DecodingError`` is neither a transport error nor a refusal, so the
+    client refuses it as it refuses a redirect, and each caller records the
+    exhibit's attempt (plan 8's final review)."""
 
     def handler(request):
-        if served.get("loop"):
-            return httpx.Response(301, headers={"Location": str(request.url)})
-        headers = {"Content-Type": "text/html", **served["headers"]}
-        return httpx.Response(200, headers=headers, content=served["content"])
+        headers = {"Content-Type": "text/html", "Content-Encoding": "gzip"}
+        return httpx.Response(200, headers=headers, content=b"not gzip")
 
-    with opened(handler) as client, pytest.raises(UnexpectedResponse, match=refusal):
+    with (
+        opened(handler) as client,
+        pytest.raises(UnexpectedResponse, match="sent a body that cannot be decoded"),
+    ):
         client.fetch("https://www.sec.gov/x.htm", {"text/html"})
+
+
+@pytest.mark.parametrize(
+    ("location", "refusal"),
+    [
+        ("https://www.sec.gov/x.htm", UnexpectedResponse),
+        ("https://www.example.org/x.htm", AccessStop),
+    ],
+    ids=["to-itself", "off-sec"],
+)
+def test_a_redirect_is_refused_before_it_is_followed(location, refusal) -> None:
+    """Every redirected SEC response is refused (F13), so the client never follows
+    one: a redirect costs one request, even one without end, and a redirect off
+    SEC's hosts still stops the run (plan 8's final review)."""
+
+    def handler(request):
+        return httpx.Response(301, headers={"Location": location})
+
+    with opened(handler) as client:
+        with pytest.raises(refusal):
+            client.fetch("https://www.sec.gov/x.htm", {"text/html"})
+        assert client.throttle.count == 1

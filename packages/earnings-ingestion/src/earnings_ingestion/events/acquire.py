@@ -38,11 +38,12 @@ P8-6 to P8-12).
 - **Problems.** A saved response that cannot be read is a problem naming its repair;
   it is never fetched again, and its document stays in the state the run recorded,
   to be attempted again once the store is repaired. An override applied under its
-  ID and since edited to name another exhibit is a problem too: an applied
+  ID and since edited to name another event or exhibit is a problem too: an applied
   override is not edited in place.
 - **Canonical documents.** Each is written once under its ``doc_id``, which hashes
-  its text. One already there that differs only in its manifest, as another
-  environment writes it, is kept; any other difference is a problem.
+  its text. One already there that differs only in the Python, lxml, and libxml2
+  versions its manifest records, as another environment writes it, is kept; any
+  other difference is a problem.
 - **The run.** Each run writes its transitions to ``<run_id>.parquet`` under
   ``states_dir``, even when it stops, and writes nothing when it records nothing.
 """
@@ -105,6 +106,8 @@ ATTEMPTED = frozenset({DocumentState.EXPECTED, DocumentState.ACQUIRED})
 OVERRIDDEN = ATTEMPTED | {DocumentState.UNAVAILABLE, DocumentState.FAILED}
 """The states from which an acquisition override moves a document."""
 OVERRIDES_FILE = "acquisition-overrides.toml"
+ENVIRONMENT = ("python_version", "lxml_version", "libxml2_version")
+"""The manifest fields another environment writes differently for the same text."""
 REPAIR = (
     "repair the store by hand: a saved response is never fetched again (PR #6's"
     " review, P2.1)"
@@ -174,33 +177,37 @@ def _filing(saved: SavedResponses, row: EventRow) -> _Filing:
 def _pending(
     state: StateTransition | None,
     override: AcquisitionOverride | None,
-    acquired: StateTransition | None,
+    applied: StateTransition | None,
 ) -> str | None:
     """What a run does with a document: ``override`` applies its override,
     ``attempt`` tries its exhibits, ``refused`` reports an override of a document
-    no override moves, ``edited`` one applied under its ID that now names another
-    exhibit than ``acquired``, the document's last acquisition, and ``None`` leaves
-    it."""
+    no override moves, ``edited`` one whose ID was ``applied`` to another event or
+    exhibit, and ``None`` leaves it."""
     current = DocumentState.EXPECTED if state is None else state.to_state
     if override is not None:
-        applied = state is not None and state.override_id == override.override_id
-        named = (override.accession, override.exhibit)
-        if applied and acquired and (acquired.accession, acquired.exhibit) != named:
+        named = (override.event_id, override.accession, override.exhibit)
+        if applied and (applied.event_id, applied.accession, applied.exhibit) != named:
             return "edited"
-        if applied and current not in ATTEMPTED:
+        mine = applied and state.override_id == override.override_id
+        if mine and current not in ATTEMPTED:
             return None
         return "override" if current in OVERRIDDEN else "refused"
     return "attempt" if current in ATTEMPTED else None
 
 
-def _acquisitions(
+def _applications(
     transitions: Iterable[StateTransition], pilot_hash: str
 ) -> dict[str, StateTransition]:
-    """Each document's latest transition under the pilot that names an exhibit."""
+    """Each override's latest acquisition under the pilot, by ``override_id``: the
+    event, filing, and exhibit it was applied to."""
     latest: dict[str, StateTransition] = {}
     for transition in in_order(transitions):
-        if transition.pilot_hash == pilot_hash and transition.exhibit is not None:
-            latest[transition.document_id] = transition
+        if (
+            transition.pilot_hash == pilot_hash
+            and transition.override_id is not None
+            and transition.exhibit is not None
+        ):
+            latest[transition.override_id] = transition
     return latest
 
 
@@ -218,14 +225,14 @@ def planned_requests(
     rows = {row.event_id: row for row in events.rows}
     recorded = read_runs(states_dir)
     current = current_states(recorded, pilot.definition.content_hash)
-    acquisitions = _acquisitions(recorded, pilot.definition.content_hash)
+    applications = _applications(recorded, pilot.definition.content_hash)
     named = {} if overrides is None else {o.event_id: o for o in overrides.overrides}
     first = most = 0
     for pilot_row in pilot.rows:
         row = rows[pilot_row.event_id]
-        key = document_id(row.event_id)
         override = named.get(row.event_id)
-        pending = _pending(current.get(key), override, acquisitions.get(key))
+        applied = None if override is None else applications.get(override.override_id)
+        pending = _pending(current.get(document_id(row.event_id)), override, applied)
         if pending == "override":
             url = archive_url(row.cik, override.accession, override.exhibit)
             if url not in saved:
@@ -322,18 +329,20 @@ def _exhibit(
 
 def _write(canonical_dir: Path, result: Canonicalized) -> None:
     """Write ``result`` under its ``doc_id``, keeping a file already there that
-    differs only in its manifest; raises ``ValueError`` for any other difference."""
+    differs only in ``ENVIRONMENT``; raises ``ValueError`` for any other
+    difference."""
     path = canonical_dir / f"{result.document.doc_id}.json"
     data = to_fixture_json(result)
     try:
         write_new(path, data.encode())
     except FileExistsError:
         kept, written = json.loads(path.read_bytes()), json.loads(data)
-        kept.pop("manifest", None)
-        written.pop("manifest")
+        for bundle in (kept, written):
+            for field in ENVIRONMENT:
+                bundle.get("manifest", {}).pop(field, None)
         if kept != written:
             raise ValueError(
-                f"{path.name} holds other elements or masks for the same text"
+                f"{path.name} holds another canonical document for the same text"
             ) from None
 
 
@@ -623,7 +632,7 @@ def acquire(
     rows = {row.event_id: row for row in events.rows}
     recorded = read_runs(states_dir)
     current = current_states(recorded, definition.content_hash)
-    acquisitions = _acquisitions(recorded, definition.content_hash)
+    applications = _applications(recorded, definition.content_hash)
     saved = SavedResponses(store)
     run = _Run(pilot, run_id, now)
     fetched: list[str] = []
@@ -649,13 +658,14 @@ def acquire(
             key, row = document_id(pilot_row.event_id), rows[pilot_row.event_id]
             state = current[key]
             override = named.get(row.event_id)
-            last = acquisitions.get(key)
+            last = None if override is None else applications.get(override.override_id)
             pending = _pending(state, override, last)
             if pending == "edited":
                 problems.append(
-                    f"{override.override_id} was applied to {last.accession}"
-                    f" {last.exhibit} and now names {override.accession}"
-                    f" {override.exhibit}: an applied override is not edited in place"
+                    f"{override.override_id} was applied to {last.event_id}"
+                    f" {last.accession} {last.exhibit} and now names"
+                    f" {override.event_id} {override.accession} {override.exhibit}:"
+                    " an applied override is not edited in place"
                 )
                 continue
             if pending == "refused":

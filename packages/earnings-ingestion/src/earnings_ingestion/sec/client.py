@@ -11,9 +11,10 @@
 - **Refusals.** A 403 that persists, or SEC's block page, stops the run without
   changing identity (A §404). A response SEC serves from another URL than the one
   requested is refused before it is saved, so no saved response is ever read under a
-  URL it was not served from (PR #6's review, F13). So are a redirect without end and
-  a body that cannot be decoded, which httpx raises as neither (plan 8's final
-  review).
+  URL it was not served from (PR #6's review, F13). Since every redirect is refused,
+  none is followed: a redirect costs one request, and one off SEC's hosts still stops
+  the run. A body that cannot be decoded, which httpx raises as neither a transport
+  error nor a refusal, is refused too (plan 8's final review).
 
 Two limits remain, because A §398 asks for coordination across the outbound network.
 The lock lives in ``machine_lock_dir()``, outside every checkout, so it coordinates the
@@ -67,23 +68,33 @@ class SecClient(PoliteClient):
             throttle=throttle,
             host_allowed=SEC_HOSTS.__contains__,
             block_markers=BLOCK_MARKERS,
+            follow_redirects=False,
             transport=transport,
             sleep=sleep,
             rng=rng,
             now=now,
         )
 
+    def get(self, url: str) -> httpx.Response:
+        """``PoliteClient.get``, refusing a redirect before it is followed: one off
+        SEC's hosts raises ``AccessStop``, and any other ``UnexpectedResponse``."""
+        response = super().get(url)
+        if response.is_redirect:
+            target = response.next_request
+            location = str(target.url) if target else response.headers["location"]
+            self._check_host(location)
+            raise UnexpectedResponse(
+                f"{url} was redirected to {location}; a redirected response is never"
+                " saved"
+            )
+        return response
+
     def fetch(self, url: str, expected_types: Collection[str]) -> Fetched:
-        """``PoliteClient.fetch``, refused with ``UnexpectedResponse`` when SEC served
-        the response from another URL, redirected it without end, or sent a body
-        that cannot be decoded."""
+        """``PoliteClient.fetch``, refused with ``UnexpectedResponse`` when SEC
+        redirected the response or served it from another URL, or sent a body that
+        cannot be decoded."""
         try:
             fetched = super().fetch(url, expected_types)
-        except httpx.TooManyRedirects as exc:
-            raise UnexpectedResponse(
-                f"{url} was redirected without end; a redirected response is never"
-                " saved"
-            ) from exc
         except httpx.DecodingError as exc:
             raise UnexpectedResponse(
                 f"{url} sent a body that cannot be decoded: {exc}"

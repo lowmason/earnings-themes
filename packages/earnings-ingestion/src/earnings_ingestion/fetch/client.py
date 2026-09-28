@@ -193,7 +193,8 @@ class PoliteClient:
 
     ``host_allowed`` decides which hosts the client may reach; ``block_markers`` are
     lowercase byte strings whose presence in an HTML body means the server refused
-    automated access.
+    automated access; ``follow_redirects`` is off for a client that refuses every
+    redirected response anyway.
     """
 
     def __init__(
@@ -203,6 +204,7 @@ class PoliteClient:
         throttle: Throttle,
         host_allowed: Callable[[str], bool] = lambda host: True,
         block_markers: Collection[bytes] = (),
+        follow_redirects: bool = True,
         transport: httpx.BaseTransport | None = None,
         sleep: Callable[[float], None] = time.sleep,
         rng: random.Random | None = None,
@@ -217,7 +219,7 @@ class PoliteClient:
         self._client = httpx.Client(
             headers={"User-Agent": identity, "Accept-Encoding": "gzip, deflate"},
             timeout=TIMEOUT,
-            follow_redirects=True,
+            follow_redirects=follow_redirects,
             transport=transport,
             event_hooks={"request": [self._before_request]},
         )

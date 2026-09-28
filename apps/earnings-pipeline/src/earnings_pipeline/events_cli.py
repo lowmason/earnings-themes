@@ -26,8 +26,11 @@ which no rerun fetches again, since it is saved.
 it, which ``load_pilot`` checks and reselects, and refuses otherwise. It states what
 it would send before it opens the client: at most N requests, one per exhibit not
 saved, and how many are first choices. With nothing to fetch the client stays
-closed; otherwise ``--max-requests``, the count the user approved, is required, and
-the client's cap is it or N, whichever is smaller, so neither is ever exceeded. It
+closed; otherwise ``--max-requests``, the count the user approved, is required and is
+the client's cap. A retry after a 429 or a server error counts against it: a run the
+cap stops keeps what it recorded, and a rerun at a newly approved count takes up the
+rest. The client refuses a redirect before following it, so a redirect costs one
+request. It
 holds a lock on ``--runs-dir`` while it counts and acquires, so two runs never record
 at once. It prints each pilot document's state, and its request count on every exit.
 It writes its run under ``--runs-dir``, and exits 1 on a problem (plan 8's final
@@ -370,10 +373,7 @@ def acquire_command(
     context: typer.Context,
     max_requests: Annotated[
         int | None,
-        typer.Option(
-            help="The request count approved at the gate; with the stated count, the"
-            " client's cap."
-        ),
+        typer.Option(help="The request count approved at the gate; the client's cap."),
     ] = None,
     runs_dir: Annotated[
         Path, typer.Option(help="Where the state table and canonical documents go.")
@@ -429,7 +429,7 @@ def acquire_command(
             if most == 0:
                 result = acquire(*arguments, _closed, **options)
             else:
-                with open_sec_client(max_requests=min(max_requests, most)) as sec:
+                with open_sec_client(max_requests=max_requests) as sec:
                     try:
                         result = acquire(*arguments, sec.fetch, **options)
                     finally:

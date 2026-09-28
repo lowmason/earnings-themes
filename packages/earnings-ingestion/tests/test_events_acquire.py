@@ -295,21 +295,37 @@ def test_an_index_page_never_saved_names_discover_not_a_repair(
     assert result.states[f"{first}:release"].to_state is E
 
 
-@pytest.mark.parametrize(("part", "kept"), [("manifest", True), ("elements", False)])
-def test_a_canonical_document_already_written_is_kept_when_only_its_manifest_differs(
+def _change(written: dict, part: str) -> None:
+    if part == "no manifest":
+        del written["manifest"]
+    elif part == "elements":
+        written["elements"] = written["elements"][1:]
+    else:
+        written["manifest"][part] = "0" * 64 if part == "raw_sha256" else "3.14.1"
+
+
+@pytest.mark.parametrize(
+    ("part", "kept"),
+    [
+        ("python_version", True),
+        ("lxml_version", True),
+        ("raw_sha256", False),
+        ("no manifest", False),
+        ("elements", False),
+    ],
+)
+def test_a_canonical_document_already_written_is_kept_when_only_its_environment_differs(
     frozen, store, tmp_path, part, kept
 ) -> None:
     """A canonical file is named by its ``doc_id``, which hashes its text. One
-    written in another environment differs in its manifest alone, and is kept; one
-    whose elements differ is a problem, and its document stays acquired."""
+    written in another environment differs only in the Python, lxml, and libxml2
+    versions its manifest records, and is kept; any other difference is a problem,
+    and its document stays acquired."""
     first = run(frozen, store, Served(), tmp_path / "first")
     key = f"{ACME_Q3}:release"
     name = f"{first.states[key].doc_id}.json"
     written = json.loads((tmp_path / "first" / "canonical" / name).read_text())
-    if part == "manifest":
-        written["manifest"]["python_version"] = "3.14.1"
-    else:
-        written["elements"] = written["elements"][1:]
+    _change(written, part)
     (tmp_path / "canonical").mkdir()
     (tmp_path / "canonical" / name).write_text(json.dumps(written))
     result = run(frozen, store, Served(), tmp_path)
@@ -408,6 +424,8 @@ def accession_of(registrant_cik: str, accepted: str) -> str:
 
 
 EASTFIELD_Q1 = "cik-0009990006:2026-03-31"
+MISSING = "dyna-20250422-ex991.htm"
+"""The one exhibit of the synthetic pilot that SEC never served."""
 LATE = "2026-07-17 07:30:00"
 """Eastfield's release for 2026-06-30, accepted after it left on 2026-06-22."""
 
@@ -570,7 +588,44 @@ def test_an_applied_override_edited_in_place_is_a_problem(
     )
     assert again.transitions == ()
     (problem,) = again.problems
-    assert problem.startswith(f"{override.override_id} was applied to {accession}")
+    assert problem.startswith(
+        f"{override.override_id} was applied to {ACME_Q3} {accession}"
+    )
+    assert problem.endswith(EDITED)
+
+
+def test_an_applied_override_moved_to_another_event_is_a_problem(
+    frozen, store, tmp_path
+) -> None:
+    """An applied override's ID keeps one meaning. Eastfield's override parsed its
+    document; moved under the same ID to Dyna's unavailable document, which an
+    override could change, it is reported, and nothing is fetched or applied (plan
+    8's final review)."""
+    run(frozen, store, Served(), tmp_path)
+    late = accession_of("0009990006", LATE)
+    override = document_override(
+        store, "0009990006", late, "efb-20260717-ex991.htm", EASTFIELD_Q1
+    )
+    applied = run(
+        frozen, store, Served(), tmp_path, run_id="acquire-2", overrides=(override,)
+    )
+    assert applied.states[f"{EASTFIELD_Q1}:release"].to_state is P
+    dyna = "cik-0009990005:2025-03-28"
+    (row,) = [row for row in frozen[1].rows if row.event_id == dyna]
+    moved = document_override(
+        store,
+        "0009990005",
+        row.release_accession,
+        MISSING,
+        dyna,
+        override_id=override.override_id,
+    )
+    again = run(frozen, store, refuse, tmp_path, run_id="acquire-3", overrides=(moved,))
+    assert again.transitions == ()
+    (problem,) = again.problems
+    assert problem.startswith(
+        f"{override.override_id} was applied to {EASTFIELD_Q1} {late}"
+    )
     assert problem.endswith(EDITED)
 
 

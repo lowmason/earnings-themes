@@ -240,11 +240,19 @@ def served() -> dict[str, tuple[bytes, str]]:
     return found
 
 
-def client(monkeypatch, responses: dict[str, tuple[bytes, str]], status: int = 200):
-    """Replace the CLI's client with the shared client over a serving transport."""
+def client(
+    monkeypatch,
+    responses: dict[str, tuple[bytes, str]],
+    status: int = 200,
+    moved: str | None = None,
+):
+    """Replace the CLI's client with the shared client over a serving transport,
+    which redirects any URL ending in ``moved``."""
     budgets: list[int] = []
 
     def handle(request: httpx.Request) -> httpx.Response:
+        if moved is not None and str(request.url).endswith(moved):
+            return httpx.Response(301, headers={"Location": f"{request.url}-moved"})
         body, media_type = responses.get(str(request.url), (b"", "text/plain"))
         code = status if str(request.url) in responses else 404
         return httpx.Response(code, content=body, headers={"content-type": media_type})
@@ -623,16 +631,42 @@ def test_acquire_stops_on_a_persistent_403_and_leaves_the_rest_expected(
     assert states == {DocumentState.EXPECTED}
 
 
-def test_acquire_caps_the_client_at_the_count_it_states(
+def test_acquire_records_a_redirected_exhibit_within_the_stated_count(
     repo, moved, monkeypatch
 ) -> None:
-    """A larger approval never lets retries pass the count the run stated, as
-    discover --filing caps itself (plan 8's final review)."""
+    """The one exhibit to fetch is redirected. The client refuses it before
+    following, within the count the run stated and the user approved, so its
+    attempt is recorded rather than stalling every rerun (plan 8's final review)."""
+    budgets = client(monkeypatch, served(), moved=MISSING)
+    result = run(repo, "acquire", "--max-requests", "1", store=EVENTS_STORE)
+    assert result.exit_code == 0, result.output
+    assert budgets == [1]
+    lines = acquire_lines(result)
+    assert lines[4] == (
+        "at most 1 requests to SEC, through the shared client; 1 first choices"
+    )
+    assert lines[-2] == "fetched 0; requests sent: 1"
+    pilot_hash = PilotManifest.model_validate_json(
+        (repo / FIXTURE_DIR / "pilot-v1.json").read_text(encoding="utf-8")
+    ).definition.content_hash
+    (path,) = (repo / "data" / "runs" / "events" / "states").glob("*.parquet")
+    missing = [
+        t
+        for t in read_runs(path.parent)
+        if t.pilot_hash == pilot_hash and any(a.filename == MISSING for a in t.attempts)
+    ]
+    (attempt,) = [a for a in missing[-1].attempts if a.filename == MISSING]
+    assert "was redirected to" in attempt.detail
+
+
+def test_acquire_s_cap_is_the_approved_count(repo, moved, monkeypatch) -> None:
+    """The approval is the client's cap: a retry counts against it, so a count above
+    the stated one leaves room for retries (plan 8's final review)."""
     forget_exhibits(moved)
     budgets = client(monkeypatch, {**served(), **exhibit_bodies()})
     result = run(repo, "acquire", "--max-requests", "56", store=EVENTS_STORE)
     assert result.exit_code == 0, result.output
-    assert budgets == [28]
+    assert budgets == [56]
 
 
 def test_acquire_refuses_a_run_file_it_cannot_read(repo, moved, monkeypatch) -> None:
