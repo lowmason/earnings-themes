@@ -1,5 +1,7 @@
 # Acquisition and Processing States (Stage 5, plan B) — Implementation Plan
 
+**Status: COMPLETE (2026-09-28)** — executed via executing-plans; nothing deferred
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > Roadmap: specs/evidence-linked-theme-extraction-roadmap.md, Stage 5 — on plan
@@ -841,7 +843,7 @@ before plan B's first live request.
 - Produces: `machine_lock_dir()` raises `AccessStop` naming `EARNINGS_LOCK_DIR` for a
   relative value.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `/tmp/plan8-task1-tests.py`:
 
@@ -885,13 +887,13 @@ for path, (text, count) in written.items():
 
 Apply `task1-tests`.
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_fetch_client.py -q`
 
 Expected: FAIL: `1 failed, 19 passed`, with `Failed: DID NOT RAISE AccessStop`.
 
-- [ ] **Step 3: Refuse the relative value**
+- [x] **Step 3: Refuse the relative value**
 
 Create `/tmp/plan8-task1-source.py`:
 
@@ -936,13 +938,13 @@ for path, (text, count) in written.items():
 
 Apply `task1-source`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_fetch_client.py -q`
 
 Expected: `20 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py packages/earnings-ingestion/src/earnings_ingestion/fetch/client.py packages/earnings-ingestion/tests/test_fetch_client.py
@@ -953,7 +955,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1369 passed, 24 deselected`; `All checks passed!` and
 `252 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -1000,7 +1002,7 @@ unchanged.
   `UnexpectedResponse` on a redirect; `SavedResponses.get(url)`, which raises
   `ValueError` on a redirected record.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `/tmp/plan8-task2-tests.py`:
 
@@ -1137,7 +1139,7 @@ for path, (text, count) in written.items():
 
 Apply `task2-tests`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_build.py packages/earnings-ingestion/tests/test_sec_client.py -q`
 
@@ -1145,7 +1147,9 @@ Expected: FAIL: `2 failed, 54 passed`. The client saves the redirected response
 (`Failed: DID NOT RAISE UnexpectedResponse`), and the build reads the redirected
 record (`Failed: DID NOT RAISE ValueError`).
 
-- [ ] **Step 3: Refuse a redirect when fetched and when read**
+- [x] **Step 3: Refuse a redirect when fetched and when read**
+
+> Deviation: after the final review (`55ea811`), `SecClient.fetch` also refuses a redirect without end (httpx's `TooManyRedirects`) and a body that cannot be decoded (`DecodingError`) as `UnexpectedResponse`, since httpx raises them as neither a transport error nor a refusal any caller caught.
 
 Create `/tmp/plan8-task2-source.py`:
 
@@ -1267,13 +1271,13 @@ for path, (text, count) in written.items():
 
 Apply `task2-source`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_build.py packages/earnings-ingestion/tests/test_sec_client.py -q`
 
 Expected: `56 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/build.py packages/earnings-ingestion/src/earnings_ingestion/events/saved.py packages/earnings-ingestion/src/earnings_ingestion/sec/client.py packages/earnings-ingestion/tests/test_events_build.py packages/earnings-ingestion/tests/test_sec_client.py
@@ -1284,7 +1288,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1371 passed, 24 deselected`; `All checks passed!` and
 `252 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -1319,7 +1323,7 @@ it. events v1 does not: the build over its saved responses reads every candidate
   `events/release.py`.
 - Produces: `read_text` returns `Reading(unread=...)` for text with no Item line.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `/tmp/plan8-task3-tests.py`:
 
@@ -1395,14 +1399,14 @@ for path, (text, count) in written.items():
 
 Apply `task3-tests`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_build.py packages/earnings-ingestion/tests/test_events_release.py -q`
 
 Expected: FAIL: `2 failed, 88 passed`, each with
 `ValueError: zip() argument 2 is longer than argument 1`.
 
-- [ ] **Step 3: Read no Item line as unread**
+- [x] **Step 3: Read no Item line as unread**
 
 Create `/tmp/plan8-task3-source.py`:
 
@@ -1442,13 +1446,13 @@ for path, (text, count) in written.items():
 
 Apply `task3-source`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_build.py packages/earnings-ingestion/tests/test_events_release.py -q`
 
 Expected: `90 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/release.py packages/earnings-ingestion/tests/test_events_build.py packages/earnings-ingestion/tests/test_events_release.py
@@ -1459,7 +1463,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1373 passed, 24 deselected`; `All checks passed!` and
 `252 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -1505,7 +1509,7 @@ None of events v1's 269 candidates disagrees, so v1 rebuilds unchanged.
 - Produces: `index_disagreement(filing: Filing, index: FilingIndex) -> str | None` in
   `events/filings.py`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `/tmp/plan8-task4-tests.py`:
 
@@ -1628,7 +1632,7 @@ for path, (text, count) in written.items():
 
 Apply `task4-tests`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_events_cli.py packages/earnings-ingestion/tests/test_events_discover.py packages/earnings-ingestion/tests/test_events_filings.py -q`
 
@@ -1643,7 +1647,7 @@ Expected: FAIL: `5 failed, 39 passed`.
 - `test_discover_filing_keeps_a_smaller_approved_cap` reads one phase,
   `8-K 0009990001-24-000003: 2 to fetch`, where it expects two.
 
-- [ ] **Step 3: Check the page against its row**
+- [x] **Step 3: Check the page against its row**
 
 Create `/tmp/plan8-task4-source.py`:
 
@@ -1781,13 +1785,13 @@ for path, (text, count) in written.items():
 
 Apply `task4-source`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_events_cli.py packages/earnings-ingestion/tests/test_events_discover.py packages/earnings-ingestion/tests/test_events_filings.py -q`
 
 Expected: `44 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py apps/earnings-pipeline/tests/test_events_cli.py packages/earnings-ingestion/src/earnings_ingestion/events/build.py packages/earnings-ingestion/src/earnings_ingestion/events/discover.py packages/earnings-ingestion/src/earnings_ingestion/events/filings.py packages/earnings-ingestion/tests/test_events_discover.py packages/earnings-ingestion/tests/test_events_filings.py
@@ -1798,7 +1802,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1377 passed, 24 deselected`; `All checks passed!` and
 `252 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -1842,7 +1846,7 @@ freezing, and selecting stay unguarded, since they fetch nothing.
   `raw_store_refusal(repo: Path, store: Path) -> str | None`, and
   `shown(path: Path, repo: Path) -> str`. Task 19 adds `RUNS` and `runs_refusal`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `apps/earnings-pipeline/tests/test_paths.py`:
 
@@ -2132,14 +2136,14 @@ for path, (text, count) in written.items():
 
 Apply `task5-tests`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_cohort_cli.py apps/earnings-pipeline/tests/test_events_cli.py apps/earnings-pipeline/tests/test_paths.py -q`
 
 Expected: FAIL: `1 error`, collecting `apps/earnings-pipeline/tests/test_paths.py`,
 with `ModuleNotFoundError: No module named 'earnings_pipeline.paths'`.
 
-- [ ] **Step 3: Check the paths before anything runs**
+- [x] **Step 3: Check the paths before anything runs**
 
 Create `apps/earnings-pipeline/src/earnings_pipeline/paths.py`:
 
@@ -2288,13 +2292,13 @@ for path, (text, count) in written.items():
 
 Apply `task5-source`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_cohort_cli.py apps/earnings-pipeline/tests/test_events_cli.py apps/earnings-pipeline/tests/test_paths.py -q`
 
 Expected: `34 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py apps/earnings-pipeline/src/earnings_pipeline/events_cli.py apps/earnings-pipeline/src/earnings_pipeline/paths.py apps/earnings-pipeline/tests/test_cohort_cli.py apps/earnings-pipeline/tests/test_events_cli.py apps/earnings-pipeline/tests/test_paths.py
@@ -2305,7 +2309,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1384 passed, 24 deselected`; `All checks passed!` and
 `254 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -2350,7 +2354,7 @@ requests sent on every exit, and the `verify-live` record gains `requests_sent`.
   N`, both required; `run_live(..., max_requests=N)` in `cohort/live.py`; and
   `LiveVerification.requests_sent: int` in `cohort/records.py`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `/tmp/plan8-task6-tests.py`:
 
@@ -2561,7 +2565,7 @@ for path, (text, count) in written.items():
 
 Apply `task6-tests`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_cohort_cli.py apps/earnings-pipeline/tests/test_events_cli.py packages/earnings-ingestion/tests/test_cohort_live.py tests/integration/test_cohort_live.py -q`
 
@@ -2576,7 +2580,9 @@ Expected: FAIL: `8 failed, 34 passed, 1 deselected`. The deselected test is
 - `run_live` records no count
   (`'LiveVerification' object has no attribute 'requests_sent'`).
 
-- [ ] **Step 3: Print the count on every exit, and take the approved counts**
+- [x] **Step 3: Print the count on every exit, and take the approved counts**
+
+> Deviation: after the final review (`55ea811`), `discover`, `fetch-sec`, and `verify-live` print their count on any exit, their Ctrl-C handler widened to `BaseException`, so an error no stop names still ends with the count.
 
 Create `/tmp/plan8-task6-source.py`:
 
@@ -2839,13 +2845,13 @@ for path, (text, count) in written.items():
 
 Apply `task6-source`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_cohort_cli.py apps/earnings-pipeline/tests/test_events_cli.py packages/earnings-ingestion/tests/test_cohort_live.py tests/integration/test_cohort_live.py -q`
 
 Expected: `42 passed, 1 deselected`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py apps/earnings-pipeline/src/earnings_pipeline/events_cli.py apps/earnings-pipeline/tests/test_cohort_cli.py apps/earnings-pipeline/tests/test_events_cli.py packages/earnings-ingestion/src/earnings_ingestion/cohort/live.py packages/earnings-ingestion/src/earnings_ingestion/cohort/records.py packages/earnings-ingestion/tests/test_cohort_live.py tests/integration/test_cohort_live.py
@@ -2859,7 +2865,7 @@ Expected: `escapes intact`; `1391 passed, 24 deselected`; `All checks passed!` a
 `tests/integration/test_cohort_live.py::test_the_real_cohort_verifies_live`, then
 `1 test collected`: collected, never run.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -2902,7 +2908,7 @@ The data dictionary's reading notes say so.
   content", and `frozen_event_manifests` raises "`events-v<N>.json` has no
   `events-v<N>.evidence.json`".
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `/tmp/plan8-task7-tests.py`:
 
@@ -2996,13 +3002,13 @@ for path, (text, count) in written.items():
 
 Apply `task7-tests`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_build.py packages/earnings-ingestion/tests/test_events_freeze.py -q`
 
 Expected: FAIL: `3 failed, 38 passed`, each with `Failed: DID NOT RAISE ValueError`.
 
-- [ ] **Step 3: Refuse them when listing**
+- [x] **Step 3: Refuse them when listing**
 
 Create `/tmp/plan8-task7-source.py`:
 
@@ -3176,13 +3182,13 @@ for path, (text, count) in written.items():
 
 Apply `task7-source`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_build.py packages/earnings-ingestion/tests/test_events_freeze.py -q`
 
 Expected: `41 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py packages/earnings-ingestion/src/earnings_ingestion/cohort/freeze.py packages/earnings-ingestion/src/earnings_ingestion/events/freeze.py packages/earnings-ingestion/src/earnings_ingestion/events/pilot.py packages/earnings-ingestion/tests/test_cohort_build.py packages/earnings-ingestion/tests/test_events_freeze.py
@@ -3193,7 +3199,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1394 passed, 24 deselected`; `All checks passed!` and
 `254 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -3230,7 +3236,7 @@ a row's event exchanged with another's, another policy, another `pilot_id`, and
   djia-pilot/1" for another policy, and "selects ..." when the policy selects another
   pilot.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `/tmp/plan8-task8-tests.py`:
 
@@ -3356,7 +3362,7 @@ for path, (text, count) in written.items():
 
 Apply `task8-tests`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_pilot.py tests/integration/test_event_corpus_v1.py -q`
 
@@ -3364,7 +3370,7 @@ Expected: FAIL: `5 failed, 40 passed`, each with `Failed: DID NOT RAISE ValueErr
 the four tamperings of `test_loading_selects_again`, and
 `test_a_pilot_with_a_row_swapped_for_another_eligible_event_is_refused` on pilot v1.
 
-- [ ] **Step 3: Select again when loading**
+- [x] **Step 3: Select again when loading**
 
 Create `/tmp/plan8-task8-source.py`:
 
@@ -3434,13 +3440,13 @@ for path, (text, count) in written.items():
 
 Apply `task8-source`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_pilot.py tests/integration/test_event_corpus_v1.py -q`
 
 Expected: `45 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/pilot.py packages/earnings-ingestion/tests/test_events_pilot.py tests/integration/test_event_corpus_v1.py
@@ -3451,7 +3457,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1399 passed, 24 deselected`; `All checks passed!` and
 `254 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -3509,7 +3515,7 @@ On the real corpus, the rebuild's content hash is still events v1's, `2348671b�
   - `_current(layout) -> tuple[FrozenEvents, UniverseManifest]` in `events_cli.py`,
     which Task 19's `acquire_command` reuses.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `/tmp/plan8-task9-tests.py`:
 
@@ -3746,14 +3752,14 @@ for path, (text, count) in written.items():
 
 Apply `task9-tests`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_cohort_cli.py apps/earnings-pipeline/tests/test_events_cli.py packages/earnings-ingestion/tests/test_cohort_build.py packages/earnings-ingestion/tests/test_events_freeze.py -q`
 
 Expected: FAIL: `1 error`, collecting `test_events_freeze.py`, with
 `ImportError: cannot import name 'current_events' from 'earnings_ingestion.events.freeze'`.
 
-- [ ] **Step 3: Let the build decide, and record the rule**
+- [x] **Step 3: Let the build decide, and record the rule**
 
 Create `/tmp/plan8-task9-source.py`:
 
@@ -4055,13 +4061,13 @@ for path, (text, count) in written.items():
 
 Apply `task9-source`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_cohort_cli.py apps/earnings-pipeline/tests/test_events_cli.py packages/earnings-ingestion/tests/test_cohort_build.py packages/earnings-ingestion/tests/test_events_freeze.py -q`
 
 Expected: `84 passed`.
 
-- [ ] **Step 5: Check the real corpus offline**
+- [x] **Step 5: Check the real corpus offline**
 
 The real corpus's current version must still be events v1 and pilot v1. This reads
 committed files and the saved responses, and sends nothing:
@@ -4093,7 +4099,7 @@ EOF
 
 Expected: `events-v1.json 2348671b` and `pilot-v1.json 3839c800`.
 
-- [ ] **Step 6: Run the checks**
+- [x] **Step 6: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py apps/earnings-pipeline/src/earnings_pipeline/events_cli.py apps/earnings-pipeline/tests/test_cohort_cli.py apps/earnings-pipeline/tests/test_events_cli.py packages/earnings-ingestion/src/earnings_ingestion/cohort/freeze.py packages/earnings-ingestion/src/earnings_ingestion/events/freeze.py packages/earnings-ingestion/src/earnings_ingestion/events/pilot.py packages/earnings-ingestion/tests/test_cohort_build.py packages/earnings-ingestion/tests/test_events_freeze.py
@@ -4104,7 +4110,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1404 passed, 24 deselected`; `All checks passed!` and
 `254 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -4139,7 +4145,7 @@ that copies 39.
   `WIDTH = 40`. `records` already matches `acquisition-overrides.toml`, through
   `*overrides.toml`. Task 18 makes `pages` skip a page `walker-1` cannot read.
 
-- [ ] **Step 1: Write the check**
+- [x] **Step 1: Write the check**
 
 Create `tests/integration/test_corpus_quotes.py`:
 
@@ -4288,7 +4294,7 @@ def test_a_rationale_that_copies_40_characters_is_caught(
 
 Extract it with `python3 /tmp/plan8-extract.py tests/integration/test_corpus_quotes.py`.
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `uv run --locked --all-packages pytest tests/integration/test_corpus_quotes.py -q`
 
@@ -4297,7 +4303,7 @@ synthetic corpus, and a rationale that copies 40 characters, caught, and one tha
 copies 39, not caught. If it reports `1 skipped`, the store is missing: stop and ask
 (Preconditions).
 
-- [ ] **Step 3: Run the checks**
+- [x] **Step 3: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py tests/integration/test_corpus_quotes.py
@@ -4308,7 +4314,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1408 passed, 24 deselected`; `All checks passed!` and
 `255 files already formatted`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git log --oneline -3
@@ -4368,7 +4374,7 @@ drift test.
   `write_run(directory, transitions) -> Path`, and
   `read_runs(directory) -> list[StateTransition]`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_events_state_table.py`:
 
@@ -4789,7 +4795,7 @@ for path, (text, count) in written.items():
 
 Apply `task11-tests`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_state_table.py packages/earnings-ingestion/tests/test_events_states.py tests/contracts/test_data_dictionary.py -q`
 
@@ -4798,7 +4804,9 @@ Expected: FAIL: `3 errors`, in collection: `No module named
 'earnings_ingestion.events.states'`, and, in the dictionary's drift test,
 `cannot import name 'states' from 'earnings_ingestion.events'`.
 
-- [ ] **Step 3: Write the states, the table, and their dictionary section**
+- [x] **Step 3: Write the states, the table, and their dictionary section**
+
+> Deviation: after the final review (`55ea811`), with the user's choice, runs are ordered by their earliest `recorded_at`, then `run_id`, and each run's transitions by `sequence` (`in_order`), amending P8-6's order so that a clock that steps back during a run cannot break a chain. A `StateTransition`'s `document_id` must be `<event_id>:release`; `read_runs` refuses a file Polars cannot read, by name, as a `ValueError`; and the dictionary gives `ExhibitAttempt.detail`'s `walker-1` failure detail.
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/events/state_table.py`:
 
@@ -5322,13 +5330,13 @@ for path, (text, count) in written.items():
 
 Apply `task11-source`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_state_table.py packages/earnings-ingestion/tests/test_events_states.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: `124 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/state_table.py packages/earnings-ingestion/src/earnings_ingestion/events/states.py packages/earnings-ingestion/tests/test_events_state_table.py packages/earnings-ingestion/tests/test_events_states.py tests/contracts/test_data_dictionary.py
@@ -5339,7 +5347,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1432 passed, 24 deselected`; `All checks passed!` and
 `259 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -5372,7 +5380,7 @@ integer sub-number, so "99.01" names `EX-99.1` and "Exhibit 99" names `EX-99` al
   and `exhibit_order(index: FilingIndex, item_text: str) ->
   tuple[ExhibitCandidate, ...]`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_events_exhibits.py`:
 
@@ -5489,14 +5497,14 @@ def test_a_filing_without_ex_99_has_no_candidate() -> None:
 
 Extract it with `python3 /tmp/plan8-extract.py packages/earnings-ingestion/tests/test_events_exhibits.py`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_exhibits.py -q`
 
 Expected: FAIL: `1 error`, with
 `ModuleNotFoundError: No module named 'earnings_ingestion.events.exhibits'`.
 
-- [ ] **Step 3: Order the exhibits**
+- [x] **Step 3: Order the exhibits**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/events/exhibits.py`:
 
@@ -5586,13 +5594,13 @@ def exhibit_order(index: FilingIndex, item_text: str) -> tuple[ExhibitCandidate,
 
 Extract it with `python3 /tmp/plan8-extract.py packages/earnings-ingestion/src/earnings_ingestion/events/exhibits.py`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_exhibits.py -q`
 
 Expected: `17 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/exhibits.py packages/earnings-ingestion/tests/test_events_exhibits.py
@@ -5603,7 +5611,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1449 passed, 24 deselected`; `All checks passed!` and
 `261 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -5645,7 +5653,7 @@ whose openings announce nothing; it skips without them.
     `opening(result) -> str`, and `confirm(result, period_end, fiscal_year,
     fiscal_period) -> Confirmation`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_events_content.py`:
 
@@ -5816,14 +5824,14 @@ def test_stage_1_s_saved_exhibits_are_judged_as_before() -> None:
 
 Extract it with `python3 /tmp/plan8-extract.py packages/earnings-ingestion/tests/test_events_content.py`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_content.py -q`
 
 Expected: FAIL: `1 error`, with
 `ModuleNotFoundError: No module named 'earnings_ingestion.events.content'`.
 
-- [ ] **Step 3: Write the policy, and share the period test**
+- [x] **Step 3: Write the policy, and share the period test**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/events/content.py`:
 
@@ -5991,14 +5999,14 @@ for path, (text, count) in written.items():
 
 Apply `task13-source`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_content.py -q`
 
 Expected: `20 passed`. If it reports `19 passed, 1 skipped`, Stage 1's saved exhibits
 are missing: stop and ask (Preconditions).
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/content.py packages/earnings-ingestion/src/earnings_ingestion/events/release.py packages/earnings-ingestion/tests/test_events_content.py
@@ -6009,7 +6017,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1469 passed, 24 deselected`; `All checks passed!` and
 `263 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -6054,7 +6062,7 @@ manifest's and the pilot's content hashes do not change, since no fact changes.
   - in `events/synthetic.py`: `exhibit_page(page: str, registrant: str, period_end:
     date) -> bytes`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `/tmp/plan8-task14-tests.py`:
 
@@ -6178,14 +6186,14 @@ for path, (text, count) in written.items():
 
 Apply `task14-tests`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_layer.py -q`
 
 Expected: FAIL: `1 error`, with
 `ImportError: cannot import name 'exhibit_bodies' from 'earnings_ingestion.events.layer'`.
 
-- [ ] **Step 3: Add the exhibits**
+- [x] **Step 3: Add the exhibits**
 
 Create `/tmp/plan8-task14-source.py`:
 
@@ -6544,7 +6552,7 @@ for path, (text, count) in written.items():
 
 Apply `task14-source`.
 
-- [ ] **Step 4: Regenerate the synthetic corpus**
+- [x] **Step 4: Regenerate the synthetic corpus**
 
 ```bash
 uv run --locked --all-packages python tests/integration/regenerate_event_fixtures.py
@@ -6562,13 +6570,13 @@ retrieval directories. The four new pages are the Acme and Eastfield filings' in
 pages and primary documents, which now name the new exhibits. If a hash differs,
 stop: an earlier task's code differs from the plan's.
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_layer.py -q tests/integration/test_event_fixtures.py`
 
 Expected: `24 passed`.
 
-- [ ] **Step 6: Run the checks**
+- [x] **Step 6: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/layer.py packages/earnings-ingestion/src/earnings_ingestion/events/synthetic.py packages/earnings-ingestion/tests/test_events_layer.py
@@ -6579,7 +6587,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1478 passed, 24 deselected`; `All checks passed!` and
 `263 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -6615,7 +6623,7 @@ offline path's boundary test.
   `earnings_ingestion.fetch.responses.UnexpectedResponse`, which `fetch.client` still
   exports.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `/tmp/plan8-task15-tests.py`:
 
@@ -6684,7 +6692,7 @@ for path, (text, count) in written.items():
 
 Apply `task15-tests`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_import_boundaries.py tests/contracts/test_import_scan.py -q`
 
@@ -6692,7 +6700,7 @@ Expected: FAIL: `2 failed, 65 passed`. Discovery loads `httpx` and
 `earnings_ingestion.fetch.client`, and the scan reports
 `packages/earnings-ingestion/src/earnings_ingestion/events/discover.py:47 imports earnings_ingestion.fetch.client.Fetched`.
 
-- [ ] **Step 3: Move the two names**
+- [x] **Step 3: Move the two names**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/fetch/responses.py`:
 
@@ -6792,13 +6800,13 @@ for path, (text, count) in written.items():
 
 Apply `task15-source`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_import_boundaries.py tests/contracts/test_import_scan.py -q`
 
 Expected: `67 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/discover.py packages/earnings-ingestion/src/earnings_ingestion/fetch/client.py packages/earnings-ingestion/src/earnings_ingestion/fetch/responses.py packages/earnings-ingestion/tests/test_import_boundaries.py tests/contracts/test_import_scan.py
@@ -6809,7 +6817,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1478 passed, 24 deselected`; `All checks passed!` and
 `264 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -6870,7 +6878,7 @@ checks P-C7 after a run with a failure, and the import tests add every new modul
     now=...) -> Acquisition`. Task 17 adds the universe and the overrides, and
     Task 19 adds the overrides to `planned_requests`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_events_acquire.py`:
 
@@ -7285,7 +7293,7 @@ for path, (text, count) in written.items():
 
 Apply `task16-tests`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_acquire.py packages/earnings-ingestion/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/integration/test_event_store_v1.py -q`
 
@@ -7293,7 +7301,9 @@ Expected: FAIL: `2 errors`, collecting `test_events_acquire.py` and
 `tests/integration/test_event_store_v1.py`, each with
 `ModuleNotFoundError: No module named 'earnings_ingestion.events.acquire'`.
 
-- [ ] **Step 3: Write the acquisition**
+- [x] **Step 3: Write the acquisition**
+
+> Deviation: after the final review (`55ea811`), a canonical file already under its `doc_id` that differs only in its manifest is kept, and any other difference is a problem, not a stop; `Acquisition.states` returns the state the run recorded when a problem follows a document's first exhibit; and an index page never saved names `events discover`, without the repair hint.
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/events/acquire.py`:
 
@@ -7718,14 +7728,14 @@ def acquire(
 
 Extract it with `python3 /tmp/plan8-extract.py packages/earnings-ingestion/src/earnings_ingestion/events/acquire.py`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_acquire.py packages/earnings-ingestion/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/integration/test_event_store_v1.py -q`
 
 Expected: `85 passed`. `test_the_first_acquisition_sends_40_to_56_requests` reads the
 real store; if it reports `skipped`, stop and ask (Preconditions).
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/acquire.py packages/earnings-ingestion/tests/test_events_acquire.py packages/earnings-ingestion/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/integration/test_event_store_v1.py
@@ -7736,7 +7746,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1496 passed, 24 deselected`; `All checks passed!` and
 `267 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -7793,7 +7803,7 @@ reproduces the frozen event manifest.
     overrides, states_dir, canonical_dir, run_id, now=...) -> Acquisition`, which
     now takes the universe, for eligibility, and the overrides.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `/tmp/plan8-task17-tests.py`:
 
@@ -8141,7 +8151,7 @@ for path, (text, count) in written.items():
 
 Apply `task17-tests`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_acquire.py packages/earnings-ingestion/tests/test_events_records.py tests/contracts/test_data_dictionary.py -q`
 
@@ -8151,7 +8161,9 @@ Expected: FAIL: `3 errors`, in collection:
 and, in the dictionary's drift test,
 `module 'earnings_ingestion.events.records' has no attribute 'AcquisitionOverride'`.
 
-- [ ] **Step 3: Write the overrides, and apply them**
+- [x] **Step 3: Write the overrides, and apply them**
+
+> Deviation: after the final review (`55ea811`), an override applied under its ID that now names another exhibit than the document's last acquisition is a problem: an applied override is not edited in place.
 
 Create `/tmp/plan8-task17-source.py`:
 
@@ -8582,13 +8594,13 @@ for path, (text, count) in written.items():
 
 Apply `task17-source`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_acquire.py packages/earnings-ingestion/tests/test_events_records.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: `146 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/acquire.py packages/earnings-ingestion/src/earnings_ingestion/events/build.py packages/earnings-ingestion/src/earnings_ingestion/events/records.py packages/earnings-ingestion/tests/test_events_acquire.py packages/earnings-ingestion/tests/test_events_records.py tests/contracts/test_data_dictionary.py
@@ -8599,7 +8611,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1508 passed, 24 deselected`; `All checks passed!` and
 `267 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -8650,7 +8662,7 @@ exhibits' URLs, which discovery never fetches, and the quote check skips a page
     `transitions_json(transitions) -> str`, and `load_transitions(path) ->
     tuple[StateTransition, ...]`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `/tmp/plan8-task18-tests.py`:
 
@@ -8910,14 +8922,14 @@ for path, (text, count) in written.items():
 
 Apply `task18-tests`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_events_cli.py packages/earnings-ingestion/tests/test_events_discover.py tests/integration/test_corpus_quotes.py tests/integration/test_event_fixtures.py -q`
 
 Expected: FAIL: `1 error`, collecting `tests/integration/test_event_fixtures.py`,
 with `ImportError: cannot import name 'ACQUIRED_AT' from 'earnings_ingestion.events.fixture'`.
 
-- [ ] **Step 3: Acquire in the fixture, and serve the exhibits**
+- [x] **Step 3: Acquire in the fixture, and serve the exhibits**
 
 Create `/tmp/plan8-task18-source.py`:
 
@@ -9101,7 +9113,7 @@ for path, (text, count) in written.items():
 
 Apply `task18-source`.
 
-- [ ] **Step 4: Regenerate the synthetic corpus**
+- [x] **Step 4: Regenerate the synthetic corpus**
 
 ```bash
 uv run --locked --all-packages python tests/integration/regenerate_event_fixtures.py
@@ -9113,13 +9125,13 @@ python3 -c "import json; print(len(json.load(open('tests/fixtures/events/acquisi
 Expected: `wrote tests/fixtures/events/pilot-v1.json`; `227`; the two hashes of Task
 14, unchanged; and `80`. If a hash differs, stop.
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_events_cli.py packages/earnings-ingestion/tests/test_events_discover.py tests/integration/test_corpus_quotes.py tests/integration/test_event_fixtures.py -q`
 
 Expected: `41 passed`.
 
-- [ ] **Step 6: Run the checks**
+- [x] **Step 6: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py apps/earnings-pipeline/tests/test_events_cli.py packages/earnings-ingestion/src/earnings_ingestion/events/fixture.py packages/earnings-ingestion/src/earnings_ingestion/events/synthetic.py packages/earnings-ingestion/tests/test_events_discover.py tests/integration/test_corpus_quotes.py tests/integration/test_event_fixtures.py
@@ -9130,7 +9142,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1509 passed, 24 deselected`; `All checks passed!` and
 `267 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -9178,7 +9190,7 @@ the count only when it would fetch, stops on a persistent 403 with the rest
   - in `events/acquire.py`: `planned_requests(events, pilot, store, states_dir,
     overrides=None) -> tuple[int, int]`, which counts an override's document.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `/tmp/plan8-task19-tests.py`:
 
@@ -9417,14 +9429,16 @@ for path, (text, count) in written.items():
 
 Apply `task19-tests`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_events_cli.py apps/earnings-pipeline/tests/test_paths.py packages/earnings-ingestion/tests/test_events_acquire.py -q`
 
 Expected: FAIL: `1 error`, collecting `apps/earnings-pipeline/tests/test_paths.py`,
 with `ImportError: cannot import name 'runs_refusal' from 'earnings_pipeline.paths'`.
 
-- [ ] **Step 3: Write the command**
+- [x] **Step 3: Write the command**
+
+> Deviation: after the final review (`55ea811`), `events acquire` caps the client at the smaller of `--max-requests` and the count it states, as `discover --filing` does. It holds `.acquire.lock` in `--runs-dir` while it counts and records, so two runs, offline ones included, never fork a history. It refuses an unreadable run file or a held lock with `Refused:` before any client opens, and prints its count on any exit. A redirect loop, 21 requests under httpx's limit, now stops the run at the cap unless the cap leaves room for it, when it is recorded `not_fetched`.
 
 Create `/tmp/plan8-task19-source.py`:
 
@@ -9715,13 +9729,13 @@ for path, (text, count) in written.items():
 
 Apply `task19-source`.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_events_cli.py apps/earnings-pipeline/tests/test_paths.py packages/earnings-ingestion/tests/test_events_acquire.py -q`
 
 Expected: `48 passed`.
 
-- [ ] **Step 5: Read the real count offline**
+- [x] **Step 5: Read the real count offline**
 
 `events acquire` with no `--max-requests` states its count and refuses before it opens
 the client, so it sends nothing:
@@ -9742,7 +9756,7 @@ Refused: pass --max-requests, the request count the user approved
 exit 1
 ```
 
-- [ ] **Step 6: Run the checks**
+- [x] **Step 6: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py apps/earnings-pipeline/src/earnings_pipeline/events_cli.py apps/earnings-pipeline/src/earnings_pipeline/paths.py apps/earnings-pipeline/tests/test_events_cli.py apps/earnings-pipeline/tests/test_paths.py packages/earnings-ingestion/src/earnings_ingestion/events/acquire.py packages/earnings-ingestion/tests/test_events_acquire.py
@@ -9753,7 +9767,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1518 passed, 24 deselected`; `All checks passed!` and
 `267 files already formatted`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -9785,7 +9799,7 @@ runs until the user has said yes in chat.
 - Produces: `test_offline_replay_reproduces_the_live_acquisition`, which skips until
   an acquisition run is saved; and the live run's states.
 
-- [ ] **Step 1: Write the replay test**
+- [x] **Step 1: Write the replay test**
 
 The count test, from Task 16, now skips once an acquisition run is saved, since the
 run saves the exhibits it counts. The replay test then takes over.
@@ -9889,14 +9903,14 @@ def test_offline_replay_reproduces_the_live_acquisition(tmp_path) -> None:
 
 Extract it with `python3 /tmp/plan8-extract.py tests/integration/test_event_store_v1.py 2`.
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `uv run --locked --all-packages pytest tests/integration/test_event_store_v1.py -q -rs`
 
 Expected: `1 passed, 1 skipped`, and the skip reads
 `no acquisition run is saved here: the live gate runs this test`.
 
-- [ ] **Step 3: Run the checks**
+- [x] **Step 3: Run the checks**
 
 ```bash
 python3 /tmp/plan8-escapes.py tests/integration/test_event_store_v1.py
@@ -9907,7 +9921,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected: `escapes intact`; `1518 passed, 1 skipped, 24 deselected`;
 `All checks passed!` and `267 files already formatted`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git log --oneline -3
@@ -9915,7 +9929,7 @@ git add tests/integration/test_event_store_v1.py
 git commit -m "test(events): offline replay reproduces the live acquisition's states"
 ```
 
-- [ ] **Step 5: Check everything the gate relies on, offline**
+- [x] **Step 5: Check everything the gate relies on, offline**
 
 ```bash
 uv run --locked --all-packages pytest tests/integration/test_corpus_quotes.py tests/integration/test_event_store_v1.py -q
@@ -9937,7 +9951,7 @@ Expected:
 If any differs, stop and report it: the gate's count is not what the user will be
 asked to approve.
 
-- [ ] **Step 6 (gate): Ask the user to approve the count**
+- [x] **Step 6 (gate): Ask the user to approve the count**
 
 Put this to the user in chat, and wait for a clear yes:
 
@@ -9950,7 +9964,9 @@ Put this to the user in chat, and wait for a clear yes:
 
 A different count, or a no, stops the task.
 
-- [ ] **Step 7: Run the acquisition**
+- [x] **Step 7: Run the acquisition**
+
+> Deviation: predictions only; every check matched. The run exited 0 and sent 40 requests of the approved 56, fetching 40: 39 documents `parsed` and 1 `unavailable`, `no_confirmed_release`. That one was not JPMorgan's, 3M's, or Verizon's, the likeliest predicted, but Disney's for 2026-03-28, #26: its release states the period but opens as a letter to shareholders. No stop, retry, or rerun was needed.
 
 ```bash
 uv run --locked earnings-pipeline events acquire --max-requests 56 > /tmp/plan8-acquire-1.txt 2>&1; echo "exit $?"
@@ -9985,7 +10001,7 @@ never retried with another identity (A §404). A rerun is a gate of its own:
 approves that count, and the rerun takes it as `--max-requests`, with its output in
 `/tmp/plan8-acquire-2.txt`, and so on.
 
-- [ ] **Step 8: Replay the run offline, and check the frozen records**
+- [x] **Step 8: Replay the run offline, and check the frozen records**
 
 `/tmp/plan8-review.py` lists each pilot document that is not `parsed`, with every
 exhibit it tried and each outcome, then the counts by state. It reads the state
@@ -10107,7 +10123,9 @@ writes nothing: note that in the record, and go to Task 22.
   citation's locator.
 - Produces: the reviewed acquisition overrides, and the documents' final states.
 
-- [ ] **Step 1 (gate): Take each problem, and each document not parsed, to the user**
+- [x] **Step 1 (gate): Take each problem, and each document not parsed, to the user**
+
+> Deviation: no `problem:` line arose. The one document not parsed, Disney's, went to the user, who chose an override naming its only `EX-99.1`, `fy2026_q2xprxex991.htm`, and gave its rationale and signature. No rerun, `events discover --filing`, or store repair was needed.
 
 A `problem:` line comes first. One that ends "repair the store by hand" names a saved
 response that cannot be read: acquisition never fetches it again (P8-2). Show it to
@@ -10200,7 +10218,7 @@ If another filing's index page is not saved, the user approves at most 2 request
 for `uv run --locked earnings-pipeline events discover --filing [GATE: the CIK] [GATE: the accession] --max-requests 2`
 first.
 
-- [ ] **Step 2 (gate): Write the overrides the user decided**
+- [x] **Step 2 (gate): Write the overrides the user decided**
 
 **To cite the filing,** cite its index page at its Accepted value, which Step 1's
 listing shows:
@@ -10263,7 +10281,7 @@ cited_sha256 = "[GATE: cite's cited_sha256]"
   refuses a 40-character window copied from a saved page.
 - **One per event.** The file holds at most one override for each event (P8-11).
 
-- [ ] **Step 3: Check the overrides offline**
+- [x] **Step 3: Check the overrides offline**
 
 ```bash
 grep -n 'GATE:' config/corpus/djia-2024q3-2026q2/acquisition-overrides.toml
@@ -10278,7 +10296,9 @@ first choices`, with `n` the number of overrides whose exhibit is not saved, or
 then acquires offline. Without a count it refuses when `n` is above 0, with `exit 1`.
 A `problem:` line names an override that does not check: fix it and repeat.
 
-- [ ] **Step 4 (gate): Acquire the overrides' documents**
+- [x] **Step 4 (gate): Acquire the overrides' documents**
+
+> Deviation: `n` was 0, since the exhibit was already saved, so no count went to the user. The override's acquisition ran with the client closed, sent 0 requests, and parsed Disney's document with no `corpus_error`, leaving the pilot 40 `parsed`.
 
 When `n` is above 0, put the count to the user, as Task 20, Step 6 did, and wait for
 a clear yes. Then:
@@ -10295,7 +10315,7 @@ membership change (S §What acquisition can change); and `exit 0`. A `corpus_err
 line is reported to the user and recorded, and nothing is fixed in place: the next
 corpus version corrects it.
 
-- [ ] **Step 5: Replay, and commit the overrides**
+- [x] **Step 5: Replay, and commit the overrides**
 
 ```bash
 uv run --locked --all-packages pytest tests/integration/test_event_store_v1.py tests/integration/test_corpus_quotes.py -q
@@ -10341,7 +10361,7 @@ S §Gates (plan B), gate 2, and S §Rollout's refresh of the current state.
 - Consumes: everything this plan built, and the outputs of Tasks 20 and 21.
 - Produces: documentation only. The test counts stay at Task 20's.
 
-- [ ] **Step 1: Apply the record and the current state**
+- [x] **Step 1: Apply the record and the current state**
 
 Create `/tmp/plan8-task21-source.py`:
 
@@ -10559,7 +10579,9 @@ for path, (text, count) in written.items():
 
 Apply `task21-source`.
 
-- [ ] **Step 2 (gate): Fill the slots, and have the user read the record**
+- [x] **Step 2 (gate): Fill the slots, and have the user read the record**
+
+> Deviation: after the final review, the user chose (`a06e2d0`) to quote the override's signed rationale exactly, where the record had paraphrased it, and to give check 7 the suite count after the review's fixes, 1535 passed and 1 skipped.
 
 Fill every `[GATE: …]` slot in the three files from Tasks 20 and 21's outputs. Then:
 
@@ -10571,7 +10593,7 @@ Expected: nothing. Ask the user to read `docs/verification/djia-events.md`'s pla
 sections, and wait for their approval before Step 4. The user may add to it; record
 each addition as a deviation.
 
-- [ ] **Step 3: Final verification**
+- [x] **Step 3: Final verification**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q
@@ -10588,7 +10610,7 @@ Expected, checks: `1518 passed, 1 skipped, 24 deselected`; `280 passed`;
 `uv lock --check` passes; the first `git diff` prints nothing; and the second prints
 nothing, or only `acquisition-overrides.toml` if Task 21 wrote it.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git log --oneline -3
@@ -10615,6 +10637,8 @@ completes that list:
   An expected but absent document carries its `missing_reason` (P8-6). The coverage
   report Stage 6 writes counts `unavailable`, `restricted`, and `failed` documents
   from them, and never reselects.
+
+  > Deviation: after the final review (`55ea811`), `in_order` gives the order `check_histories` and `current_states` use: runs by their earliest `recorded_at`, then `run_id`, and each run's transitions by `sequence`. `events acquire` holds `.acquire.lock` in `data/runs/events` while it records; a later stage that writes runs to the same table takes it too.
 - **The canonical documents.** Each `parsed` document's row names its `doc_id`, and
   its `walker-1` canonical document is `data/runs/events/canonical/<doc_id>.json`,
   local and never committed. Gold spans bind to those `doc_id`s. The saved exhibit

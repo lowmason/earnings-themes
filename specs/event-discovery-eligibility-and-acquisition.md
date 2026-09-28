@@ -957,3 +957,6 @@ handoff, state:
 - that no model was called.
 
 > Plan A: COMPLETE (2026-09-27) — implemented by plan 7 (specs/plans/completed/7-event-discovery-eligibility-and-acquisition-plan-a.md). Next: write plan B.
+
+> Stage 5: COMPLETE (2026-09-28) — implemented by plans 7 (specs/plans/completed/7-event-discovery-eligibility-and-acquisition-plan-a.md) and 8 (specs/plans/completed/8-event-discovery-eligibility-and-acquisition-plan-b.md).
+> Next: resume the roadmap.
