@@ -174,40 +174,55 @@ def _filing(saved: SavedResponses, row: EventRow) -> _Filing:
     return _Filing(exhibit_order(index, text))
 
 
+Target = tuple[str, str, str]
+"""An override's event, filing, and exhibit."""
+
+
+def _target(override: AcquisitionOverride) -> Target:
+    return (override.event_id, override.accession, override.exhibit)
+
+
 def _pending(
     state: StateTransition | None,
     override: AcquisitionOverride | None,
-    applied: StateTransition | None,
+    applied: Target | None,
 ) -> str | None:
     """What a run does with a document: ``override`` applies its override,
     ``attempt`` tries its exhibits, ``refused`` reports an override of a document
-    no override moves, ``edited`` one whose ID was ``applied`` to another event or
-    exhibit, and ``None`` leaves it."""
+    no override moves, ``edited`` one whose ID was ``applied`` to another target,
+    and ``None`` leaves it."""
     current = DocumentState.EXPECTED if state is None else state.to_state
     if override is not None:
-        named = (override.event_id, override.accession, override.exhibit)
-        if applied and (applied.event_id, applied.accession, applied.exhibit) != named:
+        if applied is not None and applied != _target(override):
             return "edited"
-        mine = applied and state.override_id == override.override_id
+        mine = state is not None and state.override_id == override.override_id
         if mine and current not in ATTEMPTED:
             return None
         return "override" if current in OVERRIDDEN else "refused"
     return "attempt" if current in ATTEMPTED else None
 
 
-def _applications(
-    transitions: Iterable[StateTransition], pilot_hash: str
-) -> dict[str, StateTransition]:
-    """Each override's latest acquisition under the pilot, by ``override_id``: the
-    event, filing, and exhibit it was applied to."""
-    latest: dict[str, StateTransition] = {}
+def _applications(transitions: Iterable[StateTransition]) -> dict[str, Target]:
+    """Each override's latest target, by ``override_id``, under any pilot, so an ID
+    keeps one meaning: as its acquisition names it, or its attempt when it failed
+    from ``acquired`` and recorded no acquisition of its own."""
+    latest: dict[str, Target] = {}
     for transition in in_order(transitions):
-        if (
-            transition.pilot_hash == pilot_hash
-            and transition.override_id is not None
-            and transition.exhibit is not None
-        ):
-            latest[transition.override_id] = transition
+        if transition.override_id is None:
+            continue
+        if transition.exhibit is not None:
+            latest[transition.override_id] = (
+                transition.event_id,
+                transition.accession,
+                transition.exhibit,
+            )
+        for attempt in transition.attempts:
+            if attempt.choice is ExhibitChoice.OVERRIDE:
+                latest[transition.override_id] = (
+                    transition.event_id,
+                    attempt.accession,
+                    attempt.filename,
+                )
     return latest
 
 
@@ -220,12 +235,13 @@ def planned_requests(
 ) -> tuple[int, int]:
     """What a run would fetch: the first choices not saved, and every candidate not
     saved, over the documents it would attempt, an override's document counting as
-    both. The second is the most it can send."""
+    both. The second is the most it sends before any retry: a retry after a 429 or
+    a server error adds one, within the approved count, the client's cap."""
     saved = SavedResponses(store)
     rows = {row.event_id: row for row in events.rows}
     recorded = read_runs(states_dir)
     current = current_states(recorded, pilot.definition.content_hash)
-    applications = _applications(recorded, pilot.definition.content_hash)
+    applications = _applications(recorded)
     named = {} if overrides is None else {o.event_id: o for o in overrides.overrides}
     first = most = 0
     for pilot_row in pilot.rows:
@@ -327,6 +343,15 @@ def _exhibit(
     )
 
 
+def _without_environment(bundle: object) -> object:
+    """A canonical bundle without ``ENVIRONMENT``'s fields; anything else, as it
+    is, so that it differs."""
+    if not isinstance(bundle, dict) or not isinstance(bundle.get("manifest"), dict):
+        return bundle
+    manifest = {k: v for k, v in bundle["manifest"].items() if k not in ENVIRONMENT}
+    return {**bundle, "manifest": manifest}
+
+
 def _write(canonical_dir: Path, result: Canonicalized) -> None:
     """Write ``result`` under its ``doc_id``, keeping a file already there that
     differs only in ``ENVIRONMENT``; raises ``ValueError`` for any other
@@ -336,11 +361,8 @@ def _write(canonical_dir: Path, result: Canonicalized) -> None:
     try:
         write_new(path, data.encode())
     except FileExistsError:
-        kept, written = json.loads(path.read_bytes()), json.loads(data)
-        for bundle in (kept, written):
-            for field in ENVIRONMENT:
-                bundle.get("manifest", {}).pop(field, None)
-        if kept != written:
+        kept = _without_environment(json.loads(path.read_bytes()))
+        if kept != _without_environment(json.loads(data)):
             raise ValueError(
                 f"{path.name} holds another canonical document for the same text"
             ) from None
@@ -632,7 +654,7 @@ def acquire(
     rows = {row.event_id: row for row in events.rows}
     recorded = read_runs(states_dir)
     current = current_states(recorded, definition.content_hash)
-    applications = _applications(recorded, definition.content_hash)
+    applications = _applications(recorded)
     saved = SavedResponses(store)
     run = _Run(pilot, run_id, now)
     fetched: list[str] = []
@@ -662,10 +684,9 @@ def acquire(
             pending = _pending(state, override, last)
             if pending == "edited":
                 problems.append(
-                    f"{override.override_id} was applied to {last.event_id}"
-                    f" {last.accession} {last.exhibit} and now names"
-                    f" {override.event_id} {override.accession} {override.exhibit}:"
-                    " an applied override is not edited in place"
+                    f"{override.override_id} was applied to {' '.join(last)} and now"
+                    f" names {' '.join(_target(override))}: an applied override is"
+                    " not edited in place"
                 )
                 continue
             if pending == "refused":

@@ -13,6 +13,7 @@ from earnings_core import sha256_hex
 from earnings_ingestion.cohort.freeze import load_manifest
 from earnings_ingestion.cohort.records import OverrideCitation
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
+from earnings_ingestion.events import acquire as acquire_module
 from earnings_ingestion.events.acquire import (
     EXHIBIT_TYPES,
     acquire,
@@ -38,7 +39,7 @@ from earnings_ingestion.events.records import (
     AcquisitionOverridesFile,
 )
 from earnings_ingestion.events.saved import SavedResponses
-from earnings_ingestion.events.state_table import read_runs
+from earnings_ingestion.events.state_table import read_runs, write_run
 from earnings_ingestion.events.states import (
     AttemptOutcome,
     DocumentState,
@@ -298,6 +299,8 @@ def test_an_index_page_never_saved_names_discover_not_a_repair(
 def _change(written: dict, part: str) -> None:
     if part == "no manifest":
         del written["manifest"]
+    elif part == "null manifest":
+        written["manifest"] = None
     elif part == "elements":
         written["elements"] = written["elements"][1:]
     else:
@@ -311,6 +314,7 @@ def _change(written: dict, part: str) -> None:
         ("lxml_version", True),
         ("raw_sha256", False),
         ("no manifest", False),
+        ("null manifest", False),
         ("elements", False),
     ],
 )
@@ -660,6 +664,90 @@ def test_an_override_that_failed_edited_in_place_is_a_problem(
     )
     assert third.transitions == ()
     (problem,) = third.problems
+    assert problem.endswith(EDITED)
+
+
+def test_an_override_s_id_keeps_its_meaning_under_a_later_pilot(
+    frozen, store, tmp_path
+) -> None:
+    """Eastfield's override was applied under an earlier pilot. Under the current
+    one, whose states start again at expected, its ID moved to Dyna's event is
+    still reported, never applied (plan 8's final review)."""
+    run(frozen, store, Served(), tmp_path)
+    late = accession_of("0009990006", LATE)
+    override = document_override(
+        store, "0009990006", late, "efb-20260717-ex991.htm", EASTFIELD_Q1
+    )
+    run(frozen, store, Served(), tmp_path, run_id="acquire-2", overrides=(override,))
+    earlier = tmp_path / "later" / "states"
+    earlier.mkdir(parents=True)
+    runs: dict[str, list] = {}
+    for transition in read_runs(tmp_path / "states"):
+        changed = transition.model_copy(update={"pilot_hash": "0" * 64})
+        runs.setdefault(transition.run_id, []).append(changed)
+    for transitions in runs.values():
+        write_run(earlier, transitions)
+    dyna = "cik-0009990005:2025-03-28"
+    (row,) = [row for row in frozen[1].rows if row.event_id == dyna]
+    moved = document_override(
+        store,
+        "0009990005",
+        row.release_accession,
+        MISSING,
+        dyna,
+        override_id=override.override_id,
+    )
+    later = run(
+        frozen,
+        store,
+        refuse,
+        tmp_path / "later",
+        run_id="acquire-3",
+        overrides=(moved,),
+    )
+    assert [p for p in later.problems if p.endswith(EDITED)] == [
+        (
+            f"{override.override_id} was applied to {EASTFIELD_Q1} {late}"
+            f" efb-20260717-ex991.htm and now names {dyna} {row.release_accession}"
+            f" {MISSING}: {EDITED}"
+        )
+    ]
+
+
+def test_an_override_that_failed_from_acquired_keeps_its_target(
+    frozen, store, tmp_path, monkeypatch
+) -> None:
+    """Acme's document stays acquired when its second exhibit cannot be read. An
+    override naming its first exhibit then fails to canonicalize, recording no
+    acquisition of its own; its attempt still names its target, so an edit is
+    reported (plan 8's final review)."""
+    served = Served()
+    url = next(u for u in served.bodies if u.endswith("acme-20250925-ex992.htm"))
+    save_unreadable(store, served, url)
+    first = run(frozen, store, served, tmp_path)
+    assert first.states[f"{ACME_Q3}:release"].to_state is A
+    real = acquire_module.canonicalize
+
+    def failing(raw, *, source_document_id, media_type):
+        if source_document_id.endswith("acme-20250925-ex991.htm"):
+            raw = b"<html><body></body></html>"
+        return real(raw, source_document_id=source_document_id, media_type=media_type)
+
+    monkeypatch.setattr(acquire_module, "canonicalize", failing)
+    accession = accession_of("0009990001", "2025-09-25 16:05:00")
+    override = document_override(
+        store, "0009990001", accession, "acme-20250925-ex991.htm", ACME_Q3
+    )
+    second = run(
+        frozen, store, refuse, tmp_path, run_id="acquire-2", overrides=(override,)
+    )
+    assert second.states[f"{ACME_Q3}:release"].to_state is F
+    edited = override.model_copy(update={"exhibit": "acme-20250925-ex992.htm"})
+    third = run(
+        frozen, store, refuse, tmp_path, run_id="acquire-3", overrides=(edited,)
+    )
+    assert third.transitions == ()
+    (problem,) = [p for p in third.problems if p.startswith(override.override_id)]
     assert problem.endswith(EDITED)
 
 

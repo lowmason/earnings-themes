@@ -24,8 +24,8 @@ which no rerun fetches again, since it is saved.
 
 ``acquire`` reads the event manifest the build reproduces and the pilot frozen over
 it, which ``load_pilot`` checks and reselects, and refuses otherwise. It states what
-it would send before it opens the client: at most N requests, one per exhibit not
-saved, and how many are first choices. With nothing to fetch the client stays
+it would send before it opens the client: at most N requests before any retry, one
+per exhibit not saved, and how many are first choices. With nothing to fetch the client stays
 closed; otherwise ``--max-requests``, the count the user approved, is required and is
 the client's cap. A retry after a 429 or a server error counts against it: a run the
 cap stops keeps what it recorded, and a rerun at a newly approved count takes up the
