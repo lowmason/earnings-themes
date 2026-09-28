@@ -8,6 +8,11 @@ its name when it is first read.
 
 Every response is cited with the ``sec-edgar`` source's rights, as Stage 4 cites
 SEC's records (``cohort.register.SEC_RIGHTS``).
+
+A response whose newest retrieval was redirected is refused by raising, never
+skipped: it stays among the saved URLs, so discovery never fetches it again, and
+every reader reports it (PR #6's review, F13). The shared SEC client refuses a
+redirect before it is saved, so only a record saved before that check can be one.
 """
 
 from earnings_ingestion.cohort.locators import ArtifactText, CitableArtifact
@@ -42,12 +47,18 @@ class SavedResponses:
 
     def get(self, url: str) -> CitableArtifact | None:
         """The newest response saved from ``url``, or ``None``. Raises
-        ``FileNotFoundError`` or ``ValueError`` if its bytes are gone or changed."""
+        ``FileNotFoundError`` or ``ValueError`` if its bytes are gone or changed, and
+        ``ValueError`` if it was redirected."""
         if url in self._read:
             return self._read[url]
         record = self._newest.get(url)
         if record is None:
             return None
+        if record.final_url != record.request_url:
+            raise ValueError(
+                f"it was redirected to {record.final_url}, and a redirected response"
+                " is never read"
+            )
         stored = self.store.get(
             SEC_SOURCE_ID,
             record.sha256,

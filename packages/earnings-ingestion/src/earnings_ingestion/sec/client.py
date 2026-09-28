@@ -9,7 +9,9 @@
 - **Identity.** The User-Agent is the descriptive identity in ``EDGAR_IDENTITY``,
   configured outside Git and never recorded (A §393).
 - **Refusals.** A 403 that persists, or SEC's block page, stops the run without
-  changing identity (A §404).
+  changing identity (A §404). A response SEC serves from another URL than the one
+  requested is refused before it is saved, so no saved response is ever read under a
+  URL it was not served from (PR #6's review, F13).
 
 Two limits remain, because A §398 asks for coordination across the outbound network.
 The lock lives in ``machine_lock_dir()``, outside every checkout, so it coordinates the
@@ -20,7 +22,7 @@ time.
 
 import random
 import time
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Collection, Iterator, Mapping
 from contextlib import contextmanager
 from datetime import UTC, datetime
 
@@ -28,9 +30,11 @@ import httpx
 
 from earnings_ingestion.fetch.client import (
     DEFAULT_MAX_REQUESTS,
+    Fetched,
     PoliteClient,
     ProcessLock,
     Throttle,
+    UnexpectedResponse,
     machine_lock_dir,
     require_identity,
 )
@@ -66,6 +70,17 @@ class SecClient(PoliteClient):
             rng=rng,
             now=now,
         )
+
+    def fetch(self, url: str, expected_types: Collection[str]) -> Fetched:
+        """``PoliteClient.fetch``, refused with ``UnexpectedResponse`` when SEC served
+        the response from another URL."""
+        fetched = super().fetch(url, expected_types)
+        if fetched.retrieval.final_url != url:
+            raise UnexpectedResponse(
+                f"{url} was redirected to {fetched.retrieval.final_url}; a redirected"
+                " response is never saved"
+            )
+        return fetched
 
 
 @contextmanager

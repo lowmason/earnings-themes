@@ -10,7 +10,11 @@ from itertools import pairwise
 
 import httpx
 import pytest
-from earnings_ingestion.fetch.client import AccessStop, machine_lock_dir
+from earnings_ingestion.fetch.client import (
+    AccessStop,
+    UnexpectedResponse,
+    machine_lock_dir,
+)
 from earnings_ingestion.sec.client import (
     LOCK_NAME,
     MIN_INTERVAL_SECONDS,
@@ -227,3 +231,23 @@ def test_sec_block_page_stops_the_run() -> None:
         pytest.raises(AccessStop, match="block or rate-limit page"),
     ):
         client.fetch(submissions_url("320193"), {"application/json"})
+
+
+def test_a_redirected_response_is_refused_before_it_is_saved() -> None:
+    """A response served from another URL than the one requested is never saved or
+    read under the URL requested (PR #6's review, F13)."""
+
+    def handler(request):
+        if request.url.path == "/moved.htm":
+            return httpx.Response(
+                301, headers={"Location": "https://www.sec.gov/other.htm"}
+            )
+        return httpx.Response(200, headers={"Content-Type": "text/html"}, text="x")
+
+    with (
+        opened(handler) as client,
+        pytest.raises(
+            UnexpectedResponse, match="redirected to https://www.sec.gov/other.htm"
+        ),
+    ):
+        client.fetch("https://www.sec.gov/moved.htm", {"text/html"})

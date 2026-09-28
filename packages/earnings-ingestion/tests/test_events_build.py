@@ -7,7 +7,9 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from earnings_core import RightsStatus, sha256_hex
 from earnings_ingestion.cohort.freeze import load_manifest
+from earnings_ingestion.cohort.locators import ArtifactText
 from earnings_ingestion.cohort.records import OverrideCitation
 from earnings_ingestion.events.build import (
     EPOCH,
@@ -45,6 +47,7 @@ from earnings_ingestion.events.synthetic import (
     save,
     submissions_file,
 )
+from earnings_ingestion.fetch.records import Retrieval, RetrievalMethod
 from earnings_ingestion.sec.urls import (
     archive_url,
     companyfacts_url,
@@ -530,6 +533,63 @@ def test_a_citation_in_the_folder_must_be_a_saved_sec_artifact_with_a_locator(
     for case in cases:
         override = good.model_copy(update={"citations": (case,)})
         assert refused(universe, layer, override) == expected, case
+
+
+def redirected(layer: SyntheticStore, url: str, body: bytes) -> None:
+    """Save ``body`` as a retrieval of ``url`` that SEC answered from another URL."""
+    record = Retrieval(
+        request_url=url,
+        final_url=f"{url}.moved",
+        retrieved_at=datetime(2026, 9, 29, tzinfo=UTC),
+        retrieval_method=RetrievalMethod.HTTP,
+        http_status=200,
+        media_type="text/html",
+        content_type="text/html",
+        byte_count=len(body),
+        sha256=sha256_hex(body),
+    )
+    layer.store.put(
+        "sec-edgar",
+        body,
+        record,
+        rights_status=RightsStatus.LOCAL_ONLY,
+        rights_basis="synthetic",
+    )
+
+
+def test_a_redirected_record_is_refused_where_it_is_read(universe, tmp_path) -> None:
+    """A saved response whose retrieval was redirected is refused by raising, never
+    skipped, so discovery never fetches it again, and it grounds no citation (PR
+    #6's review, F13)."""
+    layer = write_layer(tmp_path / "data" / "raw" / "events", tmp_path)
+    good = choose(layer, ACME_SET, ACME, "2025-03-20 16:05:00")
+    folder = archive_url(ACME.cik, good.accession, "")
+    moved = f"{folder}moved.htm"
+    body = b"<html><body><p>Accepted 2025-03-20 16:05:00</p></body></html>"
+    redirected(layer, moved, body)
+    saved = SavedResponses(layer.store)
+    assert moved in saved
+    with pytest.raises(ValueError, match="redirected"):
+        saved.get(moved)
+    artifact = ArtifactText(body, "text/html")
+    citation = OverrideCitation(
+        source_id="sec-edgar",
+        url=moved,
+        artifact_sha256=sha256_hex(body),
+        locator=artifact.find("2025-03-20 16:05:00"),
+    )
+    assert refused(
+        universe, layer, good.model_copy(update={"citations": (citation,)})
+    ) == (
+        (f"release-cik-0009990001-2025-02-28: {moved} was redirected to {moved}.moved"),
+    )
+    page = filing_index_url(ACME.cik, good.accession)
+    redirected(layer, page, SavedResponses(layer.store).get(page).text.body)
+    problems = refused(universe, layer)
+    assert (
+        f"{page}: it was redirected to {page}.moved, and a redirected response is"
+        " never read"
+    ) in problems
 
 
 def test_a_filing_accepted_after_the_cutoff_is_refused(universe, tmp_path) -> None:

@@ -331,8 +331,9 @@ def _citations_refused(
     override: EventOverride, saved: SavedResponses, folder: str | None
 ) -> list[str]:
     """Why an override's citations fail: a stored locator that no longer cites what it
-    hashed; or, with the named filing's ``folder``, no citation there of an SEC
-    artifact retrieved from its own URL, at a locator that verifies."""
+    hashed, or a cited URL whose retrievals were all redirected (F13); or, with the
+    named filing's ``folder``, no citation there of an SEC artifact retrieved from its
+    own URL, unredirected, at a locator that verifies."""
     refused = []
     grounded = failed = False
     for citation in override.citations:
@@ -354,11 +355,15 @@ def _citations_refused(
             refused.append(f"{override.override_id}: {exc}")
             failed |= inside
             continue
-        grounded |= (
-            inside
-            and citation.locator is not None
-            and any(r.request_url == citation.url for r in stored.retrievals)
-        )
+        own = [r for r in stored.retrievals if r.request_url == citation.url]
+        if own and all(r.final_url != r.request_url for r in own):
+            refused.append(
+                f"{override.override_id}: {citation.url} was redirected to"
+                f" {own[-1].final_url}"
+            )
+            failed |= inside
+            continue
+        grounded |= inside and citation.locator is not None and bool(own)
     if folder is not None and not (grounded or failed):
         if any(citation.url.startswith(folder) for citation in override.citations):
             refused.append(
