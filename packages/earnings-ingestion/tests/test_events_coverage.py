@@ -80,6 +80,20 @@ def test_a_pilot_holding_no_failure_class_reports_three_gaps(synthetic) -> None:
     )
     assert report.run_ids == (ACQUISITION_RUN, "acquire-override")
 
+    # A pilot holding only the 24 rows already parsed: none unavailable, restricted,
+    # or failed, so build_coverage reports all three failure classes as gaps.
+    clean_ids = parsed_documents(transitions, pin.pilot_hash)
+    clean_pilot = pilot.model_copy(
+        update={"rows": tuple(row for row in pilot.rows if row.event_id in clean_ids)}
+    )
+    clean_report = build_coverage(clean_pilot, pin, transitions)
+    assert clean_report.documents == len(clean_ids) == 24
+    assert [gap.state for gap in clean_report.gaps] == [
+        DocumentState.UNAVAILABLE,
+        DocumentState.RESTRICTED,
+        DocumentState.FAILED,
+    ]
+
 
 def test_a_rebuild_reads_only_the_runs_it_names(synthetic) -> None:
     pilot, pin, transitions = synthetic
