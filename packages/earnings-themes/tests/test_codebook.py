@@ -212,3 +212,44 @@ def test_a_tampered_version_is_refused(bundles) -> None:
         Refusal("codebook.content_hash", "content_hash_mismatch"),
         Refusal("theme demand.positive_examples[0]", "outside_training"),
     ]
+
+    other_doc = positive.pointer.model_copy(
+        update={"doc_id": positive.pointer.doc_id.replace("@walker-1#", "@walker-2#")}
+    )
+    wrong_doc = codebook.model_copy(
+        update={
+            "themes": (
+                theme.model_copy(
+                    update={
+                        "positive_examples": (
+                            positive.model_copy(update={"pointer": other_doc}),
+                        )
+                    }
+                ),
+            )
+        }
+    )
+    refused_doc = validate_codebook(wrong_doc, adr_text=adr, **check)
+    assert refused_doc == [
+        Refusal("codebook.content_hash", "content_hash_mismatch"),
+        Refusal("theme demand.positive_examples[0]", "wrong_document"),
+    ]
+
+    wrong_corpus = codebook.model_copy(
+        update={
+            "discovery_corpus": codebook.discovery_corpus.model_copy(
+                update={
+                    "doc_ids": (
+                        codebook.discovery_corpus.doc_ids[0].replace(
+                            "@walker-1#", "@walker-2#"
+                        ),
+                    )
+                }
+            )
+        }
+    )
+    refused_corpus = validate_codebook(wrong_corpus, adr_text=adr, **check)
+    assert refused_corpus == [
+        Refusal("codebook.content_hash", "content_hash_mismatch"),
+        Refusal("discovery_corpus", "discovery_corpus"),
+    ]
