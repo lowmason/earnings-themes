@@ -46,3 +46,9 @@ never a release's wording or a paraphrase of it (GS3, GS13).
 - **The user's review.** The user read both on 2026-09-29, and approved them.
 - **Checks.** The rebuilt split and report reproduce both files byte for byte. The
   local legs printed `11 passed, 3 skipped`, and the wording guard `5 passed`.
+
+## Gate 2: the backup
+
+On 2026-09-29, the user confirmed that `data/` is backed up outside the
+repository (GS12). The backup's location is the user's, and is not recorded. No
+drafting session had started.
