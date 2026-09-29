@@ -1627,3 +1627,70 @@ Why an exhibit was tried, in R1.2's order.
   written once; a later run keeps one that differs only in the Python, lxml, and
   libxml2 versions its manifest records, as another environment writes it, and
   reports any other difference as a problem.
+## earnings-ingestion coverage records, schema version 1
+
+`earnings_ingestion.events.coverage` builds Stage 6's D4 coverage report from the
+state table: the observed state of each pinned pilot document, read only from the
+runs the report names (the Stage 6 spec, §The coverage report; GS8).
+
+### `PilotPin`
+
+GS2's pin: the pilot, its event manifest, and its universe, each by version and hash.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `pilot_id` | ID part | The pilot's ID |
+| `pilot_version` | int ≥ 1 | Its version |
+| `pilot_hash` | 64 lowercase hex | Its `content_hash` |
+| `events_version` | int ≥ 1 | The event manifest it selected from |
+| `events_hash` | 64 lowercase hex | That manifest's `content_hash` |
+| `universe_version` | int ≥ 1 | The universe the pilot was selected over |
+| `universe_operative_hash` | 64 lowercase hex | That universe's `operative_hash` |
+
+### `StateCount`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `state` | `DocumentState` | A processing state |
+| `count` | int ≥ 0 | The pilot documents whose current state it is |
+
+### `CoverageGap`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `state` | `DocumentState` | `unavailable`, `restricted`, or `failed`, with a count of zero |
+| `basis` | `"D4"` | A missing class is a gap, never repaired by reselecting |
+
+### `AppliedOverride`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `override_id` | ID part | The acquisition override applied to a pilot document |
+| `document_id` | ID part | `<event_id>:release` |
+| `verdict` | `AttemptOutcome` | The verdict the override's attempt kept |
+
+### `NoThemeCount`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `partition` | `"train"`, `"dev"`, or `"test"` | The partition counted |
+| `bundles` | int ≥ 0 | Its bundles with signed gold |
+| `no_theme` | int ≥ 0 | Those whose gold has `no_theme` true |
+
+### `CoverageReport`
+
+`evaluation/<corpus>/pilot-v<N>/coverage-v<M>.json`, written once.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Ingestion record schema version |
+| `coverage_version` | int ≥ 1 | The report's version |
+| `pin` | `PilotPin` | The pilot it covers |
+| `run_ids` | tuple of ID part | The runs it read; a rebuild reads only these |
+| `documents` | int ≥ 0 | The pilot's documents |
+| `states` | tuple of `StateCount` | Every `DocumentState`, in order, summing to `documents` |
+| `gaps` | tuple of `CoverageGap` | Each failure class with no document |
+| `overrides` | tuple of `AppliedOverride` | Each override applied to a pilot document |
+| `no_theme` | tuple of `NoThemeCount` | Empty until Stage 11 adds train and dev, and Stage 14 test (R12.4, GS18) |
+| `content_hash` | 64 lowercase hex | SHA-256 of the canonical JSON of every other field |
+
