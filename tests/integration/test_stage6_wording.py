@@ -93,10 +93,20 @@ def test_no_stage_6_file_quotes_a_pilot_document() -> None:
     assert len(doc_ids) == 40
     paths = {e: EVENT_RUNS / "canonical" / f"{d}.json" for e, d in doc_ids.items()}
     assert sorted(e for e, path in paths.items() if not path.is_file()) == []
-    texts = [
-        (e, from_fixture_json(path.read_text(encoding="utf-8")).document.canonical_text)
-        for e, path in sorted(paths.items())
-    ]
+    texts = []
+    unreadable = []
+    for e, path in sorted(paths.items()):
+        try:
+            canonical_text = from_fixture_json(
+                path.read_text(encoding="utf-8")
+            ).document.canonical_text
+        except ValueError:
+            unreadable.append(e)
+            continue
+        texts.append((e, canonical_text))
+    # A load error's message may quote the document (serialize.py), so only IDs
+    # are kept.
+    assert unreadable == []
     found = shared(strings(committed()), texts)
     # Bound first: pytest's report of a failed assert shows each call's arguments,
     # and ``texts`` holds pilot text (GS13). ``found`` holds labels and IDs only.
