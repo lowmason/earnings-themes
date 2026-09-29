@@ -1809,3 +1809,16 @@ Stage 6's own refusal reasons; a span check's reason is earnings-core's
 | `rows` | tuple of `SplitRow` | One per pilot event, sorted by `event_id` |
 | `content_hash` | 64 lowercase hex | SHA-256 of the canonical JSON of every other field |
 
+### `SpanPointer`
+
+A quote, by position: the committed form of evidence.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `start` | int ≥ 0 | Half-open start in the canonical text |
+| `end` | int > `start` | Half-open end |
+| `element_id` | string | The most specific narrative element that contains it |
+| `quote_sha256` | 64 lowercase hex | SHA-256 of the slice's UTF-8 bytes |
+| `context_sha256` | 64 lowercase hex or null | When the text repeats: SHA-256 of `make_locator`'s prefix and suffix, as a compact JSON pair |
+| `mask_ids` | tuple of string | The boilerplate masks over it, each `<category>-<start>-<end>` |
+

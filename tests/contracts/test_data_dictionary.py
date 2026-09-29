@@ -23,6 +23,7 @@ from earnings_ingestion.events import records as events
 from earnings_ingestion.fetch import records as fetch
 from earnings_themes import problems, split
 from earnings_themes import records as themes
+from earnings_themes.anchoring import SpanPointer
 from pydantic import BaseModel
 
 DICTIONARY = Path(__file__).resolve().parents[2] / "docs" / "data-dictionary.md"
@@ -113,6 +114,7 @@ MODELS = [
     split.SplitEvent,
     split.SplitRow,
     split.SplitManifest,
+    SpanPointer,
 ]
 ENUMS = [
     core.RightsStatus,
