@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 import tomllib
-from earnings_themes.records import RecordError
+from earnings_themes.records import IdPart, Part, Pin, RecordError, parse
 from earnings_themes.tomlfile import dumps, read
 
 AWKWARD = "".join(
@@ -54,6 +54,19 @@ def test_a_file_that_is_not_toml_is_refused_by_position_only(tmp_path) -> None:
         read(path)
     assert refused.value.problems == ("not TOML at line 2, column 1",)
     assert "Revenue" not in str(refused.value)
+
+    with pytest.raises(RecordError) as extra:
+        parse({"a synthetic phrase with spaces": 1}, Pin, "x.toml")
+    assert "a synthetic phrase with spaces" not in str(extra.value)
+    assert "<key>" in str(extra.value)
+
+    class WithItems(Part):
+        items: dict[IdPart, int]
+
+    with pytest.raises(RecordError) as bad_key:
+        parse({"items": {"another synthetic key with spaces": 1}}, WithItems, "x.toml")
+    assert "another synthetic key with spaces" not in str(bad_key.value)
+    assert "<key>" in str(bad_key.value)
 
 
 def test_a_missing_file_is_refused_by_name(tmp_path) -> None:

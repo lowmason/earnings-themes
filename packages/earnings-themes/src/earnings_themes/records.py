@@ -100,11 +100,19 @@ def record_json(record: BaseModel) -> bytes:
 
 
 def describe(error: ValidationError) -> tuple[str, ...]:
-    """Each problem as its field path and message, without the input."""
-    return tuple(
-        f"{'.'.join(str(part) for part in item['loc']) or 'record'}: {item['msg']}"
-        for item in error.errors(include_input=False, include_url=False)
-    )
+    """Each problem as its field path and message, without the input; an unknown or
+    a refused dict key is redacted as ``<key>``.
+    """
+    problems = []
+    for item in error.errors(include_input=False, include_url=False):
+        loc = list(item["loc"])
+        if item["type"] == "extra_forbidden" and loc:
+            loc[-1] = "<key>"
+        if len(loc) >= 2 and loc[-1] == "[key]":
+            loc[-2] = "<key>"
+        path = ".".join(str(part) for part in loc) or "record"
+        problems.append(f"{path}: {item['msg']}")
+    return tuple(problems)
 
 
 def read_json(path: Path) -> object:
