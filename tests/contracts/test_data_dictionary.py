@@ -21,7 +21,7 @@ from earnings_ingestion.cohort import register as cohort_register
 from earnings_ingestion.events import acceptance, coverage, states
 from earnings_ingestion.events import records as events
 from earnings_ingestion.fetch import records as fetch
-from earnings_themes import problems, split
+from earnings_themes import codebook, problems, split
 from earnings_themes import records as themes
 from earnings_themes.anchoring import SpanPointer
 from pydantic import BaseModel
@@ -115,6 +115,17 @@ MODELS = [
     split.SplitRow,
     split.SplitManifest,
     SpanPointer,
+    codebook.ExamplePointer,
+    codebook.Example,
+    codebook.Theme,
+    codebook.DiscoveryCorpus,
+    codebook.CodebookRules,
+    codebook.Approval,
+    codebook.DraftingAid,
+    codebook.Codebook,
+    codebook.ExampleDraft,
+    codebook.ThemeDraft,
+    codebook.CodebookDraft,
 ]
 ENUMS = [
     core.RightsStatus,
@@ -152,6 +163,7 @@ ENUMS = [
     problems.Problem,
     split.Partition,
     split.ExclusionReason,
+    codebook.CodebookStatus,
 ]
 
 

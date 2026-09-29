@@ -1823,3 +1823,135 @@ A quote, by position: the committed form of evidence.
 | `context_sha256` | 64 lowercase hex or null | When the text repeats: SHA-256 of `make_locator`'s prefix and suffix, as a compact JSON pair |
 | `mask_ids` | tuple of string | The boilerplate masks over it, each `<category>-<start>-<end>` |
 
+### `CodebookStatus`
+
+| Value | Meaning |
+| --- | --- |
+| `draft` | Frozen by the build but not approved; never written |
+| `approved` | Approved, with its `Approval`; the only status committed |
+
+### `ExamplePointer`
+
+A `SpanPointer` into a training bundle, with its document.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `start` | int ≥ 0 | As `SpanPointer` |
+| `end` | int > `start` | As `SpanPointer` |
+| `element_id` | string | As `SpanPointer` |
+| `quote_sha256` | 64 lowercase hex | As `SpanPointer` |
+| `context_sha256` | 64 lowercase hex or null | As `SpanPointer` |
+| `mask_ids` | tuple of string | As `SpanPointer` |
+| `event_id` | ID part | The training event |
+| `doc_id` | string | Its canonical document |
+
+### `Example`
+
+Exactly one kind: a pointer, or synthetic with its text.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `synthetic` | bool | True for an example in the user's words |
+| `text` | string or null | The synthetic example's text |
+| `pointer` | `ExamplePointer` or null | The quoted example |
+
+### `Theme`
+
+One theme (R9.2). Every list has at least one item.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `theme_id` | `^[a-z][a-z0-9_.-]*$` | Its ID; `unmatched` is reserved |
+| `parent_id` | theme ID or null | Its parent theme |
+| `label` | string | Its short name |
+| `definition` | string | Its definition |
+| `inclusion_rules` | tuple of string | What it covers |
+| `exclusion_rules` | tuple of string | What it does not |
+| `positive_examples` | tuple of `Example` | Examples it covers |
+| `hard_negatives` | tuple of `Example` | Confusable examples it does not |
+| `sector_applicability` | `"all"` or tuple of sector tag | Where it applies |
+
+### `DiscoveryCorpus`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `pin` | `Pin` | The pilot |
+| `split_hash` | 64 lowercase hex | The split's `content_hash` |
+| `event_ids` | tuple of ID part | The training events with a parsed document |
+| `doc_ids` | tuple of string | Their canonical documents, in the same order |
+
+### `CodebookRules`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `multi_label` | string | How a claim takes more than one theme |
+| `boilerplate` | string | How masked text is treated (R3.4) |
+
+### `Approval`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `approver` | string | Who approved the codebook |
+| `approved_on` | date | When |
+| `adr` | path | ADR 0003, which cites the content hash |
+
+### `DraftingAid`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `model_id` | string | The Claude model that drafted, in an interactive session outside the required path (GS4) |
+| `drafted_on` | date | When |
+
+### `Codebook`
+
+`codebooks/djia-pilot/codebook-v<N>.toml`, written once, approved.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Themes record schema version |
+| `codebook_id` | ID part | `djia-pilot` |
+| `codebook_version` | int ≥ 0 | `0` for Stage 6 |
+| `status` | `CodebookStatus` | `approved` exactly when `approval` is set |
+| `content_hash` | 64 lowercase hex | SHA-256 of the canonical JSON of every field but `status`, `approval`, and itself, so an ADR can cite it before approval |
+| `discovery_corpus` | `DiscoveryCorpus` | What it was discovered from |
+| `rules` | `CodebookRules` | Its rules |
+| `approval` | `Approval` or null | The approval |
+| `drafting_aid` | `DraftingAid` | The drafting session |
+| `themes` | tuple of `Theme` | Its themes |
+
+### `ExampleDraft`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part or null | The training event quoted; null for a synthetic example |
+| `text` | string | The exact text, or the synthetic example |
+| `prefix` | string | Text just before it, when it repeats |
+| `suffix` | string | Text just after it, when it repeats |
+| `synthetic` | bool | True for an example in the user's words |
+
+### `ThemeDraft`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `theme_id` | theme ID | As `Theme` |
+| `parent_id` | theme ID or null | As `Theme` |
+| `label` | string | As `Theme` |
+| `definition` | string | As `Theme` |
+| `inclusion_rules` | tuple of string | As `Theme` |
+| `exclusion_rules` | tuple of string | As `Theme` |
+| `sector_applicability` | `"all"` or tuple of sector tag | As `Theme` |
+| `positive_examples` | tuple of `ExampleDraft` | Anchored into `ExamplePointer`s |
+| `hard_negatives` | tuple of `ExampleDraft` | Anchored likewise |
+
+### `CodebookDraft`
+
+`data/runs/gold/drafts/codebook.draft.toml` and its working copy; never committed.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `codebook_id` | ID part | As `Codebook` |
+| `codebook_version` | int ≥ 0 | As `Codebook` |
+| `drafting_aid` | `DraftingAid` | The drafting session |
+| `rules` | `CodebookRules` | As `Codebook` |
+| `themes` | tuple of `ThemeDraft` | At least one |
+
