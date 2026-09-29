@@ -220,7 +220,9 @@ pilot codebook, not the final taxonomy.
 
 ## The gold
 
-One file per annotated bundle, `gold/<event_id>.toml`.
+One file per annotated bundle, `gold/<event>.toml`, where `<event>` is the event
+ID with its colon as an underscore, since Git on Windows cannot check out a path
+with a colon (amended by plan 9, P9-3).
 
 **Header:**
 - `event_id`, `document_id` (`<event_id>:release`), `doc_id`, and the canonical hash;
@@ -270,7 +272,7 @@ its origin. Its expected support is `does_not_support`.
   `parse_span_candidate` first, so plan 3's open item on unvalidated offsets cannot
   arise here. The validator also checks the header (the pin, the codebook, the
   signature, and `no_theme`), the IDs, and the wording guard.
-- **View.** `gold show` writes `data/runs/gold/views/<event_id>.md`: the canonical
+- **View.** `gold show` writes `data/runs/gold/views/<event>.md`: the canonical
   text with each quote marked, and its claims, themes, and support listed. The user
   verifies, and does the omission pass, against it.
 

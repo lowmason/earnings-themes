@@ -2182,3 +2182,16 @@ in no partition (GS10), though it carries the pin, as every Stage 6 record does.
 | `drafting_aid` | `DraftingAid` | The drafting session |
 | `documents` | tuple of `FixtureDraft` | At least one |
 
+## Stage 6 files
+
+- **Committed, written once.** `evaluation/<corpus>/pilot-v<N>/split-v<M>.json`,
+  `coverage-v<M>.json`, and `gold/<event>.toml`; `codebooks/djia-pilot/
+  codebook-v<N>.toml`; and `tests/fixtures/gold/hard-negatives.toml`. A changed
+  record is a new version, never an edit.
+- **Local, never committed.** Under `data/runs/gold/`: `drafts/`, each draft kept
+  unchanged beside the user's working copy; `anchored/`, the latest build of each;
+  `views/`, the text with each quote marked, which the user verifies against; and
+  `texts/`, the text alone, which a drafting session reads. No command prints a
+  document's text (GS13).
+- **File names.** A file named for an event takes the event ID with its colon as an
+  underscore, `<event>`; the ID inside the file is unchanged.

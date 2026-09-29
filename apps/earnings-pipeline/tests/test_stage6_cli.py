@@ -1,10 +1,11 @@
-"""Stage 6's commands over the synthetic pilot (plan 9): the split and the coverage
-report freeze once, over the pin; codebook v0 freezes only once its ADR cites it;
-every refusal names its item and reason; and no command prints a document's text
-(GS13) or changes a frozen record (P-C7).
+"""Stage 6's commands over the synthetic pilot (plan 9): the split and coverage
+report freeze once, codebook v0 freezes only once its ADR cites it, gold commits
+only once signed, every refusal names its item and reason, and no command prints a
+document's text (GS13) or changes a frozen record (P-C7).
 
 The synthetic acquisition is replayed offline once, into ``data/runs/events/``, as
 Stage 5's replay test does; its documents are the synthetic layer's invented text.
+Curated hard negatives take their quotes from Stage 1's fixtures when a test runs.
 """
 
 import shutil
@@ -28,7 +29,7 @@ from earnings_ingestion.events.state_table import read_runs, write_run
 from earnings_ingestion.events.states import DocumentState
 from earnings_ingestion.fetch.responses import UnexpectedResponse
 from earnings_ingestion.fetch.store import ArtifactStore
-from earnings_pipeline import cli
+from earnings_pipeline import cli, gold_cli
 from earnings_pipeline.stage6 import (
     Layout,
     documents,
@@ -37,10 +38,16 @@ from earnings_pipeline.stage6 import (
     wording_texts,
 )
 from earnings_themes import tomlfile
+from earnings_themes.anchoring import Bundle
 from earnings_themes.codebook import load_codebook
-from earnings_themes.gold import ReleaseIdentification, ReleaseLabel
-from earnings_themes.split import load_split
-from earnings_themes.synthetic import codebook_draft
+from earnings_themes.gold import (
+    ReleaseIdentification,
+    ReleaseLabel,
+    load_gold,
+    load_hard_negatives,
+)
+from earnings_themes.split import Partition, load_split
+from earnings_themes.synthetic import AID, codebook_draft, curated_draft
 from earnings_themes.wording import WIDTH, masked
 from typer.testing import CliRunner
 
@@ -55,9 +62,12 @@ RELEASES = Path("tests") / "fixtures" / "releases" / "manifest.toml"
 CODEBOOK = Path("codebooks") / "djia-pilot" / "codebook-v0.toml"
 ADR = Path("docs") / "adr" / "0003-codebook-v0.md"
 FIRST = "cik-0009990001:2024-08-31"
+FIRST_FILE = "cik-0009990001_2024-08-31"
+SECOND = "cik-0009990001:2024-11-30"
 UNPARSED = ("cik-0009990003:2025-06-30", "cik-0009990005:2025-03-28")
 EXCLUDED = "cik-0009990001:2025-08-31"
 SENTENCE = "today reported net sales of $1,000 million"
+SIGNED = "Lowell Mason (verified a Claude draft)"
 WINDOW = 20
 
 
@@ -184,6 +194,33 @@ def frozen(repo: Path) -> Path:
     return repo / CODEBOOK
 
 
+def gold_draft(event_id: str = FIRST, annotator: str = "", **changes) -> dict:
+    draft = {
+        "event_id": event_id,
+        "annotator": annotator,
+        "drafting_aid": AID,
+        "no_theme": False,
+        "release_identification": {"label": "release", "note": "Its own results."},
+        "quotes": [{"quote_id": "q1", "text": SENTENCE}],
+        "claims": [{"claim_id": "c1", "quote_ids": ["q1"], "claim": "Sales rose."}],
+        "assignments": [
+            {"claim_id": "c1", "theme_id": "demand", "support": "supports"}
+        ],
+    }
+    draft.update(changes)
+    return draft
+
+
+def fixtures(repo: Path) -> dict[str, Bundle]:
+    bundles = {}
+    for path in sorted((repo / CANONICAL).glob("*.json")):
+        result = from_fixture_json(path.read_text(encoding="utf-8"))
+        bundles[path.stem] = Bundle(
+            path.stem, result.document, result.elements, result.masked.masks
+        )
+    return bundles
+
+
 def pilot_bytes(repo: Path) -> dict[str, bytes]:
     return {p.name: p.read_bytes() for p in (repo / FIXTURE_DIR).glob("*.json")}
 
@@ -211,6 +248,17 @@ def unique_window(found: dict[str, str], name: str) -> str:
         if not any(window in other for other in others):
             return window
     raise AssertionError(f"{name} has no window of its own")
+
+
+def a_pilot_window(found: dict[str, str]) -> tuple[str, str]:
+    """The first synthetic pilot release with a window of its own, and that window.
+    Most share one template, so each is tried in turn."""
+    for name in sorted(key for key in found if ":" in key):
+        try:
+            return name, unique_window(found, name)
+        except AssertionError:
+            continue
+    raise AssertionError("no pilot release has a window of its own")
 
 
 def test_split_freezes_once_and_prints_only_ids_and_counts(repo) -> None:
@@ -446,3 +494,365 @@ def test_codebook_validate_checks_every_text_the_guard_reads(repo) -> None:
     result = run(repo, "codebook", "validate")
     assert result.exit_code == 1
     assert f"refused: themes[0].definition ({other}): source_wording" in lines(result)
+
+
+def test_gold_commits_only_once_signed_and_then_validates(repo) -> None:
+    frozen(repo)
+    before = pilot_bytes(repo)
+    write_drafts(repo, FIRST, gold_draft())
+    unsigned = run(repo, "gold", "anchor", FIRST)
+    assert unsigned.exit_code == 0, unsigned.output
+    assert lines(unsigned) == [
+        (
+            f"{FIRST} (train): 1 quotes, 1 claims, 1 assignments, 0 hard negatives;"
+            " no_theme false"
+        ),
+        "origins: accepted 3, edited 0, rejected 0, added 0",
+        f"anchored  data/runs/gold/anchored/{FIRST_FILE}.toml",
+        (
+            f"unsigned: {FIRST} is not committed until the working copy's annotator"
+            " is signed"
+        ),
+    ]
+    committed = repo / EVALUATION / "gold" / f"{FIRST_FILE}.toml"
+    assert not committed.exists()
+    shown = run(repo, "gold", "show", FIRST)
+    assert lines(shown) == [f"view  data/runs/gold/views/{FIRST_FILE}.md"]
+    view = (repo / "data" / "runs" / "gold" / "views" / f"{FIRST_FILE}.md").read_text(
+        encoding="utf-8"
+    )
+    assert f"[[q1>>{SENTENCE}<<q1]]" in view
+    write_drafts(repo, FIRST, gold_draft(), gold_draft(annotator=SIGNED))
+    signed = run(repo, "gold", "anchor", FIRST)
+    assert lines(signed)[-1] == f"froze {EVALUATION}/gold/{FIRST_FILE}.toml"
+    assert lines(run(repo, "gold", "anchor", FIRST))[-1] == (
+        f"unchanged: {EVALUATION}/gold/{FIRST_FILE}.toml"
+    )
+    record = load_gold(committed)
+    assert (record.annotator, record.partition, record.no_theme) == (
+        SIGNED,
+        "train",
+        False,
+    )
+    assert SENTENCE not in committed.read_text(encoding="utf-8")
+    valid = run(repo, "gold", "validate")
+    assert valid.exit_code == 0, valid.output
+    assert lines(valid) == [f"valid: {FIRST} (train), 1 quotes, 1 claims, signed"]
+    assert pilot_bytes(repo) == before
+
+
+def test_gold_that_copies_another_release_is_refused_before_anything_is_written(
+    repo,
+) -> None:
+    """GS3: gold anchor checks a bundle's gold against every text the committed
+    guard reads, not only its own release, with --check too, and writes nothing.
+    The copy is taken from a Stage 1 fixture, since the synthetic releases share one
+    template."""
+    frozen(repo)
+    other = first_fixture(repo)
+    copied = unique_window(guarded_texts(repo), other)
+    claims = [{"claim_id": "c1", "quote_ids": ["q1"], "claim": f"Ours: {copied}"}]
+    write_drafts(
+        repo,
+        FIRST,
+        gold_draft(claims=claims),
+        gold_draft(annotator=SIGNED, claims=claims),
+    )
+    for args in ((FIRST, "--check"), (FIRST,)):
+        result = run(repo, "gold", "anchor", *args)
+        assert result.exit_code == 1
+        assert [line for line in lines(result) if line.startswith("refused: ")] == [
+            f"refused: claims[0].claim ({other}): source_wording"
+        ]
+    assert not (repo / "data" / "runs" / "gold" / "anchored").exists()
+    assert not (repo / EVALUATION / "gold").exists()
+
+
+def test_a_changed_signed_copy_is_refused_before_its_anchored_file_changes(
+    repo,
+) -> None:
+    """A refusal writes nothing: once a bundle's record is written, a changed signed
+    working copy is refused before the anchored file is replaced, so the view still
+    shows the record as written."""
+    frozen(repo)
+    write_drafts(repo, FIRST, gold_draft(), gold_draft(annotator=SIGNED))
+    assert run(repo, "gold", "anchor", FIRST).exit_code == 0
+    anchored = repo / "data" / "runs" / "gold" / "anchored" / f"{FIRST_FILE}.toml"
+    committed = repo / EVALUATION / "gold" / f"{FIRST_FILE}.toml"
+    claims = [{"claim_id": "c1", "quote_ids": ["q1"], "claim": "Sales grew."}]
+    write_drafts(repo, FIRST, gold_draft(), gold_draft(annotator=SIGNED, claims=claims))
+    result = run(repo, "gold", "anchor", FIRST)
+    assert result.exit_code == 1
+    assert lines(result)[-1] == (
+        f"Refused: {EVALUATION}/gold/{FIRST_FILE}.toml holds other content; a"
+        " changed record is a new version, never an edit"
+    )
+    assert anchored.read_bytes() == committed.read_bytes()
+
+
+def test_gold_validate_checks_every_text_the_guard_reads(repo) -> None:
+    """P9-21: gold validate rechecks committed gold against every text the committed
+    guard reads, not only its own release."""
+    frozen(repo)
+    write_drafts(repo, FIRST, gold_draft(), gold_draft(annotator=SIGNED))
+    assert run(repo, "gold", "anchor", FIRST).exit_code == 0
+    committed = repo / EVALUATION / "gold" / f"{FIRST_FILE}.toml"
+    other = first_fixture(repo)
+    record = tomlfile.read(committed)
+    copied = unique_window(guarded_texts(repo), other)
+    record["claims"][0]["claim"] = f"Ours: {copied}"
+    committed.write_text(tomlfile.dumps(record), encoding="utf-8")
+    result = run(repo, "gold", "validate", FIRST)
+    assert result.exit_code == 1
+    assert f"refused: {FIRST} claims[0].claim ({other}): source_wording" in lines(
+        result
+    )
+
+
+def test_a_blank_signature_commits_nothing(repo) -> None:
+    """P9-18: whitespace is not a signature, to the anchor as to the validator."""
+    frozen(repo)
+    write_drafts(repo, FIRST, gold_draft(), gold_draft(annotator="   "))
+    result = run(repo, "gold", "anchor", FIRST)
+    assert result.exit_code == 0, result.output
+    assert lines(result)[-1] == (
+        f"unsigned: {FIRST} is not committed until the working copy's annotator"
+        " is signed"
+    )
+    assert not (repo / EVALUATION / "gold").exists()
+
+
+def test_a_draft_origin_is_derived_from_the_working_copy(repo) -> None:
+    frozen(repo)
+    working = gold_draft(
+        claims=[{"claim_id": "c1", "quote_ids": ["q1"], "claim": "Sales grew."}],
+    )
+    write_drafts(repo, FIRST, gold_draft(), working)
+    result = run(repo, "gold", "anchor", FIRST, "--check")
+    assert result.exit_code == 0, result.output
+    assert lines(result)[1:] == [
+        "origins: accepted 2, edited 1, rejected 0, added 0",
+        f"checked {FIRST}: nothing written",
+    ]
+    assert not (repo / "data" / "runs" / "gold" / "anchored").exists()
+
+
+@pytest.mark.parametrize(
+    ("change", "refusals"),
+    [
+        (
+            {
+                "quotes": [
+                    {"quote_id": "q1", "text": SENTENCE},
+                    {"quote_id": "q2", "text": "Net sales\t1,000"},
+                    {"quote_id": "q3", "text": "An invented sentence found nowhere."},
+                ]
+            },
+            [
+                "refused: quote q2: not_narrative",
+                "refused: quote q3: locator_not_found",
+            ],
+        ),
+        (
+            {
+                "claims": [
+                    {
+                        "claim_id": "c1",
+                        "quote_ids": ["q1"],
+                        "claim": f"Acme Industrial Corp {SENTENCE} for the quarter.",
+                    }
+                ]
+            },
+            [f"refused: claims[0].claim ({SECOND}): source_wording"],
+        ),
+        (
+            {"no_theme": True},
+            ["refused: no_theme: no_theme_mismatch"],
+        ),
+    ],
+)
+def test_a_bad_gold_draft_is_refused_by_item_and_writes_nothing(
+    repo, change, refusals
+) -> None:
+    frozen(repo)
+    write_drafts(repo, SECOND, gold_draft(SECOND, **change))
+    result = run(repo, "gold", "anchor", SECOND)
+    assert result.exit_code == 1
+    assert lines(result) == [
+        *refusals,
+        f"Refused: {len(refusals)} problem(s); nothing written",
+    ]
+    assert not (repo / "data" / "runs" / "gold" / "anchored").exists()
+
+
+def test_gold_is_refused_for_an_excluded_or_unparsed_event(repo) -> None:
+    frozen(repo)
+    excluded = run(repo, "gold", "anchor", EXCLUDED)
+    assert lines(excluded) == [f"Refused: {EXCLUDED} is excluded, so it has no gold"]
+    unparsed = run(repo, "gold", "anchor", UNPARSED[0])
+    assert lines(unparsed) == [
+        f"Refused: {UNPARSED[0]} is not a pilot event with a parsed document"
+    ]
+
+
+def test_a_draft_that_is_not_toml_is_named_never_quoted(repo) -> None:
+    frozen(repo)
+    folder = repo / DRAFTS
+    for kind in ("draft", "working"):
+        (folder / f"{FIRST_FILE}.{kind}.toml").write_text(
+            "quotes = [\n", encoding="utf-8"
+        )
+    result = run(repo, "gold", "anchor", FIRST)
+    assert lines(result) == [
+        f"problem: {FIRST_FILE}.draft.toml: not TOML at line 2, column 1",
+        f"Refused: {FIRST_FILE}.draft.toml does not read as its record",
+    ]
+
+
+def test_curated_hard_negatives_commit_once_signed(repo) -> None:
+    frozen(repo)
+    bundles = fixtures(repo)
+    write_drafts(
+        repo,
+        "hard-negatives",
+        curated_draft(bundles),
+        curated_draft(bundles, SIGNED),
+    )
+    result = run(repo, "gold", "anchor", "--hard-negatives")
+    assert result.exit_code == 0, result.output
+    assert lines(result) == [
+        "hard-negatives: 2 fixtures, 4 hard negatives (issuer 1, period 2, section 1)",
+        "origins: accepted 8, edited 0, rejected 0, added 0",
+        "anchored  data/runs/gold/anchored/hard-negatives.toml",
+        "froze tests/fixtures/gold/hard-negatives.toml",
+    ]
+    record = load_hard_negatives(
+        repo / "tests" / "fixtures" / "gold" / "hard-negatives.toml"
+    )
+    assert record.annotator == SIGNED
+    valid = run(repo, "gold", "validate", "--hard-negatives")
+    assert lines(valid) == [
+        "valid: hard-negatives, 2 fixtures, 4 hard negatives, signed"
+    ]
+    views = run(repo, "gold", "show", "--hard-negatives")
+    assert len(lines(views)) == 2
+
+
+def test_curated_hard_negatives_are_checked_against_the_pilot_before_a_write(
+    repo,
+) -> None:
+    """P9-21: the builder checks the curated set against the Stage 1 fixtures, and
+    the anchor checks it against every pilot release as well, before it writes
+    anything. Only a pilot ID in the refusal shows that the second check ran."""
+    frozen(repo)
+    bundles = fixtures(repo)
+    name, copied = a_pilot_window(guarded_texts(repo))
+    drafted, working = curated_draft(bundles), curated_draft(bundles, SIGNED)
+    for draft in (drafted, working):
+        draft["documents"][0]["hard_negatives"][0]["claim"] = f"Ours: {copied}"
+    write_drafts(repo, "hard-negatives", drafted, working)
+    result = run(repo, "gold", "anchor", "--hard-negatives")
+    assert result.exit_code == 1
+    assert [line for line in lines(result) if line.startswith("refused: ")] == [
+        f"refused: documents[0].hard_negatives[0].claim ({name}): source_wording"
+    ]
+    assert not (repo / "tests" / "fixtures" / "gold").exists()
+    assert not (repo / "data" / "runs" / "gold" / "anchored").exists()
+
+
+def test_texts_for_drafting_are_written_only_under_data_runs_gold(repo) -> None:
+    assert run(repo, "pilot", "split").exit_code == 0
+    result = run(repo, "gold", "show", "--text", "--training", "--hard-negatives")
+    assert lines(result) == ["wrote 19 texts under data/runs/gold/texts"]
+    folder = repo / "data" / "runs" / "gold" / "texts"
+    assert len(list(folder.glob("*.md"))) == 11
+    assert len(list((folder / "fixtures").glob("*.md"))) == 8
+    assert f"{FIRST_FILE}.md" in {p.name for p in folder.glob("*.md")}
+    refused = run(repo, "gold", "show", "--training")
+    assert lines(refused) == ["Refused: --training writes texts; add --text"]
+
+
+def test_an_unforeseen_error_is_named_by_type_never_by_message(
+    repo, monkeypatch
+) -> None:
+    """GS13: an exception's message may quote a document, so it is withheld."""
+    frozen(repo)
+    write_drafts(repo, FIRST, gold_draft())
+
+    def broken(*args, **kwargs):
+        raise ValueError(f"Acme Industrial Corp {SENTENCE} for the quarter")
+
+    monkeypatch.setattr(gold_cli, "build_gold", broken)
+    result = run(repo, "gold", "anchor", FIRST)
+    assert result.exit_code == 1
+    assert lines(result) == [
+        (
+            "Refused: an unforeseen ValueError; its message is withheld, since it"
+            " may quote a document (GS13)"
+        )
+    ]
+
+
+def test_a_drafting_session_checks_its_draft_alone(repo) -> None:
+    frozen(repo)
+    folder = repo / DRAFTS
+    (folder / f"{FIRST_FILE}.draft.toml").write_text(
+        tomlfile.dumps(gold_draft()), encoding="utf-8"
+    )
+    result = run(repo, "gold", "anchor", FIRST, "--check")
+    assert result.exit_code == 0, result.output
+    assert lines(result)[0] == (
+        f"checking the draft alone: {FIRST} has no working copy yet"
+    )
+    assert lines(result)[-1] == f"checked {FIRST}: nothing written"
+    assert not (folder / f"{FIRST_FILE}.working.toml").exists()
+    unchecked = run(repo, "gold", "anchor", FIRST)
+    assert unchecked.exit_code == 1
+    assert lines(unchecked)[-1].startswith(f"Refused: {FIRST}: data/runs/gold/drafts/")
+
+
+def test_committed_gold_is_named_for_its_event_without_a_colon(repo) -> None:
+    """P9-3: Git on Windows cannot check out a path with a colon, so each file
+    named for an event writes it as an underscore; the ID inside is unchanged, and
+    a file named for another event is refused."""
+    frozen(repo)
+    write_drafts(repo, FIRST, gold_draft(), gold_draft(annotator=SIGNED))
+    assert run(repo, "gold", "anchor", FIRST).exit_code == 0
+    folder = repo / EVALUATION / "gold"
+    assert [p.name for p in folder.iterdir()] == [f"{FIRST_FILE}.toml"]
+    assert not any(":" in p.name for p in (repo / "data" / "runs" / "gold").rglob("*"))
+    (folder / f"{FIRST_FILE}.toml").rename(folder / "cik-0009990001_2024-11-30.toml")
+    result = run(repo, "gold", "validate")
+    assert lines(result) == [
+        (
+            "Refused: evaluation/djia-synthetic/pilot-v1/gold/"
+            f"cik-0009990001_2024-11-30.toml holds the gold of {FIRST}"
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    ("partition", "frozen", "reason"),
+    [
+        (Partition.TRAIN, False, None),
+        (
+            Partition.DEV,
+            False,
+            "is a dev bundle, which waits for codebook v0's approval (GS13)",
+        ),
+        (Partition.DEV, True, None),
+        (Partition.TEST, True, "is a test bundle, which waits for Stage 14 (GS18)"),
+        (Partition.EXCLUDED, True, "is excluded, so it has no gold"),
+    ],
+)
+def test_a_dev_or_test_bundle_waits_its_turn(partition, frozen, reason) -> None:
+    """GS13 and GS18 in code: no text of a dev bundle before codebook v0, and none
+    of a test bundle in Stage 6."""
+    assert gold_cli.readable(partition, frozen) == reason
+
+
+def test_no_text_is_written_for_an_excluded_event(repo) -> None:
+    assert run(repo, "pilot", "split").exit_code == 0
+    result = run(repo, "gold", "show", "--text", EXCLUDED)
+    assert lines(result) == [f"Refused: {EXCLUDED} is excluded, so it has no gold"]
+    assert not (repo / "data" / "runs" / "gold" / "texts").exists()
