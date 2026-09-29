@@ -1955,3 +1955,230 @@ One theme (R9.2). Every list has at least one item.
 | `rules` | `CodebookRules` | As `Codebook` |
 | `themes` | tuple of `ThemeDraft` | At least one |
 
+### `Origin`
+
+| Value | Meaning |
+| --- | --- |
+| `drafted_accepted` | In the draft, and unchanged in the working copy |
+| `drafted_edited` | In the draft, and changed in the working copy |
+| `annotator_added` | Only in the working copy |
+
+### `Support`
+
+| Value | Meaning |
+| --- | --- |
+| `supports` | The claim's quotes support it under the theme |
+| `does_not_support` | They do not |
+| `uncertain` | The annotator cannot tell |
+
+### `ReleaseLabel`
+
+| Value | Meaning |
+| --- | --- |
+| `release` | The document is the event's earnings release (R13.1) |
+| `not_release` | It is not; `true_accession` and `true_exhibit` may name the release |
+| `ambiguous` | The annotator cannot tell |
+
+### `NegativeKind`
+
+| Value | Meaning |
+| --- | --- |
+| `period` | Confusable by its period: another quarter's result |
+| `issuer` | Confusable by its issuer: another company's result |
+| `section` | Confusable by its section: boilerplate or a forward-looking statement that reports no result |
+
+### `GoldQuote`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `start` | int ≥ 0 | As `SpanPointer` |
+| `end` | int > `start` | As `SpanPointer` |
+| `element_id` | string | As `SpanPointer` |
+| `quote_sha256` | 64 lowercase hex | As `SpanPointer` |
+| `context_sha256` | 64 lowercase hex or null | As `SpanPointer` |
+| `mask_ids` | tuple of string | As `SpanPointer` |
+| `quote_id` | ID part | Its ID in the record |
+| `origin` | `Origin` | Where it came from |
+
+### `GoldClaim`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `claim_id` | ID part | Its ID in the record |
+| `quote_ids` | tuple of ID part | The quotes it rests on; at least one |
+| `claim` | string | The claim, in the user's words |
+| `origin` | `Origin` | Where it came from |
+
+### `GoldAssignment`
+
+One row per claim and theme (R9.9).
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `claim_id` | ID part | The claim |
+| `theme_id` | theme ID | A codebook theme, or `unmatched` |
+| `support` | `Support` | Whether the claim's quotes support it under the theme |
+| `tie_group` | ID part or null | Marks rows that are alternatives for one claim (R12.6) |
+| `origin` | `Origin` | Where it came from |
+
+### `HardNegative`
+
+A hard-negative claim (D4); its expected support is `does_not_support`.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `claim_id` | ID part | Its ID in the record |
+| `quote_ids` | tuple of ID part | Its quotes; at least one |
+| `claim` | string | The claim, in the user's words |
+| `negative_kind` | `NegativeKind` | What makes it confusable |
+| `theme_id` | theme ID or null | The theme it would wrongly support |
+| `origin` | `Origin` | Where it came from |
+
+### `ReleaseIdentification`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `label` | `ReleaseLabel` | R13.1's label |
+| `note` | string | The annotator's reason, in their words |
+| `true_accession` | accession or null | Only with `not_release`: the release's filing |
+| `true_exhibit` | string or null | Only with `not_release`: its exhibit |
+
+### `DraftCounts`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `accepted` | int ≥ 0 | Drafted items kept unchanged |
+| `edited` | int ≥ 0 | Drafted items changed |
+| `rejected` | int ≥ 0 | Drafted items removed |
+| `added` | int ≥ 0 | Items the annotator added |
+
+### `CodebookRef`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `codebook_id` | ID part | The codebook coded against |
+| `codebook_version` | int ≥ 0 | Its version |
+| `content_hash` | 64 lowercase hex | Its `content_hash` |
+
+### `Gold`
+
+`evaluation/<corpus>/pilot-v<N>/gold/<event>.toml`, written once, signed.
+`<event>` is the event ID with its colon as an underscore, such as
+`cik-0000051143_2024-12-31`, since Git on Windows cannot check out a path with a colon.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Themes record schema version |
+| `event_id` | ID part | The bundle's event |
+| `document_id` | ID part | `<event_id>:release` |
+| `doc_id` | string | Its canonical document |
+| `canonical_hash` | 64 lowercase hex | That document's `canonical_hash` |
+| `pin` | `Pin` | The pilot |
+| `split_hash` | 64 lowercase hex | The split's `content_hash` |
+| `partition` | `Partition` | The event's partition; never `excluded` |
+| `codebook` | `CodebookRef` | The approved codebook coded against |
+| `annotator` | string | The signature; blank until the user signs (GS4) |
+| `drafting_aid` | `DraftingAid` | The drafting session |
+| `counts` | `DraftCounts` | The origins, counted against the kept draft (GS5) |
+| `no_theme` | bool | True exactly when no row pairs a claim with a codebook theme under `supports` |
+| `release_identification` | `ReleaseIdentification` | Whether the document is the release |
+| `quotes` | tuple of `GoldQuote` | Its quotes |
+| `claims` | tuple of `GoldClaim` | Its claims |
+| `assignments` | tuple of `GoldAssignment` | Its assignments |
+| `hard_negatives` | tuple of `HardNegative` | Its hard-negative claims |
+
+### `FixtureNegatives`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `fixture_id` | ID part | A Stage 1 fixture |
+| `doc_id` | string | Its canonical document |
+| `canonical_hash` | 64 lowercase hex | That document's `canonical_hash` |
+| `quotes` | tuple of `GoldQuote` | The quotes; at least one |
+| `hard_negatives` | tuple of `HardNegative` | The hard-negative claims; at least one |
+
+### `HardNegativeSet`
+
+`tests/fixtures/gold/hard-negatives.toml`, written once, signed: outside the pilot,
+in no partition (GS10), though it carries the pin, as every Stage 6 record does.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Themes record schema version |
+| `pin` | `Pin` | The pilot |
+| `annotator` | string | The signature |
+| `drafting_aid` | `DraftingAid` | The drafting session |
+| `counts` | `DraftCounts` | The origins, over every fixture |
+| `codebook` | `CodebookRef` | The approved codebook |
+| `documents` | tuple of `FixtureNegatives` | At least one; with every `NegativeKind` among them |
+
+### `QuoteDraft`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `quote_id` | ID part | Its ID |
+| `text` | string | The exact text |
+| `prefix` | string | Text just before it, when it repeats |
+| `suffix` | string | Text just after it, when it repeats |
+
+### `ClaimDraft`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `claim_id` | ID part | As `GoldClaim` |
+| `quote_ids` | tuple of ID part | As `GoldClaim` |
+| `claim` | string | As `GoldClaim` |
+
+### `AssignmentDraft`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `claim_id` | ID part | As `GoldAssignment` |
+| `theme_id` | theme ID | As `GoldAssignment` |
+| `support` | `Support` | As `GoldAssignment` |
+| `tie_group` | ID part or null | As `GoldAssignment` |
+
+### `HardNegativeDraft`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `claim_id` | ID part | As `HardNegative` |
+| `quote_ids` | tuple of ID part | As `HardNegative` |
+| `claim` | string | As `HardNegative` |
+| `negative_kind` | `NegativeKind` | As `HardNegative` |
+| `theme_id` | theme ID or null | As `HardNegative` |
+
+### `GoldDraft`
+
+`data/runs/gold/drafts/<event>.draft.toml` and its working copy; never committed.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part | The bundle's event |
+| `annotator` | string | Blank in the draft; the user signs the working copy |
+| `drafting_aid` | `DraftingAid` | The drafting session |
+| `no_theme` | bool | As `Gold` |
+| `release_identification` | `ReleaseIdentification` | As `Gold` |
+| `quotes` | tuple of `QuoteDraft` | Quotes, by text |
+| `claims` | tuple of `ClaimDraft` | Claims |
+| `assignments` | tuple of `AssignmentDraft` | Assignments |
+| `hard_negatives` | tuple of `HardNegativeDraft` | Hard-negative claims |
+
+### `FixtureDraft`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `fixture_id` | ID part | A Stage 1 fixture |
+| `quotes` | tuple of `QuoteDraft` | At least one |
+| `hard_negatives` | tuple of `HardNegativeDraft` | At least one |
+
+### `CuratedDraft`
+
+`data/runs/gold/drafts/hard-negatives.draft.toml` and its working copy.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `annotator` | string | Blank in the draft; the user signs the working copy |
+| `drafting_aid` | `DraftingAid` | The drafting session |
+| `documents` | tuple of `FixtureDraft` | At least one |
+

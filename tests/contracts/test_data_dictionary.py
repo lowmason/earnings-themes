@@ -21,7 +21,7 @@ from earnings_ingestion.cohort import register as cohort_register
 from earnings_ingestion.events import acceptance, coverage, states
 from earnings_ingestion.events import records as events
 from earnings_ingestion.fetch import records as fetch
-from earnings_themes import codebook, problems, split
+from earnings_themes import annotation, codebook, gold, problems, split
 from earnings_themes import records as themes
 from earnings_themes.anchoring import SpanPointer
 from pydantic import BaseModel
@@ -126,6 +126,23 @@ MODELS = [
     codebook.ExampleDraft,
     codebook.ThemeDraft,
     codebook.CodebookDraft,
+    gold.GoldQuote,
+    gold.GoldClaim,
+    gold.GoldAssignment,
+    gold.HardNegative,
+    gold.ReleaseIdentification,
+    gold.DraftCounts,
+    gold.CodebookRef,
+    gold.Gold,
+    gold.FixtureNegatives,
+    gold.HardNegativeSet,
+    annotation.QuoteDraft,
+    annotation.ClaimDraft,
+    annotation.AssignmentDraft,
+    annotation.HardNegativeDraft,
+    annotation.GoldDraft,
+    annotation.FixtureDraft,
+    annotation.CuratedDraft,
 ]
 ENUMS = [
     core.RightsStatus,
@@ -164,6 +181,10 @@ ENUMS = [
     split.Partition,
     split.ExclusionReason,
     codebook.CodebookStatus,
+    gold.Origin,
+    gold.Support,
+    gold.ReleaseLabel,
+    gold.NegativeKind,
 ]
 
 

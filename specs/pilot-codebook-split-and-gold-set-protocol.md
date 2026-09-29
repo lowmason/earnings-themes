@@ -229,9 +229,10 @@ One file per annotated bundle, `gold/<event_id>.toml`.
 - `annotator`: blank in a draft, and the user's signature once signed (GS4);
 - the drafting aid's model ID and date, the counts of drafted items accepted, edited,
   and rejected, and the count of items added;
-- `no_theme`: true exactly when no assignment names a codebook theme. The validator
-  checks it against the assignments, so a bundle with no theme is affirmed by the
-  user, never inferred from an empty file.
+- `no_theme`: true exactly when no assignment pairs a claim with a codebook theme
+  under `supports` (amended by plan 9, P9-4). The validator checks it against the
+  assignments, so a bundle with no theme is affirmed by the user, never inferred
+  from an empty file.
 
 **The release-identification label:** `release`, `not_release`, or `ambiguous`, with
 a note in the user's words. `release` means the document is this event's earnings
