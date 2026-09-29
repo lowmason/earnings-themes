@@ -52,3 +52,10 @@ never a release's wording or a paraphrase of it (GS3, GS13).
 On 2026-09-29, the user confirmed that `data/` is backed up outside the
 repository (GS12). The backup's location is the user's, and is not recorded. No
 drafting session had started.
+
+## The brief review
+
+On 2026-09-29, the user reviewed both briefs before any drafting session
+started (P9-6): `evaluation/djia-2024q3-2026q2/pilot-v1/briefs/codebook.md` and
+`gold.md`. Neither changed. After the review, the wording guard and the codebook
+brief's test printed `6 passed`.
