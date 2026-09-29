@@ -1694,3 +1694,62 @@ GS2's pin: the pilot, its event manifest, and its universe, each by version and 
 | `no_theme` | tuple of `NoThemeCount` | Empty until Stage 11 adds train and dev, and Stage 14 test (R12.4, GS18) |
 | `content_hash` | 64 lowercase hex | SHA-256 of the canonical JSON of every other field |
 
+## earnings-themes records, schema version 1
+
+`earnings_themes` holds Stage 6's split, codebook, and gold contracts (the Stage 6
+spec, specs/pilot-codebook-split-and-gold-set-protocol.md). Every model is strict,
+frozen, and refuses unknown fields. A committed record holds IDs, hashes, pointers,
+and the user's words, never a release's wording: a quote is a pointer, and the
+wording guard refuses any 40-character window, dates masked, shared with a pilot
+document or a Stage 1 fixture.
+
+### `Problem`
+
+Stage 6's own refusal reasons; a span check's reason is earnings-core's
+`RejectionReason`. A refusal names its item by ID or field path, never by text.
+
+| Value | Meaning |
+| --- | --- |
+| `malformed` | A draft item is inconsistent, such as a synthetic example with an event |
+| `not_narrative` | A quote overlaps a table, cell, page artifact, or other non-narrative element (GS15) |
+| `quote_hash_mismatch` | A pointer's slice does not hash to its `quote_sha256` |
+| `context_hash_mismatch` | Its context does not hash to its `context_sha256` |
+| `masks_mismatch` | Its `mask_ids` are not the masks over it |
+| `wrong_pin` | The record names another pin |
+| `wrong_split` | It names another split |
+| `wrong_partition` | Its partition is not its event's |
+| `excluded_event` | Its event is excluded |
+| `wrong_codebook` | It names another codebook version |
+| `codebook_not_approved` | Its codebook is not approved |
+| `unsigned` | Its `annotator` is blank |
+| `no_theme_mismatch` | Its `no_theme` disagrees with its assignments |
+| `counts_mismatch` | Its origin counts disagree with its items |
+| `duplicate_id` | An ID repeats, or a theme takes the reserved `unmatched` |
+| `unknown_quote` | A claim names a quote the record lacks |
+| `unknown_claim` | An assignment names a claim the record lacks |
+| `unknown_theme` | An assignment, hard negative, or parent names a theme the codebook lacks |
+| `unknown_document` | The event or fixture has no document here, or is not in the split |
+| `tie_group` | A tie group holds rows of more than one claim, or only one row |
+| `source_wording` | A string shares a 40-character window with a document's text |
+| `outside_training` | A codebook example is not from a training bundle |
+| `synthetic_unflagged` | An example names no event and is not marked synthetic |
+| `parent_cycle` | Themes' parents form a cycle |
+| `discovery_corpus` | The codebook's discovery corpus is not the split's parsed training bundles |
+| `content_hash_mismatch` | A record's `content_hash` is not its content's |
+| `negative_kinds` | The curated hard negatives lack a kind |
+| `adr_not_cited` | ADR 0003 does not cite the codebook's content hash |
+
+### `Pin`
+
+`PilotPin`, as earnings-themes reads it: the same fields and values.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `pilot_id` | ID part | The pilot's ID |
+| `pilot_version` | int ≥ 1 | Its version |
+| `pilot_hash` | 64 lowercase hex | Its `content_hash` |
+| `events_version` | int ≥ 1 | The event manifest it selected from |
+| `events_hash` | 64 lowercase hex | That manifest's `content_hash` |
+| `universe_version` | int ≥ 1 | The universe the pilot was selected over |
+| `universe_operative_hash` | 64 lowercase hex | That universe's `operative_hash` |
+

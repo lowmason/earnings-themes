@@ -1,7 +1,7 @@
 """docs/data-dictionary.md documents every field and value of the core contracts
 and of the ingestion records: the canonicalizer's, the capture's, layout-1's, the
 retrieval metadata, the cohort's records and curated files, and Stage 5's event,
-pilot, processing-state, and coverage records.
+pilot, processing-state, and coverage records; and earnings-themes' Stage 6 records.
 
 AGENTS.md §191: document public interfaces and update the data dictionary in the
 same change. A contract that gains, loses, or renames a field fails here.
@@ -21,6 +21,8 @@ from earnings_ingestion.cohort import register as cohort_register
 from earnings_ingestion.events import acceptance, coverage, states
 from earnings_ingestion.events import records as events
 from earnings_ingestion.fetch import records as fetch
+from earnings_themes import problems
+from earnings_themes import records as themes
 from pydantic import BaseModel
 
 DICTIONARY = Path(__file__).resolve().parents[2] / "docs" / "data-dictionary.md"
@@ -106,6 +108,7 @@ MODELS = [
     coverage.AppliedOverride,
     coverage.NoThemeCount,
     coverage.CoverageReport,
+    themes.Pin,
 ]
 ENUMS = [
     core.RightsStatus,
@@ -140,6 +143,7 @@ ENUMS = [
     states.MissingReason,
     states.ExhibitChoice,
     states.AttemptOutcome,
+    problems.Problem,
 ]
 
 
@@ -169,4 +173,8 @@ def test_the_documented_versions_are_the_packages() -> None:
     assert (
         f"## earnings-ingestion records, schema version"
         f" {ingestion.INGESTION_SCHEMA_VERSION}\n" in text
+    )
+    assert (
+        f"## earnings-themes records, schema version {themes.THEMES_SCHEMA_VERSION}\n"
+        in text
     )
