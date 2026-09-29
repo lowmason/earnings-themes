@@ -57,16 +57,34 @@ def test_a_file_that_is_not_toml_is_refused_by_position_only(tmp_path) -> None:
 
     with pytest.raises(RecordError) as extra:
         parse({"a synthetic phrase with spaces": 1}, Pin, "x.toml")
-    assert "a synthetic phrase with spaces" not in str(extra.value)
-    assert "<key>" in str(extra.value)
+    extra_problems = extra.value.problems
+    assert extra_problems == (
+        "<key>: Extra inputs are not permitted",
+        "pilot_id: Field required",
+        "pilot_version: Field required",
+        "pilot_hash: Field required",
+        "events_version: Field required",
+        "events_hash: Field required",
+        "universe_version: Field required",
+        "universe_operative_hash: Field required",
+    )
 
     class WithItems(Part):
         items: dict[IdPart, int]
 
     with pytest.raises(RecordError) as bad_key:
         parse({"items": {"another synthetic key with spaces": 1}}, WithItems, "x.toml")
-    assert "another synthetic key with spaces" not in str(bad_key.value)
-    assert "<key>" in str(bad_key.value)
+    bad_key_problems = bad_key.value.problems
+    assert all(problem.startswith("items.<key>.[key]") for problem in bad_key_problems)
+
+    class WithUnion(Part):
+        items: dict[int | IdPart, int]
+
+    with pytest.raises(RecordError) as union_key:
+        parse({"items": {"a synthetic union key with spaces": 1}}, WithUnion, "x.toml")
+    assert "a synthetic union key with spaces" not in str(union_key.value)
+    union_problems = union_key.value.problems
+    assert all(problem.startswith("items.<key>.[key].") for problem in union_problems)
 
 
 def test_a_missing_file_is_refused_by_name(tmp_path) -> None:

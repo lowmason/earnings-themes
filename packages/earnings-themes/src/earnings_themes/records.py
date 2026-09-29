@@ -108,8 +108,9 @@ def describe(error: ValidationError) -> tuple[str, ...]:
         loc = list(item["loc"])
         if item["type"] == "extra_forbidden" and loc:
             loc[-1] = "<key>"
-        if len(loc) >= 2 and loc[-1] == "[key]":
-            loc[-2] = "<key>"
+        for i in range(1, len(loc)):
+            if loc[i] == "[key]":
+                loc[i - 1] = "<key>"
         path = ".".join(str(part) for part in loc) or "record"
         problems.append(f"{path}: {item['msg']}")
     return tuple(problems)
