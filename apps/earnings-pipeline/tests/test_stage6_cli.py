@@ -1,6 +1,7 @@
 """Stage 6's commands over the synthetic pilot (plan 9): the split and the coverage
-report freeze once, over the pin; every refusal names its item and reason; and no
-command prints a document's text (GS13) or changes a frozen record (P-C7).
+report freeze once, over the pin; codebook v0 freezes only once its ADR cites it;
+every refusal names its item and reason; and no command prints a document's text
+(GS13) or changes a frozen record (P-C7).
 
 The synthetic acquisition is replayed offline once, into ``data/runs/events/``, as
 Stage 5's replay test does; its documents are the synthetic layer's invented text.
@@ -35,8 +36,11 @@ from earnings_pipeline.stage6 import (
     wording_refusals,
     wording_texts,
 )
+from earnings_themes import tomlfile
+from earnings_themes.codebook import load_codebook
 from earnings_themes.gold import ReleaseIdentification, ReleaseLabel
 from earnings_themes.split import load_split
+from earnings_themes.synthetic import codebook_draft
 from earnings_themes.wording import WIDTH, masked
 from typer.testing import CliRunner
 
@@ -44,10 +48,16 @@ RUNNER = CliRunner()
 REPO = Path(__file__).resolve().parents[3]
 PILOT_HASH = "71c6ac4fabc3b7e727da88b4ee74048a0ee3559c8e5ce26c02227376d820333c"
 EVENT_RUNS = Path("data") / "runs" / "events"
+DRAFTS = Path("data") / "runs" / "gold" / "drafts"
 EVALUATION = Path("evaluation") / "djia-synthetic" / "pilot-v1"
 CANONICAL = Path("tests") / "fixtures" / "canonical"
 RELEASES = Path("tests") / "fixtures" / "releases" / "manifest.toml"
+CODEBOOK = Path("codebooks") / "djia-pilot" / "codebook-v0.toml"
+ADR = Path("docs") / "adr" / "0003-codebook-v0.md"
+FIRST = "cik-0009990001:2024-08-31"
+UNPARSED = ("cik-0009990003:2025-06-30", "cik-0009990005:2025-03-28")
 EXCLUDED = "cik-0009990001:2025-08-31"
+SENTENCE = "today reported net sales of $1,000 million"
 WINDOW = 20
 
 
@@ -134,6 +144,44 @@ def run(repo: Path, group: str, *args: str):
 
 def lines(result) -> list[str]:
     return result.output.splitlines()
+
+
+def write_drafts(repo: Path, name: str, drafted: dict, working: dict | None = None):
+    folder = repo / DRAFTS
+    folder.mkdir(parents=True, exist_ok=True)
+    for kind, data in (("draft", drafted), ("working", working or drafted)):
+        text = tomlfile.dumps(data)
+        path = folder / f"{name.replace(':', '_')}.{kind}.toml"
+        path.write_text(text, encoding="utf-8")
+
+
+def the_codebook(**changes) -> dict:
+    draft = codebook_draft(**changes)
+    draft["themes"][0]["positive_examples"] = [{"event_id": FIRST, "text": SENTENCE}]
+    return draft
+
+
+def frozen(repo: Path) -> Path:
+    """The split frozen and codebook v0 approved, as gate 3 leaves them."""
+    assert run(repo, "pilot", "split").exit_code == 0
+    write_drafts(repo, "codebook", the_codebook())
+    first = run(repo, "codebook", "freeze")
+    content_hash = lines(first)[-2].split()[-1]
+    (repo / ADR).parent.mkdir(parents=True)
+    (repo / ADR).write_text(f"Codebook v0 is {content_hash}.\n", encoding="utf-8")
+    approved = run(
+        repo,
+        "codebook",
+        "freeze",
+        "--adr",
+        str(ADR),
+        "--approver",
+        "Lowell Mason",
+        "--approved-on",
+        "2026-10-02",
+    )
+    assert approved.exit_code == 0, approved.output
+    return repo / CODEBOOK
 
 
 def pilot_bytes(repo: Path) -> dict[str, bytes]:
@@ -302,3 +350,99 @@ def test_a_record_is_checked_against_every_text_the_wording_guard_reads(
     record = ReleaseIdentification(label=ReleaseLabel.RELEASE, note=f"Ours: {copied}")
     refusals = [str(refusal) for refusal in wording_refusals(record, found)]
     assert refusals == [f"note ({last}): source_wording"]
+
+
+def test_codebook_v0_is_written_only_once_its_adr_cites_it(repo) -> None:
+    assert run(repo, "pilot", "split").exit_code == 0
+    write_drafts(repo, "codebook", the_codebook())
+    first = run(repo, "codebook", "freeze")
+    assert first.exit_code == 0, first.output
+    assert lines(first)[:3] == [
+        f"no parsed document  {UNPARSED[0]}",
+        f"no parsed document  {UNPARSED[1]}",
+        "codebook djia-pilot v0: 1 themes, 2 examples, from 11 training bundles",
+    ]
+    assert lines(first)[-1].startswith("not written: ADR 0003 cites this hash")
+    assert not (repo / CODEBOOK).exists()
+    content_hash = lines(first)[-2].split()[-1]
+    (repo / ADR).parent.mkdir(parents=True)
+    (repo / ADR).write_text("Codebook v0.\n", encoding="utf-8")
+    approve = ["--adr", str(ADR), "--approver", "Lowell Mason"]
+    uncited = run(repo, "codebook", "freeze", *approve, "--approved-on", "2026-10-02")
+    assert lines(uncited)[-1] == f"Refused: {ADR} does not cite {content_hash}"
+    assert not (repo / CODEBOOK).exists()
+    (repo / ADR).write_text(f"Codebook v0 is {content_hash}.\n", encoding="utf-8")
+    cited = run(repo, "codebook", "freeze", *approve, "--approved-on", "2026-10-02")
+    assert cited.exit_code == 0, cited.output
+    assert lines(cited)[-2:] == [
+        "froze djia-pilot v0, approved",
+        f"{CODEBOOK}  {content_hash}",
+    ]
+    codebook = load_codebook(repo / CODEBOOK)
+    assert codebook.content_hash == content_hash
+    assert codebook.discovery_corpus.event_ids[0] == FIRST
+    assert (
+        FIRST
+        not in (repo / CODEBOOK)
+        .read_text(encoding="utf-8")
+        .split("[[themes]]")[1]
+        .split("event_id")[0]
+    )
+    valid = run(repo, "codebook", "validate")
+    assert valid.exit_code == 0, valid.output
+    assert lines(valid)[-2] == (
+        "valid: djia-pilot v0, 1 themes, approved by Lowell Mason on 2026-10-02"
+    )
+
+
+def test_a_codebook_that_copies_a_training_release_is_refused(repo) -> None:
+    assert run(repo, "pilot", "split").exit_code == 0
+    copied = the_codebook()
+    copied["themes"][0]["definition"] = (
+        f"Acme Industrial Corp {SENTENCE} for the quarter."
+    )
+    write_drafts(repo, "codebook", copied)
+    result = run(repo, "codebook", "freeze")
+    assert result.exit_code == 1
+    refusals = [line for line in lines(result) if line.startswith("refused: ")]
+    assert f"refused: themes[0].definition ({FIRST}): source_wording" in refusals
+    assert all(line.endswith("): source_wording") for line in refusals)
+    assert lines(result)[-1] == (
+        f"Refused: {len(refusals)} problem(s); nothing written"
+    )
+
+
+def test_a_codebook_that_copies_any_pilot_release_is_refused_before_its_hash(
+    repo,
+) -> None:
+    """GS3: codebook freeze checks v0 against every text the committed guard reads,
+    not only the training releases, so a codebook the guard would refuse gets no
+    content hash, and nothing is written. The synthetic releases share one template,
+    so the copy is taken from a Stage 1 fixture, which the guard also reads."""
+    assert run(repo, "pilot", "split").exit_code == 0
+    found = guarded_texts(repo)
+    other = first_fixture(repo)
+    changed = the_codebook()
+    changed["themes"][0]["definition"] = f"Ours: {unique_window(found, other)}"
+    write_drafts(repo, "codebook", changed)
+    result = run(repo, "codebook", "freeze")
+    assert result.exit_code == 1
+    assert [line for line in lines(result) if line.startswith("refused: ")] == [
+        f"refused: themes[0].definition ({other}): source_wording"
+    ]
+    assert not any(line.startswith("content_hash") for line in lines(result))
+    assert not (repo / CODEBOOK).exists()
+
+
+def test_codebook_validate_checks_every_text_the_guard_reads(repo) -> None:
+    """P9-21: codebook validate rechecks the committed v0 against every text the
+    committed guard reads, as freeze does."""
+    path = frozen(repo)
+    other = first_fixture(repo)
+    record = tomlfile.read(path)
+    copied = unique_window(guarded_texts(repo), other)
+    record["themes"][0]["definition"] = f"Ours: {copied}"
+    path.write_text(tomlfile.dumps(record), encoding="utf-8")
+    result = run(repo, "codebook", "validate")
+    assert result.exit_code == 1
+    assert f"refused: themes[0].definition ({other}): source_wording" in lines(result)

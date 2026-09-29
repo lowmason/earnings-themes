@@ -9,7 +9,8 @@
 chromedriver (B8). It checks each archive against the committed manifest and installs
 into a cache outside the repository; a capture never downloads anything. ``cohort``
 holds Stage 4's commands (``earnings_pipeline.cohort_cli``), and ``events`` Stage 5's
-(``earnings_pipeline.events_cli``). ``pilot`` holds Stage 6's split and coverage report (``pilot_cli``).
+(``earnings_pipeline.events_cli``). ``pilot`` and ``codebook`` hold Stage 6's (``pilot_cli`` and
+``codebook_cli``).
 """
 
 from pathlib import Path
@@ -23,6 +24,7 @@ from earnings_ingestion.browser.install import (
     load_pin,
 )
 
+from earnings_pipeline.codebook_cli import codebook
 from earnings_pipeline.cohort_cli import cohort
 from earnings_pipeline.events_cli import events
 from earnings_pipeline.pilot_cli import pilot
@@ -35,6 +37,7 @@ app.add_typer(browser, name="browser")
 app.add_typer(cohort, name="cohort")
 app.add_typer(events, name="events")
 app.add_typer(pilot, name="pilot")
+app.add_typer(codebook, name="codebook")
 
 
 @browser.command()
