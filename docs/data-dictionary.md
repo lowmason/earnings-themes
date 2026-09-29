@@ -1753,3 +1753,59 @@ Stage 6's own refusal reasons; a span check's reason is earnings-core's
 | `universe_version` | int ≥ 1 | The universe the pilot was selected over |
 | `universe_operative_hash` | 64 lowercase hex | That universe's `operative_hash` |
 
+### `Partition`
+
+| Value | Meaning |
+| --- | --- |
+| `train` | Codebook discovery and training gold: calendar quarters 2024Q3 to 2025Q2 |
+| `dev` | Tuning: 2025Q3 to 2025Q4 |
+| `test` | Held out until Stage 14 freezes: 2026Q1 to 2026Q2 |
+| `excluded` | In no partition, for its `ExclusionReason` |
+
+### `ExclusionReason`
+
+| Value | Meaning |
+| --- | --- |
+| `issuer_in_earlier_partition` | Its issuer's home partition, that of its earliest pilot event, is an earlier one |
+| `fixture_train_or_exclude` | Its release is a Stage 1 fixture outside train (GS10) |
+
+### `SplitWindow`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `partition` | `Partition` | `train`, `dev`, or `test` |
+| `first` | `YYYYQn` | Its first calendar quarter |
+| `last` | `YYYYQn` | Its last, inclusive |
+
+### `SplitEvent`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part | A pilot event |
+| `issuer_id` | ID part | Its issuer |
+| `period_end` | date | Its fiscal period's end, which places it in a quarter |
+
+### `SplitRow`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part | A pilot event |
+| `issuer_id` | ID part | Its issuer |
+| `period_end` | date | Its fiscal period's end |
+| `partition` | `Partition` | Where `issuer-time/1` puts it |
+| `reason` | `ExclusionReason` or null | Exactly for `excluded` |
+
+### `SplitManifest`
+
+`evaluation/<corpus>/pilot-v<N>/split-v<M>.json`, written once.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Themes record schema version |
+| `split_policy` | `"issuer-time/1"` | The rule: each issuer's events go to its home partition, or are excluded |
+| `split_version` | int ≥ 1 | The split's version |
+| `windows` | tuple of `SplitWindow` | The policy's fixed windows |
+| `pin` | `Pin` | The pilot it splits |
+| `rows` | tuple of `SplitRow` | One per pilot event, sorted by `event_id` |
+| `content_hash` | 64 lowercase hex | SHA-256 of the canonical JSON of every other field |
+

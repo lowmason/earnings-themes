@@ -21,7 +21,7 @@ from earnings_ingestion.cohort import register as cohort_register
 from earnings_ingestion.events import acceptance, coverage, states
 from earnings_ingestion.events import records as events
 from earnings_ingestion.fetch import records as fetch
-from earnings_themes import problems
+from earnings_themes import problems, split
 from earnings_themes import records as themes
 from pydantic import BaseModel
 
@@ -109,6 +109,10 @@ MODELS = [
     coverage.NoThemeCount,
     coverage.CoverageReport,
     themes.Pin,
+    split.SplitWindow,
+    split.SplitEvent,
+    split.SplitRow,
+    split.SplitManifest,
 ]
 ENUMS = [
     core.RightsStatus,
@@ -144,6 +148,8 @@ ENUMS = [
     states.ExhibitChoice,
     states.AttemptOutcome,
     problems.Problem,
+    split.Partition,
+    split.ExclusionReason,
 ]
 
 
