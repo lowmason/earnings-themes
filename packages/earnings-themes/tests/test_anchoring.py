@@ -103,6 +103,20 @@ def test_a_pointer_into_a_table_cell_is_not_narrative(synthetic) -> None:
     )
     assert check_pointer(synthetic.bundle, pointer) == ["not_narrative"]
 
+    exact = anchor(synthetic.bundle, "Margins held steady.")
+    assert isinstance(exact, SpanPointer)
+    exact_span = TextSpan(start=exact.start, end=exact.end)
+    paragraph = next(
+        e
+        for e in synthetic.bundle.elements
+        if e.type.value == "paragraph" and e.span.contains(exact_span)
+    )
+    mismatched = SpanPointer(
+        **{**exact.model_dump(), "element_id": paragraph.element_id}
+    )
+    assert check_pointer(synthetic.bundle, mismatched) == ["element_mismatch"]
+    assert check_pointer(synthetic.bundle, exact) == []
+
 
 def test_the_synthetic_bundle_is_sound(synthetic) -> None:
     assert bundle_problems(synthetic.bundle) == []

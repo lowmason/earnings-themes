@@ -15,6 +15,7 @@ class Problem(StrEnum):
 
     MALFORMED = "malformed"
     NOT_NARRATIVE = "not_narrative"
+    ELEMENT_MISMATCH = "element_mismatch"
     QUOTE_HASH_MISMATCH = "quote_hash_mismatch"
     CONTEXT_HASH_MISMATCH = "context_hash_mismatch"
     MASKS_MISMATCH = "masks_mismatch"

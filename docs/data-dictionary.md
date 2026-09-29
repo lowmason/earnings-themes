@@ -1712,6 +1712,7 @@ Stage 6's own refusal reasons; a span check's reason is earnings-core's
 | --- | --- |
 | `malformed` | A draft item is inconsistent, such as a synthetic example with an event |
 | `not_narrative` | A quote overlaps a table, cell, page artifact, or other non-narrative element (GS15) |
+| `element_mismatch` | A pointer names a narrative element that holds its span but is not the most specific one (P9-19) |
 | `quote_hash_mismatch` | A pointer's slice does not hash to its `quote_sha256` |
 | `context_hash_mismatch` | Its context does not hash to its `context_sha256` |
 | `masks_mismatch` | Its `mask_ids` are not the masks over it |

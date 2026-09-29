@@ -210,6 +210,13 @@ def check_pointer(bundle: Bundle, pointer: SpanPointer) -> list[str]:
         elements, span
     ):
         reasons.append(Problem.NOT_NARRATIVE.value)
+    home = _home(bundle, span)
+    if (
+        any(e.type in NARRATIVE and e.span.contains(span) for e in named)
+        and isinstance(home, DocumentElement)
+        and home.element_id != pointer.element_id
+    ):
+        reasons.append(Problem.ELEMENT_MISMATCH.value)
     verdict = _verify(bundle, span, pointer.element_id, locator)
     if isinstance(verdict, Rejection):
         reasons.append(verdict.reason.value)
