@@ -3,13 +3,14 @@
 Evidence-linked research infrastructure for company data and earnings themes.
 
 > [!IMPORTANT]
-> **Project status (2026-09-28): Stages 1 to 5 complete.**
+> **Project status (2026-10-03): Stages 1 to 6 complete.**
 > The `uv` workspace, package boundaries, specifications, and staged roadmap exist.
 > `earnings-core` holds the shared evidence contracts, and `earnings-ingestion`
 > canonicalizes releases, rebuilds the point-in-time DJIA cohort, discovers and
 > freezes its earnings events and pilot, and acquires the pilot's releases, each with
-> offline tests. `earnings-themes` still contains a placeholder API; there is no theme
-> extraction, approved theme codebook, or published dataset yet.
+> offline tests. `earnings-themes` holds the pilot's split and its codebook and gold
+> contracts. Codebook v0, the pilot codebook, is approved, and three gold bundles are
+> signed; there is no theme extraction or published dataset yet.
 
 ## Purpose
 
@@ -97,9 +98,9 @@ claim; support is assessed separately.
 | Path | Responsibility | Current state |
 | --- | --- | --- |
 | `packages/earnings-core/` | Shared contracts, identifiers, hashes, provenance, and pure span helpers | Stage 2 contracts and exactness checks (schema v2) |
-| `packages/earnings-ingestion/` | Source adapters, raw snapshots, deterministic parsing, canonicalization, and entity resolution | Stage 3's canonicalizer and browser diagnostic path; Stage 4's artifact store, shared SEC client, and point-in-time DJIA cohort; Stage 5's event discovery, eligibility, and pilot selection |
-| `packages/earnings-themes/` | Quote-claim extraction, exact-span verification, support assessment, codebooks, and evaluation | Scaffold only |
-| `apps/earnings-pipeline/` | Thin application layer for configuration, stage coordination, checkpoints, and reporting | `earnings-pipeline browser setup`, and the `earnings-pipeline cohort` and `earnings-pipeline events` commands |
+| `packages/earnings-ingestion/` | Source adapters, raw snapshots, deterministic parsing, canonicalization, and entity resolution | Stage 3's canonicalizer and browser diagnostic path; Stage 4's artifact store, shared SEC client, and point-in-time DJIA cohort; Stage 5's event discovery, eligibility, and pilot selection; Stage 6's coverage report |
+| `packages/earnings-themes/` | Quote-claim extraction, exact-span verification, support assessment, codebooks, and evaluation | Stage 6's split, codebook, and gold contracts, with their anchor, validator, and wording guard |
+| `apps/earnings-pipeline/` | Thin application layer for configuration, stage coordination, checkpoints, and reporting | `earnings-pipeline browser setup`, and the `earnings-pipeline cohort`, `events`, `pilot`, `codebook`, and `gold` commands |
 | `docs/` | Source notes and, as the project develops, methodology, source registers, verification reports, and decisions | Source notes, the release source register, verification records V1 and V2, ADR 0001, and the `earnings-core` data dictionary |
 | `specs/` | Binding and exploratory system specifications, reviews, and the staged implementation roadmap | Present |
 | `expirements/parser-fidelity/` | Stage 1's investigation harness: parser candidates, scorer, and selection rule | Complete; a record, not product code |
@@ -108,6 +109,9 @@ claim; support is assessed separately.
 | `tests/fixtures/cohort/` | The synthetic cohort, which replays offline to its frozen manifest | Present |
 | `config/corpus/djia-2024q3-2026q2/` | The reviewed event overrides, the frozen event manifest and its evidence record, and the frozen pilot: facts, URLs, hashes, and locators, never source text | Stage 5's frozen event manifest and pilot |
 | `tests/fixtures/events/` | The synthetic event corpus, which replays offline to its frozen event manifest and pilot | Present |
+| `evaluation/djia-2024q3-2026q2/pilot-v1/` | The pilot's split, coverage report, drafting briefs, and signed gold: IDs, offsets, labels, hashes, and the maintainer's words, never release text | Stage 6's frozen split and report, and three signed bundles |
+| `codebooks/djia-pilot/` | The pilot codebook | Codebook v0, approved in ADR 0003 |
+| `tests/fixtures/gold/` | The curated hard negatives, over Stage 1's fixtures | Present |
 
 The intended dependency direction is:
 
@@ -128,7 +132,7 @@ using those primitives.
 ## Current roadmap
 
 The implementation is organized as a staged, evidence-first roadmap of sixteen
-stages. Stages 1 to 5 are complete.
+stages. Stages 1 to 6 are complete.
 
 The roadmap was amended on 2026-09-22 by
 [the point-in-time DJIA cohort specification](specs/point-in-time-djia-cohort.md).
@@ -190,8 +194,18 @@ pilot selection in `config/corpus/djia-2024q3-2026q2/` before any release is
 acquired. Its second plan then acquires the pilot's releases from EDGAR through the
 shared client, chooses and confirms each release exhibit, and records each document's
 processing state. The [verification record](docs/verification/djia-events.md) has
-the details. The roadmap resumes with Stage 6: the pilot codebook, split, and
-gold-set protocol.
+the details.
+
+**Stage 6: the pilot codebook, split, and gold-set protocol** is complete. It
+pins the pilot by content hash, splits it by issuer and time into 20 train, 8
+dev, and 7 test events, with 5 excluded, and reports its coverage. Codebook v0,
+discovered from the training partition alone, is approved in
+[ADR 0003](docs/adr/0003-adopt-codebook-v0-as-the-pilot-codebook.md). A Claude
+session drafts each bundle's gold under a committed brief, and the maintainer
+verifies every item, reads the release for omissions, and signs; committed
+files hold pointers, labels, and hashes, never release text. Three train
+bundles are signed. The [verification record](docs/verification/pilot-v1-gold-set.md)
+has the details.
 
 Key planning documents:
 
@@ -208,6 +222,9 @@ Key planning documents:
 - [Event discovery, eligibility, and acquisition specification](specs/completed/event-discovery-eligibility-and-acquisition.md)
   — Stage 5's two plans: discovery, eligibility, and the freezes; then
   acquisition and processing states.
+- [Pilot codebook, split, and gold-set protocol specification](specs/pilot-codebook-split-and-gold-set-protocol.md)
+  — Stage 6: the pin, the issuer-and-time split, codebook v0, and the gold-set
+  protocol, with Claude-drafted, user-verified gold.
 - [Earnings-theme learning path](docs/earnings-themes.md) — the original staged
   learning exercise that motivates the extraction track.
 - [Company-ingestion source note](docs/earnings-ingestion.md) — the original

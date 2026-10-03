@@ -107,3 +107,83 @@ brief's test printed `6 passed`.
   - signed on 2026-10-03, as `annotator = "Lowell Mason (verified a Claude draft)"`.
 - **Checks.** `gold validate --hard-negatives` printed `valid:`, and the default suite
   now checks the record offline: `1742 passed, 2 skipped, 24 deselected`.
+
+## Gate 5: three signed train bundles
+
+The first three train events in the pilot's selection order (P9-7), chosen by order
+before any text was read. Each was drafted in its own fresh session, anchored,
+verified item by item, read whole for omissions, signed, validated, and committed
+as `evaluation/djia-2024q3-2026q2/pilot-v1/gold/<event>.toml`, the event's ID with
+its colon as an underscore (P9-3). The counting script in plan 9's Task 19, Step 8
+counted them from the committed files, and each bundle's commit holds its
+omission-pass and signing dates:
+
+| Event | Release label | Quotes | Claims | Assignments | Hard negatives | `no_theme` | Accepted | Edited | Rejected | Added | Omission pass | Signed |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `cik-0000051143:2024-12-31` | `release` | 62 | 46 | 57 | 8 | `false` | 173 | 0 | 0 | 0 | 2026-10-03 | 2026-10-03 |
+| `cik-0000093410:2025-03-31` | `release` | 56 | 40 | 62 | 13 | `false` | 171 | 0 | 0 | 0 | 2026-10-03 | 2026-10-03 |
+| `cik-0000310158:2025-06-30` | `release` | 103 | 71 | 97 | 11 | `false` | 282 | 0 | 0 | 0 | 2026-10-03 | 2026-10-03 |
+| **Total** | | 221 | 157 | 216 | 32 | | 626 | 0 | 0 | 0 | | |
+
+Each is `train` and signed by the user; `gold validate` printed `valid:` for each,
+and the gold leg passes. The accepted, edited, rejected, and added counts compare
+each signed file with its kept draft (GS5).
+
+## Drafting sessions
+
+| Gate | Draft, under `data/runs/gold/drafts/` | Brief | Model | Date |
+| --- | --- | --- | --- | --- |
+| 3 | `codebook.draft.toml` | `codebook.md` | Claude Opus 5.5 (`claude-opus-5-5`) | 2026-10-02 |
+| 4 | `hard-negatives.draft.toml` | `gold.md` | Claude Opus 5.5 (`claude-opus-5-5`) | 2026-10-03 |
+| 5 | `cik-0000051143_2024-12-31.draft.toml` | `gold.md` | Claude Opus 5.5 (`claude-opus-5-5`) | 2026-10-03 |
+| 5 | `cik-0000093410_2025-03-31.draft.toml` | `gold.md` | Claude Opus 5.5 (`claude-opus-5-5`) | 2026-10-03 |
+| 5 | `cik-0000310158_2025-06-30.draft.toml` | `gold.md` | Claude Opus 5.5 (`claude-opus-5-5`) | 2026-10-03 |
+
+- **Where they ran.** Each session was fresh, started by the user in the main
+  checkout with its committed brief, and drafted one thing (P9-5). Gate 3's
+  revision and review sessions changed the codebook's working copy, never a
+  draft; the Gate 3 section and ADR 0003 describe them.
+- **What never drafted.** Outside two exceptions the user authorized for codebook
+  v0, the executing session and its subagents drafted nothing, and never read a
+  draft, a working copy, a view, or a pilot text. The executing session read the
+  codebook draft once, and applied the user's changes to the codebook's working
+  copy by script, one synthetic hard negative in its own words included; the
+  Gate 3 section and ADR 0003 record both. Implementer subagents on five tasks
+  searched beyond their search rule, by finds, greps, or a listing of directory
+  names, and none exposed pilot text.
+- **The drafts.** They stay under `data/runs/gold/drafts/`, unchanged and
+  uncommitted, for GS5's shares at Stage 11. `gold anchor --check`, which writes
+  nothing, rebuilt each signed record from its kept draft with the committed
+  counts.
+
+## What was verified
+
+| Item (S §Verification; 7 and 8 are plan 9's) | Evidence |
+| --- | --- |
+| 1. The split over the synthetic pilot and over pilot v1, reproducing `split-v1.json` | `test_each_issuer_keeps_the_partition_of_its_earliest_event`; `test_a_fixture_event_is_never_held_out`; `test_the_issuer_rule_comes_before_the_fixture_rule`; `test_the_order_of_the_input_changes_nothing`; `test_the_split_gives_the_spec_s_counts_and_exclusions`; `test_the_committed_split_reproduces_byte_for_byte` |
+| 2. The split and the report leave the pilot unchanged (P-C7) | `test_the_split_changes_no_frozen_record`; `test_split_freezes_once_and_prints_only_ids_and_counts`; `test_coverage_counts_each_state_and_rereads_only_its_runs` |
+| 3. The coverage report over the synthetic acquisition, with its non-zero classes | `test_the_synthetic_acquisition_is_counted_by_state`; `test_a_pilot_holding_no_failure_class_reports_three_gaps`; `test_a_rebuild_reads_only_the_runs_it_names` |
+| 4. The codebook and gold contracts, the anchor, and the validator, with a tamper test for each refusal | `test_codebook.py`, `test_gold.py`, and `test_anchoring.py`, among them `test_a_tampered_version_is_refused`, `test_another_document_pin_split_codebook_or_partition_is_refused`, and `test_a_tampered_pointer_is_refused`; `test_every_unique_narrative_sentence_of_the_stage_1_fixtures_anchors`; `test_curated_hard_negatives_over_stage_1_fixtures_validate`; `test_the_curated_hard_negatives_validate_offline` |
+| 5. The wording guard's fixture leg | `test_no_stage_6_file_quotes_a_stage_1_fixture`; `test_a_copy_across_a_wrapped_line_is_caught` |
+| 6. The local legs | `test_the_committed_coverage_report_reproduces_from_its_runs`; `test_committed_records_validate_against_the_local_store`; `test_no_stage_6_file_quotes_a_pilot_document`: `14 passed` |
+| 7. Blinding (GS13) | `test_an_unforeseen_error_is_named_by_type_never_by_message`; `test_a_draft_that_is_not_toml_is_named_never_quoted`; `test_a_dev_or_test_bundle_waits_its_turn`; `test_no_text_is_written_for_an_excluded_event`; `test_a_file_that_is_not_toml_is_refused_by_position_only`; the CLI tests' `quiet` canary |
+| 8. No model and no network in `earnings-themes` (R14.1) | `test_importing_earnings_themes_loads_nothing_forbidden`; `test_every_module_is_imported` |
+| 9. The suites | The default suite, `1743 passed, 1 skipped, 24 deselected`; the harness suite, 280 passed; Ruff; `uv.lock` unchanged |
+
+## Limitations
+
+- **One annotator.** One person verified and signed every item, so inter-annotator
+  agreement is not measurable (R12.6, D2).
+- **One drafting model.** Every draft came from Claude Opus 5.5, and the user
+  verified drafts rather than annotating from blank (GS4). A Claude model scored
+  against this gold shares its drafter's family, and Stage 16 records that conflict
+  for any Claude ceiling.
+- **Three of 28.** Three train bundles are signed. The other 17 train and 8 dev
+  bundles follow Task 19's procedure after this plan, and the 7 test bundles wait
+  for Stage 14 (GS18).
+- **No observed failure class.** All 40 documents are parsed, so `unavailable`,
+  `restricted`, and `failed` are coverage gaps, not observed counts (D4).
+- **Accepted as drafted.** The user accepted every drafted item unchanged: 626 in
+  the three bundles, whose omission passes added none, and 58 in the curated hard
+  negatives. Every edited, rejected, and added count is zero (GS5): each signed
+  record holds exactly its draft's items.
