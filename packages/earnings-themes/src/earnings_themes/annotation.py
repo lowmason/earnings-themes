@@ -480,9 +480,13 @@ def validate_curated(
     kinds = {n.negative_kind for d in record.documents for n in d.hard_negatives}
     if kinds != set(NegativeKind):
         refusals.append(Refusal("hard_negatives", Problem.NEGATIVE_KINDS))
+    fixture_ids = [d.fixture_id for d in record.documents]
+    for repeated in sorted({i for i in fixture_ids if fixture_ids.count(i) > 1}):
+        refusals.append(Refusal(repeated, Problem.DUPLICATE_ID))
     items: list[BaseModel] = []
     for document in record.documents:
         prefix = f"{document.fixture_id} "
+        items += [*document.quotes, *document.hard_negatives]
         bundle = bundles.get(document.fixture_id)
         if bundle is None:
             refusals.append(Refusal(prefix.strip(), Problem.UNKNOWN_DOCUMENT))
@@ -502,6 +506,5 @@ def validate_curated(
             prefix,
         )
         refusals += _pointers(document.quotes, bundle, prefix)
-        items += [*document.quotes, *document.hard_negatives]
     refusals += _counts(record.counts, items)
     return refusals + _wording(record, bundles)

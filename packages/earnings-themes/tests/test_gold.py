@@ -192,6 +192,25 @@ def test_ids_themes_and_ties_are_checked(bundles, codebook, fixtures) -> None:
     )
     assert refusals == [Refusal(f"{first['fixture_id']} quote q2", "unreferenced")]
 
+    good = parse(curated_draft(fixtures, SIGNED), CuratedDraft, "curated")
+    record = build_curated(good, good, bundles=fixtures, pin=PIN, codebook=codebook)
+    assert isinstance(record, HardNegativeSet)
+    first_id = record.documents[0].fixture_id
+    repeated = good.model_copy(
+        update={"documents": (*good.documents, good.documents[0])}
+    )
+    refusals = build_curated(
+        good, repeated, bundles=fixtures, pin=PIN, codebook=codebook
+    )
+    assert refusals == [Refusal(first_id, "duplicate_id")]
+    others = {name: bundle for name, bundle in fixtures.items() if name != first_id}
+    refusals = validate_curated(record, bundles=others, pin=PIN, codebook=codebook)
+    assert refusals == [Refusal(first_id, "unknown_document")]
+    moved = record.documents[0].model_copy(update={"doc_id": "other@walker-1#0"})
+    tampered = record.model_copy(update={"documents": (moved, *record.documents[1:])})
+    refusals = validate_curated(tampered, bundles=fixtures, pin=PIN, codebook=codebook)
+    assert refusals == [Refusal(f"{first_id} doc_id", "wrong_document")]
+
 
 def test_a_claim_that_copies_the_release_is_refused(bundles, codebook) -> None:
     draft = gold_draft()
