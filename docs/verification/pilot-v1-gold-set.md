@@ -59,3 +59,38 @@ On 2026-09-29, the user reviewed both briefs before any drafting session
 started (P9-6): `evaluation/djia-2024q3-2026q2/pilot-v1/briefs/codebook.md` and
 `gold.md`. Neither changed. After the review, the wording guard and the codebook
 brief's test printed `6 passed`.
+
+## Gate 3: codebook v0
+
+- **The discovery corpus.** The 20 training events' parsed documents, which
+  `briefs/codebook.md` lists, and no dev or test document (R9.2, R12.3, P9-16).
+- **The drafting session.** On 2026-10-02, a fresh Claude Code session
+  in the main checkout, running Claude Opus 5.5 (`claude-opus-5-5`), read
+  `briefs/codebook.md`, the contracts it names, and the 20 training texts. It wrote
+  `data/runs/gold/drafts/codebook.draft.toml`, which is kept, unchanged and
+  uncommitted.
+- **The revisions.** On 2026-10-03, three more Claude Code sessions changed the
+  working copy, never the draft; ADR 0003 records their models and what they read.
+  At the user's direction, the session running plan 9 applied the user's choices by
+  script. A fresh revision session, given the brief and a revision prompt the user
+  reviewed, read the 20 training texts and added `mix`, `tax`, and `impairments`,
+  and a positive example each to `macro` and `regulation`. A review session made
+  two edits the user authorized.
+- **The user's edits.** The user chose each change, or the rule for making it, and
+  reviewed the result, and ADR 0003's Context gives the account, which the user
+  confirmed. `codebook freeze` printed no refusal after the plan 9 session's edits,
+  and the revision session ran it until it printed none.
+- **Blinding.** At the user's request, the session running plan 9 read the draft
+  once, its example quotes from 18 training releases included, and later edited the
+  working copy: two exceptions to GS13 the user authorized, which ADR 0003 records.
+  It opened no training text under `data/runs/gold/texts/`, and no view or canonical
+  document. No session read a dev or test document.
+- **The freeze.** `codebooks/djia-pilot/codebook-v0.toml`: 22 themes and
+  96 examples, content hash `635975d1ec952cf5719ea3b473870f96e7e3a52bc3015cc1ac5725aa80ec1e79`.
+- **The approval.** Lowell Mason approved v0 on 2026-10-03 in
+  `docs/adr/0003-adopt-codebook-v0-as-the-pilot-codebook.md`, which cites the hash.
+  `codebook validate` printed `valid:`.
+- **Checks.** The local legs printed `12 passed, 2 skipped`, and the wording guard
+  `5 passed`. Before the approval, none of the record's 642 strings shared 40
+  characters with any of the 40 pilot releases or Stage 1's 8 fixtures, and no
+  passage was both a positive example and a hard negative of one theme.
