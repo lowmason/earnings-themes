@@ -414,3 +414,6 @@ On completion, refresh the "Current state" section of `CLAUDE.md`. In the handof
 state which commands ran, that no model was called from code and no SEC request was
 sent, which drafting sessions ran and with which model, and how many bundles are
 signed.
+
+> Stage 6: COMPLETE (2026-10-03) — implemented by plan 9 (specs/plans/completed/9-pilot-codebook-split-and-gold-set-protocol.md).
+> Next: resume the roadmap.

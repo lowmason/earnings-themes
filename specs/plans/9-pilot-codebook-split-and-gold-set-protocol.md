@@ -1,5 +1,7 @@
 # The Pilot Codebook, Split, and Gold-Set Protocol (Stage 6) — Implementation Plan
 
+**Status: COMPLETE (2026-10-03)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > Roadmap: specs/evidence-linked-theme-extraction-roadmap.md, Stage 6 — on plan
@@ -166,6 +168,10 @@ executing session, every subagent it dispatches, and every reviewer:
   in the controller session, with the user (Human gates).
 - **Codex.** A Codex review takes no prompt, so it cannot carry this section, and
   it can read `data/`. It runs only as the user decides at Completion (P9-22).
+
+> Deviation: the final review showed that pytest's default `--tb=auto` already prints a failing frame's arguments, so the list of flags above was not enough on its own; by the user's choice of 2026-10-03, the root `addopts` sets `--tb=short`, and the wording guard catches every exception by type (`c77824a`; Task 13).
+
+> Deviation: at Gate 3 the user authorized two exceptions to "Drafting happens elsewhere": the executing session read the codebook draft once, and edited the codebook's working copy by script (Task 17). Implementer subagents on Tasks 5, 6, 8, 11, and 12 searched beyond the search rule, by finds, greps, or a listing of directory names, and the final review's fixer passed `--tb=long` once, to a collect-only run over synthetic tests; none exposed pilot text.
 
 **Do not touch:**
 
@@ -784,7 +790,7 @@ same bytes.
   missing or extra part, and a pydantic `ValidationError` (a `ValueError`) on a
   record its contract refuses.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-ingestion/tests/test_serialize_reader.py`:
 
@@ -846,7 +852,7 @@ Expected:
 extracted packages/earnings-ingestion/tests/test_serialize_reader.py: 43 lines
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_serialize_reader.py -q`
 
@@ -857,7 +863,7 @@ ImportError: cannot import name 'from_fixture_json' from 'earnings_ingestion.can
 ERROR packages/earnings-ingestion/tests/test_serialize_reader.py
 ```
 
-- [ ] **Step 3: Read the fixture format back**
+- [x] **Step 3: Read the fixture format back**
 
 Create `/tmp/plan9-task1-impl.py`:
 
@@ -961,13 +967,13 @@ extracted /tmp/plan9-task1-impl.py: 84 lines
 edited packages/earnings-ingestion/src/earnings_ingestion/canonical/serialize.py: 4 replacement(s)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_serialize_reader.py -q`
 
 Expected: `12 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan9-escapes.py packages/earnings-ingestion/src/earnings_ingestion/canonical/serialize.py packages/earnings-ingestion/tests/test_serialize_reader.py
@@ -977,7 +983,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `1556 passed, 1 skipped, 24 deselected`; `All checks passed!` and `268 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -1023,7 +1029,9 @@ parsed document's `doc_id`, which the later tasks load.
   - `parsed_documents(transitions, pilot_hash) -> dict[str, str]`, event ID to
     `doc_id`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+
+> Deviation: by the user's choice of 2026-09-28, `test_a_pilot_holding_no_failure_class_reports_three_gaps` also builds a pilot that holds no failure class, so the default suite reaches the three-gap case (`dcf65cf`); counts unchanged.
 
 Create `packages/earnings-ingestion/tests/test_events_coverage.py`:
 
@@ -1308,7 +1316,7 @@ extracted /tmp/plan9-task2-tests.py: 42 lines
 edited tests/contracts/test_data_dictionary.py: 3 replacement(s)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_coverage.py tests/contracts/test_data_dictionary.py -q`
 
@@ -1321,7 +1329,7 @@ ERROR packages/earnings-ingestion/tests/test_events_coverage.py
 ERROR tests/contracts/test_data_dictionary.py
 ```
 
-- [ ] **Step 3: Build the report**
+- [x] **Step 3: Build the report**
 
 Create `packages/earnings-ingestion/src/earnings_ingestion/events/coverage.py`:
 
@@ -1702,13 +1710,13 @@ extracted /tmp/plan9-task2-impl.py: 93 lines
 edited docs/data-dictionary.md: 1 replacement(s)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_coverage.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: `122 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan9-escapes.py packages/earnings-ingestion/src/earnings_ingestion/events/coverage.py packages/earnings-ingestion/tests/test_events_coverage.py tests/contracts/test_data_dictionary.py
@@ -1718,7 +1726,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `1570 passed, 1 skipped, 24 deselected`; `All checks passed!` and `270 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -1762,7 +1770,7 @@ item and a reason and nothing else.
     which raises `RecordError` naming the file with `not found`, `not UTF-8`, or
     `not TOML at line L, column C`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-themes/tests/test_tomlfile.py`:
 
@@ -1910,7 +1918,7 @@ extracted /tmp/plan9-task3-tests.py: 56 lines
 edited tests/contracts/test_data_dictionary.py: 5 replacement(s)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_tomlfile.py tests/contracts/test_data_dictionary.py -q`
 
@@ -1923,7 +1931,9 @@ ERROR packages/earnings-themes/tests/test_tomlfile.py
 ERROR tests/contracts/test_data_dictionary.py
 ```
 
-- [ ] **Step 3: Write the three modules**
+- [x] **Step 3: Write the three modules**
+
+> Deviation: by the user's choices of 2026-09-28, `describe` prints `<key>` for an extra or refused key at any position, its check folded into `test_tomlfile.py`'s no-echo refusal test (`ed6a39f`, `672f48c`); and `records.py` keeps its copy of ingestion's `canonical_json` and digest, which a deferred item moves into earnings-core.
 
 Create `packages/earnings-themes/src/earnings_themes/records.py`:
 
@@ -2331,13 +2341,13 @@ extracted /tmp/plan9-task3-impl.py: 87 lines
 edited docs/data-dictionary.md: 1 replacement(s)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_tomlfile.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: `122 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan9-escapes.py packages/earnings-themes/src/earnings_themes/problems.py packages/earnings-themes/src/earnings_themes/records.py packages/earnings-themes/src/earnings_themes/tomlfile.py packages/earnings-themes/tests/test_tomlfile.py tests/contracts/test_data_dictionary.py
@@ -2347,7 +2357,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `1578 passed, 1 skipped, 24 deselected`; `All checks passed!` and `274 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -2384,7 +2394,7 @@ each event once, and is hashed as the corpus records are.
   frozenset(), version=1) -> SplitManifest`; `split_hash(manifest) -> str`; and
   `load_split(path) -> SplitManifest`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-themes/tests/test_split.py`:
 
@@ -2611,7 +2621,7 @@ extracted /tmp/plan9-task4-tests.py: 44 lines
 edited tests/contracts/test_data_dictionary.py: 3 replacement(s)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_split.py tests/contracts/test_data_dictionary.py -q`
 
@@ -2624,7 +2634,9 @@ ERROR packages/earnings-themes/tests/test_split.py
 ERROR tests/contracts/test_data_dictionary.py
 ```
 
-- [ ] **Step 3: Write the rule**
+- [x] **Step 3: Write the rule**
+
+> Deviation: after the final review (`c77824a`), `events_in` compares with `==`, so `events_in("train")` finds the train events (T4-M1).
 
 Create `packages/earnings-themes/src/earnings_themes/split.py`:
 
@@ -2952,13 +2964,13 @@ extracted /tmp/plan9-task4-impl.py: 104 lines
 edited docs/data-dictionary.md: 1 replacement(s)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_split.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: `139 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan9-escapes.py packages/earnings-themes/src/earnings_themes/split.py packages/earnings-themes/tests/test_split.py tests/contracts/test_data_dictionary.py
@@ -2968,7 +2980,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `1601 passed, 1 skipped, 24 deselected`; `All checks passed!` and `276 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -3001,7 +3013,7 @@ cannot print their text (GS13).
   and `shared(strings, texts) -> set[tuple[str, str]]`, each (label, text ID) that
   shares a window.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-themes/tests/test_wording.py`:
 
@@ -3086,7 +3098,7 @@ Expected:
 extracted packages/earnings-themes/tests/test_wording.py: 66 lines
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_wording.py -q`
 
@@ -3097,7 +3109,7 @@ ModuleNotFoundError: No module named 'earnings_themes.wording'
 ERROR packages/earnings-themes/tests/test_wording.py
 ```
 
-- [ ] **Step 3: Write the guard**
+- [x] **Step 3: Write the guard**
 
 Create `packages/earnings-themes/src/earnings_themes/wording.py`:
 
@@ -3195,13 +3207,13 @@ Expected:
 extracted packages/earnings-themes/src/earnings_themes/wording.py: 79 lines
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_wording.py -q`
 
 Expected: `6 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan9-escapes.py packages/earnings-themes/src/earnings_themes/wording.py packages/earnings-themes/tests/test_wording.py
@@ -3211,7 +3223,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `1607 passed, 1 skipped, 24 deselected`; `All checks passed!` and `278 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -3265,7 +3277,7 @@ serve Tasks 7, 8, and 12.
   - in `conftest.py`: the fixtures `synthetic`, and `fixtures`, Stage 1's eight
     canonical fixtures as bundles.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-themes/tests/conftest.py`:
 
@@ -3504,7 +3516,7 @@ extracted /tmp/plan9-task6-tests.py: 36 lines
 edited tests/contracts/test_data_dictionary.py: 2 replacement(s)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_anchoring.py tests/contracts/test_data_dictionary.py -q`
 
@@ -3514,7 +3526,9 @@ Expected: FAIL before any test runs, since `conftest.py` imports what this task 
 ModuleNotFoundError: No module named 'earnings_themes.anchoring'
 ```
 
-- [ ] **Step 3: Write the anchor and the synthetic inputs**
+- [x] **Step 3: Write the anchor and the synthetic inputs**
+
+> Deviation: by the user's choice of 2026-09-28, `check_pointer` also refuses a pointer whose narrative element holds the span but is not the most specific one (P9-19), as `Problem.ELEMENT_MISMATCH` with its dictionary row, its test folded into `test_a_pointer_into_a_table_cell_is_not_narrative` (`1b40799`).
 
 Create `packages/earnings-themes/src/earnings_themes/anchoring.py`:
 
@@ -4042,13 +4056,13 @@ extracted /tmp/plan9-task6-impl.py: 43 lines
 edited docs/data-dictionary.md: 1 replacement(s)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_anchoring.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: `141 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan9-escapes.py packages/earnings-themes/src/earnings_themes/anchoring.py packages/earnings-themes/src/earnings_themes/synthetic.py packages/earnings-themes/tests/conftest.py packages/earnings-themes/tests/test_anchoring.py tests/contracts/test_data_dictionary.py
@@ -4058,7 +4072,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `1626 passed, 1 skipped, 24 deselected`; `All checks passed!` and `282 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -4098,7 +4112,9 @@ the approval exists.
   split, bundles, adr_text) -> list[Refusal]`; `codebook_toml(codebook) -> str`; and
   `load_codebook(path)` and `load_codebook_draft(path)`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+
+> Deviation: by the user's choice, `test_a_tampered_version_is_refused` also reaches the `wrong_document` and `discovery_corpus` refusals (`365738e`); counts unchanged.
 
 Create `packages/earnings-themes/tests/test_codebook.py`:
 
@@ -4389,7 +4405,7 @@ extracted /tmp/plan9-task7-tests.py: 50 lines
 edited tests/contracts/test_data_dictionary.py: 3 replacement(s)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_codebook.py tests/contracts/test_data_dictionary.py -q`
 
@@ -4402,7 +4418,7 @@ ERROR packages/earnings-themes/tests/test_codebook.py
 ERROR tests/contracts/test_data_dictionary.py
 ```
 
-- [ ] **Step 3: Write the codebook contract**
+- [x] **Step 3: Write the codebook contract**
 
 Create `packages/earnings-themes/src/earnings_themes/codebook.py`:
 
@@ -4990,13 +5006,13 @@ extracted /tmp/plan9-task7-impl.py: 160 lines
 edited docs/data-dictionary.md: 1 replacement(s)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_codebook.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: `151 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan9-escapes.py packages/earnings-themes/src/earnings_themes/codebook.py packages/earnings-themes/tests/test_codebook.py tests/contracts/test_data_dictionary.py
@@ -5006,7 +5022,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `1654 passed, 1 skipped, 24 deselected`; `All checks passed!` and `284 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -5059,7 +5075,9 @@ step also amends S's `no_theme` bullet (P9-4).
     list[Refusal]`;
   - `theme_id` fields typed as `codebook.ThemeId`, and `HardNegativeSet.pin`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+
+> Deviation: after the final review (`c77824a`), `test_a_tampered_pointer_is_refused` also checks tampered pointers through `validate_gold` and `validate_curated` (T8-M3); counts unchanged.
 
 Create `packages/earnings-themes/tests/test_gold.py`:
 
@@ -5469,7 +5487,7 @@ extracted /tmp/plan9-task8-tests.py: 59 lines
 edited tests/contracts/test_data_dictionary.py: 3 replacement(s)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_gold.py tests/contracts/test_data_dictionary.py -q`
 
@@ -5482,7 +5500,7 @@ ERROR packages/earnings-themes/tests/test_gold.py
 ERROR tests/contracts/test_data_dictionary.py
 ```
 
-- [ ] **Step 3: Write the gold contract and the annotation build**
+- [x] **Step 3: Write the gold contract and the annotation build**
 
 Create `packages/earnings-themes/src/earnings_themes/gold.py`:
 
@@ -6501,13 +6519,13 @@ edited docs/data-dictionary.md: 1 replacement(s)
 edited specs/pilot-codebook-split-and-gold-set-protocol.md: 1 replacement(s)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_gold.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: `173 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan9-escapes.py packages/earnings-themes/src/earnings_themes/annotation.py packages/earnings-themes/src/earnings_themes/gold.py packages/earnings-themes/tests/test_gold.py tests/contracts/test_data_dictionary.py
@@ -6517,7 +6535,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `1692 passed, 1 skipped, 24 deselected`; `All checks passed!` and `287 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -6549,7 +6567,7 @@ and the browsers.
   marked `[[q1>>` … `<<q1]]`; `render_view(bundle, gold) -> str`; and
   `render_curated_view(bundle, document) -> str`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-themes/tests/test_view.py`:
 
@@ -6674,7 +6692,7 @@ extracted packages/earnings-themes/tests/test_view.py: 47 lines
 extracted packages/earnings-themes/tests/test_import_boundaries.py: 52 lines
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_view.py packages/earnings-themes/tests/test_import_boundaries.py -q`
 
@@ -6685,7 +6703,7 @@ ModuleNotFoundError: No module named 'earnings_themes.view'
 ERROR packages/earnings-themes/tests/test_view.py
 ```
 
-- [ ] **Step 3: Write the views**
+- [x] **Step 3: Write the views**
 
 Create `packages/earnings-themes/src/earnings_themes/view.py`:
 
@@ -6824,13 +6842,13 @@ Expected:
 extracted packages/earnings-themes/src/earnings_themes/view.py: 120 lines
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_view.py packages/earnings-themes/tests/test_import_boundaries.py -q`
 
 Expected: `5 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan9-escapes.py packages/earnings-themes/src/earnings_themes/view.py packages/earnings-themes/tests/test_import_boundaries.py packages/earnings-themes/tests/test_view.py
@@ -6840,7 +6858,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `1696 passed, 1 skipped, 24 deselected`; `All checks passed!` and `289 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -6895,7 +6913,7 @@ it could read.
     text)`;
   - `earnings-pipeline pilot split` and `earnings-pipeline pilot coverage`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `apps/earnings-pipeline/tests/test_stage6_cli.py`:
 
@@ -7218,7 +7236,7 @@ Expected:
 extracted apps/earnings-pipeline/tests/test_stage6_cli.py: 304 lines
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_stage6_cli.py -q`
 
@@ -7229,7 +7247,7 @@ ModuleNotFoundError: No module named 'earnings_pipeline.stage6'
 ERROR apps/earnings-pipeline/tests/test_stage6_cli.py
 ```
 
-- [ ] **Step 3: Write the shared layer and the pilot commands**
+- [x] **Step 3: Write the shared layer and the pilot commands**
 
 Create `apps/earnings-pipeline/src/earnings_pipeline/stage6.py`:
 
@@ -7722,13 +7740,13 @@ extracted /tmp/plan9-task10-impl.py: 47 lines
 edited apps/earnings-pipeline/src/earnings_pipeline/cli.py: 4 replacement(s)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_stage6_cli.py -q`
 
 Expected: `6 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan9-escapes.py apps/earnings-pipeline/src/earnings_pipeline/cli.py apps/earnings-pipeline/src/earnings_pipeline/pilot_cli.py apps/earnings-pipeline/src/earnings_pipeline/stage6.py apps/earnings-pipeline/tests/test_stage6_cli.py
@@ -7738,7 +7756,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `1702 passed, 1 skipped, 24 deselected`; `All checks passed!` and `292 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -7774,7 +7792,7 @@ committed version against the local bundles and the same texts.
   `earnings-pipeline codebook freeze [--working PATH] [--adr PATH --approver NAME
   --approved-on DATE]` and `earnings-pipeline codebook validate`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `/tmp/plan9-task11-tests.py`:
 
@@ -8006,7 +8024,7 @@ extracted /tmp/plan9-task11-tests.py: 212 lines
 edited apps/earnings-pipeline/tests/test_stage6_cli.py: 8 replacement(s)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_stage6_cli.py -q`
 
@@ -8022,7 +8040,7 @@ FAILED apps/earnings-pipeline/tests/test_stage6_cli.py::test_a_codebook_that_cop
 FAILED apps/earnings-pipeline/tests/test_stage6_cli.py::test_codebook_validate_checks_every_text_the_guard_reads
 ```
 
-- [ ] **Step 3: Write the codebook commands**
+- [x] **Step 3: Write the codebook commands**
 
 Create `apps/earnings-pipeline/src/earnings_pipeline/codebook_cli.py`:
 
@@ -8276,13 +8294,13 @@ extracted /tmp/plan9-task11-impl.py: 41 lines
 edited apps/earnings-pipeline/src/earnings_pipeline/cli.py: 3 replacement(s)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_stage6_cli.py -q`
 
 Expected: `10 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan9-escapes.py apps/earnings-pipeline/src/earnings_pipeline/cli.py apps/earnings-pipeline/src/earnings_pipeline/codebook_cli.py apps/earnings-pipeline/tests/test_stage6_cli.py
@@ -8292,7 +8310,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `1706 passed, 1 skipped, 24 deselected`; `All checks passed!` and `293 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -8333,7 +8351,7 @@ amends S's two paths and adds the dictionary's file list.
   - `gold show [EVENT ...] [--text] [--training] [--hard-negatives]`;
   - `gold validate [EVENT ...] [--hard-negatives]`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `/tmp/plan9-task12-tests.py`:
 
@@ -8847,7 +8865,7 @@ extracted /tmp/plan9-task12-tests.py: 494 lines
 edited apps/earnings-pipeline/tests/test_stage6_cli.py: 10 replacement(s)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_stage6_cli.py -q`
 
@@ -8858,7 +8876,7 @@ ImportError: cannot import name 'gold_cli' from 'earnings_pipeline'
 ERROR apps/earnings-pipeline/tests/test_stage6_cli.py
 ```
 
-- [ ] **Step 3: Write the gold commands**
+- [x] **Step 3: Write the gold commands**
 
 Create `apps/earnings-pipeline/src/earnings_pipeline/gold_cli.py`:
 
@@ -9405,13 +9423,13 @@ edited docs/data-dictionary.md: 1 replacement(s)
 edited specs/pilot-codebook-split-and-gold-set-protocol.md: 2 replacement(s)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_stage6_cli.py -q`
 
 Expected: `33 passed`.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan9-escapes.py apps/earnings-pipeline/src/earnings_pipeline/cli.py apps/earnings-pipeline/src/earnings_pipeline/gold_cli.py apps/earnings-pipeline/tests/test_stage6_cli.py
@@ -9421,7 +9439,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `1729 passed, 1 skipped, 24 deselected`; `All checks passed!` and `294 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -9454,7 +9472,9 @@ training texts, from the split.
 - Produces: the local legs that gates 1, 3, 4, and 5 run; and the two briefs, which
   Task 16 puts to the user and Tasks 17 to 19 hand to drafting sessions.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+
+> Deviation: by the user's choice of 2026-09-29, the wording guard's pilot leg loads each document in a guard that keeps only its event ID (`99e12f0`). After the final review, by the user's choice of 2026-10-03, it catches every exception rather than only `ValueError`, and guards its matching call the same way (`c77824a`).
 
 Create `tests/integration/test_stage6_pilot_v1.py`:
 
@@ -9797,7 +9817,7 @@ extracted tests/integration/test_stage6_pilot_v1.py: 190 lines
 extracted tests/integration/test_stage6_wording.py: 127 lines
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest tests/integration/test_stage6_pilot_v1.py tests/integration/test_stage6_wording.py -q -rs`
 
@@ -9808,7 +9828,7 @@ FileNotFoundError: [Errno 2] No such file or directory: 'evaluation/djia-2024q3-
 AssertionError: assert {'evaluation/...iefs/gold.md'} <= set()
 ```
 
-- [ ] **Step 3: Write the two briefs**
+- [x] **Step 3: Write the two briefs**
 
 Create `evaluation/djia-2024q3-2026q2/pilot-v1/briefs/codebook.md`:
 
@@ -10148,7 +10168,7 @@ extracted evaluation/djia-2024q3-2026q2/pilot-v1/briefs/codebook.md: 137 lines
 extracted evaluation/djia-2024q3-2026q2/pilot-v1/briefs/gold.md: 177 lines
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest tests/integration/test_stage6_pilot_v1.py tests/integration/test_stage6_wording.py -q -rs`
 
@@ -10164,7 +10184,7 @@ SKIPPED [1] tests/integration/test_stage6_pilot_v1.py:185: the curated hard nega
 
 Each skip names the gate that commits what it checks.
 
-- [ ] **Step 5: Run the checks**
+- [x] **Step 5: Run the checks**
 
 ```bash
 python3 /tmp/plan9-escapes.py tests/integration/test_stage6_pilot_v1.py tests/integration/test_stage6_wording.py
@@ -10174,7 +10194,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 
 Expected: `escapes intact`; `1738 passed, 6 skipped, 24 deselected`; `All checks passed!` and `296 files already formatted`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -10204,7 +10224,7 @@ gate.
 - Produces: the frozen split, which every later gate reads, and the frozen coverage
   report.
 
-- [ ] **Step 1: Probe the state**
+- [x] **Step 1: Probe the state**
 
 ```bash
 git log --oneline -3 && git status --short
@@ -10220,7 +10240,7 @@ empty; and the listing shows `briefs` alone. Otherwise, resume from what exists:
 | either of them, uncommitted | Step 2. Steps 2 and 3 print `unchanged:` in place of `froze`; every other line is the same, and still a check. Then Step 4: nothing is committed before the user's yes. |
 | neither | Step 2 |
 
-- [ ] **Step 2: Freeze the split**
+- [x] **Step 2: Freeze the split**
 
 ```bash
 uv run --locked earnings-pipeline pilot split; echo "exit $?"
@@ -10247,7 +10267,7 @@ exit 0
 The rule and pilot v1 fix every line, so these are checks, the hash included. A
 different count or excluded event stops the gate (S §The split).
 
-- [ ] **Step 3: Freeze the coverage report**
+- [x] **Step 3: Freeze the coverage report**
 
 ```bash
 uv run --locked earnings-pipeline pilot coverage; echo "exit $?"
@@ -10270,7 +10290,7 @@ exit 0
 
 The report's hash depends on the two runs' IDs as well, which the state table fixes.
 
-- [ ] **Step 4 (gate): Put the split and the report to the user**
+- [x] **Step 4 (gate): Put the split and the report to the user**
 
 Put this to the user in chat, and wait for a clear yes:
 
@@ -10290,7 +10310,7 @@ A no stops the task: the rule is GS6's, and a different outcome is a finding to
 report, never a reason to edit the files. Keep the date of the user's yes for Step 6.
 A session that resumes past this step without it asks the user for it.
 
-- [ ] **Step 5: Run the local legs**
+- [x] **Step 5: Run the local legs**
 
 ```bash
 uv run --locked --all-packages pytest tests/integration/test_stage6_pilot_v1.py tests/integration/test_stage6_wording.py -q -rs
@@ -10306,7 +10326,7 @@ SKIPPED [1] tests/integration/test_stage6_pilot_v1.py:185: the curated hard nega
 
 The committed split reproduces byte for byte, and the coverage report from its runs.
 
-- [ ] **Step 6: Start the record**
+- [x] **Step 6: Start the record**
 
 Create `docs/verification/pilot-v1-gold-set.md`:
 
@@ -10372,7 +10392,7 @@ uv run --locked --all-packages pytest tests/integration/test_stage6_wording.py -
 
 Expected: nothing from `grep`, and `5 passed`.
 
-- [ ] **Step 7: Run the checks**
+- [x] **Step 7: Run the checks**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q
@@ -10382,7 +10402,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected, checks: `1740 passed, 4 skipped, 24 deselected`; `All checks passed!` and
 `296 files already formatted`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git log --oneline -3
@@ -10408,7 +10428,7 @@ user's, and is not recorded.
 - Consumes: Task 14's record.
 - Produces: the backup's confirmation, which Tasks 16 to 19 require.
 
-- [ ] **Step 1: Probe the state**
+- [x] **Step 1: Probe the state**
 
 ```bash
 git log --oneline -3 && git status --short
@@ -10421,7 +10441,7 @@ already there, and `git status --short` does not list the record, go to Task 16.
 it is there but uncommitted, go to Step 3: its extract prints `unchanged:` and leaves
 the section as it is.
 
-- [ ] **Step 2 (gate): Ask the user to confirm the backup**
+- [x] **Step 2 (gate): Ask the user to confirm the backup**
 
 Put this to the user in chat, and wait for a clear confirmation:
 
@@ -10432,7 +10452,7 @@ Put this to the user in chat, and wait for a clear confirmation:
 
 No drafting starts until the user confirms.
 
-- [ ] **Step 3: Record it**
+- [x] **Step 3: Record it**
 
 Append to `docs/verification/pilot-v1-gold-set.md`:
 
@@ -10478,7 +10498,7 @@ the wording guard and the codebook brief's test.
 - Consumes: Task 13's briefs; Task 15's record.
 - Produces: the briefs the drafting sessions of Tasks 17 to 19 read.
 
-- [ ] **Step 1: Probe the state**
+- [x] **Step 1: Probe the state**
 
 ```bash
 git log --oneline -3 && git status --short
@@ -10490,7 +10510,7 @@ Expected: the record's headings through `## Gate 2: the backup`. If
 record nor a brief, go to Task 17. If it is there but uncommitted, run Step 3, then
 only Step 4's commands from `grep` on.
 
-- [ ] **Step 2 (gate): Ask the user to review the briefs**
+- [x] **Step 2 (gate): Ask the user to review the briefs**
 
 Put this to the user in chat, and wait:
 
@@ -10505,7 +10525,7 @@ Make any change the user asks for, in the user's words where the user gives them
 A drafting session must still find its task, its reading list, the form, and the
 check in its brief; if a change removes one, say so to the user before making it.
 
-- [ ] **Step 3: Check the briefs**
+- [x] **Step 3: Check the briefs**
 
 ```bash
 uv run --locked --all-packages pytest tests/integration/test_stage6_wording.py "tests/integration/test_stage6_pilot_v1.py::test_the_codebook_brief_lists_exactly_the_training_releases" -q -rs
@@ -10515,7 +10535,7 @@ git diff --stat -- evaluation/djia-2024q3-2026q2/pilot-v1/briefs
 Expected: `6 passed`; and the `git diff` lists the briefs the user changed,
 or nothing.
 
-- [ ] **Step 4: Record it, and commit**
+- [x] **Step 4: Record it, and commit**
 
 Append to `docs/verification/pilot-v1-gold-set.md`:
 
@@ -10566,7 +10586,7 @@ before this task ends (R12.3).
   `codebook validate` (Task 11); the codebook brief (Task 13).
 - Produces: codebook v0, which Tasks 18 and 19 code against, and ADR 0003.
 
-- [ ] **Step 1: Probe the state**
+- [x] **Step 1: Probe the state**
 
 ```bash
 git log --oneline -3 && git status --short
@@ -10587,7 +10607,7 @@ Resume from what exists:
 
 Read the first row that matches.
 
-- [ ] **Step 2: Write the training texts**
+- [x] **Step 2: Write the training texts**
 
 ```bash
 uv run --locked earnings-pipeline gold show --text --training; echo "exit $?"
@@ -10596,7 +10616,9 @@ uv run --locked earnings-pipeline gold show --text --training; echo "exit $?"
 Expected, checks: `wrote 20 texts under data/runs/gold/texts`, and `exit 0`. Do not
 open them.
 
-- [ ] **Step 3 (gate): Hand off to the drafting session**
+- [x] **Step 3 (gate): Hand off to the drafting session**
+
+> Deviation: the drafting session ran on 2026-10-02. On 2026-10-03, with the user's authorization, the executing session read the draft once, its example quotes from 18 training releases included, and edited the working copy by script per the user's choices; a fresh revision session, on a prompt the user reviewed in chat rather than at Task 16, edited the working copy instead of writing a draft; and a review session made two edits the user authorized. ADR 0003 and the record give the account.
 
 Put this to the user in chat, fill the date, and end your turn:
 
@@ -10619,7 +10641,9 @@ Put this to the user in chat, fill the date, and end your turn:
 
 Keep the date you put in the first message: it is the draft's date, for Step 5.
 
-- [ ] **Step 4: Check the working copy**
+- [x] **Step 4: Check the working copy**
+
+> Deviation: the executing session checked the revision and review sessions' reported results itself, by an item-by-item compare, the all-texts wording check (642 strings, no refusal), and the content hash.
 
 ```bash
 ls data/runs/gold/drafts
@@ -10647,7 +10671,9 @@ The content hash is printed only once every check passes (P9-21).
 Keep the content hash for Steps 5 and 8. A change to the working copy after this step
 changes the hash: run this step again, and change the ADR to match.
 
-- [ ] **Step 5: Write ADR 0003**
+- [x] **Step 5: Write ADR 0003**
+
+> Deviation: ADR 0003 departs from the template: its Context gives the four-session history, the user's confirmed account, the blinding exceptions, and the checks, and its Alternatives add hand edits and deeper levels (deferred to Stage 12). After the final review, its `legal` bullet names the session that wrote the one synthetic hard negative, which the spec's §The codebook says the user writes (`c77824a`).
 
 Create `docs/adr/0003-adopt-codebook-v0-as-the-pilot-codebook.md`:
 
@@ -10746,7 +10772,7 @@ derive either by opening, listing the contents of, or comparing the draft or the
 working copy. If the ADR already exists, do not extract it again: that would
 overwrite the user's edits. Correct its values in place.
 
-- [ ] **Step 6: Check the ADR offline**
+- [x] **Step 6: Check the ADR offline**
 
 ```bash
 uv run --locked --all-packages pytest tests/integration/test_stage6_wording.py -q -rs
@@ -10754,7 +10780,7 @@ uv run --locked --all-packages pytest tests/integration/test_stage6_wording.py -
 
 Expected, checks: `5 passed`. The guard now reads ADR 0003.
 
-- [ ] **Step 7 (gate): Ask the user to approve codebook v0**
+- [x] **Step 7 (gate): Ask the user to approve codebook v0**
 
 Put this to the user in chat, and wait for a clear approval:
 
@@ -10776,7 +10802,7 @@ grep -n '\[GATE' docs/adr/0003-adopt-codebook-v0-as-the-pilot-codebook.md
 
 Expected: nothing.
 
-- [ ] **Step 8: Freeze v0**
+- [x] **Step 8: Freeze v0**
 
 With the approver and the date the user gave at Step 7, as ADR 0003's `Deciders`
 and `Date` lines record them:
@@ -10795,7 +10821,7 @@ validation prints `valid: djia-pilot v0, <t> themes, approved by <approver> on
 `Refused: docs/adr/… does not cite <hash>` means the working copy changed after the
 ADR was written: go back to Step 4.
 
-- [ ] **Step 9: Run the local legs and the checks**
+- [x] **Step 9: Run the local legs and the checks**
 
 ```bash
 uv run --locked --all-packages pytest tests/integration/test_stage6_pilot_v1.py tests/integration/test_stage6_wording.py -q -rs
@@ -10806,7 +10832,9 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected, checks: `12 passed, 2 skipped`, the committed codebook now validating against
 the local bundles; `1741 passed, 3 skipped, 24 deselected`; `All checks passed!` and `296 files already formatted`.
 
-- [ ] **Step 10: Record it, and commit**
+- [x] **Step 10: Record it, and commit**
+
+> Deviation: the record's Gate 3 section adds the revisions and blinding bullets and dates the drafting session 2026-10-02. At the user's choice, the Gate 3 commit was amended once, so ADR 0003 and the record say "no training text under `data/runs/gold/texts/`" (`2432434`, was `00723cb`).
 
 Append to `docs/verification/pilot-v1-gold-set.md`:
 
@@ -10875,7 +10903,7 @@ checks run in the default suite.
   gold brief; codebook v0.
 - Produces: the curated hard negatives, for Stage 8's misattribution fixtures.
 
-- [ ] **Step 1: Probe the state**
+- [x] **Step 1: Probe the state**
 
 ```bash
 git log --oneline -3 && git status --short
@@ -10894,7 +10922,7 @@ Resume from what exists:
 
 Read the first row that matches.
 
-- [ ] **Step 2: Write the fixtures' texts**
+- [x] **Step 2: Write the fixtures' texts**
 
 ```bash
 uv run --locked earnings-pipeline gold show --text --hard-negatives; echo "exit $?"
@@ -10902,7 +10930,7 @@ uv run --locked earnings-pipeline gold show --text --hard-negatives; echo "exit 
 
 Expected, checks: `wrote 8 texts under data/runs/gold/texts`, and `exit 0`.
 
-- [ ] **Step 3 (gate): Hand off to the drafting session**
+- [x] **Step 3 (gate): Hand off to the drafting session**
 
 Put this to the user in chat, fill the date, and end your turn:
 
@@ -10920,7 +10948,7 @@ Put this to the user in chat, fill the date, and end your turn:
 > file to `data/runs/gold/drafts/hard-negatives.working.toml`, leaving the draft
 > unchanged, and tell me the working copy is ready. You verify it in the next steps.
 
-- [ ] **Step 4: Anchor the working copy, and write the views**
+- [x] **Step 4: Anchor the working copy, and write the views**
 
 ```bash
 uv run --locked earnings-pipeline gold anchor --hard-negatives; echo "exit $?"
@@ -10937,7 +10965,9 @@ is `refused: hard_negatives: negative_kinds`: at least one each of `period`,
 release and fixture before it writes anything (P9-21). Then `gold show` prints one
 `view  …` line per fixture.
 
-- [ ] **Step 5 (gate): The user verifies and signs**
+- [x] **Step 5 (gate): The user verifies and signs**
+
+> Deviation: process only: the user's first signature did not reach the file, so the user signed by `sed`; all 58 items were accepted as drafted.
 
 Put this to the user in chat, and wait:
 
@@ -10954,7 +10984,7 @@ Rerun Step 4 whenever the user asks, and relay its refusals by item and reason.
 Keep the date the user signs for Step 8's commit message; a session that did not
 hear it asks.
 
-- [ ] **Step 6: Commit the signed record**
+- [x] **Step 6: Commit the signed record**
 
 ```bash
 uv run --locked earnings-pipeline gold anchor --hard-negatives; echo "exit $?"
@@ -10967,7 +10997,7 @@ and `exit 0`; then `valid: hard-negatives, <d> fixtures, <n> hard negatives,
 signed`, and `exit 0`. If the anchor prints the unsigned line instead, the working
 copy is not signed: go back to Step 5.
 
-- [ ] **Step 7: Run the local legs and the checks**
+- [x] **Step 7: Run the local legs and the checks**
 
 ```bash
 uv run --locked --all-packages pytest tests/integration/test_stage6_pilot_v1.py tests/integration/test_stage6_wording.py -q -rs
@@ -10978,7 +11008,7 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 Expected, checks: `13 passed, 1 skipped`; `1742 passed, 2 skipped, 24 deselected`, the curated hard negatives
 now checked in the default suite; `All checks passed!` and `296 files already formatted`.
 
-- [ ] **Step 8: Record it, and commit**
+- [x] **Step 8: Record it, and commit**
 
 Append to `docs/verification/pilot-v1-gold-set.md`:
 
@@ -11052,7 +11082,7 @@ and `<file>` its `file_stem`, such as `cik-0000051143_2024-12-31`. `<partition>`
 `train` for this plan's three bundles, and `train` or `dev` for the bundles that
 follow it (Handoffs).
 
-- [ ] **Step 1: Probe the state**
+- [x] **Step 1: Probe the state**
 
 ```bash
 git log --oneline -3 && git status --short
@@ -11078,7 +11108,7 @@ exists for the next bundle in order:
 
 Read the first row that matches.
 
-- [ ] **Step 2: Write the bundle's text**
+- [x] **Step 2: Write the bundle's text**
 
 ```bash
 uv run --locked earnings-pipeline gold show --text <event>; echo "exit $?"
@@ -11086,7 +11116,7 @@ uv run --locked earnings-pipeline gold show --text <event>; echo "exit $?"
 
 Expected, checks: `wrote 1 text under data/runs/gold/texts`, and `exit 0`.
 
-- [ ] **Step 3 (gate): Hand off to the bundle's drafting session**
+- [x] **Step 3 (gate): Hand off to the bundle's drafting session**
 
 Put this to the user in chat, fill the event and the date, and end your turn:
 
@@ -11103,7 +11133,7 @@ Put this to the user in chat, fill the event and the date, and end your turn:
 > `data/runs/gold/drafts/<file>.working.toml`, leaving the draft unchanged, and tell
 > me the working copy is ready.
 
-- [ ] **Step 4: Anchor the working copy, and write the view**
+- [x] **Step 4: Anchor the working copy, and write the view**
 
 ```bash
 uv run --locked earnings-pipeline gold anchor <event>; echo "exit $?"
@@ -11116,7 +11146,9 @@ the origins line, `anchored  data/runs/gold/anchored/<file>.toml`, the unsigned
 line, and `exit 0`; or each problem as `refused: <item>: <reason>` and `exit 1`,
 which goes to the user by item and reason. Then `view  data/runs/gold/views/<file>.md`.
 
-- [ ] **Step 5 (gate): The user verifies, reads for omissions, and signs**
+- [x] **Step 5 (gate): The user verifies, reads for omissions, and signs**
+
+> Deviation: process only: in all three bundles every item was accepted as drafted, and no omission pass added one; bundle 1's first signature did not reach the file, and the user signed bundles 1 and 2 by `sed`.
 
 Put this to the user in chat, and wait for both confirmations:
 
@@ -11138,7 +11170,7 @@ signing date, as the user gives them, for Step 7's commit message, which is wher
 the record takes them from; a session that did not hear them asks the user. The
 bundle counts as annotated only after that pass (GS5).
 
-- [ ] **Step 6: Commit the signed bundle**
+- [x] **Step 6: Commit the signed bundle**
 
 ```bash
 uv run --locked earnings-pipeline gold anchor <event>; echo "exit $?"
@@ -11152,7 +11184,7 @@ Expected, checks: the anchor's last line is
 `valid: <event> (<partition>), <q> quotes, <c> claims, signed`, and `exit 0`; and
 `5 passed`. If the anchor prints the unsigned line, go back to Step 5.
 
-- [ ] **Step 7: Commit the bundle**
+- [x] **Step 7: Commit the bundle**
 
 ```bash
 git log --oneline -3
@@ -11163,7 +11195,7 @@ git commit -m "feat(evaluation): signed gold for <event> (gate 5)" -m "Omission 
 Then return to Step 1 for the next bundle. After this plan's third bundle, go on to
 Step 8. A bundle after this plan ends here.
 
-- [ ] **Step 8: Count the three bundles from their committed files**
+- [x] **Step 8: Count the three bundles from their committed files**
 
 Create `/tmp/plan9-gold-counts.py`:
 
@@ -11235,7 +11267,9 @@ Expected, checks: three lines, each `train` and `signed`, with the release label
 the counts, and the drafting date, and the totals; then the three Step 7 commits,
 each with its omission-pass and signing dates.
 
-- [ ] **Step 9: Close the record, and refresh the current state**
+- [x] **Step 9: Close the record, and refresh the current state**
+
+> Deviation: with the user's approval, the record's "What never drafted" bullet is narrowed to the two Gate 3 exceptions and the implementers' search slips, "Where they ran" names Gate 3's revision and review sessions, "The drafts" cites a write-nothing `gold anchor --check`, and the user added the "Accepted as drafted" limitation.
 
 Append to `docs/verification/pilot-v1-gold-set.md`:
 
@@ -11463,7 +11497,9 @@ and whether to add a limitation, and wait for their approval before Step 11. A
 resumed session asks again, since it cannot know whether the user approved. Make
 any change the user asks for, and rerun the `grep`.
 
-- [ ] **Step 10: Final verification**
+- [x] **Step 10: Final verification**
+
+> Deviation: every check matched at `0aa7345`. After the final review's new offline test (`c77824a`), the default suite gives `1744 passed, 1 skipped, 24 deselected`, which the record's row 9 states.
 
 ```bash
 uv run --locked --all-packages pytest tests/integration/test_stage6_pilot_v1.py tests/integration/test_stage6_wording.py -q -rs
@@ -11479,7 +11515,7 @@ Expected, checks: `14 passed`, with no skip; `1743 passed, 1 skipped, 24 deselec
 `All checks passed!` and `296 files already formatted`; `register quotes verified`; `uv lock --check`
 passes; and the `git diff` prints nothing.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git log --oneline -3
@@ -11609,6 +11645,8 @@ recommended option first:
   Read only the `.md`, never the `.log`, which may hold what Codex read. On exit 0
   with a non-empty `.md`, write `Codex reviewed <sha>`. Step 4b's rerun, if it needs
   one, takes that sha as its `--base`.
+
+> Deviation: the user had answered P9-22 before Task 1 (2026-09-28): skip Codex, for the GS13 reason above, so it was not asked again and no `Codex reviewed` line was written. The final review (code-reviewer, Opus) found nothing Critical and three Important issues; `c77824a` lands them, with M2 and M3, by the user's choices of 2026-10-03; a scoped re-review found all seven items addressed, and `7f0359f` adds CLAUDE.md's `--tb=short` sentence, which the user approved, and the re-review's two docs Minors. The rest are deferred (specs/deferred_items.md) or dropped.
 
 Then:
 
