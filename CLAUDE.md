@@ -114,7 +114,10 @@ Verified: `uv lock` and `uv sync --locked --all-packages`. Configured: a root
 preserved Markdown. Stage 2 added `[tool.pytest]`: `--import-mode=importlib`, so members may
 repeat a test module's name; `strict = true`; registered `live` and `browser` markers, both deselected by
 default; and
-`testpaths = ["packages", "apps", "tests"]`. The frozen Stage 1 harness still needs
+`testpaths = ["packages", "apps", "tests"]`. Stage 6 added `--tb=short` to
+`addopts`: pytest's default traceback prints a failing frame's arguments, which in
+Stage 6's local legs may hold pilot text (GS13); pass `--tb=long` only on a named
+test that reads no pilot text. The frozen Stage 1 harness still needs
 `--import-mode=prepend`, which its own command passes.
 Environment: uv 0.12.15, Python 3.14.0 (uv-managed; Homebrew's `python3` is 3.14.7),
 `requires-python = ">=3.14"`. `.python-version` pins 3.14.0 exactly: the canonical

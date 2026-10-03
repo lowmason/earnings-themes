@@ -5,8 +5,9 @@ document or of a Stage 1 fixture.
 
 - **The files.** Under ``evaluation/``: the split, the coverage report, the gold,
   and the briefs; codebook v0, ADR 0003, and the verification record; and the
-  curated hard negatives: whichever are committed yet. A Markdown file is read a paragraph at a time, its
-  lines joined, so a phrase copied across a wrapped line is still caught.
+  curated hard negatives: whichever are committed yet. A Markdown file is read a
+  paragraph at a time, its lines joined, so a phrase copied across a wrapped line is
+  still caught.
 - **What a failure prints.** Each finding is a pair: the file with its field or
   paragraph, and the event or fixture. Never the window or the string, since either
   may quote a release (GS13).
@@ -14,7 +15,8 @@ document or of a Stage 1 fixture.
   canonical documents from the local store and skips visibly without it, so each
   gate runs this module with ``-rs`` and reads "passed". The root ``addopts`` sets
   ``--tb=short``. Never run it with ``-l``, ``--showlocals``, ``--pdb``,
-  ``--tb=long``, or ``-vv``, which print pilot text on a failure.
+  ``--tb=long``, ``--tb=auto``, ``--full-trace``, or ``-vv``, which print pilot
+  text on a failure.
 """
 
 import json
