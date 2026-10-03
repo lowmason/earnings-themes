@@ -33,6 +33,7 @@ class Problem(StrEnum):
     UNKNOWN_CLAIM = "unknown_claim"
     UNKNOWN_THEME = "unknown_theme"
     UNKNOWN_DOCUMENT = "unknown_document"
+    UNREFERENCED = "unreferenced"
     TIE_GROUP = "tie_group"
     SOURCE_WORDING = "source_wording"
     OUTSIDE_TRAINING = "outside_training"

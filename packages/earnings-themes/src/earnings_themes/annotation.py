@@ -274,6 +274,10 @@ def _ids(
             if quote_id not in quote_ids:
                 subject = f"{prefix}claim {claim.claim_id}"
                 refusals.append(Refusal(subject, Problem.UNKNOWN_QUOTE))
+    cited = {q for claim in (*claims, *negatives) for q in claim.quote_ids}
+    for quote_id in dict.fromkeys(quote_ids):
+        if quote_id not in cited:
+            refusals.append(Refusal(f"{prefix}quote {quote_id}", Problem.UNREFERENCED))
     rows = [(a.claim_id, a.theme_id) for a in assignments]
     for row in sorted({r for r in rows if rows.count(r) > 1}):
         refusals.append(Refusal(f"assignment {row[0]}/{row[1]}", Problem.DUPLICATE_ID))
@@ -284,6 +288,10 @@ def _ids(
             refusals.append(Refusal(subject, Problem.UNKNOWN_CLAIM))
         if a.theme_id != UNMATCHED and a.theme_id not in themes:
             refusals.append(Refusal(subject, Problem.UNKNOWN_THEME))
+    coded = {a.claim_id for a in assignments}
+    for claim_id in dict.fromkeys(c.claim_id for c in claims):
+        if claim_id not in coded:
+            refusals.append(Refusal(f"{prefix}claim {claim_id}", Problem.UNREFERENCED))
     groups: dict[str, list[GoldAssignment]] = {}
     for a in assignments:
         if a.tie_group is not None:

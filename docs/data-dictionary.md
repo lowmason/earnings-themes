@@ -1730,6 +1730,7 @@ Stage 6's own refusal reasons; a span check's reason is earnings-core's
 | `unknown_claim` | An assignment names a claim the record lacks |
 | `unknown_theme` | An assignment, hard negative, or parent names a theme the codebook lacks |
 | `unknown_document` | The event or fixture has no document here, or is not in the split |
+| `unreferenced` | The record holds an item nothing in it names: a claim with no assignment row, or a quote no claim or hard negative cites (R9.9) |
 | `tie_group` | A tie group holds rows of more than one claim, or only one row |
 | `source_wording` | A string shares a 40-character window with a document's text |
 | `outside_training` | A codebook example is not from a training bundle |

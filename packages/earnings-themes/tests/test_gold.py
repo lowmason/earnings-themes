@@ -94,7 +94,7 @@ def test_origins_come_from_comparing_the_working_copy_with_the_draft(
     del working["hard_negatives"][0]
     working["quotes"].append({"quote_id": "q4", "text": "Quarterly results"})
     working["claims"].append(
-        {"claim_id": "c3", "quote_ids": ["q4"], "claim": "A heading."}
+        {"claim_id": "c3", "quote_ids": ["q3", "q4"], "claim": "A heading."}
     )
     working["assignments"].append(
         {"claim_id": "c3", "theme_id": "unmatched", "support": "uncertain"}
@@ -150,9 +150,14 @@ def test_a_bad_draft_is_refused_by_item(bundles, codebook, change, refusal) -> N
     assert build(bundles, codebook, draft) == [refusal]
 
 
-def test_ids_themes_and_ties_are_checked(bundles, codebook) -> None:
+def test_ids_themes_and_ties_are_checked(bundles, codebook, fixtures) -> None:
+    """Every ID resolves, every claim takes an assignment row, and every quote is
+    cited, in a bundle's gold and in each fixture of the curated set (R9.9; plan
+    10)."""
     draft = gold_draft(no_theme=True)
+    draft["quotes"].append({"quote_id": "q4", "text": "Quarterly results"})
     draft["claims"].append({"claim_id": "c1", "quote_ids": ["q9"], "claim": "Again."})
+    draft["claims"].append({"claim_id": "c3", "quote_ids": ["q1"], "claim": "Uncoded."})
     draft["assignments"] = [
         {
             "claim_id": "c1",
@@ -171,10 +176,21 @@ def test_ids_themes_and_ties_are_checked(bundles, codebook) -> None:
     assert build(bundles, codebook, draft) == [
         Refusal("claim c1", "duplicate_id"),
         Refusal("claim c1", "unknown_quote"),
+        Refusal("quote q4", "unreferenced"),
         Refusal("assignment c1/pricing", "unknown_theme"),
         Refusal("assignment c9/unmatched", "unknown_claim"),
+        Refusal("claim c3", "unreferenced"),
         Refusal("tie_group t1", "tie_group"),
     ]
+
+    curated = curated_draft(fixtures)
+    first = curated["documents"][0]
+    first["hard_negatives"][1]["quote_ids"] = ["q1"]
+    parsed = parse(curated, CuratedDraft, "curated")
+    refusals = build_curated(
+        parsed, parsed, bundles=fixtures, pin=PIN, codebook=codebook
+    )
+    assert refusals == [Refusal(f"{first['fixture_id']} quote q2", "unreferenced")]
 
 
 def test_a_claim_that_copies_the_release_is_refused(bundles, codebook) -> None:
