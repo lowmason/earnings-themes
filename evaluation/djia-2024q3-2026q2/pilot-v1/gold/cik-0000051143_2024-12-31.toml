@@ -1,0 +1,1278 @@
+# Stage 6 gold (the pilot codebook, split, and gold-set protocol). Written by `earnings-pipeline gold anchor`; quotes are pointers, and every other word is the annotator's.
+schema_version = 1
+event_id = "cik-0000051143:2024-12-31"
+document_id = "cik-0000051143:2024-12-31:release"
+doc_id = "0000051143-25-000005_ibm-20250129xex991.htm@walker-1#99fb06322df9480a"
+canonical_hash = "99fb06322df9480a95b9365d146922cae18eb3633d144d105a0f5fb0cbf67e04"
+split_hash = "5c4a2f3c5ed9ffc2cf0065658ec4e75311220338cf9b3fe07802c0db9fcd0e53"
+partition = "train"
+annotator = "Lowell Mason (verified a Claude draft)"
+no_theme = false
+
+[pin]
+pilot_id = "djia-2024q3-2026q2-pilot"
+pilot_version = 1
+pilot_hash = "3839c800151cc646f11064efdce583f988e511265f8893c90e9a2f2549145926"
+events_version = 1
+events_hash = "2348671b3ae8021d644df12ae2f539258670546970c918f8edb231ba1885c3b7"
+universe_version = 1
+universe_operative_hash = "c350923422d9bf2e65a0b5929f4c0d45370458c6a044c3de012a1dfeb116e573"
+
+[codebook]
+codebook_id = "djia-pilot"
+codebook_version = 0
+content_hash = "635975d1ec952cf5719ea3b473870f96e7e3a52bc3015cc1ac5725aa80ec1e79"
+
+[drafting_aid]
+model_id = "claude-opus-5-5"
+drafted_on = 2026-10-03
+
+[counts]
+accepted = 173
+edited = 0
+rejected = 0
+added = 0
+
+[release_identification]
+label = "release"
+note = "IBM's own results exhibit for the quarter that ends on this event's period end, with the full year reported alongside."
+
+[[quotes]]
+start = 90
+end = 126
+element_id = "heading-90-177"
+quote_sha256 = "6561ccaa0fd4b0ff8867a70e5a42ae1d356a140ecdb473b1587f88b0ad8adcbf"
+mask_ids = []
+quote_id = "q1"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 128
+end = 177
+element_id = "heading-90-177"
+quote_sha256 = "3c270573644dce5f6582a598138910c0742c6250ac40ef834da6437966a2ff58"
+mask_ids = []
+quote_id = "q2"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 286
+end = 406
+element_id = "sentence-285-406"
+quote_sha256 = "d927a1d76a134c95e21ebfff35dddc65e085e9b152381146dae9d832c8565385"
+mask_ids = []
+quote_id = "q3"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 407
+end = 469
+element_id = "sentence-407-469"
+quote_sha256 = "8642167376ce0451b639310086d2391bfccf923b8d0e1c53a6e230a84772a017"
+mask_ids = []
+quote_id = "q4"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 470
+end = 600
+element_id = "sentence-470-676"
+quote_sha256 = "43deacb3e30f6576ca5c094e143849a875a2805eae4b97045e08ed575f4653c5"
+mask_ids = []
+quote_id = "q5"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 678
+end = 758
+element_id = "sentence-677-758"
+quote_sha256 = "02fabaafed8a01adc4070b8b1820557a608518152675b5441aa39f8b5ab9f013"
+mask_ids = []
+quote_id = "q6"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 759
+end = 837
+element_id = "sentence-759-837"
+quote_sha256 = "7540fa21990ef832e714541ccb5782a73273fddc687779b6d06e3dce570187c8"
+mask_ids = []
+quote_id = "q7"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 958
+end = 1004
+element_id = "sentence-838-1058"
+quote_sha256 = "365142e04db163d3d737bcff2f817791b9798c26fc2c3061e96f85928cd0deb8"
+mask_ids = []
+quote_id = "q8"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1009
+end = 1056
+element_id = "sentence-838-1058"
+quote_sha256 = "41d494ecdc1bcc880b9486d91f3158bb051442afe84bce47b94aee895975b55c"
+mask_ids = []
+quote_id = "q9"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1095
+end = 1168
+element_id = "sentence-1094-1168"
+quote_sha256 = "c409803a1ba270c519366bd63534192362599d89353bd4ca9c39c3ecf95cba05"
+mask_ids = []
+quote_id = "q10"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1170
+end = 1236
+element_id = "sentence-1169-1236"
+quote_sha256 = "c4524251fb92fe7a87c098dfd4230bc764c039eb9cbe93888e5d2764e87874a4"
+mask_ids = []
+quote_id = "q11"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1238
+end = 1308
+element_id = "sentence-1237-1308"
+quote_sha256 = "e1cc4fa7b1d0b361f096bc2ef8b4fb7ab6409bc52725a14d3467951aaa25c900"
+mask_ids = []
+quote_id = "q12"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1310
+end = 1384
+element_id = "sentence-1309-1384"
+quote_sha256 = "a6c6016b16c4d1016425d5c911ba58a1f69d284a765a62f8e98105af238bebec"
+mask_ids = []
+quote_id = "q13"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1394
+end = 1509
+element_id = "sentence-1393-1509"
+quote_sha256 = "7a094259955266016f976bb48901154a18d81fefd1e11802c70f2ec300d7a4d9"
+mask_ids = []
+quote_id = "q14"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1541
+end = 1614
+element_id = "sentence-1540-1614"
+quote_sha256 = "d881a8c0a0b5133ed9ba1391a17dc7b09609723dadfadd3cc6bc7338280697a5"
+mask_ids = []
+quote_id = "q15"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1616
+end = 1680
+element_id = "sentence-1615-1680"
+quote_sha256 = "6c38f7f5778c1e512bd6aed4c77bb0aa4d5de62f251bbe62da1e48a3f42faefe"
+mask_ids = []
+quote_id = "q16"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1682
+end = 1750
+element_id = "sentence-1681-1750"
+quote_sha256 = "7fbd9f1deb73d25c15eeaaadf8aba2e457c3c3ce0e2260c2d5e29dfaa0d09184"
+mask_ids = []
+quote_id = "q17"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1752
+end = 1826
+element_id = "sentence-1751-1826"
+quote_sha256 = "b424cfe60982a48266a7d5e0018eeae8a3c67959eb848bae96a3c721c044b076"
+mask_ids = []
+quote_id = "q18"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1836
+end = 1953
+element_id = "sentence-1835-1953"
+quote_sha256 = "06fa5370632e3e52c5a347cc6a0b9ad5d4a4d17a7979111a8c38ec12c5cbc07e"
+mask_ids = []
+quote_id = "q19"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1966
+end = 2050
+element_id = "sentence-1965-2050"
+quote_sha256 = "2d8311b80a774b371d0b302ac7240b8d7ddec11536b68a7d0a8fa06a0453c688"
+mask_ids = []
+quote_id = "q20"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2560
+end = 2826
+element_id = "sentence-2560-2826"
+quote_sha256 = "f06efe5fd4b5b093c15c28332a06e66c386b664aa8b26c6b4b3ad39ec39b993b"
+mask_ids = []
+quote_id = "q21"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2857
+end = 2971
+element_id = "sentence-2856-3050"
+quote_sha256 = "87258fc09fad690a6dd555411ea0eaed0ac4ffb66d5358d7298d812ca8e644d5"
+mask_ids = []
+quote_id = "q22"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3052
+end = 3154
+element_id = "sentence-3051-3154"
+quote_sha256 = "40738189a18f6a08f530852c946cc6d7f7c1af8d44bd8519b1ba47a038b84408"
+mask_ids = []
+quote_id = "q23"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3155
+end = 3319
+element_id = "sentence-3155-3320"
+quote_sha256 = "17ff859d904e4dbf70f558b9f9db2c7bf1ab6411828e3471215ccdce259830ba"
+mask_ids = []
+quote_id = "q24"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3357
+end = 3447
+element_id = "sentence-3357-3448"
+quote_sha256 = "76fcfe92899b1c204db85c24755fe690045cc3e1fa770edd4380bdce79e3b923"
+mask_ids = []
+quote_id = "q25"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3450
+end = 3527
+element_id = "sentence-3449-3527"
+quote_sha256 = "114d49050c37262dcbe8154267ed65662766e318d43508db26ede7e5ce04930e"
+mask_ids = []
+quote_id = "q26"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3529
+end = 3586
+element_id = "sentence-3529-3586"
+quote_sha256 = "319d126b1f65f069414ac3b1545433ba914bfb01ed428a45dc874e85e97cc9da"
+mask_ids = []
+quote_id = "q27"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3588
+end = 3648
+element_id = "sentence-3588-3648"
+quote_sha256 = "bc3f82c16fcba5172693e396bf6a8dae17b1c91ac2325d544afb40d8ddfcadef"
+mask_ids = []
+quote_id = "q28"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3650
+end = 3707
+element_id = "sentence-3650-3707"
+quote_sha256 = "4e9fbc3ecfd566a814062fc67711da415dd01234e6ab3738fda6fac96af29c57"
+mask_ids = []
+quote_id = "q29"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3709
+end = 3765
+element_id = "sentence-3709-3765"
+quote_sha256 = "d71af8bb31364040ddda06e7b90225740fe8b17feb650ffc1253c9becb52993f"
+mask_ids = []
+quote_id = "q30"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3767
+end = 3839
+element_id = "sentence-3766-3839"
+quote_sha256 = "f7cd152a79416c2fd5a0687f4301e7802da30d7e2ab2cfbff77846f7a250e2c7"
+mask_ids = []
+quote_id = "q31"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3841
+end = 3935
+element_id = "sentence-3841-3936"
+quote_sha256 = "757bbabef8e18536aaabbec6c45d78c9a77522ae52fd0599f484ee8f5f5f000d"
+mask_ids = []
+quote_id = "q32"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3938
+end = 4009
+element_id = "sentence-3937-4009"
+quote_sha256 = "6d5da723e638957a2eb90b6d4bd98ea58518d4dcf1658e91db359267f63d1572"
+mask_ids = []
+quote_id = "q33"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4011
+end = 4084
+element_id = "sentence-4010-4084"
+quote_sha256 = "160dba6dde16b622cd22533975b4888dc0f440c135c722e92516f778d0e2c60a"
+mask_ids = []
+quote_id = "q34"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4086
+end = 4160
+element_id = "sentence-4085-4160"
+quote_sha256 = "7b3b635acc6cc32680d7f07316a28ba881653824a9221bdac8ef6a8fc6bceb37"
+mask_ids = []
+quote_id = "q35"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4162
+end = 4260
+element_id = "sentence-4162-4261"
+quote_sha256 = "073879b05030d73a6732b38b3981c090caac7f5b2bbb1df26355fc1285ff4912"
+mask_ids = []
+quote_id = "q36"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4263
+end = 4337
+element_id = "sentence-4262-4337"
+quote_sha256 = "2e29179bf88f03a7d0764f38e9c6da1597ada2132abe0d929bcbf083d890c3c4"
+mask_ids = []
+quote_id = "q37"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4339
+end = 4398
+element_id = "sentence-4339-4398"
+quote_sha256 = "5f2063d8fe2dc8f84be94f8c0b7dbeb9b303c2f50a8747efa321926f4e911a50"
+mask_ids = []
+quote_id = "q38"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4400
+end = 4466
+element_id = "sentence-4400-4466"
+quote_sha256 = "c2a0a6437b7c31f2ca882008970a9be2f217ee7e6bedcafa2d47fdfebd69360e"
+mask_ids = []
+quote_id = "q39"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4468
+end = 4532
+element_id = "sentence-4467-4532"
+quote_sha256 = "b6f4785d949250beaebca0c9338e0082540b7daa3ec9db9e0f0e1330194f0c6d"
+mask_ids = []
+quote_id = "q40"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4534
+end = 4627
+element_id = "sentence-4534-4627"
+quote_sha256 = "ad68734fc15db6184d4b5ebd6399fd4f0723a07e366c7af505ea56b4a6ffa679"
+mask_ids = []
+quote_id = "q41"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4656
+end = 4784
+element_id = "sentence-4656-4784"
+quote_sha256 = "5ed2aa1a78f42804da9c0b01ba2ff0f0be5842ac8ecc09f237c8a43d55c46231"
+mask_ids = []
+quote_id = "q42"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4785
+end = 4853
+element_id = "sentence-4785-4853"
+quote_sha256 = "45c99ff51b103ea0cb9ee5f1d5dc4a16a3d8eca4d62fc8562b8dd0b339fd3ae5"
+mask_ids = []
+quote_id = "q43"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4854
+end = 4939
+element_id = "sentence-4854-4939"
+quote_sha256 = "3bd88bb05ee1c5246328702474ba34580eb1ce01a016adab4477e04d0cc1561e"
+mask_ids = []
+quote_id = "q44"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4940
+end = 5060
+element_id = "sentence-4940-5060"
+quote_sha256 = "311f7fa1d78b6dbac42ce18932c12819566574547fecb945667e474d1bdbae8c"
+mask_ids = []
+quote_id = "q45"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5061
+end = 5167
+element_id = "sentence-5061-5167"
+quote_sha256 = "4b1a565fe09c1824873949c3d3d2f5b236ecf4e9942317fe41a0294aad72e70d"
+mask_ids = []
+quote_id = "q46"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5168
+end = 5237
+element_id = "sentence-5168-5237"
+quote_sha256 = "f2c14cd9dd3420d21ca0583e1841afaab345ab7d9a0da523c644d1074475d47f"
+mask_ids = []
+quote_id = "q47"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5238
+end = 5373
+element_id = "sentence-5238-5373"
+quote_sha256 = "1770e7348271ff4b2623863adc136abb4aa838ed92eea1276612e4dba52c8334"
+mask_ids = []
+quote_id = "q48"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5374
+end = 5488
+element_id = "sentence-5374-5488"
+quote_sha256 = "e8521706231acc51102aa489336d335938ac8fa650b7193b84dd2201cbdff767"
+mask_ids = []
+quote_id = "q49"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6019
+end = 6167
+element_id = "sentence-6019-6167"
+quote_sha256 = "67f4f0400f34a77be2c8bdf6e094e9e96adb077e7948250130bd1be1cc8c3591"
+mask_ids = []
+quote_id = "q50"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6234
+end = 6319
+element_id = "sentence-6225-6319"
+quote_sha256 = "45b9006338b0d81c4a86156dc2566438a124231b48c1bc725ea44014516e6711"
+mask_ids = []
+quote_id = "q51"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6320
+end = 6432
+element_id = "sentence-6320-6432"
+quote_sha256 = "c992dc2eaab0c67f1641c486306ba9c2fa612e25c8dad7a3d31ef8b7224cb6bc"
+mask_ids = []
+quote_id = "q52"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6450
+end = 6526
+element_id = "sentence-6434-6526"
+quote_sha256 = "fd41a2463d9815dc901867f8acc90b46cd929280b4e5d6deecec778a25a7ea03"
+mask_ids = []
+quote_id = "q53"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7099
+end = 7161
+element_id = "sentence-6923-8857"
+quote_sha256 = "2991450d4c097e91e9b4ff264bcb40a67ee5ae1d3be3da1936ed7b0d4d454c26"
+mask_ids = ["safe_harbor-6569-8857"]
+quote_id = "q54"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7901
+end = 7970
+element_id = "sentence-6923-8857"
+quote_sha256 = "99bed92b6769f108cdd228a11159e53f5c87cb317929d09925ca948f3134e648"
+mask_ids = ["safe_harbor-6569-8857"]
+quote_id = "q55"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 8858
+end = 9014
+element_id = "sentence-8858-9056"
+quote_sha256 = "2e469b5f7a4c2fd0d8f78b3be0337a1bc719c0ce80f1bc5f19cf118a527e05dd"
+mask_ids = ["safe_harbor-8858-9056"]
+quote_id = "q56"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 9560
+end = 9688
+element_id = "sentence-9560-9688"
+quote_sha256 = "dbbc9603ea835d3418a1ebd4f8e478068fb312a017bb23a5c918e42115744cf5"
+mask_ids = []
+quote_id = "q57"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 13130
+end = 13337
+element_id = "sentence-13130-13337"
+quote_sha256 = "345365c5fff8f2297d5478b26ab6d00ca2e6a3de954baa93b9eebf9bf1f2b765"
+context_sha256 = "b46931a2ce69d2c6a26a284c3ce0ce4771469b422ec687f42117fd310062ea5f"
+mask_ids = []
+quote_id = "q58"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 16602
+end = 16735
+element_id = "sentence-16602-16735"
+quote_sha256 = "b310202e5e18af61f30cf5cf36d643402de1c97901a98a6fbf8dda16837f8988"
+mask_ids = []
+quote_id = "q59"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 21988
+end = 22177
+element_id = "sentence-21988-22177"
+quote_sha256 = "7d465f82077631bad3369de6a7f59f39719690549e33af8c80630567fd9c9a09"
+mask_ids = []
+quote_id = "q60"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 24995
+end = 25230
+element_id = "sentence-24995-25230"
+quote_sha256 = "58aafb5558f83f16dc24d1b36a911e575a17890876df230e8b7684600b269f4c"
+mask_ids = []
+quote_id = "q61"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 25601
+end = 25698
+element_id = "sentence-25601-25698"
+quote_sha256 = "7657e0cf3c82cb0910f317209f2c239a422f2e7f1b2b5db0e2faecf5d1b8d9bb"
+mask_ids = []
+quote_id = "q62"
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c1"
+quote_ids = ["q1", "q3", "q11", "q25"]
+claim = "Software revenue grew about 10% in Q4 to $7.9B (11.5% at constant FX), a double-digit rate."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c2"
+quote_ids = ["q3", "q27"]
+claim = "Red Hat growth sped up further in Q4, to 16% (17% at constant FX)."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c3"
+quote_ids = ["q4"]
+claim = "IBM says clients worldwide keep turning to it to transform their businesses with AI."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c4"
+quote_ids = ["q5"]
+claim = "IBM's generative AI book of business has passed $5B since inception, adding nearly $2B since the prior quarter."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c5"
+quote_ids = ["q6", "q7"]
+claim = "The CEO says IBM met or beat the commitments it made three years ago for faster growth and higher profitability."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c6"
+quote_ids = ["q8", "q51"]
+claim = "IBM expects 2025 revenue to grow by 5% or more at constant currency."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c7"
+quote_ids = ["q9", "q53"]
+claim = "IBM expects roughly $13.5B of free cash flow in 2025."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c8"
+quote_ids = ["q52"]
+claim = "At current exchange rates, IBM expects currency to cut about two points from 2025 revenue growth."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c9"
+quote_ids = ["q10"]
+claim = "Q4 revenue was $17.6B, up 1% from a year earlier and up 2% at constant FX."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c10"
+quote_ids = ["q12", "q32"]
+claim = "Q4 Consulting revenue fell 2% to $5.2B, about 1% at constant FX."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c11"
+quote_ids = ["q13", "q36"]
+claim = "Q4 Infrastructure revenue fell almost 8% to $4.3B, 6% at constant FX."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c12"
+quote_ids = ["q14"]
+claim = "Q4 gross margin widened, to 59.5% on a GAAP basis (+40 bp) and 60.6% on an operating basis (+50 bp)."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c13"
+quote_ids = ["q15"]
+claim = "Revenue for full-year 2024 was $62.8B, up 1% as reported and 3% at constant FX."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c14"
+quote_ids = ["q16"]
+claim = "Full-year Software revenue rose 8%, or 9% at constant FX."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c15"
+quote_ids = ["q17"]
+claim = "Full-year Consulting revenue fell 1% as reported but rose 1% at constant FX."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c16"
+quote_ids = ["q18"]
+claim = "Full-year Infrastructure revenue fell 4%, or 3% at constant FX."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c17"
+quote_ids = ["q19"]
+claim = "Full-year gross margin widened, to 56.7% on a GAAP basis (+120 bp) and 57.8% on an operating basis (+130 bp)."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c18"
+quote_ids = ["q20", "q45"]
+claim = "Operating cash flow for 2024 was $13.4B, $0.5B below 2023."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c19"
+quote_ids = ["q20", "q47"]
+claim = "Free cash flow for 2024 was $12.7B, $1.5B above 2023."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c20"
+quote_ids = ["q2", "q23"]
+claim = "Free cash flow for 2024 ran well ahead of what management had expected for the year."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c21"
+quote_ids = ["q21"]
+claim = "Q4 GAAP results carry a one-off, non-cash $0.4B pension settlement charge from moving part of non-US pension obligations and plan assets to insurers in October."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c22"
+quote_ids = ["q22"]
+claim = "The CFO credits strong results across the Software portfolio for the business's solid fundamentals."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c23"
+quote_ids = ["q24"]
+claim = "Strong operating profit and cash flow let IBM keep investing for the future while paying dividends."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c24"
+quote_ids = ["q26"]
+claim = "Q4 Hybrid Platform & Solutions revenue rose 11% (12% at constant FX)."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c25"
+quote_ids = ["q28"]
+claim = "Q4 Automation revenue rose 15% (16% at constant FX)."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c26"
+quote_ids = ["q29"]
+claim = "Q4 Data & AI revenue rose 4% (5% at constant FX)."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c27"
+quote_ids = ["q30"]
+claim = "Q4 Security revenue rose 4% (5% at constant FX)."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c28"
+quote_ids = ["q31"]
+claim = "Q4 Transaction Processing revenue rose 10% (11% at constant FX)."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c29"
+quote_ids = ["q33"]
+claim = "Q4 Business Transformation revenue rose 1% (2% at constant FX)."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c30"
+quote_ids = ["q34"]
+claim = "Q4 Technology Consulting revenue fell 7% (6% at constant FX)."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c31"
+quote_ids = ["q35"]
+claim = "Q4 Application Operations revenue fell 4% (3% at constant FX)."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c32"
+quote_ids = ["q37"]
+claim = "Q4 Hybrid Infrastructure revenue fell 10% (8% at constant FX)."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c33"
+quote_ids = ["q38"]
+claim = "Q4 IBM Z revenue fell 21% (20% at constant FX)."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c34"
+quote_ids = ["q39"]
+claim = "Q4 Distributed Infrastructure revenue was flat, and up 2% at constant FX."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c35"
+quote_ids = ["q40"]
+claim = "Q4 Infrastructure Support revenue fell 2% and was flat at constant FX."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c36"
+quote_ids = ["q41"]
+claim = "Q4 Financing revenue was about $0.2B, down 2.5% (0.5% at constant FX)."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c37"
+quote_ids = ["q42"]
+claim = "Q4 operating cash flow was $4.3B, $0.1B lower than a year earlier."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c38"
+quote_ids = ["q43"]
+claim = "Q4 free cash flow was $6.2B, $0.1B higher than a year earlier."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c39"
+quote_ids = ["q44"]
+claim = "IBM paid shareholders $1.5B in dividends in Q4."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c40"
+quote_ids = ["q46"]
+claim = "Excluding financing receivables, 2024 operating cash flow was $13.9B, up $1.2B."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c41"
+quote_ids = ["q48"]
+claim = "IBM held $14.8B in cash, restricted cash, and securities at year-end, $1.3B more than at end-2023."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c42"
+quote_ids = ["q49"]
+claim = "Total debt was $55.0B, including $12.1B of Financing debt, down $1.6B from end-2023."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c43"
+quote_ids = ["q50", "q58"]
+claim = "Pension settlement charges cut 2024 GAAP results by $3.1B ($2.4B after tax): $2.7B for US plans in Q3 and $0.4B for non-US plans in Q4."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c44"
+quote_ids = ["q59"]
+claim = "IBM sold certain QRadar SaaS assets in Q3 2024; the $0.4B of proceeds falls in 2024's cash flows."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c45"
+quote_ids = ["q61"]
+claim = "Adjustments for 2024 include a $68M loss (2023: $12M gain) on FX derivatives IBM entered into ahead of acquiring webMethods and StreamSets from Software AG."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c46"
+quote_ids = ["q62"]
+claim = "Resolving certain tax audits gave IBM a net income-tax benefit in 2024."
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c1"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c2"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c3"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c3"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c4"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c4"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c5"
+theme_id = "outlook"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c5"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c6"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c6"
+theme_id = "demand"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c7"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c7"
+theme_id = "capital"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c8"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c8"
+theme_id = "currency"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c9"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c10"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c11"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c12"
+theme_id = "costs"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c13"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c14"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c15"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c16"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c17"
+theme_id = "costs"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c18"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c19"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c20"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c20"
+theme_id = "outlook"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c21"
+theme_id = "costs"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c22"
+theme_id = "demand"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c23"
+theme_id = "shareholder_returns"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c23"
+theme_id = "capital_investment"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c24"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c25"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c26"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c26"
+theme_id = "ai"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c27"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c28"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c29"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c30"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c31"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c32"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c33"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c34"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c35"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c36"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c36"
+theme_id = "credit_quality"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c37"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c38"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c39"
+theme_id = "shareholder_returns"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c40"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c41"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c42"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c43"
+theme_id = "costs"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c44"
+theme_id = "portfolio"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c45"
+theme_id = "portfolio"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c45"
+theme_id = "currency"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c46"
+theme_id = "tax"
+support = "supports"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n1"
+quote_ids = ["q47"]
+claim = "Free cash flow in the fourth quarter alone was $12.7B."
+negative_kind = "period"
+theme_id = "capital"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n2"
+quote_ids = ["q59"]
+claim = "IBM sold certain QRadar SaaS assets during the fourth quarter."
+negative_kind = "period"
+theme_id = "portfolio"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n3"
+quote_ids = ["q58"]
+claim = "Fourth-quarter GAAP results include a $2.7B US pension settlement charge."
+negative_kind = "period"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n4"
+quote_ids = ["q60"]
+claim = "Fourth-quarter 2024 results include a $12M gain on currency derivatives tied to the webMethods and StreamSets purchase."
+negative_kind = "period"
+theme_id = "portfolio"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n5"
+quote_ids = ["q55"]
+claim = "IBM wrote down the value of its goodwill and amortizable intangible assets."
+negative_kind = "section"
+theme_id = "impairments"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n6"
+quote_ids = ["q56"]
+claim = "IBM closed its strategic acquisition during the quarter."
+negative_kind = "section"
+theme_id = "portfolio"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n7"
+quote_ids = ["q57"]
+claim = "IBM's generative AI consulting signings and SaaS contract value grew in the quarter."
+negative_kind = "section"
+theme_id = "ai"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n8"
+quote_ids = ["q54"]
+claim = "Clients cut their spending budgets as the economy turned down."
+negative_kind = "section"
+theme_id = "macro"
+origin = "drafted_accepted"

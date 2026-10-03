@@ -1,0 +1,1333 @@
+# Codebook djia-pilot v0 (Stage 6, GS9). Written by `earnings-pipeline codebook freeze`; never edited. Examples are pointers or synthetic.
+schema_version = 1
+codebook_id = "djia-pilot"
+codebook_version = 0
+status = "approved"
+content_hash = "635975d1ec952cf5719ea3b473870f96e7e3a52bc3015cc1ac5725aa80ec1e79"
+
+[discovery_corpus]
+split_hash = "5c4a2f3c5ed9ffc2cf0065658ec4e75311220338cf9b3fe07802c0db9fcd0e53"
+event_ids = ["cik-0000004962:2024-09-30", "cik-0000018230:2024-12-31", "cik-0000050863:2024-09-28", "cik-0000051143:2024-12-31", "cik-0000066740:2025-03-31", "cik-0000080424:2025-06-30", "cik-0000089800:2024-12-31", "cik-0000089800:2025-03-31", "cik-0000093410:2025-03-31", "cik-0000104169:2025-04-30", "cik-0000200406:2024-12-29", "cik-0000310158:2025-06-30", "cik-0000320187:2024-08-31", "cik-0000731766:2024-09-30", "cik-0000886982:2024-12-31", "cik-0001018724:2025-03-31", "cik-0001045810:2024-10-27", "cik-0001045810:2025-04-27", "cik-0001403161:2024-09-30", "cik-0001751788:2024-09-30"]
+doc_ids = ["0000004962-24-000067_q324exhibit991.htm@walker-1#e61cea93322df3f1", "0000018230-25-000004_cat_exx991x4qx2024xearning.htm@walker-1#e5fd42a1cc1d8c96", "0000050863-24-000147_q324_earningsrelease.htm@walker-1#3896eb161deb0cb9", "0000051143-25-000005_ibm-20250129xex991.htm@walker-1#99fb06322df9480a", "0000066740-25-000036_q12025-8kerexx991.htm@walker-1#8afef34c1949c6bd", "0000080424-25-000067_fy2425q4amj8-kexhibit991.htm@walker-1#0b6d6f7e99c00c15", "0000089800-25-000015_shw2024yeearningsrelease.htm@walker-1#c828252e2f897110", "0000089800-25-000083_shwearningsrelease1q2025.htm@walker-1#2dfd6da9353c39c4", "0000093410-25-000016_a03312025ex9918-k.htm@walker-1#61bc77f16419c9cf", "0000104169-25-000069_earningsreleasefy26q1.htm@walker-1#8a81f94a6037d164", "0000200406-25-000003_a2024q4exhibit991.htm@walker-1#9a71171a269a1d0f", "0001104659-25-071380_tm2521736d1_ex99-1.htm@walker-1#12204c3ea96af1fd", "0000320187-24-000062_q1fy25exhibit991er.htm@walker-1#b4164926034d86ee", "0000731766-24-000320_a2024q3exhibit991.htm@walker-1#cf348ad038762967", "0001193125-25-006554_d903229dex991.htm@walker-1#3f77aecd8d8f4841", "0001018724-25-000034_amzn-20250331xex991.htm@walker-1#a0e3ed10286597c9", "0001045810-24-000315_q3fy25pr.htm@walker-1#9301f1388e2e4495", "0001045810-25-000115_q1fy26pr.htm@walker-1#3dc4ee963e1c01aa", "0001403161-24-000053_q42024earningsrelease.htm@walker-1#b6d3e0b34bc31b6f", "0001751788-24-000147_exhibit991enrschedules3q24.htm@walker-1#1bc084b4ce094f03"]
+
+[discovery_corpus.pin]
+pilot_id = "djia-2024q3-2026q2-pilot"
+pilot_version = 1
+pilot_hash = "3839c800151cc646f11064efdce583f988e511265f8893c90e9a2f2549145926"
+events_version = 1
+events_hash = "2348671b3ae8021d644df12ae2f539258670546970c918f8edb231ba1885c3b7"
+universe_version = 1
+universe_operative_hash = "c350923422d9bf2e65a0b5929f4c0d45370458c6a044c3de012a1dfeb116e573"
+
+[rules]
+multi_label = "A claim takes every theme it fits, each as its own assignment row; where a sub-theme fits, code the sub-theme instead of its parent."
+boilerplate = "Text under a boilerplate mask may still be quoted as evidence, and the masks it falls under are recorded with the quote."
+
+[approval]
+approver = "Lowell Mason"
+approved_on = 2026-10-03
+adr = "docs/adr/0003-adopt-codebook-v0-as-the-pilot-codebook.md"
+
+[drafting_aid]
+model_id = "claude-opus-5-5"
+drafted_on = 2026-10-03
+
+[[themes]]
+theme_id = "outlook"
+label = "Outlook and guidance"
+definition = "What management says it expects for coming periods: forecasts and guidance ranges, and any raising, cutting, narrowing, confirming, or withholding of an earlier forecast."
+inclusion_rules = ["A forecast of a financial or operating figure for a future quarter or year.", "A change to guidance, a reaffirmation of it, or a decision not to give it.", "Assumptions a forecast is said to include or leave out; code the assumption's own theme as well."]
+exclusion_rules = ["A reported result set against guidance given earlier; it looks back, not ahead.", "A note that guidance is available elsewhere, with no expectation stated.", "Safe-harbor caveats that attach to every forecast alike."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 1861
+end = 1957
+element_id = "sentence-1770-1958"
+quote_sha256 = "b5febfb004a45b0ef85cfb6e997ef6385c1eed1091138134c7b61b6a047dc267"
+mask_ids = []
+event_id = "cik-0000004962:2024-09-30"
+doc_id = "0000004962-24-000067_q324exhibit991.htm@walker-1#e61cea93322df3f1"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 9962
+end = 10015
+element_id = "sentence-9962-10371"
+quote_sha256 = "8ae8e777398159b27e66c9647fe5623cf50a8050b1a1965f3978ae3b0509c25e"
+mask_ids = []
+event_id = "cik-0000089800:2025-03-31"
+doc_id = "0000089800-25-000083_shwearningsrelease1q2025.htm@walker-1#2dfd6da9353c39c4"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 29304
+end = 29506
+element_id = "sentence-29304-29506"
+quote_sha256 = "e703d81e592db36b93d9e042281813fe68dfab47a1d878a905140790264ab8ac"
+mask_ids = []
+event_id = "cik-0000310158:2025-06-30"
+doc_id = "0001104659-25-071380_tm2521736d1_ex99-1.htm@walker-1#12204c3ea96af1fd"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 10056
+end = 10163
+element_id = "sentence-10056-10163"
+quote_sha256 = "3de792a64cf790386941b7aced6b555bc3e34be543726ef469e16fa5bf8e2d43"
+mask_ids = []
+event_id = "cik-0000080424:2025-06-30"
+doc_id = "0000080424-25-000067_fy2425q4amj8-kexhibit991.htm@walker-1#0b6d6f7e99c00c15"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 1161
+end = 1216
+element_id = "sentence-1161-1349"
+quote_sha256 = "8542e2e88ac988df2e253aa68d5ebe66d6f39aba9e9a7cfb59e832ac6acdc144"
+mask_ids = []
+event_id = "cik-0000050863:2024-09-28"
+doc_id = "0000050863-24-000147_q324_earningsrelease.htm@walker-1#3896eb161deb0cb9"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 13158
+end = 13259
+element_id = "sentence-13158-13259"
+quote_sha256 = "c6944983ccf8a1977a159ad7b3336678887c22af0dca9d88fe9dcf6b11ca1705"
+mask_ids = []
+event_id = "cik-0001403161:2024-09-30"
+doc_id = "0001403161-24-000053_q42024earningsrelease.htm@walker-1#b6d3e0b34bc31b6f"
+
+[[themes]]
+theme_id = "demand"
+label = "Demand and volume"
+definition = "How much customers bought, used, or ordered from the company: units, transactions, spending, orders, backlog, and customer or member counts, and how demand for its products is holding up in the markets it sells into."
+inclusion_rules = ["Changes in volumes, transactions, traffic, or customer and member counts.", "Customer spending, orders, bookings, or backlog.", "Strength or weakness of demand for the company's products in its end markets."]
+exclusion_rules = ["Sales changes that come only from price or exchange rates: pricing or currency.", "Dealers or distributors building or cutting their stock: supply.", "Volume lost or gained because of the company's own production or supplier problems: supply.", "The economy or an industry cycle described with no measure of the company's own sales: macro."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 2113
+end = 2237
+element_id = "sentence-2112-2237"
+quote_sha256 = "62378fef97b1785f57348554fea946d847841f3327ce179f8e0c2cf74beb38a9"
+mask_ids = []
+event_id = "cik-0000004962:2024-09-30"
+doc_id = "0000004962-24-000067_q324exhibit991.htm@walker-1#e61cea93322df3f1"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 1768
+end = 1838
+element_id = "sentence-1710-1906"
+quote_sha256 = "21e4dbfcf431cbd67ed935efbbe45953ce3b4b448432f8e9f38f5d16556f89a5"
+mask_ids = []
+event_id = "cik-0000089800:2024-12-31"
+doc_id = "0000089800-25-000015_shw2024yeearningsrelease.htm@walker-1#c828252e2f897110"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 4077
+end = 4199
+element_id = "sentence-4077-4199"
+quote_sha256 = "d56c78273ac40b1f979cde6081f0a68c98bf46dfd743e6f37f0b17a7ba219f27"
+mask_ids = []
+event_id = "cik-0001403161:2024-09-30"
+doc_id = "0001403161-24-000053_q42024earningsrelease.htm@walker-1#b6d3e0b34bc31b6f"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 9166
+end = 9319
+element_id = "sentence-9166-9319"
+quote_sha256 = "14034994826a16faeed85c1a0e146e593c253363857ca2ee58fe1dadd24c0270"
+mask_ids = []
+event_id = "cik-0001751788:2024-09-30"
+doc_id = "0001751788-24-000147_exhibit991enrschedules3q24.htm@walker-1#1bc084b4ce094f03"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 4634
+end = 4787
+element_id = "sentence-4634-4787"
+quote_sha256 = "f0d0f23ad7c653703bf1d1d211f62dfa50c42203c9f4edbf913776e1bbca64c4"
+mask_ids = []
+event_id = "cik-0000018230:2024-12-31"
+doc_id = "0000018230-25-000004_cat_exx991x4qx2024xearning.htm@walker-1#e5fd42a1cc1d8c96"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 786
+end = 877
+element_id = "sentence-785-1030"
+quote_sha256 = "d3a82a259421b86e7e356a41ce19cf99792822e3dd278a1aaf27d554f51843d2"
+mask_ids = []
+event_id = "cik-0000066740:2025-03-31"
+doc_id = "0000066740-25-000036_q12025-8kerexx991.htm@walker-1#8afef34c1949c6bd"
+
+[[themes]]
+theme_id = "pricing"
+label = "Pricing"
+definition = "The prices the company charges and realizes for what it sells, how they moved, and what that did to sales or margins, including promotions and discounts."
+inclusion_rules = ["Selling-price increases or cuts and their share of sales growth.", "Price realization, including market prices received for commodities the company sells.", "Promotions, deal events, or discounts offered to customers."]
+exclusion_rules = ["Prices the company pays for its inputs: costs.", "Sales changes from exchange rates: currency.", "Shifts in product or channel mix that the release does not call pricing: mix."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 1819
+end = 1942
+element_id = "sentence-1819-1942"
+quote_sha256 = "21c0c9baef7845d720e39d10d2703ecf01bbc660c4d652186313df4be98f9efa"
+mask_ids = []
+event_id = "cik-0000018230:2024-12-31"
+doc_id = "0000018230-25-000004_cat_exx991x4qx2024xearning.htm@walker-1#e5fd42a1cc1d8c96"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 4637
+end = 4829
+element_id = "sentence-4637-4829"
+quote_sha256 = "33210d718e76ff7225249e376c99b028b49bcb2f481ab17347a5af6d93426c8c"
+mask_ids = []
+event_id = "cik-0000089800:2025-03-31"
+doc_id = "0000089800-25-000083_shwearningsrelease1q2025.htm@walker-1#2dfd6da9353c39c4"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 4649
+end = 4776
+element_id = "sentence-4649-4776"
+quote_sha256 = "5647188cb1b9ad6c4571cac346cc117d63d7abf159b9f3167d3878331d7e7c68"
+mask_ids = []
+event_id = "cik-0001751788:2024-09-30"
+doc_id = "0001751788-24-000147_exhibit991enrschedules3q24.htm@walker-1#1bc084b4ce094f03"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 3477
+end = 3590
+element_id = "sentence-3477-3590"
+quote_sha256 = "c31d819de4b619d39946b07d59d16cc147fb1ec54bc92c3467e5aab9fb72b074"
+mask_ids = []
+event_id = "cik-0000089800:2025-03-31"
+doc_id = "0000089800-25-000083_shwearningsrelease1q2025.htm@walker-1#2dfd6da9353c39c4"
+
+[[themes.hard_negatives]]
+synthetic = true
+text = "Resin and freight bills climbed faster than planned during the period."
+
+[[themes]]
+theme_id = "costs"
+label = "Costs and margins"
+definition = "What the company spends to make, deliver, and sell its products and to run itself, and how cost changes moved its margins: inputs, commodities, labor, logistics, marketing, research, overhead, and productivity savings."
+inclusion_rules = ["Changes in cost of sales, operating expenses, or a named cost line, and their causes.", "Input, commodity, freight, or labor cost pressure or relief.", "Margin expansion or contraction the release attributes to costs, and productivity or efficiency savings."]
+exclusion_rules = ["A named restructuring or cost-reduction program: restructuring.", "Changes in the prices the company charges: pricing.", "Capital spending on plants, stores, or networks: capital_investment.", "A margin change the release puts down only to price or volume, naming no cost: pricing or demand."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 2634
+end = 2785
+element_id = "sentence-2577-2786"
+quote_sha256 = "6398ac8eed75f91823bb2cd52df0f6c5c792abfab2ddce98baf748c81f119c34"
+mask_ids = []
+event_id = "cik-0000320187:2024-08-31"
+doc_id = "0000320187-24-000062_q1fy25exhibit991er.htm@walker-1#b4164926034d86ee"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 9588
+end = 9743
+element_id = "paragraph-9588-9876"
+quote_sha256 = "317915e8c38287fce2e0da79c78aca7bf6a9c91a2c3df6e692f14826b5add2a3"
+mask_ids = []
+event_id = "cik-0001751788:2024-09-30"
+doc_id = "0001751788-24-000147_exhibit991enrschedules3q24.htm@walker-1#1bc084b4ce094f03"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 11073
+end = 11171
+element_id = "sentence-11073-11299"
+quote_sha256 = "8b93c1be4d92c55b916deec446cebd1b20a314567e500f8d39c84b783d304269"
+mask_ids = []
+event_id = "cik-0000080424:2025-06-30"
+doc_id = "0000080424-25-000067_fy2425q4amj8-kexhibit991.htm@walker-1#0b6d6f7e99c00c15"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 3635
+end = 3814
+element_id = "sentence-3635-3814"
+quote_sha256 = "f64ed726d0205a05d283e16d870ebbe8740c6b4d23abe8469179f114357b1eb7"
+mask_ids = []
+event_id = "cik-0000093410:2025-03-31"
+doc_id = "0000093410-25-000016_a03312025ex9918-k.htm@walker-1#61bc77f16419c9cf"
+
+[[themes]]
+theme_id = "restructuring"
+parent_id = "costs"
+label = "Restructuring and cost programs"
+definition = "Deliberate programs to reshape the cost base or the organization: restructuring plans, job cuts, exits from sites or markets, cost-reduction targets, and the charges and savings tied to them."
+inclusion_rules = ["Announcing, advancing, or finishing a restructuring or cost-reduction program.", "Headcount reductions, simpler organizational structures, or exits from facilities or markets.", "Restructuring charges, severance, or the savings a program aims for."]
+exclusion_rules = ["A cost movement with no program behind it: costs.", "Selling a business or an asset: portfolio."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 2694
+end = 2793
+element_id = "sentence-2694-2793"
+quote_sha256 = "393f6515c5dd0fe896dfd8f1079d1a5533692eed3468503ed408fe12b2ba04bc"
+mask_ids = []
+event_id = "cik-0000050863:2024-09-28"
+doc_id = "0000050863-24-000147_q324_earningsrelease.htm@walker-1#3896eb161deb0cb9"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 9752
+end = 9895
+element_id = "sentence-9752-9895"
+quote_sha256 = "6ed28cf77a0a6fac3c2c28e500118fca4e44f9c342677302c71754fe16049e57"
+mask_ids = []
+event_id = "cik-0000080424:2025-06-30"
+doc_id = "0000080424-25-000067_fy2425q4amj8-kexhibit991.htm@walker-1#0b6d6f7e99c00c15"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 25530
+end = 25703
+element_id = "sentence-25530-25703"
+quote_sha256 = "5825e60a25a8c1124851494c2625e75182d879d590a831336425e51ccac5da58"
+mask_ids = []
+event_id = "cik-0000310158:2025-06-30"
+doc_id = "0001104659-25-071380_tm2521736d1_ex99-1.htm@walker-1#12204c3ea96af1fd"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 3020
+end = 3129
+element_id = "sentence-3020-3129"
+quote_sha256 = "c70ace7ffdaa0470f1b9a94f49f335223116f13cc0e3e044fdd1dd380f685258"
+mask_ids = []
+event_id = "cik-0000320187:2024-08-31"
+doc_id = "0000320187-24-000062_q1fy25exhibit991er.htm@walker-1#b4164926034d86ee"
+
+[[themes]]
+theme_id = "capital"
+label = "Cash, debt, and capital allocation"
+definition = "How the company generates, holds, borrows, and deploys cash: operating and free cash flow, working capital, liquidity, debt and refinancing, and its stated approach to allocating capital."
+inclusion_rules = ["Operating or free cash flow and what drove it, including swings in working capital.", "Cash balances, liquidity, borrowing, repayment, refinancing, or leverage.", "Capital-allocation priorities stated without singling out returns or investment."]
+exclusion_rules = ["Dividends and buybacks: shareholder_returns.", "Spending on new capacity or growth: capital_investment.", "Definitions of cash-flow measures that report no figure for the period."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 3052
+end = 3154
+element_id = "sentence-3051-3154"
+quote_sha256 = "40738189a18f6a08f530852c946cc6d7f7c1af8d44bd8519b1ba47a038b84408"
+mask_ids = []
+event_id = "cik-0000051143:2024-12-31"
+doc_id = "0000051143-25-000005_ibm-20250129xex991.htm@walker-1#99fb06322df9480a"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 7829
+end = 8023
+element_id = "sentence-7829-8023"
+quote_sha256 = "4cebec7bcb0934c1936fa436b694af59fe4e66cb7a1901c7a1f5b8f6e77911bf"
+mask_ids = []
+event_id = "cik-0000089800:2025-03-31"
+doc_id = "0000089800-25-000083_shwearningsrelease1q2025.htm@walker-1#2dfd6da9353c39c4"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 10935
+end = 11098
+element_id = "sentence-10935-11098"
+quote_sha256 = "45e4aecb6ead59079e598481f61abe0646e738c96175367f052bf8b4b33bbbf3"
+mask_ids = []
+event_id = "cik-0000089800:2024-12-31"
+doc_id = "0000089800-25-000015_shw2024yeearningsrelease.htm@walker-1#c828252e2f897110"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 13291
+end = 13491
+element_id = "sentence-13291-13491"
+quote_sha256 = "8179f8e5c204ff1bdc9444a888d8acbb98842eb662927fe5ecb3499c296f1838"
+mask_ids = []
+event_id = "cik-0000093410:2025-03-31"
+doc_id = "0000093410-25-000016_a03312025ex9918-k.htm@walker-1#61bc77f16419c9cf"
+
+[[themes]]
+theme_id = "shareholder_returns"
+parent_id = "capital"
+label = "Shareholder returns"
+definition = "Cash the company hands back to its owners as dividends or by buying back its stock: amounts paid, declarations, increases, authorizations, and plans."
+inclusion_rules = ["Dividends paid, declared, or raised, and dividend track records.", "Share buybacks made, authorized, or planned.", "Totals of cash handed back to shareholders over a period."]
+exclusion_rules = ["Cash the company receives from affiliates or investees.", "Stock splits and per-share restatements that move no cash."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 4104
+end = 4256
+element_id = "sentence-4104-4256"
+quote_sha256 = "439e81860d1d20208d14b11a3044e667601affecda28dee46771b75f3798de93"
+mask_ids = []
+event_id = "cik-0000093410:2025-03-31"
+doc_id = "0000093410-25-000016_a03312025ex9918-k.htm@walker-1#61bc77f16419c9cf"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 1957
+end = 2124
+element_id = "sentence-1957-2124"
+quote_sha256 = "4074605a4ad6f40fa17e66feaa77ec98b806918d9624588963c056df6055ff31"
+mask_ids = []
+event_id = "cik-0000089800:2025-03-31"
+doc_id = "0000089800-25-000083_shwearningsrelease1q2025.htm@walker-1#2dfd6da9353c39c4"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 12286
+end = 12483
+element_id = "sentence-12286-12483"
+quote_sha256 = "b7ed15c152196d2fc52d81f3886adc3c50b0505cd8af2f0abfe360c1f1950c86"
+mask_ids = []
+event_id = "cik-0000080424:2025-06-30"
+doc_id = "0000080424-25-000067_fy2425q4amj8-kexhibit991.htm@walker-1#0b6d6f7e99c00c15"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 4047
+end = 4101
+element_id = "sentence-3878-4102"
+quote_sha256 = "846d4d605328d6b173baf28dc30d6463392f995d8be90b781d30be5a247a74c2"
+mask_ids = []
+event_id = "cik-0000093410:2025-03-31"
+doc_id = "0000093410-25-000016_a03312025ex9918-k.htm@walker-1#61bc77f16419c9cf"
+
+[[themes]]
+theme_id = "capital_investment"
+parent_id = "capital"
+label = "Capital investment"
+definition = "Spending the release presents as investment in the company's own capacity or growth: capital expenditure, new or expanded plants, stores, networks, and facilities, and multi-year growth programs."
+inclusion_rules = ["Capital expenditure levels, plans, or changes.", "Building or enlarging plants, stores, data centers, or delivery networks.", "Growth investments the release expects to pay off in later years."]
+exclusion_rules = ["Buying all or part of another company: portfolio.", "Research or marketing spending reported as an expense change: costs."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 26678
+end = 26777
+element_id = "sentence-26678-26777"
+quote_sha256 = "fde579ee3cb50d175cac118efa09a93e5fdc870b524cb2f7d6cd4d41113fddb9"
+mask_ids = []
+event_id = "cik-0000310158:2025-06-30"
+doc_id = "0001104659-25-071380_tm2521736d1_ex99-1.htm@walker-1#12204c3ea96af1fd"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 3190
+end = 3276
+element_id = "sentence-3190-3367"
+quote_sha256 = "0cc34b95db3a5b0ecfcf1e0495c35a7dd95d736606c94a8922aeaa0e90b14821"
+mask_ids = []
+event_id = "cik-0001018724:2025-03-31"
+doc_id = "0001018724-25-000034_amzn-20250331xex991.htm@walker-1#a0e3ed10286597c9"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 10823
+end = 11050
+element_id = "sentence-10823-11050"
+quote_sha256 = "3a2f07ed6d00e2491c8c7de5357d8374712b0d8c5a344d7536215660904072a9"
+mask_ids = []
+event_id = "cik-0001751788:2024-09-30"
+doc_id = "0001751788-24-000147_exhibit991enrschedules3q24.htm@walker-1#1bc084b4ce094f03"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 4560
+end = 4711
+element_id = "sentence-4560-4711"
+quote_sha256 = "180bd1fce4e59af294126b01126c26707b48bbb817d8bf91b3b10ec53e2d9087"
+mask_ids = []
+event_id = "cik-0000093410:2025-03-31"
+doc_id = "0000093410-25-000016_a03312025ex9918-k.htm@walker-1#61bc77f16419c9cf"
+
+[[themes]]
+theme_id = "currency"
+label = "Currency effects"
+definition = "How movements in exchange rates changed reported sales, earnings, or forecasts, including translation effects and devaluations."
+inclusion_rules = ["A stated currency headwind or tailwind to sales, earnings, or margins.", "Exchange-rate effects built into guidance.", "Gains or losses from a devaluation or from remeasuring foreign balances."]
+exclusion_rules = ["A result restated at constant currency with no word on what currency did.", "Definitions of constant-currency or currency-neutral measures."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 360
+end = 541
+element_id = "sentence-360-541"
+quote_sha256 = "1c79434f4f1692f653043cf01e3964e15b83536b6a9b53f692c9b269cd342131"
+mask_ids = []
+event_id = "cik-0001018724:2025-03-31"
+doc_id = "0001018724-25-000034_amzn-20250331xex991.htm@walker-1#a0e3ed10286597c9"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 839
+end = 899
+element_id = "sentence-839-899"
+quote_sha256 = "f7b71474bbcc93e48bf9137bc1ace83ae0149bc4abe09f03a443b6c35a7fc681"
+mask_ids = []
+event_id = "cik-0000093410:2025-03-31"
+doc_id = "0000093410-25-000016_a03312025ex9918-k.htm@walker-1#61bc77f16419c9cf"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 6320
+end = 6432
+element_id = "sentence-6320-6432"
+quote_sha256 = "c992dc2eaab0c67f1641c486306ba9c2fa612e25c8dad7a3d31ef8b7224cb6bc"
+mask_ids = []
+event_id = "cik-0000051143:2024-12-31"
+doc_id = "0000051143-25-000005_ibm-20250129xex991.htm@walker-1#99fb06322df9480a"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 2868
+end = 2938
+element_id = "sentence-2868-2938"
+quote_sha256 = "02a5dbed81acf2c26c66c58799ab38399e1470d3b1b66a50bb9562a48f0d5104"
+mask_ids = []
+event_id = "cik-0000080424:2025-06-30"
+doc_id = "0000080424-25-000067_fy2425q4amj8-kexhibit991.htm@walker-1#0b6d6f7e99c00c15"
+
+[[themes]]
+theme_id = "trade_policy"
+label = "Tariffs and trade restrictions"
+definition = "Government trade measures that reach the company: tariffs, export controls and licenses, and sanctions, with the company's exposure to them and its response."
+inclusion_rules = ["Costs, lost sales, or charges the release ties to tariffs or export rules.", "Tariff sensitivities or tariff assumptions within guidance.", "Sourcing or production choices described as limiting tariff exposure."]
+exclusion_rules = ["Tariffs named only within a generic list of risks.", "Other laws and regulation: regulation; lawsuits and investigations: legal."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 447
+end = 589
+element_id = "sentence-447-589"
+quote_sha256 = "12e7d6fc89ebdefbeeec25292123b9a2bfe443d41f4cbfc579eea9885bc846e6"
+mask_ids = []
+event_id = "cik-0001045810:2025-04-27"
+doc_id = "0001045810-25-000115_q1fy26pr.htm@walker-1#3dc4ee963e1c01aa"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 2599
+end = 2664
+element_id = "sentence-2553-2665"
+quote_sha256 = "1835939e23b88b18b01059c52decb227658108e9619a6ce078795d155f33d04a"
+mask_ids = []
+event_id = "cik-0000066740:2025-03-31"
+doc_id = "0000066740-25-000036_q12025-8kerexx991.htm@walker-1#8afef34c1949c6bd"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 30771
+end = 30879
+element_id = "sentence-30690-30880"
+quote_sha256 = "32db6bfbb95de77c10e58bf5c52738841e8bea4a1309a090e3c74c7766565c58"
+mask_ids = []
+event_id = "cik-0000310158:2025-06-30"
+doc_id = "0001104659-25-071380_tm2521736d1_ex99-1.htm@walker-1#12204c3ea96af1fd"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 7834
+end = 7938
+element_id = "sentence-7641-8159"
+quote_sha256 = "14bfeb5e8d74720cffe5b8f380492cd0a0d99965680cf9e3c0933728d1d34b2d"
+mask_ids = []
+event_id = "cik-0001018724:2025-03-31"
+doc_id = "0001018724-25-000034_amzn-20250331xex991.htm@walker-1#a0e3ed10286597c9"
+
+[[themes]]
+theme_id = "ai"
+label = "Artificial intelligence"
+definition = "Statements about artificial intelligence: AI products, models, chips, and services the company sells or launches, demand for and adoption of AI by customers, industries, or countries, and the company's own use of AI."
+inclusion_rules = ["Revenue, bookings, or demand the release attributes to AI.", "Launches of AI models, chips, systems, or AI features.", "Claims about how widely customers, industries, or countries are taking up AI."]
+exclusion_rules = ["Data-center or computing demand with no mention of AI: demand.", "Technology or digital projects that involve no AI."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 1086
+end = 1149
+element_id = "sentence-1086-1149"
+quote_sha256 = "3974ba2a4ee37a25b74cbb6254b796c6e94415252c642c14dd2c5c130ec3cdd3"
+mask_ids = []
+event_id = "cik-0001045810:2024-10-27"
+doc_id = "0001045810-24-000315_q3fy25pr.htm@walker-1#9301f1388e2e4495"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 470
+end = 600
+element_id = "sentence-470-676"
+quote_sha256 = "43deacb3e30f6576ca5c094e143849a875a2805eae4b97045e08ed575f4653c5"
+mask_ids = []
+event_id = "cik-0000051143:2024-12-31"
+doc_id = "0000051143-25-000005_ibm-20250129xex991.htm@walker-1#99fb06322df9480a"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 7304
+end = 7419
+element_id = "sentence-7299-7419"
+quote_sha256 = "3fa2d64a059495bcdcd5fa054fbf11c1aa5136417e3a7dde6ae0eb7c526c2011"
+mask_ids = []
+event_id = "cik-0000050863:2024-09-28"
+doc_id = "0000050863-24-000147_q324_earningsrelease.htm@walker-1#3896eb161deb0cb9"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 16494
+end = 16577
+element_id = "sentence-16475-16577"
+quote_sha256 = "3f86fa936c8a0bbb0097dc475aced97e34e92cea689e3e2bd20b45f4b5ad526c"
+mask_ids = []
+event_id = "cik-0000018230:2024-12-31"
+doc_id = "0000018230-25-000004_cat_exx991x4qx2024xearning.htm@walker-1#e5fd42a1cc1d8c96"
+
+[[themes.hard_negatives]]
+synthetic = true
+text = "The company moved its payroll and billing systems onto a new cloud platform this year."
+
+[[themes]]
+theme_id = "products"
+label = "Products and innovation"
+definition = "New or improved products and services: launches, refreshes, and milestones on a product or technology roadmap."
+inclusion_rules = ["Launching, introducing, or refreshing a product or service.", "Milestones on a product or technology roadmap."]
+exclusion_rules = ["Promotions or price deals on existing products: pricing.", "Clinical trials and regulatory decisions on drugs or devices: pipeline.", "Sales growth credited to innovation in general, naming no product or milestone: demand."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 2577
+end = 2729
+element_id = "sentence-2577-2729"
+quote_sha256 = "8d766726c826ade5c8988b2c71ddae082001ccaf4b8189b800389bbdc224d7f5"
+mask_ids = []
+event_id = "cik-0000004962:2024-09-30"
+doc_id = "0000004962-24-000067_q324exhibit991.htm@walker-1#e61cea93322df3f1"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 4558
+end = 4659
+element_id = "sentence-4558-4659"
+quote_sha256 = "131f563e21b0f0564547d30cbd204997017991507d985508ec22e301107c1f52"
+mask_ids = []
+event_id = "cik-0001045810:2025-04-27"
+doc_id = "0001045810-25-000115_q1fy26pr.htm@walker-1#3dc4ee963e1c01aa"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 2852
+end = 2919
+element_id = "sentence-2852-3064"
+quote_sha256 = "1cc1bf28e568ac1880725820793190e0b67239a6a071cf2c1d3fb3a348ac8e89"
+mask_ids = []
+event_id = "cik-0001018724:2025-03-31"
+doc_id = "0001018724-25-000034_amzn-20250331xex991.htm@walker-1#a0e3ed10286597c9"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 6542
+end = 6658
+element_id = "sentence-6542-6658"
+quote_sha256 = "b28ee06db7b005d9b3640b6f41ebaf4c4a2fb1561ca7721e28f85c0c97cf2e60"
+mask_ids = []
+event_id = "cik-0000080424:2025-06-30"
+doc_id = "0000080424-25-000067_fy2425q4amj8-kexhibit991.htm@walker-1#0b6d6f7e99c00c15"
+
+[[themes]]
+theme_id = "pipeline"
+parent_id = "products"
+label = "Clinical and regulatory pipeline"
+definition = "Progress of medicines, vaccines, and medical devices through development: trial starts and readouts, regulatory filings, approvals, special designations, and setbacks."
+inclusion_rules = ["Trial starts, results, and endpoints met or missed.", "Regulatory submissions, acceptances, approvals, or designations.", "The breadth of the pipeline or a count of its milestones."]
+exclusion_rules = ["Sales of products already on the market: demand or products.", "Buying a company for its pipeline: portfolio."]
+sector_applicability = ["pharmaceuticals", "medical-devices"]
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 15515
+end = 15651
+element_id = "sentence-15515-15651"
+quote_sha256 = "82a957cf29155ed210424c55931b0504269c0c5bffd8490d7b4e7e3f5dfacc91"
+mask_ids = []
+event_id = "cik-0000310158:2025-06-30"
+doc_id = "0001104659-25-071380_tm2521736d1_ex99-1.htm@walker-1#12204c3ea96af1fd"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 894
+end = 1107
+element_id = "sentence-894-1107"
+quote_sha256 = "892a6f9ba6a86ab533658102d3914626affbbaf79556602e142428ae4d9aa662"
+mask_ids = []
+event_id = "cik-0000200406:2024-12-29"
+doc_id = "0000200406-25-000003_a2024q4exhibit991.htm@walker-1#9a71171a269a1d0f"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 17921
+end = 18197
+element_id = "sentence-17921-18197"
+quote_sha256 = "d408dbbee6f17a502697cc82d89fb9e8386ef683adc7b97eaf2a951937ec123d"
+mask_ids = []
+event_id = "cik-0000310158:2025-06-30"
+doc_id = "0001104659-25-071380_tm2521736d1_ex99-1.htm@walker-1#12204c3ea96af1fd"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 5441
+end = 5667
+element_id = "sentence-5441-5667"
+quote_sha256 = "286c2f8bcd6e06001b8d9c71668221c24ec54fdc9d8189f1009fb0833e1663f7"
+mask_ids = []
+event_id = "cik-0000200406:2024-12-29"
+doc_id = "0000200406-25-000003_a2024q4exhibit991.htm@walker-1#9a71171a269a1d0f"
+
+[[themes]]
+theme_id = "portfolio"
+label = "Acquisitions and divestitures"
+definition = "Changes to what the company owns: acquisitions, stake purchases, mergers, sales of businesses or assets, spin-offs, exits from joint ventures, and strategic reviews that may lead to them."
+inclusion_rules = ["Announcing, closing, or abandoning a deal to buy or sell a business or asset.", "Gains, charges, or sales contributions the release ties to a named deal.", "Strategic reviews of businesses or assets."]
+exclusion_rules = ["Partnerships, licenses, or supply agreements that move no ownership.", "Growth measures that strip out deals, such as organic growth, with no deal named.", "Building or enlarging the company's own facilities: capital_investment."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 2159
+end = 2363
+element_id = "sentence-2158-2425"
+quote_sha256 = "5ae584610a3e1f72d335b7b60d6246546c1a130e700afdef36f685bde4b4e894"
+mask_ids = []
+event_id = "cik-0000310158:2025-06-30"
+doc_id = "0001104659-25-071380_tm2521736d1_ex99-1.htm@walker-1#12204c3ea96af1fd"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 4985
+end = 5150
+element_id = "sentence-4985-5150"
+quote_sha256 = "6f8e6df8bf0a19ba0e96b85d87830bac6f84755d9a3cc4f8c1f24d8f7c3c8670"
+mask_ids = []
+event_id = "cik-0000093410:2025-03-31"
+doc_id = "0000093410-25-000016_a03312025ex9918-k.htm@walker-1#61bc77f16419c9cf"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 3853
+end = 3963
+element_id = "sentence-3813-3964"
+quote_sha256 = "f529daee9830ed76cdc1f2931314b6008effcc0c645c10c112ff31c8969bd852"
+mask_ids = []
+event_id = "cik-0001751788:2024-09-30"
+doc_id = "0001751788-24-000147_exhibit991enrschedules3q24.htm@walker-1#1bc084b4ce094f03"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 2176
+end = 2295
+element_id = "sentence-2176-2295"
+quote_sha256 = "4dc6ecf46a11038ad6a69054653217a530df6e6a8fa69447943d91abba259f8c"
+mask_ids = []
+event_id = "cik-0000080424:2025-06-30"
+doc_id = "0000080424-25-000067_fy2425q4amj8-kexhibit991.htm@walker-1#0b6d6f7e99c00c15"
+
+[[themes]]
+theme_id = "legal"
+label = "Litigation and investigations"
+definition = "Lawsuits, government investigations, and enforcement actions involving the company, and the legal reserves, provisions, and settlements tied to them."
+inclusion_rules = ["The filing, progress, or resolution of litigation or an investigation.", "Legal reserves, provisions, or settlement payments."]
+exclusion_rules = ["Changes in laws, regulation, or government programs: regulation.", "Litigation named only within a generic list of risks."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 10689
+end = 10878
+element_id = "sentence-10689-10878"
+quote_sha256 = "870f7b80100f0b19d13bcd8dd21248621361ae784ab5192938613b9248b7e0bc"
+mask_ids = []
+event_id = "cik-0001403161:2024-09-30"
+doc_id = "0001403161-24-000053_q42024earningsrelease.htm@walker-1#b6d3e0b34bc31b6f"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 592
+end = 672
+element_id = "sentence-592-838"
+quote_sha256 = "83d9fa5f3ee12de155bdcdb345d9104a837860d8fd4f9b4c64d3d377e8f27ae4"
+mask_ids = []
+event_id = "cik-0000093410:2025-03-31"
+doc_id = "0000093410-25-000016_a03312025ex9918-k.htm@walker-1#61bc77f16419c9cf"
+
+[[themes.hard_negatives]]
+synthetic = true
+text = "Among the factors that could sway future results, the company lists pending lawsuits and inquiries."
+
+[[themes]]
+theme_id = "regulation"
+label = "Regulation and government programs"
+definition = "Changes in laws, regulation, or government programs, funding, and reimbursement that bear on the company's results or operations."
+inclusion_rules = ["Changes in regulation or in government programs and reimbursement that affect results.", "New or changed rules the company says it must comply with, and what complying costs or changes."]
+exclusion_rules = ["Tariffs, export controls, and sanctions: trade_policy.", "Regulatory decisions on specific drugs or devices: pipeline.", "Lawsuits, investigations, and legal reserves: legal.", "Regulation named only within a generic list of risks."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 2295
+end = 2461
+element_id = "sentence-2295-2461"
+quote_sha256 = "1033996b7718f65ebe467dd8fb8132f32c4dbcafef4ffbe373c67343c7a91044"
+mask_ids = []
+event_id = "cik-0000731766:2024-09-30"
+doc_id = "0000731766-24-000320_a2024q3exhibit991.htm@walker-1#cf348ad038762967"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 9269
+end = 9432
+element_id = "sentence-9269-9432"
+quote_sha256 = "01876588b3474070ccc21cf2c5eab44fcde860736b84a219b7ae99075e3eea0a"
+mask_ids = []
+event_id = "cik-0000050863:2024-09-28"
+doc_id = "0000050863-24-000147_q324_earningsrelease.htm@walker-1#3896eb161deb0cb9"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 18572
+end = 18823
+element_id = "sentence-18572-18823"
+quote_sha256 = "5ff87e6fdcda327ee47c92ff867bd986e2096c39dffeac2318e6b01b751fb516"
+mask_ids = []
+event_id = "cik-0000310158:2025-06-30"
+doc_id = "0001104659-25-071380_tm2521736d1_ex99-1.htm@walker-1#12204c3ea96af1fd"
+
+[[themes]]
+theme_id = "macro"
+label = "Economic and market conditions"
+definition = "Conditions outside the company that the release names: how a named economy, region, or industry is doing, a recovery or slowdown in one, or a named economic indicator."
+inclusion_rules = ["A named economy, region, or industry described as weak, improving, recovering, or slowing.", "A named economic indicator the release cites, such as interest rates, unemployment, or consumer or business confidence."]
+exclusion_rules = ["The company's own volumes, customers, or orders with no wider condition named: demand.", "An environment described only by its mood, such as volatile or uncertain, naming no economy, region, industry, or indicator.", "Generic risk lists in safe-harbor language."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 3527
+end = 3601
+element_id = "sentence-3527-3601"
+quote_sha256 = "bfaff56af675e5b9c6889b1fa54268e59a6b4b025e4d69e02326d5f5ebc5667a"
+mask_ids = []
+event_id = "cik-0001751788:2024-09-30"
+doc_id = "0001751788-24-000147_exhibit991enrschedules3q24.htm@walker-1#1bc084b4ce094f03"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 2353
+end = 2453
+element_id = "sentence-2353-2453"
+quote_sha256 = "1f7ea16eda1bc2cff624e6d79845730c0066cc2288a5a0e7c7207e59ef0b4719"
+mask_ids = []
+event_id = "cik-0000089800:2025-03-31"
+doc_id = "0000089800-25-000083_shwearningsrelease1q2025.htm@walker-1#2dfd6da9353c39c4"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 4077
+end = 4199
+element_id = "sentence-4077-4199"
+quote_sha256 = "d56c78273ac40b1f979cde6081f0a68c98bf46dfd743e6f37f0b17a7ba219f27"
+mask_ids = []
+event_id = "cik-0001403161:2024-09-30"
+doc_id = "0001403161-24-000053_q42024earningsrelease.htm@walker-1#b6d3e0b34bc31b6f"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 9163
+end = 9298
+element_id = "sentence-9163-9396"
+quote_sha256 = "9022921eabcdc408283c36b71758c63494c7298eda9e65f990ebedfc18c5c8b7"
+mask_ids = []
+event_id = "cik-0000089800:2025-03-31"
+doc_id = "0000089800-25-000083_shwearningsrelease1q2025.htm@walker-1#2dfd6da9353c39c4"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 559
+end = 607
+element_id = "sentence-470-689"
+quote_sha256 = "b25b2b7513f86ab253d7f67a9d87bb5d1873d1b961a0e3f378d9bd78be5a7918"
+mask_ids = []
+event_id = "cik-0000080424:2025-06-30"
+doc_id = "0000080424-25-000067_fy2425q4amj8-kexhibit991.htm@walker-1#0b6d6f7e99c00c15"
+
+[[themes]]
+theme_id = "supply"
+label = "Supply, production, and channel stock"
+definition = "The company's ability to make and deliver what it sells: production volumes and project start-ups, plant reliability, outages and maintenance, supplier and logistics disruptions, the stock its dealers and distributors hold, and inventory write-downs."
+inclusion_rules = ["Production output, start-ups, or capacity use.", "Planned or unplanned outages, turnarounds, force majeure, or supply disruptions.", "Dealers or distributors building or running down their stock, and inventory write-downs."]
+exclusion_rules = ["Spending to add capacity: capital_investment.", "Changes in what end customers buy: demand, even when inventory moves too.", "Input price changes with no disruption to supply: costs.", "The company's own inventory balance, reported with no supply problem named."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 6924
+end = 7104
+element_id = "sentence-6924-7104"
+quote_sha256 = "896b4cc2194b2b7230bacfa906490856198deddea8e03485197a42429725d8b6"
+mask_ids = []
+event_id = "cik-0001751788:2024-09-30"
+doc_id = "0001751788-24-000147_exhibit991enrschedules3q24.htm@walker-1#1bc084b4ce094f03"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 8708
+end = 8859
+element_id = "sentence-8708-8859"
+quote_sha256 = "8321b7e36f4ce05bd94a375c6f333c35f02df4a4f0464a556f9a92324a760c56"
+mask_ids = []
+event_id = "cik-0000093410:2025-03-31"
+doc_id = "0000093410-25-000016_a03312025ex9918-k.htm@walker-1#61bc77f16419c9cf"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 27049
+end = 27172
+element_id = "sentence-27049-27279"
+quote_sha256 = "b115db8b11ba5e6f4b53b5881342a3472ed1c9adaa06398d65e52b247a6ed4a8"
+mask_ids = []
+event_id = "cik-0000310158:2025-06-30"
+doc_id = "0001104659-25-071380_tm2521736d1_ex99-1.htm@walker-1#12204c3ea96af1fd"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 1943
+end = 2024
+element_id = "sentence-1943-2024"
+quote_sha256 = "e4f82411f87a7f9e9d7f6e940dc585a3c689c5d17016152db0ff6acfbd234823"
+mask_ids = []
+event_id = "cik-0000018230:2024-12-31"
+doc_id = "0000018230-25-000004_cat_exx991x4qx2024xearning.htm@walker-1#e5fd42a1cc1d8c96"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 3544
+end = 3693
+element_id = "sentence-3544-3693"
+quote_sha256 = "bbe7bd719e84829e4ba43b783d438f403abef18d698f214f299affbe2eb4dd03"
+mask_ids = []
+event_id = "cik-0000320187:2024-08-31"
+doc_id = "0000320187-24-000062_q1fy25exhibit991er.htm@walker-1#b4164926034d86ee"
+
+[[themes]]
+theme_id = "credit_quality"
+label = "Credit quality"
+definition = "How the loans and receivables a lending business holds are performing: delinquencies, write-offs, provisions for credit losses, and reserves."
+inclusion_rules = ["Past-due, delinquency, write-off, or charge-off rates and amounts.", "Provisions for credit losses, and reserve builds or releases.", "Allowances for credit losses relative to the loan book."]
+exclusion_rules = ["Growth in interest or financing revenue, which says nothing about repayment.", "Legal or litigation provisions: legal."]
+sector_applicability = ["lending"]
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 3661
+end = 3802
+element_id = "sentence-3661-3802"
+quote_sha256 = "69dda8428502dd7492ec034d6ec72d599ddb2f87699f93430472363357ae57b4"
+mask_ids = []
+event_id = "cik-0000004962:2024-09-30"
+doc_id = "0000004962-24-000067_q324exhibit991.htm@walker-1#e61cea93322df3f1"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 18620
+end = 18718
+element_id = "sentence-18620-18718"
+quote_sha256 = "0fa2d122e919c27c7100910a40fab21f01145aa58918b9cb66fa12b249a0ef01"
+mask_ids = []
+event_id = "cik-0000018230:2024-12-31"
+doc_id = "0000018230-25-000004_cat_exx991x4qx2024xearning.htm@walker-1#e5fd42a1cc1d8c96"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 17982
+end = 18108
+element_id = "sentence-17982-18224"
+quote_sha256 = "ba37f622d759201db7781caf97f7eccc2664cdfe4a7c7232da775f169a9f601f"
+mask_ids = []
+event_id = "cik-0000018230:2024-12-31"
+doc_id = "0000018230-25-000004_cat_exx991x4qx2024xearning.htm@walker-1#e5fd42a1cc1d8c96"
+
+[[themes]]
+theme_id = "mix"
+label = "Sales mix"
+definition = "How a change in the make-up of what the company sells, across products, brands, channels, regions, or customers, moved its sales, average prices, or margins."
+inclusion_rules = ["Sales or margin effects the release credits to product, brand, or business mix.", "A rising or falling share of sales made through one channel, such as online, or in one region.", "A change in the blend of customers or members that the release says moved results."]
+exclusion_rules = ["Where profits were earned, as it bears on the tax rate: tax.", "Volume or price changes with no shift in make-up named: demand or pricing.", "The make-up of inventory or other balances rather than of sales."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 6954
+end = 7064
+element_id = "sentence-6954-7064"
+quote_sha256 = "f486733831d7786d905baeb0cf5eaad7833ee866e9c459ea2dd2edd8bcdc8835"
+mask_ids = []
+event_id = "cik-0000080424:2025-06-30"
+doc_id = "0000080424-25-000067_fy2425q4amj8-kexhibit991.htm@walker-1#0b6d6f7e99c00c15"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 491
+end = 560
+element_id = "sentence-491-560"
+quote_sha256 = "a8b7fe03f524328536aae4d94fae654737826c6787b14c6134cfe8599a253e45"
+mask_ids = []
+event_id = "cik-0000104169:2025-04-30"
+doc_id = "0000104169-25-000069_earningsreleasefy26q1.htm@walker-1#8a81f94a6037d164"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 10395
+end = 10538
+element_id = "sentence-10395-10538"
+quote_sha256 = "31ae3d41d7972b7d6bd80101648c33c1bbb57a45ecba68a49d4c182273ffd268"
+mask_ids = []
+event_id = "cik-0000310158:2025-06-30"
+doc_id = "0001104659-25-071380_tm2521736d1_ex99-1.htm@walker-1#12204c3ea96af1fd"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 9537
+end = 9649
+element_id = "sentence-9537-9649"
+quote_sha256 = "be669e83a42bd820dfddc55b6832ed6bf263b9d338ffd7c8135ddce929966a9d"
+mask_ids = []
+event_id = "cik-0000018230:2024-12-31"
+doc_id = "0000018230-25-000004_cat_exx991x4qx2024xearning.htm@walker-1#e5fd42a1cc1d8c96"
+
+[[themes]]
+theme_id = "tax"
+label = "Income taxes"
+definition = "The company's income taxes: the rate it paid or expects to pay and why that rate moved, one-off tax charges and benefits, new tax laws, settled tax audits, and charges for deferred tax assets it may never use."
+inclusion_rules = ["A reported or forecast tax rate, with any reason the release gives for its level or change.", "One-off tax charges or benefits, such as from an audit, a change in tax law, or doubt about using deferred tax assets.", "What a change in tax law or tax rules did, or is expected to do, to results; code regulation as well."]
+exclusion_rules = ["Figures that name taxes only as a line, such as earnings before them, with nothing said about tax itself.", "Duties and tariffs on goods crossing borders: trade_policy.", "Tax effects of other items, listed only to reconcile a non-GAAP measure.", "Taxes named only within a generic list of risks."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 9650
+end = 9794
+element_id = "sentence-9650-9794"
+quote_sha256 = "84b34c6256270a0fcb7eeea096a420c6e39220ecb474020e1a4865fc8c98bb6e"
+mask_ids = []
+event_id = "cik-0000018230:2024-12-31"
+doc_id = "0000018230-25-000004_cat_exx991x4qx2024xearning.htm@walker-1#e5fd42a1cc1d8c96"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 11365
+end = 11550
+element_id = "sentence-11365-11550"
+quote_sha256 = "72710b734b97bf9d253b3d34e246bc2433b2d5b22c264e0c5b26ac123071da16"
+mask_ids = []
+event_id = "cik-0000310158:2025-06-30"
+doc_id = "0001104659-25-071380_tm2521736d1_ex99-1.htm@walker-1#12204c3ea96af1fd"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 4034
+end = 4154
+element_id = "sentence-4034-4154"
+quote_sha256 = "bd6151aa97f6d1e861df86ba4a65920b15c89f225ebcd57db07b19c1909d97da"
+mask_ids = []
+event_id = "cik-0000050863:2024-09-28"
+doc_id = "0000050863-24-000147_q324_earningsrelease.htm@walker-1#3896eb161deb0cb9"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 3723
+end = 3928
+element_id = "sentence-3723-3928"
+quote_sha256 = "6ca27b792a7dee4e617338a4116242942b2511005be6f50878bae0458864ba4b"
+mask_ids = []
+event_id = "cik-0000089800:2025-03-31"
+doc_id = "0000089800-25-000083_shwearningsrelease1q2025.htm@walker-1#2dfd6da9353c39c4"
+
+[[themes.hard_negatives]]
+synthetic = true
+text = "New import duties on steel raised what the plant paid for parts this quarter."
+
+[[themes]]
+theme_id = "impairments"
+label = "Impairments and write-downs"
+definition = "Charges that lower the book value of assets the company owns: impairments of goodwill, brands and other intangibles, plants and equipment, or investments, and write-downs or write-offs of those assets."
+inclusion_rules = ["Charges for impaired goodwill, intangible assets, plants, equipment, or investments.", "Write-downs of factories, equipment, or other long-lived assets, including those that come with a restructuring; code restructuring as well.", "A past impairment the release cites to explain a change in results."]
+exclusion_rules = ["Write-downs of inventory, including charges for stock the company cannot sell or holds too much of: supply.", "Loans or receivables that go unpaid, and reserves set aside for them: credit_quality.", "Charges for deferred tax assets the company may never use: tax.", "Impairments named only in a generic list of risks or of items a forecast leaves out."]
+sector_applicability = "all"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 3836
+end = 3939
+element_id = "sentence-3836-4032"
+quote_sha256 = "3aec988fffe53f29c43ac9ae2dbf6ab3e408a58b4d020e0234acdf1f9c2f0d8d"
+mask_ids = []
+event_id = "cik-0000050863:2024-09-28"
+doc_id = "0000050863-24-000147_q324_earningsrelease.htm@walker-1#3896eb161deb0cb9"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 2607
+end = 2729
+element_id = "sentence-2426-2813"
+quote_sha256 = "c903428df7af3e753e636d43bc16a8de145c3936e69a3bc50b63b3166935dbec"
+mask_ids = []
+event_id = "cik-0000080424:2025-06-30"
+doc_id = "0000080424-25-000067_fy2425q4amj8-kexhibit991.htm@walker-1#0b6d6f7e99c00c15"
+
+[[themes.positive_examples]]
+synthetic = false
+
+[themes.positive_examples.pointer]
+start = 33549
+end = 33648
+element_id = "sentence-33549-33648"
+quote_sha256 = "601e82d349c556c4937c3d654a8712af8f0c6f45373a1f6ea46fd57d5a21dab7"
+mask_ids = []
+event_id = "cik-0001751788:2024-09-30"
+doc_id = "0001751788-24-000147_exhibit991enrschedules3q24.htm@walker-1#1bc084b4ce094f03"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 590
+end = 798
+element_id = "sentence-590-798"
+quote_sha256 = "0f78d53731f6076e1dd70be50e31ddcc58b83cecb65cfd98cf85a2a58a3781d0"
+mask_ids = []
+event_id = "cik-0001045810:2025-04-27"
+doc_id = "0001045810-25-000115_q1fy26pr.htm@walker-1#3dc4ee963e1c01aa"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 4034
+end = 4154
+element_id = "sentence-4034-4154"
+quote_sha256 = "bd6151aa97f6d1e861df86ba4a65920b15c89f225ebcd57db07b19c1909d97da"
+mask_ids = []
+event_id = "cik-0000050863:2024-09-28"
+doc_id = "0000050863-24-000147_q324_earningsrelease.htm@walker-1#3896eb161deb0cb9"
+
+[[themes.hard_negatives]]
+synthetic = false
+
+[themes.hard_negatives.pointer]
+start = 18719
+end = 18813
+element_id = "sentence-18719-18813"
+quote_sha256 = "9533a4df3804593dc96243e848e163a1459babb0871d065dc2eaceca8b8118fa"
+mask_ids = []
+event_id = "cik-0000018230:2024-12-31"
+doc_id = "0000018230-25-000004_cat_exx991x4qx2024xearning.htm@walker-1#e5fd42a1cc1d8c96"

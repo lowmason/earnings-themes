@@ -1,7 +1,7 @@
 """docs/data-dictionary.md documents every field and value of the core contracts
 and of the ingestion records: the canonicalizer's, the capture's, layout-1's, the
 retrieval metadata, the cohort's records and curated files, and Stage 5's event,
-pilot, and processing-state records.
+pilot, processing-state, and coverage records; and earnings-themes' Stage 6 records.
 
 AGENTS.md §191: document public interfaces and update the data dictionary in the
 same change. A contract that gains, loses, or renames a field fails here.
@@ -18,9 +18,12 @@ from earnings_ingestion import browser, layout
 from earnings_ingestion.cohort import config as cohort_config
 from earnings_ingestion.cohort import records as cohort
 from earnings_ingestion.cohort import register as cohort_register
-from earnings_ingestion.events import acceptance, states
+from earnings_ingestion.events import acceptance, coverage, states
 from earnings_ingestion.events import records as events
 from earnings_ingestion.fetch import records as fetch
+from earnings_themes import annotation, codebook, gold, problems, split
+from earnings_themes import records as themes
+from earnings_themes.anchoring import SpanPointer
 from pydantic import BaseModel
 
 DICTIONARY = Path(__file__).resolve().parents[2] / "docs" / "data-dictionary.md"
@@ -100,6 +103,46 @@ MODELS = [
     events.PilotManifest,
     states.ExhibitAttempt,
     states.StateTransition,
+    coverage.PilotPin,
+    coverage.StateCount,
+    coverage.CoverageGap,
+    coverage.AppliedOverride,
+    coverage.NoThemeCount,
+    coverage.CoverageReport,
+    themes.Pin,
+    split.SplitWindow,
+    split.SplitEvent,
+    split.SplitRow,
+    split.SplitManifest,
+    SpanPointer,
+    codebook.ExamplePointer,
+    codebook.Example,
+    codebook.Theme,
+    codebook.DiscoveryCorpus,
+    codebook.CodebookRules,
+    codebook.Approval,
+    codebook.DraftingAid,
+    codebook.Codebook,
+    codebook.ExampleDraft,
+    codebook.ThemeDraft,
+    codebook.CodebookDraft,
+    gold.GoldQuote,
+    gold.GoldClaim,
+    gold.GoldAssignment,
+    gold.HardNegative,
+    gold.ReleaseIdentification,
+    gold.DraftCounts,
+    gold.CodebookRef,
+    gold.Gold,
+    gold.FixtureNegatives,
+    gold.HardNegativeSet,
+    annotation.QuoteDraft,
+    annotation.ClaimDraft,
+    annotation.AssignmentDraft,
+    annotation.HardNegativeDraft,
+    annotation.GoldDraft,
+    annotation.FixtureDraft,
+    annotation.CuratedDraft,
 ]
 ENUMS = [
     core.RightsStatus,
@@ -134,6 +177,14 @@ ENUMS = [
     states.MissingReason,
     states.ExhibitChoice,
     states.AttemptOutcome,
+    problems.Problem,
+    split.Partition,
+    split.ExclusionReason,
+    codebook.CodebookStatus,
+    gold.Origin,
+    gold.Support,
+    gold.ReleaseLabel,
+    gold.NegativeKind,
 ]
 
 
@@ -163,4 +214,8 @@ def test_the_documented_versions_are_the_packages() -> None:
     assert (
         f"## earnings-ingestion records, schema version"
         f" {ingestion.INGESTION_SCHEMA_VERSION}\n" in text
+    )
+    assert (
+        f"## earnings-themes records, schema version {themes.THEMES_SCHEMA_VERSION}\n"
+        in text
     )

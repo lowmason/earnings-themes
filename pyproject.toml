@@ -44,7 +44,11 @@ extend-exclude = ["*.md"]
 # -m "not live and not browser" deselects live and browser tests unless the command line
 # passes its own -m, such as -m live or -m browser: pytest keeps the last -m it is given
 # (A §217: live checks are opt-in; Stage 3 spec, Checks: so are browser checks).
-addopts = ["--import-mode=importlib", "-m", "not live and not browser"]
+# --tb=short: pytest's default --tb=auto prints a failing frame's arguments, which in
+# Stage 6's local legs may hold pilot text (GS13). A command-line --tb=long or
+# --tb=auto, or --full-trace, still brings them back, so pass those only on a named
+# test that reads no pilot text.
+addopts = ["--import-mode=importlib", "--tb=short", "-m", "not live and not browser"]
 testpaths = ["packages", "apps", "tests"]
 # strict: unknown config keys, unregistered markers, non-strict xfail, and duplicate
 # parametrize IDs are errors.

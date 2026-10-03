@@ -1,0 +1,314 @@
+{
+ "content_hash": "5c4a2f3c5ed9ffc2cf0065658ec4e75311220338cf9b3fe07802c0db9fcd0e53",
+ "pin": {
+  "events_hash": "2348671b3ae8021d644df12ae2f539258670546970c918f8edb231ba1885c3b7",
+  "events_version": 1,
+  "pilot_hash": "3839c800151cc646f11064efdce583f988e511265f8893c90e9a2f2549145926",
+  "pilot_id": "djia-2024q3-2026q2-pilot",
+  "pilot_version": 1,
+  "universe_operative_hash": "c350923422d9bf2e65a0b5929f4c0d45370458c6a044c3de012a1dfeb116e573",
+  "universe_version": 1
+ },
+ "rows": [
+  {
+   "event_id": "cik-0000004962:2024-09-30",
+   "issuer_id": "cik-0000004962",
+   "partition": "train",
+   "period_end": "2024-09-30",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000004962:2026-06-30",
+   "issuer_id": "cik-0000004962",
+   "partition": "excluded",
+   "period_end": "2026-06-30",
+   "reason": "issuer_in_earlier_partition"
+  },
+  {
+   "event_id": "cik-0000012927:2025-12-31",
+   "issuer_id": "cik-0000012927",
+   "partition": "dev",
+   "period_end": "2025-12-31",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000018230:2024-12-31",
+   "issuer_id": "cik-0000018230",
+   "partition": "train",
+   "period_end": "2024-12-31",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000019617:2025-09-30",
+   "issuer_id": "cik-0000019617",
+   "partition": "dev",
+   "period_end": "2025-09-30",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000021344:2025-12-31",
+   "issuer_id": "cik-0000021344",
+   "partition": "dev",
+   "period_end": "2025-12-31",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000050863:2024-09-28",
+   "issuer_id": "cik-0000050863",
+   "partition": "train",
+   "period_end": "2024-09-28",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000051143:2024-12-31",
+   "issuer_id": "cik-0000051143",
+   "partition": "train",
+   "period_end": "2024-12-31",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000063908:2025-09-30",
+   "issuer_id": "cik-0000063908",
+   "partition": "dev",
+   "period_end": "2025-09-30",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000066740:2025-03-31",
+   "issuer_id": "cik-0000066740",
+   "partition": "train",
+   "period_end": "2025-03-31",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000080424:2025-06-30",
+   "issuer_id": "cik-0000080424",
+   "partition": "train",
+   "period_end": "2025-06-30",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000086312:2026-06-30",
+   "issuer_id": "cik-0000086312",
+   "partition": "test",
+   "period_end": "2026-06-30",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000089800:2024-12-31",
+   "issuer_id": "cik-0000089800",
+   "partition": "train",
+   "period_end": "2024-12-31",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000089800:2025-03-31",
+   "issuer_id": "cik-0000089800",
+   "partition": "train",
+   "period_end": "2025-03-31",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000093410:2025-03-31",
+   "issuer_id": "cik-0000093410",
+   "partition": "train",
+   "period_end": "2025-03-31",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000104169:2025-04-30",
+   "issuer_id": "cik-0000104169",
+   "partition": "train",
+   "period_end": "2025-04-30",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000200406:2024-12-29",
+   "issuer_id": "cik-0000200406",
+   "partition": "train",
+   "period_end": "2024-12-29",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000310158:2025-06-30",
+   "issuer_id": "cik-0000310158",
+   "partition": "train",
+   "period_end": "2025-06-30",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000318154:2025-09-30",
+   "issuer_id": "cik-0000318154",
+   "partition": "dev",
+   "period_end": "2025-09-30",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000320187:2024-08-31",
+   "issuer_id": "cik-0000320187",
+   "partition": "train",
+   "period_end": "2024-08-31",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000320187:2026-05-31",
+   "issuer_id": "cik-0000320187",
+   "partition": "excluded",
+   "period_end": "2026-05-31",
+   "reason": "issuer_in_earlier_partition"
+  },
+  {
+   "event_id": "cik-0000320193:2025-09-27",
+   "issuer_id": "cik-0000320193",
+   "partition": "dev",
+   "period_end": "2025-09-27",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000354950:2026-02-01",
+   "issuer_id": "cik-0000354950",
+   "partition": "test",
+   "period_end": "2026-02-01",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000731766:2024-09-30",
+   "issuer_id": "cik-0000731766",
+   "partition": "train",
+   "period_end": "2024-09-30",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000731766:2026-06-30",
+   "issuer_id": "cik-0000731766",
+   "partition": "excluded",
+   "period_end": "2026-06-30",
+   "reason": "issuer_in_earlier_partition"
+  },
+  {
+   "event_id": "cik-0000732712:2025-12-31",
+   "issuer_id": "cik-0000732712",
+   "partition": "dev",
+   "period_end": "2025-12-31",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000732712:2026-03-31",
+   "issuer_id": "cik-0000732712",
+   "partition": "excluded",
+   "period_end": "2026-03-31",
+   "reason": "issuer_in_earlier_partition"
+  },
+  {
+   "event_id": "cik-0000773840:2025-12-31",
+   "issuer_id": "cik-0000773840",
+   "partition": "dev",
+   "period_end": "2025-12-31",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000789019:2026-03-31",
+   "issuer_id": "cik-0000789019",
+   "partition": "test",
+   "period_end": "2026-03-31",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000858877:2026-04-25",
+   "issuer_id": "cik-0000858877",
+   "partition": "test",
+   "period_end": "2026-04-25",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0000886982:2024-12-31",
+   "issuer_id": "cik-0000886982",
+   "partition": "train",
+   "period_end": "2024-12-31",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0001018724:2025-03-31",
+   "issuer_id": "cik-0001018724",
+   "partition": "train",
+   "period_end": "2025-03-31",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0001045810:2024-10-27",
+   "issuer_id": "cik-0001045810",
+   "partition": "train",
+   "period_end": "2024-10-27",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0001045810:2025-04-27",
+   "issuer_id": "cik-0001045810",
+   "partition": "train",
+   "period_end": "2025-04-27",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0001108524:2026-01-31",
+   "issuer_id": "cik-0001108524",
+   "partition": "test",
+   "period_end": "2026-01-31",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0001403161:2024-09-30",
+   "issuer_id": "cik-0001403161",
+   "partition": "train",
+   "period_end": "2024-09-30",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0001403161:2026-06-30",
+   "issuer_id": "cik-0001403161",
+   "partition": "excluded",
+   "period_end": "2026-06-30",
+   "reason": "issuer_in_earlier_partition"
+  },
+  {
+   "event_id": "cik-0001652044:2026-06-30",
+   "issuer_id": "cik-0001652044",
+   "partition": "test",
+   "period_end": "2026-06-30",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0001744489:2026-03-28",
+   "issuer_id": "cik-0001744489",
+   "partition": "test",
+   "period_end": "2026-03-28",
+   "reason": null
+  },
+  {
+   "event_id": "cik-0001751788:2024-09-30",
+   "issuer_id": "cik-0001751788",
+   "partition": "train",
+   "period_end": "2024-09-30",
+   "reason": null
+  }
+ ],
+ "schema_version": 1,
+ "split_policy": "issuer-time/1",
+ "split_version": 1,
+ "windows": [
+  {
+   "first": "2024Q3",
+   "last": "2025Q2",
+   "partition": "train"
+  },
+  {
+   "first": "2025Q3",
+   "last": "2025Q4",
+   "partition": "dev"
+  },
+  {
+   "first": "2026Q1",
+   "last": "2026Q2",
+   "partition": "test"
+  }
+ ]
+}

@@ -1011,3 +1011,99 @@
       co-candidate, an unread candidate, and a passed-over filing. Recording each
       candidate's reading as a fact would reverse P7-15, so that is the user's
       open choice; if adopted, the readings are marked as inferred.
+
+## 9-pilot-codebook-split-and-gold-set-protocol — 2026-10-03
+
+- [ ] Draft, verify, and sign the other 17 train and 8 dev bundles of pilot v1
+      (plan 9, Handoffs). Stage 6's exit needed three; Stage 11 uses all 28.
+      Each follows plan 9's Task 19, Steps 1 to 7
+      (specs/plans/completed/9-pilot-codebook-split-and-gold-set-protocol.md):
+      a fresh Claude Opus 5.5 session per bundle under
+      evaluation/djia-2024q3-2026q2/pilot-v1/briefs/gold.md, then the user's
+      verification, omission pass, and signature. Size: plan. Done when: all 28
+      train and dev gold files under evaluation/djia-2024q3-2026q2/pilot-v1/gold/
+      are committed and `earnings-pipeline gold validate` passes.
+- [ ] Harden the gold before the next Task 19 bundle is anchored (plan 9's final
+      review: M1, T8-M1, and M5, deferred by the user on 2026-10-03). (1) `_ids`
+      in packages/earnings-themes/src/earnings_themes/annotation.py accepts a
+      claim with no assignment row, and a quote that no claim or hard negative
+      cites, though R9.9 codes every claim (a theme or `unmatched`): refuse both,
+      with a new `Problem` member and its row in docs/data-dictionary.md; the three
+      committed bundles already pass. (2) `build_gold` and `build_curated` take
+      `drafting_aid` from the working copy, not the kept draft, so an edit there
+      would change the recorded model or date (GS5): take it from the draft, and
+      confirm by byte compare that the three committed bundles and
+      tests/fixtures/gold/hard-negatives.toml re-anchor unchanged. (3) Count, by a
+      program that prints counts only, the narrative sentences of the 40 pilot
+      documents that sit in a walker-1 list item under an `other` element, which
+      `anchor` refuses as `not_narrative`
+      (packages/earnings-themes/src/earnings_themes/anchoring.py:119-120, T6-M1);
+      Stage 1's fixtures hold 10 such sentences, in 1 of 8. Size: plan. Done when:
+      (1) and (2) land with their tests, and (3)'s count is in
+      docs/verification/pilot-v1-gold-set.md, before any further bundle is
+      anchored.
+- [ ] Move `canonical_json` and its digest into earnings-core (plan 9, Task 3; the
+      user's decision of 2026-09-28; final review M6).
+      packages/earnings-themes/src/earnings_themes/records.py:75-91 copies them
+      from packages/earnings-ingestion/src/earnings_ingestion/cohort/digests.py,
+      since themes may not import ingestion and Stage 6 left earnings-core
+      unchanged (GS17); records.py:48-57 also repeats the pilot pin that
+      packages/earnings-ingestion/src/earnings_ingestion/events/coverage.py:60-70
+      defines. Each copy is pinned by its own package's reproduction tests.
+      Size: plan. Done when: in the first stage whose spec may change
+      earnings-core, both packages import one core definition of each, and every
+      committed record (cohort, events, split, coverage report, codebook v0, gold,
+      and hard negatives) still reproduces byte for byte.
+- [ ] Stage 6's test and validation gaps that the final review deferred (plan 9's
+      ledger Minors, triaged 2026-10-03). Under packages/earnings-themes/ unless
+      named: the pin's `universe_version` comes from the caller's universe, not the
+      pilot's definition (packages/earnings-ingestion/src/earnings_ingestion/events/coverage.py,
+      T2-M1);
+      `pilot_pin`'s two chain refusals are untested (T2-M2); `canonical_json`,
+      `digest`, `record_json`, `describe`, `read_json`, `parse`, and refusal
+      ordering have no direct test (records.py, T3-M5); nor do `partition_of`'s
+      `KeyError`, `events_in`, a row's reason only when excluded, or the
+      fixed-windows check (split.py, T4-M3); the Stage 1 anchoring test accepts any
+      result past 500 of 686 sentences instead of pinning exact counts (T6-M2);
+      `bundle_problems` has no production caller, and its mask branch is untested
+      (anchoring.py:100-112, T6-M4); P9-19's type order is untested for list items,
+      footnotes, speaker turns, and sections (T6-M5); several validate and freeze
+      branches are untested (codebook.py, T7-M1); `build_synthetic` gives every
+      synthetic bundle one `doc_id`, so a cross-bundle swap is a no-op
+      (synthetic.py:49, T7-M6); `validate_curated` turns a missing document
+      into a spurious `counts_mismatch` and never refuses a duplicate fixture ID
+      (annotation.py, T8-M2); the views have no direct test (view.py, T9-M1); the
+      import boundary blocks httpx but not requests, aiohttp, or urllib3 (T9-M2);
+      `fixture_event_ids` is never tested with a match (apps/earnings-pipeline,
+      stage6.py, T10-M1); the ADR's citation of the hash is checked in two places,
+      and freeze never re-validates the bytes it writes (codebook_cli.py and
+      codebook.py:346, T11-M2); several CLI branches are untested and one
+      assertion is vacuous (apps/earnings-pipeline/tests/test_stage6_cli.py:432-438;
+      T11-M3, T11-M4, T11-M6, T12-M6); `gold anchor --check` returns before the
+      committed-content pre-check (gold_cli.py, T12-M2); the hard-negatives
+      offline test runs in the real checkout rather than a copy of the committed
+      files (T13-M1); and `pinned_codebook` loads v0 without rehashing it
+      (codebook_cli.py:150-158). Size: plan. Done when: a plan lands each with its
+      test, or records why one is dropped.
+- [ ] Settle two anchoring questions before Stage 7 recomputes context hashes or
+      fixes its narrative set: pin `context_hash`'s byte format with a
+      known-answer test, and add `ensure_ascii=False` to its row in
+      docs/data-dictionary.md (T6-M3); and decide whether a list item under an
+      `other` element becomes quotable, using the count the bundle-hardening item
+      above records (T6-M1). Code: packages/earnings-themes/src/earnings_themes/anchoring.py.
+      Size: plan. Done when: Stage 7's plan lands both, or records why not.
+- [ ] Refuse a committed test-partition gold at validate time (T12-M1):
+      `gold validate` never calls `readable()`, so a hand-committed test bundle
+      would validate before Stage 14
+      (apps/earnings-pipeline/src/earnings_pipeline/gold_cli.py). Size: quick-fix.
+      Done when: `gold validate` refuses test gold, with a test, or Stage 14's
+      commit relaxes `readable()`.
+- [ ] Hold `codebook freeze --adr` to a repo-relative path under docs/adr/
+      (T11-M1); v0's committed path is. apps/earnings-pipeline/src/earnings_pipeline/codebook_cli.py.
+      Size: quick-fix. Done when: it lands with a test, before codebook v1 is
+      frozen.
+- [ ] Watch `fail(f"Refused: {error}")`, which prints an error's raw text at
+      apps/earnings-pipeline/src/earnings_pipeline/stage6.py:178,199 and
+      pilot_cli.py:69-70,95-96 (T10-M3). Today its inputs are config and state
+      rows, never document text. Size: quick-fix. Revisit if: a stage writes free
+      text to the state table or to the pilot's records.

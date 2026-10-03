@@ -1627,3 +1627,571 @@ Why an exhibit was tried, in R1.2's order.
   written once; a later run keeps one that differs only in the Python, lxml, and
   libxml2 versions its manifest records, as another environment writes it, and
   reports any other difference as a problem.
+## earnings-ingestion coverage records, schema version 1
+
+`earnings_ingestion.events.coverage` builds Stage 6's D4 coverage report from the
+state table: the observed state of each pinned pilot document, read only from the
+runs the report names (the Stage 6 spec, §The coverage report; GS8).
+
+### `PilotPin`
+
+GS2's pin: the pilot, its event manifest, and its universe, each by version and hash.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `pilot_id` | ID part | The pilot's ID |
+| `pilot_version` | int ≥ 1 | Its version |
+| `pilot_hash` | 64 lowercase hex | Its `content_hash` |
+| `events_version` | int ≥ 1 | The event manifest it selected from |
+| `events_hash` | 64 lowercase hex | That manifest's `content_hash` |
+| `universe_version` | int ≥ 1 | The universe the pilot was selected over |
+| `universe_operative_hash` | 64 lowercase hex | That universe's `operative_hash` |
+
+### `StateCount`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `state` | `DocumentState` | A processing state |
+| `count` | int ≥ 0 | The pilot documents whose current state it is |
+
+### `CoverageGap`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `state` | `DocumentState` | `unavailable`, `restricted`, or `failed`, with a count of zero |
+| `basis` | `"D4"` | A missing class is a gap, never repaired by reselecting |
+
+### `AppliedOverride`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `override_id` | ID part | The acquisition override applied to a pilot document |
+| `document_id` | ID part | `<event_id>:release` |
+| `verdict` | `AttemptOutcome` | The verdict the override's attempt kept |
+
+### `NoThemeCount`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `partition` | `"train"`, `"dev"`, or `"test"` | The partition counted |
+| `bundles` | int ≥ 0 | Its bundles with signed gold |
+| `no_theme` | int ≥ 0 | Those whose gold has `no_theme` true |
+
+### `CoverageReport`
+
+`evaluation/<corpus>/pilot-v<N>/coverage-v<M>.json`, written once.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Ingestion record schema version |
+| `coverage_version` | int ≥ 1 | The report's version |
+| `pin` | `PilotPin` | The pilot it covers |
+| `run_ids` | tuple of ID part | The runs it read; a rebuild reads only these |
+| `documents` | int ≥ 0 | The pilot's documents |
+| `states` | tuple of `StateCount` | Every `DocumentState`, in order, summing to `documents` |
+| `gaps` | tuple of `CoverageGap` | Each failure class with no document |
+| `overrides` | tuple of `AppliedOverride` | Each override applied to a pilot document |
+| `no_theme` | tuple of `NoThemeCount` | Empty until Stage 11 adds train and dev, and Stage 14 test (R12.4, GS18) |
+| `content_hash` | 64 lowercase hex | SHA-256 of the canonical JSON of every other field |
+
+## earnings-themes records, schema version 1
+
+`earnings_themes` holds Stage 6's split, codebook, and gold contracts (the Stage 6
+spec, specs/completed/pilot-codebook-split-and-gold-set-protocol.md). Every model is strict,
+frozen, and refuses unknown fields. A committed record holds IDs, hashes, pointers,
+and the user's words, never a release's wording: a quote is a pointer, and the
+wording guard refuses any 40-character window, dates masked, shared with a pilot
+document or a Stage 1 fixture.
+
+### `Problem`
+
+Stage 6's own refusal reasons; a span check's reason is earnings-core's
+`RejectionReason`. A refusal names its item by ID or field path, never by text.
+
+| Value | Meaning |
+| --- | --- |
+| `malformed` | A draft item is inconsistent, such as a synthetic example with an event |
+| `not_narrative` | A quote overlaps a table, cell, page artifact, or other non-narrative element (GS15) |
+| `element_mismatch` | A pointer names a narrative element that holds its span but is not the most specific one (P9-19) |
+| `quote_hash_mismatch` | A pointer's slice does not hash to its `quote_sha256` |
+| `context_hash_mismatch` | Its context does not hash to its `context_sha256` |
+| `masks_mismatch` | Its `mask_ids` are not the masks over it |
+| `wrong_pin` | The record names another pin |
+| `wrong_split` | It names another split |
+| `wrong_partition` | Its partition is not its event's |
+| `excluded_event` | Its event is excluded |
+| `wrong_codebook` | It names another codebook version |
+| `codebook_not_approved` | Its codebook is not approved |
+| `unsigned` | Its `annotator` is blank |
+| `no_theme_mismatch` | Its `no_theme` disagrees with its assignments |
+| `counts_mismatch` | Its origin counts disagree with its items |
+| `duplicate_id` | An ID repeats, or a theme takes the reserved `unmatched` |
+| `unknown_quote` | A claim names a quote the record lacks |
+| `unknown_claim` | An assignment names a claim the record lacks |
+| `unknown_theme` | An assignment, hard negative, or parent names a theme the codebook lacks |
+| `unknown_document` | The event or fixture has no document here, or is not in the split |
+| `tie_group` | A tie group holds rows of more than one claim, or only one row |
+| `source_wording` | A string shares a 40-character window with a document's text |
+| `outside_training` | A codebook example is not from a training bundle |
+| `synthetic_unflagged` | An example names no event and is not marked synthetic |
+| `parent_cycle` | Themes' parents form a cycle |
+| `discovery_corpus` | The codebook's discovery corpus is not the split's parsed training bundles |
+| `content_hash_mismatch` | A record's `content_hash` is not its content's |
+| `negative_kinds` | The curated hard negatives lack a kind |
+| `adr_not_cited` | ADR 0003 does not cite the codebook's content hash |
+
+### `Pin`
+
+`PilotPin`, as earnings-themes reads it: the same fields and values.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `pilot_id` | ID part | The pilot's ID |
+| `pilot_version` | int ≥ 1 | Its version |
+| `pilot_hash` | 64 lowercase hex | Its `content_hash` |
+| `events_version` | int ≥ 1 | The event manifest it selected from |
+| `events_hash` | 64 lowercase hex | That manifest's `content_hash` |
+| `universe_version` | int ≥ 1 | The universe the pilot was selected over |
+| `universe_operative_hash` | 64 lowercase hex | That universe's `operative_hash` |
+
+### `Partition`
+
+| Value | Meaning |
+| --- | --- |
+| `train` | Codebook discovery and training gold: calendar quarters 2024Q3 to 2025Q2 |
+| `dev` | Tuning: 2025Q3 to 2025Q4 |
+| `test` | Held out until Stage 14 freezes: 2026Q1 to 2026Q2 |
+| `excluded` | In no partition, for its `ExclusionReason` |
+
+### `ExclusionReason`
+
+| Value | Meaning |
+| --- | --- |
+| `issuer_in_earlier_partition` | Its issuer's home partition, that of its earliest pilot event, is an earlier one |
+| `fixture_train_or_exclude` | Its release is a Stage 1 fixture outside train (GS10) |
+
+### `SplitWindow`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `partition` | `Partition` | `train`, `dev`, or `test` |
+| `first` | `YYYYQn` | Its first calendar quarter |
+| `last` | `YYYYQn` | Its last, inclusive |
+
+### `SplitEvent`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part | A pilot event |
+| `issuer_id` | ID part | Its issuer |
+| `period_end` | date | Its fiscal period's end, which places it in a quarter |
+
+### `SplitRow`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part | A pilot event |
+| `issuer_id` | ID part | Its issuer |
+| `period_end` | date | Its fiscal period's end |
+| `partition` | `Partition` | Where `issuer-time/1` puts it |
+| `reason` | `ExclusionReason` or null | Exactly for `excluded` |
+
+### `SplitManifest`
+
+`evaluation/<corpus>/pilot-v<N>/split-v<M>.json`, written once.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Themes record schema version |
+| `split_policy` | `"issuer-time/1"` | The rule: each issuer's events go to its home partition, or are excluded |
+| `split_version` | int ≥ 1 | The split's version |
+| `windows` | tuple of `SplitWindow` | The policy's fixed windows |
+| `pin` | `Pin` | The pilot it splits |
+| `rows` | tuple of `SplitRow` | One per pilot event, sorted by `event_id` |
+| `content_hash` | 64 lowercase hex | SHA-256 of the canonical JSON of every other field |
+
+### `SpanPointer`
+
+A quote, by position: the committed form of evidence.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `start` | int ≥ 0 | Half-open start in the canonical text |
+| `end` | int > `start` | Half-open end |
+| `element_id` | string | The most specific narrative element that contains it |
+| `quote_sha256` | 64 lowercase hex | SHA-256 of the slice's UTF-8 bytes |
+| `context_sha256` | 64 lowercase hex or null | When the text repeats: SHA-256 of `make_locator`'s prefix and suffix, as a compact JSON pair |
+| `mask_ids` | tuple of string | The boilerplate masks over it, each `<category>-<start>-<end>` |
+
+### `CodebookStatus`
+
+| Value | Meaning |
+| --- | --- |
+| `draft` | Frozen by the build but not approved; never written |
+| `approved` | Approved, with its `Approval`; the only status committed |
+
+### `ExamplePointer`
+
+A `SpanPointer` into a training bundle, with its document.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `start` | int ≥ 0 | As `SpanPointer` |
+| `end` | int > `start` | As `SpanPointer` |
+| `element_id` | string | As `SpanPointer` |
+| `quote_sha256` | 64 lowercase hex | As `SpanPointer` |
+| `context_sha256` | 64 lowercase hex or null | As `SpanPointer` |
+| `mask_ids` | tuple of string | As `SpanPointer` |
+| `event_id` | ID part | The training event |
+| `doc_id` | string | Its canonical document |
+
+### `Example`
+
+Exactly one kind: a pointer, or synthetic with its text.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `synthetic` | bool | True for an example in the user's words |
+| `text` | string or null | The synthetic example's text |
+| `pointer` | `ExamplePointer` or null | The quoted example |
+
+### `Theme`
+
+One theme (R9.2). Every list has at least one item.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `theme_id` | `^[a-z][a-z0-9_.-]*$` | Its ID; `unmatched` is reserved |
+| `parent_id` | theme ID or null | Its parent theme |
+| `label` | string | Its short name |
+| `definition` | string | Its definition |
+| `inclusion_rules` | tuple of string | What it covers |
+| `exclusion_rules` | tuple of string | What it does not |
+| `positive_examples` | tuple of `Example` | Examples it covers |
+| `hard_negatives` | tuple of `Example` | Confusable examples it does not |
+| `sector_applicability` | `"all"` or tuple of sector tag | Where it applies |
+
+### `DiscoveryCorpus`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `pin` | `Pin` | The pilot |
+| `split_hash` | 64 lowercase hex | The split's `content_hash` |
+| `event_ids` | tuple of ID part | The training events with a parsed document |
+| `doc_ids` | tuple of string | Their canonical documents, in the same order |
+
+### `CodebookRules`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `multi_label` | string | How a claim takes more than one theme |
+| `boilerplate` | string | How masked text is treated (R3.4) |
+
+### `Approval`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `approver` | string | Who approved the codebook |
+| `approved_on` | date | When |
+| `adr` | path | ADR 0003, which cites the content hash |
+
+### `DraftingAid`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `model_id` | string | The Claude model that drafted, in an interactive session outside the required path (GS4) |
+| `drafted_on` | date | When |
+
+### `Codebook`
+
+`codebooks/djia-pilot/codebook-v<N>.toml`, written once, approved.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Themes record schema version |
+| `codebook_id` | ID part | `djia-pilot` |
+| `codebook_version` | int ≥ 0 | `0` for Stage 6 |
+| `status` | `CodebookStatus` | `approved` exactly when `approval` is set |
+| `content_hash` | 64 lowercase hex | SHA-256 of the canonical JSON of every field but `status`, `approval`, and itself, so an ADR can cite it before approval |
+| `discovery_corpus` | `DiscoveryCorpus` | What it was discovered from |
+| `rules` | `CodebookRules` | Its rules |
+| `approval` | `Approval` or null | The approval |
+| `drafting_aid` | `DraftingAid` | The drafting session |
+| `themes` | tuple of `Theme` | Its themes |
+
+### `ExampleDraft`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part or null | The training event quoted; null for a synthetic example |
+| `text` | string | The exact text, or the synthetic example |
+| `prefix` | string | Text just before it, when it repeats |
+| `suffix` | string | Text just after it, when it repeats |
+| `synthetic` | bool | True for an example in the user's words |
+
+### `ThemeDraft`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `theme_id` | theme ID | As `Theme` |
+| `parent_id` | theme ID or null | As `Theme` |
+| `label` | string | As `Theme` |
+| `definition` | string | As `Theme` |
+| `inclusion_rules` | tuple of string | As `Theme` |
+| `exclusion_rules` | tuple of string | As `Theme` |
+| `sector_applicability` | `"all"` or tuple of sector tag | As `Theme` |
+| `positive_examples` | tuple of `ExampleDraft` | Anchored into `ExamplePointer`s |
+| `hard_negatives` | tuple of `ExampleDraft` | Anchored likewise |
+
+### `CodebookDraft`
+
+`data/runs/gold/drafts/codebook.draft.toml` and its working copy; never committed.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `codebook_id` | ID part | As `Codebook` |
+| `codebook_version` | int ≥ 0 | As `Codebook` |
+| `drafting_aid` | `DraftingAid` | The drafting session |
+| `rules` | `CodebookRules` | As `Codebook` |
+| `themes` | tuple of `ThemeDraft` | At least one |
+
+### `Origin`
+
+| Value | Meaning |
+| --- | --- |
+| `drafted_accepted` | In the draft, and unchanged in the working copy |
+| `drafted_edited` | In the draft, and changed in the working copy |
+| `annotator_added` | Only in the working copy |
+
+### `Support`
+
+| Value | Meaning |
+| --- | --- |
+| `supports` | The claim's quotes support it under the theme |
+| `does_not_support` | They do not |
+| `uncertain` | The annotator cannot tell |
+
+### `ReleaseLabel`
+
+| Value | Meaning |
+| --- | --- |
+| `release` | The document is the event's earnings release (R13.1) |
+| `not_release` | It is not; `true_accession` and `true_exhibit` may name the release |
+| `ambiguous` | The annotator cannot tell |
+
+### `NegativeKind`
+
+| Value | Meaning |
+| --- | --- |
+| `period` | Confusable by its period: another quarter's result |
+| `issuer` | Confusable by its issuer: another company's result |
+| `section` | Confusable by its section: boilerplate or a forward-looking statement that reports no result |
+
+### `GoldQuote`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `start` | int ≥ 0 | As `SpanPointer` |
+| `end` | int > `start` | As `SpanPointer` |
+| `element_id` | string | As `SpanPointer` |
+| `quote_sha256` | 64 lowercase hex | As `SpanPointer` |
+| `context_sha256` | 64 lowercase hex or null | As `SpanPointer` |
+| `mask_ids` | tuple of string | As `SpanPointer` |
+| `quote_id` | ID part | Its ID in the record |
+| `origin` | `Origin` | Where it came from |
+
+### `GoldClaim`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `claim_id` | ID part | Its ID in the record |
+| `quote_ids` | tuple of ID part | The quotes it rests on; at least one |
+| `claim` | string | The claim, in the user's words |
+| `origin` | `Origin` | Where it came from |
+
+### `GoldAssignment`
+
+One row per claim and theme (R9.9).
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `claim_id` | ID part | The claim |
+| `theme_id` | theme ID | A codebook theme, or `unmatched` |
+| `support` | `Support` | Whether the claim's quotes support it under the theme |
+| `tie_group` | ID part or null | Marks rows that are alternatives for one claim (R12.6) |
+| `origin` | `Origin` | Where it came from |
+
+### `HardNegative`
+
+A hard-negative claim (D4); its expected support is `does_not_support`.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `claim_id` | ID part | Its ID in the record |
+| `quote_ids` | tuple of ID part | Its quotes; at least one |
+| `claim` | string | The claim, in the user's words |
+| `negative_kind` | `NegativeKind` | What makes it confusable |
+| `theme_id` | theme ID or null | The theme it would wrongly support |
+| `origin` | `Origin` | Where it came from |
+
+### `ReleaseIdentification`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `label` | `ReleaseLabel` | R13.1's label |
+| `note` | string | The annotator's reason, in their words |
+| `true_accession` | accession or null | Only with `not_release`: the release's filing |
+| `true_exhibit` | string or null | Only with `not_release`: its exhibit |
+
+### `DraftCounts`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `accepted` | int ≥ 0 | Drafted items kept unchanged |
+| `edited` | int ≥ 0 | Drafted items changed |
+| `rejected` | int ≥ 0 | Drafted items removed |
+| `added` | int ≥ 0 | Items the annotator added |
+
+### `CodebookRef`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `codebook_id` | ID part | The codebook coded against |
+| `codebook_version` | int ≥ 0 | Its version |
+| `content_hash` | 64 lowercase hex | Its `content_hash` |
+
+### `Gold`
+
+`evaluation/<corpus>/pilot-v<N>/gold/<event>.toml`, written once, signed.
+`<event>` is the event ID with its colon as an underscore, such as
+`cik-0000051143_2024-12-31`, since Git on Windows cannot check out a path with a colon.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Themes record schema version |
+| `event_id` | ID part | The bundle's event |
+| `document_id` | ID part | `<event_id>:release` |
+| `doc_id` | string | Its canonical document |
+| `canonical_hash` | 64 lowercase hex | That document's `canonical_hash` |
+| `pin` | `Pin` | The pilot |
+| `split_hash` | 64 lowercase hex | The split's `content_hash` |
+| `partition` | `Partition` | The event's partition; never `excluded` |
+| `codebook` | `CodebookRef` | The approved codebook coded against |
+| `annotator` | string | The signature; blank until the user signs (GS4) |
+| `drafting_aid` | `DraftingAid` | The drafting session |
+| `counts` | `DraftCounts` | The origins, counted against the kept draft (GS5) |
+| `no_theme` | bool | True exactly when no row pairs a claim with a codebook theme under `supports` |
+| `release_identification` | `ReleaseIdentification` | Whether the document is the release |
+| `quotes` | tuple of `GoldQuote` | Its quotes |
+| `claims` | tuple of `GoldClaim` | Its claims |
+| `assignments` | tuple of `GoldAssignment` | Its assignments |
+| `hard_negatives` | tuple of `HardNegative` | Its hard-negative claims |
+
+### `FixtureNegatives`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `fixture_id` | ID part | A Stage 1 fixture |
+| `doc_id` | string | Its canonical document |
+| `canonical_hash` | 64 lowercase hex | That document's `canonical_hash` |
+| `quotes` | tuple of `GoldQuote` | The quotes; at least one |
+| `hard_negatives` | tuple of `HardNegative` | The hard-negative claims; at least one |
+
+### `HardNegativeSet`
+
+`tests/fixtures/gold/hard-negatives.toml`, written once, signed: outside the pilot,
+in no partition (GS10), though it carries the pin, as every Stage 6 record does.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Themes record schema version |
+| `pin` | `Pin` | The pilot |
+| `annotator` | string | The signature |
+| `drafting_aid` | `DraftingAid` | The drafting session |
+| `counts` | `DraftCounts` | The origins, over every fixture |
+| `codebook` | `CodebookRef` | The approved codebook |
+| `documents` | tuple of `FixtureNegatives` | At least one; with every `NegativeKind` among them |
+
+### `QuoteDraft`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `quote_id` | ID part | Its ID |
+| `text` | string | The exact text |
+| `prefix` | string | Text just before it, when it repeats |
+| `suffix` | string | Text just after it, when it repeats |
+
+### `ClaimDraft`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `claim_id` | ID part | As `GoldClaim` |
+| `quote_ids` | tuple of ID part | As `GoldClaim` |
+| `claim` | string | As `GoldClaim` |
+
+### `AssignmentDraft`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `claim_id` | ID part | As `GoldAssignment` |
+| `theme_id` | theme ID | As `GoldAssignment` |
+| `support` | `Support` | As `GoldAssignment` |
+| `tie_group` | ID part or null | As `GoldAssignment` |
+
+### `HardNegativeDraft`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `claim_id` | ID part | As `HardNegative` |
+| `quote_ids` | tuple of ID part | As `HardNegative` |
+| `claim` | string | As `HardNegative` |
+| `negative_kind` | `NegativeKind` | As `HardNegative` |
+| `theme_id` | theme ID or null | As `HardNegative` |
+
+### `GoldDraft`
+
+`data/runs/gold/drafts/<event>.draft.toml` and its working copy; never committed.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part | The bundle's event |
+| `annotator` | string | Blank in the draft; the user signs the working copy |
+| `drafting_aid` | `DraftingAid` | The drafting session |
+| `no_theme` | bool | As `Gold` |
+| `release_identification` | `ReleaseIdentification` | As `Gold` |
+| `quotes` | tuple of `QuoteDraft` | Quotes, by text |
+| `claims` | tuple of `ClaimDraft` | Claims |
+| `assignments` | tuple of `AssignmentDraft` | Assignments |
+| `hard_negatives` | tuple of `HardNegativeDraft` | Hard-negative claims |
+
+### `FixtureDraft`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `fixture_id` | ID part | A Stage 1 fixture |
+| `quotes` | tuple of `QuoteDraft` | At least one |
+| `hard_negatives` | tuple of `HardNegativeDraft` | At least one |
+
+### `CuratedDraft`
+
+`data/runs/gold/drafts/hard-negatives.draft.toml` and its working copy.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `annotator` | string | Blank in the draft; the user signs the working copy |
+| `drafting_aid` | `DraftingAid` | The drafting session |
+| `documents` | tuple of `FixtureDraft` | At least one |
+
+## Stage 6 files
+
+- **Committed, written once.** `evaluation/<corpus>/pilot-v<N>/split-v<M>.json`,
+  `coverage-v<M>.json`, and `gold/<event>.toml`; `codebooks/djia-pilot/
+  codebook-v<N>.toml`; and `tests/fixtures/gold/hard-negatives.toml`. A changed
+  record is a new version, never an edit.
+- **Local, never committed.** Under `data/runs/gold/`: `drafts/`, each draft kept
+  unchanged beside the user's working copy; `anchored/`, the latest build of each;
+  `views/`, the text with each quote marked, which the user verifies against; and
+  `texts/`, the text alone, which a drafting session reads. No command prints a
+  document's text (GS13).
+- **File names.** A file named for an event takes the event ID with its colon as an
+  underscore, `<event>`; the ID inside the file is unchanged.

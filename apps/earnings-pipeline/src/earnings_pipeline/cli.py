@@ -3,12 +3,14 @@
     uv run --locked --all-packages earnings-pipeline browser setup
     uv run --locked --all-packages earnings-pipeline cohort --help
     uv run --locked --all-packages earnings-pipeline events --help
+    uv run --locked --all-packages earnings-pipeline pilot --help
 
 ``browser setup`` is the only command that downloads the pinned Chrome for Testing and
 chromedriver (B8). It checks each archive against the committed manifest and installs
 into a cache outside the repository; a capture never downloads anything. ``cohort``
 holds Stage 4's commands (``earnings_pipeline.cohort_cli``), and ``events`` Stage 5's
-(``earnings_pipeline.events_cli``).
+(``earnings_pipeline.events_cli``). ``pilot``, ``codebook``, and ``gold`` hold Stage 6's
+(``pilot_cli``, ``codebook_cli``, and ``gold_cli``).
 """
 
 from pathlib import Path
@@ -22,8 +24,11 @@ from earnings_ingestion.browser.install import (
     load_pin,
 )
 
+from earnings_pipeline.codebook_cli import codebook
 from earnings_pipeline.cohort_cli import cohort
 from earnings_pipeline.events_cli import events
+from earnings_pipeline.gold_cli import gold
+from earnings_pipeline.pilot_cli import pilot
 
 app = typer.Typer(no_args_is_help=True, help="The earnings pipeline.")
 browser = typer.Typer(
@@ -32,6 +37,9 @@ browser = typer.Typer(
 app.add_typer(browser, name="browser")
 app.add_typer(cohort, name="cohort")
 app.add_typer(events, name="events")
+app.add_typer(pilot, name="pilot")
+app.add_typer(codebook, name="codebook")
+app.add_typer(gold, name="gold")
 
 
 @browser.command()
