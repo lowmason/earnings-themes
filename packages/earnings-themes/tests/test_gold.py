@@ -2,8 +2,6 @@
 and derives every origin, and the validator refuses each problem by item and
 reason, never by text."""
 
-from datetime import date
-
 import pytest
 from earnings_themes.annotation import (
     CuratedDraft,
@@ -13,12 +11,6 @@ from earnings_themes.annotation import (
     signed,
     validate_curated,
     validate_gold,
-)
-from earnings_themes.codebook import (
-    Approval,
-    Codebook,
-    CodebookDraft,
-    freeze_codebook,
 )
 from earnings_themes.gold import (
     Gold,
@@ -38,7 +30,6 @@ from earnings_themes.synthetic import (
     TEST,
     TRAIN,
     build_synthetic,
-    codebook_draft,
     curated_draft,
     gold_draft,
     synthetic_split,
@@ -50,24 +41,6 @@ SIGNED = "Lowell Mason (verified a Claude draft)"
 @pytest.fixture(scope="module")
 def bundles():
     return {e: build_synthetic(e).bundle for e in (TRAIN, DEV, TEST, LATER)}
-
-
-@pytest.fixture(scope="module")
-def codebook(bundles) -> Codebook:
-    approval = Approval(
-        approver="Lowell Mason",
-        approved_on=date(2026, 10, 2),
-        adr="docs/adr/0003-approve-pilot-codebook-v0.md",
-    )
-    made = freeze_codebook(
-        parse(codebook_draft(), CodebookDraft, "draft"),
-        pin=PIN,
-        split=synthetic_split(),
-        bundles=bundles,
-        approval=approval,
-    )
-    assert isinstance(made, Codebook)
-    return made
 
 
 def build(bundles, codebook, drafted: dict, working: dict | None = None):

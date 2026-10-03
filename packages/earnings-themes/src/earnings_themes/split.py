@@ -125,7 +125,7 @@ class SplitManifest(ThemesRecord):
 
     def events_in(self, partition: Partition) -> tuple[str, ...]:
         """The events of one partition, by ``event_id``."""
-        return tuple(row.event_id for row in self.rows if row.partition is partition)
+        return tuple(row.event_id for row in self.rows if row.partition == partition)
 
 
 def quarter(day: date) -> str:

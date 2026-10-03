@@ -58,9 +58,9 @@ What was known on 2026-10-03, when Stage 6 drafted its codebook
     `supply.positive_examples[2]` became a hard negative.
   - `legal_regulatory` became two themes: `legal` (lawsuits, investigations, legal
     reserves), with the draft's positives [0] and [1] and a synthetic hard
-    negative, and `regulation` (laws, rules, government programs, reimbursement),
-    with the draft's positive [2] and hard negative [0], and a positive example
-    the revision session added.
+    negative the session running plan 9 wrote, and `regulation` (laws, rules,
+    government programs, reimbursement), with the draft's positive [2] and hard
+    negative [0], and a positive example the revision session added.
   - `costs.restructuring`, `capital.returns`, `capital.investment`, and
     `products.pipeline` became `restructuring`, `shareholder_returns`,
     `capital_investment`, and `pipeline`, under the same parents.

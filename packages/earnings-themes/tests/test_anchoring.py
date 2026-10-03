@@ -13,7 +13,20 @@ from earnings_themes.anchoring import (
     mask_id,
     quote_hash,
 )
-from earnings_themes.problems import Problem
+from earnings_themes.annotation import (
+    CuratedDraft,
+    GoldDraft,
+    build_curated,
+    build_gold,
+    validate_curated,
+    validate_gold,
+)
+from earnings_themes.gold import Gold, GoldQuote, HardNegativeSet
+from earnings_themes.problems import Problem, Refusal
+from earnings_themes.records import parse
+from earnings_themes.synthetic import PIN, curated_draft, gold_draft, synthetic_split
+
+SIGNED = "Lowell Mason (verified a Claude draft)"
 
 
 def test_a_unique_sentence_is_anchored_to_its_sentence(synthetic) -> None:
@@ -86,11 +99,53 @@ def test_a_masked_quote_is_allowed_and_its_masks_are_recorded(synthetic) -> None
         ({"end": 10_000}, ["span_out_of_bounds"]),
     ],
 )
-def test_a_tampered_pointer_is_refused(synthetic, change, reasons) -> None:
+def test_a_tampered_pointer_is_refused(
+    synthetic, codebook, fixtures, change, reasons
+) -> None:
+    """The check gives each tampered field's reasons, and the validators refuse a
+    signed record whose first quote is tampered alike, naming the quote."""
     pointer = anchor(synthetic.bundle, "Margins held steady.")
     assert isinstance(pointer, SpanPointer)
     tampered = SpanPointer(**{**pointer.model_dump(), **change})
     assert check_pointer(synthetic.bundle, tampered) == reasons
+
+    draft = parse(gold_draft(annotator=SIGNED), GoldDraft, "draft")
+    split = synthetic_split()
+    gold = build_gold(
+        draft, draft, bundle=synthetic.bundle, pin=PIN, split=split, codebook=codebook
+    )
+    assert isinstance(gold, Gold)
+    first = gold.quotes[0]
+    assert first.quote_id == "q1"
+    assert SpanPointer(**first.model_dump(exclude={"quote_id", "origin"})) == pointer
+    quote = GoldQuote(**tampered.model_dump(), quote_id="q1", origin=first.origin)
+    refusals = validate_gold(
+        gold.model_copy(update={"quotes": (quote, *gold.quotes[1:])}),
+        bundle=synthetic.bundle,
+        pin=PIN,
+        split=split,
+        codebook=codebook,
+    )
+    assert refusals == [Refusal("quote q1", reason) for reason in reasons]
+
+    if "quote_sha256" in change:
+        curated = parse(curated_draft(fixtures, SIGNED), CuratedDraft, "curated")
+        record = build_curated(
+            curated, curated, bundles=fixtures, pin=PIN, codebook=codebook
+        )
+        assert isinstance(record, HardNegativeSet)
+        document = record.documents[0]
+        assert document.quotes[0].quote_id == "q1"
+        quote = GoldQuote(**{**document.quotes[0].model_dump(), **change})
+        document = document.model_copy(update={"quotes": (quote, *document.quotes[1:])})
+        refusals = validate_curated(
+            record.model_copy(update={"documents": (document, *record.documents[1:])}),
+            bundles=fixtures,
+            pin=PIN,
+            codebook=codebook,
+        )
+        subject = f"{document.fixture_id} quote q1"
+        assert refusals == [Refusal(subject, reason) for reason in reasons]
 
 
 def test_a_pointer_into_a_table_cell_is_not_narrative(synthetic) -> None:

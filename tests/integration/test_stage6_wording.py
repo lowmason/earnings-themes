@@ -4,16 +4,17 @@ committed Stage 6 file, dates masked, occurs in the canonical text of a pilot
 document or of a Stage 1 fixture.
 
 - **The files.** Under ``evaluation/``: the split, the coverage report, the gold,
-  and the briefs; codebook v0 and ADR 0003; and the curated hard negatives:
-  whichever are committed yet. A Markdown file is read a paragraph at a time, its
+  and the briefs; codebook v0, ADR 0003, and the verification record; and the
+  curated hard negatives: whichever are committed yet. A Markdown file is read a paragraph at a time, its
   lines joined, so a phrase copied across a wrapped line is still caught.
 - **What a failure prints.** Each finding is a pair: the file with its field or
   paragraph, and the event or fixture. Never the window or the string, since either
   may quote a release (GS13).
 - **Where it runs.** The fixture leg always runs. The pilot leg reads the pilot's
   canonical documents from the local store and skips visibly without it, so each
-  gate runs this module with ``-rs`` and reads "passed". Never run it with ``-l``,
-  ``--showlocals``, ``--pdb``, or ``-vv``, which print pilot text on a failure.
+  gate runs this module with ``-rs`` and reads "passed". The root ``addopts`` sets
+  ``--tb=short``. Never run it with ``-l``, ``--showlocals``, ``--pdb``,
+  ``--tb=long``, or ``-vv``, which print pilot text on a failure.
 """
 
 import json
@@ -36,6 +37,7 @@ STAGE6 = (
     "evaluation/*/pilot-v*/briefs/*.md",
     "codebooks/*/codebook-v*.toml",
     "docs/adr/0003-*.md",
+    "docs/verification/pilot-v1-gold-set.md",
     "tests/fixtures/gold/*.toml",
 )
 BRIEFS = (
@@ -93,6 +95,9 @@ def test_no_stage_6_file_quotes_a_pilot_document() -> None:
     assert len(doc_ids) == 40
     paths = {e: EVENT_RUNS / "canonical" / f"{d}.json" for e, d in doc_ids.items()}
     assert sorted(e for e, path in paths.items() if not path.is_file()) == []
+    # Any error below keeps only an event ID or a type's name, and the test fails on
+    # it outside the ``except``: an error's message, or pytest's report of the frame
+    # that raised it, may quote a pilot document (serialize.py; GS13).
     texts = []
     unreadable = []
     for e, path in sorted(paths.items()):
@@ -100,14 +105,17 @@ def test_no_stage_6_file_quotes_a_pilot_document() -> None:
             canonical_text = from_fixture_json(
                 path.read_text(encoding="utf-8")
             ).document.canonical_text
-        except ValueError:
+        except Exception:  # noqa: BLE001 - only the event ID is kept
             unreadable.append(e)
             continue
         texts.append((e, canonical_text))
-    # A load error's message may quote the document (serialize.py), so only IDs
-    # are kept.
     assert unreadable == []
-    found = shared(strings(committed()), texts)
+    unforeseen = []
+    try:
+        found = shared(strings(committed()), texts)
+    except Exception as error:  # noqa: BLE001 - only its type's name is kept
+        unforeseen.append(type(error).__name__)
+    assert unforeseen == []
     # Bound first: pytest's report of a failed assert shows each call's arguments,
     # and ``texts`` holds pilot text (GS13). ``found`` holds labels and IDs only.
     assert found == set()

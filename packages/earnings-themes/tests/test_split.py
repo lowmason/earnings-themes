@@ -89,6 +89,9 @@ def test_each_issuer_keeps_the_partition_of_its_earliest_event() -> None:
         "cik-0000000002:2026-03-31": later,
         "cik-0000000003:2026-03-31": (Partition.TEST, None),
     }
+    manifest = split_events(events, PIN)
+    train = ("cik-0000000001:2024-09-30", "cik-0000000001:2025-03-31")
+    assert manifest.events_in("train") == manifest.events_in(Partition.TRAIN) == train
 
 
 def test_a_fixture_event_is_never_held_out() -> None:
