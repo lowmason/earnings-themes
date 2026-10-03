@@ -1697,7 +1697,7 @@ GS2's pin: the pilot, its event manifest, and its universe, each by version and 
 ## earnings-themes records, schema version 1
 
 `earnings_themes` holds Stage 6's split, codebook, and gold contracts (the Stage 6
-spec, specs/pilot-codebook-split-and-gold-set-protocol.md). Every model is strict,
+spec, specs/completed/pilot-codebook-split-and-gold-set-protocol.md). Every model is strict,
 frozen, and refuses unknown fields. A committed record holds IDs, hashes, pointers,
 and the user's words, never a release's wording: a quote is a pointer, and the
 wording guard refuses any 40-character window, dates masked, shared with a pilot

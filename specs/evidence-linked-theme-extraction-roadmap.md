@@ -135,7 +135,7 @@ reconcile after Stage 1 missed: each fixture event carries
 `pilot_split = "train_or_exclude"`, and no fixture issuer is in pilot v1.
 
 Amended 2026-09-28 by Stage 6's spec,
-`specs/pilot-codebook-split-and-gold-set-protocol.md`, approved the same day. It
+`specs/completed/pilot-codebook-split-and-gold-set-protocol.md`, approved the same day. It
 amends D2 for Stage 6's gold (GS4), and its test partition's gold waits until Stage
 14 freezes its configuration (GS18). Stage 6's Exit and Stages 11 and 14 now say
 which partitions each annotates.
@@ -153,7 +153,7 @@ CIK fields serve EDGAR discovery and fixture provenance only.
 
 Decisions taken by the user on 2026-09-22, resolving the batched questions:
 **D1** — V6 gates only metrics the pilot can estimate (R12.2 conflicts with
-V6 as written); **D2** — the user is the sole annotator (R12.6, R8.4; for Stage 1 gold, amended 2026-09-23 by `specs/release-parser-fidelity.md` F9: Codex drafts, the user verifies every block; for Stage 6's gold, amended 2026-09-28 by `specs/pilot-codebook-split-and-gold-set-protocol.md` GS4: a Claude session drafts, the user verifies every item and reads each bundle for omissions);
+V6 as written); **D2** — the user is the sole annotator (R12.6, R8.4; for Stage 1 gold, amended 2026-09-23 by `specs/release-parser-fidelity.md` F9: Codex drafts, the user verifies every block; for Stage 6's gold, amended 2026-09-28 by `specs/completed/pilot-codebook-split-and-gold-set-protocol.md` GS4: a Claude session drafts, the user verifies every item and reads each bundle for omissions);
 **D3** — R14.2's hosted ceiling is an optional stage; R5.3/V3 are unstaged.
 
 **D4** — taken 2026-09-22 with the cohort amendment, resolving R12.4/R12.5

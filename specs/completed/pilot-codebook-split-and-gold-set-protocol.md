@@ -1,5 +1,7 @@
 # Pilot codebook, split, and gold-set protocol
 
+**Status: COMPLETE (2026-10-03)** — Stage 6; implemented by plan 9; retired to specs/completed/.
+
 > For agentic workers: REQUIRED NEXT SKILL: writing-plans. This is the stage spec
 > for Stage 6 of `specs/evidence-linked-theme-extraction-roadmap.md`. Plan it as one
 > plan whose last tasks are the gates (§Gates). Never plan a later stage with it.

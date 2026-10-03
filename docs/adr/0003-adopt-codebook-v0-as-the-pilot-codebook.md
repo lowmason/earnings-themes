@@ -10,8 +10,8 @@
 ## Context
 
 What was known on 2026-10-03, when Stage 6 drafted its codebook
-(`specs/pilot-codebook-split-and-gold-set-protocol.md`, §The codebook;
-`specs/plans/9-pilot-codebook-split-and-gold-set-protocol.md`, Task 17):
+(`specs/completed/pilot-codebook-split-and-gold-set-protocol.md`, §The codebook;
+`specs/plans/completed/9-pilot-codebook-split-and-gold-set-protocol.md`, Task 17):
 
 - **The question.** A codebook version names its discovery corpus and is approved in
   a decision record before it codes anything (R9.2, R9.7). GS9 makes v0 the pilot

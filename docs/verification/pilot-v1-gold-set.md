@@ -1,8 +1,8 @@
 # Pilot v1's codebook, split, and gold set: verification record
 
 This record verifies roadmap Stage 6, which
-`specs/pilot-codebook-split-and-gold-set-protocol.md` specifies and plan 9
-(`specs/plans/9-pilot-codebook-split-and-gold-set-protocol.md`) built. Each gate
+`specs/completed/pilot-codebook-split-and-gold-set-protocol.md` specifies and plan 9
+(`specs/plans/completed/9-pilot-codebook-split-and-gold-set-protocol.md`) built. Each gate
 appends its section as it closes. The record holds IDs, counts, hashes, and dates,
 never a release's wording or a paraphrase of it (GS3, GS13).
 

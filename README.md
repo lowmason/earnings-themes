@@ -101,7 +101,7 @@ claim; support is assessed separately.
 | `packages/earnings-ingestion/` | Source adapters, raw snapshots, deterministic parsing, canonicalization, and entity resolution | Stage 3's canonicalizer and browser diagnostic path; Stage 4's artifact store, shared SEC client, and point-in-time DJIA cohort; Stage 5's event discovery, eligibility, and pilot selection; Stage 6's coverage report |
 | `packages/earnings-themes/` | Quote-claim extraction, exact-span verification, support assessment, codebooks, and evaluation | Stage 6's split, codebook, and gold contracts, with their anchor, validator, and wording guard |
 | `apps/earnings-pipeline/` | Thin application layer for configuration, stage coordination, checkpoints, and reporting | `earnings-pipeline browser setup`, and the `earnings-pipeline cohort`, `events`, `pilot`, `codebook`, and `gold` commands |
-| `docs/` | Source notes and, as the project develops, methodology, source registers, verification reports, and decisions | Source notes, the release source register, verification records V1 and V2, ADR 0001, and the `earnings-core` data dictionary |
+| `docs/` | Source notes and, as the project develops, methodology, source registers, verification reports, and decisions | Source notes, the release and membership source registers, verification records V1 and V2 and those of Stages 3 to 6, ADRs 0001 to 0003, and the data dictionary |
 | `specs/` | Binding and exploratory system specifications, reviews, and the staged implementation roadmap | Present |
 | `expirements/parser-fidelity/` | Stage 1's investigation harness: parser candidates, scorer, and selection rule | Complete; a record, not product code |
 | `tests/fixtures/releases/` | Stage 1's eight release fixtures, with gold annotations and a provenance manifest | Present |
@@ -222,7 +222,7 @@ Key planning documents:
 - [Event discovery, eligibility, and acquisition specification](specs/completed/event-discovery-eligibility-and-acquisition.md)
   — Stage 5's two plans: discovery, eligibility, and the freezes; then
   acquisition and processing states.
-- [Pilot codebook, split, and gold-set protocol specification](specs/pilot-codebook-split-and-gold-set-protocol.md)
+- [Pilot codebook, split, and gold-set protocol specification](specs/completed/pilot-codebook-split-and-gold-set-protocol.md)
   — Stage 6: the pin, the issuer-and-time split, codebook v0, and the gold-set
   protocol, with Claude-drafted, user-verified gold.
 - [Earnings-theme learning path](docs/earnings-themes.md) — the original staged
