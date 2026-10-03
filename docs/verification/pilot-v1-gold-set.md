@@ -94,3 +94,16 @@ brief's test printed `6 passed`.
   `5 passed`. Before the approval, none of the record's 642 strings shared 40
   characters with any of the 40 pilot releases or Stage 1's 8 fixtures, and no
   passage was both a positive example and a hard negative of one theme.
+
+## Gate 4: the curated hard negatives
+
+- **The drafting session.** On 2026-10-03, a fresh session running
+  Claude Opus 5.5 read `briefs/gold.md` and the texts of Stage 1's eight fixtures,
+  and wrote `data/runs/gold/drafts/hard-negatives.draft.toml`.
+- **The record.** `tests/fixtures/gold/hard-negatives.toml`, outside the pilot and in
+  no partition (R12.5):
+  - 8 fixtures and 29 hard negatives: `issuer` 4, `period` 13, and `section` 12;
+  - origins: accepted 58, edited 0, rejected 0, and added 0;
+  - signed on 2026-10-03, as `annotator = "Lowell Mason (verified a Claude draft)"`.
+- **Checks.** `gold validate --hard-negatives` printed `valid:`, and the default suite
+  now checks the record offline: `1742 passed, 2 skipped, 24 deselected`.

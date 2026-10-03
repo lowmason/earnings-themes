@@ -1,0 +1,560 @@
+# Stage 6 gold (the pilot codebook, split, and gold-set protocol). Written by `earnings-pipeline gold anchor`; quotes are pointers, and every other word is the annotator's.
+schema_version = 1
+annotator = "Lowell Mason (verified a Claude draft)"
+
+[pin]
+pilot_id = "djia-2024q3-2026q2-pilot"
+pilot_version = 1
+pilot_hash = "3839c800151cc646f11064efdce583f988e511265f8893c90e9a2f2549145926"
+events_version = 1
+events_hash = "2348671b3ae8021d644df12ae2f539258670546970c918f8edb231ba1885c3b7"
+universe_version = 1
+universe_operative_hash = "c350923422d9bf2e65a0b5929f4c0d45370458c6a044c3de012a1dfeb116e573"
+
+[drafting_aid]
+model_id = "claude-opus-5-5"
+drafted_on = 2026-10-03
+
+[counts]
+accepted = 58
+edited = 0
+rejected = 0
+added = 0
+
+[codebook]
+codebook_id = "djia-pilot"
+codebook_version = 0
+content_hash = "635975d1ec952cf5719ea3b473870f96e7e3a52bc3015cc1ac5725aa80ec1e79"
+
+[[documents]]
+fixture_id = "0000007332-09-000032_ex-99"
+doc_id = "0000007332-09-000032_ex-99@walker-1#3479c25b8e410f3f"
+canonical_hash = "3479c25b8e410f3fe7dc24bdbdd86ec1cff14ecd17d47aa4682a31d0bc77a627"
+
+[[documents.quotes]]
+start = 1197
+end = 1356
+element_id = "sentence-1197-1356"
+quote_sha256 = "1e0b5f23813e8f5e8a8fbde852734a02f30bdc30a9915d3152c95d3bacf83ed5"
+mask_ids = []
+quote_id = "q1"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 3164
+end = 3366
+element_id = "sentence-3134-3367"
+quote_sha256 = "e67c16a92f94d3cb9c83c76eb1ac343b6c9c35aab224ebe3ba67b82bc016a1ce"
+mask_ids = []
+quote_id = "q2"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 9352
+end = 9508
+element_id = "sentence-9237-9549"
+quote_sha256 = "bfb00427a59cfbe88c7d7f5fd2d1d188b2945739500ec0521b0b79b90b9e8988"
+mask_ids = []
+quote_id = "q3"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 19562
+end = 19719
+element_id = "sentence-19562-19719"
+quote_sha256 = "900d9a2e6b2a03c3710765a66739a4abb2a65d1d722b36ed528b5371423b519c"
+mask_ids = []
+quote_id = "q4"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n1"
+quote_ids = ["q1"]
+claim = "Southwestern's third-quarter 2009 earnings were lifted by a gain on selling its utility assets."
+negative_kind = "period"
+theme_id = "portfolio"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n2"
+quote_ids = ["q2"]
+claim = "Southwestern shut down a pipeline it owns for maintenance and inspection."
+negative_kind = "issuer"
+theme_id = "supply"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n3"
+quote_ids = ["q3"]
+claim = "Southwestern took a $907.8 million write-down on its gas and oil properties in the third quarter of 2009."
+negative_kind = "period"
+theme_id = "impairments"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n4"
+quote_ids = ["q4"]
+claim = "Southwestern expects each of its Fayetteville wells to produce between 2.0 and 3.0 Bcf over its life."
+negative_kind = "section"
+theme_id = "supply"
+origin = "drafted_accepted"
+
+[[documents]]
+fixture_id = "0000009389-10-000004_ex-99-1"
+doc_id = "0000009389-10-000004_ex-99-1@walker-1#10ed931407083a44"
+canonical_hash = "10ed931407083a448f529a14acf2111037e8e51565f9f52641e593a7b009e231"
+
+[[documents.quotes]]
+start = 4469
+end = 4598
+element_id = "sentence-4469-4691"
+quote_sha256 = "c47e5f6b9e8e0722aa7e721fcf44bc2e1fe1b49985d946d919413b4ee9420927"
+mask_ids = []
+quote_id = "q5"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 6875
+end = 7004
+element_id = "sentence-6875-7004"
+quote_sha256 = "ae67ee5f09bfd7f65bbfc6ab410c4289d5b744e9536b3ed44a471b902781a0e7"
+mask_ids = []
+quote_id = "q6"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 10864
+end = 10923
+element_id = "sentence-10238-11197"
+quote_sha256 = "c44e0c43b5ac291f13d58fae719dbe6f164c1613daa14cc0f40fc30676ce2551"
+mask_ids = ["safe_harbor-8719-11197"]
+quote_id = "q7"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 18670
+end = 18773
+element_id = "sentence-18670-18773"
+quote_sha256 = "3ff4271599ec3b2b8653e94842296d56b220251d3bc3f2a86334f34528cc2869"
+mask_ids = []
+quote_id = "q8"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 21255
+end = 21399
+element_id = "sentence-21211-21400"
+quote_sha256 = "af59002d481a921c52d1077e727afd32f48ef04497ef54031f593807bf6e1041"
+mask_ids = []
+quote_id = "q9"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n5"
+quote_ids = ["q5"]
+claim = "In the fourth quarter of 2009, Ball's customers bought early to get ahead of a steel price hike."
+negative_kind = "period"
+theme_id = "demand"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n6"
+quote_ids = ["q6"]
+claim = "Ball's capital spending for 2009 came to about $235 million."
+negative_kind = "section"
+theme_id = "capital_investment"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n7"
+quote_ids = ["q7"]
+claim = "Ball booked a goodwill impairment charge during the quarter."
+negative_kind = "section"
+theme_id = "impairments"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n8"
+quote_ids = ["q8"]
+claim = "During the quarter just reported, Ball said it would close two of its North American can plants."
+negative_kind = "period"
+theme_id = "restructuring"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n9"
+quote_ids = ["q9"]
+claim = "Ball holds a 65 percent stake in the Sanshui can-making joint venture."
+negative_kind = "issuer"
+theme_id = "portfolio"
+origin = "drafted_accepted"
+
+[[documents]]
+fixture_id = "0000010795-22-000014_ex-99-1"
+doc_id = "0000010795-22-000014_ex-99-1@walker-1#5e2d87a3609c7613"
+canonical_hash = "5e2d87a3609c7613d532b5815f5e78d0675b89520b9b3909e3d7296d789ad04d"
+
+[[documents.quotes]]
+start = 5481
+end = 5552
+element_id = "sentence-5400-5623"
+quote_sha256 = "ac2a1f41dab2927bb2bb6d421e3ec8d078a3da2b177062ee231053091fdd0eca"
+mask_ids = []
+quote_id = "q10"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 8386
+end = 8519
+element_id = "sentence-8386-8655"
+quote_sha256 = "f0582c563a0d607504d5e4525b3caede41b073e06851c8f27bbe1fb37f86f590"
+mask_ids = []
+quote_id = "q11"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 16913
+end = 17059
+element_id = "sentence-16006-19219"
+quote_sha256 = "e6cd4703686ab30023e1c769d56c12d6931f6394fe12c2a1110d6d2b12f88dd2"
+mask_ids = ["safe_harbor-15361-19669"]
+quote_id = "q12"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 17393
+end = 17503
+element_id = "sentence-16006-19219"
+quote_sha256 = "27aea39dd21d29780aa8590ac86bca51f6808426dfe05c196c05ed36819b666d"
+mask_ids = ["safe_harbor-15361-19669"]
+quote_id = "q13"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n10"
+quote_ids = ["q10"]
+claim = "Demand for BD's infusion pumps ran high during its first fiscal quarter of 2022."
+negative_kind = "period"
+theme_id = "demand"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n11"
+quote_ids = ["q11"]
+claim = "Currency movements took about 125 basis points off BD's revenue growth in its first fiscal quarter."
+negative_kind = "section"
+theme_id = "currency"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n12"
+quote_ids = ["q12"]
+claim = "Newly imposed tariffs pushed up BD's costs in its first fiscal quarter."
+negative_kind = "section"
+theme_id = "trade_policy"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n13"
+quote_ids = ["q13"]
+claim = "Procurement tenders run by the Chinese government cut BD's sales in the quarter."
+negative_kind = "section"
+theme_id = "regulation"
+origin = "drafted_accepted"
+
+[[documents]]
+fixture_id = "0000037785-14-000003_ex-99-1"
+doc_id = "0000037785-14-000003_ex-99-1@walker-1#101008907bf2e58b"
+canonical_hash = "101008907bf2e58b3c9a8298f57fbc85d2daa5ff4fdb140a7a964acbb97ea376"
+
+[[documents.quotes]]
+start = 18742
+end = 18934
+element_id = "sentence-18742-19021"
+quote_sha256 = "6c3db3e65b83bb949b39e32b2790ec26d78dccd8faa5a5bc7bdc513df5124a73"
+mask_ids = []
+quote_id = "q14"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 21890
+end = 22020
+element_id = "sentence-21890-22091"
+quote_sha256 = "50d961e399782d57392a3d3d376bd6d4abd124b26a8cb53a67a265c8127e79bd"
+mask_ids = []
+quote_id = "q15"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 23946
+end = 24165
+element_id = "sentence-23946-24165"
+quote_sha256 = "a7f19d42232011f8651ee599a178e462d3ab9a12b91d97d5dbdcbc4c0301ddf4"
+mask_ids = []
+quote_id = "q16"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n14"
+quote_ids = ["q14"]
+claim = "FMC took a $156.7 million impairment charge in the fourth quarter alone."
+negative_kind = "period"
+theme_id = "impairments"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n15"
+quote_ids = ["q15"]
+claim = "Swings in financial markets drove FMC's pension costs higher in the quarter."
+negative_kind = "section"
+theme_id = "costs"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n16"
+quote_ids = ["q16"]
+claim = "FMC released part of a valuation allowance on state tax losses in the fourth quarter of 2013."
+negative_kind = "period"
+theme_id = "tax"
+origin = "drafted_accepted"
+
+[[documents]]
+fixture_id = "0000092380-07-000011_ex-99-1"
+doc_id = "0000092380-07-000011_ex-99-1@walker-1#ba7dd3d743738bd0"
+canonical_hash = "ba7dd3d743738bd06a16a5867f144001a0432ac8e08e6dc097698a0c60c74471"
+
+[[documents.quotes]]
+start = 1865
+end = 1936
+element_id = "sentence-1864-2003"
+quote_sha256 = "8da121412982fe387de3bcd08e511cbe8c0c316c8edff540bd4d9dd251ee71fe"
+mask_ids = []
+quote_id = "q17"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 1938
+end = 2002
+element_id = "sentence-1864-2003"
+quote_sha256 = "a0fe46b369412c0b28477f30d10dd15c50778921b925e8f0f17dbfee36e5b6b9"
+mask_ids = []
+quote_id = "q18"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 7186
+end = 7331
+element_id = "sentence-7186-7331"
+quote_sha256 = "056d8363c3e435d3944b7ceba513e60ea6b11c45357f1a3eb25a71834c5be9d2"
+mask_ids = []
+quote_id = "q19"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 2792
+end = 2883
+element_id = "sentence-2731-2884"
+quote_sha256 = "b7474ed46e749bbf21c8a448193eef5dfacc07773d3f8015d2452a1a80907d8c"
+mask_ids = []
+quote_id = "q20"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n17"
+quote_ids = ["q17"]
+claim = "Southwest's revenue performance in the first quarter of 2007 was exceptionally strong."
+negative_kind = "period"
+theme_id = "demand"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n18"
+quote_ids = ["q18"]
+claim = "Southwest made major cuts to its own flying capacity."
+negative_kind = "issuer"
+theme_id = "supply"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n19"
+quote_ids = ["q19"]
+claim = "Southwest bought back 4.2 million of its shares for $62.8 million in the first quarter."
+negative_kind = "period"
+theme_id = "shareholder_returns"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n20"
+quote_ids = ["q20"]
+claim = "Southwest's economic fuel cost reached $1.70 a gallon in the first quarter."
+negative_kind = "section"
+theme_id = "costs"
+origin = "drafted_accepted"
+
+[[documents]]
+fixture_id = "0000706863-16-000110_ex-99-1"
+doc_id = "0000706863-16-000110_ex-99-1@walker-1#2ba63c35d4129be4"
+canonical_hash = "2ba63c35d4129be427367cf9378a26867dadaeb5fa341ab7c15384c81f882e7e"
+
+[[documents.quotes]]
+start = 2780
+end = 2887
+element_id = "sentence-2780-2887"
+quote_sha256 = "f5d6db7d4136e8cf2f25239e430794e8a34113c973a5f4b2840ea12b7e5835b1"
+mask_ids = []
+quote_id = "q21"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 3295
+end = 3410
+element_id = "sentence-3295-3465"
+quote_sha256 = "01738307fc20917113089aa2515f90c95939319cd76af11834e97ccd7a29eb20"
+mask_ids = []
+quote_id = "q22"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 5890
+end = 6000
+element_id = "sentence-5746-6386"
+quote_sha256 = "942051c8fd2f787c569666135b6e70cc09caa34e53ee13cfd9aa330a02910696"
+mask_ids = ["safe_harbor-5274-6558"]
+quote_id = "q23"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n21"
+quote_ids = ["q21"]
+claim = "Union Bankshares charged off a net $125 thousand of loans in the second quarter of 2016."
+negative_kind = "period"
+theme_id = "credit_quality"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n22"
+quote_ids = ["q22"]
+claim = "Noninterest expense in the second quarter was 7.3% higher than a year before."
+negative_kind = "period"
+theme_id = "costs"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n23"
+quote_ids = ["q23"]
+claim = "Inflation and changing interest rates hurt the bank's results in the quarter."
+negative_kind = "section"
+theme_id = "macro"
+origin = "drafted_accepted"
+
+[[documents]]
+fixture_id = "0000877860-13-000100_ex-99-1"
+doc_id = "0000877860-13-000100_ex-99-1@walker-1#8cc85aabefdcf829"
+canonical_hash = "8cc85aabefdcf8298615eddf47ab3465dbf39867332f9bbd1e60034448c25490"
+
+[[documents.quotes]]
+start = 1380
+end = 1541
+element_id = "sentence-1380-1541"
+quote_sha256 = "7e44cfd99d6762771c7ba5797e1dd78016bece3d3a3b40c6efee8d64bc0abded"
+mask_ids = []
+quote_id = "q24"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 4277
+end = 4470
+element_id = "sentence-4277-4470"
+quote_sha256 = "cc18829aef82c67a9882145cfe2ae64c721dab151a730dcb8f3ae8c8b024822c"
+mask_ids = []
+quote_id = "q25"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 5793
+end = 5979
+element_id = "sentence-5793-5995"
+quote_sha256 = "9fa062490f511aa10319f9bed7d1d0d33e4013bbe26d6782e9e1b96bee450100"
+mask_ids = []
+quote_id = "q26"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n24"
+quote_ids = ["q24"]
+claim = "NHI wrote down a mortgage note receivable during the third quarter of 2013."
+negative_kind = "period"
+theme_id = "credit_quality"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n25"
+quote_ids = ["q25"]
+claim = "The credit quality of NHI's tenants deteriorated during the quarter."
+negative_kind = "section"
+theme_id = "credit_quality"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n26"
+quote_ids = ["q26"]
+claim = "NHI bought new hospital and office properties during the third quarter."
+negative_kind = "section"
+theme_id = "portfolio"
+origin = "drafted_accepted"
+
+[[documents]]
+fixture_id = "0000949699-08-000023_ex-99-1"
+doc_id = "0000949699-08-000023_ex-99-1@walker-1#954c9ade85018bd9"
+canonical_hash = "954c9ade85018bd9cde27db31655ef8f7ff2fa48f85b239a9869ccc8c630e7d9"
+
+[[documents.quotes]]
+start = 1634
+end = 1737
+element_id = "sentence-1634-1737"
+quote_sha256 = "fe63b8c2ac66f2212482e096cebeea2b29eba450652809ea9e8aed0d40a635f4"
+mask_ids = []
+quote_id = "q27"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 2860
+end = 3029
+element_id = "sentence-2859-3162"
+quote_sha256 = "de9f44b1fee41c44ecc8ed833275df3bf78489b9eaa0e0633d9db4cc86e68496"
+mask_ids = []
+quote_id = "q28"
+origin = "drafted_accepted"
+
+[[documents.quotes]]
+start = 7233
+end = 7417
+element_id = "sentence-7233-8062"
+quote_sha256 = "14233d515f54b2b6d964ae30d0743bcc55f72766a9d6191c3e838eede458d212"
+mask_ids = ["safe_harbor-6140-8681"]
+quote_id = "q29"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n27"
+quote_ids = ["q27"]
+claim = "Pharmacyclics ended fiscal 2008 with about $38.8 million in cash and investments."
+negative_kind = "period"
+theme_id = "capital"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n28"
+quote_ids = ["q28"]
+claim = "Pharmacyclics itself is sponsoring two Phase 2 brain tumor trials of motexafin gadolinium."
+negative_kind = "issuer"
+theme_id = "pipeline"
+origin = "drafted_accepted"
+
+[[documents.hard_negatives]]
+claim_id = "n29"
+quote_ids = ["q29"]
+claim = "Pharmacyclics' clinical trials ran into unexpected delays during the fourth quarter."
+negative_kind = "section"
+theme_id = "pipeline"
+origin = "drafted_accepted"
