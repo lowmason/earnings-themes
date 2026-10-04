@@ -92,7 +92,9 @@ def quote_hash(text: str) -> str:
 
 
 def context_hash(prefix: str, suffix: str) -> str:
-    """The SHA-256 of a locator's prefix and suffix, as a two-item JSON array."""
+    """The SHA-256 of a locator's prefix and suffix, as a compact two-item JSON array
+    in UTF-8 with ``ensure_ascii=False``: the byte format the committed gold stores,
+    which a known-answer test pins (T6-M3)."""
     pair = json.dumps([prefix, suffix], ensure_ascii=False, separators=(",", ":"))
     return sha256_hex(pair.encode("utf-8"))
 

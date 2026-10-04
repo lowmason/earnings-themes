@@ -2,10 +2,11 @@
 a quote occurs once, sits in narrative, passes Stage 2's checks, and is committed as
 offsets and hashes that the local document reproduces."""
 
+import json
 from collections import Counter
 
 import pytest
-from earnings_core import RejectionReason, TextSpan, make_locator
+from earnings_core import RejectionReason, TextSpan, make_locator, sha256_hex
 from earnings_themes.anchoring import (
     SpanPointer,
     anchor,
@@ -217,3 +218,19 @@ def test_every_unique_narrative_sentence_of_the_stage_1_fixtures_anchors(
         "not_narrative": 10,
     }
     assert under_other == {"0000949699-08-000023_ex-99-1: not_narrative": 10}
+
+
+def test_context_hash_is_the_sha256_of_a_compact_utf8_json_pair() -> None:
+    """T6-M3 (ES8): the byte format the three signed bundles and the curated hard
+    negatives store. The pair holds a non-ASCII character, a double quote, and a
+    backslash, so ``ensure_ascii=False``, the escaping, and the separators all
+    show; an ASCII-only pair could not show the first. Plan 11's Task 6 wrote
+    these literals as escape text, from code points."""
+    prefix = 'the caf\xe9 line, "net" '
+    suffix = " under C:\\notes"
+    pair = b'["the caf\xc3\xa9 line, \\"net\\" "," under C:\\\\notes"]'
+    expected = "fd4874e7855a8b8d6c9df217cca901d75d1129624089f94a6db6cda22ef52280"
+    assert context_hash(prefix, suffix) == expected
+    assert sha256_hex(pair) == expected
+    escaped = json.dumps([prefix, suffix], separators=(",", ":")).encode("ascii")
+    assert escaped != pair

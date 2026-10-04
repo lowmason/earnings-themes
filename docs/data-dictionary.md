@@ -1828,7 +1828,7 @@ A quote, by position: the committed form of evidence.
 | `end` | int > `start` | Half-open end |
 | `element_id` | string | The most specific narrative element that contains it |
 | `quote_sha256` | 64 lowercase hex | SHA-256 of the slice's UTF-8 bytes |
-| `context_sha256` | 64 lowercase hex or null | When the text repeats: SHA-256 of `make_locator`'s prefix and suffix, as a compact JSON pair |
+| `context_sha256` | 64 lowercase hex or null | When the text repeats: SHA-256 of `make_locator`'s prefix and suffix as a compact JSON pair in UTF-8, `json.dumps([prefix, suffix], ensure_ascii=False, separators=(",", ":"))` |
 | `mask_ids` | tuple of string | The boilerplate masks over it, each `<category>-<start>-<end>` |
 
 ### `CodebookStatus`
