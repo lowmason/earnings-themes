@@ -1,4 +1,5 @@
-"""Evidence spans: parse an untrusted candidate, then verify it exactly (R6.1)."""
+"""Evidence spans: parse an untrusted candidate, verify it exactly, and verify a
+stored span again at each later gate (R6.1)."""
 
 from collections.abc import Mapping, Sequence
 from typing import Self
@@ -171,6 +172,27 @@ def validate_span(
         suffix=candidate.suffix,
         validator_version=VALIDATOR_VERSION,
     )
+
+
+def reverify_span(
+    document: CanonicalDocument,
+    elements: Sequence[DocumentElement],
+    span: VerifiedSpan,
+) -> VerifiedSpan | Rejection:
+    """Verify a stored span again, as each later R6.1 gate must: its type alone is
+    not proof, since ``model_copy(update=...)`` skips validation (ES5).
+
+    The span's candidate fields, all but ``validator_version``, are read into a
+    mapping and parsed as a fresh candidate, so a value construction would refuse
+    is ``malformed_record``. The span is never dumped: dumping a copy that holds a
+    float in an integer field warns. A span that verifies comes back fresh, under
+    the current ``VALIDATOR_VERSION``.
+    """
+    fields = {name: getattr(span, name) for name in SpanCandidate.model_fields}
+    candidate = parse_span_candidate(fields)
+    if isinstance(candidate, Rejection):
+        return candidate
+    return validate_span(document, elements, candidate)
 
 
 def _reject(reason: RejectionReason, detail: str) -> Rejection:

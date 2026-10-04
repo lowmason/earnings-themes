@@ -23,6 +23,7 @@ from earnings_core.evidence import (
     SpanCandidate,
     VerifiedSpan,
     parse_span_candidate,
+    reverify_span,
     validate_span,
 )
 from earnings_core.hashing import hash_canonical_text, sha256_hex
@@ -68,6 +69,7 @@ __all__ = [
     "parse_span_candidate",
     "resolve_locator",
     "resolve_pointer",
+    "reverify_span",
     "sha256_hex",
     "validate_elements",
     "validate_span",

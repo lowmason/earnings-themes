@@ -31,6 +31,7 @@ PUBLIC = {
     "parse_span_candidate",
     "resolve_locator",
     "resolve_pointer",
+    "reverify_span",
     "sha256_hex",
     "validate_elements",
     "validate_span",

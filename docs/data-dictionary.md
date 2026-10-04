@@ -189,7 +189,8 @@ A proposed evidence span before verification: one contiguous range (R5.5).
 ### `VerifiedSpan`
 
 A span that passed every check (R6.1). Its `quote_text` is sliced from the canonical
-text, never copied from a candidate (A §523).
+text, never copied from a candidate (A §523). A stored one is verified again with
+`reverify_span` at each later gate, since its type alone is not proof.
 
 | Field | Type | Meaning |
 | --- | --- | --- |

@@ -1,5 +1,6 @@
 import inspect
 import json
+import warnings
 
 import pytest
 from earnings_core.elements import ElementType
@@ -7,6 +8,7 @@ from earnings_core.evidence import (
     SpanCandidate,
     VerifiedSpan,
     parse_span_candidate,
+    reverify_span,
     validate_span,
 )
 from earnings_core.locators import SpanLocator, make_locator, resolve_locator
@@ -123,3 +125,48 @@ def test_a_malformed_record_names_the_offending_field(sample) -> None:
     outcome = parse_span_candidate(sample.raw("Margins held", start=1.5))
     assert isinstance(outcome, Rejection)
     assert outcome.detail.startswith("start:")
+
+
+def test_a_stored_span_re_verifies_under_the_current_validator(sample) -> None:
+    """A span read back from JSON verifies again into a fresh span, even one an
+    earlier validator stamped: a stored span's type alone is not proof (ES5)."""
+    candidate = sample.candidate("Margins held at last year's level.")
+    verified = validate_span(sample.document, sample.elements, candidate)
+    assert isinstance(verified, VerifiedSpan)
+    stored = VerifiedSpan.model_validate_json(verified.model_dump_json())
+    assert reverify_span(sample.document, sample.elements, stored) == verified
+    older = VerifiedSpan.model_validate(
+        {**verified.model_dump(), "validator_version": "1"}
+    )
+    assert reverify_span(sample.document, sample.elements, older) == verified
+
+
+@pytest.mark.parametrize(
+    ("change", "reason"),
+    [
+        (
+            lambda span: {"quote_text": "Margins held"},
+            RejectionReason.QUOTE_TEXT_MISMATCH,
+        ),
+        (
+            lambda span: {"start": float(span.start)},
+            RejectionReason.MALFORMED_RECORD,
+        ),
+    ],
+    ids=["changed-text", "float-offset"],
+)
+def test_a_tampered_stored_span_is_refused_and_never_dumped(
+    sample, change, reason
+) -> None:
+    """``model_copy`` skips validation, so a stored span may hold anything. It is
+    refused with a reason, never raised, and never dumped, since dumping a float
+    in an integer field warns (ES5)."""
+    candidate = sample.candidate("Margins held at last year's level.")
+    verified = validate_span(sample.document, sample.elements, candidate)
+    assert isinstance(verified, VerifiedSpan)
+    tampered = verified.model_copy(update=change(verified))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        outcome = reverify_span(sample.document, sample.elements, tampered)
+    assert isinstance(outcome, Rejection)
+    assert outcome.reason is reason
