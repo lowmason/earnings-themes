@@ -19,14 +19,13 @@ from dataclasses import dataclass
 from datetime import datetime
 from functools import cached_property
 
-from earnings_core import ArtifactRef, hash_canonical_text, sha256_hex
+from earnings_core import ArtifactRef, canonical_json, hash_canonical_text, sha256_hex
 
 from earnings_ingestion.canonical import (
     CANONICALIZATION_VERSION,
     CanonicalizationFailure,
     canonicalize,
 )
-from earnings_ingestion.cohort.digests import canonical_json
 from earnings_ingestion.cohort.pdftext import PDFTEXT_VERSION, PdfTextError, pdf_text
 from earnings_ingestion.cohort.records import Citation, EvidenceLocator, LocatorKind
 

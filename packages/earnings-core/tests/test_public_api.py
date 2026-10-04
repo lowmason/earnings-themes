@@ -22,8 +22,10 @@ PUBLIC = {
     "TextSpan",
     "VerifiedSpan",
     "apply_masks",
+    "canonical_json",
     "derive_doc_id",
     "derive_element_id",
+    "digest",
     "document_integrity_problem",
     "hash_canonical_text",
     "make_locator",
@@ -31,6 +33,7 @@ PUBLIC = {
     "parse_span_candidate",
     "resolve_locator",
     "resolve_pointer",
+    "reverify_span",
     "sha256_hex",
     "validate_elements",
     "validate_span",
@@ -49,4 +52,4 @@ def test_the_scaffold_placeholder_is_gone() -> None:
 
 def test_versions_are_pinned() -> None:
     assert earnings_core.SCHEMA_VERSION == 2
-    assert earnings_core.VALIDATOR_VERSION == "2"
+    assert earnings_core.VALIDATOR_VERSION == "3"

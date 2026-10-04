@@ -15,12 +15,11 @@ from pathlib import Path
 from typing import Any, Literal, Self
 
 import tomllib
-from earnings_core import RightsStatus
+from earnings_core import RightsStatus, digest
 from earnings_core.artifacts import NonBlankStr
 from earnings_core.hashing import Sha256Hex
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from earnings_ingestion.cohort.digests import digest
 from earnings_ingestion.cohort.records import EvidenceClass, SourceRights, SourceRole
 from earnings_ingestion.fetch.records import SourceId
 

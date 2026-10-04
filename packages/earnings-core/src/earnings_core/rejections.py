@@ -4,11 +4,17 @@ from enum import StrEnum
 
 from earnings_core._model import VersionedRecord
 
-VALIDATOR_VERSION = "2"
+VALIDATOR_VERSION = "3"
 """Bump when any check changes: caches key on the verifier version (R14.6).
 
 Version 2 (Stage 3) added the OCR refusal, reports every crossing pair, and rechecks
-the element invariants that construction checks and ``model_copy`` skips.
+the element invariants that construction checks and ``model_copy`` skips. Version 3
+(Stage 7) changed two outcomes: ``validate_span`` refuses an offset that is not
+exactly an ``int``, or is a ``bool``, as ``malformed_record``, where version 2
+raised, returned another check's reason, or, for an ``int`` subclass, accepted the
+span, since the offset check now runs first; and ``resolve_pointer`` resolves the
+document version's genuine element wherever it sits in the list, where a stale or
+tampered element listed first with its ID was refused.
 """
 
 

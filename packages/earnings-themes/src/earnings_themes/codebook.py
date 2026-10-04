@@ -21,7 +21,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Literal, Self
 
-from earnings_core import RejectionReason
+from earnings_core import RejectionReason, digest
 from pydantic import Field, NonNegativeInt, StringConstraints, model_validator
 
 from earnings_themes import tomlfile
@@ -34,7 +34,6 @@ from earnings_themes.records import (
     Pin,
     Sha256Hex,
     ThemesRecord,
-    digest,
     parse,
 )
 from earnings_themes.split import Partition, SplitManifest

@@ -6,6 +6,7 @@ Contract schema version 2; docs/data-dictionary.md documents every field.
 from earnings_core._model import SCHEMA_VERSION
 from earnings_core.artifacts import ArtifactRef, RightsStatus
 from earnings_core.chunks import TextChunk
+from earnings_core.digests import canonical_json, digest
 from earnings_core.documents import (
     CanonicalDocument,
     derive_doc_id,
@@ -23,6 +24,7 @@ from earnings_core.evidence import (
     SpanCandidate,
     VerifiedSpan,
     parse_span_candidate,
+    reverify_span,
     validate_span,
 )
 from earnings_core.hashing import hash_canonical_text, sha256_hex
@@ -59,8 +61,10 @@ __all__ = [
     "TextSpan",
     "VerifiedSpan",
     "apply_masks",
+    "canonical_json",
     "derive_doc_id",
     "derive_element_id",
+    "digest",
     "document_integrity_problem",
     "hash_canonical_text",
     "make_locator",
@@ -68,6 +72,7 @@ __all__ = [
     "parse_span_candidate",
     "resolve_locator",
     "resolve_pointer",
+    "reverify_span",
     "sha256_hex",
     "validate_elements",
     "validate_span",

@@ -10,9 +10,13 @@ this file changing too.
 - **Package.** `packages/earnings-core`, imported as `earnings_core`.
 - **Schema version.** `2` (`earnings_core.SCHEMA_VERSION`). Every top-level record
   carries it as `schema_version`, and a payload with another version is refused.
-- **Validator version.** `"2"` (`earnings_core.VALIDATOR_VERSION`), stamped on every
+- **Validator version.** `"3"` (`earnings_core.VALIDATOR_VERSION`), stamped on every
   `Rejection` and `VerifiedSpan`. Caches key on it (R14.6); bump it whenever a check
-  changes.
+  changes. Version 3 (Stage 7) refuses an unvalidated offset that is not exactly an
+  `int`, or is a `bool`, as `malformed_record`, where version 2 raised, returned
+  another check's reason, or, for an `int` subclass, accepted the span, since the
+  offset check now runs first; and it resolves a pointer to the document version's
+  genuine element wherever it sits in the list. No committed record stores it.
 - **Compatibility.** Version 2 (Stage 3) adds `DocumentElement.text_origin` and the
   `ocr_derived_text` rejection. Its checks also report every crossing pair, recheck
   the element invariants that construction enforces, validate `MaskedDocument`
@@ -189,7 +193,8 @@ A proposed evidence span before verification: one contiguous range (R5.5).
 ### `VerifiedSpan`
 
 A span that passed every check (R6.1). Its `quote_text` is sliced from the canonical
-text, never copied from a candidate (A §523).
+text, never copied from a candidate (A §523). A stored one is verified again with
+`reverify_span` at each later gate, since its type alone is not proof.
 
 | Field | Type | Meaning |
 | --- | --- | --- |
@@ -253,8 +258,10 @@ Why a check refused a record (R6.2: rejections stay auditable).
 
 ### `RejectionReason`
 
-`parse_span_candidate` records `malformed_record`. `validate_span` then runs its checks
-in the order of the next eleven rows and records the first failure.
+`parse_span_candidate` records `malformed_record`, and so does `validate_span` for an
+offset that is not exactly an `int`, or is a `bool`, on a candidate that skipped
+parsing. `validate_span` then runs its checks in the order of the next eleven rows
+and records the first failure.
 
 | Value | Meaning |
 | --- | --- |
@@ -603,8 +610,9 @@ recorded.
   facts, URLs, locators, and hashes, and never a source's wording (the user's
   decision, 2026-09-26). The saved artifacts stay local.
 - **Canonical JSON.** Every cohort hash is SHA-256 over canonical JSON
-  (`earnings_ingestion.cohort.digests`): sorted keys, separators without whitespace,
-  UTF-8 with non-ASCII characters written as themselves, and dates in ISO 8601.
+  (`earnings_core.canonical_json` and `earnings_core.digest`, which every record
+  hash uses): sorted keys, separators without whitespace, UTF-8 with non-ASCII
+  characters written as themselves, and dates in ISO 8601.
 
 ### `EvidenceClass`
 
@@ -1711,7 +1719,7 @@ Stage 6's own refusal reasons; a span check's reason is earnings-core's
 | Value | Meaning |
 | --- | --- |
 | `malformed` | A draft item is inconsistent, such as a synthetic example with an event |
-| `not_narrative` | A quote overlaps a table, cell, page artifact, or other non-narrative element (GS15) |
+| `not_narrative` | A quote overlaps a table, cell, page artifact, or other non-narrative element (GS15), other than a transparent container: an `other` element with at least one child, whose children hold every non-space character of its span (ES9) |
 | `element_mismatch` | A pointer names a narrative element that holds its span but is not the most specific one (P9-19) |
 | `quote_hash_mismatch` | A pointer's slice does not hash to its `quote_sha256` |
 | `context_hash_mismatch` | Its context does not hash to its `context_sha256` |
@@ -1821,7 +1829,7 @@ A quote, by position: the committed form of evidence.
 | `end` | int > `start` | Half-open end |
 | `element_id` | string | The most specific narrative element that contains it |
 | `quote_sha256` | 64 lowercase hex | SHA-256 of the slice's UTF-8 bytes |
-| `context_sha256` | 64 lowercase hex or null | When the text repeats: SHA-256 of `make_locator`'s prefix and suffix, as a compact JSON pair |
+| `context_sha256` | 64 lowercase hex or null | When the text repeats: SHA-256 of `make_locator`'s prefix and suffix as a compact JSON pair in UTF-8, `json.dumps([prefix, suffix], ensure_ascii=False, separators=(",", ":"))` |
 | `mask_ids` | tuple of string | The boilerplate masks over it, each `<category>-<start>-<end>` |
 
 ### `CodebookStatus`

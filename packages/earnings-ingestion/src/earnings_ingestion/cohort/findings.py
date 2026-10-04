@@ -8,7 +8,8 @@ finding holds the freeze again.
 
 from collections.abc import Iterable
 
-from earnings_ingestion.cohort.digests import digest
+from earnings_core import digest
+
 from earnings_ingestion.cohort.records import (
     Finding,
     FindingKind,

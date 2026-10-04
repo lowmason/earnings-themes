@@ -45,30 +45,41 @@ def resolve_pointer(
 ) -> TextSpan | Rejection:
     """The span of the element a model pointed at: code, not the model, supplies offsets.
 
-    Only an element of this document version resolves; anything else is an invalid
-    pointer with a recorded reason (R5.1, V9).
+    Only a genuine element resolves, wherever it sits in ``elements``. When no
+    genuine element has the ID, the pointer is invalid with a recorded reason (R5.1,
+    V9), from the first element that carries it: another version's is
+    ``wrong_document``, and a tampered one ``element_id_mismatch``. With no such
+    element, it is ``unknown_element``.
     """
     problem = document_integrity_problem(document)
     if problem is not None:
         return Rejection(reason=RejectionReason.DOCUMENT_INTEGRITY, detail=problem)
-    for element in elements:
-        if element.element_id != element_id:
-            continue
-        if element.doc_id != document.doc_id:
-            return Rejection(
-                reason=RejectionReason.WRONG_DOCUMENT,
-                detail=f"element {element_id} belongs to {element.doc_id},"
-                f" not {document.doc_id}",
-            )
-        if derive_element_id(element.type, element.span) != element_id:
-            return Rejection(
-                reason=RejectionReason.ELEMENT_ID_MISMATCH,
-                detail=f"element {element_id} does not match its type and span",
-            )
-        return element.span
+    named = [element for element in elements if element.element_id == element_id]
+    for element in named:
+        if is_genuine(document, element):
+            return element.span
+    if not named:
+        return Rejection(
+            reason=RejectionReason.UNKNOWN_ELEMENT,
+            detail=f"no element {element_id!r} in {document.doc_id}",
+        )
+    first = named[0]
+    if first.doc_id != document.doc_id:
+        return Rejection(
+            reason=RejectionReason.WRONG_DOCUMENT,
+            detail=f"element {element_id} belongs to {first.doc_id},"
+            f" not {document.doc_id}",
+        )
     return Rejection(
-        reason=RejectionReason.UNKNOWN_ELEMENT,
-        detail=f"no element {element_id!r} in {document.doc_id}",
+        reason=RejectionReason.ELEMENT_ID_MISMATCH,
+        detail=f"element {element_id} does not match its type and span",
+    )
+
+
+def is_genuine(document: CanonicalDocument, element: DocumentElement) -> bool:
+    """An element of this document version whose ID still matches its type and span."""
+    return element.doc_id == document.doc_id and element.element_id == (
+        derive_element_id(element.type, element.span)
     )
 
 

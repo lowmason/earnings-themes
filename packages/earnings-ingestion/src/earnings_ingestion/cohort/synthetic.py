@@ -20,10 +20,9 @@ import json
 from datetime import UTC, date, datetime
 from pathlib import Path
 
-from earnings_core import RightsStatus, sha256_hex
+from earnings_core import RightsStatus, canonical_json, sha256_hex
 
 from earnings_ingestion.cohort.build import build
-from earnings_ingestion.cohort.digests import canonical_json
 from earnings_ingestion.cohort.freeze import freeze
 from earnings_ingestion.cohort.locators import ArtifactText
 from earnings_ingestion.fetch.records import Retrieval, RetrievalMethod

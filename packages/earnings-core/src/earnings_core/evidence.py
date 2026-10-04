@@ -1,4 +1,5 @@
-"""Evidence spans: parse an untrusted candidate, then verify it exactly (R6.1)."""
+"""Evidence spans: parse an untrusted candidate, verify it exactly, and verify a
+stored span again at each later gate (R6.1)."""
 
 from collections.abc import Mapping, Sequence
 from typing import Self
@@ -7,16 +8,12 @@ from pydantic import NonNegativeInt, ValidationError, model_validator
 
 from earnings_core._model import VersionedRecord
 from earnings_core.documents import CanonicalDocument, document_integrity_problem
-from earnings_core.elements import (
-    DocumentElement,
-    ElementType,
-    TextOrigin,
-    derive_element_id,
-)
+from earnings_core.elements import DocumentElement, ElementType, TextOrigin
 from earnings_core.hashing import Sha256Hex
 from earnings_core.locators import SpanLocator, occurrences
 from earnings_core.rejections import VALIDATOR_VERSION, Rejection, RejectionReason
 from earnings_core.spans import TextSpan
+from earnings_core.structure import is_genuine
 
 
 class _EvidenceFields(VersionedRecord):
@@ -93,7 +90,19 @@ def validate_span(
     after the speaker-turn check, however exactly it matches (R4.3). Nothing here is
     a threshold (R13.2): text is compared with ``==``, never normalized. Check the
     element set once with ``validate_elements`` before checking spans against it.
+
+    An offset that is not exactly an ``int``, or is a ``bool``, is
+    ``malformed_record`` before any check, as ``parse_span_candidate`` would have
+    found for a bool or a float: a candidate built by ``model_copy`` skips it, and a
+    bad offset is refused, never raised.
     """
+    for name in ("start", "end"):
+        offset = getattr(candidate, name)
+        if type(offset) is not int:
+            return _reject(
+                RejectionReason.MALFORMED_RECORD,
+                f"{name}: an offset is an int, not a {type(offset).__name__}",
+            )
     problem = document_integrity_problem(document)
     if problem is not None:
         return _reject(RejectionReason.DOCUMENT_INTEGRITY, problem)
@@ -173,22 +182,36 @@ def validate_span(
     )
 
 
+def reverify_span(
+    document: CanonicalDocument,
+    elements: Sequence[DocumentElement],
+    span: VerifiedSpan,
+) -> VerifiedSpan | Rejection:
+    """Verify a stored span again, as each later R6.1 gate must: its type alone is
+    not proof, since ``model_copy(update=...)`` skips validation (ES5).
+
+    The span's candidate fields, all but ``validator_version``, are read into a
+    mapping and parsed as a fresh candidate, so a value construction would refuse
+    is ``malformed_record``. The span is never dumped: dumping a copy that holds a
+    float in an integer field warns. A span that verifies comes back fresh, under
+    the current ``VALIDATOR_VERSION``.
+    """
+    fields = {name: getattr(span, name) for name in SpanCandidate.model_fields}
+    candidate = parse_span_candidate(fields)
+    if isinstance(candidate, Rejection):
+        return candidate
+    return validate_span(document, elements, candidate)
+
+
 def _reject(reason: RejectionReason, detail: str) -> Rejection:
     return Rejection(reason=reason, detail=detail)
-
-
-def _genuine(document: CanonicalDocument, element: DocumentElement) -> bool:
-    """An element of this document version whose ID still matches its type and span."""
-    return element.doc_id == document.doc_id and element.element_id == (
-        derive_element_id(element.type, element.span)
-    )
 
 
 def _element(
     document: CanonicalDocument, elements: Sequence[DocumentElement], element_id: str
 ) -> DocumentElement | None:
     for element in elements:
-        if element.element_id == element_id and _genuine(document, element):
+        if element.element_id == element_id and is_genuine(document, element):
             return element
     return None
 
@@ -199,7 +222,7 @@ def _speaker_turns(
     return [
         element
         for element in elements
-        if element.type is ElementType.SPEAKER_TURN and _genuine(document, element)
+        if element.type is ElementType.SPEAKER_TURN and is_genuine(document, element)
     ]
 
 
@@ -210,7 +233,7 @@ def _ocr_elements(
     return [
         element
         for element in elements
-        if element.text_origin is TextOrigin.OCR and _genuine(document, element)
+        if element.text_origin is TextOrigin.OCR and is_genuine(document, element)
     ]
 
 

@@ -1,5 +1,6 @@
 import inspect
 import json
+import warnings
 
 import pytest
 from earnings_core.elements import ElementType
@@ -7,6 +8,7 @@ from earnings_core.evidence import (
     SpanCandidate,
     VerifiedSpan,
     parse_span_candidate,
+    reverify_span,
     validate_span,
 )
 from earnings_core.locators import SpanLocator, make_locator, resolve_locator
@@ -123,3 +125,82 @@ def test_a_malformed_record_names_the_offending_field(sample) -> None:
     outcome = parse_span_candidate(sample.raw("Margins held", start=1.5))
     assert isinstance(outcome, Rejection)
     assert outcome.detail.startswith("start:")
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [("start", False), ("start", 0.0), ("end", 16.0), ("end", True)],
+    ids=["bool-start-whose-slice-matches", "float-start", "float-end", "bool-end"],
+)
+def test_an_unvalidated_offset_is_malformed_and_never_raises(
+    sample, field, value
+) -> None:
+    """A candidate built by ``model_copy`` skips ``parse_span_candidate``, so an
+    offset may be a float or a bool: each is ``malformed_record``, never an
+    exception, even where its slice would match (R3.2, R6.2). The detail names the
+    field and its type, never its value, and the offset check runs first, even on a
+    candidate that also names another document."""
+    candidate = sample.candidate("Prepared remarks")
+    assert (candidate.start, candidate.end) == (0, 16)
+    unvalidated = candidate.model_copy(update={field: value})
+    outcome = validate_span(sample.document, sample.elements, unvalidated)
+    assert isinstance(outcome, Rejection)
+    assert outcome.reason is RejectionReason.MALFORMED_RECORD
+    detail, shown = outcome.detail, str(value)
+    assert detail.startswith(f"{field}:")
+    assert shown not in detail
+    elsewhere = unvalidated.model_copy(
+        update={"doc_id": "another@test-1#0000000000000000"}
+    )
+    ordered = validate_span(sample.document, sample.elements, elsewhere)
+    assert isinstance(ordered, Rejection)
+    assert ordered.reason is RejectionReason.MALFORMED_RECORD
+
+
+def test_a_stored_span_re_verifies_under_the_current_validator(sample) -> None:
+    """A span read back from JSON verifies again into a fresh span, even one an
+    earlier validator stamped: a stored span's type alone is not proof (ES5)."""
+    candidate = sample.candidate("Margins held at last year's level.")
+    verified = validate_span(sample.document, sample.elements, candidate)
+    assert isinstance(verified, VerifiedSpan)
+    stored = VerifiedSpan.model_validate_json(verified.model_dump_json())
+    assert reverify_span(sample.document, sample.elements, stored) == verified
+    older = VerifiedSpan.model_validate(
+        {**verified.model_dump(), "validator_version": "1"}
+    )
+    assert reverify_span(sample.document, sample.elements, older) == verified
+
+
+@pytest.mark.parametrize(
+    ("change", "reason"),
+    [
+        (
+            lambda span: {"quote_text": "Margins held"},
+            RejectionReason.QUOTE_TEXT_MISMATCH,
+        ),
+        (
+            lambda span: {"start": float(span.start)},
+            RejectionReason.MALFORMED_RECORD,
+        ),
+        (
+            lambda span: {"prefix": None},
+            RejectionReason.MALFORMED_RECORD,
+        ),
+    ],
+    ids=["changed-text", "float-offset", "none-prefix"],
+)
+def test_a_tampered_stored_span_is_refused_and_never_dumped(
+    sample, change, reason
+) -> None:
+    """``model_copy`` skips validation, so a stored span may hold anything. It is
+    refused with a reason, never raised, and never dumped, since dumping a float
+    in an integer field warns (ES5)."""
+    candidate = sample.candidate("Margins held at last year's level.")
+    verified = validate_span(sample.document, sample.elements, candidate)
+    assert isinstance(verified, VerifiedSpan)
+    tampered = verified.model_copy(update=change(verified))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        outcome = reverify_span(sample.document, sample.elements, tampered)
+    assert isinstance(outcome, Rejection)
+    assert outcome.reason is reason

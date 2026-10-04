@@ -235,3 +235,9 @@ only:
 - **What follows.** No gold quote can rest on such a sentence until Stage 7 decides
   whether a list item under an `other` element becomes quotable
   (`specs/deferred_items.md`, T6-M1).
+- **Stage 7's rule (plan 11).** An `other` element with at least one child, whose
+  children hold every non-space character of its span, is a transparent container,
+  and no longer blocks a quote (ES9). In `0000949699-08-000023_ex-99-1`,
+  `other-3292-5040` is one, so its 10 sentences now anchor: the test pins 660
+  anchored, 26 repeated, and 0 not narrative. No pilot verdict changed, since no
+  pilot release holds such a sentence (0 of 5139).

@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Literal, Self
 
 import tomllib
+from earnings_core import canonical_json
 from earnings_core.artifacts import NonBlankStr
 from earnings_core.documents import IdPart
 from earnings_core.hashing import Sha256Hex
@@ -30,7 +31,6 @@ from pydantic import (
     model_validator,
 )
 
-from earnings_ingestion.cohort.digests import canonical_json
 from earnings_ingestion.cohort.records import BoundTiming, Override, OverrideKind
 from earnings_ingestion.fetch.records import SourceId
 from earnings_ingestion.sec.identifiers import Cik
