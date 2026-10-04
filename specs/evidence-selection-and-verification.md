@@ -18,6 +18,18 @@ V11 for their tool-call and verification-bypass cases. It reads no pilot documen
 calls a model from code only in the opt-in live test, over a Stage 1 fixture, and it
 sends no SEC request.
 
+**This spec amends** the handoff Stage 7 receives from Stages 3 and 6, at two points:
+- **`other` elements.** The Stage 3 spec's handoff to Stage 7 (§Handoffs to later
+  stages), the Stage 6 spec's GS15, plan 9's P9-19, and the roadmap's Stage 7 Consumes
+  line call every `other` element non-narrative. Each now excepts a transparent
+  container, and only that (ES9).
+- **The pointer unit.** The Stage 3 spec's handoff and the roadmap make sentences the
+  pointer unit. The units are S1's sentences together with the narrative elements S1
+  never splits, such as headings (ES12).
+
+The roadmap records both in the commit that approves this spec. The completed Stage 3
+and Stage 6 specs and plans 4 and 9 are not edited.
+
 Locators:
 - **`A §n`** is `AGENTS.md`, by line.
 - **`Rn`** and **`Vn`** are the theme spec's requirements and verification items.
@@ -109,10 +121,12 @@ Out:
 ### The core fixes
 
 1. **`reverify_span(document, elements, span) -> VerifiedSpan | Rejection`**, in
-   `earnings_core.evidence` and exported from the root. It dumps the stored span
-   without its `validator_version`, parses that through `parse_span_candidate`, and
-   runs `validate_span`, returning a fresh `VerifiedSpan` under the current
-   `VALIDATOR_VERSION`. Tests: a span round-tripped through JSON re-verifies; a
+   `earnings_core.evidence` and exported from the root. It reads the stored span's
+   candidate fields, all but `validator_version`, into a mapping, passes that to
+   `parse_span_candidate`, and runs `validate_span`, returning a fresh `VerifiedSpan`
+   under the current `VALIDATOR_VERSION`. It never dumps the span, since dumping a
+   `model_copy` that holds a float in an integer field emits a serializer warning;
+   strict validation refuses the float instead. Tests: a span round-tripped through JSON re-verifies; a
    `model_copy` with changed text is `quote_text_mismatch`, and one with a float
    offset is `malformed_record`; neither raises.
 2. **`resolve_pointer`** returns the span of the genuine element, one of this version's
@@ -167,7 +181,8 @@ What follows from the rule:
   its children blocking.
 - The data-dictionary row for `not_narrative` names the exception.
 - `docs/verification/pilot-v1-gold-set.md`, under M5, gains a line: the 10 fixture
-  sentences now anchor, and no pilot verdict changed.
+  sentences now anchor, and no pilot verdict changed. The line gives counts and IDs
+  only, never a sentence, since the Stage 6 wording guard reads that file.
 - The gold brief already calls list items quotable, and is not edited.
 
 ### The proof
@@ -447,6 +462,10 @@ The default suite is offline and calls no model:
   - A scripted adapter obeys it. No tool exists to call, and no request body carries
     `tools`. Every injected candidate is rejected with its reason, and only spans that
     code sliced are stored.
+  - A line of the injection text spoofs labels: one past the window's range, which is
+    refused as `unknown_label`, and one equal to a real label, which resolves to the
+    unit code labeled, never to the spoofing line. Labels come only from code's
+    rendering.
   - Stage 9 reuses the bundle for its codebook case.
 - **GS13.** An AST test: `gold.py`, `annotation.py`, `anchoring.py`, `codebook.py`,
   `records.py`, and `tomlfile.py` import nothing from `earnings_themes.extraction`.
@@ -469,6 +488,12 @@ Plan A:
 1. **The proof.** The session runs the offline proof and the diff (§The proof).
 2. **The main checkout.** The user runs the default suite there, at plan A's tip on a
    detached HEAD, and reports its counts.
+   - The checkout must have no tracked changes before `git switch --detach`, since a
+     bundle in mid-edit would block the switch or be carried along. The user returns to
+     `main` afterward.
+   - On a failure, the user reports only the test's name and its reason, never the
+     traceback. A local leg can print pilot text even under `--tb=short`, and the
+     session that fixes the failure stays blind (ES2).
 
 Plan B:
 1. **The model.** On the gate's date, the session checks candidate model cards: open
