@@ -19,6 +19,7 @@ ES22).
   prompt and schema hashes: what every request of a run shares (R14.6).
 """
 
+from collections.abc import Iterator
 from enum import StrEnum
 from typing import Annotated, Literal, Self
 
@@ -207,6 +208,15 @@ class ExtractionRejection(ExtractionRecord):
             subject.append(f"candidate {self.candidate_index}")
         subject += self.element_ids
         return f"{' '.join(subject)}: {self.reason}"
+
+    def __repr_args__(self) -> Iterator[tuple[str, object]]:
+        """What ``repr`` shows: its IDs and reason, never a detail or a label."""
+        yield "doc_id", self.doc_id
+        yield "window_id", self.window_id
+        yield "attempt", self.attempt
+        yield "candidate_index", self.candidate_index
+        yield "element_ids", self.element_ids
+        yield "reason", self.reason
 
 
 class Visit(ExtractionRecord):

@@ -67,6 +67,11 @@ def test_a_refusal_prints_its_ids_and_reason_never_its_text(reason, expected) ->
     )
     assert (str(refused), f"{refused}") == (expected, expected)
     assert SENTINEL not in str(refused)
+    shown = repr(refused)
+    listed = str([refused])
+    assert SENTINEL not in shown
+    assert SENTINEL not in listed
+    assert refused.reason in shown
 
 
 def test_a_document_refusal_prints_the_document_and_reason() -> None:
@@ -75,6 +80,11 @@ def test_a_document_refusal_prints_the_document_and_reason() -> None:
         rejection=Rejection(reason=RejectionReason.WRONG_DOCUMENT, detail=SENTINEL),
     )
     assert str(refused) == "doc: wrong_document"
+    shown = repr(refused)
+    listed = str([refused])
+    assert SENTINEL not in shown
+    assert SENTINEL not in listed
+    assert refused.reason in shown
 
 
 @pytest.mark.parametrize(
