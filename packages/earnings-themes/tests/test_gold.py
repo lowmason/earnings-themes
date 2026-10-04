@@ -92,10 +92,11 @@ def test_origins_come_from_comparing_the_working_copy_with_the_draft(
     bundles, codebook
 ) -> None:
     """Each item's origin, and the drafting aid, come from the kept draft: the
-    working copy's drafting aid is never read (GS5; plan 10)."""
+    working copy's drafting aid is never used (GS5; plan 10)."""
     drafted = gold_draft()
     working = gold_draft(annotator=SIGNED)
     working["drafting_aid"] = {**AID, "drafted_on": date(2026, 10, 3)}
+    assert working["drafting_aid"] != AID
     working["claims"][1]["claim"] = "Margins were flat, in the user's words."
     del working["hard_negatives"][0]
     working["quotes"].append({"quote_id": "q4", "text": "Quarterly results"})
@@ -158,9 +159,10 @@ def test_a_bad_draft_is_refused_by_item(bundles, codebook, change, refusal) -> N
 
 
 def test_ids_themes_and_ties_are_checked(bundles, codebook, fixtures) -> None:
-    """Every ID resolves, every claim takes an assignment row, and every quote is
-    cited, in a bundle's gold and in each fixture of the curated set (R9.9; plan
-    10)."""
+    """Every ID resolves and every quote is cited, in a bundle's gold and in each
+    fixture of the curated set; every claim in a bundle's gold takes an assignment
+    row (R9.9); and the curated set refuses a repeated, missing, or moved fixture
+    once (plan 10)."""
     draft = gold_draft(no_theme=True)
     draft["quotes"].append({"quote_id": "q4", "text": "Quarterly results"})
     draft["claims"].append({"claim_id": "c1", "quote_ids": ["q9"], "claim": "Again."})
@@ -280,9 +282,10 @@ def test_curated_hard_negatives_over_stage_1_fixtures_validate(
     fixtures, codebook, tmp_path
 ) -> None:
     """The curated set builds, validates, and round-trips, and its drafting aid is
-    the kept draft's: the working copy's is never read (GS5; plan 10)."""
+    the kept draft's: the working copy's is never used (GS5; plan 10)."""
     draft = curated(fixtures)
     aid = draft.drafting_aid.model_copy(update={"drafted_on": date(2026, 10, 3)})
+    assert aid != draft.drafting_aid
     working = draft.model_copy(update={"drafting_aid": aid})
     record = build_curated(draft, working, bundles=fixtures, pin=PIN, codebook=codebook)
     assert isinstance(record, HardNegativeSet)

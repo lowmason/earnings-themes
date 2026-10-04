@@ -2079,7 +2079,7 @@ A hard-negative claim (D4); its expected support is `does_not_support`.
 | `partition` | `Partition` | The event's partition; never `excluded` |
 | `codebook` | `CodebookRef` | The approved codebook coded against |
 | `annotator` | string | The signature; blank until the user signs (GS4) |
-| `drafting_aid` | `DraftingAid` | The drafting session |
+| `drafting_aid` | `DraftingAid` | The drafting session, from the kept draft (GS5) |
 | `counts` | `DraftCounts` | The origins, counted against the kept draft (GS5) |
 | `no_theme` | bool | True exactly when no row pairs a claim with a codebook theme under `supports` |
 | `release_identification` | `ReleaseIdentification` | Whether the document is the release |
@@ -2108,7 +2108,7 @@ in no partition (GS10), though it carries the pin, as every Stage 6 record does.
 | `schema_version` | `1` | Themes record schema version |
 | `pin` | `Pin` | The pilot |
 | `annotator` | string | The signature |
-| `drafting_aid` | `DraftingAid` | The drafting session |
+| `drafting_aid` | `DraftingAid` | The drafting session, from the kept draft (GS5) |
 | `counts` | `DraftCounts` | The origins, over every fixture |
 | `codebook` | `CodebookRef` | The approved codebook |
 | `documents` | tuple of `FixtureNegatives` | At least one; with every `NegativeKind` among them |
