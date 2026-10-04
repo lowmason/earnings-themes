@@ -5,7 +5,8 @@ document or of a Stage 1 fixture.
 
 - **The files.** Under ``evaluation/``: the split, the coverage report, the gold,
   and the briefs; codebook v0, ADR 0003, and the verification record; and the
-  curated hard negatives: whichever are committed yet. A Markdown file is read a
+  curated hard negatives: whichever are committed yet. Also Stage 7's prompts,
+  under ``prompts/`` (the Stage 7 spec, §Wording guard). A Markdown file is read a
   paragraph at a time, its lines joined, so a phrase copied across a wrapped line is
   still caught.
 - **What a failure prints.** Each finding is a pair: the file with its field or
@@ -41,11 +42,13 @@ STAGE6 = (
     "docs/adr/0003-*.md",
     "docs/verification/pilot-v1-gold-set.md",
     "tests/fixtures/gold/*.toml",
+    "prompts/**/*.md",
 )
 BRIEFS = (
     "evaluation/djia-2024q3-2026q2/pilot-v1/briefs/codebook.md",
     "evaluation/djia-2024q3-2026q2/pilot-v1/briefs/gold.md",
 )
+PROMPTS = ("prompts/extraction/pointer-1.md",)
 
 
 def committed() -> list[Path]:
@@ -80,6 +83,11 @@ def fixture_texts() -> list[tuple[str, str]]:
 def test_the_briefs_are_among_the_files_checked() -> None:
     names = {path.relative_to(REPO).as_posix() for path in committed()}
     assert set(BRIEFS) <= names
+
+
+def test_the_prompts_are_among_the_files_checked() -> None:
+    names = {path.relative_to(REPO).as_posix() for path in committed()}
+    assert set(PROMPTS) <= names
 
 
 def test_no_stage_6_file_quotes_a_stage_1_fixture() -> None:
