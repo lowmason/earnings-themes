@@ -1136,12 +1136,14 @@
 
 ## 11-evidence-selection-and-verification-plan-a — 2026-10-04
 
-- [ ] Surface only a refusal's reason and IDs over pilot text (plan 11's final
+- [ ] Print only a refusal's reason and IDs over pilot text (plan 11's final
       review; GS13; deferred by the user). In
       packages/earnings-core/src/earnings_core/evidence.py, `validate_span`'s
       `quote_text_mismatch`, `locator_mismatch`, and `ambiguous_occurrence`
       details embed text through `!r`, and `reverify_span` passes them through
       unchanged, so a refusal over a pilot document carries pilot text in its
-      `detail`. Size: quick-fix. Done when: plan B's rejection store and gates
-      print and store only the reason and IDs for a refusal over pilot text,
-      with a test.
+      `detail`. The Stage 7 spec's Records section lets that detail stay in the
+      local store, since `data/` is gitignored, so only printing and committing
+      are at issue. Size: quick-fix. Done when: plan B's gates and commands print
+      or commit only the reason and IDs for a refusal over pilot text, with a
+      test.
