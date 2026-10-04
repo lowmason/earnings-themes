@@ -238,7 +238,7 @@ def build_gold(
         partition=partition,
         codebook=_codebook_ref(codebook),
         annotator=working.annotator,
-        drafting_aid=working.drafting_aid,
+        drafting_aid=drafted.drafting_aid,
         counts=origins.tally(),
         no_theme=working.no_theme,
         release_identification=working.release_identification,
@@ -449,7 +449,7 @@ def build_curated(
     record = HardNegativeSet(
         pin=pin,
         annotator=working.annotator,
-        drafting_aid=working.drafting_aid,
+        drafting_aid=drafted.drafting_aid,
         counts=origins.tally(),
         codebook=_codebook_ref(codebook),
         documents=tuple(documents),

@@ -2157,7 +2157,7 @@ in no partition (GS10), though it carries the pin, as every Stage 6 record does.
 | --- | --- | --- |
 | `event_id` | ID part | The bundle's event |
 | `annotator` | string | Blank in the draft; the user signs the working copy |
-| `drafting_aid` | `DraftingAid` | The drafting session |
+| `drafting_aid` | `DraftingAid` | The drafting session; the record takes the kept draft's, never the working copy's (GS5) |
 | `no_theme` | bool | As `Gold` |
 | `release_identification` | `ReleaseIdentification` | As `Gold` |
 | `quotes` | tuple of `QuoteDraft` | Quotes, by text |
@@ -2180,7 +2180,7 @@ in no partition (GS10), though it carries the pin, as every Stage 6 record does.
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `annotator` | string | Blank in the draft; the user signs the working copy |
-| `drafting_aid` | `DraftingAid` | The drafting session |
+| `drafting_aid` | `DraftingAid` | The drafting session; the record takes the kept draft's, never the working copy's (GS5) |
 | `documents` | tuple of `FixtureDraft` | At least one |
 
 ## Stage 6 files
