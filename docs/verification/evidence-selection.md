@@ -68,8 +68,9 @@ its content hash with the moved functions:
 
 ### The main checkout
 
-On [GATE: the date], the user ran the default suite in the main checkout at plan A's
-tip, `[GATE: the tip's short hash]`, on a detached HEAD, from a checkout with no
-tracked change. It printed `[GATE: the summary line]`. Its skip was
-[GATE: the skip line's location and reason]. [GATE: "No test failed.", or each
-failure's node ID and exception type, with its fix's commit.]
+On 2026-10-04, the user ran the default suite in the main checkout at plan A's
+tip, `5c4259e`, on a detached HEAD, from a checkout with no tracked change. It
+printed `1755 passed, 1 skipped, 24 deselected`. Its skip was
+`tests/integration/test_event_store_v1.py:42`: the first acquisition has run, and
+`docs/verification/djia-events.md` records its count. The other 7 legs that skip in
+the worktree ran there and passed. No test failed.
