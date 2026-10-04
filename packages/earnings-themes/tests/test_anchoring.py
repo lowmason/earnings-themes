@@ -2,6 +2,8 @@
 a quote occurs once, sits in narrative, passes Stage 2's checks, and is committed as
 offsets and hashes that the local document reproduces."""
 
+from collections import Counter
+
 import pytest
 from earnings_core import RejectionReason, TextSpan, make_locator
 from earnings_themes.anchoring import (
@@ -180,19 +182,38 @@ def test_the_synthetic_bundle_is_sound(synthetic) -> None:
 def test_every_unique_narrative_sentence_of_the_stage_1_fixtures_anchors(
     fixtures,
 ) -> None:
-    anchored = 0
-    for bundle in fixtures.values():
+    """Each of the 686 sentences of Stage 1's fixtures anchors to itself, or is
+    refused: 26 repeat, so need context, and 10 sit in a list item under an
+    ``other`` element, all in one fixture, so are not narrative (T6-M1). Plan 10
+    pins these counts (T6-M2), and calibrates its count over the pilot on the 10."""
+    verdicts: Counter[str] = Counter()
+    under_other: Counter[str] = Counter()
+    for name, bundle in fixtures.items():
         assert bundle_problems(bundle) == []
         text = bundle.document.canonical_text
+        others = [e for e in bundle.elements if e.type.value == "other"]
+        items = [
+            e
+            for e in bundle.elements
+            if e.type.value == "list_item"
+            and any(other.span.contains(e.span) for other in others)
+        ]
         for element in bundle.elements:
             if element.type.value != "sentence":
                 continue
             exact = text[element.span.start : element.span.end]
             pointer = anchor(bundle, exact)
             if isinstance(pointer, str):
-                assert pointer in {"ambiguous_occurrence", "not_narrative"}
+                verdicts[pointer] += 1
+                if any(item.span.contains(element.span) for item in items):
+                    under_other[f"{name}: {pointer}"] += 1
                 continue
             assert pointer.element_id == element.element_id
             assert check_pointer(bundle, pointer) == []
-            anchored += 1
-    assert anchored > 500
+            verdicts["anchored"] += 1
+    assert verdicts == {
+        "anchored": 650,
+        "ambiguous_occurrence": 26,
+        "not_narrative": 10,
+    }
+    assert under_other == {"0000949699-08-000023_ex-99-1: not_narrative": 10}

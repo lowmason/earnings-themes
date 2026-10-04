@@ -238,7 +238,7 @@ def build_gold(
         partition=partition,
         codebook=_codebook_ref(codebook),
         annotator=working.annotator,
-        drafting_aid=working.drafting_aid,
+        drafting_aid=drafted.drafting_aid,
         counts=origins.tally(),
         no_theme=working.no_theme,
         release_identification=working.release_identification,
@@ -274,6 +274,10 @@ def _ids(
             if quote_id not in quote_ids:
                 subject = f"{prefix}claim {claim.claim_id}"
                 refusals.append(Refusal(subject, Problem.UNKNOWN_QUOTE))
+    cited = {q for claim in (*claims, *negatives) for q in claim.quote_ids}
+    for quote_id in dict.fromkeys(quote_ids):
+        if quote_id not in cited:
+            refusals.append(Refusal(f"{prefix}quote {quote_id}", Problem.UNREFERENCED))
     rows = [(a.claim_id, a.theme_id) for a in assignments]
     for row in sorted({r for r in rows if rows.count(r) > 1}):
         refusals.append(Refusal(f"assignment {row[0]}/{row[1]}", Problem.DUPLICATE_ID))
@@ -284,6 +288,10 @@ def _ids(
             refusals.append(Refusal(subject, Problem.UNKNOWN_CLAIM))
         if a.theme_id != UNMATCHED and a.theme_id not in themes:
             refusals.append(Refusal(subject, Problem.UNKNOWN_THEME))
+    coded = {a.claim_id for a in assignments}
+    for claim_id in dict.fromkeys(c.claim_id for c in claims):
+        if claim_id not in coded:
+            refusals.append(Refusal(f"{prefix}claim {claim_id}", Problem.UNREFERENCED))
     groups: dict[str, list[GoldAssignment]] = {}
     for a in assignments:
         if a.tie_group is not None:
@@ -441,7 +449,7 @@ def build_curated(
     record = HardNegativeSet(
         pin=pin,
         annotator=working.annotator,
-        drafting_aid=working.drafting_aid,
+        drafting_aid=drafted.drafting_aid,
         counts=origins.tally(),
         codebook=_codebook_ref(codebook),
         documents=tuple(documents),
@@ -472,9 +480,13 @@ def validate_curated(
     kinds = {n.negative_kind for d in record.documents for n in d.hard_negatives}
     if kinds != set(NegativeKind):
         refusals.append(Refusal("hard_negatives", Problem.NEGATIVE_KINDS))
+    fixture_ids = [d.fixture_id for d in record.documents]
+    for repeated in sorted({i for i in fixture_ids if fixture_ids.count(i) > 1}):
+        refusals.append(Refusal(repeated, Problem.DUPLICATE_ID))
     items: list[BaseModel] = []
     for document in record.documents:
         prefix = f"{document.fixture_id} "
+        items += [*document.quotes, *document.hard_negatives]
         bundle = bundles.get(document.fixture_id)
         if bundle is None:
             refusals.append(Refusal(prefix.strip(), Problem.UNKNOWN_DOCUMENT))
@@ -494,6 +506,5 @@ def validate_curated(
             prefix,
         )
         refusals += _pointers(document.quotes, bundle, prefix)
-        items += [*document.quotes, *document.hard_negatives]
     refusals += _counts(record.counts, items)
     return refusals + _wording(record, bundles)

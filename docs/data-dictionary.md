@@ -1730,6 +1730,7 @@ Stage 6's own refusal reasons; a span check's reason is earnings-core's
 | `unknown_claim` | An assignment names a claim the record lacks |
 | `unknown_theme` | An assignment, hard negative, or parent names a theme the codebook lacks |
 | `unknown_document` | The event or fixture has no document here, or is not in the split |
+| `unreferenced` | The record holds an item nothing in it names: a claim with no assignment row, or a quote no claim or hard negative cites (R9.9) |
 | `tie_group` | A tie group holds rows of more than one claim, or only one row |
 | `source_wording` | A string shares a 40-character window with a document's text |
 | `outside_training` | A codebook example is not from a training bundle |
@@ -2078,7 +2079,7 @@ A hard-negative claim (D4); its expected support is `does_not_support`.
 | `partition` | `Partition` | The event's partition; never `excluded` |
 | `codebook` | `CodebookRef` | The approved codebook coded against |
 | `annotator` | string | The signature; blank until the user signs (GS4) |
-| `drafting_aid` | `DraftingAid` | The drafting session |
+| `drafting_aid` | `DraftingAid` | The drafting session, from the kept draft (GS5) |
 | `counts` | `DraftCounts` | The origins, counted against the kept draft (GS5) |
 | `no_theme` | bool | True exactly when no row pairs a claim with a codebook theme under `supports` |
 | `release_identification` | `ReleaseIdentification` | Whether the document is the release |
@@ -2107,7 +2108,7 @@ in no partition (GS10), though it carries the pin, as every Stage 6 record does.
 | `schema_version` | `1` | Themes record schema version |
 | `pin` | `Pin` | The pilot |
 | `annotator` | string | The signature |
-| `drafting_aid` | `DraftingAid` | The drafting session |
+| `drafting_aid` | `DraftingAid` | The drafting session, from the kept draft (GS5) |
 | `counts` | `DraftCounts` | The origins, over every fixture |
 | `codebook` | `CodebookRef` | The approved codebook |
 | `documents` | tuple of `FixtureNegatives` | At least one; with every `NegativeKind` among them |
@@ -2156,7 +2157,7 @@ in no partition (GS10), though it carries the pin, as every Stage 6 record does.
 | --- | --- | --- |
 | `event_id` | ID part | The bundle's event |
 | `annotator` | string | Blank in the draft; the user signs the working copy |
-| `drafting_aid` | `DraftingAid` | The drafting session |
+| `drafting_aid` | `DraftingAid` | The drafting session; the record takes the kept draft's, never the working copy's (GS5) |
 | `no_theme` | bool | As `Gold` |
 | `release_identification` | `ReleaseIdentification` | As `Gold` |
 | `quotes` | tuple of `QuoteDraft` | Quotes, by text |
@@ -2179,7 +2180,7 @@ in no partition (GS10), though it carries the pin, as every Stage 6 record does.
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `annotator` | string | Blank in the draft; the user signs the working copy |
-| `drafting_aid` | `DraftingAid` | The drafting session |
+| `drafting_aid` | `DraftingAid` | The drafting session; the record takes the kept draft's, never the working copy's (GS5) |
 | `documents` | tuple of `FixtureDraft` | At least one |
 
 ## Stage 6 files

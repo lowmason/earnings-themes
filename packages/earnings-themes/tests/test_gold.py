@@ -2,6 +2,8 @@
 and derives every origin, and the validator refuses each problem by item and
 reason, never by text."""
 
+from datetime import date
+
 import pytest
 from earnings_themes.annotation import (
     CuratedDraft,
@@ -24,6 +26,7 @@ from earnings_themes.problems import Refusal
 from earnings_themes.records import RecordError, parse
 from earnings_themes.split import Partition
 from earnings_themes.synthetic import (
+    AID,
     DEV,
     LATER,
     PIN,
@@ -88,13 +91,17 @@ def test_an_accepted_draft_builds_unsigned_and_fails_only_on_its_signature(
 def test_origins_come_from_comparing_the_working_copy_with_the_draft(
     bundles, codebook
 ) -> None:
+    """Each item's origin, and the drafting aid, come from the kept draft: the
+    working copy's drafting aid is never used (GS5; plan 10)."""
     drafted = gold_draft()
     working = gold_draft(annotator=SIGNED)
+    working["drafting_aid"] = {**AID, "drafted_on": date(2026, 10, 3)}
+    assert working["drafting_aid"] != AID
     working["claims"][1]["claim"] = "Margins were flat, in the user's words."
     del working["hard_negatives"][0]
     working["quotes"].append({"quote_id": "q4", "text": "Quarterly results"})
     working["claims"].append(
-        {"claim_id": "c3", "quote_ids": ["q4"], "claim": "A heading."}
+        {"claim_id": "c3", "quote_ids": ["q3", "q4"], "claim": "A heading."}
     )
     working["assignments"].append(
         {"claim_id": "c3", "theme_id": "unmatched", "support": "uncertain"}
@@ -109,6 +116,7 @@ def test_origins_come_from_comparing_the_working_copy_with_the_draft(
     }
     assert gold.claims[1].origin is Origin.DRAFTED_EDITED
     assert gold.quotes[3].origin is Origin.ANNOTATOR_ADDED
+    assert gold.drafting_aid.model_dump() == AID
     assert check(gold, bundles, codebook) == []
 
 
@@ -150,9 +158,15 @@ def test_a_bad_draft_is_refused_by_item(bundles, codebook, change, refusal) -> N
     assert build(bundles, codebook, draft) == [refusal]
 
 
-def test_ids_themes_and_ties_are_checked(bundles, codebook) -> None:
+def test_ids_themes_and_ties_are_checked(bundles, codebook, fixtures) -> None:
+    """Every ID resolves and every quote is cited, in a bundle's gold and in each
+    fixture of the curated set; every claim in a bundle's gold takes an assignment
+    row (R9.9); and the curated set refuses a repeated, missing, or moved fixture
+    once (plan 10)."""
     draft = gold_draft(no_theme=True)
+    draft["quotes"].append({"quote_id": "q4", "text": "Quarterly results"})
     draft["claims"].append({"claim_id": "c1", "quote_ids": ["q9"], "claim": "Again."})
+    draft["claims"].append({"claim_id": "c3", "quote_ids": ["q1"], "claim": "Uncoded."})
     draft["assignments"] = [
         {
             "claim_id": "c1",
@@ -171,10 +185,40 @@ def test_ids_themes_and_ties_are_checked(bundles, codebook) -> None:
     assert build(bundles, codebook, draft) == [
         Refusal("claim c1", "duplicate_id"),
         Refusal("claim c1", "unknown_quote"),
+        Refusal("quote q4", "unreferenced"),
         Refusal("assignment c1/pricing", "unknown_theme"),
         Refusal("assignment c9/unmatched", "unknown_claim"),
+        Refusal("claim c3", "unreferenced"),
         Refusal("tie_group t1", "tie_group"),
     ]
+
+    curated = curated_draft(fixtures)
+    first = curated["documents"][0]
+    first["hard_negatives"][1]["quote_ids"] = ["q1"]
+    parsed = parse(curated, CuratedDraft, "curated")
+    refusals = build_curated(
+        parsed, parsed, bundles=fixtures, pin=PIN, codebook=codebook
+    )
+    assert refusals == [Refusal(f"{first['fixture_id']} quote q2", "unreferenced")]
+
+    good = parse(curated_draft(fixtures, SIGNED), CuratedDraft, "curated")
+    record = build_curated(good, good, bundles=fixtures, pin=PIN, codebook=codebook)
+    assert isinstance(record, HardNegativeSet)
+    first_id = record.documents[0].fixture_id
+    repeated = good.model_copy(
+        update={"documents": (*good.documents, good.documents[0])}
+    )
+    refusals = build_curated(
+        good, repeated, bundles=fixtures, pin=PIN, codebook=codebook
+    )
+    assert refusals == [Refusal(first_id, "duplicate_id")]
+    others = {name: bundle for name, bundle in fixtures.items() if name != first_id}
+    refusals = validate_curated(record, bundles=others, pin=PIN, codebook=codebook)
+    assert refusals == [Refusal(first_id, "unknown_document")]
+    moved = record.documents[0].model_copy(update={"doc_id": "other@walker-1#0"})
+    tampered = record.model_copy(update={"documents": (moved, *record.documents[1:])})
+    refusals = validate_curated(tampered, bundles=fixtures, pin=PIN, codebook=codebook)
+    assert refusals == [Refusal(f"{first_id} doc_id", "wrong_document")]
 
 
 def test_a_claim_that_copies_the_release_is_refused(bundles, codebook) -> None:
@@ -237,10 +281,16 @@ def curated(fixtures, signed: bool = True) -> CuratedDraft:
 def test_curated_hard_negatives_over_stage_1_fixtures_validate(
     fixtures, codebook, tmp_path
 ) -> None:
+    """The curated set builds, validates, and round-trips, and its drafting aid is
+    the kept draft's: the working copy's is never used (GS5; plan 10)."""
     draft = curated(fixtures)
-    record = build_curated(draft, draft, bundles=fixtures, pin=PIN, codebook=codebook)
+    aid = draft.drafting_aid.model_copy(update={"drafted_on": date(2026, 10, 3)})
+    assert aid != draft.drafting_aid
+    working = draft.model_copy(update={"drafting_aid": aid})
+    record = build_curated(draft, working, bundles=fixtures, pin=PIN, codebook=codebook)
     assert isinstance(record, HardNegativeSet)
     assert record.pin == PIN
+    assert record.drafting_aid == draft.drafting_aid
     assert validate_curated(record, bundles=fixtures, pin=PIN, codebook=codebook) == []
     path = tmp_path / "hard-negatives.toml"
     path.write_text(gold_toml(record), encoding="utf-8")
