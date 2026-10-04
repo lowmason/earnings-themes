@@ -137,14 +137,24 @@ def test_an_unvalidated_offset_is_malformed_and_never_raises(
 ) -> None:
     """A candidate built by ``model_copy`` skips ``parse_span_candidate``, so an
     offset may be a float or a bool: each is ``malformed_record``, never an
-    exception, even where its slice would match (R3.2, R6.2)."""
+    exception, even where its slice would match (R3.2, R6.2). The detail names the
+    field and its type, never its value, and the offset check runs first, even on a
+    candidate that also names another document."""
     candidate = sample.candidate("Prepared remarks")
     assert (candidate.start, candidate.end) == (0, 16)
     unvalidated = candidate.model_copy(update={field: value})
     outcome = validate_span(sample.document, sample.elements, unvalidated)
     assert isinstance(outcome, Rejection)
     assert outcome.reason is RejectionReason.MALFORMED_RECORD
-    assert outcome.detail.startswith(f"{field}:")
+    detail, shown = outcome.detail, str(value)
+    assert detail.startswith(f"{field}:")
+    assert shown not in detail
+    elsewhere = unvalidated.model_copy(
+        update={"doc_id": "another@test-1#0000000000000000"}
+    )
+    ordered = validate_span(sample.document, sample.elements, elsewhere)
+    assert isinstance(ordered, Rejection)
+    assert ordered.reason is RejectionReason.MALFORMED_RECORD
 
 
 def test_a_stored_span_re_verifies_under_the_current_validator(sample) -> None:
@@ -172,8 +182,12 @@ def test_a_stored_span_re_verifies_under_the_current_validator(sample) -> None:
             lambda span: {"start": float(span.start)},
             RejectionReason.MALFORMED_RECORD,
         ),
+        (
+            lambda span: {"prefix": None},
+            RejectionReason.MALFORMED_RECORD,
+        ),
     ],
-    ids=["changed-text", "float-offset"],
+    ids=["changed-text", "float-offset", "none-prefix"],
 )
 def test_a_tampered_stored_span_is_refused_and_never_dumped(
     sample, change, reason

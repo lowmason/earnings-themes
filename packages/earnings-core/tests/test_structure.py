@@ -266,7 +266,8 @@ def test_a_tampered_pointer_target_is_rejected(sample) -> None:
 def test_the_genuine_element_resolves_wherever_it_sits(sample) -> None:
     """An unchanged region keeps its ID across versions (D-1), so a list may name a
     stale element, or a tampered one, before the genuine one. The genuine element
-    resolves wherever it sits; only when none has the ID is the pointer refused."""
+    resolves wherever it sits; only when no genuine element has the ID is the
+    pointer refused, and then the first element named gives the reason."""
     heading = sample.element(ElementType.HEADING, "Prepared remarks")
     older = CanonicalDocument.create(
         source_document_id="sample-call",
@@ -280,6 +281,11 @@ def test_the_genuine_element_resolves_wherever_it_sits(sample) -> None:
         listed = [first, *sample.elements]
         resolved = resolve_pointer(sample.document, listed, heading.element_id)
         assert resolved == heading.span
-    alone = resolve_pointer(sample.document, [stale], heading.element_id)
-    assert isinstance(alone, Rejection)
-    assert alone.reason is RejectionReason.WRONG_DOCUMENT
+    for named, reason in (
+        ([stale], RejectionReason.WRONG_DOCUMENT),
+        ([stale, moved], RejectionReason.WRONG_DOCUMENT),
+        ([moved, stale], RejectionReason.ELEMENT_ID_MISMATCH),
+    ):
+        refused = resolve_pointer(sample.document, named, heading.element_id)
+        assert isinstance(refused, Rejection)
+        assert refused.reason is reason

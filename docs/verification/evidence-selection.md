@@ -13,8 +13,9 @@ spec's §Plan A. It changed functions and tests, and no committed record.
 - **The core fixes (ES4, ES5).**
   - `reverify_span` verifies a stored span again from its fields, and never dumps
     it.
-  - `validate_span` refuses an offset that is not an `int`, or is a `bool`, as
-    `malformed_record`, where it raised.
+  - `validate_span` refuses an offset that is not exactly an `int`, or is a
+    `bool`, as `malformed_record`, where version 2 raised or returned another
+    reason, since the offset check now runs first.
   - `resolve_pointer` resolves the genuine element wherever it sits in the list.
   - `VALIDATOR_VERSION` is `"3"`, and no committed record stores it.
 - **One canonical JSON (ES7).** `canonical_json` and `digest` live in
@@ -24,9 +25,9 @@ spec's §Plan A. It changed functions and tests, and no committed record.
 - **`context_hash` (ES8).** A known-answer test pins its byte format, with a pair
   holding a non-ASCII character, a double quote, and a backslash:
   `fd4874e7855a8b8d6c9df217cca901d75d1129624089f94a6db6cda22ef52280`, over 47 bytes.
-- **The narrative rule (ES9).** An `other` element whose children hold every
-  non-space character of its span is a transparent container, and no longer blocks
-  a quote.
+- **The narrative rule (ES9).** An `other` element with at least one child, whose
+  children hold every non-space character of its span, is a transparent container,
+  and no longer blocks a quote.
   - Stage 1's 686 sentences now give 660 anchored, 26 repeated, and 0 not narrative.
   - The 10 that moved sit under `other-3292-5040` in `0000949699-08-000023_ex-99-1`.
   - No pilot verdict changed (M5: 0 of 5139).

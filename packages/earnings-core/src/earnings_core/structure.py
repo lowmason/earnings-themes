@@ -45,10 +45,11 @@ def resolve_pointer(
 ) -> TextSpan | Rejection:
     """The span of the element a model pointed at: code, not the model, supplies offsets.
 
-    Only a genuine element resolves, wherever it sits in ``elements``. When none has
-    the ID, the pointer is invalid with a recorded reason (R5.1, V9), from the first
-    element that has it: another version's is ``wrong_document``, and a tampered
-    one ``element_id_mismatch``. With no such element, it is ``unknown_element``.
+    Only a genuine element resolves, wherever it sits in ``elements``. When no
+    genuine element has the ID, the pointer is invalid with a recorded reason (R5.1,
+    V9), from the first element that carries it: another version's is
+    ``wrong_document``, and a tampered one ``element_id_mismatch``. With no such
+    element, it is ``unknown_element``.
     """
     problem = document_integrity_problem(document)
     if problem is not None:

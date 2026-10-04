@@ -1,10 +1,10 @@
 """Stage 6's committed records, checked from committed files alone (the Stage 6 spec,
 §The codebook, §The coverage report, and §The gold): codebook v0 hashes to its
 content hash, is approved, and is cited by ADR 0003; the coverage report hashes to
-its own; codebook v0, the coverage report, and each gold file bind to the pin and
-the split that the suite recomputes (plan 11, P11-2); and each gold file is named
-for its event, codes against v0, agrees with its ``no_theme``, and holds together
-by ID.
+its own and binds to the pin; codebook v0 and each gold file bind to the pin and the
+split; the suite recomputes the pin and the split (plan 11, P11-2); and each gold
+file is named for its event, codes against v0, agrees with its ``no_theme``, and
+holds together by ID.
 
 The local legs in ``test_stage6_pilot_v1.py`` recheck these records against the
 pilot's documents and skip without ``data/``; this check needs no local store, so a

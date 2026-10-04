@@ -12,9 +12,10 @@ this file changing too.
   carries it as `schema_version`, and a payload with another version is refused.
 - **Validator version.** `"3"` (`earnings_core.VALIDATOR_VERSION`), stamped on every
   `Rejection` and `VerifiedSpan`. Caches key on it (R14.6); bump it whenever a check
-  changes. Version 3 (Stage 7) refuses an unvalidated offset that is not an `int`,
-  or is a `bool`, as `malformed_record` where version 2 raised, and resolves a
-  pointer to this version's genuine element wherever it sits in the list. No
+  changes. Version 3 (Stage 7) refuses an unvalidated offset that is not exactly an
+  `int`, or is a `bool`, as `malformed_record`, where version 2 raised or returned
+  another reason, since the offset check now runs first; and it resolves a pointer
+  to the document version's genuine element wherever it sits in the list. No
   committed record stores it.
 - **Compatibility.** Version 2 (Stage 3) adds `DocumentElement.text_origin` and the
   `ocr_derived_text` rejection. Its checks also report every crossing pair, recheck
@@ -258,9 +259,9 @@ Why a check refused a record (R6.2: rejections stay auditable).
 ### `RejectionReason`
 
 `parse_span_candidate` records `malformed_record`, and so does `validate_span` for an
-offset that is not an `int`, or is a `bool`, on a candidate that skipped parsing.
-`validate_span` then runs its checks in the order of the next eleven rows and records
-the first failure.
+offset that is not exactly an `int`, or is a `bool`, on a candidate that skipped
+parsing. `validate_span` then runs its checks in the order of the next eleven rows
+and records the first failure.
 
 | Value | Meaning |
 | --- | --- |
@@ -1718,7 +1719,7 @@ Stage 6's own refusal reasons; a span check's reason is earnings-core's
 | Value | Meaning |
 | --- | --- |
 | `malformed` | A draft item is inconsistent, such as a synthetic example with an event |
-| `not_narrative` | A quote overlaps a table, cell, page artifact, or other non-narrative element (GS15), other than a transparent container: an `other` element whose children hold every non-space character of its span (ES9) |
+| `not_narrative` | A quote overlaps a table, cell, page artifact, or other non-narrative element (GS15), other than a transparent container: an `other` element with at least one child, whose children hold every non-space character of its span (ES9) |
 | `element_mismatch` | A pointer names a narrative element that holds its span but is not the most specific one (P9-19) |
 | `quote_hash_mismatch` | A pointer's slice does not hash to its `quote_sha256` |
 | `context_hash_mismatch` | Its context does not hash to its `context_sha256` |

@@ -190,12 +190,13 @@ def test_the_synthetic_bundle_is_sound(synthetic) -> None:
     assert bundle_problems(synthetic.bundle) == []
 
 
-def list_bundle(lead: str) -> Bundle:
+def list_bundle(lead: str, between: str = "", tail: str = "") -> Bundle:
     """Invented text: a heading; a list container of type ``other``, as walker-1
-    makes one (W7), whose two list items hold one sentence each, with ``lead`` as
-    the container's own text before its first item; and a 4-character ``other``
-    div."""
-    text = f"Outlook\n{lead}Sales rose.\nCosts fell.\nNote\n"
+    makes one (W7), whose two list items hold one sentence each, with ``lead``,
+    ``between``, and ``tail`` as the container's own text before its first item,
+    after the newline between its items, and after its last item; and a
+    4-character ``other`` div."""
+    text = f"Outlook\n{lead}Sales rose.\n{between}Costs fell.{tail}\nNote\n"
     document = CanonicalDocument.create(
         source_document_id="0009990001-25-000002_ex991.htm",
         canonicalization_version="walker-1",
@@ -210,7 +211,7 @@ def list_bundle(lead: str) -> Bundle:
     container = DocumentElement.create(
         document,
         ElementType.OTHER,
-        TextSpan(start=first.start - len(lead), end=second.end),
+        TextSpan(start=first.start - len(lead), end=second.end + len(tail)),
     )
     elements = [
         DocumentElement.create(document, ElementType.HEADING, span("Outlook"), level=1),
@@ -232,7 +233,8 @@ def test_only_a_container_whose_children_hold_its_text_is_transparent() -> None:
     """ES9 (T6-M1): an ``other`` element with children and no non-space character
     outside them is a transparent container. It no longer blocks a quote, and it is
     never a quote's home. An ``other`` element with text of its own still blocks,
-    and so does a container with text outside its children."""
+    and so does a container with text outside its children: before, between, or
+    after them."""
     bundle = list_bundle("")
     assert bundle_problems(bundle) == []
     sentence = next(e for e in bundle.elements if e.type is ElementType.SENTENCE)
@@ -247,9 +249,13 @@ def test_only_a_container_whose_children_hold_its_text_is_transparent() -> None:
     assert anchor(bundle, "Sales rose.\nCosts fell.") == "outside_element"
     assert anchor(bundle, "Note") == "not_narrative"
 
-    led = list_bundle("Also: ")
-    assert bundle_problems(led) == []
-    assert anchor(led, "Sales rose.") == "not_narrative"
+    for own in (
+        list_bundle("Also: "),
+        list_bundle("", between="Then: "),
+        list_bundle("", tail=" (est.)"),
+    ):
+        assert bundle_problems(own) == []
+        assert anchor(own, "Sales rose.") == "not_narrative"
 
 
 def test_every_unique_narrative_sentence_of_the_stage_1_fixtures_anchors(

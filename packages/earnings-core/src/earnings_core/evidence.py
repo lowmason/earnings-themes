@@ -91,9 +91,10 @@ def validate_span(
     a threshold (R13.2): text is compared with ``==``, never normalized. Check the
     element set once with ``validate_elements`` before checking spans against it.
 
-    An offset that is not an ``int``, or is a ``bool``, is ``malformed_record``
-    before any check, as ``parse_span_candidate`` would have found: a candidate
-    built by ``model_copy`` skips it, and a bad offset is refused, never raised.
+    An offset that is not exactly an ``int``, or is a ``bool``, is
+    ``malformed_record`` before any check, as ``parse_span_candidate`` would have
+    found for a bool or a float: a candidate built by ``model_copy`` skips it, and a
+    bad offset is refused, never raised.
     """
     for name in ("start", "end"):
         offset = getattr(candidate, name)
