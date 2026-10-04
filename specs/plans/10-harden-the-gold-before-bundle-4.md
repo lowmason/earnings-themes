@@ -1,5 +1,7 @@
 # Harden the Pilot Gold Before Bundle 4 — Implementation Plan
 
+**Status: COMPLETE (2026-10-03)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > Requirement: `specs/deferred_items.md`, section
@@ -377,7 +379,7 @@ program's output, and never predict it, as plan 9's `[GATE: …]` marks were fil
 
 ## Preconditions — before Task 1
 
-- [ ] **Step 1: Probe the state**
+- [x] **Step 1: Probe the state**
 
 ```bash
 cd /Users/lowell/Projects/earnings-themes
@@ -405,7 +407,7 @@ Read the first row that matches:
 | `main` holds this plan's file, committed by the user, and nothing else since `0242468` | Step 2, without its `git add` and its first `git commit` |
 | As expected | Step 2 |
 
-- [ ] **Step 2: Branch, and commit this plan**
+- [x] **Step 2: Branch, and commit this plan**
 
 ```bash
 git switch -c harden-the-gold-before-bundle-4
@@ -418,7 +420,7 @@ git status --short
 Expected: `Switched to a new branch 'harden-the-gold-before-bundle-4'`, then the
 commit, and `git status --short` prints nothing.
 
-- [ ] **Step 3: Confirm the baselines**
+- [x] **Step 3: Confirm the baselines**
 
 ```bash
 uv sync --locked --all-packages --group dev
@@ -432,7 +434,7 @@ Expected: `1744 passed, 1 skipped, 24 deselected`; `14 passed`; `280 passed`;
 `All checks passed!` and `297 files already formatted`. Any other count: stop and
 report it.
 
-- [ ] **Step 4: Confirm the drafts that the re-anchor reads**
+- [x] **Step 4: Confirm the drafts that the re-anchor reads**
 
 ```bash
 ls data/runs/gold/drafts/
@@ -479,7 +481,7 @@ negative `n1`, which leaves its quote `q3` cited by nothing. The smallest repair
 keeps every count the test asserts: the claim `c3` the test adds cites `q3` as well
 as `q4`. Its origin is `annotator_added` either way.
 
-- [ ] **Step 1: Write the failing tests, and document the new value**
+- [x] **Step 1: Write the failing tests, and document the new value**
 
 In `test_origins_come_from_comparing_the_working_copy_with_the_draft`, the added
 claim rests on the deleted hard negative's quote too:
@@ -572,7 +574,7 @@ with:
 | `unreferenced` | The record holds an item nothing in it names: a claim with no assignment row, or a quote no claim or hard negative cites (R9.9) |
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_gold.py tests/contracts/test_data_dictionary.py -q
@@ -586,7 +588,7 @@ Expected: `2 failed, 171 passed`.
   value the enum lacks.
 - The repaired origins test passes: `c3` citing `q3` is valid before M1 too.
 
-- [ ] **Step 3: Add the member, and the two checks**
+- [x] **Step 3: Add the member, and the two checks**
 
 In `packages/earnings-themes/src/earnings_themes/problems.py`, replace:
 
@@ -641,7 +643,7 @@ with:
     groups: dict[str, list[GoldAssignment]] = {}
 ```
 
-- [ ] **Step 4: Run them to see them pass**
+- [x] **Step 4: Run them to see them pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests tests/contracts/test_data_dictionary.py tests/integration/test_stage6_records.py apps/earnings-pipeline/tests/test_stage6_cli.py -q
@@ -653,7 +655,7 @@ Expected: `275 passed`, with the offline check of the committed bundles
 Then `1744 passed, 1 skipped, 24 deselected`: the default suite now validates the
 committed records under M1, offline and against the local store.
 
-- [ ] **Step 5: Lint, and the escape check**
+- [x] **Step 5: Lint, and the escape check**
 
 ```bash
 uv run --locked ruff check . && uv run --locked ruff format --check .
@@ -662,7 +664,7 @@ python3 -c 'import sys; ok={chr(0xA7)}; bad=[n for n in sys.argv[1:] if any(ord(
 
 Expected: `All checks passed!`, `297 files already formatted`, and `escapes intact`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -703,7 +705,7 @@ Today a missing fixture yields `<fixture_id>: unknown_document` and
 `counts: counts_mismatch`. A working copy that repeats a fixture builds a
 `HardNegativeSet` with no refusal. The planning session confirmed all three.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Extend `test_ids_themes_and_ties_are_checked`, after Task 1's curated assert:
 
@@ -738,7 +740,7 @@ with:
     assert refusals == [Refusal(f"{first_id} doc_id", "wrong_document")]
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_gold.py -q
@@ -748,7 +750,7 @@ Expected: `1 failed, 16 passed`. `test_ids_themes_and_ties_are_checked` fails at
 `assert refusals == [Refusal(first_id, "duplicate_id")]`, since the build returns a
 `HardNegativeSet`.
 
-- [ ] **Step 3: Refuse a repeated fixture, and count every fixture's items**
+- [x] **Step 3: Refuse a repeated fixture, and count every fixture's items**
 
 In `packages/earnings-themes/src/earnings_themes/annotation.py`, replace:
 
@@ -790,7 +792,7 @@ with:
         refusals += _pointers(document.quotes, bundle, prefix)
 ```
 
-- [ ] **Step 4: Run them to see them pass**
+- [x] **Step 4: Run them to see them pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests tests/contracts/test_data_dictionary.py tests/integration/test_stage6_records.py apps/earnings-pipeline/tests/test_stage6_cli.py -q
@@ -801,7 +803,7 @@ Expected: `275 passed`; then `1744 passed, 1 skipped, 24 deselected`. The defaul
 suite includes `test_the_curated_hard_negatives_validate_offline`, which validates
 the committed curated set, with its 8 distinct fixtures, under the new check.
 
-- [ ] **Step 5: Lint, and the escape check**
+- [x] **Step 5: Lint, and the escape check**
 
 ```bash
 uv run --locked ruff check . && uv run --locked ruff format --check .
@@ -810,7 +812,7 @@ python3 -c 'import sys; ok={chr(0xA7)}; bad=[n for n in sys.argv[1:] if any(ord(
 
 Expected: `All checks passed!`, `297 files already formatted`, and `escapes intact`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -844,7 +846,9 @@ Expected: `git status --short` prints nothing.
   draft's aid, whatever the working copy's says (P10-5). Task 5 re-anchors the
   committed records on this.
 
-- [ ] **Step 1: Write the failing tests, and document the rule**
+- [x] **Step 1: Write the failing tests, and document the rule**
+
+> Deviation: the implementer applied this step's two `docs/data-dictionary.md` edits before its three test-body edits; the files are independent and every edit preceded Step 2's red run, so the commit holds this step's edits exactly (`6422b71`).
 
 The imports:
 
@@ -981,7 +985,7 @@ with:
 | `documents` | tuple of `FixtureDraft` | At least one |
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_gold.py tests/contracts/test_data_dictionary.py -q
@@ -993,7 +997,7 @@ Expected: `2 failed, 171 passed`:
 `test_curated_hard_negatives_over_stage_1_fixtures_validate`, at
 `assert record.drafting_aid == draft.drafting_aid`.
 
-- [ ] **Step 3: Take the aid from the draft**
+- [x] **Step 3: Take the aid from the draft**
 
 In `packages/earnings-themes/src/earnings_themes/annotation.py`, replace:
 
@@ -1027,7 +1031,7 @@ with:
         codebook=_codebook_ref(codebook),
 ```
 
-- [ ] **Step 4: Run them to see them pass**
+- [x] **Step 4: Run them to see them pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests tests/contracts/test_data_dictionary.py tests/integration/test_stage6_records.py apps/earnings-pipeline/tests/test_stage6_cli.py -q
@@ -1036,7 +1040,7 @@ uv run --locked --all-packages pytest packages apps tests -m "not live and not b
 
 Expected: `275 passed`; then `1744 passed, 1 skipped, 24 deselected`.
 
-- [ ] **Step 5: Lint, and the escape check**
+- [x] **Step 5: Lint, and the escape check**
 
 ```bash
 uv run --locked ruff check . && uv run --locked ruff format --check .
@@ -1045,7 +1049,7 @@ python3 -c 'import sys; ok={chr(0xA7)}; bad=[n for n in sys.argv[1:] if any(ord(
 
 Expected: `All checks passed!`, `297 files already formatted`, and `escapes intact`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -1073,7 +1077,7 @@ Expected: `git status --short` prints nothing.
 The test pins today's behavior, so it passes as soon as it is written. Step 3 shows
 that it can fail.
 
-- [ ] **Step 1: Pin the counts**
+- [x] **Step 1: Pin the counts**
 
 In `packages/earnings-themes/tests/test_anchoring.py`, replace:
 
@@ -1156,7 +1160,7 @@ with:
     assert under_other == {"0000949699-08-000023_ex-99-1: not_narrative": 10}
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_anchoring.py -q
@@ -1164,7 +1168,7 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_anchor
 
 Expected: `18 passed`.
 
-- [ ] **Step 3: Show that the pin can fail, then restore it**
+- [x] **Step 3: Show that the pin can fail, then restore it**
 
 ```bash
 sed -i '' 's/"anchored": 650,/"anchored": 651,/' packages/earnings-themes/tests/test_anchoring.py
@@ -1176,7 +1180,7 @@ grep -c '"anchored": 650,' packages/earnings-themes/tests/test_anchoring.py
 
 Expected: `1 failed, 17 passed`; then `18 passed`; then `1`.
 
-- [ ] **Step 4: The default suite, lint, and the escape check**
+- [x] **Step 4: The default suite, lint, and the escape check**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q
@@ -1187,7 +1191,7 @@ python3 -c 'import sys; ok={chr(0xA7)}; bad=[n for n in sys.argv[1:] if any(ord(
 Expected: `1744 passed, 1 skipped, 24 deselected`; `All checks passed!`,
 `297 files already formatted`, and `escapes intact`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git log --oneline -3
@@ -1220,7 +1224,7 @@ and its program, each of which prints IDs, counts, reasons, paths, and hashes.
 - Produces: the bytes' proof, M5's count, and the verification record's plan 10
   section, which is the item's last clause.
 
-- [ ] **Step 1: Re-anchor the committed records (T8-M1's proof)**
+- [x] **Step 1: Re-anchor the committed records (T8-M1's proof)**
 
 ```bash
 uv run --locked --all-packages earnings-pipeline gold anchor cik-0000051143:2024-12-31 cik-0000093410:2025-03-31 cik-0000310158:2025-06-30 --hard-negatives; echo "exit $?"
@@ -1257,7 +1261,7 @@ anything is written (`gold_cli.py`, `_write`). If any line starts with `Refused`
 - never run the anchor with `--check` in place of this step: `--check` returns
   before it compares the rebuilt bytes with the committed file.
 
-- [ ] **Step 2: Validate them**
+- [x] **Step 2: Validate them**
 
 ```bash
 uv run --locked --all-packages earnings-pipeline gold validate; echo "exit $?"
@@ -1275,7 +1279,7 @@ valid: hard-negatives, 8 fixtures, 29 hard negatives, signed
 exit 0
 ```
 
-- [ ] **Step 3: The byte check**
+- [x] **Step 3: The byte check**
 
 ```bash
 git diff --stat 0242468 -- evaluation codebooks tests/fixtures config
@@ -1284,7 +1288,7 @@ git status --short
 
 Expected: nothing, from either command.
 
-- [ ] **Step 4: The local legs**
+- [x] **Step 4: The local legs**
 
 ```bash
 uv run --locked --all-packages pytest tests/integration/test_stage6_pilot_v1.py tests/integration/test_stage6_wording.py -q -rs
@@ -1292,7 +1296,7 @@ uv run --locked --all-packages pytest tests/integration/test_stage6_pilot_v1.py 
 
 Expected: `14 passed`.
 
-- [ ] **Step 5: Write the count program**
+- [x] **Step 5: Write the count program**
 
 Create `/tmp/plan10-list-items.py`:
 
@@ -1400,7 +1404,7 @@ if __name__ == "__main__":
         )
 ```
 
-- [ ] **Step 6: Calibrate it on Stage 1's fixtures**
+- [x] **Step 6: Calibrate it on Stage 1's fixtures**
 
 ```bash
 uv run --locked --all-packages python /tmp/plan10-list-items.py fixtures; echo "exit $?"
@@ -1418,7 +1422,7 @@ This is plan 9's final-review count, and Task 4's pin. Anything else: stop and
 report it. The program does not then measure what the review measured, and its count
 over the pilot would mean nothing.
 
-- [ ] **Step 7: Count the pilot**
+- [x] **Step 7: Count the pilot**
 
 ```bash
 uv run --locked --all-packages python /tmp/plan10-list-items.py pilot; echo "exit $?"
@@ -1436,7 +1440,7 @@ Keep the output for Step 9. A `Refused:` or `stopped:` line, or another exit, st
 the task: report it as printed. Such a line names an item, or an exception's type,
 never text.
 
-- [ ] **Step 8: The suites**
+- [x] **Step 8: The suites**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q
@@ -1448,7 +1452,7 @@ git diff --quiet 0242468 -- uv.lock && echo "uv.lock unchanged"
 Expected: `1744 passed, 1 skipped, 24 deselected`; `280 passed`; `All checks passed!`
 and `297 files already formatted`; `uv.lock unchanged`.
 
-- [ ] **Step 9: Append plan 10's section to the record**
+- [x] **Step 9: Append plan 10's section to the record**
 
 Append to `docs/verification/pilot-v1-gold-set.md`, filling each `[COUNT: …]` from
 Step 7's output:
@@ -1515,7 +1519,7 @@ grep -c "COUNT" docs/verification/pilot-v1-gold-set.md
 Expected: `5 passed`, since the wording guard reads the record; then `0`, since every
 mark is filled.
 
-- [ ] **Step 10: Commit the record**
+- [x] **Step 10: Commit the record**
 
 ```bash
 git log --oneline -3
@@ -1528,7 +1532,9 @@ Expected: `git status --short` prints nothing.
 
 ## Completion
 
-- [ ] **Step 1: The final review**
+- [x] **Step 1: The final review**
+
+> Deviation: the final review (Opus, over `0242468..e57f6ae`) found the branch ready to merge, with no Critical or Important finding. At the gate on 2026-10-03 the user chose one polish commit outside this plan's edits (`2982781`): a guard in each drafting-aid test that the working copy's aid differs from the draft's (T3-m1); the `drafting_aid` rows of §`Gold` and §`HardNegativeSet` naming the kept draft (FR-m1); and three docstrings' wording (FR-m2, T1-m3). The default suite stayed at `1744 passed, 1 skipped, 24 deselected`. T2-m1, widened to a kept draft's repeated quote, claim, or fixture, was deferred (Step 3), and every other Minor was dropped.
 
 Run the final whole-branch review with the `code-reviewer` agent, on Opus, over
 `0242468..HEAD`. Its dispatch carries:
@@ -1539,13 +1545,13 @@ Run the final whole-branch review with the `code-reviewer` agent, on Opus, over
 Codex is skipped (P10-3): state the reason at the review. Resolve the review's
 findings with the user before Step 2.
 
-- [ ] **Step 2: Mark up this plan** (writing-plans' Plan Completion Protocol)
+- [x] **Step 2: Mark up this plan** (writing-plans' Plan Completion Protocol)
 
 - Run the resolve-before-defer gate.
 - Tick the steps, add `> Deviation:` and `> Skipped:` notes, and add the status
   header. Notes hold IDs, counts, and hashes only (Blinding).
 
-- [ ] **Step 3: The deferred items**
+- [x] **Step 3: The deferred items**
 
 Tick the item:
 

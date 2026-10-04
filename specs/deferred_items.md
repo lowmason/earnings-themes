@@ -1023,7 +1023,7 @@
       verification, omission pass, and signature. Size: plan. Done when: all 28
       train and dev gold files under evaluation/djia-2024q3-2026q2/pilot-v1/gold/
       are committed and `earnings-pipeline gold validate` passes.
-- [ ] Harden the gold before the next Task 19 bundle is anchored (plan 9's final
+- [x] Harden the gold before the next Task 19 bundle is anchored (plan 9's final
       review: M1, T8-M1, and M5, deferred by the user on 2026-10-03). (1) `_ids`
       in packages/earnings-themes/src/earnings_themes/annotation.py accepts a
       claim with no assignment row, and a quote that no claim or hard negative
@@ -1041,7 +1041,7 @@
       Stage 1's fixtures hold 10 such sentences, in 1 of 8. Size: plan. Done when:
       (1) and (2) land with their tests, and (3)'s count is in
       docs/verification/pilot-v1-gold-set.md, before any further bundle is
-      anchored.
+      anchored. → done in plan 10 (specs/plans/completed/10-harden-the-gold-before-bundle-4.md)
 - [ ] Move `canonical_json` and its digest into earnings-core (plan 9, Task 3; the
       user's decision of 2026-09-28; final review M6).
       packages/earnings-themes/src/earnings_themes/records.py:75-91 copies them
@@ -1084,7 +1084,8 @@
       offline test runs in the real checkout rather than a copy of the committed
       files (T13-M1); and `pinned_codebook` loads v0 without rehashing it
       (codebook_cli.py:150-158). Size: plan. Done when: a plan lands each with its
-      test, or records why one is dropped.
+      test, or records why one is dropped. T8-M2 and T6-M2 → done in plan 10
+      (specs/plans/completed/10-harden-the-gold-before-bundle-4.md).
 - [ ] Settle two anchoring questions before Stage 7 recomputes context hashes or
       fixes its narrative set: pin `context_hash`'s byte format with a
       known-answer test, and add `ensure_ascii=False` to its row in
@@ -1107,3 +1108,26 @@
       pilot_cli.py:69-70,95-96 (T10-M3). Today its inputs are config and state
       rows, never document text. Size: quick-fix. Revisit if: a stage writes free
       text to the state table or to the pilot's records.
+
+## 10-harden-the-gold-before-bundle-4 — 2026-10-03
+
+- [ ] Take `codebook freeze`'s drafting aid from the kept draft (plan 10, P10-7;
+      T8-M1's pattern). apps/earnings-pipeline/src/earnings_pipeline/codebook_cli.py
+      reads only data/runs/gold/drafts/codebook.working.toml, and
+      packages/earnings-themes/src/earnings_themes/codebook.py:319 copies that
+      copy's `drafting_aid`, so an edit there would change the recorded model or
+      date (GS5). Codebook v0 is frozen and approved, so only a later version is
+      affected. Size: quick-fix. Done when: `codebook freeze` takes the aid from
+      codebook.draft.toml, with a test, before codebook v1 is frozen.
+- [ ] Refuse a kept draft that repeats an ID (plan 10's final review, T2-m1,
+      widened; deferred at plan 10's completion gate). In
+      packages/earnings-themes/src/earnings_themes/annotation.py, `_Origins.compare`
+      (:135) keys the kept draft's items by ID, and `build_curated` (:414) keys its
+      fixtures by fixture ID, so a kept draft that repeats a quote, claim, or
+      fixture keeps only the last copy, and GS5's `rejected` count misses the
+      repeat if the working copy drops it; `CuratedDraft` has no uniqueness
+      validator. `gold anchor --check` with no working copy already refuses the
+      repeat as `duplicate_id`, so only a draft that skipped that check is
+      affected. Size: quick-fix. Done when: build_gold and build_curated refuse a
+      kept draft with a repeated ID, with a test, before Stage 11 counts the
+      rejected shares.
