@@ -8,16 +8,12 @@ from pydantic import NonNegativeInt, ValidationError, model_validator
 
 from earnings_core._model import VersionedRecord
 from earnings_core.documents import CanonicalDocument, document_integrity_problem
-from earnings_core.elements import (
-    DocumentElement,
-    ElementType,
-    TextOrigin,
-    derive_element_id,
-)
+from earnings_core.elements import DocumentElement, ElementType, TextOrigin
 from earnings_core.hashing import Sha256Hex
 from earnings_core.locators import SpanLocator, occurrences
 from earnings_core.rejections import VALIDATOR_VERSION, Rejection, RejectionReason
 from earnings_core.spans import TextSpan
+from earnings_core.structure import is_genuine
 
 
 class _EvidenceFields(VersionedRecord):
@@ -210,18 +206,11 @@ def _reject(reason: RejectionReason, detail: str) -> Rejection:
     return Rejection(reason=reason, detail=detail)
 
 
-def _genuine(document: CanonicalDocument, element: DocumentElement) -> bool:
-    """An element of this document version whose ID still matches its type and span."""
-    return element.doc_id == document.doc_id and element.element_id == (
-        derive_element_id(element.type, element.span)
-    )
-
-
 def _element(
     document: CanonicalDocument, elements: Sequence[DocumentElement], element_id: str
 ) -> DocumentElement | None:
     for element in elements:
-        if element.element_id == element_id and _genuine(document, element):
+        if element.element_id == element_id and is_genuine(document, element):
             return element
     return None
 
@@ -232,7 +221,7 @@ def _speaker_turns(
     return [
         element
         for element in elements
-        if element.type is ElementType.SPEAKER_TURN and _genuine(document, element)
+        if element.type is ElementType.SPEAKER_TURN and is_genuine(document, element)
     ]
 
 
@@ -243,7 +232,7 @@ def _ocr_elements(
     return [
         element
         for element in elements
-        if element.text_origin is TextOrigin.OCR and _genuine(document, element)
+        if element.text_origin is TextOrigin.OCR and is_genuine(document, element)
     ]
 
 

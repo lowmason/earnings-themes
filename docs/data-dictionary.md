@@ -10,9 +10,12 @@ this file changing too.
 - **Package.** `packages/earnings-core`, imported as `earnings_core`.
 - **Schema version.** `2` (`earnings_core.SCHEMA_VERSION`). Every top-level record
   carries it as `schema_version`, and a payload with another version is refused.
-- **Validator version.** `"2"` (`earnings_core.VALIDATOR_VERSION`), stamped on every
+- **Validator version.** `"3"` (`earnings_core.VALIDATOR_VERSION`), stamped on every
   `Rejection` and `VerifiedSpan`. Caches key on it (R14.6); bump it whenever a check
-  changes.
+  changes. Version 3 (Stage 7) refuses an unvalidated offset that is not an `int`,
+  or is a `bool`, as `malformed_record` where version 2 raised, and resolves a
+  pointer to this version's genuine element wherever it sits in the list. No
+  committed record stores it.
 - **Compatibility.** Version 2 (Stage 3) adds `DocumentElement.text_origin` and the
   `ocr_derived_text` rejection. Its checks also report every crossing pair, recheck
   the element invariants that construction enforces, validate `MaskedDocument`
