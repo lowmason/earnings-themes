@@ -3196,7 +3196,7 @@ git status --short
 
 Expected: `git status --short` prints nothing.
 
-- [ ] **Step 5: Backlog triage**
+- [x] **Step 5: Backlog triage**
 
 ```bash
 uv run --no-project --python 3.13 python /Users/lowell/.claude/skills/writing-plans/scripts/deferred_stats.py
@@ -3204,7 +3204,7 @@ uv run --no-project --python 3.13 python /Users/lowell/.claude/skills/writing-pl
 
 Report its summary line, and present the triage rubric if its thresholds trip.
 
-- [ ] **Step 6: Retire this plan only** (P11-1)
+- [x] **Step 6: Retire this plan only** (P11-1)
 
 The spec stays live, since plan B implements it too. Re-point the record's path to
 this plan:

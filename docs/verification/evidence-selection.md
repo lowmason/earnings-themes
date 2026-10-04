@@ -7,7 +7,7 @@ never a release's wording (ES2).
 
 ## Plan A: core and anchoring (plan 11)
 
-Plan 11 (`specs/plans/11-evidence-selection-and-verification-plan-a.md`) landed the
+Plan 11 (`specs/plans/completed/11-evidence-selection-and-verification-plan-a.md`) landed the
 spec's §Plan A. It changed functions and tests, and no committed record.
 
 - **The core fixes (ES4, ES5).**
