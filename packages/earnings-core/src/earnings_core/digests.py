@@ -1,15 +1,17 @@
-"""Canonical JSON and its SHA-256, the one serialization every cohort hash uses.
+"""Canonical JSON and its SHA-256, the one serialization every record hash uses.
 
 Keys are sorted, separators carry no whitespace, and non-ASCII characters are
 written as themselves in UTF-8. Dates and datetimes are ISO 8601 strings. A hash
-computed here is reproducible from the committed values alone.
+computed here is reproducible from the committed values alone. Moved unchanged from
+earnings-ingestion's cohort, so earnings-themes imports the same definition (ES7).
 """
 
 import json
 from datetime import date
 
-from earnings_core import sha256_hex
 from pydantic import BaseModel
+
+from earnings_core.hashing import sha256_hex
 
 
 def _default(value: object) -> str:

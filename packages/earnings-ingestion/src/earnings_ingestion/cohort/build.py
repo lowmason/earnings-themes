@@ -17,6 +17,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from earnings_core import digest
+
 from earnings_ingestion.cohort.config import (
     UNIVERSE_DIR,
     ChangeEvidence,
@@ -33,7 +35,6 @@ from earnings_ingestion.cohort.corroboration import (
     match_holdings,
     reconcile,
 )
-from earnings_ingestion.cohort.digests import digest
 from earnings_ingestion.cohort.findings import acknowledge, make_finding
 from earnings_ingestion.cohort.intervals import Statement, count_findings, reconstruct
 from earnings_ingestion.cohort.locators import (

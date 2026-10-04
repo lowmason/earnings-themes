@@ -35,6 +35,7 @@ from datetime import date, timedelta
 from enum import StrEnum
 from typing import Annotated, Literal, Self
 
+from earnings_core import digest
 from earnings_core.artifacts import NonBlankStr
 from earnings_core.documents import IdPart
 from earnings_core.hashing import Sha256Hex
@@ -49,7 +50,6 @@ from pydantic import (
 )
 
 from earnings_ingestion.canonical.records import IngestionRecord
-from earnings_ingestion.cohort.digests import digest
 from earnings_ingestion.cohort.records import Citation, OverrideCitation
 from earnings_ingestion.events.acceptance import Convention
 from earnings_ingestion.sec.identifiers import Cik

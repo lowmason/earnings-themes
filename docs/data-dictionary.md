@@ -609,8 +609,9 @@ recorded.
   facts, URLs, locators, and hashes, and never a source's wording (the user's
   decision, 2026-09-26). The saved artifacts stay local.
 - **Canonical JSON.** Every cohort hash is SHA-256 over canonical JSON
-  (`earnings_ingestion.cohort.digests`): sorted keys, separators without whitespace,
-  UTF-8 with non-ASCII characters written as themselves, and dates in ISO 8601.
+  (`earnings_core.canonical_json` and `earnings_core.digest`, which every record
+  hash uses): sorted keys, separators without whitespace, UTF-8 with non-ASCII
+  characters written as themselves, and dates in ISO 8601.
 
 ### `EvidenceClass`
 

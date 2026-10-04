@@ -3,7 +3,7 @@
 from datetime import date
 
 import pytest
-from earnings_ingestion.cohort.digests import digest
+from earnings_core import digest
 from earnings_ingestion.cohort.findings import acknowledge, make_finding
 from earnings_ingestion.cohort.records import FindingKind, Override, OverrideKind
 

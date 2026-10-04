@@ -1,15 +1,19 @@
-"""Canonical JSON: the one serialization every cohort hash is computed over."""
+"""Canonical JSON: the one serialization every record hash is computed over (ES7).
+
+Moved from earnings-ingestion's cohort tests with their expectations unchanged. A
+local enum and a core model stand in for the cohort's, since core's tests import no
+sibling package.
+"""
 
 from datetime import UTC, date, datetime
+from enum import StrEnum
 
 import pytest
-from earnings_core import sha256_hex
-from earnings_ingestion.cohort.digests import canonical_json, digest
-from earnings_ingestion.cohort.records import (
-    AssertedAction,
-    EvidenceLocator,
-    LocatorKind,
-)
+from earnings_core import SpanLocator, canonical_json, digest, sha256_hex
+
+
+class Action(StrEnum):
+    ADDED = "added"
 
 
 def test_keys_are_sorted_without_whitespace_and_text_stays_utf8() -> None:
@@ -23,7 +27,7 @@ def test_dates_and_enums_are_written_as_iso_text_and_values() -> None:
     value = {
         "on": date(2024, 11, 8),
         "at": datetime(2024, 11, 1, 21, 0, tzinfo=UTC),
-        "action": AssertedAction.ADDED,
+        "action": Action.ADDED,
     }
     assert canonical_json(value) == (
         b'{"action":"added","at":"2024-11-01T21:00:00+00:00","on":"2024-11-08"}'
@@ -31,9 +35,7 @@ def test_dates_and_enums_are_written_as_iso_text_and_values() -> None:
 
 
 def test_a_model_is_dumped_in_json_mode_first() -> None:
-    locator = EvidenceLocator(
-        kind=LocatorKind.JSON_POINTER, pointer="/0", cited_sha256="a" * 64
-    )
+    locator = SpanLocator(exact="caf" + chr(0xE9), prefix="the ", suffix=" line")
     assert canonical_json(locator) == canonical_json(locator.model_dump(mode="json"))
 
 

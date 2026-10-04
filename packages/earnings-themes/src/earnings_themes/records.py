@@ -3,20 +3,18 @@
 - **The base.** Records are immutable, closed, and strictly typed, as earnings-core's
   contracts are. A top-level record carries ``schema_version``.
 - **Hashing.** A frozen record's content hash is the SHA-256 of its canonical JSON:
-  sorted keys, no whitespace, UTF-8. earnings-themes imports only earnings-core, so
-  ``canonical_json`` repeats ``earnings_ingestion.cohort.digests``'s form rather than
-  importing it.
+  sorted keys, no whitespace, UTF-8. ``canonical_json`` and ``digest`` are
+  earnings-core's, the one definition earnings-ingestion uses too (ES7).
 - **Errors.** A pydantic error's message quotes its input, which may be a release's
   text. ``RecordError`` keeps each problem's field path and message only, never the
   input, so no command prints pilot text (GS13).
 """
 
 import json
-from datetime import date
 from pathlib import Path
 from typing import Annotated, Literal
 
-from earnings_core import sha256_hex
+from earnings_core import canonical_json
 from earnings_core.documents import IdPart
 from earnings_core.hashing import Sha256Hex
 from pydantic import (
@@ -64,31 +62,6 @@ class RecordError(ValueError):
         super().__init__(f"{name}: {'; '.join(problems)}")
         self.name = name
         self.problems = problems
-
-
-def _default(value: object) -> str:
-    if isinstance(value, date):
-        return value.isoformat()
-    raise TypeError(f"{type(value).__name__} has no canonical JSON form")
-
-
-def canonical_json(value: object) -> bytes:
-    """``value`` as canonical JSON bytes; a model is dumped in JSON mode first."""
-    if isinstance(value, BaseModel):
-        value = value.model_dump(mode="json")
-    text = json.dumps(
-        value,
-        sort_keys=True,
-        ensure_ascii=False,
-        separators=(",", ":"),
-        default=_default,
-    )
-    return text.encode("utf-8")
-
-
-def digest(value: object) -> str:
-    """SHA-256 of ``value``'s canonical JSON."""
-    return sha256_hex(canonical_json(value))
 
 
 def record_json(record: BaseModel) -> bytes:
@@ -143,9 +116,7 @@ __all__ = [
     "RecordError",
     "Sha256Hex",
     "ThemesRecord",
-    "canonical_json",
     "describe",
-    "digest",
     "parse",
     "read_json",
     "record_json",

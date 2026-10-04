@@ -25,7 +25,8 @@ The assertions themselves are left out too, but not their actions, which
 assertions' actions, and the interval lists them by IDs that end in the action.
 """
 
-from earnings_ingestion.cohort.digests import digest
+from earnings_core import digest
+
 from earnings_ingestion.cohort.records import UniverseManifest
 
 DEFINITION = (

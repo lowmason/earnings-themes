@@ -49,9 +49,8 @@ from datetime import date, datetime, timedelta
 from enum import StrEnum
 from pathlib import Path
 
-from earnings_core import sha256_hex
+from earnings_core import digest, sha256_hex
 
-from earnings_ingestion.cohort.digests import digest
 from earnings_ingestion.cohort.freeze import repeated_content
 from earnings_ingestion.cohort.identity import operative_hash
 from earnings_ingestion.cohort.records import UniverseManifest

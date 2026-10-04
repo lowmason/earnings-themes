@@ -23,6 +23,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Literal, Self
 
+from earnings_core import digest
 from pydantic import PositiveInt, StringConstraints, model_validator
 
 from earnings_themes.records import (
@@ -32,7 +33,6 @@ from earnings_themes.records import (
     RecordError,
     Sha256Hex,
     ThemesRecord,
-    digest,
     parse,
     read_json,
 )
