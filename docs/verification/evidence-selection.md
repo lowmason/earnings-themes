@@ -14,8 +14,9 @@ spec's §Plan A. It changed functions and tests, and no committed record.
   - `reverify_span` verifies a stored span again from its fields, and never dumps
     it.
   - `validate_span` refuses an offset that is not exactly an `int`, or is a
-    `bool`, as `malformed_record`, where version 2 raised or returned another
-    reason, since the offset check now runs first.
+    `bool`, as `malformed_record`, where version 2 raised, returned another
+    check's reason, or, for an `int` subclass, accepted the span, since the offset
+    check now runs first.
   - `resolve_pointer` resolves the genuine element wherever it sits in the list.
   - `VALIDATOR_VERSION` is `"3"`, and no committed record stores it.
 - **One canonical JSON (ES7).** `canonical_json` and `digest` live in
