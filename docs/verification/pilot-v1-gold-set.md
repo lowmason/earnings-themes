@@ -187,3 +187,51 @@ each signed file with its kept draft (GS5).
   the three bundles, whose omission passes added none, and 58 in the curated hard
   negatives. Every edited, rejected, and added count is zero (GS5): each signed
   record holds exactly its draft's items.
+
+## Plan 10: the gold hardened before bundle 4
+
+Plan 10 (`specs/plans/10-harden-the-gold-before-bundle-4.md`) closed three findings
+of plan 9's final review before any further bundle was anchored: M1, T8-M1, and M5.
+It also closed two of plan 9's deferred test and validation gaps, T8-M2 and T6-M2
+(`specs/deferred_items.md`).
+
+- **Every claim coded, and every quote cited (M1).** The validator refuses a claim
+  with no assignment row, and a quote that no claim or hard negative cites, as
+  `unreferenced` (R9.9). Neither the three committed bundles nor the curated hard
+  negatives hold one, and `tests/integration/test_stage6_records.py` now checks the
+  committed bundles for one offline.
+- **The drafting aid (T8-M1).** `build_gold` and `build_curated` take
+  `drafting_aid` from the kept draft, never the working copy, so an edit there
+  cannot change the recorded model or date (GS5).
+- **The curated set's validator (T8-M2).** A missing or moved fixture is refused
+  once, never also as `counts_mismatch`, and a repeated fixture ID is refused as
+  `duplicate_id`.
+- **The bytes.** `gold anchor` rebuilt each committed record from its kept draft
+  and signed working copy, and printed `unchanged:` for the three bundles and
+  `tests/fixtures/gold/hard-negatives.toml`, and no refusal. `gold validate`
+  printed `valid:` for each, and `git diff --stat 0242468 -- evaluation codebooks
+  tests/fixtures config` printed nothing.
+- **The suites.** The default suite printed `1744 passed, 1 skipped, 24
+  deselected`; the local legs and the wording guard, `14 passed`; and the harness
+  suite, `280 passed`. Ruff passed, and `uv.lock` is unchanged.
+
+### Sentences in a list item under an `other` element (M5)
+
+walker-1 nests some list items in an element of type `other`, and the anchor
+refuses a sentence in one as not narrative, since the `other` element overlaps it
+(T6-M1). The program in plan 10's Task 5 counted these sentences through the
+application's loaders, with the anchor's verdict on each, printing IDs and counts
+only:
+
+| Documents | Sentences | List items | Documents holding one | The anchor's verdicts | All sentences | All `not_narrative` |
+| --- | --- | --- | --- | --- | --- | --- |
+| Stage 1's 8 fixtures | 10 | 7 | 1 of 8 | `not_narrative` 10 | 686 | 10 |
+| Pilot v1's 40 releases | 0 | 0 | 0 of 40 | none | 5139 | 0 |
+
+- **The calibration.** The fixtures' row is plan 9's final-review count, which
+  `test_every_unique_narrative_sentence_of_the_stage_1_fixtures_anchors` now pins
+  (T6-M2), beside 650 sentences anchored and 26 whose text repeats.
+- **The pilot's releases.** No pilot release holds one.
+- **What follows.** No gold quote can rest on such a sentence until Stage 7 decides
+  whether a list item under an `other` element becomes quotable
+  (`specs/deferred_items.md`, T6-M1).
