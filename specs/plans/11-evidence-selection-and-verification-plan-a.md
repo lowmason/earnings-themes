@@ -1,5 +1,7 @@
 # Evidence Selection and Verification, Plan A: Core and Anchoring — Implementation Plan
 
+**Status: COMPLETE (2026-10-04)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > Roadmap: specs/evidence-linked-theme-extraction-roadmap.md, Stage 7 — on plan
@@ -515,7 +517,7 @@ the user's report, and never predict it.
 
 ## Preconditions — before Task 1
 
-- [ ] **Step 1: Probe the state**
+- [x] **Step 1: Probe the state**
 
 Run each from the worktree's root,
 `/Users/lowell/Projects/earnings-themes/.claude/worktrees/stage-7-evidence-selection-and-verification`:
@@ -549,6 +551,8 @@ Read the first row that matches:
 
 - [ ] **Step 2: Commit this plan**
 
+> Skipped: not needed. Step 1 found this plan committed at planning (`1ee9f24`, P11-11), with nothing else since `186348d` and no `data/`, and routed to Step 3.
+
 ```bash
 git log --oneline -3
 git add specs/plans/11-evidence-selection-and-verification-plan-a.md
@@ -558,7 +562,7 @@ git status --short
 
 Expected: the commit, then `git status --short` prints nothing.
 
-- [ ] **Step 3: Confirm the baselines**
+- [x] **Step 3: Confirm the baselines**
 
 ```bash
 uv sync --locked --all-packages --group dev
@@ -602,7 +606,7 @@ Then `275 passed, 5 skipped`; then `All checks passed!` and
 - Produces: the offline net that the proof's map cites,
   `test_codebook_v0_the_coverage_report_and_the_gold_hold_offline`, still one test.
 
-- [ ] **Step 1: Fold in the reference checks**
+- [x] **Step 1: Fold in the reference checks**
 
 In `tests/integration/test_stage6_records.py`, replace:
 
@@ -715,7 +719,7 @@ with:
             "split_hash": gold.split_hash == split_hash,
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 ```bash
 uv run --locked --all-packages pytest tests/integration/test_stage6_records.py -q
@@ -729,7 +733,7 @@ The checks pass at once (P11-5), since they pin committed records. Never edit a
 committed record to make one pass. If one fails, stop and report the failing check's
 name: a record names another pin or split than the suite recomputes.
 
-- [ ] **Step 3: Lint, and the escape check**
+- [x] **Step 3: Lint, and the escape check**
 
 ```bash
 uv run --locked ruff check . && uv run --locked ruff format --check .
@@ -738,7 +742,7 @@ python3 -c 'import sys; ok={chr(0xA7)}; bad=[n for n in sys.argv[1:] if any(ord(
 
 Expected: `All checks passed!`, `297 files already formatted`, and `escapes intact`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git log --oneline -3
@@ -771,7 +775,7 @@ Expected: `git status --short` prints nothing.
   exported from `earnings_core`. Plan B's `write_run` calls it, and so does each
   later R6.1 gate.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `packages/earnings-core/tests/test_evidence.py`, replace:
 
@@ -894,7 +898,7 @@ with:
     "sha256_hex",
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests tests/contracts/test_data_dictionary.py -q
@@ -903,7 +907,9 @@ uv run --locked --all-packages pytest packages/earnings-core/tests tests/contrac
 Expected: the run stops at collection with `1 error`. `test_evidence.py` cannot
 import `reverify_span`, which does not exist yet.
 
-- [ ] **Step 3: Write `reverify_span`, and export it**
+- [x] **Step 3: Write `reverify_span`, and export it**
+
+> Deviation: in this task's text only. Its Interfaces counts eight `SpanCandidate.model_fields` names, but there are nine, since `schema_version` is inherited; `reverify_span` re-parses all nine, as the code given here does (`20acae8`).
 
 In `packages/earnings-core/src/earnings_core/evidence.py`, replace:
 
@@ -1002,7 +1008,7 @@ text, never copied from a candidate (A §523). A stored one is verified again wi
 `reverify_span` at each later gate, since its type alone is not proof.
 ```
 
-- [ ] **Step 4: Run them to see them pass**
+- [x] **Step 4: Run them to see them pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests tests/contracts/test_data_dictionary.py -q
@@ -1011,7 +1017,7 @@ uv run --locked --all-packages pytest packages apps tests -m "not live and not b
 
 Expected: `349 passed`; then `1740 passed, 8 skipped, 24 deselected`.
 
-- [ ] **Step 5: Lint, and the escape check**
+- [x] **Step 5: Lint, and the escape check**
 
 ```bash
 uv run --locked ruff check . && uv run --locked ruff format --check .
@@ -1020,7 +1026,7 @@ python3 -c 'import sys; ok={chr(0xA7)}; bad=[n for n in sys.argv[1:] if any(ord(
 
 Expected: `All checks passed!`, `297 files already formatted`, and `escapes intact`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -1048,7 +1054,7 @@ Expected: `git status --short` prints nothing.
   `Rejection(reason=RejectionReason.MALFORMED_RECORD, detail="<field>: an offset is an int, not a <type>")`
   for an offset whose type is not exactly `int`. It never raises on one (P11-10).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 One case per offset and type. The bool start's slice matches, so only a type check
 can refuse it:
@@ -1085,7 +1091,7 @@ def test_an_unvalidated_offset_is_malformed_and_never_raises(
 def test_a_stored_span_re_verifies_under_the_current_validator(sample) -> None:
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests/test_evidence.py -q
@@ -1098,7 +1104,7 @@ Expected: `4 failed, 18 passed`.
 - The float start and the float end raise `TypeError` at the slice.
 - The bool end is refused, but as `quote_text_mismatch`.
 
-- [ ] **Step 3: Check the offsets first**
+- [x] **Step 3: Check the offsets first**
 
 In `packages/earnings-core/src/earnings_core/evidence.py`, replace:
 
@@ -1151,7 +1157,7 @@ offset that is not an `int`, or is a `bool`, on a candidate that skipped parsing
 the first failure.
 ```
 
-- [ ] **Step 4: Run them to see them pass**
+- [x] **Step 4: Run them to see them pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests tests/contracts/test_data_dictionary.py -q
@@ -1160,7 +1166,7 @@ uv run --locked --all-packages pytest packages apps tests -m "not live and not b
 
 Expected: `353 passed`; then `1744 passed, 8 skipped, 24 deselected`.
 
-- [ ] **Step 5: Lint, and the escape check**
+- [x] **Step 5: Lint, and the escape check**
 
 ```bash
 uv run --locked ruff check . && uv run --locked ruff format --check .
@@ -1169,7 +1175,7 @@ python3 -c 'import sys; ok={chr(0xA7)}; bad=[n for n in sys.argv[1:] if any(ord(
 
 Expected: `All checks passed!`, `297 files already formatted`, and `escapes intact`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -1201,7 +1207,7 @@ Expected: `git status --short` prints nothing.
   - `resolve_pointer` returns the span of the genuine element wherever it sits;
   - `VALIDATOR_VERSION == "3"`, which plan B's cache key holds.
 
-- [ ] **Step 1: Write the failing tests, and document the version**
+- [x] **Step 1: Write the failing tests, and document the version**
 
 The stale element is listed first, as the deferred item asks, and then a tampered
 one is:
@@ -1281,7 +1287,7 @@ with:
   committed record stores it.
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests tests/contracts/test_data_dictionary.py -q
@@ -1295,7 +1301,7 @@ Expected: `3 failed, 351 passed`.
 - `test_the_documented_versions_are_the_packages` fails, since the dictionary says
   `"3"`.
 
-- [ ] **Step 3: Resolve the genuine element, and bump the version**
+- [x] **Step 3: Resolve the genuine element, and bump the version**
 
 In `packages/earnings-core/src/earnings_core/structure.py`, replace:
 
@@ -1476,7 +1482,7 @@ list, where a stale or tampered element listed first with its ID was refused.
 """
 ```
 
-- [ ] **Step 4: Run them to see them pass**
+- [x] **Step 4: Run them to see them pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests tests/contracts/test_data_dictionary.py -q
@@ -1486,7 +1492,7 @@ uv run --locked --all-packages pytest packages apps tests -m "not live and not b
 Expected: `354 passed`; then `1745 passed, 8 skipped, 24 deselected`. No committed
 record stores the validator version (ES4), so none changes.
 
-- [ ] **Step 5: Lint, and the escape check**
+- [x] **Step 5: Lint, and the escape check**
 
 ```bash
 uv run --locked ruff check . && uv run --locked ruff format --check .
@@ -1495,7 +1501,7 @@ python3 -c 'import sys; ok={chr(0xA7)}; bad=[n for n in sys.argv[1:] if any(ord(
 
 Expected: `All checks passed!`, `297 files already formatted`, and `escapes intact`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -1536,7 +1542,7 @@ Expected: `git status --short` prints nothing.
 
 The functions move verbatim (P11-7), so every content hash is the same.
 
-- [ ] **Step 1: Write the moved tests**
+- [x] **Step 1: Write the moved tests**
 
 The expectations are unchanged. A local enum and a core model stand in for the
 cohort's (P11-7). The non-ASCII text is built from code points.
@@ -1610,7 +1616,7 @@ with:
     "document_integrity_problem",
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests -q
@@ -1619,7 +1625,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests -q
 Expected: the run stops at collection with `1 error`. `test_digests.py` cannot
 import `canonical_json` from `earnings_core`.
 
-- [ ] **Step 3: Move the module into core, and export it**
+- [x] **Step 3: Move the module into core, and export it**
 
 Create `packages/earnings-core/src/earnings_core/digests.py`:
 
@@ -1698,7 +1704,7 @@ with:
     "document_integrity_problem",
 ```
 
-- [ ] **Step 4: Run core's tests**
+- [x] **Step 4: Run core's tests**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-core/tests -q
@@ -1706,7 +1712,7 @@ uv run --locked --all-packages pytest packages/earnings-core/tests -q
 
 Expected: `202 passed`.
 
-- [ ] **Step 5: Point ingestion at the core definition, and delete its copy**
+- [x] **Step 5: Point ingestion at the core definition, and delete its copy**
 
 In `packages/earnings-ingestion/src/earnings_ingestion/cohort/build.py`, replace:
 
@@ -1955,7 +1961,7 @@ git rm packages/earnings-ingestion/src/earnings_ingestion/cohort/digests.py pack
 
 Expected: two `rm '...'` lines.
 
-- [ ] **Step 6: Point themes at the core definition, and drop its copies**
+- [x] **Step 6: Point themes at the core definition, and drop its copies**
 
 In `packages/earnings-themes/src/earnings_themes/records.py`, replace:
 
@@ -2130,7 +2136,7 @@ with:
   characters written as themselves, and dates in ISO 8601.
 ```
 
-- [ ] **Step 7: Run the suite, and check that one definition is left**
+- [x] **Step 7: Run the suite, and check that one definition is left**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q -rs
@@ -2149,7 +2155,7 @@ packages/earnings-core/src/earnings_core/digests.py:37:def digest(value: object)
 The second prints nothing. The suite's record tests reran every content hash through
 the moved functions (The proof's map), so their passing is the move's byte proof.
 
-- [ ] **Step 8: Lint, and the escape check**
+- [x] **Step 8: Lint, and the escape check**
 
 ```bash
 uv run --locked ruff check . && uv run --locked ruff format --check .
@@ -2159,7 +2165,7 @@ python3 -c 'import sys; ok={chr(0xA7)}; bad=[n for n in sys.argv[1:] if any(ord(
 Expected: `All checks passed!`, `297 files already formatted`, and `escapes intact`.
 The file count is unchanged: two files arrive in core, and two leave ingestion.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git log --oneline -3
@@ -2191,7 +2197,7 @@ and never edit them afterwards. To write the test again, restore
 `test_anchoring.py` with `git restore`, which undoes Step 1's uncommitted edit too;
 reapply Step 1's edit; then rerun Steps 3 and 4.
 
-- [ ] **Step 1: The imports the generated test needs**
+- [x] **Step 1: The imports the generated test needs**
 
 In `packages/earnings-themes/tests/test_anchoring.py`, replace:
 
@@ -2212,7 +2218,9 @@ import pytest
 from earnings_core import RejectionReason, TextSpan, make_locator, sha256_hex
 ```
 
-- [ ] **Step 2: Write the generator**
+- [x] **Step 2: Write the generator**
+
+> Deviation: the generator was extracted from this block by script, byte for byte, rather than typed with the Write tool. The file's SHA-256 was `919797ba8f02cd4dce79bbd8673e7d2a9bae5a3269732c1da05d513f0b3ecc8d`, 1976 characters, ASCII, with no backslash, and it printed the known answer (`a8b4c78`).
 
 Create `/tmp/plan11-context-hash.py`:
 
@@ -2274,7 +2282,7 @@ TEST.write_text(source + body, encoding="utf-8")
 print(expected)
 ```
 
-- [ ] **Step 3: Generate the test, and format it**
+- [x] **Step 3: Generate the test, and format it**
 
 ```bash
 uv run --locked python /tmp/plan11-context-hash.py
@@ -2285,7 +2293,7 @@ Expected: `fd4874e7855a8b8d6c9df217cca901d75d1129624089f94a6db6cda22ef52280`, th
 `1 file reformatted`, since Ruff puts the suffix's literal in double quotes. If the
 generator prints `already holds`, the test exists: go to Step 4.
 
-- [ ] **Step 4: Run it**
+- [x] **Step 4: Run it**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_anchoring.py -q
@@ -2293,7 +2301,7 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_anchor
 
 Expected: `19 passed`. It passes at once, since it pins today's behavior (ES8).
 
-- [ ] **Step 5: Show that the pin can fail, then restore it**
+- [x] **Step 5: Show that the pin can fail, then restore it**
 
 ```bash
 sed -i '' 's/ensure_ascii=False, separators/ensure_ascii=True, separators/' packages/earnings-themes/src/earnings_themes/anchoring.py
@@ -2305,7 +2313,7 @@ git diff --quiet -- packages/earnings-themes/src/earnings_themes/anchoring.py &&
 
 Expected: `1 failed, 18 passed`; then `19 passed`; then `anchoring.py unchanged`.
 
-- [ ] **Step 6: Document the format**
+- [x] **Step 6: Document the format**
 
 In `packages/earnings-themes/src/earnings_themes/anchoring.py`, replace:
 
@@ -2333,7 +2341,7 @@ with:
 | `context_sha256` | 64 lowercase hex or null | When the text repeats: SHA-256 of `make_locator`'s prefix and suffix as a compact JSON pair in UTF-8, `json.dumps([prefix, suffix], ensure_ascii=False, separators=(",", ":"))` |
 ```
 
-- [ ] **Step 7: The suite, lint, and the escape check**
+- [x] **Step 7: The suite, lint, and the escape check**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q -rs
@@ -2345,7 +2353,7 @@ Expected: `1746 passed, 8 skipped, 24 deselected`; `All checks passed!` and
 `297 files already formatted`; and `escapes intact`, which shows that the test's
 literals are escape text.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git log --oneline -3
@@ -2380,7 +2388,7 @@ Expected: `git status --short` prints nothing.
     units are the elements that are their own `narrative_home`.
   - `_transparent(element, elements, text) -> bool`, which stays private.
 
-- [ ] **Step 1: Write the failing tests, and document the exception**
+- [x] **Step 1: Write the failing tests, and document the exception**
 
 In `packages/earnings-themes/tests/test_anchoring.py`, replace:
 
@@ -2570,7 +2578,7 @@ with:
 | `not_narrative` | A quote overlaps a table, cell, page artifact, or other non-narrative element (GS15), other than a transparent container: an `other` element whose children hold every non-space character of its span (ES9) |
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_anchoring.py -q
@@ -2579,7 +2587,9 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_anchor
 Expected: the run stops at collection with `1 error`. `test_anchoring.py` cannot
 import `narrative_home`, which does not exist yet.
 
-- [ ] **Step 3: The rule, and `narrative_home`**
+- [x] **Step 3: The rule, and `narrative_home`**
+
+> Deviation: of Blinding's search rule, not of this step's edits. The implementer ran one `git grep` whose `*.toml` pathspec covered the two gold paths. It reported no `.toml` match, so no gold line was printed, and every later dispatch forbade `*.toml` and `*.json` pathspecs. The commit holds this task's edits exactly (`2e70016`).
 
 In `packages/earnings-themes/src/earnings_themes/anchoring.py`, replace:
 
@@ -2701,7 +2711,7 @@ with:
     home = narrative_home(bundle, span)
 ```
 
-- [ ] **Step 4: Run them to see them pass**
+- [x] **Step 4: Run them to see them pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests tests/contracts/test_data_dictionary.py tests/integration/test_stage6_records.py tests/integration/test_stage6_pilot_v1.py tests/integration/test_stage6_wording.py apps/earnings-pipeline/tests/test_stage6_cli.py -q -rs
@@ -2714,7 +2724,7 @@ Expected: `287 passed, 4 skipped`, the skips being the local legs at
 offline over Stage 1's fixtures under the rule
 (`test_the_curated_hard_negatives_validate_offline`).
 
-- [ ] **Step 5: Record the rule under M5**
+- [x] **Step 5: Record the rule under M5**
 
 Counts and IDs only, never a sentence: the wording guard reads this file.
 
@@ -2747,7 +2757,7 @@ uv run --locked --all-packages pytest tests/integration/test_stage6_wording.py -
 Expected: `4 passed, 1 skipped`. The fixture leg passes, and the pilot leg skips
 without `data/`, and runs at the user's gate.
 
-- [ ] **Step 6: Lint, and the escape check**
+- [x] **Step 6: Lint, and the escape check**
 
 ```bash
 uv run --locked ruff check . && uv run --locked ruff format --check .
@@ -2756,7 +2766,7 @@ python3 -c 'import sys; ok={chr(0xA7)}; bad=[n for n in sys.argv[1:] if any(ord(
 
 Expected: `All checks passed!`, `297 files already formatted`, and `escapes intact`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -2780,7 +2790,7 @@ controller session. Its record is what the user's gate completes.
 - Produces: the record's plan A section, whose `[GATE: ...]` marks Completion, Step 2
   fills.
 
-- [ ] **Step 1: Run the proof's map by node ID**
+- [x] **Step 1: Run the proof's map by node ID**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_cohort_identity.py::test_v1_loads_unchanged_and_has_an_operative_hash tests/integration/test_cohort_fixtures.py::test_the_fixture_regenerates_byte_for_byte tests/integration/test_cohort_fixtures.py::test_saved_evidence_replays_to_the_frozen_manifest tests/integration/test_event_corpus_v1.py::test_events_v1_loads_unchanged_with_its_evidence_record tests/integration/test_event_corpus_v1.py::test_pilot_v1_loads_unchanged_and_djia_pilot_1_reselects_it tests/integration/test_event_fixtures.py::test_the_fixture_regenerates_byte_for_byte tests/integration/test_event_fixtures.py::test_p_vi_replays_offline_to_the_frozen_manifests tests/integration/test_event_fixtures.py::test_p_vi_replays_the_acquisition_offline tests/integration/test_stage6_pilot_v1.py::test_the_pin_is_pilot_v1_and_its_chain tests/integration/test_stage6_pilot_v1.py::test_the_committed_split_reproduces_byte_for_byte tests/integration/test_stage6_pilot_v1.py::test_the_curated_hard_negatives_validate_offline tests/integration/test_stage6_records.py::test_codebook_v0_the_coverage_report_and_the_gold_hold_offline tests/integration/test_canonical_golden.py::test_the_canonical_fixture_regenerates_byte_for_byte tests/integration/test_stage6_pilot_v1.py::test_the_committed_coverage_report_reproduces_from_its_runs tests/integration/test_stage6_pilot_v1.py::test_committed_records_validate_against_the_local_store -q -rs
@@ -2793,7 +2803,7 @@ SKIPPED [1] tests/integration/test_stage6_pilot_v1.py:133: data/runs/events/ is 
 SKIPPED [2] tests/integration/test_stage6_pilot_v1.py:164: data/runs/events/ is not here: each Stage 6 gate runs this test
 ```
 
-- [ ] **Step 2: The diff**
+- [x] **Step 2: The diff**
 
 ```bash
 git diff --stat 186348d -- config evaluation codebooks tests/fixtures
@@ -2802,7 +2812,7 @@ git status --short
 
 Expected: nothing, from either command.
 
-- [ ] **Step 3: One definition**
+- [x] **Step 3: One definition**
 
 ```bash
 git grep -n -e "def canonical_json" -e "def digest(" -- "*.py"
@@ -2812,7 +2822,7 @@ git grep -n "cohort.digests" -- "*.py" "docs/*.md"
 Expected: Task 5's two lines in `packages/earnings-core/src/earnings_core/digests.py`,
 then nothing.
 
-- [ ] **Step 4: The suites**
+- [x] **Step 4: The suites**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q -rs
@@ -2828,7 +2838,9 @@ Expected:
 - `All checks passed!` and `297 files already formatted`;
 - `uv.lock unchanged`.
 
-- [ ] **Step 5: Write the record**
+- [x] **Step 5: Write the record**
+
+> Deviation: the record was written by extracting this block byte for byte (`3cafab1`). The final review's fixes later reworded three of its sentences (`4740156`, `4cad363`), `5c4259e` updated its suite count to 1748, and `4badd99` filled its marks from the user's gate.
 
 Create `docs/verification/evidence-selection.md`:
 
@@ -2907,7 +2919,7 @@ tracked change. It printed `[GATE: the summary line]`. Its skip was
 failure's node ID and exception type, with its fix's commit.]
 ```
 
-- [ ] **Step 6: Commit the record**
+- [x] **Step 6: Commit the record**
 
 ```bash
 git log --oneline -3
@@ -2920,7 +2932,9 @@ Expected: `git status --short` prints nothing.
 
 ## Completion
 
-- [ ] **Step 1: The final review**
+- [x] **Step 1: The final review**
+
+> Deviation: the final review (Opus, over `186348d..3cafab1`; Codex skipped, P11-3) found the branch ready to merge, with no Critical or Important finding. The user chose one fix commit outside this plan's edits (`4740156`): the outcomes version 3 changed, and "not exactly an `int`", in `rejections.py`, `evidence.py`, the data dictionary, and the record (F1, T3-m1); "with at least one child" in three places (T7-m2); three docstrings' wording (T4-m2, T1-m2); and assertions folded into existing tests for the container's trailing and between-children text (T7-m1), the fallback order (T4-m3), and the offset check's order and detail (T3-m2); plus one added test, `[none-prefix]` (T2-m1), so plan A adds 11 collected tests, not 10. The scoped re-review's one Minor, the int-subclass outcome, was fixed in `4cad363`. Task 8's Steps 1 to 4 then printed `20 passed, 3 skipped` and `1748 passed, 8 skipped, 24 deselected`, and Step 3's `cohort.digests` search found only the record's own sentence. One item was deferred (Step 4), and every other Minor was dropped.
 
 Run the final whole-branch review with the `code-reviewer` agent, on Opus, over
 `186348d..HEAD`. Its dispatch carries:
@@ -2937,7 +2951,9 @@ Codex is skipped (P11-3): state the reason at the review.
   - update the record's counts;
   - commit, before the gate.
 
-- [ ] **Step 2: The main checkout's gate (the user's; P11-12)**
+- [x] **Step 2: The main checkout's gate (the user's; P11-12)**
+
+> Deviation: with T2-m1's test, the expected summary became `1755 passed, 1 skipped, 24 deselected`. On 2026-10-04 the user ran the gate at `5c4259e`, and it printed exactly that, with its one skip at `tests/integration/test_event_store_v1.py:42`. No test failed (`4badd99`).
 
 This is plan A's last gate (the spec's §Gates, plan A, gate 2). In the worktree:
 
@@ -2993,14 +3009,14 @@ git status --short
 
 Expected: `0`, since every mark is filled; then the commit; then nothing.
 
-- [ ] **Step 3: Mark up this plan** (writing-plans' Plan Completion Protocol)
+- [x] **Step 3: Mark up this plan** (writing-plans' Plan Completion Protocol)
 
 - Run the resolve-before-defer gate. The spec says Stage 7 defers nothing new, so
   any leftover goes to the user before anything is deferred.
 - Tick the steps, add `> Deviation:` and `> Skipped:` notes, and add the status
   header. Notes hold IDs, counts, and hashes only (Blinding).
 
-- [ ] **Step 4: The deferred items, and the spec's line**
+- [x] **Step 4: The deferred items, and the spec's line**
 
 Tick plan 3's three items, and plan 9's two that the spec gives plan A (the spec's
 §Deferred items). `Rejection`'s subject and T6-M4 stay open for plan B.

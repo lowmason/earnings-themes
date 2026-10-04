@@ -593,3 +593,5 @@ user's approval. In the handoff, state:
 - that no session opened pilot text or ran extraction over a pilot document;
 - that the only model call from code was the gate's live test over a Stage 1 fixture;
 - that no SEC request was sent.
+
+> Plan A: COMPLETE (2026-10-04) — implemented by plan 11 (specs/plans/completed/11-evidence-selection-and-verification-plan-a.md). Next: write plan B.

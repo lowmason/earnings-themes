@@ -97,7 +97,7 @@
       to re-check a sec-parser release under ADR 0001.
 
 ## 3-core-evidence-spine — 2026-09-25
-- [ ] Accept a stored `VerifiedSpan` in `validate_span` (final review, Important
+- [x] Accept a stored `VerifiedSpan` in `validate_span` (final review, Important
       #2; the user chose a handoff note and deferred this): `VerifiedSpan` in
       `packages/earnings-core/src/earnings_core/evidence.py` validates only
       `start < end`, so a `model_copy(update=...)` or a JSON round trip can
@@ -110,7 +110,7 @@
       re-verification helper, with a test that a round-tripped `VerifiedSpan`
       re-verifies and a tampered copy is rejected. Size: quick-fix. Done when:
       that API and its test land, at the latest when Stage 7 first stores
-      `VerifiedSpan`s.
+      `VerifiedSpan`s. → done in plan 11 (specs/plans/completed/11-evidence-selection-and-verification-plan-a.md)
 - [x] Report every crossing in `validate_elements` (final review, Minor;
       deferred by the user): `_crossings` in
       `packages/earnings-core/src/earnings_core/structure.py` never pushes an
@@ -119,7 +119,7 @@
       but not against C. The set is still refused, but D-8 promises every
       structural problem at once. Size: quick-fix. Done when: that case reports
       both crossings, with a test. → done in plan 4
-- [ ] Prefer the genuine element in `resolve_pointer` (final review, Minor;
+- [x] Prefer the genuine element in `resolve_pointer` (final review, Minor;
       deferred by the user): `resolve_pointer` in
       `packages/earnings-core/src/earnings_core/structure.py` returns
       `wrong_document` for the first element whose ID matches, while
@@ -128,7 +128,7 @@
       mixed-version element list the outcome depends on list order. Size:
       quick-fix. Done when: `resolve_pointer` resolves the genuine element
       wherever it sits in the list, with a test that lists the stale element
-      first.
+      first. → done in plan 11 (specs/plans/completed/11-evidence-selection-and-verification-plan-a.md)
 - [x] Recheck construction-only invariants in `validate_elements` (final review,
       Minor; deferred by the user): `validate_elements` in
       `packages/earnings-core/src/earnings_core/structure.py` recomputes hashes
@@ -156,7 +156,7 @@
       a `model_validator` on `MaskedDocument` enforces those checks and
       `apply_masks` relies on it, with a test that a directly built bad set is
       refused, at the latest when Stage 3 first builds `MaskedDocument`s. → done in plan 4
-- [ ] Reject, don't raise, on unvalidated offsets (final review, Minor; deferred
+- [x] Reject, don't raise, on unvalidated offsets (final review, Minor; deferred
       by the user): given a candidate built by `model_copy` with a float offset,
       `validate_span` in `packages/earnings-core/src/earnings_core/evidence.py`
       raises `TypeError` at the slice, and a bool offset whose slice matches
@@ -164,7 +164,7 @@
       meant never to raise on bad evidence (R6.2). `parse_span_candidate`
       refuses both offsets, so only code that skips it can get there. Size:
       quick-fix. Done when: `validate_span` returns `malformed_record` for a
-      non-integer or bool offset on an unvalidated candidate, with a test.
+      non-integer or bool offset on an unvalidated candidate, with a test. → done in plan 11 (specs/plans/completed/11-evidence-selection-and-verification-plan-a.md)
 - [ ] Give `Rejection` a structured subject (final review, recommendation;
       deferred by the user): `Rejection` in
       `packages/earnings-core/src/earnings_core/rejections.py` names what it
@@ -1042,7 +1042,7 @@
       (1) and (2) land with their tests, and (3)'s count is in
       docs/verification/pilot-v1-gold-set.md, before any further bundle is
       anchored. → done in plan 10 (specs/plans/completed/10-harden-the-gold-before-bundle-4.md)
-- [ ] Move `canonical_json` and its digest into earnings-core (plan 9, Task 3; the
+- [x] Move `canonical_json` and its digest into earnings-core (plan 9, Task 3; the
       user's decision of 2026-09-28; final review M6).
       packages/earnings-themes/src/earnings_themes/records.py:75-91 copies them
       from packages/earnings-ingestion/src/earnings_ingestion/cohort/digests.py,
@@ -1053,7 +1053,7 @@
       Size: plan. Done when: in the first stage whose spec may change
       earnings-core, both packages import one core definition of each, and every
       committed record (cohort, events, split, coverage report, codebook v0, gold,
-      and hard negatives) still reproduces byte for byte.
+      and hard negatives) still reproduces byte for byte. → done in plan 11 (specs/plans/completed/11-evidence-selection-and-verification-plan-a.md)
 - [ ] Stage 6's test and validation gaps that the final review deferred (plan 9's
       ledger Minors, triaged 2026-10-03). Under packages/earnings-themes/ unless
       named: the pin's `universe_version` comes from the caller's universe, not the
@@ -1085,14 +1085,16 @@
       files (T13-M1); and `pinned_codebook` loads v0 without rehashing it
       (codebook_cli.py:150-158). Size: plan. Done when: a plan lands each with its
       test, or records why one is dropped. T8-M2 and T6-M2 → done in plan 10
-      (specs/plans/completed/10-harden-the-gold-before-bundle-4.md).
-- [ ] Settle two anchoring questions before Stage 7 recomputes context hashes or
+      (specs/plans/completed/10-harden-the-gold-before-bundle-4.md). T3-M5's
+      `canonical_json` and `digest` → done in plan 11
+      (specs/plans/completed/11-evidence-selection-and-verification-plan-a.md).
+- [x] Settle two anchoring questions before Stage 7 recomputes context hashes or
       fixes its narrative set: pin `context_hash`'s byte format with a
       known-answer test, and add `ensure_ascii=False` to its row in
       docs/data-dictionary.md (T6-M3); and decide whether a list item under an
       `other` element becomes quotable, using the count the bundle-hardening item
       above records (T6-M1). Code: packages/earnings-themes/src/earnings_themes/anchoring.py.
-      Size: plan. Done when: Stage 7's plan lands both, or records why not.
+      Size: plan. Done when: Stage 7's plan lands both, or records why not. → done in plan 11 (specs/plans/completed/11-evidence-selection-and-verification-plan-a.md)
 - [ ] Refuse a committed test-partition gold at validate time (T12-M1):
       `gold validate` never calls `readable()`, so a hand-committed test bundle
       would validate before Stage 14
@@ -1131,3 +1133,15 @@
       affected. Size: quick-fix. Done when: build_gold and build_curated refuse a
       kept draft with a repeated ID, with a test, before Stage 11 counts the
       rejected shares.
+
+## 11-evidence-selection-and-verification-plan-a — 2026-10-04
+
+- [ ] Surface only a refusal's reason and IDs over pilot text (plan 11's final
+      review; GS13; deferred by the user). In
+      packages/earnings-core/src/earnings_core/evidence.py, `validate_span`'s
+      `quote_text_mismatch`, `locator_mismatch`, and `ambiguous_occurrence`
+      details embed text through `!r`, and `reverify_span` passes them through
+      unchanged, so a refusal over a pilot document carries pilot text in its
+      `detail`. Size: quick-fix. Done when: plan B's rejection store and gates
+      print and store only the reason and IDs for a refusal over pilot text,
+      with a test.
