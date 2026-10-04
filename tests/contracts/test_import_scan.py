@@ -204,3 +204,103 @@ def test_the_client_scan_sees_imports_inside_functions(tmp_path: Path) -> None:
         (8, ".client"),
         (9, "earnings_ingestion.cohort.live.verify_live"),
     ]
+
+
+THEMES_NETWORK = frozenset(
+    {
+        "httpx",
+        "requests",
+        "aiohttp",
+        "urllib3",
+        "openai",
+        "anthropic",
+        "typesafe_sdk",
+        "langchain_typesafe",
+        "ollama",
+        "mistralai",
+        "cohere",
+        "litellm",
+        "pydantic_ai",
+        "langgraph",
+        "langchain",
+        "langchain_core",
+        "dspy",
+        "crewai",
+        "llama_index",
+        "instructor",
+        "outlines",
+    }
+)
+"""HTTP clients, model SDKs, and frameworks: no themes module imports one (the Stage 7
+spec, §Packaging; ES10, ES15)."""
+
+
+def themes_network_imports() -> list[str]:
+    """Each import of ``THEMES_NETWORK`` in earnings-themes, at any depth."""
+    return [
+        f"{path.relative_to(ROOT)}:{line} imports {module}"
+        for path in sorted(SOURCES["earnings_themes"].rglob("*.py"))
+        for line, module in imported(path)
+        if module.partition(".")[0] in THEMES_NETWORK
+    ]
+
+
+def test_no_themes_module_imports_a_client_sdk_or_framework() -> None:
+    assert themes_network_imports() == []
+
+
+RETRIEVAL = frozenset(
+    {
+        "rapidfuzz",
+        "thefuzz",
+        "fuzzywuzzy",
+        "Levenshtein",
+        "jellyfish",
+        "difflib",
+        "sentence_transformers",
+        "sklearn",
+        "faiss",
+        "chromadb",
+        "rank_bm25",
+        "bm25s",
+        "hnswlib",
+        "annoy",
+        "lancedb",
+        "qdrant_client",
+    }
+)
+"""Retrieval, embedding, and fuzzy-matching libraries (R10.2)."""
+EXTRACTION = SOURCES["earnings_themes"] / "extraction"
+
+
+def retrieval_imports(paths: list[Path]) -> list[tuple[int, str]]:
+    return [
+        (line, module)
+        for path in paths
+        for line, module in imported(path)
+        if module.partition(".")[0] in RETRIEVAL
+    ]
+
+
+def test_the_extractor_imports_no_retrieval_embedding_or_fuzzy_matching() -> None:
+    """R10.2: top-k retrieval is not a discovery mechanism, so the extraction package
+    imports nothing that could rank, embed, or fuzzily match text."""
+    paths = sorted(EXTRACTION.rglob("*.py"))
+    assert len(paths) >= 3
+    assert retrieval_imports(paths) == []
+
+
+def test_the_retrieval_scan_sees_imports_inside_functions(tmp_path: Path) -> None:
+    module = tmp_path / "late.py"
+    module.write_text(
+        "def later():\n"
+        "    from rapidfuzz import fuzz\n"
+        "    import difflib\n"
+        "    import sentence_transformers.util\n",
+        encoding="utf-8",
+    )
+    assert retrieval_imports([module]) == [
+        (2, "rapidfuzz"),
+        (3, "difflib"),
+        (4, "sentence_transformers.util"),
+    ]
