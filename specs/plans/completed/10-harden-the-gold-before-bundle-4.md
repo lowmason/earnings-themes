@@ -1623,7 +1623,7 @@ git commit -m "docs(specs): mark up plan 10, and tick the gold hardening"
 git status --short
 ```
 
-- [ ] **Step 4: Backlog triage**
+- [x] **Step 4: Backlog triage**
 
 ```bash
 uv run --no-project --python 3.13 python ~/.claude/skills/writing-plans/scripts/deferred_stats.py
@@ -1631,7 +1631,7 @@ uv run --no-project --python 3.13 python ~/.claude/skills/writing-plans/scripts/
 
 Report its summary line, and present the triage rubric if its thresholds trip.
 
-- [ ] **Step 5: Retire this plan**
+- [x] **Step 5: Retire this plan**
 
 Plan 10 has no spec to retire.
 

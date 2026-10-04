@@ -190,7 +190,7 @@ each signed file with its kept draft (GS5).
 
 ## Plan 10: the gold hardened before bundle 4
 
-Plan 10 (`specs/plans/10-harden-the-gold-before-bundle-4.md`) closed three findings
+Plan 10 (`specs/plans/completed/10-harden-the-gold-before-bundle-4.md`) closed three findings
 of plan 9's final review before any further bundle was anchored: M1, T8-M1, and M5.
 It also closed two of plan 9's deferred test and validation gaps, T8-M2 and T6-M2
 (`specs/deferred_items.md`).
