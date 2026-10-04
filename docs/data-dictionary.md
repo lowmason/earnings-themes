@@ -2435,3 +2435,64 @@ One run: `run.json`.
 | `software` | map of string to string | The software identity the caller passes |
 | `billable_cost` | `"none, self-hosted"` | No billable inference (R14.1) |
 | `exactness_rate` | float or null | 1.0 over the retained quotes, each verified; null when no quote is retained (R6.2, R12.8) |
+
+### `Usage`
+
+The token usage a server reports.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `prompt_tokens` | int ≥ 0 | Prompt tokens |
+| `completion_tokens` | int ≥ 0 | Completion tokens |
+
+### `ModelReply`
+
+An adapter's reply, stored raw in the cache.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `text` | string | The reply's text, which the extractor parses and verifies again on every use |
+| `usage` | `Usage` or null | Null when the server reports none |
+| `model` | string or null | The model the server names |
+| `tool_calls` | bool | Whether it carries tool calls; such a reply is refused and never stored |
+| `latency_ms` | int ≥ 0 | The request's latency |
+| `cached` | bool | Whether the cache returned it; false in the stored entry |
+
+### `CacheKey`
+
+One field per R14.6 component; the cache file is named by its SHA-256.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `doc_id` | string | The window's document |
+| `canonical_hash` | 64 lowercase hex | Its canonical hash |
+| `window_id` | string | The window |
+| `unit_ids` | tuple of string | Its units' element IDs, in label order |
+| `adapter_kind` | string | From `AdapterIdentity` |
+| `model_id` | string | From `AdapterIdentity` |
+| `weights_sha256` | 64 lowercase hex or null | From `AdapterIdentity` |
+| `runtime` | string or null | From `AdapterIdentity` |
+| `runtime_version` | string or null | From `AdapterIdentity` |
+| `structured` | bool | From `Parameters` |
+| `temperature` | float | From `Parameters` |
+| `seed` | int | From `Parameters` |
+| `max_tokens` | int ≥ 1 | From `Parameters` |
+| `window_budget` | int ≥ 1 or null | From `ExtractionPolicy` |
+| `claim_limit` | int ≥ 1 | From `ExtractionPolicy` |
+| `prompt_sha256` | 64 lowercase hex | SHA-256 of the template's UTF-8 bytes |
+| `reply_schema_sha256` | 64 lowercase hex | SHA-256 of the reply schema's canonical JSON |
+| `request_sha256` | 64 lowercase hex | SHA-256 of the request's messages, the exact text the model is sent: the window's text, any feedback, and so the attempt |
+| `extractor_version` | string | `pointer-traversal/1` |
+| `validator_version` | string | earnings-core's `VALIDATOR_VERSION` |
+| `codebook_hash` | 64 lowercase hex or null | Null under codebook-free extraction (ES11) |
+
+### `CacheEntry`
+
+One cache file, `<SHA-256 of the key>.json`, written atomically in `live` mode under
+a directory the caller supplies.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Extraction record schema version |
+| `key` | `CacheKey` | Its key, which a hit must equal |
+| `reply` | `ModelReply` | The raw reply |
