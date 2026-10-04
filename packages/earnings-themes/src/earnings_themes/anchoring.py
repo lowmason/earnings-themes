@@ -3,12 +3,15 @@
 
 - **The anchor.** A draft names a quote by its text, with the words around it when
   the text repeats. The text must occur exactly once with that context. Its span is
-  attributed to the most specific narrative element that holds it, and the span is
-  then built through ``parse_span_candidate`` and checked by ``validate_span``: code
-  is the authority on exactness, and no offset comes from a browser.
+  attributed to ``narrative_home``, the most specific narrative element that holds
+  it, and the span is then built through ``parse_span_candidate`` and checked by
+  ``validate_span``: code is the authority on exactness, and no offset comes from a
+  browser.
 - **Narrative only.** A quote never overlaps a ``table``, ``table_cell``,
-  ``page_artifact``, or ``other`` element (R4.2, GS15). A quote under a boilerplate
-  mask is allowed, and its masks are recorded.
+  ``page_artifact``, or ``other`` element (R4.2, GS15), except a transparent
+  container: an ``other`` element with children and no non-space character outside
+  them, which walker-1 makes from a list (ES9). A quote under a boilerplate mask is
+  allowed, and its masks are recorded.
 - **The committed pointer.** Offsets, the element, and hashes, never text: the
   quote's SHA-256, and, when the text repeats, the SHA-256 of ``make_locator``'s
   prefix and suffix (GS3). The check recomputes each from the local document.
@@ -118,13 +121,46 @@ def _genuine(bundle: Bundle) -> list[DocumentElement]:
     return [e for e in bundle.elements if e.doc_id == bundle.document.doc_id]
 
 
-def _outside_narrative(elements: list[DocumentElement], span: TextSpan) -> bool:
-    return any(e.type not in NARRATIVE and e.span.overlaps(span) for e in elements)
+def _transparent(
+    element: DocumentElement, elements: list[DocumentElement], text: str
+) -> bool:
+    """An ``other`` element with at least one child and no non-space character of
+    its span outside its children's spans (ES9)."""
+    if element.type is not ElementType.OTHER:
+        return False
+    children = sorted(
+        (e for e in elements if e.parent_id == element.element_id),
+        key=lambda e: e.span.start,
+    )
+    if not children:
+        return False
+    own, position = [], element.span.start
+    for child in children:
+        own.append(text[position : child.span.start])
+        position = max(position, child.span.end)
+    own.append(text[position : element.span.end])
+    return not "".join(own).strip()
 
 
-def _home(bundle: Bundle, span: TextSpan) -> DocumentElement | str:
+def _outside_narrative(
+    elements: list[DocumentElement], span: TextSpan, text: str
+) -> bool:
+    return any(
+        e.type not in NARRATIVE
+        and e.span.overlaps(span)
+        and not _transparent(e, elements, text)
+        for e in elements
+    )
+
+
+def narrative_home(bundle: Bundle, span: TextSpan) -> DocumentElement | str:
+    """The most specific narrative element that holds ``span``, by P9-19's order:
+    the shortest, then the earliest type in ``NARRATIVE``. Or why none does:
+    ``not_narrative`` when a non-narrative element overlaps it, a transparent
+    container excepted (ES9), and ``outside_element`` when no narrative element
+    holds it whole."""
     elements = _genuine(bundle)
-    if _outside_narrative(elements, span):
+    if _outside_narrative(elements, span, bundle.document.canonical_text):
         return Problem.NOT_NARRATIVE.value
     holding = [e for e in elements if e.type in NARRATIVE and e.span.contains(span)]
     if not holding:
@@ -176,7 +212,7 @@ def anchor(
     if len(starts) > 1:
         return RejectionReason.AMBIGUOUS_OCCURRENCE.value
     span = TextSpan(start=starts[0], end=starts[0] + len(exact))
-    home = _home(bundle, span)
+    home = narrative_home(bundle, span)
     if isinstance(home, str):
         return home
     locator = make_locator(bundle.document, span)
@@ -209,10 +245,10 @@ def check_pointer(bundle: Bundle, pointer: SpanPointer) -> list[str]:
     elements = _genuine(bundle)
     named = [e for e in elements if e.element_id == pointer.element_id]
     if any(e.type not in NARRATIVE for e in named) or _outside_narrative(
-        elements, span
+        elements, span, text
     ):
         reasons.append(Problem.NOT_NARRATIVE.value)
-    home = _home(bundle, span)
+    home = narrative_home(bundle, span)
     if (
         any(e.type in NARRATIVE and e.span.contains(span) for e in named)
         and isinstance(home, DocumentElement)
