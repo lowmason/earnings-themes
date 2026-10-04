@@ -94,7 +94,18 @@ def validate_span(
     after the speaker-turn check, however exactly it matches (R4.3). Nothing here is
     a threshold (R13.2): text is compared with ``==``, never normalized. Check the
     element set once with ``validate_elements`` before checking spans against it.
+
+    An offset that is not an ``int``, or is a ``bool``, is ``malformed_record``
+    before any check, as ``parse_span_candidate`` would have found: a candidate
+    built by ``model_copy`` skips it, and a bad offset is refused, never raised.
     """
+    for name in ("start", "end"):
+        offset = getattr(candidate, name)
+        if type(offset) is not int:
+            return _reject(
+                RejectionReason.MALFORMED_RECORD,
+                f"{name}: an offset is an int, not a {type(offset).__name__}",
+            )
     problem = document_integrity_problem(document)
     if problem is not None:
         return _reject(RejectionReason.DOCUMENT_INTEGRITY, problem)

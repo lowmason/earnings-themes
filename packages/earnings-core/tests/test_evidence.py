@@ -127,6 +127,26 @@ def test_a_malformed_record_names_the_offending_field(sample) -> None:
     assert outcome.detail.startswith("start:")
 
 
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [("start", False), ("start", 0.0), ("end", 16.0), ("end", True)],
+    ids=["bool-start-whose-slice-matches", "float-start", "float-end", "bool-end"],
+)
+def test_an_unvalidated_offset_is_malformed_and_never_raises(
+    sample, field, value
+) -> None:
+    """A candidate built by ``model_copy`` skips ``parse_span_candidate``, so an
+    offset may be a float or a bool: each is ``malformed_record``, never an
+    exception, even where its slice would match (R3.2, R6.2)."""
+    candidate = sample.candidate("Prepared remarks")
+    assert (candidate.start, candidate.end) == (0, 16)
+    unvalidated = candidate.model_copy(update={field: value})
+    outcome = validate_span(sample.document, sample.elements, unvalidated)
+    assert isinstance(outcome, Rejection)
+    assert outcome.reason is RejectionReason.MALFORMED_RECORD
+    assert outcome.detail.startswith(f"{field}:")
+
+
 def test_a_stored_span_re_verifies_under_the_current_validator(sample) -> None:
     """A span read back from JSON verifies again into a fresh span, even one an
     earlier validator stamped: a stored span's type alone is not proof (ES5)."""

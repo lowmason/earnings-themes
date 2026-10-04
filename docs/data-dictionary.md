@@ -254,8 +254,10 @@ Why a check refused a record (R6.2: rejections stay auditable).
 
 ### `RejectionReason`
 
-`parse_span_candidate` records `malformed_record`. `validate_span` then runs its checks
-in the order of the next eleven rows and records the first failure.
+`parse_span_candidate` records `malformed_record`, and so does `validate_span` for an
+offset that is not an `int`, or is a `bool`, on a candidate that skipped parsing.
+`validate_span` then runs its checks in the order of the next eleven rows and records
+the first failure.
 
 | Value | Meaning |
 | --- | --- |
