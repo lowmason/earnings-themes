@@ -1,6 +1,7 @@
 """Shared inputs for earnings-themes' tests: Stage 1's committed canonical fixtures,
 read through earnings-core's contracts, the synthetic document, and the synthetic
-codebook. Tests hold only synthetic text and Stage 1's fixtures (GS13)."""
+codebook; and for the extractor, the prompt template. Tests hold only synthetic text
+and Stage 1's fixtures (GS13)."""
 
 import json
 from datetime import date
@@ -10,6 +11,7 @@ import pytest
 from earnings_core import CanonicalDocument, DocumentElement, OverlayMask
 from earnings_themes.anchoring import Bundle
 from earnings_themes.codebook import Approval, Codebook, CodebookDraft, freeze_codebook
+from earnings_themes.extraction.prompt import PromptTemplate, parse_template
 from earnings_themes.records import parse
 from earnings_themes.synthetic import (
     DEV,
@@ -25,6 +27,7 @@ from earnings_themes.synthetic import (
 
 REPO = Path(__file__).resolve().parents[3]
 CANONICAL = REPO / "tests" / "fixtures" / "canonical"
+TEMPLATE = REPO / "prompts" / "extraction" / "pointer-1.md"
 FIXTURE_IDS = sorted(path.stem for path in CANONICAL.glob("*.json"))
 
 
@@ -70,3 +73,9 @@ def codebook() -> Codebook:
     )
     assert isinstance(made, Codebook)
     return made
+
+
+@pytest.fixture(scope="session")
+def template() -> PromptTemplate:
+    """The committed prompt, read by the caller and passed in (ES17)."""
+    return parse_template(TEMPLATE.read_text(encoding="utf-8"))
