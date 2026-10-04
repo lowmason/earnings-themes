@@ -60,8 +60,9 @@ its content hash with the moved functions:
   `packages/earnings-core/src/earnings_core/digests.py`, and nothing names
   `cohort.digests`.
 - **The suites, in the worktree.**
-  - The default suite printed `1747 passed, 8 skipped, 24 deselected`. Its 8 skips
-    are the local legs that need `data/`.
+  - The default suite printed `1748 passed, 8 skipped, 24 deselected`. Plan A
+    added 11 collected tests: 10 in its tasks, and 1 in the final review's fixes.
+    Its 8 skips are the local legs that need `data/`.
   - The harness suite printed `275 passed, 5 skipped`.
   - Ruff passed, and `uv.lock` is unchanged.
 
