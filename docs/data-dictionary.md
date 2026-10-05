@@ -3033,3 +3033,48 @@ locally; only a fixed reason prints and its exception chain is suppressed.
 `ScriptedJudge(script, token_counter, identity)` is test-only, retains requests
 locally and exposes a count-only representation. No retry, cache or budget policy
 is implemented by these transport seams.
+
+
+### `SupportCacheEntry`
+
+One support raw-response artifact, a closed frozen `SupportRecord`. Source-bearing
+fields serialize locally; printable forms contain only its digest. The cache never
+stores review outcomes, verdicts or quote-verification decisions.
+
+| Field | Meaning |
+| --- | --- |
+| `schema_version` | Support schema version 1. |
+| `key` | SHA-256 of the full canonical key material. |
+| `kind` | `scorer` or `judge`; selects typed request, identity and reply validation. |
+| `material` | Canonical JSON covering the original source run, claim, quote locators, canonical documents, structure/masks, evidence/context bounds, provenance, theme/codebook, request, runtime identity and policy. No codebook examples are dereferenced. |
+| `request` | Typed `ScoreRequest` or `JudgeRequest`, checked against material on reuse. |
+| `identity` | Typed `ScorerIdentity` or `JudgeIdentity`, including limits and runtime/checkpoint metadata. |
+| `reply_hash` | Integrity digest of the raw reply JSON. |
+| `reply` | Raw `ScoreReply` or `ModelReply`; never a derived assessment. |
+
+`scorer_key(input, request, identity, policy)` and `judge_key(...)` return
+`SupportCacheKey`, a SHA-256 `str` subclass with immutable canonical local binding
+material. Its string/repr are ordinary safe digest text. Bare digest strings cannot
+recover expected typed bindings and are refused. Bound material is rehashed and
+checked on every boundary; no mutable registry is used. `SupportCache(directory,
+mode)` supports `live` and `replay`, typed `lookup(key, kind)` returning a raw reply
+or `None`, `put(key, raw)` returning a relative artifact reference, and
+`raw_ref(key)`. Neither mode dispatches itself; the coordinator treats replay
+misses as `replay_miss` and live misses as dispatch candidates. Writes use a
+temporary sibling and atomic replacement; incompatible existing content and
+corruption refuse. Raw model failures stay explicit unavailable responses or local
+attempt artifacts, with model/input mismatches refused before publication. Evidence
+must be reverified outside the cache on every reuse. No bypass or concurrent-writer
+guarantee is provided.
+
+`Allowance(ceilings)` reserves one scorer evaluation per actual request and one
+judge request plus full input/allowed completion tokens per attempt. The caller
+checks complete tokenizer counts and runtime context/output limits before reserving.
+`reserve_scorer(target_id, doc_id)` and `reserve_judge(target_id, doc_id,
+input_tokens, completion_limit)` return safe reservation digest IDs.
+`settle(reservation_id, usage)` is once-only: known usage replaces charged tokens
+with actual usage, retaining original reservation and any overspend; unknown usage
+retains the full reservation and marks `unreported`. Scorer counts are never
+released. `snapshot()` returns immutable safe `UsageRecord` tuples. All applicable
+target/document/run ceilings are checked before changing state; exhaustion uses
+fixed codes. Cache hits and the one-quote joint alias make no extra reservation.

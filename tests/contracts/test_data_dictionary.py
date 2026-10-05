@@ -29,6 +29,7 @@ from earnings_themes.extraction import adapters, cache, local
 from earnings_themes.extraction import records as extraction
 from earnings_themes.support import judges, scorers
 from earnings_themes.support import records as support
+from earnings_themes.support.cache import SupportCacheEntry
 from earnings_themes.support.problems import SupportProblem
 from pydantic import BaseModel
 
@@ -170,6 +171,7 @@ MODELS = [
     judges.JudgeRequest,
     scorers.ScoreRequest,
     scorers.ScoreReply,
+    SupportCacheEntry,
     support.CodebookReference,
     support.Target,
     support.ThemeSnapshot,
