@@ -495,3 +495,39 @@ def test_incompatible_policy_versions_refused(
         SupportCache(tmp_path, "replay").lookup(
             SupportCacheKey(canonical_json(material).decode()), "scorer"
         )
+
+
+@pytest.mark.parametrize("publication_fails", [True, False])
+def test_cleanup_failure_keeps_fixed_storage_error(
+    tmp_path, one_quote, scorer_identity, policy, monkeypatch, publication_fails
+):
+    from pathlib import Path
+
+    from earnings_themes.support import cache as cache_module
+
+    request = score_requests(one_quote)[0][1]
+    key = scorer_key(one_quote, request, scorer_identity, policy)
+    original_replace = cache_module.os.replace
+    events = []
+
+    def publish(source, destination):
+        events.append("publication")
+        if publication_fails:
+            raise OSError("SECRET_PUBLICATION_PATH")
+        original_replace(source, destination)
+
+    def cleanup(path, *, missing_ok=False):
+        events.append("cleanup")
+        raise OSError("SECRET_CLEANUP_PATH")
+
+    monkeypatch.setattr(cache_module.os, "replace", publish)
+    monkeypatch.setattr(Path, "unlink", cleanup)
+    caught = None
+    try:
+        SupportCache(tmp_path, "live").put(key, reply(request, scorer_identity))
+    except Exception as error:  # noqa: BLE001 - inspect type before printable text
+        caught = error
+    assert events == ["publication", "cleanup"]
+    assert type(caught).__name__ == "SupportError"
+    assert str(caught) == "storage_corrupt"
+    assert caught.__suppress_context__

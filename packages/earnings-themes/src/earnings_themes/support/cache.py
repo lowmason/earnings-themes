@@ -298,6 +298,7 @@ class SupportCache:
             reply=raw,
         )
         partial = None
+        storage_failure = None
         try:
             self._directory.mkdir(parents=True, exist_ok=True)
             path = self._directory / self.raw_ref(key)
@@ -308,10 +309,16 @@ class SupportCache:
                 stream.write(record_json(entry))
             os.replace(partial, path)
         except OSError:
-            raise SupportError("storage_corrupt") from None
+            storage_failure = SupportError("storage_corrupt")
         finally:
             if partial is not None:
-                partial.unlink(missing_ok=True)
+                try:
+                    partial.unlink(missing_ok=True)
+                except OSError:
+                    if storage_failure is None:
+                        storage_failure = SupportError("storage_corrupt")
+        if storage_failure is not None:
+            raise storage_failure from None
         return self.raw_ref(key)
 
     def __repr__(self) -> str:

@@ -121,3 +121,74 @@ Commit subject: `feat(support): bound dispatch and cache raw versioned signals`.
 Controller checkpoint was 320 passing before four focused coverage additions
 (judge input limit, structured output, two incompatible versions). Final 324/324
 passing output above is after those additions; implementation did not change.
+
+## Review round 1: filesystem cleanup exception safety
+
+Verified the Important finding at `SupportCache.put`: `partial.unlink` was outside
+the storage `OSError` handler, and a cleanup failure could replace the intended
+fixed error with raw filesystem diagnostics. Applied receiving-code-review and
+TDD, changing only cache.py, test_cache.py and this report.
+
+RED command:
+
+```text
+uv run --locked --all-packages pytest packages/earnings-themes/tests/support/test_cache.py::test_cleanup_failure_keeps_fixed_storage_error -q
+```
+
+Observed exit 1, safe output:
+
+```text
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_____________ test_cleanup_failure_keeps_fixed_storage_error[True] _____________
+packages/earnings-themes/tests/support/test_cache.py:531: in test_cleanup_failure_keeps_fixed_storage_error
+    assert type(caught).__name__ == "SupportError"
+E   AssertionError: assert 'OSError' == 'SupportError'
+E
+E     - SupportError
+E     + OSError
+____________ test_cleanup_failure_keeps_fixed_storage_error[False] _____________
+packages/earnings-themes/tests/support/test_cache.py:531: in test_cleanup_failure_keeps_fixed_storage_error
+    assert type(caught).__name__ == "SupportError"
+E   AssertionError: assert 'OSError' == 'SupportError'
+E
+E     - SupportError
+E     + OSError
+=========================== short test summary info ============================
+FAILED packages/earnings-themes/tests/support/test_cache.py::test_cleanup_failure_keeps_fixed_storage_error[True]
+FAILED packages/earnings-themes/tests/support/test_cache.py::test_cleanup_failure_keeps_fixed_storage_error[False]
+2 failed in 0.05s
+```
+
+The parametrized regression covers both publication failure followed by cleanup
+failure, and cleanup failure after successful publication. Injected filesystem
+errors contain invented sentinel paths; the test checks error type before any
+printable text, so no raw sentinel exception appears in RED output.
+
+Implementation retains a fixed `storage_failure` through cleanup. A cleanup error
+creates a fixed error only when no original storage failure exists. After cleanup,
+the preserved error is raised `from None`. No raw filesystem error can replace the
+original fixed publication error. No unrelated cache behavior changed.
+
+GREEN and focused checks (all exit 0):
+
+```text
+uv run --locked --all-packages pytest packages/earnings-themes/tests/support/test_cache.py -q
+........................................................................ [ 96%]
+...                                                                      [100%]
+75 passed in 0.28s
+```
+
+```text
+uv run --locked ruff check packages/earnings-themes/src/earnings_themes/support/cache.py packages/earnings-themes/tests/support/test_cache.py
+All checks passed!
+```
+
+```text
+uv run --locked ruff format --check packages/earnings-themes/src/earnings_themes/support/cache.py packages/earnings-themes/tests/support/test_cache.py
+2 files already formatted
+```
+
+`git diff --check`: exit 0, no output. No broad root, Stage 6 wording or live tests
+were run. Original Task 6 commit is preserved; this correction is a separate
+commit with subject `fix(support): redact cache cleanup failures`.
