@@ -440,108 +440,8 @@ def _validate(stored: StoredSupportRun, *, published: bool) -> StoredSupportRun:
                 tuple((e.start, e.end, e.quote_id) for e in a.evidence)
                 == tuple(sorted((e.start, e.end, e.quote_id) for e in a.evidence))
             )
-            _require(all(s.identity == record.scorer_identity for s in a.entailment))
-            for signal in a.entailment:
-                evaluation = digest(
-                    {
-                        "target": target.target_id,
-                        "identity": signal.identity.model_dump(mode="json"),
-                        "input": signal.input_hash,
-                        "quote": signal.quote_id,
-                        "scope": signal.scope,
-                    }
-                )
-                # A single quote's joint slot aliases the one raw evaluation.
-                if signal.scope == "joint" and len(target.evidence_ids) == 1:
-                    quote_signal = next(s for s in a.entailment if s.scope == "quote")
-                    evaluation = quote_signal.evaluation_id
-                    _require(
-                        signal
-                        == quote_signal.model_copy(
-                            update={
-                                "scope": "joint",
-                                "quote_id": None,
-                                "signal_id": signal.signal_id,
-                            }
-                        )
-                    )
-                _require(
-                    signal.evaluation_id == evaluation
-                    and signal.signal_id
-                    == digest(
-                        {
-                            "evaluation": evaluation,
-                            "scope": signal.scope,
-                            "quote": signal.quote_id,
-                        }
-                    )
-                )
-            _require(
-                len(a.trials) == 4
-                and {(t.identity.family, t.presentation.value) for t in a.trials}
-                == {
-                    (j.family, p)
-                    for j in record.judge_identities
-                    for p in ("evidence_first", "claim_theme_first")
-                }
-            )
-            for trial in a.trials:
-                _require(trial.identity in record.judge_identities)
-                _require(
-                    trial.trial_id
-                    == digest(
-                        {
-                            "target": target.target_id,
-                            "identity": trial.identity.model_dump(mode="json"),
-                            "presentation": trial.presentation,
-                        }
-                    )
-                )
-                attempts = tuple(v for v in a.attempts if v.trial_id == trial.trial_id)
-                _require(
-                    1 <= len(attempts) <= 2
-                    and trial.attempt_ids == tuple(v.attempt_id for v in attempts)
-                )
-                _require(
-                    tuple(v.attempt for v in attempts)
-                    == tuple(range(1, len(attempts) + 1))
-                )
-                for attempt in attempts:
-                    _require(
-                        attempt.attempt_id
-                        == digest(
-                            {
-                                "trial": trial.trial_id,
-                                "attempt": attempt.attempt,
-                                "request": attempt.request_hash,
-                            }
-                        )
-                    )
-                    _require(attempt.cached is False or attempt.reserved_tokens == 0)
-                    _require(not attempt.cached or attempt.raw_ref is not None)
-                    if attempt.answer is not None:
-                        _require(attempt.raw_ref is not None)
-                        _require(
-                            attempt.problem is None
-                            and {q.quote_id for q in attempt.answer.quote_assessments}
-                            == set(target.evidence_ids)
-                        )
-                _require(
-                    trial.answer == attempts[-1].answer
-                    and trial.reason == attempts[-1].problem
-                )
-                if len(attempts) == 2:
-                    _require(
-                        attempts[0].answer is None
-                        and attempts[0].problem
-                        in {
-                            "malformed_reply",
-                            "invalid_references",
-                            "tool_call_refused",
-                            "model_mismatch",
-                            "transport_error",
-                        }
-                    )
+            _check_signals(a, record)
+            _check_trials(a, record)
             _require(
                 outcome
                 == derive_outcome(
@@ -575,6 +475,123 @@ def _validate(stored: StoredSupportRun, *, published: bool) -> StoredSupportRun:
         OverflowError,
     ):
         raise SupportError("storage_corrupt") from None
+
+
+def _check_signals(a: AssessmentResult, record: SupportRunRecord) -> None:
+    """Require every evidence/joint slot, including explicit unavailable signals."""
+    target = a.target
+    quotes = [signal for signal in a.entailment if signal.scope == "quote"]
+    joint = [signal for signal in a.entailment if signal.scope == "joint"]
+    _require(
+        len(quotes) == len(target.evidence_ids)
+        and {signal.quote_id for signal in quotes} == set(target.evidence_ids)
+        and len(joint) == 1
+    )
+    _require(all(s.identity == record.scorer_identity for s in a.entailment))
+    for signal in a.entailment:
+        evaluation = digest(
+            {
+                "target": target.target_id,
+                "identity": signal.identity.model_dump(mode="json"),
+                "input": signal.input_hash,
+                "quote": signal.quote_id,
+                "scope": signal.scope,
+            }
+        )
+        # A single quote's joint slot aliases the one raw evaluation.
+        if signal.scope == "joint" and len(target.evidence_ids) == 1:
+            quote_signal = next(s for s in a.entailment if s.scope == "quote")
+            evaluation = quote_signal.evaluation_id
+            _require(
+                signal
+                == quote_signal.model_copy(
+                    update={
+                        "scope": "joint",
+                        "quote_id": None,
+                        "signal_id": signal.signal_id,
+                    }
+                )
+            )
+        _require(
+            signal.evaluation_id == evaluation
+            and signal.signal_id
+            == digest(
+                {
+                    "evaluation": evaluation,
+                    "scope": signal.scope,
+                    "quote": signal.quote_id,
+                }
+            )
+        )
+
+
+def _check_trials(a: AssessmentResult, record: SupportRunRecord) -> None:
+    """Validate complete panel coverage and each trial's ordered attempt chain."""
+    target = a.target
+    _require(
+        len(a.trials) == 4
+        and {(t.identity.family, t.presentation.value) for t in a.trials}
+        == {
+            (j.family, p)
+            for j in record.judge_identities
+            for p in ("evidence_first", "claim_theme_first")
+        }
+    )
+    for trial in a.trials:
+        _require(trial.identity in record.judge_identities)
+        _require(
+            trial.trial_id
+            == digest(
+                {
+                    "target": target.target_id,
+                    "identity": trial.identity.model_dump(mode="json"),
+                    "presentation": trial.presentation,
+                }
+            )
+        )
+        attempts = tuple(v for v in a.attempts if v.trial_id == trial.trial_id)
+        _require(
+            1 <= len(attempts) <= 2
+            and trial.attempt_ids == tuple(v.attempt_id for v in attempts)
+        )
+        _require(
+            tuple(v.attempt for v in attempts) == tuple(range(1, len(attempts) + 1))
+        )
+        for attempt in attempts:
+            _require(
+                attempt.attempt_id
+                == digest(
+                    {
+                        "trial": trial.trial_id,
+                        "attempt": attempt.attempt,
+                        "request": attempt.request_hash,
+                    }
+                )
+            )
+            _require(attempt.cached is False or attempt.reserved_tokens == 0)
+            _require(not attempt.cached or attempt.raw_ref is not None)
+            if attempt.answer is not None:
+                _require(attempt.raw_ref is not None)
+                _require(
+                    attempt.problem is None
+                    and {q.quote_id for q in attempt.answer.quote_assessments}
+                    == set(target.evidence_ids)
+                )
+        _require(
+            trial.answer == attempts[-1].answer and trial.reason == attempts[-1].problem
+        )
+        if len(attempts) == 2:
+            _require(
+                attempts[0].answer is None
+                and attempts[0].problem
+                in {
+                    "malformed_reply",
+                    "invalid_references",
+                    "tool_call_refused",
+                    "model_mismatch",
+                    "transport_error",
+                }
+            )
 
 
 def _check_usage(a: AssessmentResult) -> None:

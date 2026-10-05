@@ -332,3 +332,102 @@ def test_available_answer_requires_raw_reference(tmp_path, completed, case):
     (path / "run.json").write_text(json.dumps(manifest))
     with pytest.raises(SupportError, match="^storage_corrupt$"):
         read_support_run(path)
+
+
+def rewrite_complete_assessment(path, assessment):
+    """Tamper all dependent local tables/counts together, retaining valid schemas."""
+    from earnings_core import digest
+    from earnings_themes.support.run import accounting
+
+    ordinal = 0
+    usage = []
+    for row in assessment.usage:
+        if not row.cached:
+            row = row.model_copy(
+                update={
+                    "operation_id": digest(
+                        {
+                            "ordinal": ordinal,
+                            "kind": row.kind,
+                            "target": row.target_id,
+                            "document": row.doc_id,
+                        }
+                    )
+                }
+            )
+            ordinal += 1
+        usage.append(row)
+    assessment = replace(assessment, usage=tuple(usage))
+    manifest = json.loads((path / "run.json").read_bytes())
+    hashes = dict(manifest["artifact_hashes"])
+    for kind in ("entailment", "usage", "outcomes"):
+        records = (
+            (assessment.outcome,) if kind == "outcomes" else getattr(assessment, kind)
+        )
+        artifact = path / f"{kind}.parquet"
+        pl.DataFrame(
+            [row.model_dump(mode="json") for row in records],
+            schema=SCHEMAS[kind][1],
+            orient="row",
+        ).write_parquet(artifact)
+        hashes[artifact.name] = sha256_hex(artifact.read_bytes())
+    manifest.update(accounting((assessment,), assessment.usage))
+    manifest["artifact_hashes"] = sorted(hashes.items())
+    (path / "run.json").write_text(json.dumps(manifest))
+
+
+@pytest.mark.parametrize("kind", ["missing_joint", "missing_quote", "duplicate_quote"])
+def test_reader_rejects_inconsistent_signal_slots_with_rebuilt_manifest(
+    tmp_path, completed, case, kind
+):
+    from earnings_core import digest
+    from earnings_themes.support.assess import derive_outcome
+
+    path = write_support_run(tmp_path / "run", completed, case[0])
+    assessment = completed.assessments[0]
+    signals = list(assessment.entailment)
+    usage = list(assessment.usage)
+    if kind == "missing_joint":
+        signals.pop(2)
+        usage.pop(2)
+    elif kind == "missing_quote":
+        signals.pop(0)
+        usage.pop(0)
+    else:
+        first = signals[0]
+        changed_hash = digest("invented duplicate-slot input")
+        evaluation = digest(
+            {
+                "target": first.target_id,
+                "identity": first.identity.model_dump(mode="json"),
+                "input": changed_hash,
+                "quote": first.quote_id,
+                "scope": first.scope,
+            }
+        )
+        signals[1] = first.model_copy(
+            update={
+                "input_hash": changed_hash,
+                "evaluation_id": evaluation,
+                "signal_id": digest(
+                    {
+                        "evaluation": evaluation,
+                        "scope": first.scope,
+                        "quote": first.quote_id,
+                    }
+                ),
+            }
+        )
+    outcome = derive_outcome(
+        assessment.target.target_id,
+        tuple(signals),
+        assessment.trials,
+        assessment.target.evidence_ids,
+    )
+    assert outcome.status == "incomplete" and outcome.missing == ("invalid_references",)
+    assessment = replace(
+        assessment, entailment=tuple(signals), usage=tuple(usage), outcome=outcome
+    )
+    rewrite_complete_assessment(path, assessment)
+    with pytest.raises(SupportError, match="^storage_corrupt$"):
+        read_support_run(path)
