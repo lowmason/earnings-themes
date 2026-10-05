@@ -1,5 +1,7 @@
 # Evidence Selection and Verification, Plan B: The Extractor — Implementation Plan
 
+**Status: COMPLETE (2026-10-05)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > Roadmap: specs/evidence-linked-theme-extraction-roadmap.md, Stage 7 — on plan
@@ -591,7 +593,7 @@ from the gate's output or the user's report, and never predict it.
 
 ## Preconditions — before Task 1
 
-- [ ] **Step 1: Probe the state**
+- [x] **Step 1: Probe the state**
 
 Run each from the worktree's root,
 `/Users/lowell/Projects/earnings-themes/.claude/worktrees/stage-7-evidence-selection-and-verification`:
@@ -624,6 +626,8 @@ Read the first row that matches:
 
 - [ ] **Step 2: Commit this plan**
 
+> Skipped: not needed. Step 1 found this plan committed at planning (`7895c7c`, P12-5), with nothing else since `eb180cd` and no `data/`, and routed to Step 3.
+
 Only if Step 1 found it untracked (P12-5):
 
 ```bash
@@ -635,7 +639,7 @@ git status --short
 
 Expected: the commit, then `git status --short` prints nothing.
 
-- [ ] **Step 3: Confirm the baselines**
+- [x] **Step 3: Confirm the baselines**
 
 ```bash
 uv sync --locked --all-packages --group dev
@@ -690,7 +694,7 @@ since Task 4 adds 8 lines above it.
     `plan_windows(bundle: Bundle, budget: int | None) -> tuple[Window, ...]`, where
     `None` gives one window per document.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 The tests pin the spec's counts over Stage 1's fixtures (Versions and constants), and
 check every unit lies in exactly one window, every eligible element holds a unit, a
@@ -854,7 +858,7 @@ def test_the_synthetic_document_s_units_and_windows(synthetic) -> None:
     assert [len(w.unit_ids) for w in plan_windows(bundle, BUDGET)] == [6]
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_windows.py -q
@@ -863,7 +867,9 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extrac
 Expected: the run stops at collection with `1 error`, a `ModuleNotFoundError`:
 `earnings_themes.extraction` does not exist yet.
 
-- [ ] **Step 3: Write the package, the units, and the windows**
+- [x] **Step 3: Write the package, the units, and the windows**
+
+> Deviation: F6, as the user ruled before Task 1: `units.py`'s and `windows.py`'s docstrings, and `test_extraction_windows.py`'s in Step 1, say the plan never reads a unit's text, and name the one text it reads, `narrative_home`'s whitespace test of a container (ES9), which ranks and selects nothing (R10.2) (`56ad223`). F4: this task's Interfaces line misstates `narrative_home`'s signature; the code, `narrative_home(bundle, span)`, governs.
 
 Create `packages/earnings-themes/src/earnings_themes/extraction/__init__.py`:
 
@@ -1065,7 +1071,7 @@ def plan_windows(bundle: Bundle, budget: int | None) -> tuple[Window, ...]:
     return tuple(windows)
 ```
 
-- [ ] **Step 4: Run them to see them pass**
+- [x] **Step 4: Run them to see them pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_windows.py -q
@@ -1073,7 +1079,7 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extrac
 
 Expected: `9 passed`.
 
-- [ ] **Step 5: The suite, lint, and the escape check**
+- [x] **Step 5: The suite, lint, and the escape check**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q -rs
@@ -1084,7 +1090,7 @@ python3 -c 'import sys; ok={chr(0xA7)}; bad=[n for n in sys.argv[1:] if any(ord(
 Expected: `1757 passed, 8 skipped, 24 deselected`, with Preconditions' 8 skip lines;
 `All checks passed!` and `301 files already formatted`; and `escapes intact`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -1116,7 +1122,9 @@ forbidden import to show that each one can fail.
     list[str]`, `RETRIEVAL`, `EXTRACTION`, and `retrieval_imports(paths) ->
     list[tuple[int, str]]`. Task 9 amends the first two.
 
-- [ ] **Step 1: Write the guards**
+- [x] **Step 1: Write the guards**
+
+> Deviation: after the final review, `test_import_scan.py`'s module docstring also names the themes scans (M2-5, `76fa5a4`).
 
 The boundary walks every module, subpackages included, in one fresh interpreter, and
 forbids requests, aiohttp, and urllib3 beside httpx (T9-M2). The six modules a
@@ -1382,7 +1390,7 @@ def test_the_retrieval_scan_sees_imports_inside_functions(tmp_path: Path) -> Non
     ]
 ```
 
-- [ ] **Step 2: Run them**
+- [x] **Step 2: Run them**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py -q
@@ -1390,7 +1398,7 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_import
 
 Expected: `16 passed`. They pass at once: Task 1's modules import nothing forbidden.
 
-- [ ] **Step 3: Show that the guards can fail, then remove the plant**
+- [x] **Step 3: Show that the guards can fail, then remove the plant**
 
 ```bash
 printf 'import difflib\nimport httpx\n' > packages/earnings-themes/src/earnings_themes/extraction/planted.py
@@ -1408,7 +1416,7 @@ Expected:
 - then `16 passed`;
 - then ` M` for the two test files, and nothing else.
 
-- [ ] **Step 4: The suite, lint, and the escape check**
+- [x] **Step 4: The suite, lint, and the escape check**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q -rs
@@ -1419,7 +1427,7 @@ python3 -c 'import sys; ok={chr(0xA7)}; bad=[n for n in sys.argv[1:] if any(ord(
 Expected: `1762 passed, 8 skipped, 24 deselected`; `All checks passed!` and
 `301 files already formatted`; and `escapes intact`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git log --oneline -3
@@ -1464,7 +1472,7 @@ Expected: `git status --short` prints nothing.
     no quote was retained);
   - `REASONS`, every reason a rejection may carry.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 The records' rules, with a sentinel that a refusal never prints its text (P12-2):
 
@@ -1746,7 +1754,7 @@ with:
     )
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_records.py tests/contracts/test_data_dictionary.py -q
@@ -1757,7 +1765,9 @@ Expected: the run stops at collection with `2 errors`, since
 the records' test, and an `ImportError` in the dictionary's, which imports `records`
 from the package.
 
-- [ ] **Step 3: Write the records, and document them**
+- [x] **Step 3: Write the records, and document them**
+
+> Deviation: F2, as the user ruled before Task 1: `WindowRecord.attempts` and its data-dictionary row read "Dispatched attempts: requests, cache hits, and replay misses" (`f6c596a`). I3-1, as the user ruled at review: `ExtractionRejection`'s `repr` shows its IDs and reason only, and the sentinel tests check `repr` and `str` of a list (`cb89b6d`). After the final review, the module docstring says `str` and `repr` (M3-6), and the `Claim` row says its ID is unique together with `doc_id` (m4) (`76fa5a4`).
 
 Create `packages/earnings-themes/src/earnings_themes/extraction/records.py`:
 
@@ -2326,7 +2336,7 @@ One run: `run.json`.
 | `exactness_rate` | float or null | 1.0 over the retained quotes, each verified; null when no quote is retained (R6.2, R12.8) |
 ```
 
-- [ ] **Step 4: Run them to see them pass**
+- [x] **Step 4: Run them to see them pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_records.py tests/contracts/test_data_dictionary.py -q
@@ -2334,7 +2344,7 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extrac
 
 Expected: `182 passed`: the records' 11, and the dictionary's 156 and 15 new.
 
-- [ ] **Step 5: The suite, lint, and the escape check**
+- [x] **Step 5: The suite, lint, and the escape check**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q -rs
@@ -2345,7 +2355,9 @@ python3 -c 'import sys; ok={chr(0xA7)}; bad=[n for n in sys.argv[1:] if any(ord(
 Expected: `1788 passed, 8 skipped, 24 deselected`; `All checks passed!` and
 `303 files already formatted`; and `escapes intact`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
+
+> Deviation: of Blinding's search rule, not of this task's edits. Task 3's re-reviewer ran one recursive `grep` over `tests`, a path that covers `tests/fixtures`. Its `*.py` filter excluded the gold, and it printed two source lines, so no gold line was printed. Every later dispatch named `tests/contracts` or `tests/integration` instead.
 
 ```bash
 git log --oneline -3
@@ -2389,7 +2401,7 @@ Expected: `git status --short` prints nothing.
 - The template's path, `prompts/extraction/pointer-1.md`, is the caller's: no module
   reads it (ES17). Task 6's conftest fixture `template` does.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 The prompt's tests:
 
@@ -2631,7 +2643,7 @@ def test_the_prompts_are_among_the_files_checked() -> None:
 def test_no_stage_6_file_quotes_a_stage_1_fixture() -> None:
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_prompt.py -q
@@ -2646,7 +2658,7 @@ Expected:
   `test_the_prompts_are_among_the_files_checked`, since no prompt exists yet, and the
   skip is the guard's pilot leg, at `test_stage6_wording.py:101`.
 
-- [ ] **Step 3: Write the prompt and its code**
+- [x] **Step 3: Write the prompt and its code**
 
 The prompt is committed text, and every example in it is invented (§Wording guard):
 
@@ -2862,7 +2874,7 @@ def refused_feedback(
     )
 ```
 
-- [ ] **Step 4: Run them to see them pass**
+- [x] **Step 4: Run them to see them pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_prompt.py tests/integration/test_stage6_wording.py -q -rs
@@ -2874,7 +2886,7 @@ Expected: `21 passed, 1 skipped`, with this skip line, the guard's pilot leg:
 SKIPPED [1] tests/integration/test_stage6_wording.py:101: data/runs/events/ is not here: each Stage 6 gate runs this test with -rs
 ```
 
-- [ ] **Step 5: The suite, lint, and the escape check**
+- [x] **Step 5: The suite, lint, and the escape check**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q -rs
@@ -2886,7 +2898,7 @@ Expected: `1805 passed, 8 skipped, 24 deselected`, the wording guard's skip line
 at `test_stage6_wording.py:101`; `All checks passed!` and
 `305 files already formatted`; and `escapes intact`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -2926,7 +2938,7 @@ Expected: `git status --short` prints nothing.
     calls nothing. A tool-call reply, or one that names another model or none, is
     never stored (P12-9).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 One case per key component (R14.6), and the cache's refusals, each held to print no
 text (P12-2):
@@ -3210,7 +3222,7 @@ with:
 ]
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_cache.py tests/contracts/test_data_dictionary.py -q
@@ -3221,7 +3233,9 @@ Expected: the run stops at collection with `2 errors`, since
 the cache's test, and an `ImportError` in the dictionary's, which imports `adapters`
 from the package.
 
-- [ ] **Step 3: Write the protocol and the cache, and document them**
+- [x] **Step 3: Write the protocol and the cache, and document them**
+
+> Deviation: F4: this task's Interfaces line names `identity` as a method; the code makes it a property, and governs. After the final review, `CachedAdapter` reads a mode given as its value as its member, so `"replay"` never calls the model, with one more test (I1, `209387d`).
 
 Create `packages/earnings-themes/src/earnings_themes/extraction/adapters.py`:
 
@@ -3546,7 +3560,7 @@ a directory the caller supplies.
 | `reply` | `ModelReply` | The raw reply |
 ```
 
-- [ ] **Step 4: Run them to see them pass**
+- [x] **Step 4: Run them to see them pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_cache.py tests/contracts/test_data_dictionary.py -q
@@ -3554,7 +3568,7 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extrac
 
 Expected: `207 passed`: the cache's 32, and the dictionary's 175.
 
-- [ ] **Step 5: The suite, lint, and the escape check**
+- [x] **Step 5: The suite, lint, and the escape check**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q -rs
@@ -3565,7 +3579,7 @@ python3 -c 'import sys; ok={chr(0xA7)}; bad=[n for n in sys.argv[1:] if any(ord(
 Expected: `1841 passed, 8 skipped, 24 deselected`; `All checks passed!` and
 `308 files already formatted`; and `escapes intact`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -3603,7 +3617,7 @@ Expected: `git status --short` prints nothing.
 - The conftest gains `TEMPLATE`, the prompt's path, and the session fixture
   `template`, which reads it and returns `parse_template`'s result.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 The conftest reads the committed prompt for every extractor test (ES17):
 
@@ -4070,7 +4084,7 @@ def test_the_request_names_its_window_policy_and_prompt(synthetic, template) -> 
     assert result.record.window_id == work.window.window_id
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_window.py -q
@@ -4079,7 +4093,9 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extrac
 Expected: the run stops at collection with `1 error`, a `ModuleNotFoundError`:
 `earnings_themes.extraction.extract` does not exist yet.
 
-- [ ] **Step 3: Write the window**
+- [x] **Step 3: Write the window**
+
+> Deviation: after the final review, `WindowResult` has a docstring (M6-3), and `extract_window`'s says that an error other than an `AdapterError` ends the run (m2) (`76fa5a4`).
 
 Create `packages/earnings-themes/src/earnings_themes/extraction/extract.py`:
 
@@ -4468,7 +4484,7 @@ def extract_window(
     )
 ```
 
-- [ ] **Step 4: Run them to see them pass**
+- [x] **Step 4: Run them to see them pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_window.py -q
@@ -4476,7 +4492,7 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extrac
 
 Expected: `18 passed`.
 
-- [ ] **Step 5: The suite, lint, and the escape check**
+- [x] **Step 5: The suite, lint, and the escape check**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q -rs
@@ -4487,7 +4503,7 @@ python3 -c 'import sys; ok={chr(0xA7)}; bad=[n for n in sys.argv[1:] if any(ord(
 Expected: `1859 passed, 8 skipped, 24 deselected`; `All checks passed!` and
 `310 files already formatted`; and `escapes intact`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -4529,7 +4545,9 @@ Expected: `git status --short` prints nothing.
   - `mixed_script(bundles, budget) -> Script`, the mixed run's six reply kinds by the
     window's index mod 6, and the fixture `mixed`, which returns it.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+
+> Deviation: after the final review, `no_network`'s docstring names what its six guarded entries cover and what passes unguarded (M7-1, `76fa5a4`).
 
 The conftest gains the socket guard and the scripted replies:
 
@@ -5070,7 +5088,7 @@ def test_a_mask_of_another_document_or_past_the_text_is_wrong_document(
 def list_bundle(
 ```
 
-- [ ] **Step 2: Run the run's tests to see them fail**
+- [x] **Step 2: Run the run's tests to see them fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_run.py -q
@@ -5079,7 +5097,7 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extrac
 Expected: the run stops at collection with `1 error`, a `ModuleNotFoundError`:
 `earnings_themes.extraction.run` does not exist yet.
 
-- [ ] **Step 3: Show that the mask test passes, and can fail**
+- [x] **Step 3: Show that the mask test passes, and can fail**
 
 It passes at once, since it pins today's `bundle_problems`. A plant that skips the
 mask branch fails it, and `git restore` removes the plant:
@@ -5095,7 +5113,9 @@ git diff --stat -- packages/earnings-themes/src/earnings_themes/anchoring.py
 Expected: `21 passed`; then `1 failed, 20 passed`, the failure
 `test_a_mask_of_another_document_or_past_the_text_is_wrong_document`; then nothing.
 
-- [ ] **Step 4: Write documents and runs**
+- [x] **Step 4: Write documents and runs**
+
+> Deviation: after the final review, `DocumentResult` has a docstring (M7-5), and `extract_run`'s says that an error other than an `AdapterError` ends the run with no run record (m2) (`76fa5a4`).
 
 Create `packages/earnings-themes/src/earnings_themes/extraction/run.py`:
 
@@ -5342,7 +5362,7 @@ def extract_run(
     return RunResult(record=record, documents=tuple(documents))
 ```
 
-- [ ] **Step 5: Run them to see them pass**
+- [x] **Step 5: Run them to see them pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_run.py packages/earnings-themes/tests/test_anchoring.py -q
@@ -5350,7 +5370,7 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extrac
 
 Expected: `30 passed`.
 
-- [ ] **Step 6: The suite, lint, and the escape check**
+- [x] **Step 6: The suite, lint, and the escape check**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q -rs
@@ -5361,7 +5381,7 @@ python3 -c 'import sys; ok={chr(0xA7)}; bad=[n for n in sys.argv[1:] if any(ord(
 Expected: `1869 passed, 8 skipped, 24 deselected`; `All checks passed!` and
 `312 files already formatted`; and `escapes intact`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -5396,7 +5416,7 @@ Expected: `git status --short` prints nothing.
   - `read_run(directory: Path) -> StoredRun`, which refuses another schema, and a row
     by its file, row, and field.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Three runs round-trip: the fixtures' mixed run, the synthetic document's, and a run
 with a refused document:
@@ -5632,7 +5652,7 @@ def test_the_run_file_is_the_run_record(synthetic, template, tmp_path: Path) -> 
     assert record == run.record
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_store.py -q
@@ -5641,7 +5661,9 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extrac
 Expected: the run stops at collection with `1 error`, a `ModuleNotFoundError`:
 `earnings_themes.extraction.store` does not exist yet.
 
-- [ ] **Step 3: Write the store, and document its files**
+- [x] **Step 3: Write the store, and document its files**
+
+> Deviation: I8-1, as the user ruled at review: Task 3's two validator messages in `extraction/records.py` name no stored value, the store's sentinel test also plants its sentinel in a quote ID and in a run's rejection reason, and the round-trip test binds its result before asserting on it (`a1d6e8d`).
 
 Create `packages/earnings-themes/src/earnings_themes/extraction/store.py`:
 
@@ -5937,7 +5959,7 @@ its fields.
 ### `ExtractionProblem`
 ```
 
-- [ ] **Step 4: Run them to see them pass**
+- [x] **Step 4: Run them to see them pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_store.py -q
@@ -5945,7 +5967,7 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extrac
 
 Expected: `14 passed`.
 
-- [ ] **Step 5: The suite, lint, and the escape check**
+- [x] **Step 5: The suite, lint, and the escape check**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q -rs
@@ -5956,7 +5978,7 @@ python3 -c 'import sys; ok={chr(0xA7)}; bad=[n for n in sys.argv[1:] if any(ord(
 Expected: `1883 passed, 8 skipped, 24 deselected`; `All checks passed!` and
 `314 files already formatted`; and `escapes intact`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -5992,7 +6014,9 @@ Expected: `git status --short` prints nothing.
 - No themes module imports it: a caller that chose the extra does (ES15). The live
   test reads `config/models/local-model.toml`, which Completion, Step 4 writes.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+
+> Deviation: F9, as the user ruled before Task 1: `test_a_reply_that_is_not_a_completion_is_a_transport_error` also asserts that each refusal has a cause or suppresses its context (`25dc5f0`).
 
 The adapter's tests run on httpx's `MockTransport`, but the proxy test, which runs
 the real transport against a refused socket (P12-17):
@@ -6589,7 +6613,7 @@ with:
 ]
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_local.py packages/earnings-themes/tests/test_extraction_live.py tests/contracts/test_data_dictionary.py -q
@@ -6606,7 +6630,7 @@ Expected:
   `test_the_local_adapter_loads_httpx_and_nothing_else_forbidden`, and
   `test_only_the_local_adapter_imports_httpx`.
 
-- [ ] **Step 3: Add the extra, and lock it**
+- [x] **Step 3: Add the extra, and lock it**
 
 In `packages/earnings-themes/pyproject.toml`, replace:
 
@@ -6640,7 +6664,9 @@ Expected: `Resolved 152 packages`; then `uv.lock | 6 +++++-`, with
 printing `Resolved 152 packages` again. The lock's change is themes' `local-model`
 extra, which needs httpx, and its name in `provides-extras`.
 
-- [ ] **Step 4: Write the adapter, and document its configuration**
+- [x] **Step 4: Write the adapter, and document its configuration**
+
+> Deviation: I9-1, as the user ruled at review: `loopback_url` also refuses a URL with credentials, a bad port, or one that does not parse, naming no part of it, with one test of three cases (`fb569fd`, `3ce2bf5`). After the final review, it also refuses surrounding whitespace or an ASCII control character, its docstrings and the dictionary's `base_url` row name every refusal, and the test, renamed `test_a_malformed_url_or_one_with_credentials_is_refused_naming_no_value`, gained two cases (m1, M9-6 to M9-9, `b6715de`).
 
 Create `packages/earnings-themes/src/earnings_themes/extraction/local.py`:
 
@@ -6863,7 +6889,7 @@ from `config/models/local-model.toml`, which ADR 0004 records at plan B's gate.
 | `timeout_s` | float > 0 | Seconds per request; default 300 |
 ```
 
-- [ ] **Step 5: Run them to see them pass, and check the live test's collection**
+- [x] **Step 5: Run them to see them pass, and check the live test's collection**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_local.py packages/earnings-themes/tests/test_extraction_live.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q
@@ -6875,7 +6901,7 @@ Expected: `221 passed, 1 deselected`; then the live test's node ID and
 `1 test collected`; then `no tests collected (1 deselected)`. `--collect-only` runs
 nothing, so `-m live` is safe here: the live test runs only at the gate.
 
-- [ ] **Step 6: The suite, lint, and the escape check**
+- [x] **Step 6: The suite, lint, and the escape check**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q -rs
@@ -6887,7 +6913,7 @@ Expected: `1913 passed, 8 skipped, 25 deselected`: the live test is the new
 deselected one; `All checks passed!` and `317 files already formatted`; and
 `escapes intact`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log --oneline -3
@@ -6914,7 +6940,7 @@ Expected: `git status --short` prints nothing.
     `walker-1`, with no masks. Stage 9 reuses it for its codebook case.
 - `Synthetic.text(name)` slices its own bundle's text (P12-16).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 A scripted adapter obeys the document. Every obeying candidate is refused with its
 reason, a spoofed label resolves to the unit code labeled, and no request body
@@ -7104,7 +7130,7 @@ def test_no_request_body_carries_tools_when_the_document_asks(template) -> None:
     assert all(tool_line in body["messages"][1]["content"] for body in bodies)
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_injection.py -q
@@ -7113,7 +7139,9 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extrac
 Expected: the run stops at collection with `1 error`, an `ImportError`:
 `earnings_themes.synthetic` has no `INJECTION`, or `injection_bundle`, yet.
 
-- [ ] **Step 3: Write the injection document**
+- [x] **Step 3: Write the injection document**
+
+> Deviation: I10-1, as the user ruled at review: `injection_bundle()`'s docstring says the spoofing paragraph is built without sentences so that one unit holds a line break, which S1 would split (`35a1367`). F4: `injection_bundle()` returns a `Synthetic`, whose `.bundle` the tests read; the code governs over this task's Interfaces line.
 
 In `packages/earnings-themes/src/earnings_themes/synthetic.py`, replace:
 
@@ -7213,7 +7241,7 @@ def injection_bundle() -> Synthetic:
 PIN = Pin(
 ```
 
-- [ ] **Step 4: Run them to see them pass**
+- [x] **Step 4: Run them to see them pass**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_injection.py -q
@@ -7221,7 +7249,7 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extrac
 
 Expected: `7 passed`.
 
-- [ ] **Step 5: The suite, lint, and the escape check**
+- [x] **Step 5: The suite, lint, and the escape check**
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q -rs
@@ -7232,7 +7260,7 @@ python3 -c 'import sys; ok={chr(0xA7)}; bad=[n for n in sys.argv[1:] if any(ord(
 Expected: `1920 passed, 8 skipped, 25 deselected`; `All checks passed!` and
 `318 files already formatted`; and `escapes intact`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log --oneline -3
@@ -7255,7 +7283,9 @@ Completion fills.
 - Consumes: Tasks 1 to 10.
 - Produces: the record's plan B section, whose marks Completion, Steps 5 to 7 fill.
 
-- [ ] **Step 1: The exit criteria, by node ID**
+- [x] **Step 1: The exit criteria, by node ID**
+
+> Deviation: it printed `72 passed`, not 69, with I9-1's three cases (`e407a62`); after the final review's fixes, `74 passed` (`2e09fb3`).
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_windows.py::test_the_stage_1_fixtures_hold_797_units_in_37_windows packages/earnings-themes/tests/test_extraction_windows.py::test_every_unit_lies_in_exactly_one_window packages/earnings-themes/tests/test_extraction_windows.py::test_every_eligible_element_holds_a_unit packages/earnings-themes/tests/test_extraction_windows.py::test_the_plan_reads_structure_and_lengths_never_text packages/earnings-themes/tests/test_extraction_run.py::test_a_mixed_scripted_run_over_the_fixtures packages/earnings-themes/tests/test_extraction_run.py::test_citing_every_label_keeps_every_unit packages/earnings-themes/tests/test_extraction_run.py::test_the_guard_blocks_and_records_every_connection tests/contracts/test_import_scan.py::test_the_extractor_imports_no_retrieval_embedding_or_fuzzy_matching tests/contracts/test_import_scan.py::test_no_themes_module_imports_a_client_sdk_or_framework packages/earnings-themes/tests/test_extraction_cache.py::test_every_key_component_has_a_case packages/earnings-themes/tests/test_extraction_cache.py::test_changing_one_key_component_misses packages/earnings-themes/tests/test_extraction_cache.py::test_an_identical_key_hits_and_calls_nothing packages/earnings-themes/tests/test_import_boundaries.py packages/earnings-themes/tests/test_extraction_local.py packages/earnings-themes/tests/test_extraction_injection.py -q
@@ -7263,7 +7293,7 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extrac
 
 Expected: `69 passed`.
 
-- [ ] **Step 2: The bytes, and the scans**
+- [x] **Step 2: The bytes, and the scans**
 
 ```bash
 git diff --stat eb180cd -- config evaluation codebooks tests/fixtures
@@ -7281,7 +7311,9 @@ Expected:
 - nothing: no drafting module names the extractor (GS13);
 - nothing.
 
-- [ ] **Step 3: The suites**
+- [x] **Step 3: The suites**
+
+> Deviation: the default suite printed `1923 passed, 8 skipped, 25 deselected`, not 1920, with I9-1's three cases; after the final review's fixes, `1926 passed, 8 skipped, 25 deselected`. The other lines printed as expected.
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q -rs
@@ -7298,7 +7330,9 @@ Expected:
 - `All checks passed!` and `318 files already formatted`;
 - `Resolved 152 packages`.
 
-- [ ] **Step 4: Write the record**
+- [x] **Step 4: Write the record**
+
+> Deviation: the record (`e407a62`) says the plan never reads a unit's text (F6), adds an F3 note under R14.1 and a fuller GS13 bullet, gives the counts the rulings shifted, and adds a "Deviations from the plan" subsection. `2e09fb3` added the final review's fixes and its counts, 178, 1926, and 74, and `024c76d` filled its marks from the gates.
 
 Append plan B's section. Its counts are those Steps 1 to 3 printed; if any differs,
 stop and report it rather than editing the record to match:
@@ -7395,7 +7429,7 @@ tracked change. It printed `[GATE: the summary line]`. [GATE: "No test failed.",
 each failure's node ID and exception type, with its fix's commit.]
 ```
 
-- [ ] **Step 5: Commit the record**
+- [x] **Step 5: Commit the record**
 
 ```bash
 git log --oneline -3
@@ -7408,7 +7442,9 @@ Expected: `git status --short` prints nothing.
 
 ## Completion
 
-- [ ] **Step 1: The final review**
+- [x] **Step 1: The final review**
+
+> Deviation: the final review (Opus, over `eb180cd..e407a62`; Codex skipped, P12-4) found the branch ready to merge with fixes, and nothing Critical. The user ruled one fix round: I1, the cache mode (`209387d`); m1, the base URL, with M9-6 to M9-9 and a whitespace gap the controller found (`b6715de`); and six docstring and dictionary items (`76fa5a4`). Its three tests make plan B add 178 collected tests, not 172. The scoped re-review found every hunk as briefed and nothing new. Task 11's Steps 1 to 3 then printed `74 passed` and `1926 passed, 8 skipped, 25 deselected` (`2e09fb3`). The live test stays strict, as the user ruled. Twelve items were deferred (Step 9). M4-1, M8-4, and the fixed items were closed, and the user dropped M1-1, M1-4, M3-4, M4-3, M6-4, M6-6, M6-7, M7-5's naming, M8-3, M8-5, M8-6, and M10-1.
 
 Run the final whole-branch review with the `code-reviewer` agent, on Opus, over
 `eb180cd..HEAD`. Its dispatch carries:
@@ -7426,7 +7462,7 @@ Codex is skipped (P12-4): state the reason at the review.
   - update the record's counts;
   - commit, before the gates.
 
-- [ ] **Step 2: Gate 1, the model (the session checks; the user chooses)**
+- [x] **Step 2: Gate 1, the model (the session checks; the user chooses)**
 
 On the gate's date, check candidate model cards on the web (the spec's §Gates, plan
 B, gate 1). Each candidate needs:
@@ -7444,7 +7480,7 @@ Then ask the user with AskUserQuestion, recommended option first.
 - For each candidate, keep its model card's URL, the date it was read, and its
   license's name, quoted in under 15 words. ADR 0004 records them.
 
-- [ ] **Step 3: Gate 2, the install (the user's)**
+- [x] **Step 3: Gate 2, the install (the user's)**
 
 The user installs the runtime, downloads the weights, and starts the server on this
 machine. Ask the user, in chat, for:
@@ -7462,7 +7498,7 @@ machine. Ask the user, in chat, for:
   it, so `structured` is true. It is false only if the user reports that the runtime
   ignores it; the system message then carries the schema (ES19).
 
-- [ ] **Step 4: The configuration (P12-14)**
+- [x] **Step 4: The configuration (P12-14)**
 
 Create `config/models/local-model.toml`, with gate 2's answers in place of the marks:
 
@@ -7496,7 +7532,7 @@ git status --short
 
 Expected: `git status --short` prints nothing.
 
-- [ ] **Step 5: Gate 3, the live run**
+- [x] **Step 5: Gate 3, the live run**
 
 Run the live test once, by its node ID:
 
@@ -7527,7 +7563,9 @@ rejections by reason.
 
 Keep the date, the summary line, and the printed line for the record.
 
-- [ ] **Step 6: Gate 4, ADR 0004**
+- [x] **Step 6: Gate 4, ADR 0004**
+
+> Deviation: ADR 0004 adds three things to this template, which the user approved with it on 2026-10-05: the server's flags and its text-only start, the Gemma 4 license page's note, and the consequence that `llama-server` names each reply's model by its `--alias` (`6bf06a9`).
 
 Create `docs/adr/0004-use-a-local-open-weight-model-for-the-extractors-live-test.md`
 from gates 1 to 3, and fill each mark but the three the user's approval fills:
@@ -7604,7 +7642,7 @@ git status --short
 
 Expected: `0`; then the commit; then nothing.
 
-- [ ] **Step 7: Gate 5, the main checkout (the user's; P12-3)**
+- [x] **Step 7: Gate 5, the main checkout (the user's; P12-3)**
 
 In the worktree:
 
@@ -7661,14 +7699,14 @@ git status --short
 
 Expected: `0`, since every mark is filled; then the commit; then nothing.
 
-- [ ] **Step 8: Mark up this plan** (writing-plans' Plan Completion Protocol)
+- [x] **Step 8: Mark up this plan** (writing-plans' Plan Completion Protocol)
 
 - Run the resolve-before-defer gate. The spec says Stage 7 defers nothing new, so
   any leftover goes to the user before anything is deferred.
 - Tick the steps, add `> Deviation:` and `> Skipped:` notes, and add the status
   header. Notes hold IDs, counts, and hashes only (Blinding).
 
-- [ ] **Step 9: The deferred items, and the stage's stamp (P12-18)**
+- [x] **Step 9: The deferred items, and the stage's stamp (P12-18)**
 
 Tick plan 3's item 4, `Rejection`'s subject: the store pairs each rejection with its
 subject (ES6).

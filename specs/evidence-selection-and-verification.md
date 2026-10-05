@@ -595,3 +595,6 @@ user's approval. In the handoff, state:
 - that no SEC request was sent.
 
 > Plan A: COMPLETE (2026-10-04) — implemented by plan 11 (specs/plans/completed/11-evidence-selection-and-verification-plan-a.md). Next: write plan B.
+
+> Stage 7: COMPLETE (2026-10-05) — implemented by plans 11 (specs/plans/completed/11-evidence-selection-and-verification-plan-a.md) and 12 (specs/plans/completed/12-evidence-selection-and-verification-plan-b.md).
+> Next: resume the roadmap.
