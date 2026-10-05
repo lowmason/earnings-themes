@@ -25,7 +25,7 @@ from earnings_ingestion.fetch import records as fetch
 from earnings_themes import annotation, codebook, gold, problems, split
 from earnings_themes import records as themes
 from earnings_themes.anchoring import SpanPointer
-from earnings_themes.extraction import adapters, cache
+from earnings_themes.extraction import adapters, cache, local
 from earnings_themes.extraction import records as extraction
 from pydantic import BaseModel
 
@@ -162,6 +162,7 @@ MODELS = [
     adapters.ModelReply,
     cache.CacheKey,
     cache.CacheEntry,
+    local.LocalModelConfig,
 ]
 ENUMS = [
     core.RightsStatus,

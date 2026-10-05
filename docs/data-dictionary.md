@@ -2505,3 +2505,18 @@ a directory the caller supplies.
 | `schema_version` | `1` | Extraction record schema version |
 | `key` | `CacheKey` | Its key, which a hit must equal |
 | `reply` | `ModelReply` | The raw reply |
+
+### `LocalModelConfig`
+
+The local adapter's endpoint and identity (`earnings_themes.extraction.local`), read
+from `config/models/local-model.toml`, which ADR 0004 records at plan B's gate.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `base_url` | string | The server's OpenAI-compatible root; the adapter refuses any host but 127.0.0.1, ::1, or localhost (R14.1) |
+| `model_id` | string | The model the server names in each reply |
+| `weights_sha256` | 64 lowercase hex | The weights file's SHA-256 |
+| `runtime` | string | The serving runtime's name |
+| `runtime_version` | string | Its version |
+| `structured` | bool | Whether the runtime honors a strict JSON-schema `response_format`; a run sets `Parameters.structured` from it (ES19); default true |
+| `timeout_s` | float > 0 | Seconds per request; default 300 |

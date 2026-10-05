@@ -3,7 +3,9 @@ browser, and no model SDK, HTTP client, or framework (A §173; browser-rendering
 spec, Stage 2 verification; the Stage 6 spec, R14.1: drafting stays outside the
 code; the Stage 7 spec, §Packaging and ES10).
 
-Every module is imported, subpackages included, in one fresh interpreter. The six
+Every module is imported, subpackages included, in one fresh interpreter. The local
+adapter, behind the ``local-model`` extra, is the one module that loads an HTTP
+client, httpx, and nothing else forbidden; no other module loads it (ES15). The six
 modules a drafting session may read import nothing from the extractor (the Stage 7
 spec, §Verification, GS13).
 """
@@ -58,6 +60,8 @@ MODULES = [
         )
     ),
 ]
+LOCAL = "earnings_themes.extraction.local"
+"""The local adapter, the one module that imports httpx (ES15)."""
 SOURCE = Path(earnings_themes.__file__).parent
 DRAFTING = (
     "gold.py",
@@ -89,11 +93,19 @@ def top_level(names: set[str]) -> set[str]:
 def test_every_module_is_imported() -> None:
     assert "earnings_themes.annotation" in MODULES
     assert "earnings_themes.extraction.windows" in MODULES
+    assert LOCAL in MODULES
     assert len(MODULES) >= 15
 
 
 def test_importing_earnings_themes_loads_nothing_forbidden() -> None:
-    assert top_level(modules_loaded_by(MODULES)) & FORBIDDEN == set()
+    """Every module but the local adapter, which none of them loads."""
+    loaded = modules_loaded_by([m for m in MODULES if m != LOCAL])
+    assert top_level(loaded) & FORBIDDEN == set()
+    assert LOCAL not in loaded
+
+
+def test_the_local_adapter_loads_httpx_and_nothing_else_forbidden() -> None:
+    assert top_level(modules_loaded_by([LOCAL])) & FORBIDDEN == {"httpx"}
 
 
 def extraction_imports(path: Path) -> list[str]:

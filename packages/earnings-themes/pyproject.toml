@@ -14,6 +14,11 @@ dependencies = [
 
 [project.optional-dependencies]
 
+# Stage 7's local adapter: one OpenAI-compatible server on this machine (ES15).
+local-model = [
+    "httpx",                         # import httpx
+]
+
 # Typed extraction framework, including offline/test-model workflows.
 extraction = [
     "pydantic-ai-slim",              # import pydantic_ai
