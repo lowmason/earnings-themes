@@ -35,3 +35,28 @@ def test_producer_serialization_is_unchanged():
 }
 """
     assert record_json(claim) == expected.encode("utf-8")
+
+
+def test_support_keeps_theme_examples_outside_assessment_contract():
+    from earnings_themes.support.records import (
+        EvidenceReference,
+        JudgeAnswer,
+        ReviewOutcome,
+        ThemeSnapshot,
+    )
+
+    assert "examples" not in ThemeSnapshot.model_fields
+    assert "quote_text" not in EvidenceReference.model_fields
+    assert "accepted" not in ReviewOutcome.model_fields
+    assert "new_theme" not in JudgeAnswer.model_fields
+    assert "claim" not in JudgeAnswer.model_fields
+    assert "definition" not in JudgeAnswer.model_fields
+
+
+def test_default_support_import_does_not_export_concrete_adapters():
+    from earnings_themes import support
+
+    exports = tuple(name for name in vars(support) if not name.startswith("_"))
+    assert "MiniCheckScorer" not in exports
+    assert "DebertaScorer" not in exports
+    assert "JudgeBinding" not in exports
