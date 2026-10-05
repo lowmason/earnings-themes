@@ -2,9 +2,11 @@
 (the Stage 7 spec, §The local adapter; R14.1, R14.7, ES15, ES19).
 
 - **Hosts.** Construction refuses a base URL whose host is not 127.0.0.1, ::1, or
-  localhost, so no hosted, billable endpoint is reachable (R14.1). The client reads
-  no proxy from the environment and follows no redirect, so no request leaves the
-  machine.
+  localhost, so no hosted, billable endpoint is reachable (R14.1). It refuses one
+  that carries credentials, since the adapter sends no key, one whose port is not a
+  number from 0 to 65535, and one that does not parse. No refusal names any part of
+  the URL, so a credential typed into it is never printed. The client reads no proxy
+  from the environment and follows no redirect, so no request leaves the machine.
 - **The request.** A POST to ``<base>/chat/completions`` with the messages and the
   parameters, and in structured mode a strict ``response_format`` JSON schema
   (ES19). It never sends ``tools`` or ``tool_choice``, and sends no API key.
@@ -75,7 +77,11 @@ def loopback_url(base_url: str) -> str:
     of the URL, unless its scheme is http or https, its host is a loopback name
     (R14.1), it carries no credentials, and its port, if it has one, is a number
     from 0 to 65535."""
-    parts = urlsplit(base_url)
+    try:
+        parts = urlsplit(base_url)
+    except ValueError:
+        # Its message may quote the netloc, userinfo included.
+        raise ValueError("the base URL is not a valid URL") from None
     if parts.scheme not in {"http", "https"} or parts.hostname not in LOOPBACK:
         raise ValueError(
             "the base URL is not on this machine: the local adapter reaches only"

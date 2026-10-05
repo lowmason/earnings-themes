@@ -122,8 +122,10 @@ def serving(
 )
 def test_a_host_off_this_machine_is_refused_when_built(base_url: str) -> None:
     config = CONFIG.model_copy(update={"base_url": base_url})
-    with pytest.raises(ValueError, match="not on this machine"):
+    with pytest.raises(ValueError, match="not on this machine") as refused:
         LocalAdapter(config)
+    message = str(refused.value)
+    assert base_url not in message
 
 
 @pytest.mark.parametrize(
@@ -135,15 +137,20 @@ def test_a_host_off_this_machine_is_refused_when_built(base_url: str) -> None:
             "carries credentials",
         ),
         ("http://127.0.0.1:INVENTEDPORT/v1", "INVENTEDPORT", "port is not a number"),
+        (
+            "http://invented:INVENTED-SECRET" + chr(0x2100) + "@127.0.0.1:8080/v1",
+            "INVENTED-SECRET",
+            "the base URL is not a valid URL",
+        ),
     ],
-    ids=["credentials", "bad-port"],
+    ids=["credentials", "bad-port", "invalid"],
 )
 def test_a_url_with_credentials_or_a_bad_port_is_refused_naming_no_value(
     base_url: str, secret: str, reason: str
 ) -> None:
-    """The refusal names no part of the URL: a credential would otherwise be printed,
-    and urllib's own port error quotes the port, so it is neither the cause nor shown
-    as the context (GS13)."""
+    """The refusal names no part of the URL: a credential would otherwise be printed.
+    urllib's own errors quote a bad port and, for U+2100, which NFKC expands to a
+    slash, the whole netloc, so none is the cause or shown as the context (GS13)."""
     config = CONFIG.model_copy(update={"base_url": base_url})
     with pytest.raises(ValueError, match=reason) as refused:
         LocalAdapter(config)
