@@ -1,6 +1,6 @@
 # Semantic support assessment
 
-**Status: DESIGN APPROVED (2026-10-05)** — Stage 8; written spec awaiting review.
+**Status: SPEC APPROVED (2026-10-05)** — Stage 8; ready for writing-plans.
 
 > For agentic workers: REQUIRED NEXT SKILL: writing-plans. This is the stage spec
 > for Stage 8 of `specs/evidence-linked-theme-extraction-roadmap.md`. Plan this
@@ -643,5 +643,5 @@ On implementation completion, stamp this spec with the plan ID/date and retire i
 to `specs/completed/` under the plan-completion protocol. Reconcile Stage 9's runtime
 proposal–assessment ordering, Stage 10's store/gate, and Stage 11's calibration and
 fresh-call obligations against the shipped interfaces. The design approval does not
-tick Stage 8 or establish V4. Planning receives this committed spec in a fresh
-session after the user's written-spec review.
+tick Stage 8 or establish V4. Planning receives this approved, committed spec in a
+fresh session.
