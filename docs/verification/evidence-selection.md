@@ -122,8 +122,8 @@ gold, and no default test calls a model or opens a socket (ES2, R14.1).
   pairs each core `Rejection` with its subject. `read_run` reads a run back record
   for record.
 - **The suites, in the worktree.**
-  - The default suite printed `1923 passed, 8 skipped, 25 deselected`. Plan B added
-    175 collected tests, and the live test is the new deselected one. Its 8 skips
+  - The default suite printed `1926 passed, 8 skipped, 25 deselected`. Plan B added
+    178 collected tests, and the live test is the new deselected one. Its 8 skips
     are the local legs that need `data/`.
   - The harness suite printed `275 passed, 5 skipped`.
   - Ruff passed over 318 files. `uv lock --check` passed, and the lock's one change
@@ -140,7 +140,7 @@ gold, and no default test calls a model or opens a socket (ES2, R14.1).
 | R14.7 and V11 | `test_extraction_injection.py`, 7 tests |
 | GS13 | `test_import_boundaries.py::test_the_drafting_modules_import_nothing_from_the_extractor` |
 
-Run by node ID in the worktree, they printed `72 passed`. `git diff --stat eb180cd --
+Run by node ID in the worktree, they printed `74 passed`. `git diff --stat eb180cd --
 config evaluation codebooks tests/fixtures` printed nothing.
 
 ### Deviations from the plan
@@ -180,9 +180,25 @@ governs.
 - **I10-1 (Task 10, `35a1367`).** `injection_bundle()`'s docstring says the spoofing
   paragraph is built without sentences, so that one unit holds a line break. The
   plan's text said S1 left it unsplit, which S1 does not.
-- **The counts.** I9-1's three cases are the only tests a ruling added. So plan B
-  added 175 tests, not 172; the default suite passed 1923, not 1920; and the node-ID
-  run passed 72, not 69.
+- **The final review.** The `code-reviewer` agent, on Opus, reviewed
+  `eb180cd..e407a62` and found nothing Critical; Codex was skipped (P12-4). The user
+  ruled to fix three of its items, with their polish, and to defer or drop the rest
+  at Completion:
+  - **I1 (`209387d`).** `CachedAdapter` reads a mode given as its value as its
+    member, so `"replay"` never calls the model, and a misspelled mode refuses
+    construction. One new test.
+  - **m1 (`b6715de`).** `loopback_url` also refuses a base URL that holds
+    surrounding whitespace or an ASCII control character, which urlsplit and httpx
+    would read differently, so the URL it checks is the URL httpx sends. The
+    module's docstring and the dictionary's `base_url` row name every refusal, the
+    scheme's included. Two new cases, in the renamed
+    `test_a_malformed_url_or_one_with_credentials_is_refused_naming_no_value`.
+  - **Docs (`76fa5a4`).** `extract_window` and `extract_run` say that an error other
+    than an `AdapterError` ends the run; the dictionary's `Claim` row says its ID is
+    unique together with `doc_id`; and five docstrings close the review's gaps.
+- **The counts.** I9-1's three cases and the final review's three tests are the only
+  tests a ruling added. So plan B added 178 tests, not 172; the default suite passed
+  1926, not 1920; and the node-ID run passed 74, not 69.
 
 ### The model (ADR 0004)
 
