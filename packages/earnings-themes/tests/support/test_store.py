@@ -431,3 +431,53 @@ def test_reader_rejects_inconsistent_signal_slots_with_rebuilt_manifest(
     rewrite_complete_assessment(path, assessment)
     with pytest.raises(SupportError, match="^storage_corrupt$"):
         read_support_run(path)
+
+
+@pytest.mark.parametrize("quote_count", [1, 2, 3])
+def test_repeated_quote_text_live_and_replay_publish_and_consume(
+    codebook, no_network, scorer, panel, policy, allowance, tmp_path, quote_count
+):
+    from earnings_themes.support.cache import SupportCache
+
+    from .cases import invented_case
+
+    case = invented_case(
+        codebook,
+        ("Orion expanded its workshop.",) * quote_count,
+        "Orion expanded its workshop.",
+    )
+    cache_path = tmp_path / "cache"
+    first = run(case, scorer, panel, policy, allowance.ceilings, cache_path)
+    first_stored = read_support_run(
+        write_support_run(tmp_path / "live", first, case[0])
+    )
+    assert reverify_support_run(first_stored, case[0]) == first_stored.outcomes
+    expected_evaluations = 1 if quote_count == 1 else 2
+    expected_usage = 5 if quote_count == 1 else quote_count + 5
+    assert first.record.evaluations == expected_evaluations
+    assert first.record.cache_hits == max(0, quote_count - 1)
+    assert len(first_stored.usage) == expected_usage
+    assert len({q.quote_id for q in first_stored.evidence}) == quote_count
+    assert len({(q.start, q.end) for q in first_stored.evidence}) == quote_count
+    calls = (len(scorer.requests), *(len(j.requests) for j in panel))
+
+    replay = run(
+        case,
+        scorer,
+        panel,
+        policy,
+        allowance.ceilings,
+        cache_path,
+        cache=SupportCache(cache_path, "replay"),
+    )
+    replay_stored = read_support_run(
+        write_support_run(tmp_path / "replay", replay, case[0])
+    )
+    assert reverify_support_run(replay_stored, case[0]) == replay_stored.outcomes
+    assert replay_stored.outcomes == first_stored.outcomes
+    assert replay.record.evaluations == replay.record.requests == 0
+    assert replay.record.cache_hits == expected_usage
+    assert len(replay_stored.usage) == expected_usage
+    assert len({u.operation_id for u in replay_stored.usage}) == expected_usage
+    assert calls == (len(scorer.requests), *(len(j.requests) for j in panel))
+    assert no_network == []

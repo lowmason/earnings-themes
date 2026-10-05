@@ -10,7 +10,7 @@ from pydantic import Field
 from earnings_themes.extraction.adapters import AdapterError, Message, ModelReply
 from earnings_themes.extraction.records import AdapterIdentity, Parameters
 from earnings_themes.records import NonBlank, Sha256Hex
-from earnings_themes.support.problems import SupportError
+from earnings_themes.support.problems import SupportError, unexpected_error
 from earnings_themes.support.records import (
     SUPPORT_VERSION,
     JudgeAnswer,
@@ -167,8 +167,10 @@ class JudgeBinding:
     def count_tokens(self, request: JudgeRequest) -> int:
         try:
             tokens = self._token_counter(_validated(request, JudgeRequest))
-        except Exception:  # noqa: BLE001 - tokenizer errors can contain source text
-            raise SupportError("malformed_reply") from None
+        except SupportError:
+            raise
+        except Exception as error:  # noqa: BLE001 - tokenizer diagnostics stay local
+            raise unexpected_error(error) from None
         if type(tokens) is not int or tokens < 0:
             raise SupportError("malformed_reply")
         return tokens
@@ -186,8 +188,10 @@ class JudgeBinding:
             return self._transport.complete(request)
         except AdapterError as error:
             raise SupportTransportError(error.problem.value, error.reply) from None
-        except Exception:  # noqa: BLE001 - never expose arbitrary transport errors
-            raise SupportError("transport_error") from None
+        except SupportError:
+            raise
+        except Exception as error:  # noqa: BLE001 - transport diagnostics stay local
+            raise unexpected_error(error) from None
 
     def __repr__(self) -> str:
         return "JudgeBinding()"

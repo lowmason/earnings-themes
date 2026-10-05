@@ -166,7 +166,14 @@ def _score_signals(
                 usage_rows.append(
                     _cached_usage(
                         input,
-                        digest({"cached_score": str(key)}),
+                        digest(
+                            {
+                                "cached_score": str(key),
+                                "target": input.record.target_id,
+                                "quote": quote_id,
+                                "scope": "joint" if quote_id is None else "quote",
+                            }
+                        ),
                         "scorer",
                         usage,
                         raw.latency_ms,

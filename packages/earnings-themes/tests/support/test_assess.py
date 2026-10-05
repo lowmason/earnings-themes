@@ -459,3 +459,78 @@ def test_three_family_panel_missing_presentation_is_incomplete(
     )
     assert outcome.status == "incomplete"
     assert outcome.missing == ("invalid_references",)
+
+
+@pytest.mark.parametrize("entrypoint", ["target", "run"])
+@pytest.mark.parametrize("failure", ["transport", "tokenizer"])
+def test_bound_unexpected_failure_aborts_with_completed_cache_and_accounting(
+    case,
+    resolved,
+    scorer,
+    panel,
+    policy,
+    allowance,
+    tmp_path,
+    monkeypatch,
+    entrypoint,
+    failure,
+):
+    from types import SimpleNamespace
+
+    from earnings_themes.extraction.records import AdapterIdentity
+    from earnings_themes.support import run as run_module
+    from earnings_themes.support.judges import JudgeBinding
+
+    from .test_run import run
+
+    transport_calls = []
+    token_calls = []
+    positive = judge_reply()
+
+    def complete(request):
+        transport_calls.append(request)
+        if failure == "transport" and len(transport_calls) == 2:
+            raise RuntimeError("INVENTED_PRIVATE_EXCEPTION")
+        return positive(request)
+
+    def count(request):
+        token_calls.append(request)
+        if failure == "tokenizer" and len(token_calls) == 3:
+            raise RuntimeError("INVENTED_PRIVATE_EXCEPTION")
+        return 5
+
+    bound = JudgeBinding(
+        panel[1].identity,
+        SimpleNamespace(
+            identity=AdapterIdentity(
+                adapter_kind="scripted", model_id="invented-judge", runtime="scripted"
+            ),
+            complete=complete,
+        ),
+        count,
+    )
+    panel = (panel[0], bound)
+    monkeypatch.setattr(run_module, "Allowance", lambda ceilings: allowance)
+    with pytest.raises(SupportError, match="^unexpected_error$") as caught:
+        if entrypoint == "target":
+            assess(resolved, scorer, panel, policy, allowance, tmp_path)
+        else:
+            run(case, scorer, panel, policy, allowance.ceilings, tmp_path)
+    assert caught.value.diagnostic == "RuntimeError"
+    assert caught.value.__suppress_context__
+    assert "INVENTED_PRIVATE" not in str(caught.value) + repr(caught.value)
+    assert len(panel[0].requests) == 2
+    assert len(transport_calls) == (2 if failure == "transport" else 1)
+    rows = allowance.snapshot()
+    assert len(rows) == (7 if failure == "transport" else 6)
+    assert sum(r.unreported for r in rows) == (1 if failure == "transport" else 0)
+    assert sum(r.actual_completion_tokens or 0 for r in rows) == 9
+    assert len(list(tmp_path.glob("*.json"))) == 6
+
+    replay = assess(resolved, scorer, panel, policy, allowance, tmp_path, "replay")
+    assert replay.outcome.status == "incomplete"
+    assert replay.outcome.missing == ("replay_miss",)
+    assert all(s.cached for s in replay.entailment)
+    assert all(a.cached for a in replay.attempts[:3])
+    assert allowance.snapshot() == rows
+    assert len(transport_calls) == (2 if failure == "transport" else 1)

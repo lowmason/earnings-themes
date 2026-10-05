@@ -312,3 +312,31 @@ def test_request_and_schema_are_closed_and_safe(case, policy):
     )
     with pytest.raises(SupportError):
         judges._validated(bad, judges.JudgeRequest)
+
+
+@pytest.mark.parametrize("failure", ["transport", "tokenizer"])
+@pytest.mark.parametrize("custom", [False, True])
+def test_binding_unexpected_failure_has_safe_type_diagnostic(
+    case, policy, local_identity, failure, custom
+):
+    error_type = (
+        type("INVENTED_PRIVATE_CLASS", (RuntimeError,), {}) if custom else RuntimeError
+    )
+
+    def fail(request):
+        raise error_type("INVENTED_PRIVATE_EXCEPTION")
+
+    transport = Transport(transport_identity())
+    if failure == "transport":
+        transport.complete = fail
+    binding = judges.JudgeBinding(
+        local_identity, transport, fail if failure == "tokenizer" else lambda r: 1
+    )
+    request = render_judge(resolved_case(*case), policy, "evidence_first")
+    with pytest.raises(SupportError, match="^unexpected_error$") as caught:
+        binding.complete(request)
+    assert caught.value.diagnostic == ("Exception" if custom else "RuntimeError")
+    assert caught.value.__suppress_context__
+    assert "INVENTED_PRIVATE" not in (
+        str(caught.value) + repr(caught.value) + caught.value.diagnostic
+    )
