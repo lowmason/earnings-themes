@@ -3249,3 +3249,37 @@ Stage 11 owns view selection, calibration, pooling, and thresholds.
 All counts are strict nonnegative integers. Input models are revalidated at each
 metric boundary; invalid joins raise only fixed `invalid_references`, and
 malformed records raise fixed `malformed_record`. No artifact is discovered.
+
+### `LocalScorerConfig`
+
+Closed, frozen, safe configuration for an explicitly selected local NLI adapter.
+It is supplied by the caller, never discovered from repository paths. Revisions,
+complete runtime tuple, encoding and mappings are pinned. Primary input limit is
+at most 512, an explicit tokenizer-metadata policy rather than a T5 architectural
+limit. Hashes are checked before heavyweight imports; all local files must appear
+in the manifest and symlink files are refused. Every inference file is confined to
+the absolute directory. No file is downloaded by the adapter.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `kind` | minicheck, deberta | Explicit primary or named alternative selection; no fallback |
+| `local_directory` | string | Absolute supplied checkpoint directory, excluded from repr |
+| `revision` | string | Exact immutable repository revision |
+| `files` | tuple[FileHash, …] | All local file checksums; config, tokenizer and checkpoint required |
+| `runtime_versions` | tuple[tuple[string, string], …] | Ordered exact torch/transformers/sentencepiece/tokenizers/safetensors versions |
+| `device` | cpu, mps | Explicit device bound to scorer identity |
+| `precision` | float32 | Explicit inference precision bound to scorer identity |
+| `input_limit` | strict int > 0 | Complete encoded input budget; primary ≤512, alternative capped by model positions |
+| `encoding_version` | minicheck-first-step/1, deberta-pair/1 | Fixed rendering/kernel version; runtime identity appends checkpoint serialization |
+| `label_mapping` | tuple[strict int, …] | Primary vocabulary IDs (3,209) or alternative ordered NLI indices (0,1,2) |
+| `weight_license` | WeightLicense | Verified weight terms, date and intended use required before dispatch |
+
+`MiniCheckScorer(config)` and `DebertaScorer(config)` implement `EntailmentScorer`.
+Only their constructors import the optional runtime. The primary loads the pinned
+PyTorch checkpoint with `weights_only=True`, `use_safetensors=False`; the alternative
+loads native safetensors. Both use `local_files_only=True`, `trust_remote_code=False`,
+evaluation and inference mode. `count_tokens` counts the complete nontruncated
+encoding; `score` returns raw finite probabilities with identity/hash/latency/tokens
+or fixed unavailable reasons. There is no class decision, generation, aggregation,
+cutoff, wrapper chunking or alternative fallback. Configuration/runtime setup errors
+have fixed `model_mismatch`; inference errors return fixed `scorer_failed`.

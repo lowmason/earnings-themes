@@ -30,6 +30,7 @@ from earnings_themes.extraction import records as extraction
 from earnings_themes.support import judges, metrics, scorers
 from earnings_themes.support import records as support
 from earnings_themes.support.cache import SupportCacheEntry
+from earnings_themes.support.nli import LocalScorerConfig
 from earnings_themes.support.problems import SupportProblem
 from pydantic import BaseModel
 
@@ -197,6 +198,7 @@ MODELS = [
     support.UsageRecord,
     support.SupportPolicy,
     support.SupportRunRecord,
+    LocalScorerConfig,
 ]
 ENUMS = [
     core.RightsStatus,

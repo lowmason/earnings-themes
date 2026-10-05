@@ -363,3 +363,83 @@ def test_the_retrieval_scan_sees_imports_inside_functions(tmp_path: Path) -> Non
         (3, "difflib"),
         (4, "sentence_transformers.util"),
     ]
+
+
+NLI_MODULE = "earnings_themes.support.nli"
+NLI_PATH = SOURCES["earnings_themes"] / "support" / "nli.py"
+NLI_HEAVY = frozenset(
+    {"torch", "transformers", "sentencepiece", "tokenizers", "safetensors"}
+)
+
+
+def nli_import_violations(path: Path) -> list[str]:
+    """Permit heavy imports only in concrete NLI constructors, at any AST depth."""
+    import importlib.util
+
+    parts = path.with_suffix("").parts
+    package = "earnings_themes"
+    if "earnings_themes" in parts:
+        package = ".".join(parts[parts.index("earnings_themes") : -1])
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    parents = {
+        child: parent
+        for parent in ast.walk(tree)
+        for child in ast.iter_child_nodes(parent)
+    }
+    forbidden = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names = [a.name for a in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            module = node.module or ""
+            if node.level:
+                module = importlib.util.resolve_name("." * node.level + module, package)
+            names = [module, *(module + "." + a.name for a in node.names)]
+        else:
+            continue
+        parent = parents.get(node)
+        while parent is not None and not isinstance(
+            parent, (ast.FunctionDef, ast.ClassDef)
+        ):
+            parent = parents.get(parent)
+        constructor = (
+            isinstance(parent, ast.FunctionDef)
+            and parent.name == "__init__"
+            and isinstance(parents.get(parent), ast.ClassDef)
+            and parents[parent].name in {"MiniCheckScorer", "DebertaScorer"}
+        )
+        for name in names:
+            if name.split(".")[0] in NLI_HEAVY and not (
+                path == NLI_PATH and constructor
+            ):
+                forbidden.append(name)
+            if (
+                name == NLI_MODULE or name.startswith(NLI_MODULE + ".")
+            ) and path != NLI_PATH:
+                forbidden.append(name)
+    return forbidden
+
+
+def test_nli_heavy_imports_only_in_constructors():
+    assert {
+        str(p): nli_import_violations(p)
+        for p in SOURCES["earnings_themes"].rglob("*.py")
+        if nli_import_violations(p)
+    } == {}
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "import torch\n",
+        "def later():\n    import transformers\n",
+        "def later():\n    from .support import nli\n",
+        "def later():\n    import earnings_themes.support.nli\n",
+    ],
+)
+def test_nli_scan_detects_planted_forbidden_imports(tmp_path, source):
+    package = tmp_path / "earnings_themes"
+    package.mkdir()
+    path = package / "ordinary.py"
+    path.write_text(source, encoding="utf-8")
+    assert nli_import_violations(path)

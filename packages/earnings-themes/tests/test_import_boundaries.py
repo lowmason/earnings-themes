@@ -62,7 +62,14 @@ MODULES = [
     ),
 ]
 PIPELINE_PREFIXES = ("earnings_themes.extraction", "earnings_themes.support")
-NLI_RUNTIME = {"torch", "transformers", "tokenizers", "sentencepiece", "minicheck"}
+NLI_RUNTIME = {
+    "torch",
+    "transformers",
+    "tokenizers",
+    "sentencepiece",
+    "safetensors",
+    "minicheck",
+}
 LOCAL = "earnings_themes.extraction.local"
 """The local adapter, the one module that imports httpx (ES15)."""
 SOURCE = Path(earnings_themes.__file__).parent
@@ -106,7 +113,9 @@ def test_every_module_is_imported() -> None:
 
 def test_importing_earnings_themes_loads_nothing_forbidden() -> None:
     """Every module but the local adapter, which none of them loads."""
-    loaded = modules_loaded_by([m for m in MODULES if m != LOCAL])
+    loaded = modules_loaded_by(
+        [m for m in MODULES if m not in {LOCAL, "earnings_themes.support.nli"}]
+    )
     assert top_level(loaded) & FORBIDDEN == set()
     assert LOCAL not in loaded
     assert top_level(loaded) & NLI_RUNTIME == set()
@@ -208,3 +217,30 @@ def test_fresh_process_guard_detects_planted_transitive_support(tmp_path: Path) 
         stream.write("\nimport earnings_themes.support.records\n")
     loaded = modules_loaded_by(["earnings_themes.gold"], cwd=tmp_path)
     assert "earnings_themes.support.records" in forbidden_pipeline(loaded)
+
+
+def test_nli_import_loads_no_optional_runtime():
+    assert (
+        top_level(modules_loaded_by(["earnings_themes.support.nli"]))
+        & (FORBIDDEN | NLI_RUNTIME)
+        == set()
+    )
+
+
+def test_ordinary_imports_do_not_load_nli_adapter():
+    loaded = modules_loaded_by(
+        [m for m in MODULES if m not in {LOCAL, "earnings_themes.support.nli"}]
+    )
+    assert "earnings_themes.support.nli" not in loaded
+
+
+def test_fresh_guard_detects_planted_nli(tmp_path):
+    import shutil
+
+    package = tmp_path / "earnings_themes"
+    shutil.copytree(SOURCE, package, ignore=shutil.ignore_patterns("__pycache__"))
+    with (package / "tomlfile.py").open("a", encoding="utf-8") as stream:
+        stream.write("\nimport earnings_themes.support.nli\n")
+    assert "earnings_themes.support.nli" in forbidden_pipeline(
+        modules_loaded_by(["earnings_themes.gold"], cwd=tmp_path)
+    )
