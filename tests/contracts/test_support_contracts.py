@@ -60,3 +60,37 @@ def test_default_support_import_does_not_export_concrete_adapters():
     assert "MiniCheckScorer" not in exports
     assert "DebertaScorer" not in exports
     assert "JudgeBinding" not in exports
+
+
+def test_support_public_seams_retain_implemented_objects():
+    from earnings_themes import support
+    from earnings_themes.support import metrics, records
+    from earnings_themes.support.assess import assess_target
+    from earnings_themes.support.resolve import resolve_target
+    from earnings_themes.support.run import assess_run
+    from earnings_themes.support.store import (
+        read_support_run,
+        reverify_support_run,
+        write_support_run,
+    )
+
+    expected = {
+        "Target": records.Target,
+        "SupportSources": records.SupportSources,
+        "ResolvedInput": records.ResolvedInput,
+        "resolve_target": resolve_target,
+        "assess_target": assess_target,
+        "assess_run": assess_run,
+        "write_support_run": write_support_run,
+        "read_support_run": read_support_run,
+        "reverify_support_run": reverify_support_run,
+        "HumanLabel": metrics.HumanLabel,
+        "ContinuousSignal": metrics.ContinuousSignal,
+        "Acceptance": metrics.Acceptance,
+        "MetricReport": metrics.MetricReport,
+        "auc_roc": metrics.auc_roc,
+        "accepted_claim_precision": metrics.accepted_claim_precision,
+    }
+    for name, implementation in expected.items():
+        assert name in support.__all__, name
+        assert getattr(support, name) is implementation, name

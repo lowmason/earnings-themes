@@ -2940,6 +2940,32 @@ with repr=False. They retain supplied typed records and tuples; ResolvedInput's
 unchanged claim and SupportSources' artifacts never appear in printable output.
 They do not dereference codebook examples or resolve repository paths.
 
+### Public support library boundary
+
+`earnings_themes.support` exports `Target`, `SupportSources`, `ResolvedInput`,
+`resolve_target`, `assess_target`, `assess_run`, `write_support_run`,
+`read_support_run`, and `reverify_support_run`. It also exports the pure metric
+functions `auc_roc` and `accepted_claim_precision` and their closed typed parts
+`HumanLabel`, `ContinuousSignal`, `Acceptance`, and `MetricReport`. These are the
+implemented objects, with no wrapper that discovers artifacts or changes policy.
+Neither the themes root initializer nor the support initializer imports a concrete
+NLI or chat adapter. `support-nli` is an explicitly selected optional extra.
+
+`resolve_target(stored_run, bundles, codebook, target, *, provenance_hash)`
+returns `ResolvedInput` or `RefusedTarget`. The required provenance hash binds
+the supplied source provenance, including curated fixture provenance.
+`assess_target` requires keyword-only
+`cache` and `extractor_family`; `assess_run` requires those plus `started_at` and
+`software`. Extractor family is an explicit lineage input, never inferred from a
+model alias. The complete assessment and storage signatures are documented below.
+
+These shipped contracts describe raw signals and processing outcomes. They do not
+certify Stage 8 completion: required real-primary V4 inference, user-only full root
+and wording gates, and final whole-branch review remain pending in the
+[verification record](verification/semantic-support.md). Stage 9 decides assignments;
+Stage 11 supplies expert labels, calibration, view/pooling selection, agreement
+floors, thresholds and fresh-call stability across extraction/scorer/judge caches.
+
 ### `ScoreRequest`
 
 One nonpersisted evidence-only raw scoring request (`support.scorers`). Strict,

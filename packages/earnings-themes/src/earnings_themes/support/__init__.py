@@ -2,10 +2,19 @@
 
 from earnings_themes.support.assess import assess_target, derive_outcome
 from earnings_themes.support.cache import SupportCache
+from earnings_themes.support.metrics import (
+    Acceptance,
+    ContinuousSignal,
+    HumanLabel,
+    MetricReport,
+    accepted_claim_precision,
+    auc_roc,
+)
 from earnings_themes.support.problems import SupportError
 from earnings_themes.support.records import (
     SUPPORT_SCHEMA_VERSION,
     SUPPORT_VERSION,
+    ResolvedInput,
     StoredSupportRun,
     SupportCeilings,
     SupportPolicy,
@@ -24,6 +33,11 @@ from earnings_themes.support.store import (
 __all__ = [
     "SUPPORT_SCHEMA_VERSION",
     "SUPPORT_VERSION",
+    "Acceptance",
+    "ContinuousSignal",
+    "HumanLabel",
+    "MetricReport",
+    "ResolvedInput",
     "StoredSupportRun",
     "SupportCache",
     "SupportCeilings",
@@ -32,8 +46,10 @@ __all__ = [
     "SupportRunResult",
     "SupportSources",
     "Target",
+    "accepted_claim_precision",
     "assess_run",
     "assess_target",
+    "auc_roc",
     "derive_outcome",
     "read_support_run",
     "resolve_target",

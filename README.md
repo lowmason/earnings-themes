@@ -12,6 +12,36 @@ Evidence-linked research infrastructure for company data and earnings themes.
 > contracts. Codebook v0, the pilot codebook, is approved, and three gold bundles are
 > signed; there is no theme extraction or published dataset yet.
 
+## Stage 8 library status (2026-10-05)
+
+The semantic support library is implemented and has offline verification evidence.
+Stage 8 completion remains pending the actual pinned primary inference smoke (V4),
+the user's full root default suite and both Stage 6 wording gates, and the final
+whole-branch review. The [verification record](docs/verification/semantic-support.md)
+distinguishes observed checks from those required gates.
+
+`earnings_themes.support` exposes `Target`, `SupportSources`, `ResolvedInput`,
+`resolve_target`, `assess_target`, `assess_run`, `write_support_run`,
+`read_support_run`, `reverify_support_run`, and the pure `auc_roc` and
+`accepted_claim_precision` metrics with their typed inputs/reports. Callers supply
+saved extraction records, canonical bundles, a frozen approved codebook, explicit
+claim–theme targets, model identities, prompts, ceilings, and a cache. Exact spans
+are reverified before scoring, publication, and downstream consumption. Results
+retain raw per-quote/joint scores, four independent judge trials, usage, and
+`refused`/`incomplete`/`flagged`/`assessed` processing outcomes. An `assessed`
+outcome confers no accepted assignment.
+
+Concrete local scorer adapters live in `earnings_themes.support.nli`, behind the
+optional `support-nli` extra; ordinary imports need no model runtime or weights.
+[ADR 0005](docs/adr/0005-adopt-local-minicheck-for-support-signals.md) records the
+pinned MiniCheck primary, explicit DeBERTa alternative, external configuration,
+local-file and rights requirements, and network-denied smoke runner. Actual primary
+inference and local weight verification remain pending. Stage 9 owns assignment
+decisions; Stage 10 adds the application command and coverage mapping; Stage 11
+owns expert labels, calibration, thresholds, production judge selection, and
+fresh-call stability. The offline evidence establishes no pilot accuracy or
+stability result.
+
 ## Purpose
 
 This monorepo is being built around two connected research capabilities:
