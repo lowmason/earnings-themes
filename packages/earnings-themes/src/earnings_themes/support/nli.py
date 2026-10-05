@@ -18,6 +18,7 @@ from earnings_themes.support.records import (
     WeightLicense,
     parse_support,
 )
+from earnings_themes.support.resolve import _validated
 from earnings_themes.support.scorers import ScoreReply, ScoreRequest, _request
 
 PRIMARY_REVISION = "96eafd01cee2d16cf81aaa2fb226b14f422a37b3"
@@ -88,7 +89,7 @@ def _prepare_config(
 ) -> LocalScorerConfig:
     """Apply the same configuration/file identity gate to either constructor."""
     try:
-        checked = parse_support(config.model_dump(mode="json"), LocalScorerConfig)
+        checked = _validated(config, LocalScorerConfig)
         if checked.kind != kind:
             raise SupportError("model_mismatch")
         _verify_files(checked)

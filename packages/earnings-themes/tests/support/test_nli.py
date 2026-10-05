@@ -454,3 +454,23 @@ def test_shared_runtime_version_gate_redacts_failures(monkeypatch):
         module._verify_runtime_versions()
     assert "INVENTED_RUNTIME_SENTINEL" not in repr(caught.value)
     assert caught.value.__suppress_context__
+
+
+@pytest.mark.parametrize(
+    "update",
+    [
+        {"INVENTED_EXTRA_SENTINEL": "INVENTED_PRIVATE_VALUE"},
+        {"label_mapping": [3, 209]},
+    ],
+)
+def test_shared_preflight_rejects_forged_raw_state_before_serializing(tmp_path, update):
+    import warnings
+
+    _, _, _, _, config = fixture(tmp_path)
+    forged = config.model_copy(update=update)
+    with (
+        warnings.catch_warnings(record=True) as recorded,
+        pytest.raises(SupportError, match="model_mismatch"),
+    ):
+        api()._prepare_config(forged, "minicheck")
+    assert recorded == []
