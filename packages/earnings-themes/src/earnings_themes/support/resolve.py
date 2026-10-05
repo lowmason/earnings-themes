@@ -25,6 +25,7 @@ from earnings_themes.anchoring import Bundle, bundle_problems, mask_id
 from earnings_themes.codebook import Codebook, CodebookStatus, codebook_hash
 from earnings_themes.extraction.records import Claim, DocumentRecord, Quote, RunRecord
 from earnings_themes.extraction.store import StoredRun
+from earnings_themes.support.context import context_elements
 from earnings_themes.support.problems import SupportError
 from earnings_themes.support.records import (
     CodebookReference,
@@ -313,6 +314,39 @@ def resolve_target(
                 key=lambda item: (item[1].start, item[1].end, item[0].quote_id),
             )
         )
+        context_refs = {}
+        for ref in evidence:
+            selected = context_elements(checked_bundle, ref.element_id)
+            for index, element in enumerate(selected):
+                kind = "block" if index == len(selected) - 1 else "heading"
+                context = ContextReference(
+                    target_id="pending",
+                    doc_id=document.doc_id,
+                    canonical_hash=document.canonical_hash,
+                    element_id=element.element_id,
+                    start=element.span.start,
+                    end=element.span.end,
+                    text_hash=sha256_hex(
+                        document.canonical_text[
+                            element.span.start : element.span.end
+                        ].encode("utf-8")
+                    ),
+                    kind=kind,
+                )
+                key = (
+                    context.doc_id,
+                    context.element_id,
+                    context.start,
+                    context.end,
+                    kind,
+                )
+                context_refs[key] = context
+        contexts = tuple(
+            sorted(
+                context_refs.values(),
+                key=lambda c: (c.doc_id, c.start, c.end, c.element_id, c.kind),
+            )
+        )
         claim_hash = digest(_dump(claim))
         input_hash = digest(
             {
@@ -326,7 +360,7 @@ def resolve_target(
                 },
                 "theme": _dump(theme),
                 "evidence": [_dump(e) for e in evidence],
-                "contexts": [],
+                "contexts": [_dump(c) for c in contexts],
             }
         )
         target_id = "support-" + digest(
@@ -334,6 +368,9 @@ def resolve_target(
         )
         evidence = tuple(
             e.model_copy(update={"target_id": target_id}) for e in evidence
+        )
+        contexts = tuple(
+            c.model_copy(update={"target_id": target_id}) for c in contexts
         )
         record = TargetRecord(
             target_id=target_id,
@@ -346,7 +383,7 @@ def resolve_target(
             theme=theme,
         )
         sources = SupportSources(stored_run, tuple(bundles), codebook, provenance_hash)
-        return ResolvedInput(record, evidence, (), claim.claim, sources)
+        return ResolvedInput(record, evidence, contexts, claim.claim, sources)
     except SupportError as error:
         return _refused(target, source_hash, str(error))
     except (AttributeError, ValueError, TypeError, OverflowError):

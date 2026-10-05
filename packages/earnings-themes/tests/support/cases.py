@@ -2,7 +2,14 @@
 
 from datetime import UTC, datetime
 
-from earnings_core import SpanCandidate, VerifiedSpan, digest, validate_span
+from earnings_core import (
+    SpanCandidate,
+    TextSpan,
+    VerifiedSpan,
+    digest,
+    make_locator,
+    validate_span,
+)
 from earnings_themes.anchoring import mask_id
 from earnings_themes.extraction.records import (
     AdapterIdentity,
@@ -22,6 +29,7 @@ from earnings_themes.support.records import CodebookReference, SupportSources, T
 def stored_case(bundle, codebook, claim, spans):
     quotes = []
     for start, end, element_id in spans:
+        locator = make_locator(bundle.document, TextSpan(start=start, end=end))
         checked = validate_span(
             bundle.document,
             bundle.elements,
@@ -32,6 +40,8 @@ def stored_case(bundle, codebook, claim, spans):
                 end=end,
                 element_id=element_id,
                 quote_text=bundle.document.canonical_text[start:end],
+                prefix=locator.prefix,
+                suffix=locator.suffix,
             ),
         )
         assert isinstance(checked, VerifiedSpan)
@@ -121,3 +131,40 @@ def stored_case(bundle, codebook, claim, spans):
         ),
     )
     return sources, target
+
+
+def context_bundle():
+    """Invented nested narrative with attribution-only words and repeated evidence."""
+    from earnings_core import CanonicalDocument, DocumentElement, ElementType, TextSpan
+    from earnings_themes.anchoring import Bundle
+
+    text = "OUTER HEADING\nINNER HEADING\nINVENTED_CONTEXT_ONLY_ASSERTION. Orion improved output. Orion improved output."
+    doc = CanonicalDocument.create(
+        source_document_id="invented-context",
+        canonicalization_version="test-1",
+        canonical_text=text,
+    )
+    elements = []
+
+    def add(kind, start, end, parent=None):
+        element = DocumentElement.create(
+            doc,
+            ElementType(kind),
+            TextSpan(start=start, end=end),
+            parent_id=None if parent is None else parent.element_id,
+        )
+        elements.append(element)
+        return element
+
+    outer = add("section", 0, len(text))
+    add("heading", 0, text.index("\n"), outer)
+    inner_start = text.index("INNER HEADING")
+    inner = add("section", inner_start, len(text), outer)
+    add("heading", inner_start, text.index("\n", inner_start), inner)
+    paragraph = add(
+        "paragraph", text.index("INVENTED_CONTEXT_ONLY_ASSERTION"), len(text), inner
+    )
+    first = text.index("Orion")
+    sentence = add("sentence", first, first + len("Orion improved output."), paragraph)
+    add("sentence", text.index("Orion", first + 1), len(text), paragraph)
+    return Bundle("invented-context", doc, tuple(elements), ()), sentence
