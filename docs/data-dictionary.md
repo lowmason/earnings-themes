@@ -3471,3 +3471,41 @@ strings alongside the unchanged support/core reason vocabulary.
 | `fixture_policy` | Result uses an explicitly fixture-only acceptance policy |
 | `storage_corrupt` | Stored coding artifact fails integrity or parsing checks |
 | `unexpected_error` | Unknown caller reason or unexpected failure is redacted |
+
+### `CodingInput`
+
+`earnings_themes.coding.input.CodingInput` is a frozen transient dataclass,
+outside the persisted coding schema. Its `repr` and `str` omit all fields,
+including source text, claim wording, definitions, and prompts.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `sources` | SupportSources | Caller-supplied saved extraction records, immutable canonical bundles, approved codebook, and provenance hash |
+| `doc_id` | str | Immutable canonical document identity for the requested claim |
+| `claim_id` | str | Original Stage 7 claim identity, resolved within doc_id |
+| `probes` | tuple[ResolvedInput, …] | Complete integrity probes, ordered by theme_id, for every frozen theme; no proposals, assessments, or assignment decisions |
+| `input_hash` | SHA-256 | Digest of deductive-coding/1, document and claim identities, and the ordered Stage 8 input hashes |
+
+`resolve_coding_input(sources: SupportSources, doc_id: str, claim_id: str) ->
+CodingInput` resolves every theme through Stage 8's public `resolve_target`.
+The gate requires exact source dataclass and tuple container types, a nonempty
+approved codebook, its identifier/version/content hash, a valid theme graph,
+the original claim and every original quote link, strict offsets, current masks,
+and source-run/configuration bindings. A bad original link refuses the whole
+input even when another link is good. Each snapshot contains definition and
+inclusion/exclusion rules without example fields. Supplied example metadata
+participates in the frozen codebook hash; examples, discovery bundles, signed
+records, and files are never dereferenced or opened by this boundary.
+
+`reverify_coding_input(input: CodingInput) -> CodingInput` first revalidates each
+retained probe through Stage 8's public `reverify_input`, then resolves the
+complete current input anew. Equal-valued copied booleans or floats cannot
+stand in for strict offsets. The input hash, ordered target records, evidence,
+contexts, and unchanged claim must agree with the new resolution. Valid source
+changes still refuse with `input_changed`; integrity failures retain the first
+closed Stage 8/core reason from flags and missing reasons, with
+`invalid_references` as the fallback. Other malformed inputs produce the fixed
+`malformed_record` error with source-bearing exception chaining suppressed.
+No classifier, scorer, judge, acceptance policy, or filesystem operation is
+dispatched here. These checks establish integrity only, never semantic support
+or acceptance.
