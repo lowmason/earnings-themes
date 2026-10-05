@@ -434,3 +434,58 @@ def test_raw_fields_cannot_disappear_during_json_dump(case, kind):
             codebook=sources.codebook.model_copy(update={"schema_version": True}),
         )
     assert_refused(resolve(replace(sources, stored_run=run), target))
+
+
+@pytest.mark.parametrize(
+    "field,value", [("start", 0.0), ("start", False), ("schema_version", True)]
+)
+def test_consuming_gate_refuses_equal_valued_evidence_forgery(case, field, value):
+    resolved = resolve(*case)
+    reference = resolved.evidence[0]
+    assert reference.start == 0
+    forged = reference.model_copy(update={field: value})
+    assert forged == reference
+    result = reverify_input(
+        replace(resolved, evidence=(forged, *resolved.evidence[1:]))
+    )
+    assert_refused(result)
+    assert result.outcome.missing == ("malformed_record",)
+
+
+@pytest.mark.parametrize(
+    "kind", ["record_schema", "evidence_list", "contexts_list", "claim_shape"]
+)
+def test_consuming_gate_requires_strict_retained_shape(case, kind):
+    resolved = resolve(*case)
+    if kind == "record_schema":
+        forged = replace(
+            resolved, record=resolved.record.model_copy(update={"schema_version": True})
+        )
+    elif kind == "evidence_list":
+        forged = replace(resolved, evidence=list(resolved.evidence))
+    elif kind == "contexts_list":
+        forged = replace(resolved, contexts=[])
+    else:
+        forged = replace(resolved, claim=True)
+    result = reverify_input(forged)
+    assert_refused(result)
+    assert result.outcome.missing == ("malformed_record",)
+
+
+@pytest.mark.parametrize(
+    "field,value", [("start", 0.0), ("start", False), ("schema_version", True)]
+)
+def test_consuming_gate_revalidates_context_references(case, field, value):
+    from earnings_themes.support.records import ContextReference
+
+    resolved = resolve(*case)
+    reference = resolved.evidence[0]
+    fields = {
+        name: getattr(reference, name)
+        for name in ContextReference.model_fields
+        if name != "kind"
+    }
+    context = ContextReference(**fields, kind="block").model_copy(update={field: value})
+    result = reverify_input(replace(resolved, contexts=(context,)))
+    assert_refused(result)
+    assert result.outcome.missing == ("malformed_record",)

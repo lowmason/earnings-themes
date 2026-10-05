@@ -6,6 +6,7 @@ Refusals retain only identities, digests, and fixed reasons.
 
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
+from typing import get_origin
 
 from earnings_core import (
     CanonicalDocument,
@@ -27,6 +28,7 @@ from earnings_themes.extraction.store import StoredRun
 from earnings_themes.support.problems import SupportError
 from earnings_themes.support.records import (
     CodebookReference,
+    ContextReference,
     EvidenceReference,
     RefusedTarget,
     ResolvedInput,
@@ -56,8 +58,13 @@ def _check_raw(value: object) -> None:
             and type(value.schema_version) is not int
         ):
             raise SupportError("malformed_record")
-        for field in type(value).model_fields:
-            _check_raw(getattr(value, field))
+        for field, definition in type(value).model_fields.items():
+            item = getattr(value, field)
+            if definition.annotation is int and type(item) is not int:
+                raise SupportError("malformed_record")
+            if get_origin(definition.annotation) is tuple and type(item) is not tuple:
+                raise SupportError("malformed_record")
+            _check_raw(item)
     elif isinstance(value, Mapping):
         for key, item in value.items():
             if not isinstance(key, str):
@@ -189,6 +196,19 @@ def _source_hash(stored_run: StoredRun, provenance_hash: str) -> str:
         return digest("malformed_source")
 
 
+def _redacted_target() -> Target:
+    reference = CodebookReference(
+        codebook_id="redacted", codebook_version=0, content_hash=digest(None)
+    )
+    return Target(
+        source_run_id="redacted",
+        doc_id="redacted",
+        claim_id="redacted",
+        theme_id="redacted",
+        codebook=reference,
+    )
+
+
 def resolve_target(
     stored_run: StoredRun,
     bundles: Sequence[Bundle],
@@ -202,16 +222,7 @@ def resolve_target(
     try:
         target = _validated(target, Target)
     except SupportError:
-        reference = CodebookReference(
-            codebook_id="redacted", codebook_version=0, content_hash=digest(None)
-        )
-        safe = Target(
-            source_run_id="redacted",
-            doc_id="redacted",
-            claim_id="redacted",
-            theme_id="redacted",
-            codebook=reference,
-        )
+        safe = _redacted_target()
         return _refused(safe, source_hash, "malformed_record")
     try:
         if (
@@ -343,21 +354,45 @@ def resolve_target(
 
 
 def reverify_input(input: ResolvedInput) -> ResolvedInput | RefusedTarget:
-    """Possessing a resolved input never bypasses current source verification."""
-    sources = input.sources
+    """Strictly validate retained input, then repeat the current source gate."""
+    sources = getattr(input, "sources", None)
+    source_hash = _source_hash(
+        getattr(sources, "stored_run", None), getattr(sources, "provenance_hash", None)
+    )
+    try:
+        target = _validated(input.record.target, Target)
+    except (SupportError, AttributeError):
+        target = _redacted_target()
+    try:
+        if (
+            type(input) is not ResolvedInput
+            or type(sources) is not SupportSources
+            or type(sources.stored_run) is not StoredRun
+            or type(sources.bundles) is not tuple
+            or type(input.evidence) is not tuple
+            or type(input.contexts) is not tuple
+            or type(input.claim) is not str
+            or not input.claim.strip()
+        ):
+            raise SupportError("malformed_record")
+        record = _validated(input.record, TargetRecord)
+        evidence = tuple(_validated(e, EvidenceReference) for e in input.evidence)
+        contexts = tuple(_validated(c, ContextReference) for c in input.contexts)
+    except (SupportError, AttributeError, TypeError, ValueError):
+        return _refused(target, source_hash, "malformed_record")
     again = resolve_target(
         sources.stored_run,
         sources.bundles,
         sources.codebook,
-        input.record.target,
+        record.target,
         provenance_hash=sources.provenance_hash,
     )
     if isinstance(again, RefusedTarget):
         return again
     if (
-        again.record != input.record
-        or again.evidence != input.evidence
-        or again.contexts != input.contexts
+        again.record != record
+        or again.evidence != evidence
+        or again.contexts != contexts
         or again.claim != input.claim
     ):
         return _refused(
