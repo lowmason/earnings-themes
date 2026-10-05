@@ -7,7 +7,8 @@ Task 12 documentation/public-export preparation starts at that checkpoint.
 
 **Stage 8 is not complete.** Offline implementation evidence is recorded below.
 Required V4 actual primary inference, the user's complete root default suite and
-both full Stage 6 wording nodes, and final whole-branch review remain unobserved.
+both full Stage 6 wording nodes remain unobserved. The final GPT-6.1 Max whole-branch
+review and its scoped fix reviews are complete with no outstanding code findings.
 No plan/spec retirement, roadmap completion tick, or integration follows from this
 record. It contains no pilot quality, agreement, or fresh-call stability result.
 
@@ -152,6 +153,50 @@ and tool requests. These scripted cases verify machinery, not observed model acc
 No protected pilot text, signed gold, draft, working copy or view was read here.
 GS13 remains binding through Stage 14's final test-gold drafting.
 
+## Final review fixes and independent checks
+
+The GPT-6.1 Max reviewer examined the full branch from `5463a44` through
+`8d97c57`. Two Important findings were fixed in `ec15c2b`: cached scorer usage
+IDs now distinguish target/quote/scope while preserving raw score reuse, and bound
+judge callbacks abort safely on unexpected failures rather than retrying them as
+availability failures. The scoped review found one further Important exception-chain
+issue, fixed in `e2cb007` with preserved safe diagnostics and suppressed chains.
+The second scoped review marked it addressed and reported no new findings.
+
+Invented-input regressions demonstrated 10 expected failures before the first fix,
+then 11 passing cases, covering repeated text at separate exact spans through live
+and replay publication/consumption, one-quote aliasing, and bound callback crashes.
+Four further chain-suppression regressions failed before the amendment and passed
+afterward, covering both callbacks with explicit causes and implicit context.
+The worker's final affected checks returned 679 passed, 1 optional-runtime skip,
+2 deselected. No live smoke or protected artifact reader ran.
+
+The controller independently ran these checks at `ec15c2b`:
+
+```bash
+uv run --locked --all-packages pytest packages/earnings-themes/tests/support/test_assess.py packages/earnings-themes/tests/support/test_judges.py packages/earnings-themes/tests/support/test_store.py packages/earnings-themes/tests/support/test_run.py packages/earnings-themes/tests/support/test_safe_output.py packages/earnings-themes/tests/support/test_cache.py -m "not live and not browser" -q --tb=short
+uv run --locked --all-packages pytest packages/earnings-core/tests packages/earnings-themes/tests tests/contracts tests/integration/test_support_fixtures.py tests/integration/test_support_wording.py -m "not live and not browser" -q --tb=short
+uv run --locked ruff check .
+uv run --locked ruff format --check .
+uv run --locked --all-packages pytest packages apps tests --ignore=tests/integration/test_stage6_records.py --ignore=tests/integration/test_stage6_wording.py --ignore=tests/integration/test_stage6_pilot_v1.py -m "not live and not browser" -q -rs --tb=short
+```
+
+Observed: 272 focused tests passed; 1358 affected tests passed, 1 optional-runtime
+skip, 4 deselected in 43.01 seconds; Ruff check passed and 355 files were already
+formatted; the broad blind subset returned 2628 passed, 5 skipped, 27 deselected
+in 91.06 seconds. Its exclusions and skips have the same reasons recorded above.
+It remains a subset result, never a complete root-suite result.
+
+After the exception-chain amendment at `e2cb007`, the controller independently ran:
+
+```bash
+uv run --locked --all-packages pytest packages/earnings-themes/tests/support/test_judges.py packages/earnings-themes/tests/support/test_assess.py packages/earnings-themes/tests/support/test_run.py packages/earnings-themes/tests/support/test_safe_output.py packages/earnings-themes/tests/test_import_boundaries.py tests/integration/test_support_wording.py -m "not live and not browser" -q --tb=short
+```
+
+Observed: 164 passed in 3.63 seconds. The amended callback behavior, safe errors,
+import boundaries and support-only fixture wording gate passed. These results do
+not discharge V4 or any user-only gate.
+
 ## V4: metadata and runner evidence; actual inference pending
 
 [ADR 0005](../adr/0005-adopt-local-minicheck-for-support-signals.md) records the
@@ -206,7 +251,9 @@ uv run --locked --all-packages pytest tests/integration/test_stage6_wording.py::
 Use no locals, verbose, debugger, or long/automatic/full traceback options. The
 implementing/reviewing sessions remain blind. Passed observed human results are
 required before completion; skipping or deferring them cannot replace the gate.
-The final whole-branch review and its resolution are also pending.
+The final whole-branch review and both scoped fix reviews are complete; all findings
+were addressed with no new findings in the last review. The external gates above
+remain pending.
 
 Stage 9 receives explicit target assessment, raw views and quote contributions and
 owns assignment decisions. Stage 10 receives the store/reader/consuming gate and
