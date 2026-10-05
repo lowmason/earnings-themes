@@ -4,12 +4,14 @@ offsets and hashes that the local document reproduces."""
 
 import json
 from collections import Counter
+from dataclasses import replace
 
 import pytest
 from earnings_core import (
     CanonicalDocument,
     DocumentElement,
     ElementType,
+    OverlayMask,
     RejectionReason,
     TextSpan,
     make_locator,
@@ -188,6 +190,37 @@ def test_a_pointer_into_a_table_cell_is_not_narrative(synthetic) -> None:
 
 def test_the_synthetic_bundle_is_sound(synthetic) -> None:
     assert bundle_problems(synthetic.bundle) == []
+
+
+def remask(bundle: Bundle, **change: object) -> Bundle:
+    """``bundle`` with its one mask changed, and constructed again, so validated."""
+    (mask,) = bundle.masks
+    fields = {name: getattr(mask, name) for name in OverlayMask.model_fields}
+    return replace(bundle, masks=(OverlayMask(**{**fields, **change}),))
+
+
+def test_a_mask_of_another_document_or_past_the_text_is_wrong_document(
+    synthetic,
+) -> None:
+    """T6-M4: ``bundle_problems``' mask branch. A mask whose ``doc_id`` or hash is
+    another document's, or whose span ends past the text, is ``wrong_document``,
+    reported once however many masks are."""
+    bundle = synthetic.bundle
+    other = CanonicalDocument.create(
+        source_document_id="0009990002-25-000001_ex991.htm",
+        canonicalization_version="walker-1",
+        canonical_text="Invented text.\n",
+    )
+    end = len(bundle.document.canonical_text)
+    wrong = [RejectionReason.WRONG_DOCUMENT.value]
+    for changed in (
+        remask(bundle, doc_id=other.doc_id, canonical_hash=other.canonical_hash),
+        remask(bundle, canonical_hash=other.canonical_hash),
+        remask(bundle, span=TextSpan(start=end - 1, end=end + 1)),
+    ):
+        assert bundle_problems(changed) == wrong
+        (mask,) = changed.masks
+        assert bundle_problems(replace(changed, masks=(mask, mask))) == wrong
 
 
 def list_bundle(lead: str, between: str = "", tail: str = "") -> Bundle:
