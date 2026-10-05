@@ -168,3 +168,18 @@ def context_bundle():
     sentence = add("sentence", first, first + len("Orion improved output."), paragraph)
     add("sentence", text.index("Orion", first + 1), len(text), paragraph)
     return Bundle("invented-context", doc, tuple(elements), ()), sentence
+
+
+def resolved_case(sources, target):
+    from earnings_themes.support.records import ResolvedInput
+    from earnings_themes.support.resolve import resolve_target
+
+    result = resolve_target(
+        sources.stored_run,
+        sources.bundles,
+        sources.codebook,
+        target,
+        provenance_hash=sources.provenance_hash,
+    )
+    assert isinstance(result, ResolvedInput)
+    return result

@@ -30,3 +30,39 @@ def case(codebook, no_network):
     )
     yield result
     assert no_network == []
+
+
+@pytest.fixture
+def one_quote(codebook, no_network):
+    from .cases import context_bundle, resolved_case
+
+    bundle, sentence = context_bundle()
+    yield resolved_case(
+        *stored_case(
+            bundle,
+            codebook,
+            "Orion improved output.",
+            ((sentence.span.start, sentence.span.end, sentence.element_id),),
+        )
+    )
+    assert no_network == []
+
+
+@pytest.fixture
+def scorer_identity():
+    from earnings_themes.support.records import RuntimeIdentity, ScorerIdentity
+
+    return ScorerIdentity(
+        kind="scripted",
+        input_limit=1000,
+        runtime=RuntimeIdentity(
+            model_id="invented-scorer",
+            revision="test-1",
+            files=(),
+            runtime="scripted",
+            runtime_version="1",
+            device="cpu",
+            precision="float32",
+            encoding_version="test-1",
+        ),
+    )

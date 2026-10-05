@@ -2939,3 +2939,43 @@ AssessmentResult, SupportRunResult and StoredSupportRun are frozen dataclasses
 with repr=False. They retain supplied typed records and tuples; ResolvedInput's
 unchanged claim and SupportSources' artifacts never appear in printable output.
 They do not dereference codebook examples or resolve repository paths.
+
+### `ScoreRequest`
+
+One nonpersisted evidence-only raw scoring request (`support.scorers`). Strict,
+closed and frozen, with safe digest-only representations. The hypothesis is the
+unchanged claim. A premise is one exact canonical quote slice or the versioned
+rendering of individually bounded passages; attribution context and theme rules
+are excluded.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `premise` | string | Complete evidence premise, local and excluded from printable fields |
+| `hypothesis` | string | Original unchanged claim, local and excluded from printable fields |
+| `input_hash` | SHA-256 | Digest of support encoding version, premise and hypothesis |
+
+### `ScoreReply`
+
+One nonpersisted raw response (`support.scorers`), revalidated before consumption.
+A score is finite in `[0,1]` and remains uncalibrated. Available replies require
+no reason and a reported input count. Failures have a fixed reason and null score,
+never a zero stand-in. Identity and input hash must match the request/adapter.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `score` | finite float in [0,1] or null | Raw support signal; no pooling or acceptance policy |
+| `reason` | fixed reason or null | Support/core failure reason; absent exactly when score exists |
+| `input_tokens` | strict nonnegative integer or null | Adapter input count, required for an available reply |
+| `latency_ms` | strict nonnegative integer | Reported operation latency; pre-dispatch refusals use zero |
+| `identity` | ScorerIdentity | Bound checkpoint/runtime and full-input limit |
+| `input_hash` | SHA-256 | Binding to complete premise/hypothesis request |
+
+`score_requests(input)` re-verifies all linked quotes and retained source bindings
+before rendering. For one quote it returns one evaluation to alias downstream as
+both quote and joint signal rows. For several quotes it returns every quote request
+plus one separate joint request (`None` scope). `evaluate_score(scorer, request)`
+counts the complete request before dispatch, refuses over-limit inputs without
+clipping, and checks strict counts, score validity and reply bindings. Expected
+scorer/transport failures remain unavailable; unexpected adapter exceptions abort
+with a safe fixed reason. `ScriptedScorer(script, token_counter, identity)` accepts
+injected callables and retains requests locally with a safe count-only repr.
