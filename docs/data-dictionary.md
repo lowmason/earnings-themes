@@ -2584,7 +2584,7 @@ One exact quote reference for a target. Character offsets are strict integers in
 | --- | --- | --- |
 | `schema_version` | 1 | Support record schema version, fixed at 1 |
 | `target_id` | nonblank string | Derived assessment target identity |
-| `quote_id` | nonblank string | Source quote ID (null only for joint signals) |
+| `quote_id` | nonblank string | Source quote ID |
 | `doc_id` | nonblank string | Immutable canonical document ID |
 | `canonical_hash` | SHA-256 | Immutable canonical-text SHA-256 |
 | `element_id` | nonblank string | Canonical element ID |
@@ -2712,7 +2712,7 @@ One contribution classification for one supplied quote. Reference completeness i
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `quote_id` | nonblank string | Source quote ID (null only for joint signals) |
+| `quote_id` | nonblank string | Source quote ID |
 | `contribution` | supporting, contextual, irrelevant, contradicting, uncertain | supporting, contextual, irrelevant, contradicting, or uncertain |
 
 ### `JudgeAnswer`
