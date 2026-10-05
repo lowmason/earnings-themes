@@ -555,6 +555,9 @@ jev = [
 jev-langchain = [
     { name = "langchain-typesafe" },
 ]
+local-model = [
+    { name = "httpx" },
+]
 openai = [
     { name = "pydantic-ai-slim", extra = ["openai"] },
 ]
@@ -562,6 +565,7 @@ openai = [
 [package.metadata]
 requires-dist = [
     { name = "earnings-core", editable = "packages/earnings-core" },
+    { name = "httpx", marker = "extra == 'local-model'" },
     { name = "langchain-typesafe", marker = "extra == 'jev-langchain'" },
     { name = "numpy", marker = "extra == 'embeddings'" },
     { name = "polars" },
@@ -574,7 +578,7 @@ requires-dist = [
     { name = "sentence-transformers", marker = "extra == 'embeddings'" },
     { name = "typesafe-sdk", marker = "extra == 'jev'" },
 ]
-provides-extras = ["extraction", "openai", "anthropic", "jev", "embeddings", "fuzzy-localization", "jev-langchain"]
+provides-extras = ["local-model", "extraction", "openai", "anthropic", "jev", "embeddings", "fuzzy-localization", "jev-langchain"]
 
 [[package]]
 name = "edgartools"

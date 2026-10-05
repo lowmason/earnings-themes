@@ -1,0 +1,9 @@
+# The local model for Stage 7's live test (plan 12, P12-14; ADR 0004). It serves
+# that test only, and is not the production choice, which stays open.
+base_url = "http://127.0.0.1:8080/v1"
+model_id = "gemma-4-31b-it-qat-q4_0"
+weights_sha256 = "179cfb99212709597eae5929112cfca677e1bbf566178b479ae1da0c4772874b"
+runtime = "llama.cpp"
+runtime_version = "0.5.0 (build 11146, commit 7fe450e19)"
+structured = true
+timeout_s = 300.0

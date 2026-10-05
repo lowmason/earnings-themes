@@ -165,7 +165,7 @@
       refuses both offsets, so only code that skips it can get there. Size:
       quick-fix. Done when: `validate_span` returns `malformed_record` for a
       non-integer or bool offset on an unvalidated candidate, with a test. → done in plan 11 (specs/plans/completed/11-evidence-selection-and-verification-plan-a.md)
-- [ ] Give `Rejection` a structured subject (final review, recommendation;
+- [x] Give `Rejection` a structured subject (final review, recommendation;
       deferred by the user): `Rejection` in
       `packages/earnings-core/src/earnings_core/rejections.py` names what it
       refused only in its `detail` prose, with no `doc_id`, candidate, or
@@ -173,7 +173,7 @@
       to keep R6.2's audit trail. Size: design. Done when: Stage 7's
       rejection-store design records whether `Rejection` gains structured
       subject fields (a schema bump with a data-dictionary update) or the store
-      pairs each rejection with its candidate.
+      pairs each rejection with its candidate. → done in plan 12 (specs/plans/completed/12-evidence-selection-and-verification-plan-b.md): the store pairs each core `Rejection` with its subject (ES6)
 - [x] Check import boundaries statically as well (final review, recommendation;
       deferred by the user): the three
       `packages/*/tests/test_import_boundaries.py` files inspect `sys.modules`
@@ -1088,6 +1088,8 @@
       (specs/plans/completed/10-harden-the-gold-before-bundle-4.md). T3-M5's
       `canonical_json` and `digest` → done in plan 11
       (specs/plans/completed/11-evidence-selection-and-verification-plan-a.md).
+      T6-M4 and T9-M2 → done in plan 12
+      (specs/plans/completed/12-evidence-selection-and-verification-plan-b.md).
 - [x] Settle two anchoring questions before Stage 7 recomputes context hashes or
       fixes its narrative set: pin `context_hash`'s byte format with a
       known-answer test, and add `ensure_ascii=False` to its row in
@@ -1136,7 +1138,7 @@
 
 ## 11-evidence-selection-and-verification-plan-a — 2026-10-04
 
-- [ ] Print only a refusal's reason and IDs over pilot text (plan 11's final
+- [x] Print only a refusal's reason and IDs over pilot text (plan 11's final
       review; GS13; deferred by the user). In
       packages/earnings-core/src/earnings_core/evidence.py, `validate_span`'s
       `quote_text_mismatch`, `locator_mismatch`, and `ambiguous_occurrence`
@@ -1146,4 +1148,135 @@
       local store, since `data/` is gitignored, so only printing and committing
       are at issue. Size: quick-fix. Done when: plan B's gates and commands print
       or commit only the reason and IDs for a refusal over pilot text, with a
-      test.
+      test. → done in plan 12 (specs/plans/completed/12-evidence-selection-and-verification-plan-b.md): a refusal prints as its reason and IDs, with sentinel tests; Stage 10's first command inherits it
+
+## 12-evidence-selection-and-verification-plan-b — 2026-10-05
+
+- [ ] Share one span-verification path and one set of test helpers (plan 12's
+      pre-flight F1 and F7, and its review's M2-4 and M7-6; deferred by the
+      user). In packages/earnings-themes/src/earnings_themes/extraction/extract.py,
+      `verify` and `masks_over` repeat anchoring.py's `_verify` and
+      `_masks_over`, and units.py's `_rank` repeats `narrative_home`'s ordering
+      key. The tests repeat the forbidden-import lists
+      (tests/contracts/test_import_scan.py and
+      packages/earnings-themes/tests/test_import_boundaries.py), the AST walkers,
+      and the foreign-mask helpers (test_extraction_run.py's `foreign_mask` and
+      test_anchoring.py's `remask`). anchoring.py is Stage 6's frozen module, so
+      plan 12 copied rather than refactored. Both copies call core's
+      `validate_span`, so a drift could change a reason or an ID but cannot
+      weaken exactness. Size: plan. Done when: anchoring's freeze lifts and each
+      pair shares one definition, with the suites unchanged.
+- [ ] Enforce the extraction records' invariants (plan 12's pre-flight F5, its
+      review's I3-2 and M3-1 to M3-3, and its final review's m3; deferred by the
+      user). In packages/earnings-themes/src/earnings_themes/extraction/records.py:
+      `WindowRecord` checks neither `end > start` nor its `window_id`'s format,
+      though docs/data-dictionary.md documents `end` as `int > start`; no check
+      covers `Claim.claim_id`'s format, `attempts` against `requests`,
+      `unreported <= requests`, or `DocumentRecord.windows_failed <= windows`;
+      `_reason_when_failed` repeats in `Visit` and `WindowRecord`, and only
+      `Visit`'s is tested; and the `min_length=1` on `Claim.quote_ids` and
+      `WindowRecord.unit_ids` is untested. New validators shift the test counts,
+      so they wait. Size: plan. Done when: the validators land with tests, before
+      Stage 10 reads a stored run back.
+- [ ] Make the cache and the store safe for concurrent workers (plan 12's
+      review's M5-2, M5-3, M8-1, and M8-2; deferred by the user).
+      packages/earnings-themes/src/earnings_themes/extraction/adapters.py's
+      `AdapterError` does not pickle (`super().__init__(problem.value)`).
+      cache.py's `.partial` name is per key, so two writers of one key collide,
+      and a stored entry keeps `reply.cached` as given. store.py's
+      check-then-rename gives a concurrent writer an `OSError` rather than the
+      documented `FileExistsError`, and its run directory's 0700 mode, kept from
+      `mkdtemp`, is undocumented. One process runs today, so none bites. Size:
+      plan. Done when: Stage 15's orchestration lands its workers with these
+      fixed or ruled out.
+- [ ] Widen the default tests' socket guard (plan 12's review's M7-1; deferred by
+      the user). packages/earnings-themes/tests/conftest.py's `no_network`
+      patches six entries, the connections and the forward lookups. A send
+      without a connection, a reverse lookup, a name imported from `socket`
+      before the patch, and a socket opened in C or another process pass
+      unguarded. The guard is opt-in, and its own test exercises 2 of the 6
+      entries; its docstring has said so since `76fa5a4`. Size: plan. Revisit
+      if: a default test needs isolation beyond the scripted runs, or a library
+      under test opens a socket another way.
+- [ ] Harden the import scans (plan 12's review's M2-1, M9-3, M2-2, and M2-6;
+      deferred by the user).
+      packages/earnings-themes/tests/test_import_boundaries.py's
+      `extraction_imports` and tests/contracts/test_import_scan.py's themes scans
+      skip relative imports (`node.level == 0`); `retrieval_imports` reports a
+      line without its file; and `themes_network_imports` has no files-scanned
+      floor and lists clients by name. No source module uses a relative import
+      today. Size: quick-fix. Revisit if: a module under
+      packages/earnings-themes/src adopts a relative import.
+- [ ] Close plan 12's test gaps (its review's M1-2, M1-3, M2-3, M3-5, M4-2, M4-4,
+      M5-4, M6-1, M6-2, M6-5, M7-2 to M7-4, M8-7, M8-8, M9-2, M10-2, and M10-3;
+      deferred by the user). Under packages/earnings-themes/tests:
+      test_extraction_windows.py's never-split check passes by construction, and
+      its label check compares keys only; the reversed-span validator is
+      unexercised; the drafting-module guard was never seen red against a real
+      drafting module; `ExtractionRejection`'s repr IDs are unpinned; the
+      prompt template's two section guards and a repeated heading are untested,
+      and a test pins pydantic's error order; no reply-carrying `AdapterError`
+      passes through `CachedAdapter`; P12-6's resend is pinned for one problem
+      only, and ES20's first refusal is not discriminated; a test pins
+      pydantic-core's JSON wording; the cross-document token carry, the mask
+      check's `doc_id` half, and a refused bundle through `extract_run` are
+      unpinned; no test reads another schema version's row, and two sentinel
+      cases do not pin the refused path; the model-mismatch test does not check
+      that the refused reply rides on the error; and two injection tests have
+      teeth in one case only. Size: plan. Done when: a test-hardening pass closes
+      them, or records why one is dropped.
+- [ ] Decide whether a run survives an error that is not an `AdapterError` (plan
+      12's Task 7 decision and its final review's m2; deferred by the user).
+      packages/earnings-themes/src/earnings_themes/extraction/extract.py catches
+      only `AdapterError`, and run.py has no handler. So a cached entry that does
+      not read (`RecordError` or `ValueError` from cache.py, `UnicodeDecodeError`
+      from `read_json`) ends the run with no `RunRecord`, and the spend of the
+      earlier attempts goes unrecorded. Run metadata is validated only when the
+      `RunRecord` is built, after every dispatch. Failing loud matches the repo's
+      repair-by-hand stance, accepted replies stay cached, and `extract_window`
+      and `extract_run` say so since `76fa5a4`. A recorded outcome would be a new
+      `ExtractionProblem`, a schema change. Size: design. Revisit if: Stage 10 or
+      11 needs a partial run record after such an error.
+- [ ] Decide whether the wording guard scans Python sources (plan 12's Task 10
+      review; deferred by the user). tests/integration/test_stage6_wording.py's
+      `STAGE6` globs cover the committed Stage 6 files and `prompts/**/*.md`, but
+      no `.py` file, so synthetic.py's injection document and the test strings
+      are never checked against pilot text. They are invented, and the Task 10
+      reviewer's 40-character check against Stage 1's fixtures found no match.
+      Widening the guard to `.py` would sweep in the tests and the guard itself.
+      Size: design. Revisit if: a test or synthetic string is ever derived from
+      release text.
+- [ ] Let earnings-themes' tests collect without httpx (plan 12's pre-flight F3;
+      deferred by the user). tests/contracts/test_data_dictionary.py and
+      packages/earnings-themes/tests/test_extraction_local.py,
+      test_extraction_injection.py, and test_extraction_live.py import
+      `earnings_themes.extraction.local`, which imports httpx. The default suite
+      finds httpx through earnings-ingestion's dependencies, not themes'
+      `local-model` extra, so a themes-only environment would fail at
+      collection. Size: quick-fix. Done when: those modules `importorskip` httpx,
+      or a themes-only run is shown to pass.
+- [ ] Keep a refused map key out of a field path (plan 12's review's M8-9;
+      deferred by the user).
+      packages/earnings-themes/src/earnings_themes/records.py's `describe`,
+      Stage 6's frozen code, keeps a dictionary key in the field path when that
+      key's value is refused, so a corrupted run.json can echo a key of
+      `RunRecord.documents`, `rejections_by_reason`, or `software`. Those keys
+      are code-written document IDs, reason values, and software names, never
+      release text. Size: quick-fix. Revisit if: a `RunRecord` map key can hold
+      model or release text, or Stage 6's freeze lifts.
+- [ ] Keep the live test's failure output to IDs and counts (plan 12's review's
+      M9-4; deferred by the user).
+      packages/earnings-themes/tests/test_extraction_live.py's assertions over
+      the stored run would print records, Stage 1 text and the model's claims,
+      on a failure. It runs only over a Stage 1 fixture, and its one run at the
+      gate passed. Size: quick-fix. Revisit if: the live test, or one like it,
+      runs over pilot text.
+- [ ] Check the block rule against transcripts (plan 12's review's M1-5;
+      deferred by the user).
+      packages/earnings-themes/src/earnings_themes/extraction/units.py's
+      `block_of` returns any non-sentence narrative ancestor, a section, turn, or
+      heading included, not only a paragraph, list item, or footnote, and
+      windows.py assumes a block's units are contiguous. walker-1's releases
+      never interleave blocks, and test_extraction_windows.py would catch it on
+      the fixtures. Size: design. Revisit if: transcripts add speaker turns or
+      sections as blocks.

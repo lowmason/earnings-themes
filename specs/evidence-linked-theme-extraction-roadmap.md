@@ -185,7 +185,7 @@ and Stage 7's "only — not Stage 5" now covers its tests and Exit alone, since 
 gold reaches it through Stage 5's pilot documents. Stages 10 and 13 to 16 are
 re-validated unchanged.
 
-Amended 2026-10-04 by Stage 7's spec, `specs/evidence-selection-and-verification.md`,
+Amended 2026-10-04 by Stage 7's spec, `specs/completed/evidence-selection-and-verification.md`,
 approved the same day. It amends the handoff Stage 7 receives from Stages 3 and 6 at
 two points, and Stage 7's Consumes line now names both. ES9 excepts a transparent
 container from the rule that no `other` element is narrative: one with children and no

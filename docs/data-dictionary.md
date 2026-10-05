@@ -2204,3 +2204,319 @@ in no partition (GS10), though it carries the pin, as every Stage 6 record does.
   document's text (GS13).
 - **File names.** A file named for an event takes the event ID with its colon as an
   underscore, `<event>`; the ID inside the file is unchanged.
+
+## earnings-themes extraction records, schema version 1
+
+`earnings_themes.extraction` holds Stage 7's extractor (the Stage 7 spec,
+specs/completed/evidence-selection-and-verification.md). Every model is strict, frozen, and
+refuses unknown fields. Each stored record carries `schema_version`
+(`earnings_themes.extraction.records.EXTRACTION_SCHEMA_VERSION`), apart from the
+themes records' version, so an extraction change never re-versions the gold or the
+codebook (ES22). A run is written only to a directory its caller supplies, never to
+a committed file. A rejection's `detail` and the reply's labels may quote a
+document, so they stay local, and a refusal prints as its reason and IDs alone
+(GS13).
+
+`write_run` (`earnings_themes.extraction.store`) stores a run in a new directory:
+`run.json`, the `RunRecord`, and one Parquet file per record kind, written through
+Polars under an explicit schema: `documents.parquet` (`DocumentRecord`),
+`windows.parquet` (`WindowRecord`), `visits.parquet` (`Visit`), `quotes.parquet`
+(`Quote`), `claims.parquet` (`Claim`), and `rejections.parquet`
+(`ExtractionRejection`). Each column is a field, in the model's order: an enum is
+its value, a tuple a list, and a nested `VerifiedSpan` or `Rejection` a struct of
+its fields.
+
+### `ExtractionProblem`
+
+The extractor's own refusal reasons; a span check's reason is earnings-core's
+`RejectionReason`.
+
+| Value | Meaning |
+| --- | --- |
+| `malformed_reply` | The reply is not JSON, or breaks the reply's schema |
+| `tool_call_refused` | The reply carries a tool call, though no tool exists (R14.7) |
+| `model_mismatch` | The reply names a model other than the configured one, or none |
+| `transport_error` | The reply never arrived |
+| `replay_miss` | Replay found no stored reply, and called nothing |
+| `budget_exhausted` | A ceiling stopped the dispatch (ES21) |
+| `unknown_label` | A label names no unit of the window |
+| `duplicate_label` | A candidate repeats a label |
+| `blank_claim` | A claim holds no non-space character |
+| `claim_too_long` | A claim is longer than the policy's claim limit |
+
+### `WindowOutcome`
+
+| Value | Meaning |
+| --- | --- |
+| `completed` | At least one attempt brought a usable reply |
+| `failed` | No attempt did |
+
+### `DocumentOutcome`
+
+R1.4's words for a document's extraction.
+
+| Value | Meaning |
+| --- | --- |
+| `completed` | Every window completed, or the document has none |
+| `partial` | Some windows failed |
+| `failed` | Every window failed, or `bundle_problems` refused the document |
+
+### `Parameters`
+
+A request's parameters. The defaults are provisional.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `temperature` | float | Sampling temperature; default 0 |
+| `seed` | int | The sampling seed; default 0 |
+| `max_tokens` | int ≥ 1 | The reply's token limit; default 2048 |
+| `structured` | bool | Whether to ask for a JSON-schema response format (ES19); default true |
+
+### `AdapterIdentity`
+
+Who answers a request, as the cache key and the run record name it (R14.6).
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `adapter_kind` | string | `scripted` for the fake, `local` for the local adapter |
+| `model_id` | string | The model, as its server names it |
+| `weights_sha256` | 64 lowercase hex or null | The weights file's SHA-256; null for a fake |
+| `runtime` | string or null | The serving runtime's name |
+| `runtime_version` | string or null | Its version |
+
+### `ExtractionPolicy`
+
+How a run extracts. Each value is provisional, not a quality threshold.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `parameters` | `Parameters` | Every request's parameters |
+| `window_budget` | int ≥ 1 or null | Characters of unit text per window, default 4000; null packs one window per document (ES13) |
+| `claim_limit` | int ≥ 1 | The longest claim, in characters; default 500 |
+
+### `Ceilings`
+
+A run's ceilings, each passed explicitly, none with a default (ES21; A §691).
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `requests_per_document` | int ≥ 1 | Requests one document may send |
+| `requests_per_run` | int ≥ 1 | Requests the run may send |
+| `tokens_per_run` | int ≥ 1 | Reported tokens the run may spend |
+
+### `RunConfiguration`
+
+What every request of a run shares: the key components common to the run (R14.6).
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `identity` | `AdapterIdentity` | Who answers |
+| `policy` | `ExtractionPolicy` | How the run extracts |
+| `ceilings` | `Ceilings` | What it may spend |
+| `prompt_sha256` | 64 lowercase hex | SHA-256 of the prompt template's UTF-8 bytes |
+| `reply_schema_sha256` | 64 lowercase hex | SHA-256 of the reply schema's canonical JSON |
+| `extractor_version` | string | `pointer-traversal/1`: the unit rule, the planner, the labels, the reply contract, and the retry policy |
+| `validator_version` | string | earnings-core's `VALIDATOR_VERSION` |
+| `codebook_hash` | 64 lowercase hex or null | Null under codebook-free extraction (ES11) |
+
+### `Quote`
+
+One cited unit, verified exactly (R6.1): `quotes.parquet`.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Extraction record schema version |
+| `quote_id` | string | `q-<start>-<end>`, unique together with the span's `doc_id`; the same unit keeps it in every run on the same document version (R9.9) |
+| `span` | `VerifiedSpan` | The unit's span and text, as `validate_span` returned it |
+| `mask_ids` | tuple of string | The boilerplate masks over it, each `<category>-<start>-<end>` |
+
+### `Claim`
+
+A candidate that verified: `claims.parquet`. It carries no theme (ES11).
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Extraction record schema version |
+| `claim_id` | string | `c-<window start>-<window end>-<attempt>-<index>`, from its window, attempt, and index in the reply; unique together with `doc_id` |
+| `doc_id` | string | Its document |
+| `window_id` | string | Its window |
+| `attempt` | int ≥ 1 | The attempt whose reply held it |
+| `claim` | string | The model's words |
+| `quote_ids` | tuple of string, at least one | The quotes it rests on, in its labels' order |
+
+### `ExtractionRejection`
+
+A refusal and its subject: `rejections.parquet`. It holds exactly one of
+`rejection` and `problem` (ES6).
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Extraction record schema version |
+| `doc_id` | string | Its document |
+| `window_id` | string or null | Its window; null for a document `bundle_problems` refused |
+| `attempt` | int ≥ 1 or null | Its attempt |
+| `candidate_index` | int ≥ 0 or null | Its candidate's index in the reply; null for a reply or a dispatch |
+| `labels` | tuple of string | The candidate's labels, as the reply gave them |
+| `element_ids` | tuple of string | The elements its known labels name |
+| `rejection` | `Rejection` or null | From verification, or one per reason `bundle_problems` reported |
+| `problem` | `ExtractionProblem` or null | The extractor's own reason |
+| `detail` | string | A problem's field paths, never a value |
+
+### `Visit`
+
+One unit's visit, R10.1's coverage evidence: `visits.parquet`.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Extraction record schema version |
+| `doc_id` | string | Its document |
+| `element_id` | string | The unit |
+| `window_id` | string | The window it lies in |
+| `outcome` | `WindowOutcome` | Its window's outcome |
+| `reason` | `ExtractionProblem` or null | Why its window failed; exactly for `failed` |
+
+### `WindowRecord`
+
+One window, its attempts, and what it spent: `windows.parquet`.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Extraction record schema version |
+| `doc_id` | string | Its document |
+| `window_id` | string | `w-<start>-<end>` |
+| `start` | int ≥ 0 | Its first unit's start |
+| `end` | int > `start` | Its last unit's end |
+| `unit_ids` | tuple of string | Its units in label order: `U1` names the first |
+| `context_id` | string or null | The heading shown before it, unlabeled and not quotable |
+| `attempts` | int ≥ 0 | Dispatched attempts: requests, cache hits, and replay misses |
+| `outcome` | `WindowOutcome` | Whether an attempt brought a usable reply |
+| `reason` | `ExtractionProblem` or null | Its last attempt's problem; exactly for `failed` |
+| `requests` | int ≥ 0 | Requests sent; a cache hit or a replay miss is none |
+| `cache_hits` | int ≥ 0 | Replies the cache returned |
+| `prompt_tokens` | int ≥ 0 | Prompt tokens its requests' replies reported |
+| `completion_tokens` | int ≥ 0 | Completion tokens they reported |
+| `unreported` | int ≥ 0 | Requests whose reply reported no usage |
+| `latency_ms` | int ≥ 0 | Its requests' latency, summed |
+| `exhausted` | bool | Whether a ceiling stopped one of its dispatches |
+
+### `DocumentRecord`
+
+One document's outcome and counts: `documents.parquet`.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Extraction record schema version |
+| `doc_id` | string | The document |
+| `canonical_hash` | 64 lowercase hex | Its canonical hash |
+| `outcome` | `DocumentOutcome` | R1.4's word for it |
+| `units` | int ≥ 0 | Its units |
+| `windows` | int ≥ 0 | Its windows |
+| `windows_failed` | int ≥ 0 | Its failed windows |
+| `candidates` | int ≥ 0 | Candidates its replies held |
+| `quotes` | int ≥ 0 | Quotes retained |
+| `claims` | int ≥ 0 | Claims retained |
+| `rejections` | int ≥ 0 | Its rejections |
+
+### `RunRecord`
+
+One run: `run.json`.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Extraction record schema version |
+| `run_id` | ID part | The caller's ID for the run |
+| `started_at` | aware datetime | When the caller started it |
+| `configuration` | `RunConfiguration` | What every request shared |
+| `configuration_hash` | 64 lowercase hex | SHA-256 of the configuration's canonical JSON |
+| `documents` | map of `doc_id` to 64 lowercase hex | Each document and its canonical hash |
+| `units` | int ≥ 0 | Units over every document |
+| `windows` | int ≥ 0 | Windows |
+| `candidates` | int ≥ 0 | Candidates the replies held |
+| `quotes` | int ≥ 0 | Quotes retained |
+| `claims` | int ≥ 0 | Claims retained |
+| `rejections_by_reason` | map of reason to int ≥ 1 | Rejections, by `RejectionReason` or `ExtractionProblem` value |
+| `requests` | int ≥ 0 | Requests sent |
+| `cache_hits` | int ≥ 0 | Replies the cache returned |
+| `prompt_tokens` | int ≥ 0 | Prompt tokens reported |
+| `completion_tokens` | int ≥ 0 | Completion tokens reported |
+| `unreported` | int ≥ 0 | Requests whose reply reported no usage, which only the request ceilings bind |
+| `exhausted` | bool | Whether any ceiling stopped a dispatch |
+| `software` | map of string to string | The software identity the caller passes |
+| `billable_cost` | `"none, self-hosted"` | No billable inference (R14.1) |
+| `exactness_rate` | float or null | 1.0 over the retained quotes, each verified; null when no quote is retained (R6.2, R12.8) |
+
+### `Usage`
+
+The token usage a server reports.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `prompt_tokens` | int ≥ 0 | Prompt tokens |
+| `completion_tokens` | int ≥ 0 | Completion tokens |
+
+### `ModelReply`
+
+An adapter's reply, stored raw in the cache.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `text` | string | The reply's text, which the extractor parses and verifies again on every use |
+| `usage` | `Usage` or null | Null when the server reports none |
+| `model` | string or null | The model the server names |
+| `tool_calls` | bool | Whether it carries tool calls; such a reply is refused and never stored |
+| `latency_ms` | int ≥ 0 | The request's latency |
+| `cached` | bool | Whether the cache returned it; false in the stored entry |
+
+### `CacheKey`
+
+One field per R14.6 component; the cache file is named by its SHA-256.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `doc_id` | string | The window's document |
+| `canonical_hash` | 64 lowercase hex | Its canonical hash |
+| `window_id` | string | The window |
+| `unit_ids` | tuple of string | Its units' element IDs, in label order |
+| `adapter_kind` | string | From `AdapterIdentity` |
+| `model_id` | string | From `AdapterIdentity` |
+| `weights_sha256` | 64 lowercase hex or null | From `AdapterIdentity` |
+| `runtime` | string or null | From `AdapterIdentity` |
+| `runtime_version` | string or null | From `AdapterIdentity` |
+| `structured` | bool | From `Parameters` |
+| `temperature` | float | From `Parameters` |
+| `seed` | int | From `Parameters` |
+| `max_tokens` | int ≥ 1 | From `Parameters` |
+| `window_budget` | int ≥ 1 or null | From `ExtractionPolicy` |
+| `claim_limit` | int ≥ 1 | From `ExtractionPolicy` |
+| `prompt_sha256` | 64 lowercase hex | SHA-256 of the template's UTF-8 bytes |
+| `reply_schema_sha256` | 64 lowercase hex | SHA-256 of the reply schema's canonical JSON |
+| `request_sha256` | 64 lowercase hex | SHA-256 of the request's messages, the exact text the model is sent: the window's text, any feedback, and so the attempt |
+| `extractor_version` | string | `pointer-traversal/1` |
+| `validator_version` | string | earnings-core's `VALIDATOR_VERSION` |
+| `codebook_hash` | 64 lowercase hex or null | Null under codebook-free extraction (ES11) |
+
+### `CacheEntry`
+
+One cache file, `<SHA-256 of the key>.json`, written atomically in `live` mode under
+a directory the caller supplies.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Extraction record schema version |
+| `key` | `CacheKey` | Its key, which a hit must equal |
+| `reply` | `ModelReply` | The raw reply |
+
+### `LocalModelConfig`
+
+The local adapter's endpoint and identity (`earnings_themes.extraction.local`), read
+from `config/models/local-model.toml`, which ADR 0004 records at plan B's gate.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `base_url` | string | The server's OpenAI-compatible root; the adapter refuses any scheme but http or https and any host but 127.0.0.1, ::1, or localhost (R14.1), and a URL with credentials, a port that is not a number from 0 to 65535, surrounding whitespace or an ASCII control character, or one that does not parse; no refusal names any part of the URL |
+| `model_id` | string | The model the server names in each reply |
+| `weights_sha256` | 64 lowercase hex | The weights file's SHA-256 |
+| `runtime` | string | The serving runtime's name |
+| `runtime_version` | string | Its version |
+| `structured` | bool | Whether the runtime honors a strict JSON-schema `response_format`; a run sets `Parameters.structured` from it (ES19); default true |
+| `timeout_s` | float > 0 | Seconds per request; default 300 |

@@ -1,7 +1,8 @@
 """docs/data-dictionary.md documents every field and value of the core contracts
 and of the ingestion records: the canonicalizer's, the capture's, layout-1's, the
 retrieval metadata, the cohort's records and curated files, and Stage 5's event,
-pilot, processing-state, and coverage records; and earnings-themes' Stage 6 records.
+pilot, processing-state, and coverage records; and earnings-themes' Stage 6 records
+and Stage 7's extraction records.
 
 AGENTS.md §191: document public interfaces and update the data dictionary in the
 same change. A contract that gains, loses, or renames a field fails here.
@@ -24,6 +25,8 @@ from earnings_ingestion.fetch import records as fetch
 from earnings_themes import annotation, codebook, gold, problems, split
 from earnings_themes import records as themes
 from earnings_themes.anchoring import SpanPointer
+from earnings_themes.extraction import adapters, cache, local
+from earnings_themes.extraction import records as extraction
 from pydantic import BaseModel
 
 DICTIONARY = Path(__file__).resolve().parents[2] / "docs" / "data-dictionary.md"
@@ -143,6 +146,23 @@ MODELS = [
     annotation.GoldDraft,
     annotation.FixtureDraft,
     annotation.CuratedDraft,
+    extraction.Parameters,
+    extraction.AdapterIdentity,
+    extraction.ExtractionPolicy,
+    extraction.Ceilings,
+    extraction.RunConfiguration,
+    extraction.Quote,
+    extraction.Claim,
+    extraction.ExtractionRejection,
+    extraction.Visit,
+    extraction.WindowRecord,
+    extraction.DocumentRecord,
+    extraction.RunRecord,
+    adapters.Usage,
+    adapters.ModelReply,
+    cache.CacheKey,
+    cache.CacheEntry,
+    local.LocalModelConfig,
 ]
 ENUMS = [
     core.RightsStatus,
@@ -185,6 +205,9 @@ ENUMS = [
     gold.Support,
     gold.ReleaseLabel,
     gold.NegativeKind,
+    extraction.ExtractionProblem,
+    extraction.WindowOutcome,
+    extraction.DocumentOutcome,
 ]
 
 
@@ -218,4 +241,8 @@ def test_the_documented_versions_are_the_packages() -> None:
     assert (
         f"## earnings-themes records, schema version {themes.THEMES_SCHEMA_VERSION}\n"
         in text
+    )
+    assert (
+        f"## earnings-themes extraction records, schema version"
+        f" {extraction.EXTRACTION_SCHEMA_VERSION}\n" in text
     )
