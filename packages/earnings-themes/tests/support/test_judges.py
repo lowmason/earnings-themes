@@ -340,3 +340,38 @@ def test_binding_unexpected_failure_has_safe_type_diagnostic(
     assert "INVENTED_PRIVATE" not in (
         str(caught.value) + repr(caught.value) + caught.value.diagnostic
     )
+
+
+@pytest.mark.parametrize("callback", ["transport", "tokenizer"])
+@pytest.mark.parametrize("chain", ["cause", "context"])
+def test_binding_preserves_safe_error_without_printable_chain(
+    case, policy, local_identity, callback, chain
+):
+    import traceback
+
+    safe_error = SupportError("unexpected_error")
+    safe_error.diagnostic = "RuntimeError"
+
+    def fail(request):
+        try:
+            raise RuntimeError("INVENTED_PRIVATE_CAUSE")
+        except RuntimeError as unsafe:
+            if chain == "cause":
+                raise safe_error from unsafe
+            raise safe_error
+
+    transport = Transport(transport_identity())
+    if callback == "transport":
+        transport.complete = fail
+    binding = judges.JudgeBinding(
+        local_identity, transport, fail if callback == "tokenizer" else lambda r: 1
+    )
+    request = render_judge(resolved_case(*case), policy, "evidence_first")
+    with pytest.raises(SupportError, match="^unexpected_error$") as caught:
+        binding.complete(request)
+    assert caught.value is safe_error
+    assert caught.value.diagnostic == "RuntimeError"
+    assert caught.value.__suppress_context__
+    assert caught.value.__cause__ is None
+    rendered = "".join(traceback.format_exception(caught.value))
+    assert "INVENTED_PRIVATE_CAUSE" not in rendered

@@ -167,8 +167,8 @@ class JudgeBinding:
     def count_tokens(self, request: JudgeRequest) -> int:
         try:
             tokens = self._token_counter(_validated(request, JudgeRequest))
-        except SupportError:
-            raise
+        except SupportError as error:
+            raise error from None
         except Exception as error:  # noqa: BLE001 - tokenizer diagnostics stay local
             raise unexpected_error(error) from None
         if type(tokens) is not int or tokens < 0:
@@ -188,8 +188,8 @@ class JudgeBinding:
             return self._transport.complete(request)
         except AdapterError as error:
             raise SupportTransportError(error.problem.value, error.reply) from None
-        except SupportError:
-            raise
+        except SupportError as error:
+            raise error from None
         except Exception as error:  # noqa: BLE001 - transport diagnostics stay local
             raise unexpected_error(error) from None
 
