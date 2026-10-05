@@ -3309,3 +3309,165 @@ encoding; `score` returns raw finite probabilities with identity/hash/latency/to
 or fixed unavailable reasons. There is no class decision, generation, aggregation,
 cutoff, wrapper chunking or alternative fallback. Configuration/runtime setup errors
 have fixed `model_mismatch`; inference errors return fixed `scorer_failed`.
+
+## earnings-themes coding records, schema version 1
+
+The Stage 9 deductive contracts (`earnings_themes.coding.records`) have coding
+policy version `"deductive-coding/1"` (`earnings_themes.coding.records.CODING_VERSION`).
+Core schema 2, validator `"3"`, Stage 6 records, extraction schema 1 and
+`"pointer-traversal/1"`, support schema 1 and `"semantic-support/1"` are unchanged.
+All coding parts are frozen, closed, strict Pydantic contracts. Integer literals,
+attempts, offsets, ceilings and counts reject bools, floats and numeric strings.
+`CodingRecord` is the separate base for persisted coding schema 1 records.
+
+`checked(value, model)` reparses JSON mode at untrusted boundaries. For a supplied
+Part, it first validates the Python-mode data, because JSON serialization can
+coerce an invalid copied boolean to an integer. Both dumps suppress serializer
+warnings, which can contain input text. Copied and constructed instances receive
+the same invariant checks as fresh inputs. Boundary errors are fixed
+`CodingError("malformed_record")` with source-bearing exception chaining suppressed.
+`CodingError` admits only exact string values in the union of support/core reasons
+and CodingProblem; unknown values become `unexpected_error` without printing the
+value. The reusable reason-field guard enforces that same vocabulary.
+
+Printable coding parts expose only their class and content SHA-256. Local JSON
+intentionally retains local attributes and prompt data and must not be logged.
+Tests use invented text and identifiers; these contracts do not open pilot text,
+gold, codebook examples or source artifacts. The contracts introduce no numeric
+acceptance policy. Topic, sentiment, direction and event type are optional
+model-derived attributes beside the unchanged claim, with no quality evaluation
+implied. Theme IDs alone represent themes and subthemes; hierarchy is resolved
+from the approved definition's parent_id in a later consuming boundary.
+
+### `CodingPart`
+
+Fieldless strict immutable base for new coding parts, with hash-only diagnostics,
+strict integer-literal guards and fixed reason validation. It inherits Part,
+separately from support SafePart so coding reasons retain their own vocabulary.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+
+### `CodingRecord`
+
+Base for persisted coding records. Integer schema literals receive validation
+before Pydantic can accept boolean or floating-point equivalents.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | 1 | Strict literal integer coding schema version, default 1 |
+
+### `CodingAttributes`
+
+Optional semantic annotations, separate from closed theme identifiers. No
+importance, rank, cluster label, acceptance, claim or replacement evidence field
+exists. Null means no supplied annotation, and the default for every field is null.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `topic` | nonblank string or null | Local model-derived topic, excluded from printable field output |
+| `sentiment` | positive, negative, neutral, mixed, unknown or null | Optional categorical sentiment; never an importance score |
+| `direction` | increase, decrease, unchanged, mixed, unknown or null | Optional categorical direction beside the claim |
+| `event_type` | nonblank string or null | Local model-derived event type, excluded from printable field output |
+
+### `CodingReply`
+
+Typed multi-label classifier response. Theme IDs must be distinct and nonblank;
+an empty tuple is allowed. Frozen-codebook membership and hierarchy checks belong
+to the later reply-consuming boundary. Extra fields cannot request tools, rewrite
+definitions or evidence, create themes, or declare acceptance.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `theme_ids` | tuple[nonblank string, …] | Distinct proposed theme identifiers, preserving caller order |
+| `attributes` | CodingAttributes | Separate optional semantic annotations |
+
+### `CodingPolicy`
+
+Versioned classifier prompt and generation settings. Exactly two attempts are
+permitted provisionally; this retry ceiling does not decide semantic acceptance.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `coding_version` | deductive-coding/1 | Literal coding policy version, default deductive-coding/1 |
+| `prompt_text` | nonblank string | Caller-supplied local prompt, excluded from printable field output |
+| `prompt_hash` | SHA-256 | Prompt content hash |
+| `parameters` | Parameters | Existing frozen extraction generation Parameters, unchanged |
+| `max_attempts` | 2 | Strict literal integer 2, provisional retry ceiling |
+
+### `CodingCeilings`
+
+Explicit caller-supplied nonnegative ceilings, with no numeric defaults. Zero is
+allowed. No ceiling is an acceptance threshold or production inference budget.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `requests_per_claim` | strict int ≥ 0 | Classifier request ceiling for one claim, including retries |
+| `requests_per_document` | strict int ≥ 0 | Classifier request ceiling for one document |
+| `requests_per_run` | strict int ≥ 0 | Classifier request ceiling for one run |
+| `tokens_per_document` | strict int ≥ 0 | Classifier token ceiling for one document |
+| `tokens_per_run` | strict int ≥ 0 | Classifier token ceiling for one run |
+
+### `PolicyReference`
+
+Explicit acceptance-policy provenance bound to codebook ID, version and content
+hash, and the complete support configuration. A calibrated policy requires a
+calibration reference; a fixture policy requires null. No reference implements a
+threshold or approves a production policy.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `policy_id` | nonblank string | Explicit external acceptance-policy identifier |
+| `policy_hash` | SHA-256 | External policy content hash |
+| `kind` | fixture, calibrated | Fixture-only or externally calibrated policy provenance |
+| `codebook` | CodebookReference | Frozen codebook identifier, version and content hash |
+| `support_configuration_hash` | SHA-256 | Exact support configuration to which the policy applies |
+| `calibration_reference` | SHA-256 or null | Calibration artifact hash, present exactly for calibrated kind |
+
+### `PolicyVote`
+
+External policy decision and supporting quote identifiers. Accept requires at
+least one distinct quote ID; reject and review require an empty tuple. Subsequent
+consuming gates establish evidence validity and supporting contributions; a
+well-formed vote alone cannot establish acceptance.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `action` | accept, reject, review | Explicit external policy decision |
+| `supporting_quote_ids` | tuple[nonblank string, …] | Distinct original document-scoped quote IDs for accept; otherwise empty, default empty |
+
+### `CodingProblem`
+
+Fixed coding reason vocabulary. It also supplies permitted persisted reason
+strings alongside the unchanged support/core reason vocabulary.
+
+| Value | Meaning |
+| --- | --- |
+| `malformed_record` | Record fails the closed typed coding contract |
+| `malformed_reply` | Classifier response fails its closed reply contract |
+| `invalid_references` | Response or decision contains unusable identifiers |
+| `hierarchy_conflict` | Proposal contains an incompatible ancestor/descendant combination |
+| `input_changed` | Current input differs from its recorded binding |
+| `input_too_long` | Complete rendered input exceeds the explicit adapter limit |
+| `model_mismatch` | Model identity differs from the configured runtime |
+| `tool_call_refused` | Model response requests a tool that coding does not supply |
+| `transport_error` | Classifier transport fails without a usable response |
+| `cache_corrupt` | Cached artifact fails integrity or parsing checks |
+| `replay_miss` | Offline replay has no matching stored response |
+| `requests_exhausted` | Explicit classifier request ceiling prevents dispatch |
+| `tokens_exhausted` | Explicit token ceiling prevents dispatch |
+| `calibration_required` | No externally calibrated acceptance policy is supplied |
+| `policy_mismatch` | External policy bindings differ from the current inputs |
+| `policy_accept` | Explicit external policy requests acceptance, subject to consuming gates |
+| `policy_reject` | Explicit external policy rejects the target |
+| `policy_review` | Explicit external policy requests review |
+| `assessment_refused` | Stage 8 assessment processing refused the target |
+| `assessment_incomplete` | Stage 8 assessment processing lacks required signals |
+| `assessment_flagged` | Stage 8 assessment processing records review flags |
+| `missing_assessment` | Required support assessment is unavailable |
+| `invalid_contribution` | Selected quote lacks the required supporting contribution |
+| `no_theme_fit` | Valid empty proposal finds no theme fit, eligible for novelty review |
+| `mixed_codebook` | Inputs combine incompatible codebook identities or versions |
+| `fixture_policy` | Result uses an explicitly fixture-only acceptance policy |
+| `storage_corrupt` | Stored coding artifact fails integrity or parsing checks |
+| `unexpected_error` | Unknown caller reason or unexpected failure is redacted |

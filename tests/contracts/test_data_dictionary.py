@@ -2,7 +2,7 @@
 and of the ingestion records: the canonicalizer's, the capture's, layout-1's, the
 retrieval metadata, the cohort's records and curated files, and Stage 5's event,
 pilot, processing-state, and coverage records; and earnings-themes' Stage 6 records
-and Stage 7's extraction records.
+and Stages 7–9's extraction, support, and coding records.
 
 AGENTS.md §191: document public interfaces and update the data dictionary in the
 same change. A contract that gains, loses, or renames a field fails here.
@@ -25,6 +25,7 @@ from earnings_ingestion.fetch import records as fetch
 from earnings_themes import annotation, codebook, gold, problems, split
 from earnings_themes import records as themes
 from earnings_themes.anchoring import SpanPointer
+from earnings_themes.coding import records as coding
 from earnings_themes.extraction import adapters, cache, local
 from earnings_themes.extraction import records as extraction
 from earnings_themes.support import judges, metrics, scorers
@@ -199,6 +200,14 @@ MODELS = [
     support.SupportPolicy,
     support.SupportRunRecord,
     LocalScorerConfig,
+    coding.CodingPart,
+    coding.CodingRecord,
+    coding.CodingAttributes,
+    coding.CodingReply,
+    coding.CodingPolicy,
+    coding.CodingCeilings,
+    coding.PolicyReference,
+    coding.PolicyVote,
 ]
 ENUMS = [
     core.RightsStatus,
@@ -249,6 +258,7 @@ ENUMS = [
     support.Presentation,
     support.ReviewStatus,
     support.ReasonCode,
+    coding.CodingProblem,
 ]
 
 
@@ -297,5 +307,17 @@ def test_the_documented_support_versions_are_the_package() -> None:
     )
     assert (
         f'`"{support.SUPPORT_VERSION}"` (`earnings_themes.support.records.SUPPORT_VERSION`)'
+        in text
+    )
+
+
+def test_the_documented_coding_versions_are_the_package() -> None:
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert (
+        f"## earnings-themes coding records, schema version {coding.CODING_SCHEMA_VERSION}\n"
+        in text
+    )
+    assert (
+        f'`"{coding.CODING_VERSION}"` (`earnings_themes.coding.records.CODING_VERSION`)'
         in text
     )
