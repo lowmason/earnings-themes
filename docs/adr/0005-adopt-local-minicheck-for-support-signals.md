@@ -63,7 +63,9 @@ checkpoint inference follows from these runtime checks.
 PyTorch emitted a FutureWarning from `torch/jit/_script.py:1485`:
 `torch.jit.script` is not supported in Python 3.14+ and may break. Please switch to
 `torch.compile` or `torch.export`. The adapter uses eager evaluation and
-`torch.inference_mode`, not JIT. V4 has not established real weight compatibility.
+`torch.inference_mode`, not JIT. V4 has not established real weight compatibility. This warning remains an explicit
+compatibility limitation until the actual primary gate verifies the eager path;
+it alone does not establish an inference defect or justify changing approved pins.
 Lock changes are limited to the extra, new SentencePiece package, required
 Torch2.14.0→2.14.1 and Transformers5.17.0→5.18.0 updates; unrelated pins preserved.
 
@@ -169,6 +171,10 @@ socket connected baseline versus EPERM under this policy. The live test checks a
 unpatched socket syscall for PermissionError before adding socket trip assertions.
 The two offline environment settings and local-only loaders remain mandatory.
 Python socket monkeypatches alone do not establish process-wide network denial.
+The smoke refuses absolute or resolved configuration/model paths containing a
+`data` component before reading or hashing them. A missing supplied config or
+checkpoint visibly skips with V4 pending; an existing invalid/mismatched checkpoint
+fails and is never converted into a missing-checkpoint skip.
 Never run a whole `-m live` suite; SEC tests have independent live dispatch paths.
 
 The required named primary test has not run: no external config or weights were

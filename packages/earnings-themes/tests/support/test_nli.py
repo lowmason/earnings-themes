@@ -327,3 +327,130 @@ def test_optional_runtime_imports_and_real_softmax_when_installed(tmp_path):
     assert float(torch.softmax(torch.tensor([0.0, 2.0]), dim=-1)[1]) == pytest.approx(
         0.880797, abs=1e-6
     )
+
+
+def smoke_environment(monkeypatch):
+    from . import test_nli_live
+
+    class DeniedSocket:
+        def connect(self, *args):
+            raise PermissionError("denied")
+
+        def connect_ex(self, *args):
+            raise PermissionError("denied")
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(test_nli_live.socket, "socket", DeniedSocket)
+    monkeypatch.setenv("HF_HUB_OFFLINE", "1")
+    monkeypatch.setenv("TRANSFORMERS_OFFLINE", "1")
+    return test_nli_live
+
+
+def test_live_missing_weights_visibly_skip(tmp_path, monkeypatch):
+    _, _, _, _, config = fixture(tmp_path)
+    config_path = tmp_path.parent / (tmp_path.name + "-config.json")
+    config_path.write_text(config.model_dump_json(), encoding="utf-8")
+    (tmp_path / "pytorch_model.bin").unlink()
+    smoke = smoke_environment(monkeypatch)
+    monkeypatch.setenv("INVENTED_CONFIG", str(config_path))
+    with pytest.raises(
+        pytest.skip.Exception, match="checkpoint absent; V4 remains pending"
+    ):
+        smoke._local_smoke("INVENTED_CONFIG", "minicheck", monkeypatch)
+
+
+def test_live_invalid_weights_fail_instead_of_skip(tmp_path, monkeypatch):
+    _, _, _, _, config = fixture(tmp_path)
+    config_path = tmp_path.parent / (tmp_path.name + "-config.json")
+    config_path.write_text(config.model_dump_json(), encoding="utf-8")
+    (tmp_path / "pytorch_model.bin").write_bytes(b"changed")
+    smoke = smoke_environment(monkeypatch)
+    monkeypatch.setenv("INVENTED_CONFIG", str(config_path))
+    with pytest.raises(SupportError, match="model_mismatch"):
+        smoke._local_smoke("INVENTED_CONFIG", "minicheck", monkeypatch)
+
+
+@pytest.mark.parametrize("resolved", [False, True])
+def test_live_data_config_path_refused_before_read(tmp_path, monkeypatch, resolved):
+    data_path = tmp_path / "data" / "config.json"
+    data_path.parent.mkdir()
+    data_path.write_text("{}", encoding="utf-8")
+    config_path = data_path
+    if resolved:
+        config_path = tmp_path / "linked.json"
+        config_path.symlink_to(data_path)
+    smoke = smoke_environment(monkeypatch)
+    monkeypatch.setenv("INVENTED_CONFIG", str(config_path))
+    reads = []
+
+    def refuse_read(path):
+        reads.append(1)
+        raise AssertionError("forbidden_read")
+
+    monkeypatch.setattr(type(config_path), "read_bytes", refuse_read)
+    with pytest.raises(pytest.fail.Exception, match="forbidden_local_path"):
+        smoke._local_smoke("INVENTED_CONFIG", "minicheck", monkeypatch)
+    assert reads == []
+
+
+@pytest.mark.parametrize("resolved", [False, True])
+def test_live_data_model_directory_refused_before_read_or_constructor(
+    tmp_path, monkeypatch, resolved
+):
+    _, _, _, _, config = fixture(tmp_path)
+    data_path = tmp_path / "data" / "checkpoint"
+    data_path.mkdir(parents=True)
+    model_path = data_path
+    if resolved:
+        model_path = tmp_path / "linked-checkpoint"
+        model_path.symlink_to(data_path, target_is_directory=True)
+    config_path = tmp_path / "external-config.json"
+    payload = config.model_dump(mode="json")
+    payload["local_directory"] = str(model_path)
+    config_path.write_text(json.dumps(payload), encoding="utf-8")
+    smoke = smoke_environment(monkeypatch)
+    monkeypatch.setenv("INVENTED_CONFIG", str(config_path))
+    original_read = type(config_path).read_bytes
+    reads = []
+    constructs = []
+
+    def checked_read(path):
+        reads.append(path)
+        assert path == config_path
+        return original_read(path)
+
+    def refuse_constructor(*args, **kwargs):
+        constructs.append(1)
+        raise AssertionError("constructor_called")
+
+    monkeypatch.setattr(type(config_path), "read_bytes", checked_read)
+    monkeypatch.setattr(api(), "MiniCheckScorer", refuse_constructor)
+    with pytest.raises(pytest.fail.Exception, match="forbidden_local_path"):
+        smoke._local_smoke("INVENTED_CONFIG", "minicheck", monkeypatch)
+    assert reads == [config_path] and constructs == []
+
+
+@pytest.mark.parametrize("kind", ["minicheck", "deberta"])
+def test_shared_constructor_gate_refuses_hash_change_for_both_kinds(tmp_path, kind):
+    _, _, _, _, config = fixture(tmp_path, kind=kind)
+    (tmp_path / "config.json").write_bytes(b"changed")
+    with pytest.raises(SupportError, match="model_mismatch"):
+        api()._prepare_config(config, kind)
+
+
+def test_shared_runtime_version_gate_redacts_failures(monkeypatch):
+    module = api()
+    monkeypatch.setattr(module, "version", lambda name: "unapproved")
+    with pytest.raises(SupportError, match="model_mismatch"):
+        module._verify_runtime_versions()
+
+    def failed_version(name):
+        raise RuntimeError("INVENTED_RUNTIME_SENTINEL")
+
+    monkeypatch.setattr(module, "version", failed_version)
+    with pytest.raises(SupportError, match="model_mismatch") as caught:
+        module._verify_runtime_versions()
+    assert "INVENTED_RUNTIME_SENTINEL" not in repr(caught.value)
+    assert caught.value.__suppress_context__

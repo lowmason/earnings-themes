@@ -9,10 +9,44 @@ from earnings_themes.support.records import parse_support
 from earnings_themes.support.scorers import _request
 
 
+def _checked_local_path(value):
+    """Refuse lexical and resolved data components before reading any contents."""
+    path = Path(value)
+    if not path.is_absolute() or "data" in path.parts:
+        pytest.fail("forbidden_local_path", pytrace=False)
+    try:
+        resolved = path.resolve()
+    except (OSError, RuntimeError, ValueError):
+        pytest.fail("forbidden_local_path", pytrace=False)
+    if "data" in resolved.parts:
+        pytest.fail("forbidden_local_path", pytrace=False)
+    return path
+
+
 def _local_smoke(variable, kind, monkeypatch):
     path = os.environ.get(variable)
     if not path:
         pytest.skip("external local model configuration absent; V4 remains pending")
+    config_path = _checked_local_path(path)
+    if not config_path.exists():
+        pytest.skip("external local model configuration absent; V4 remains pending")
+    from earnings_themes.support.nli import (
+        DebertaScorer,
+        LocalScorerConfig,
+        MiniCheckScorer,
+    )
+
+    try:
+        import json
+
+        config = parse_support(json.loads(config_path.read_bytes()), LocalScorerConfig)
+    except Exception:  # noqa: BLE001 - never print external configuration
+        pytest.fail("invalid_local_configuration", pytrace=False)
+    assert config.kind == kind
+    model_path = _checked_local_path(config.local_directory)
+    weight_name = "pytorch_model.bin" if kind == "minicheck" else "model.safetensors"
+    if not model_path.exists() or not (model_path / weight_name).exists():
+        pytest.skip("external local checkpoint absent; V4 remains pending")
     assert os.environ.get("HF_HUB_OFFLINE") == "1"
     assert os.environ.get("TRANSFORMERS_OFFLINE") == "1"
     # An unpatched syscall must fail under the process-level runner before patches.
@@ -32,19 +66,6 @@ def _local_smoke(variable, kind, monkeypatch):
     monkeypatch.setattr(socket.socket, "connect_ex", blocked)
     monkeypatch.setattr(socket, "create_connection", blocked)
     monkeypatch.setattr(socket, "getaddrinfo", blocked)
-    from earnings_themes.support.nli import (
-        DebertaScorer,
-        LocalScorerConfig,
-        MiniCheckScorer,
-    )
-
-    try:
-        import json
-
-        config = parse_support(json.loads(Path(path).read_bytes()), LocalScorerConfig)
-    except Exception:  # noqa: BLE001 - never print external configuration
-        pytest.fail("invalid_local_configuration", pytrace=False)
-    assert config.kind == kind
     scorer = (MiniCheckScorer if kind == "minicheck" else DebertaScorer)(config)
     request = _request(
         "The imaginary workshop sells blue gadgets.", "The gadgets are blue."

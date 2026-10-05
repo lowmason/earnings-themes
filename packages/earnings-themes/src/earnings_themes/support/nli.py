@@ -83,6 +83,29 @@ def _verify_files(config: LocalScorerConfig) -> None:
                 raise SupportError("model_mismatch")
 
 
+def _prepare_config(
+    config: LocalScorerConfig, kind: Literal["minicheck", "deberta"]
+) -> LocalScorerConfig:
+    """Apply the same configuration/file identity gate to either constructor."""
+    try:
+        checked = parse_support(config.model_dump(mode="json"), LocalScorerConfig)
+        if checked.kind != kind:
+            raise SupportError("model_mismatch")
+        _verify_files(checked)
+        return checked
+    except Exception:  # noqa: BLE001 - redact arbitrary configuration/file errors
+        raise SupportError("model_mismatch") from None
+
+
+def _verify_runtime_versions() -> None:
+    """Require the pinned installed runtime before either heavyweight import."""
+    try:
+        if any(version(name) != pin for name, pin in RUNTIME_VERSIONS):
+            raise SupportError("model_mismatch")
+    except Exception:  # noqa: BLE001 - redact arbitrary packaging diagnostics
+        raise SupportError("model_mismatch") from None
+
+
 class _LocalScorer:
     def _initialize(
         self,
@@ -91,11 +114,7 @@ class _LocalScorer:
         kind: Literal["minicheck", "deberta"],
     ) -> None:
         try:
-            self.config = parse_support(
-                config.model_dump(mode="json"), LocalScorerConfig
-            )
-            if self.config.kind != kind:
-                raise SupportError("model_mismatch")
+            self.config = config
             self.torch, tokenizer_loader, model_loader = runtime
             options = {"local_files_only": True, "trust_remote_code": False}
             self.tokenizer = tokenizer_loader(self.config.local_directory, **options)
@@ -235,18 +254,10 @@ class MiniCheckScorer(_LocalScorer):
     def __init__(
         self, config: LocalScorerConfig, *, _runtime: tuple[Any, Any, Any] | None = None
     ) -> None:
-        try:
-            config = parse_support(config.model_dump(mode="json"), LocalScorerConfig)
-            if config.kind != "minicheck":
-                raise SupportError("model_mismatch")
-            _verify_files(config)
-        except Exception:  # noqa: BLE001 - redact arbitrary runtime/file diagnostics
-            raise SupportError("model_mismatch") from None
+        config = _prepare_config(config, "minicheck")
         if _runtime is None:
+            _verify_runtime_versions()
             try:
-                for name, pin in RUNTIME_VERSIONS:
-                    if version(name) != pin:
-                        raise SupportError("model_mismatch")
                 import torch
                 from transformers import AutoTokenizer, T5ForConditionalGeneration
 
@@ -264,18 +275,10 @@ class DebertaScorer(_LocalScorer):
     def __init__(
         self, config: LocalScorerConfig, *, _runtime: tuple[Any, Any, Any] | None = None
     ) -> None:
-        try:
-            config = parse_support(config.model_dump(mode="json"), LocalScorerConfig)
-            if config.kind != "deberta":
-                raise SupportError("model_mismatch")
-            _verify_files(config)
-        except Exception:  # noqa: BLE001 - redact arbitrary runtime/file diagnostics
-            raise SupportError("model_mismatch") from None
+        config = _prepare_config(config, "deberta")
         if _runtime is None:
+            _verify_runtime_versions()
             try:
-                for name, pin in RUNTIME_VERSIONS:
-                    if version(name) != pin:
-                        raise SupportError("model_mismatch")
                 import torch
                 from transformers import (
                     AutoTokenizer,
