@@ -12,7 +12,8 @@ ES22).
   with no theme (ES11).
 - **Rejections.** Each pairs its subject with exactly one of a core ``Rejection`` or
   an extraction problem, so ``Rejection`` gains no field (ES6). Its detail may quote
-  text, so it stays local, and ``str`` of one gives its reason and IDs only (GS13).
+  text, so it stays local, and ``str`` and ``repr`` of one give its reason and IDs
+  only (GS13).
 - **Coverage.** One visit per unit is R10.1's evidence that every eligible element
   was processed.
 - **Configuration.** The adapter's identity, the policy, the ceilings, and the

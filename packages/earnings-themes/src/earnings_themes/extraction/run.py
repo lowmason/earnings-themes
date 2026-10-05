@@ -54,6 +54,9 @@ BUNDLE_PROBLEM = "reported by bundle_problems"
 
 @dataclass(frozen=True)
 class DocumentResult:
+    """One document's outcome: its record, its windows' results, and its own
+    rejections."""
+
     record: DocumentRecord
     windows: tuple[WindowResult, ...] = ()
     rejections: tuple[ExtractionRejection, ...] = ()
@@ -182,7 +185,10 @@ def extract_run(
     started_at: datetime,
     software: Mapping[str, str],
 ) -> RunResult:
-    """Every document in order, under the run's ceilings, with its run record."""
+    """Every document in order, under the run's ceilings, with its run record. An
+    error other than an ``AdapterError`` propagates and ends the run, and no run
+    record is built; under a ``CachedAdapter``, the replies already stored stay, so
+    a rerun replays them."""
     doc_ids = [bundle.document.doc_id for bundle in bundles]
     if len(set(doc_ids)) != len(doc_ids):
         raise ValueError("a run holds each document once")

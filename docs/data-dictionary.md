@@ -2337,7 +2337,7 @@ A candidate that verified: `claims.parquet`. It carries no theme (ES11).
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `schema_version` | `1` | Extraction record schema version |
-| `claim_id` | string | `c-<window start>-<window end>-<attempt>-<index>`, from its window, attempt, and index in the reply |
+| `claim_id` | string | `c-<window start>-<window end>-<attempt>-<index>`, from its window, attempt, and index in the reply; unique together with `doc_id` |
 | `doc_id` | string | Its document |
 | `window_id` | string | Its window |
 | `attempt` | int ≥ 1 | The attempt whose reply held it |

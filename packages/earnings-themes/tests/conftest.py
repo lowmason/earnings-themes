@@ -99,8 +99,11 @@ GUARDED = (
 
 @pytest.fixture
 def no_network(monkeypatch: pytest.MonkeyPatch) -> list[str]:
-    """Every socket connection or name lookup raises, and is recorded first, since a
-    library may swallow the error: a test asserts the list is empty (R14.1)."""
+    """Each of ``GUARDED``'s socket connections and forward name lookups raises, and
+    is recorded first, since a library may swallow the error: a test asserts the
+    list is empty (R14.1). A send without a connection, a reverse lookup, a name
+    imported from ``socket`` before the patch, and a socket opened in C or in
+    another process all pass unguarded."""
     trips: list[str] = []
 
     def blocked(name: str) -> Callable[..., object]:

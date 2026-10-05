@@ -98,6 +98,9 @@ class WindowJob:
 
 @dataclass(frozen=True)
 class WindowResult:
+    """One window's outcome: its record, the claims and quotes it kept, its
+    rejections, one visit per unit, and how many candidates its replies held."""
+
     record: WindowRecord
     claims: tuple[Claim, ...]
     quotes: tuple[Quote, ...]
@@ -205,7 +208,9 @@ def masks_over(bundle: Bundle, span: TextSpan) -> tuple[str, ...]:
 def extract_window(
     job: WindowJob, adapter: ModelAdapter, policy: ExtractionPolicy
 ) -> WindowResult:
-    """One window's claims, quotes, rejections, and visits."""
+    """One window's claims, quotes, rejections, and visits. An ``AdapterError`` is
+    the window's to record; any other error, such as a cached entry that does not
+    read, propagates and ends the run."""
     bundle, window = job.bundle, job.window
     doc_id = bundle.document.doc_id
     labels = window.labels

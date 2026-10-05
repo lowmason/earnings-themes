@@ -13,7 +13,10 @@ every module under each member's ``src/`` with ``ast`` and refuses:
 - a network client (httpx, the SEC client, the polite client, the web client, or the
   cohort's live check, which opens the SEC and web clients itself) in any of Stage 5's
   package modules, since only the CLI opens the client (P6-22). Discovery may import
-  the polite client's ``Fetched`` record, and nothing else from it.
+  the polite client's ``Fetched`` record, and nothing else from it;
+- in earnings-themes, an HTTP client, model SDK, or framework, but the local
+  adapter's httpx; any import of that adapter from another themes module (ES15); and
+  a retrieval, embedding, or fuzzy-matching library in the extractor (R10.2).
 """
 
 import ast
