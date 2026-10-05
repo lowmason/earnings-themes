@@ -122,7 +122,9 @@ to a real label (the Stage 7 spec, §Verification, V11). Stage 9 reuses it."""
 
 def injection_bundle() -> Synthetic:
     """``INJECTION`` as a bundle: a heading, a paragraph of the five sentences, and
-    the spoofing paragraph, which S1 left unsplit. It has no mask."""
+    the spoofing paragraph, which is built without sentences so that one unit holds
+    a line break. S1 would split it, and walker-1 never leaves a line break in a
+    unit; the renderer must flatten one all the same (R14.7). It has no mask."""
     text = "\n".join(INJECTION.values()) + "\n"
     document = CanonicalDocument.create(
         source_document_id="0009990009-25-000001_ex991.htm",
