@@ -2,15 +2,16 @@
 
 import json
 from enum import StrEnum
-from typing import Literal, Self
+from typing import Any, Literal, Self
 
 from earnings_core import digest
 from pydantic import Field, ValidationError, field_validator, model_validator
 
+from earnings_themes.extraction.adapters import Message
 from earnings_themes.extraction.records import Parameters
 from earnings_themes.records import NonBlank, Part, Sha256Hex
 from earnings_themes.support.problems import REASONS as SUPPORT_REASONS
-from earnings_themes.support.records import CodebookReference
+from earnings_themes.support.records import CodebookReference, Target
 
 CODING_SCHEMA_VERSION = 1
 CODING_VERSION = "deductive-coding/1"
@@ -123,6 +124,53 @@ class CodingReply(CodingPart):
         if len(self.theme_ids) != len(set(self.theme_ids)):
             raise ValueError("duplicate_reference")
         return self
+
+
+class CodingSubject(CodingPart):
+    doc_id: NonBlank
+    claim_id: NonBlank
+    input_hash: Sha256Hex
+    codebook: CodebookReference
+    prompt_hash: Sha256Hex
+    schema_hash: Sha256Hex
+    coding_version: Literal["deductive-coding/1"] = CODING_VERSION
+    validator_version: NonBlank
+
+
+class CodingRequest(CodingPart):
+    messages: tuple[Message, ...] = Field(min_length=2, repr=False)
+    reply_schema: dict[str, Any] = Field(repr=False)
+    parameters: Parameters
+    subject: CodingSubject
+
+
+class ProposalRecord(CodingRecord):
+    proposal_id: NonBlank
+    coding_run_id: NonBlank
+    classification_id: NonBlank
+    target: Target
+    input_hash: Sha256Hex
+
+
+class AttributeRecord(CodingRecord):
+    coding_run_id: NonBlank
+    doc_id: NonBlank
+    claim_id: NonBlank
+    input_hash: Sha256Hex
+    attributes: CodingAttributes
+
+
+class NoveltyItem(CodingRecord):
+    novelty_id: NonBlank
+    coding_run_id: NonBlank
+    classification_id: NonBlank
+    source_run_id: NonBlank
+    doc_id: NonBlank
+    claim_id: NonBlank
+    codebook: CodebookReference
+    input_hash: Sha256Hex
+    original_quote_ids: tuple[NonBlank, ...]
+    reason: Literal["no_theme_fit"] = "no_theme_fit"
 
 
 class CodingPolicy(CodingPart):

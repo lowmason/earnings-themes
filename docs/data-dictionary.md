@@ -3337,7 +3337,7 @@ gold, codebook examples or source artifacts. The contracts introduce no numeric
 acceptance policy. Topic, sentiment, direction and event type are optional
 model-derived attributes beside the unchanged claim, with no quality evaluation
 implied. Theme IDs alone represent themes and subthemes; hierarchy is resolved
-from the approved definition's parent_id in a later consuming boundary.
+from the approved definition's parent_id during reply parsing and target resolution.
 
 ### `CodingPart`
 
@@ -3373,8 +3373,8 @@ exists. Null means no supplied annotation, and the default for every field is nu
 ### `CodingReply`
 
 Typed multi-label classifier response. Theme IDs must be distinct and nonblank;
-an empty tuple is allowed. Frozen-codebook membership and hierarchy checks belong
-to the later reply-consuming boundary. Extra fields cannot request tools, rewrite
+an empty tuple is allowed. Reply parsing and target resolution check frozen-codebook
+membership and hierarchy. Extra fields cannot request tools, rewrite
 definitions or evidence, create themes, or declare acceptance.
 
 | Field | Type | Meaning |
@@ -3509,3 +3509,119 @@ closed Stage 8/core reason from flags and missing reasons, with
 No classifier, scorer, judge, acceptance policy, or filesystem operation is
 dispatched here. These checks establish integrity only, never semantic support
 or acceptance.
+
+### `CodingSubject`
+
+The classification request's integrity subject, kept separate from transported
+messages. It binds the original document and claim, complete coding input, frozen
+codebook reference, prompt and reply schema, and coding/verifier versions. It has
+no extraction-window or support-trial fields.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `doc_id` | nonblank string | Original immutable canonical document identity |
+| `claim_id` | nonblank string | Original Stage 7 claim identity within doc_id |
+| `input_hash` | SHA-256 | Complete ordered CodingInput digest |
+| `codebook` | CodebookReference | Frozen approved codebook identifier, version and content hash |
+| `prompt_hash` | SHA-256 | Hash of exact caller-supplied prompt UTF-8 bytes |
+| `schema_hash` | SHA-256 | Digest of the generated CodingReply JSON schema |
+| `coding_version` | deductive-coding/1 | Literal coding policy version, default deductive-coding/1 |
+| `validator_version` | nonblank string | Current exact-evidence validator version |
+
+### `CodingRequest`
+
+A structural Stage 7 ChatRequest with a coding subject. Printable representations
+expose only the coding part's content hash. Local JSON contains supplied data and
+must not be logged. The request has no alternative source text or evidence repair.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `messages` | tuple[Message, …], length ≥ 2 | System prompt and one bounded JSON user payload; excluded from printable field output |
+| `reply_schema` | dict[str, Any] | Generated closed CodingReply JSON schema, excluded from printable field output |
+| `parameters` | Parameters | Existing frozen extraction generation settings, unchanged |
+| `subject` | CodingSubject | Non-transported coding integrity bindings |
+
+### `ProposalRecord`
+
+One explicit proposed claim–theme target, before assessment or acceptance. Several
+proposals may share the same original document and claim; evidence remains linked
+through the unchanged source claim rather than copied into each proposal.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | 1 | Strict literal integer coding schema version, default 1 |
+| `proposal_id` | nonblank string | Proposal identity |
+| `coding_run_id` | nonblank string | Coding run that produced the proposal |
+| `classification_id` | nonblank string | Classification result that selected this target |
+| `target` | Target | Original source run, document, claim, selected theme and frozen codebook reference |
+| `input_hash` | SHA-256 | Complete ordered CodingInput digest |
+
+### `AttributeRecord`
+
+Separate optional model-derived annotations beside the unchanged Stage 7 claim.
+They cannot change evidence, supply theme identifiers or confer acceptance.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | 1 | Strict literal integer coding schema version, default 1 |
+| `coding_run_id` | nonblank string | Coding run that produced the annotations |
+| `doc_id` | nonblank string | Original immutable canonical document identity |
+| `claim_id` | nonblank string | Original Stage 7 claim identity within doc_id |
+| `input_hash` | SHA-256 | Complete ordered CodingInput digest |
+| `attributes` | CodingAttributes | Separate nullable topic, sentiment, direction and event_type |
+
+### `NoveltyItem`
+
+A valid empty classification's pointer-only human-review item. It creates no
+production theme identifier, inferred definition, copied quote, or annotation.
+The novelty identity binds coding run, classification, input hash and no_theme_fit.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | 1 | Strict literal integer coding schema version, default 1 |
+| `novelty_id` | nonblank string | novelty- followed by the digest of coding_run_id, classification_id, input_hash and reason |
+| `coding_run_id` | nonblank string | Coding run that produced the unmatched result |
+| `classification_id` | nonblank string | Valid empty classification result |
+| `source_run_id` | nonblank string | Original Stage 7 extraction run identity |
+| `doc_id` | nonblank string | Original immutable canonical document identity |
+| `claim_id` | nonblank string | Original Stage 7 claim identity within doc_id |
+| `codebook` | CodebookReference | Frozen approved codebook identifier, version and content hash |
+| `input_hash` | SHA-256 | Complete ordered CodingInput digest |
+| `original_quote_ids` | tuple[nonblank string, …] | Original claim links in their original order; scoped by doc_id |
+| `reason` | no_theme_fit | Literal unmatched reason, default no_theme_fit |
+
+`render_coding(input: CodingInput, policy: CodingPolicy) -> CodingRequest` first
+reverifies the complete input through the public coding input gate and validates
+the policy and exact prompt hash. It renders the unchanged claim, individually
+bounded exact quoted slices, separately labeled attribution-context slices, every
+ordered ThemeSnapshot, and exact frozen multi-label/boilerplate strings in one
+JSON user message. Offsets remain canonical Python character spans; no text is
+normalized, stitched or clipped. Examples are not opened or rendered, parent
+rules are not inherited, sector tags are not inferred issuer classifications,
+and no extractor rationale or accepted status enters the payload. Unstructured
+generation appends the generated closed reply schema to the system prompt while
+preserving the separate exact prompt and schema hashes.
+
+`parse_coding_reply(reply: ModelReply, input: CodingInput, model_id: str) ->
+CodingReply` repeats input verification, validates the reply, refuses tool calls
+or model mismatch, then parses the closed JSON response. Malformed JSON, extra
+keys and invalid attribute values produce fixed malformed_reply; unknown theme
+IDs produce invalid_references. It considers the complete frozen snapshot and
+refuses any selected ancestor together with its descendant as hierarchy_conflict.
+Sibling selections, child-only selections, and parent-only selections remain
+possible under each theme's own definition; there is no automatic parent target
+or candidate pruning. A valid empty tuple remains a valid unmatched result.
+
+`targets_for(input: CodingInput, reply: CodingReply) -> tuple[Target, ...]` repeats
+input/reply validation and frozen membership/hierarchy checks, returning only
+explicit selected original targets sorted by theme ID. `novelty_for(input,
+reply, *, coding_run_id, classification_id) -> NoveltyItem | None` repeats input
+and reply validation and returns the original evidence pointers exactly when
+the supplied valid reply is empty. Nonempty parsed proposals return None.
+`unusable_feedback(reason: str) -> str` formats a closed reason as
+`Unusable reply: <closed reason>. Return the closed JSON response only.` Unknown
+caller reasons become unexpected_error, without source or model wording.
+
+These seams render and parse only; they dispatch no inference and perform no
+retry. Runtime input limits, bounded attempts, raw audit/cache persistence and
+complete rendered-request/cache binding belong to subsequent coding orchestration.
