@@ -14,11 +14,11 @@ Evidence-linked research infrastructure for company data and earnings themes.
 
 ## Stage 8 library status (2026-10-05)
 
-The semantic support library is implemented and has offline verification evidence.
-Stage 8 completion remains pending the actual pinned primary inference smoke (V4),
-the user's full root default suite and both Stage 6 wording gates, and the final
-whole-branch review. The [verification record](docs/verification/semantic-support.md)
-distinguishes observed checks from those required gates.
+Stage 8 is complete. The actual pinned MiniCheck primary smoke passed under
+process-wide network denial on invented text, the user’s full root default suite
+and both Stage 6 wording gates passed, and the final whole-branch review cleared
+its findings. The [verification record](docs/verification/semantic-support.md)
+records the observed checks, runtime identity and limits.
 
 `earnings_themes.support` exposes `Target`, `SupportSources`, `ResolvedInput`,
 `resolve_target`, `assess_target`, `assess_run`, `write_support_run`,
@@ -35,8 +35,8 @@ Concrete local scorer adapters live in `earnings_themes.support.nli`, behind the
 optional `support-nli` extra; ordinary imports need no model runtime or weights.
 [ADR 0005](docs/adr/0005-adopt-local-minicheck-for-support-signals.md) records the
 pinned MiniCheck primary, explicit DeBERTa alternative, external configuration,
-local-file and rights requirements, and network-denied smoke runner. Actual primary
-inference and local weight verification remain pending. Stage 9 owns assignment
+local-file and rights requirements, and the passed network-denied primary smoke.
+The alternative’s real-checkpoint smoke remains unrun. Stage 9 owns assignment
 decisions; Stage 10 adds the application command and coverage mapping; Stage 11
 owns expert labels, calibration, thresholds, production judge selection, and
 fresh-call stability. The offline evidence establishes no pilot accuracy or

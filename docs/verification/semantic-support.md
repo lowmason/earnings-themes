@@ -1,16 +1,18 @@
-# Semantic support: implementation evidence and pending completion gates
+# Semantic support: verified Stage 8 implementation
 
 Date: 2026-10-05. Branch: `codex/stage8-semantic-support`.
 Execution base: `5463a44c311a91fd4ef363f5bed63273f40f2898`.
 Implementation checkpoint checked by the controller: `5eeb28ba79bfdf78cf96cde5211154cfc270fdf9`.
 Task 12 documentation/public-export preparation starts at that checkpoint.
 
-**Stage 8 is not complete.** Offline implementation evidence is recorded below.
-Required V4 actual primary inference, the user's complete root default suite and
-both full Stage 6 wording nodes remain unobserved. The final GPT-6.1 Max whole-branch
-review and its scoped fix reviews are complete with no outstanding code findings.
-No plan/spec retirement, roadmap completion tick, or integration follows from this
-record. It contains no pilot quality, agreement, or fresh-call stability result.
+**Stage 8 is complete (2026-10-05).** The actual pinned primary inference smoke
+passed under process-wide network denial, and the user reported passing results
+for the complete root default suite and both full Stage 6 wording nodes at prepared
+head `46eda6d263c7d23f01f4719cc81f38ed6121e948`. The final GPT-6.1 Max whole-branch
+review, both scoped fix reviews, and verification-document review cleared all
+findings. Plan 13 records completion and retirement; branch integration remains
+the user's choice. This record establishes no pilot quality, agreement, or
+fresh-call stability result.
 
 ## Implemented library seams
 
@@ -197,50 +199,62 @@ Observed: 164 passed in 3.63 seconds. The amended callback behavior, safe errors
 import boundaries and support-only fixture wording gate passed. These results do
 not discharge V4 or any user-only gate.
 
-## V4: metadata and runner evidence; actual inference pending
+## V4: observed primary inference and identity
 
-[ADR 0005](../adr/0005-adopt-local-minicheck-for-support-signals.md) records the
-upstream metadata/license sources, external configuration template, expected
-inference-file hashes and the local verification boundary. The primary is
-`lytang/MiniCheck-Flan-T5-Large` revision
-`96eafd01cee2d16cf81aaa2fb226b14f422a37b3`; the explicitly selected alternative is
-`MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli` revision
-`6f5cf0a2b59cabb106aca4c287eed12e357e90eb`. Neither is silently substituted.
-The primary's upstream LFS weight checksum is
+[ADR 0005](../adr/0005-adopt-local-minicheck-for-support-signals.md) records
+the immutable revision, all eight upstream inference-file hashes, runtime pins,
+weight terms, external configuration and runner. The controller matched all eight
+supplied local file hashes to that manifest and observed the user’s confirmation
+of applicable model/base-model weight terms for research use on 2026-10-05. The
+external config SHA-256 is
+`99bbbffafe16d3a92574eb8e1a6fed8b22e443533b1dad6fc3187f9797752ba6`.
+No local checkpoint path, config content, request, reply or rationale is published.
+
+The actual primary is `lytang/MiniCheck-Flan-T5-Large`, revision
+`96eafd01cee2d16cf81aaa2fb226b14f422a37b3`. Its locally matched native `.bin`
+weight SHA-256 is
 `41291881e13c6235ed47149cec903bee9493e45d9d7325587a9fa2e266c526c0`.
-This is expected upstream metadata, not an observed checksum of acquired local weights.
+The run used Python 3.14.0 arm64, Torch 2.14.1, Transformers 5.18.0,
+SentencePiece 0.2.2, Tokenizers 0.23.2 and Safetensors 0.8.0; CPU float32;
+complete input limit 512; `minicheck-first-step/1`; and logit mapping `[3,209]`.
+Native checkpoint loading used `weights_only=True`, local-only files, and
+disabled remote/custom code.
 
-The documented runtime pins are Python 3.14.0 arm64, Torch 2.14.1,
-Transformers 5.18.0, SentencePiece 0.2.2, Tokenizers 0.23.2 and Safetensors 0.8.0.
-The primary uses the native `.bin` checkpoint with explicit `weights_only=True`;
-the alternative uses its native safetensors. Encoding/serialization, revisions,
-file hashes, device, precision and limits participate in scorer identity/cache
-bindings. The upstream cards mark artifacts MIT; acquisition-time weight/base-model
-terms, intended use and locally hashed files still require user verification.
-No weights or usable external primary configuration were supplied.
+With `EARNINGS_SUPPORT_PRIMARY_CONFIG` supplied externally, the controller ran:
 
-Task 11's offline adapter/import checks and runtime-import/tensor checks do not
-prove real checkpoint inference. PyTorch warns that `torch.jit.script` is unsupported
-on Python 3.14+; the adapter uses eager evaluation and `torch.inference_mode`.
-Actual primary eager compatibility remains pending V4 rather than inferred from
-mocked tests. The default sync subsequently removed the optional runtime.
+```bash
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 /usr/bin/sandbox-exec \
+  -p '(version 1) (allow default) (deny network*)' \
+  uv run --offline --locked --all-packages --extra support-nli pytest \
+  packages/earnings-themes/tests/support/test_nli_live.py::test_minicheck_local_primary \
+  -m live -q -rs --tb=short
+```
 
-The controller separately verified the macOS process network-denial mechanism:
-loopback C curl baseline exit 0 versus sandbox exit 7; an unpatched child socket
-connected at baseline and returned EPERM under the network-denied policy. That probe
-was a runner check, not a primary model smoke. ADR 0005 gives the exact named V4
-runner under `/usr/bin/sandbox-exec` with `(deny network*)`, offline environment
-settings and local-only loading. No live/model/weight network call was made in this
-Task 12 preparation. The primary named node has not run; the optional alternative
-smoke was also not run and provides no primary evidence. Missing-weight/config skips
-cannot discharge V4.
+Observed on 2026-10-05: **1 passed, 0 skipped in 12.84 seconds**. Actual primary
+inference on invented text produced a finite signal, counted complete input,
+verified checkpoint/runtime identity and bound that identity through a synthetic
+support-run manifest. Socket trip count was zero. The process ran under macOS
+`/usr/bin/sandbox-exec` with `(deny network*)`, in addition to both offline
+environment settings. Earlier independent runner probes observed C curl baseline
+exit 0 versus sandbox exit 7, and an unpatched child socket connected at baseline
+versus EPERM under that policy. Python patches alone were never the denial claim.
+No API inference or weight acquisition occurred in this gate.
 
-## Required human gates and downstream obligations
+An earlier user attempt with no supplied config visibly returned **1 skipped in
+0.01 seconds**; it did not satisfy V4. The later actual passed result discharges
+the primary gate. The explicit DeBERTa alternative remains wired and mocked, but
+its optional real-checkpoint smoke was not run; it supplies no primary evidence.
+No MPS execution or model-quality comparison was observed. The earlier PyTorch
+JIT FutureWarning remains a runtime limitation for JIT use on Python 3.14+; the
+actual primary eager path passed. This smoke establishes compatibility of this
+configured path, not semantic accuracy, calibration, or general platform coverage.
 
-The following commands remain **unrun/unobserved** in the user's pilot-artifact
-checkout. The controller first prepares that checkout with the branch's committed
-support prompts and guard changes. Only the user runs these gates and reports
-passed counts, or failing test IDs/fixed reasons/counts without source text or traces.
+## Observed user-only gates and downstream obligations
+
+The controller prepared 51 committed branch files at `46eda6d` in the user’s
+pilot-artifact checkout, preserving the user’s roadmap reconciliation. All copied
+file hashes still matched the prepared branch when the results were recorded.
+The user ran these commands and reported safe counts only:
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -q -rs --tb=short
@@ -248,12 +262,14 @@ uv run --locked --all-packages pytest tests/integration/test_stage6_wording.py::
 uv run --locked --all-packages pytest tests/integration/test_stage6_wording.py::test_no_stage_6_file_quotes_a_pilot_document -q -rs --tb=short
 ```
 
-Use no locals, verbose, debugger, or long/automatic/full traceback options. The
-implementing/reviewing sessions remain blind. Passed observed human results are
-required before completion; skipping or deferring them cannot replace the gate.
-The final whole-branch review and both scoped fix reviews are complete; all findings
-were addressed with no new findings in the last review. The external gates above
-remain pending.
+Observed on 2026-10-05: the **full root default suite passed 2651 tests, with
+2 skipped and 27 deselected in 108.67 seconds**. The skips were optional runtime
+absence and the already-recorded first acquisition. The explicit full fixture
+wording node passed **1 test in 0.19 seconds**; the explicit pilot wording node
+passed **1 test in 0.61 seconds**. These results supplement the blind subset and
+support-only fixture checks above. Implementing/reviewing sessions stayed blind;
+no protected artifact was opened to record or verify this documentation. All
+required completion gates are observed, and no Stage 8 work is deferred.
 
 Stage 9 receives explicit target assessment, raw views and quote contributions and
 owns assignment decisions. Stage 10 receives the store/reader/consuming gate and
@@ -264,4 +280,21 @@ fresh-call bypass covering extraction, scorer and judge caches. Four panel trial
 are bias diagnostics, not k-run stability evidence. Stage 13 adapts release context
 to transcript speaker/section boundaries; Stage 15 owns concurrency/backfill.
 Existing extraction-record, recovery, gold-drafting and other deferred obligations
-remain open under their original triggers. This preparation closes none of them.
+remain open under their original triggers. Plan 13 closes none of those unrelated items.
+
+
+## Documentation-completion verification
+
+The completion worker changed documentation only, then ran the blind checks:
+
+```bash
+uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py tests/contracts/test_support_contracts.py packages/earnings-themes/tests/test_import_boundaries.py tests/integration/test_support_wording.py -m 'not live and not browser' -q --tb=short
+```
+
+Observed: **230 passed in 1.35 seconds**. The full root, full Stage 6 wording and
+real inference gates were not repeated by this worker; their observed results
+above remain the completion evidence. Backlog statistics independently returned
+48 open, 33 ever closed, 41% closure, no items aged >45 days, oldest 10 days, and
+all 48 in the 0–14-day band. The local read-only triage covers every open item;
+no disposition was executed and no earlier item or grouped partial obligation was
+closed. No Stage 8 item was deferred.

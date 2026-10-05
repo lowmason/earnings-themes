@@ -2959,10 +2959,10 @@ the supplied source provenance, including curated fixture provenance.
 `software`. Extractor family is an explicit lineage input, never inferred from a
 model alias. The complete assessment and storage signatures are documented below.
 
-These shipped contracts describe raw signals and processing outcomes. They do not
-certify Stage 8 completion: required real-primary V4 inference, user-only full root
-and wording gates, and final whole-branch review remain pending in the
-[verification record](verification/semantic-support.md). Stage 9 decides assignments;
+These shipped contracts describe raw signals and processing outcomes. The
+[verification record](verification/semantic-support.md) records Stage 8 completion:
+actual primary V4 inference, the user-only full root and both wording gates passed,
+and the final whole-branch review cleared its findings. Stage 9 decides assignments;
 Stage 11 supplies expert labels, calibration, view/pooling selection, agreement
 floors, thresholds and fresh-call stability across extraction/scorer/judge caches.
 

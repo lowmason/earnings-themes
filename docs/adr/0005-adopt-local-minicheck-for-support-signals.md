@@ -1,6 +1,6 @@
 # 0005: Adopt local MiniCheck for raw support signals
 
-Date: 2026-10-05. Status: implementation adopted; required V4 inference pending.
+Date: 2026-10-05. Status: adopted; required V4 primary inference verified.
 
 Stage 8 exposes raw uncalibrated support probabilities on unchanged evidence and
 claims. The primary is `lytang/MiniCheck-Flan-T5-Large`, immutable revision
@@ -26,7 +26,8 @@ uses the first decoder position and two logits at IDs [3,209]. The adapter uses
 It never imports the MiniCheck wrapper, chunks, generates, argmaxes or applies a
 label cutoff. Tokenizer metadata declares 512 while upstream wrapper defaults to
 2048. We explicitly choose complete encoder input ≤512; this is a conservative
-policy requiring V4 validation, not an architectural claim about T5 positions.
+policy validated by the primary V4 smoke, not an architectural claim about T5
+positions.
 
 The primary inventory contains `pytorch_model.bin`, not safetensors. It is loaded
 explicitly with `use_safetensors=False`, `weights_only=True`. This metadata-driven
@@ -63,17 +64,20 @@ checkpoint inference follows from these runtime checks.
 PyTorch emitted a FutureWarning from `torch/jit/_script.py:1485`:
 `torch.jit.script` is not supported in Python 3.14+ and may break. Please switch to
 `torch.compile` or `torch.export`. The adapter uses eager evaluation and
-`torch.inference_mode`, not JIT. V4 has not established real weight compatibility. This warning remains an explicit
-compatibility limitation until the actual primary gate verifies the eager path;
-it alone does not establish an inference defect or justify changing approved pins.
+`torch.inference_mode`, not JIT. The actual primary V4 gate passed on CPU float32
+with this eager path. The warning remains a limitation for JIT use on Python 3.14+;
+no MPS run or broader platform compatibility was established.
 Lock changes are limited to the extra, new SentencePiece package, required
 Torch2.14.0→2.14.1 and Transformers5.17.0→5.18.0 updates; unrelated pins preserved.
 
 ## Upstream checksums and local verification boundary
 
-These are upstream metadata/content checksums, not checksums of locally acquired
-weights. Every supplied local file must be independently hashed and matched to its
-immutable revision. The loader checks the entire manifest before heavyweight
+These are the immutable upstream metadata/content checksums. On 2026-10-05 the
+controller matched all eight supplied primary local file hashes to this table,
+including the native weight file. Alternative local-file verification and actual
+alternative inference remain unobserved. Every supplied local file must be
+independently hashed and matched to its immutable revision. The loader checks
+the entire manifest before heavyweight
 imports; unknown/unmanifested files and symlink files refuse initialization.
 
 | Primary inference file | Upstream SHA-256 |
@@ -104,8 +108,10 @@ and alternative's pinned [model card](https://huggingface.co/MoritzLaurer/DeBERT
 mark the model artifacts MIT. Primary lineage is google/flan-t5-large; alternative
 lineage is Microsoft DeBERTa-v3. The user must independently confirm applicable
 weight/base-model terms and intended research use on their acquisition date.
-These observations do not assert local rights verification or substitute the
-software licenses for weight terms. The user has supplied no weights or config.
+On 2026-10-05 the user confirmed applicable primary model/base-model weight terms
+and intended research use, supplying external weights and config. This confirmation
+is distinct from the metadata/software-license checks above. Alternative rights
+verification is required separately before its real inference is enabled.
 
 Acquire the chosen immutable inference files externally into a dedicated absolute
 local directory outside `data/`. No import/test downloads weights. A minimal
@@ -152,7 +158,7 @@ own local execution. Runtime identity binds all file hashes, ordered runtime
 versions, device, precision, encoding plus serialization and effective input limit;
 these fields already participate in scorer caches and support-run manifests.
 
-## Required V4 runner and unmet gate
+## Observed V4 primary gate and runner
 
 After configuring `EARNINGS_SUPPORT_PRIMARY_CONFIG` to the external JSON, sync the
 optional extra before entering the network-denied runner. Then execute only:
@@ -177,9 +183,19 @@ checkpoint visibly skips with V4 pending; an existing invalid/mismatched checkpo
 fails and is never converted into a missing-checkpoint skip.
 Never run a whole `-m live` suite; SEC tests have independent live dispatch paths.
 
-The required named primary test has not run: no external config or weights were
-supplied. Real checkpoint compatibility, locally verified weight checksums/rights,
-complete-input real inference, actual finite score and actual runtime identity in
-an executed primary run remain unmet V4 evidence. A missing-config skip cannot
-satisfy this gate. Mocked manifest binding is verified independently. Stage 11
-retains calibration, pooling, thresholds and stability; V4 remains a Stage8 gate.
+The controller observed the exact named primary command above pass on 2026-10-05:
+**1 passed, 0 skipped in 12.84 seconds**, under the network-denied policy and both
+offline settings, with zero socket trips. All eight local file hashes matched
+the primary table. The external configuration checksum was
+`99bbbffafe16d3a92574eb8e1a6fed8b22e443533b1dad6fc3187f9797752ba6`.
+The actual runtime matched the five versions above, CPU float32, complete input
+limit 512, encoding `minicheck-first-step/1`, and mapping `[3,209]`. Actual
+primary inference on invented text produced a finite signal and passed synthetic
+support-run identity/manifest binding. The earlier missing-config attempt skipped
+1 test in 0.01 seconds and did not discharge V4; the later passed test does.
+The optional alternative smoke remains unrun.
+
+The [verification record](../verification/semantic-support.md) records this gate
+and the user’s full-suite/wording results. Stage 11 retains calibration, pooling,
+thresholds, production judge choice, quality comparison and fresh-call stability;
+this primary smoke makes no claim about those measurements.
