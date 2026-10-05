@@ -334,3 +334,72 @@ def test_the_configuration_is_read_from_toml(tmp_path: Path) -> None:
         load_local_config(path)
     assert refused.value.problems == ("<key>: Extra inputs are not permitted",)
     assert SENTINEL not in str(refused.value)
+
+
+def support_request():
+    from earnings_themes.support.judges import JudgeRequest, JudgeSubject
+    from earnings_themes.support.records import JudgeAnswer, Presentation
+
+    return JudgeRequest(
+        messages=(
+            Message(role="system", content="Invented support instructions."),
+            Message(role="user", content="Invented evidence."),
+        ),
+        reply_schema=JudgeAnswer.model_json_schema(),
+        parameters=Parameters(),
+        subject=JudgeSubject(
+            target_id="target",
+            input_hash=HASH,
+            codebook_hash=HASH,
+            presentation=Presentation.EVIDENCE_FIRST,
+            prompt_hash=HASH,
+            schema_hash=HASH,
+            validator_version="3",
+        ),
+    )
+
+
+def test_support_uses_same_transport_protections(monkeypatch, no_network):
+    import earnings_themes.extraction.local as module
+
+    original_client = httpx.Client
+    options = []
+
+    def client(**kwargs):
+        options.append(kwargs)
+        return original_client(**kwargs)
+
+    monkeypatch.setattr(module.httpx, "Client", client)
+    sent = []
+    serving(completion("{}"), sent).complete(support_request())
+    assert options[0]["trust_env"] is False
+    assert options[0]["follow_redirects"] is False
+    assert "authorization" not in sent[0].headers
+    body = json.loads(sent[0].content)
+    assert set(body) == {
+        "model",
+        "messages",
+        "temperature",
+        "seed",
+        "max_tokens",
+        "response_format",
+    }
+    assert "subject" not in body
+    with pytest.raises(AdapterError) as refused:
+        serving(completion(model="wrong")).complete(support_request())
+    assert refused.value.problem is ExtractionProblem.MODEL_MISMATCH
+    with pytest.raises(AdapterError) as refused:
+        serving(
+            httpx.Response(307, headers={"location": "https://example.invalid"})
+        ).complete(support_request())
+    assert refused.value.problem is ExtractionProblem.TRANSPORT_ERROR
+    assert no_network == []
+
+
+def test_extraction_request_body_bytes_unchanged():
+    sent = []
+    serving(completion(), sent).complete(request(False))
+    assert sent[0].content == (
+        b'{"model":"invented-model","messages":[{"role":"system","content":"Invented system text."},'
+        b'{"role":"user","content":"[U1] Invented unit."}],"temperature":0.0,"seed":0,"max_tokens":2048}'
+    )

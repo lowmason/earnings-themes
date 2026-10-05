@@ -84,6 +84,19 @@ class AdapterError(Exception):
         self.reply = reply
 
 
+class ChatRequest(Protocol):
+    """Structural chat payload shared with support; subject is never transported."""
+
+    @property
+    def messages(self) -> tuple[Message, ...]: ...
+
+    @property
+    def reply_schema(self) -> dict[str, Any]: ...
+
+    @property
+    def parameters(self) -> Parameters: ...
+
+
 class ModelAdapter(Protocol):
     @property
     def identity(self) -> AdapterIdentity: ...

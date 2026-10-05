@@ -27,6 +27,11 @@ from earnings_themes import records as themes
 from earnings_themes.anchoring import SpanPointer
 from earnings_themes.extraction import adapters, cache, local
 from earnings_themes.extraction import records as extraction
+from earnings_themes.support import judges, metrics, scorers
+from earnings_themes.support import records as support
+from earnings_themes.support.cache import SupportCacheEntry
+from earnings_themes.support.nli import LocalScorerConfig
+from earnings_themes.support.problems import SupportProblem
 from pydantic import BaseModel
 
 DICTIONARY = Path(__file__).resolve().parents[2] / "docs" / "data-dictionary.md"
@@ -163,6 +168,37 @@ MODELS = [
     cache.CacheKey,
     cache.CacheEntry,
     local.LocalModelConfig,
+    judges.JudgeSubject,
+    judges.JudgeRequest,
+    scorers.ScoreRequest,
+    scorers.ScoreReply,
+    SupportCacheEntry,
+    metrics.HumanLabel,
+    metrics.ContinuousSignal,
+    metrics.Acceptance,
+    metrics.MetricReport,
+    support.CodebookReference,
+    support.Target,
+    support.ThemeSnapshot,
+    support.EvidenceReference,
+    support.ContextReference,
+    support.TargetRecord,
+    support.FileHash,
+    support.RuntimeIdentity,
+    support.WeightLicense,
+    support.ScorerIdentity,
+    support.JudgeIdentity,
+    support.EntailmentSignal,
+    support.QuoteAssessment,
+    support.JudgeAnswer,
+    support.JudgeAttempt,
+    support.JudgeTrial,
+    support.ReviewOutcome,
+    support.SupportCeilings,
+    support.UsageRecord,
+    support.SupportPolicy,
+    support.SupportRunRecord,
+    LocalScorerConfig,
 ]
 ENUMS = [
     core.RightsStatus,
@@ -208,6 +244,11 @@ ENUMS = [
     extraction.ExtractionProblem,
     extraction.WindowOutcome,
     extraction.DocumentOutcome,
+    SupportProblem,
+    support.SignalStatus,
+    support.Presentation,
+    support.ReviewStatus,
+    support.ReasonCode,
 ]
 
 
@@ -245,4 +286,16 @@ def test_the_documented_versions_are_the_packages() -> None:
     assert (
         f"## earnings-themes extraction records, schema version"
         f" {extraction.EXTRACTION_SCHEMA_VERSION}\n" in text
+    )
+
+
+def test_the_documented_support_versions_are_the_package() -> None:
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert (
+        f"## earnings-themes support records, schema version {support.SUPPORT_SCHEMA_VERSION}\n"
+        in text
+    )
+    assert (
+        f'`"{support.SUPPORT_VERSION}"` (`earnings_themes.support.records.SUPPORT_VERSION`)'
+        in text
     )

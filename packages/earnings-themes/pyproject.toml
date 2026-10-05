@@ -54,6 +54,11 @@ fuzzy-localization = [
 jev-langchain = [
     "langchain-typesafe",            # import langchain_typesafe
 ]
+support-nli = [
+    "sentencepiece==0.2.2",
+    "torch==2.14.1",
+    "transformers==5.18.0",
+]
 
 [build-system]
 requires = ["uv_build>=0.12.15,<0.13.0"]

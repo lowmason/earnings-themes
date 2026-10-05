@@ -48,7 +48,7 @@ BRIEFS = (
     "evaluation/djia-2024q3-2026q2/pilot-v1/briefs/codebook.md",
     "evaluation/djia-2024q3-2026q2/pilot-v1/briefs/gold.md",
 )
-PROMPTS = ("prompts/extraction/pointer-1.md",)
+PROMPTS = ("prompts/extraction/pointer-1.md", "prompts/support/judge-1.md")
 
 
 def committed() -> list[Path]:

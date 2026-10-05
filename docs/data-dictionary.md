@@ -2520,3 +2520,792 @@ from `config/models/local-model.toml`, which ADR 0004 records at plan B's gate.
 | `runtime_version` | string | Its version |
 | `structured` | bool | Whether the runtime honors a strict JSON-schema `response_format`; a run sets `Parameters.structured` from it (ES19); default true |
 | `timeout_s` | float > 0 | Seconds per request; default 300 |
+
+## earnings-themes support records, schema version 1
+
+The Stage 8 contracts (`earnings_themes.support.records`) implement SS1–SS22.
+Support policy version is `"semantic-support/1"` (`earnings_themes.support.records.SUPPORT_VERSION`).
+Core, Stage 6, extraction and verifier versions are unchanged. Persisted records
+carry schema_version 1; request/reply parts and identities are nonpersisted parts.
+All models are frozen, closed, strict Pydantic contracts. Counts and offsets never
+accept bools, floats or numeric strings. Tuple fields and tuple bindings are immutable;
+JSON-mode parsing revalidates model data instead of trusting prior construction.
+
+`parse_support(data, model)` converts validation failures to the fixed
+`SupportError("malformed_record")`, suppressing source-bearing exception chaining.
+Unknown refusal values become `unexpected_error`; core rejection reason values
+are allowed but core Rejection.detail is never copied. Printable records expose
+only class name and content SHA-256. Source-bearing fields also set repr=False.
+Explicit local JSON/disk serialization intentionally retains source-bearing data;
+logging must never serialize those records. Raw requests, replies and rationales
+remain local and uncommitted. No record or import opens a file or concrete adapter.
+
+### `CodebookReference`
+
+One explicit frozen codebook identity. Version is a strict nonnegative integer.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `codebook_id` | nonblank string | Expected frozen codebook ID |
+| `codebook_version` | strict int ≥ 0 | Expected nonnegative codebook version |
+| `content_hash` | SHA-256 | Codebook content SHA-256 |
+
+### `Target`
+
+One caller-selected source-run/document/claim/theme pairing. Callers supply no alternative evidence or replacement text.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `source_run_id` | nonblank string | Source extraction run ID |
+| `doc_id` | nonblank string | Immutable canonical document ID |
+| `claim_id` | nonblank string | Document-scoped source claim ID |
+| `theme_id` | nonblank string | Explicit selected theme ID |
+| `codebook` | CodebookReference | Frozen CodebookReference |
+
+### `ThemeSnapshot`
+
+One copied selected theme definition and its rules. Examples are excluded and parent rules are not inherited.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `codebook` | CodebookReference | Frozen CodebookReference |
+| `theme_id` | nonblank string | Explicit selected theme ID |
+| `label` | nonblank string | Source-supported theme label, local |
+| `definition` | nonblank string | Unchanged selected theme definition, local |
+| `parent_id` | string or null | Selected theme parent ID or null |
+| `inclusion_rules` | tuple[nonblank string, …] | Unchanged local inclusion rules |
+| `exclusion_rules` | tuple[nonblank string, …] | Unchanged local exclusion rules |
+
+### `EvidenceReference`
+
+One exact quote reference for a target. Character offsets are strict integers in a nonempty half-open span; quote text is not duplicated.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | 1 | Support record schema version, fixed at 1 |
+| `target_id` | nonblank string | Derived assessment target identity |
+| `quote_id` | nonblank string | Source quote ID |
+| `doc_id` | nonblank string | Immutable canonical document ID |
+| `canonical_hash` | SHA-256 | Immutable canonical-text SHA-256 |
+| `element_id` | nonblank string | Canonical element ID |
+| `start` | strict int ≥ 0 | First Python character offset, nonnegative |
+| `end` | strict int ≥ 0 | Exclusive character offset, greater than start |
+| `text_hash` | SHA-256 | SHA-256 of the canonical slice |
+| `validator_version` | nonblank string | Exact-span validator version |
+| `mask_ids` | tuple[nonblank string, …] | Distinct current overlay mask IDs |
+
+### `ContextReference`
+
+One attribution context span for a target. It is explicitly a block or heading and carries no evidence status.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | 1 | Support record schema version, fixed at 1 |
+| `target_id` | nonblank string | Derived assessment target identity |
+| `doc_id` | nonblank string | Immutable canonical document ID |
+| `canonical_hash` | SHA-256 | Immutable canonical-text SHA-256 |
+| `element_id` | nonblank string | Canonical element ID |
+| `start` | strict int ≥ 0 | First Python character offset, nonnegative |
+| `end` | strict int ≥ 0 | Exclusive character offset, greater than start |
+| `text_hash` | SHA-256 | SHA-256 of the canonical slice |
+| `kind` | block, heading | Declared context, scorer, or operation kind |
+
+### `TargetRecord`
+
+One resolved target identity with source/claim/input hashes and original versus resolved evidence IDs. Refused targets retain provenance but no accepted evidence.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | 1 | Support record schema version, fixed at 1 |
+| `target_id` | nonblank string | Derived assessment target identity |
+| `target` | Target | Caller Target identity |
+| `source_run_hash` | SHA-256 | Canonical source-run provenance hash |
+| `claim_hash` | SHA-256 | Hash of the unchanged source claim |
+| `input_hash` | SHA-256 | Hash binding the full assessment or evaluation input |
+| `original_quote_ids` | tuple[string, …] | Distinct source claim quote IDs in original order |
+| `evidence_ids` | tuple[string, …] | Distinct resolved evidence reference IDs |
+| `theme` | ThemeSnapshot or null | Resolved ThemeSnapshot, null for refusals where unresolved |
+
+### `FileHash`
+
+One pinned local inference file. Paths are relative POSIX paths with no absolute root, drive, backslash, dot or parent component; adapters enforce actual filesystem confinement.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `relative_path` | nonblank string | Confined local model-relative inference filename |
+| `sha256` | SHA-256 | Inference-file byte SHA-256 |
+
+### `RuntimeIdentity`
+
+One complete model/checkpoint/runtime identity; file paths are unique and inference files carry hashes.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `model_id` | nonblank string | Explicit model identity |
+| `revision` | nonblank string | Pinned checkpoint revision |
+| `files` | tuple[FileHash, …] | Immutable tuple of FileHash records |
+| `runtime` | nonblank string | Inference runtime name |
+| `runtime_version` | nonblank string | Pinned runtime version |
+| `device` | nonblank string | Explicit inference device |
+| `precision` | nonblank string | Explicit inference numeric precision |
+| `encoding_version` | nonblank string | Version of the complete-input rendering/encoding |
+
+### `WeightLicense`
+
+One verified weight-license assertion for the stated research use. Permission must be the literal boolean true.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `source_url` | nonblank string | Weight-license source URL, local |
+| `terms_reference` | nonblank string | Verified terms reference, local |
+| `intended_use` | nonblank string | Verified intended research use, local |
+| `verified_on` | date | Actual license verification date |
+| `permits_use` | True | Literal boolean true |
+
+### `ScorerIdentity`
+
+One explicitly selected scorer and full runtime identity; input limit is positive.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `kind` | scripted, minicheck, deberta | Declared context, scorer, or operation kind |
+| `runtime` | RuntimeIdentity | Inference runtime name |
+| `input_limit` | strict int ≥ 1 | Positive complete-input token ceiling |
+
+### `JudgeIdentity`
+
+One configured judge family and runtime; local hosting requires a WeightLicense. Both limits are positive.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `family` | nonblank string | Explicit family lineage, never inferred from model alias |
+| `runtime` | RuntimeIdentity | Inference runtime name |
+| `input_limit` | strict int ≥ 1 | Positive complete-input token ceiling |
+| `output_limit` | strict int ≥ 1 | Positive completion-token ceiling |
+| `hosting` | scripted, local | scripted or local; local requires license evidence |
+| `weight_license` | WeightLicense or null | Verified WeightLicense or null for scripted identity |
+
+### `EntailmentSignal`
+
+One per-quote or joint signal. Available means a finite score in [0,1] and no reason; unavailable means no score and a fixed refusal reason. Quote scope requires quote_id; joint scope has none.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | 1 | Support record schema version, fixed at 1 |
+| `signal_id` | nonblank string | Unique signal ID |
+| `target_id` | nonblank string | Derived assessment target identity |
+| `scope` | quote, joint | quote or joint; evidence remains separate canonical spans |
+| `quote_id` | string or null | Source quote ID (null only for joint signals) |
+| `evaluation_id` | nonblank string | Raw scorer evaluation identity; aliases may reuse it |
+| `identity` | ScorerIdentity | Complete configured scorer or judge identity |
+| `input_hash` | SHA-256 | Hash binding the full assessment or evaluation input |
+| `status` | SignalStatus | Signal availability or review processing status |
+| `score` | finite float in [0,1] or null | Finite raw uncalibrated score in [0,1], otherwise null |
+| `reason` | string or null | Fixed support/core refusal reason or null |
+| `input_tokens` | strict int ≥ 0 or null | Complete input token count; nullable when unavailable and unknown |
+| `latency_ms` | strict int ≥ 0 | Nonnegative operation latency in milliseconds |
+| `cached` | bool | Whether served from the raw-signal cache |
+
+### `QuoteAssessment`
+
+One contribution classification for one supplied quote. Reference completeness is checked against the assessment input downstream.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `quote_id` | nonblank string | Source quote ID |
+| `contribution` | supporting, contextual, irrelevant, contradicting, uncertain | supporting, contextual, irrelevant, contradicting, or uncertain |
+
+### `JudgeAnswer`
+
+One closed model answer with separate claim-support/theme-fit axes and finite joint score. Quote IDs and reasons are distinct. Local rationale is nonblank and at most 500 characters.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `claim_support` | supported, unsupported, uncertain | supported, unsupported, or uncertain |
+| `theme_fit` | fits, does_not_fit, uncertain | fits, does_not_fit, or uncertain |
+| `joint_support_score` | finite float in [0,1] | Finite uncalibrated joint score in [0,1] |
+| `quote_assessments` | tuple[QuoteAssessment, …] | Immutable tuple of distinct QuoteAssessment records |
+| `reason_codes` | tuple[ReasonCode, …] | Distinct fixed ReasonCode values |
+| `summary` | nonblank string | Nonblank local rationale, at most 500 characters, excluded from printable output |
+
+### `JudgeAttempt`
+
+One bounded attempt (strict integer 1 or 2) for a trial, preserving request hashes, local reply reference, answer/problem, and usage.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | 1 | Support record schema version, fixed at 1 |
+| `attempt_id` | nonblank string | Attempt identity |
+| `trial_id` | nonblank string | Independent judge trial identity |
+| `attempt` | 1, 2 | Strict integer 1 or 2 |
+| `request_hash` | SHA-256 | Complete rendered request SHA-256 |
+| `prompt_hash` | SHA-256 | Prompt content hash |
+| `schema_hash` | SHA-256 | Closed reply schema hash |
+| `input_tokens` | strict int ≥ 0 | Complete input token count; nullable when unavailable and unknown |
+| `reserved_tokens` | strict int ≥ 0 | Nonnegative complete-input plus output reservation |
+| `actual_prompt_tokens` | strict int ≥ 0 or null | Reported nonnegative prompt tokens, otherwise null |
+| `actual_completion_tokens` | strict int ≥ 0 or null | Reported nonnegative completion tokens, otherwise null |
+| `latency_ms` | strict int ≥ 0 | Nonnegative operation latency in milliseconds |
+| `cached` | bool | Whether served from the raw-signal cache |
+| `raw_ref` | string or null | Local raw-reply reference, excluded from printable output |
+| `problem` | string or null | Fixed unusable-reply problem or null |
+| `answer` | JudgeAnswer or null | JudgeAnswer or null when unusable/unavailable |
+
+### `JudgeTrial`
+
+One independent family/presentation trial. Available means an answer and no reason; unavailable means no answer and a fixed reason.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | 1 | Support record schema version, fixed at 1 |
+| `trial_id` | nonblank string | Independent judge trial identity |
+| `target_id` | nonblank string | Derived assessment target identity |
+| `identity` | JudgeIdentity | Complete configured scorer or judge identity |
+| `presentation` | Presentation | Independent evidence_first or claim_theme_first order |
+| `attempt_ids` | tuple[nonblank string, …] | Distinct attempt IDs in attempt order |
+| `status` | SignalStatus | Signal availability or review processing status |
+| `answer` | JudgeAnswer or null | JudgeAnswer or null when unusable/unavailable |
+| `reason` | string or null | Fixed support/core refusal reason or null |
+
+### `ReviewOutcome`
+
+One processing outcome and its diagnostic flags, missing reasons, and contributing references. It has no acceptance or assignment field.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | 1 | Support record schema version, fixed at 1 |
+| `target_id` | nonblank string | Derived assessment target identity |
+| `status` | ReviewStatus | Signal availability or review processing status |
+| `flags` | tuple[nonblank string, …] | Distinct semantic/diagnostic flags; no acceptance rule |
+| `missing` | tuple[nonblank string, …] | Distinct fixed reasons for missing signals |
+| `signal_ids` | tuple[nonblank string, …] | Distinct contributing entailment signal IDs |
+| `trial_ids` | tuple[nonblank string, …] | Distinct contributing judge trial IDs |
+
+### `SupportCeilings`
+
+One explicit allowance configuration; every field is a required strict nonnegative integer. Cache hits spend no dispatch allowance.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `scorer_per_target` | strict int ≥ 0 | Required nonnegative scorer per target ceiling |
+| `scorer_per_document` | strict int ≥ 0 | Required nonnegative scorer per document ceiling |
+| `scorer_per_run` | strict int ≥ 0 | Required nonnegative scorer per run ceiling |
+| `judge_per_target` | strict int ≥ 0 | Required nonnegative judge per target ceiling |
+| `judge_per_document` | strict int ≥ 0 | Required nonnegative judge per document ceiling |
+| `judge_per_run` | strict int ≥ 0 | Required nonnegative judge per run ceiling |
+| `tokens_per_document` | strict int ≥ 0 | Required nonnegative tokens per document ceiling |
+| `tokens_per_run` | strict int ≥ 0 | Required nonnegative tokens per run ceiling |
+
+### `UsageRecord`
+
+One operation usage observation. Counts are strict nonnegative integers; unknown reported usage remains null and unreported is explicit.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | 1 | Support record schema version, fixed at 1 |
+| `target_id` | nonblank string | Derived assessment target identity |
+| `doc_id` | nonblank string | Immutable canonical document ID |
+| `operation_id` | nonblank string | Scorer evaluation or judge dispatch identity |
+| `kind` | scorer, judge | Declared context, scorer, or operation kind |
+| `reserved_tokens` | strict int ≥ 0 | Nonnegative complete-input plus output reservation |
+| `actual_prompt_tokens` | strict int ≥ 0 or null | Reported nonnegative prompt tokens, otherwise null |
+| `actual_completion_tokens` | strict int ≥ 0 or null | Reported nonnegative completion tokens, otherwise null |
+| `unreported` | bool | Whether actual usage was unreported (run manifest stores its count) |
+| `cached` | bool | Whether served from the raw-signal cache |
+| `latency_ms` | strict int ≥ 0 | Nonnegative operation latency in milliseconds |
+
+### `SupportPolicy`
+
+One versioned prompt and generation policy; exactly two attempts are permitted. No threshold or pooling policy exists.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `support_version` | semantic-support/1 | Literal semantic-support/1 policy version |
+| `prompt_text` | nonblank string | Caller-supplied local prompt, excluded from printable output |
+| `prompt_hash` | SHA-256 | Prompt content hash |
+| `parameters` | Parameters | Existing frozen extraction Parameters, with unchanged schema |
+| `max_attempts` | 2 | Strict literal integer 2, provisional retry ceiling |
+
+### `SupportRunRecord`
+
+One immutable support run manifest. Binding tuples are sorted with unique keys. Two judge identities retain caller order; panel lineage checks happen before dispatch. started_at is UTC aware and software includes a valid lock_hash.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | 1 | Support record schema version, fixed at 1 |
+| `run_id` | nonblank string | Unique support run identity |
+| `started_at` | UTC-aware datetime | UTC-aware support run start timestamp |
+| `source_run_id` | nonblank string | Source extraction run ID |
+| `source_run_hash` | SHA-256 | Canonical source-run provenance hash |
+| `documents` | tuple[tuple[nonblank string, SHA-256], …] | Sorted immutable (document ID, canonical SHA-256) bindings |
+| `codebook` | CodebookReference | Frozen CodebookReference |
+| `configuration_hash` | SHA-256 | Complete support configuration content hash |
+| `extractor_family` | nonblank string | Caller-supplied source extractor lineage |
+| `scorer_identity` | ScorerIdentity | Configured ScorerIdentity |
+| `judge_identities` | tuple[JudgeIdentity, JudgeIdentity] | Ordered pair of JudgeIdentity records |
+| `support_version` | semantic-support/1 | Literal semantic-support/1 policy version |
+| `validator_version` | nonblank string | Exact-span validator version |
+| `software` | tuple[tuple[nonblank string, nonblank string], …] | Sorted immutable software name/version bindings, including lock_hash SHA-256 |
+| `ceilings` | SupportCeilings | Explicit SupportCeilings |
+| `counts_by_status` | tuple[tuple[ReviewStatus, strict int ≥ 0], …] | Sorted immutable (ReviewStatus, strict nonnegative count) bindings |
+| `counts_by_reason` | tuple[tuple[nonblank string, strict int ≥ 0], …] | Sorted immutable (fixed support/core refusal or semantic ReasonCode, strict nonnegative count) bindings |
+| `evaluations` | strict int ≥ 0 | Nonnegative dispatched scorer evaluation count |
+| `requests` | strict int ≥ 0 | Nonnegative dispatched judge request count |
+| `prompt_tokens` | strict int ≥ 0 | Nonnegative recorded prompt token total |
+| `completion_tokens` | strict int ≥ 0 | Nonnegative recorded completion token total |
+| `reserved_tokens` | strict int ≥ 0 | Nonnegative complete-input plus output reservation |
+| `unreported` | strict int ≥ 0 | Whether actual usage was unreported (run manifest stores its count) |
+| `cache_hits` | strict int ≥ 0 | Nonnegative raw-signal cache-hit count |
+| `billable_cost` | none, self-hosted | Literal none, self-hosted; no billable inference |
+| `artifact_hashes` | tuple[tuple[nonblank string, SHA-256], …] | Sorted immutable (artifact name, byte SHA-256) bindings |
+
+### `SupportProblem`
+
+| Value | Meaning |
+| --- | --- |
+| `malformed_record` | malformed record |
+| `wrong_source_run` | wrong source run |
+| `wrong_document` | wrong document |
+| `unknown_claim` | unknown claim |
+| `duplicate_claim` | duplicate claim |
+| `unknown_quote` | unknown quote |
+| `duplicate_quote` | duplicate quote |
+| `invalid_quote` | invalid quote |
+| `masks_mismatch` | masks mismatch |
+| `invalid_bundle` | invalid bundle |
+| `wrong_codebook` | wrong codebook |
+| `codebook_not_approved` | codebook not approved |
+| `unknown_theme` | unknown theme |
+| `duplicate_theme` | duplicate theme |
+| `parent_cycle` | parent cycle |
+| `unknown_parent` | unknown parent |
+| `input_changed` | input changed |
+| `invalid_panel` | invalid panel |
+| `input_too_long` | input too long |
+| `replay_miss` | replay miss |
+| `cache_corrupt` | cache corrupt |
+| `transport_error` | transport error |
+| `model_mismatch` | model mismatch |
+| `tool_call_refused` | tool call refused |
+| `malformed_reply` | malformed reply |
+| `invalid_references` | invalid references |
+| `scorer_failed` | scorer failed |
+| `scorer_exhausted` | scorer exhausted |
+| `judge_exhausted` | judge exhausted |
+| `tokens_exhausted` | tokens exhausted |
+| `storage_corrupt` | storage corrupt |
+| `unexpected_error` | unexpected error |
+
+### `SignalStatus`
+
+| Value | Meaning |
+| --- | --- |
+| `available` | available |
+| `unavailable` | unavailable |
+
+### `Presentation`
+
+| Value | Meaning |
+| --- | --- |
+| `evidence_first` | evidence first |
+| `claim_theme_first` | claim theme first |
+
+### `ReviewStatus`
+
+| Value | Meaning |
+| --- | --- |
+| `refused` | refused |
+| `incomplete` | incomplete |
+| `flagged` | flagged |
+| `assessed` | assessed |
+
+### `ReasonCode`
+
+| Value | Meaning |
+| --- | --- |
+| `wrong_attribution` | wrong attribution |
+| `wrong_period` | wrong period |
+| `negation` | negation |
+| `scope_mismatch` | scope mismatch |
+| `partial_support` | partial support |
+| `theme_mismatch` | theme mismatch |
+| `exclusion_conflict` | exclusion conflict |
+| `context_only_support` | context only support |
+| `insufficient_evidence` | insufficient evidence |
+| `compound_claim` | compound claim |
+
+The in-memory containers SupportSources, ResolvedInput, RefusedTarget,
+AssessmentResult, SupportRunResult and StoredSupportRun are frozen dataclasses
+with repr=False. They retain supplied typed records and tuples; ResolvedInput's
+unchanged claim and SupportSources' artifacts never appear in printable output.
+They do not dereference codebook examples or resolve repository paths.
+
+### Public support library boundary
+
+`earnings_themes.support` exports `Target`, `SupportSources`, `ResolvedInput`,
+`resolve_target`, `assess_target`, `assess_run`, `write_support_run`,
+`read_support_run`, and `reverify_support_run`. It also exports the pure metric
+functions `auc_roc` and `accepted_claim_precision` and their closed typed parts
+`HumanLabel`, `ContinuousSignal`, `Acceptance`, and `MetricReport`. These are the
+implemented objects, with no wrapper that discovers artifacts or changes policy.
+Neither the themes root initializer nor the support initializer imports a concrete
+NLI or chat adapter. `support-nli` is an explicitly selected optional extra.
+
+`resolve_target(stored_run, bundles, codebook, target, *, provenance_hash)`
+returns `ResolvedInput` or `RefusedTarget`. The required provenance hash binds
+the supplied source provenance, including curated fixture provenance.
+`assess_target` requires keyword-only
+`cache` and `extractor_family`; `assess_run` requires those plus `started_at` and
+`software`. Extractor family is an explicit lineage input, never inferred from a
+model alias. The complete assessment and storage signatures are documented below.
+
+These shipped contracts describe raw signals and processing outcomes. The
+[verification record](verification/semantic-support.md) records Stage 8 completion:
+actual primary V4 inference, the user-only full root and both wording gates passed,
+and the final whole-branch review cleared its findings. Stage 9 decides assignments;
+Stage 11 supplies expert labels, calibration, view/pooling selection, agreement
+floors, thresholds and fresh-call stability across extraction/scorer/judge caches.
+
+### `ScoreRequest`
+
+One nonpersisted evidence-only raw scoring request (`support.scorers`). Strict,
+closed and frozen, with safe digest-only representations. The hypothesis is the
+unchanged claim. A premise is one exact canonical quote slice or the versioned
+rendering of individually bounded passages; attribution context and theme rules
+are excluded.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `premise` | string | Complete evidence premise, local and excluded from printable fields |
+| `hypothesis` | string | Original unchanged claim, local and excluded from printable fields |
+| `input_hash` | SHA-256 | Digest of support encoding version, premise and hypothesis |
+
+### `ScoreReply`
+
+One nonpersisted raw response (`support.scorers`), revalidated before consumption.
+A score is finite in `[0,1]` and remains uncalibrated. Available replies require
+no reason and a reported input count. Failures have a fixed reason and null score,
+never a zero stand-in. Identity and input hash must match the request/adapter.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `score` | finite float in [0,1] or null | Raw support signal; no pooling or acceptance policy |
+| `reason` | fixed reason or null | Support/core failure reason; absent exactly when score exists |
+| `input_tokens` | strict nonnegative integer or null | Adapter input count, required for an available reply |
+| `latency_ms` | strict nonnegative integer | Reported operation latency; pre-dispatch refusals use zero |
+| `identity` | ScorerIdentity | Bound checkpoint/runtime and full-input limit |
+| `input_hash` | SHA-256 | Binding to complete premise/hypothesis request |
+
+`score_requests(input)` re-verifies all linked quotes and retained source bindings
+before rendering. For one quote it returns one evaluation to alias downstream as
+both quote and joint signal rows. For several quotes it returns every quote request
+plus one separate joint request (`None` scope). `evaluate_score(scorer, request)`
+counts the complete request before dispatch, refuses over-limit inputs without
+clipping, and checks strict counts, score validity and reply bindings. Expected
+scorer/transport failures remain unavailable; unexpected adapter exceptions abort
+with a safe fixed reason. `ScriptedScorer(script, token_counter, identity)` accepts
+injected callables and retains requests locally with a safe count-only repr.
+
+### `JudgeSubject`
+
+Support's nonpersisted, strict, closed, frozen request identity. This has no
+extraction-window subject. Its printable representation contains a digest only.
+
+| Field | Meaning |
+| --- | --- |
+| `target_id` | Explicit resolved claim/theme target identity. |
+| `input_hash` | Hash of the immutable resolved evidence, attribution context, claim and frozen theme. |
+| `codebook_hash` | Selected frozen codebook content hash. |
+| `presentation` | `evidence_first` or `claim_theme_first`. |
+| `prompt_hash` | SHA-256 of the caller-supplied complete UTF-8 system text. |
+| `schema_hash` | Canonical digest of the closed judge answer JSON schema. |
+| `support_version` | Literal `semantic-support/1`. |
+| `validator_version` | Exact-span validator version. |
+
+### `JudgeRequest`
+
+Support's nonpersisted local chat request, deriving from `SafePart`. Source-bearing
+fields are excluded from printable representations; JSON serialization retains the
+local request. Neither scorer outputs nor extractor rationale nor previous trials
+appear. `render_judge(input, policy, presentation)` re-verifies all evidence and
+checks the caller-supplied prompt hash. The two independent orders use identical
+content/roles and document-order quotes, in separately tagged JSON blocks.
+
+| Field | Meaning |
+| --- | --- |
+| `messages` | System instructions and one user message holding quoted evidence/context and claim/frozen-theme JSON blocks. |
+| `reply_schema` | Strict closed `JudgeAnswer` JSON schema, including nested quote assessments. |
+| `parameters` | Existing extraction `Parameters`, unchanged. |
+| `subject` | `JudgeSubject`; never sent by the transport. |
+
+`Judge` exposes `identity`, `count_tokens(request)` and `complete(request)`.
+`JudgeBinding(identity, transport, token_counter)` uses a caller-supplied complete
+local tokenizer/chat-template counter bound to the same runtime, covering all
+messages and schema framing, without a character heuristic. Before dispatch it
+checks the transport's local model, weights and runtime identity. For a single
+weight file, Stage 7's `weights_sha256` equals that file's SHA-256; for multiple
+files, it equals the canonical digest of path/hash records sorted by relative path.
+An empty local manifest refuses. `input_limit` is the total context ceiling:
+complete input tokens plus reserved `max_tokens` must fit; `max_tokens` must also
+fit `output_limit`. Over-limit requests refuse `input_too_long` without dispatch,
+clipping or hidden chunking. Token counts reject booleans and negative values.
+
+`validate_panel(extractor_family, identities)` requires two distinct explicitly
+configured judge families, at least one different from the extractor. Aliases
+never establish lineage. `parse_answer(reply, input, identity)` checks tool/model
+refusals, closed schema and exactly one assessment for each supplied quote ID.
+`SupportTransportError.reply` retains a refused transport reply and its usage
+locally; only a fixed reason prints and its exception chain is suppressed.
+`ScriptedJudge(script, token_counter, identity)` is test-only, retains requests
+locally and exposes a count-only representation. No retry, cache or budget policy
+is implemented by these transport seams.
+
+
+### `SupportCacheEntry`
+
+One support raw-response artifact, a closed frozen `SupportRecord`. Source-bearing
+fields serialize locally; printable forms contain only its digest. The cache never
+stores review outcomes, verdicts or quote-verification decisions.
+
+| Field | Meaning |
+| --- | --- |
+| `schema_version` | Support schema version 1. |
+| `key` | SHA-256 of the full canonical key material. |
+| `kind` | `scorer` or `judge`; selects typed request, identity and reply validation. |
+| `material` | Canonical JSON covering the original source run, claim, quote locators, canonical documents, structure/masks, evidence/context bounds, provenance, theme/codebook, request, runtime identity and policy. No codebook examples are dereferenced. |
+| `request` | Typed `ScoreRequest` or `JudgeRequest`, checked against material on reuse. |
+| `identity` | Typed `ScorerIdentity` or `JudgeIdentity`, including limits and runtime/checkpoint metadata. |
+| `reply_hash` | Integrity digest of raw reply JSON plus fixed transport refusal metadata. |
+| `reply` | Raw `ScoreReply` or `ModelReply`; never a derived assessment. |
+| `refusal_reason` | Optional fixed transport/schema refusal for a judge reply: `transport_error`, `model_mismatch`, `tool_call_refused`, `malformed_reply`, or `invalid_references`. Scorer entries require null. This is not a semantic review decision. |
+
+`scorer_key(input, request, identity, policy)` and `judge_key(...)` return
+`SupportCacheKey`, a SHA-256 `str` subclass with immutable canonical local binding
+material. Its string/repr are ordinary safe digest text. Bare digest strings cannot
+recover expected typed bindings and are refused. Bound material is rehashed and
+checked on every boundary; no mutable registry is used. `SupportCache(directory,
+mode)` supports `live` and `replay`, typed `lookup(key, kind)` returning a raw reply
+or `None`, `put(key, raw, *, refusal_reason=None)` returning a relative artifact reference,
+`refusal_reason(key)` returning integrity-checked judge refusal metadata, and
+`raw_ref(key)`. Neither mode dispatches itself; the coordinator treats replay
+misses as `replay_miss` and live misses as dispatch candidates. Writes use a
+temporary sibling and atomic replacement; incompatible existing content and
+corruption refuse. Raw model failures stay explicit unavailable responses or local
+attempt artifacts. Scorer model/input mismatches refuse cache publication; judge
+wrong-model replies are retained under the expected request/identity binding and
+always reparsed as unusable attempts. A cached transport-refused reply remains
+unusable even if its answer body otherwise validates. Metadata changes alter the
+integrity digest and cannot overwrite an existing entry. Earlier Stage 8 development
+cache envelopes without the combined integrity digest are invalidated as corrupt;
+no core, extraction, Stage 6, or support schema version changes. Evidence
+must be reverified outside the cache on every reuse. No bypass or concurrent-writer
+guarantee is provided.
+
+`Allowance(ceilings)` reserves one scorer evaluation per actual request and one
+judge request plus full input/allowed completion tokens per attempt. The caller
+checks complete tokenizer counts and runtime context/output limits before reserving.
+`reserve_scorer(target_id, doc_id)` and `reserve_judge(target_id, doc_id,
+input_tokens, completion_limit)` return safe reservation digest IDs.
+`settle(reservation_id, usage)` is once-only: known usage replaces charged tokens
+with actual usage, retaining original reservation and any overspend; unknown usage
+retains the full reservation and marks `unreported`. Scorer counts are never
+released. `snapshot()` returns immutable safe `UsageRecord` tuples. All applicable
+target/document/run ceilings are checked before changing state; exhaustion uses
+fixed codes. Cache hits and the one-quote joint alias make no extra reservation.
+
+
+### Assessment orchestration and review outcomes
+
+`assess_target(input, scorer, judges, policy, allowance, *, cache,
+extractor_family)` requires explicitly supplied extractor lineage. The Stage 7
+model alias cannot establish it. Policy hashes, typed scorer/judge identities,
+lineage/panel requirements and bound transport preflight validate before dispatch.
+Current exact evidence gates run before scoring and before result publication.
+Initial integrity failures return a refused result with zero dispatch. A source
+change after dispatch aborts publication with fixed `input_changed`, preserving
+completed raw cache artifacts and settled accounting locally; it never fabricates
+a zero-dispatch refusal record after calls occurred.
+The assessor evaluates each quote and a separate joint premise; a one-quote joint
+signal aliases its sole evaluation. Raw cache hits spend no allowance, replay misses
+remain unavailable, and live misses count complete input before reservation.
+Judge context limits include reserved output and a separate output limit applies.
+
+Two supplied families each receive `evidence_first` and `claim_theme_first`, in
+that order. Four independent trials retain at most two attempts each. Only
+unusable replies retry, with the original trial messages plus fixed reason and
+trusted field feedback. Raw replies/rationales never enter retry feedback or another
+trial. Every dispatched request is settled once, including unavailable requests and
+usage attached to refused raw replies. Cache hits have explicit cached usage rows
+with zero reservation; live result rows preserve reported latency.
+
+`derive_outcome(target_id, entailment, trials, evidence_ids)` consumes quote IDs in
+`evidence_ids`, validates required signal/trial coverage and compares quote
+contributions by ID. Unavailable required signals yield `incomplete`, preserving
+all semantic flags. Complete targets are `flagged` for any reason code,
+`claim_support_unsupported`, `claim_support_uncertain`,
+`theme_fit_does_not_fit`, `theme_fit_uncertain`, `quote_irrelevant`,
+`quote_contradicting`, `quote_uncertain`, or `category_disagreement`.
+Contextual quote contribution alone is permitted; `context_only_support` flags
+assertion support found only in context. Numeric differences and low NLI scores
+never determine a flag or threshold. Complete unflagged targets are `assessed`;
+integrity failures are `refused`. These processing outcomes confer no acceptance.
+
+Unexpected adapter errors abort as `SupportError("unexpected_error")` with no
+printed chain. `unexpected_error(error)` attaches only a safe `diagnostic`:
+an exact trusted builtin exception type name, or fixed `Exception` for custom
+or untrusted class identities. `str` and `repr` remain the fixed reason; exception
+messages, raw replies and source text never enter diagnostics. Completed raw calls
+remain cached; there is no durable process recovery.
+
+### Support run coordination and immutable storage
+
+`assess_run(run_id, sources, targets, scorer, judges, policy, ceilings, *,
+extractor_family, cache, started_at, software)` preflights UTC time, nonblank
+software identities including `lock_hash`, policy hash, typed identities, explicit
+family lineage and all ceilings before resolving any target. Duplicate requested
+identities and mixed source-run/codebook references refuse the run without dispatch.
+Targets are resolved and assessed sequentially in caller order under one shared
+`Allowance`. Refused rows retain IDs/hashes/fixed reasons without evidence links or
+calls. Post-dispatch input mutation aborts the run, retaining completed cache data
+and accounting; it never becomes a zero-dispatch refusal.
+
+The manifest counts each processing status and each missing or semantic reason code
+once per target. Categorical flags remain fully available in outcomes. Evaluation,
+request, reservation, actual token, unreported and cache totals reconcile to usage
+rows. Cache-hit usage is auditable but contributes no dispatch count or reserved
+allowance. Reported overspend remains visible; later reservations still obey the
+ceilings. No processing-status or no-theme observation is invented.
+
+`write_support_run(directory, result, sources)` validates all derived references
+and re-resolves each non-refused target against the supplied extraction records,
+canonical bundles, current masks and frozen codebook before creating a temporary
+sibling. It writes eight explicit Polars schemas (`targets`, `evidence`, `contexts`,
+`entailment`, `trials`, `attempts`, `usage`, `outcomes`) as Parquet plus `run.json`.
+Empty tables retain their declared schemas. Nested identity, theme and answer parts
+use declared structs/lists; nullable scores, reasons, answers and usage remain null.
+No support field duplicates canonical quote/context text. Rationales remain local.
+A complete sibling is renamed into a new destination; failed/interrupted writes
+remove the sibling. Existing destinations are never overwritten.
+
+`SupportRunRecord.artifact_hashes` reserves two namespaces: `<table>.parquet` binds
+the bytes published in the run directory, and `raw/<64-hex-digest>.json` binds the
+bytes of caller-owned raw cache artifacts. `JudgeAttempt.raw_ref` remains the confined
+`<64-hex-digest>.json` cache filename. `SupportCache.artifact_hash(reference)` validates
+the closed envelope, canonical key/request/identity bindings and reply/refusal
+integrity before hashing bytes. It rejects malformed names, symlinks, missing files
+and corrupt entries. No raw request/reply is copied into a support run directory.
+
+`read_support_run(directory)` verifies each Parquet hash/schema, strict closed models,
+unique keys/foreign keys, exact evidence sets, required quote/joint signal slots,
+four family/presentation trials, ordered attempt ownership, identities/hashes,
+recomputed outcomes/counts and dispatch ceilings. Raw-reference manifest bindings
+must be complete and confined. The reader cannot check external cache bytes without
+that cache and does not claim to do so. Inconsistency raises fixed `storage_corrupt`.
+
+Loading establishes structural consistency. Before consuming outcomes, call
+`reverify_support_run(stored, sources)` to repeat exact-span/source/theme/context
+resolution and compare all retained input and scorer hashes. A mismatch refuses
+reuse. Auditable refused rows remain refused; usable results are returned as
+processing outcomes and are never promoted to accepted theme assignments.
+No new persisted models or schema versions are introduced by these seams.
+
+## Explicit support metric parts
+
+These nonpersisted closed, strict, frozen `SafePart` models contain no source
+text. Their printable forms expose only class and content hash. `LabelTask` is
+`Literal["claim_support", "joint_support"]`; each call selects one task.
+
+`auc_roc(population, labels, signals, *, task, view)` requires unique population
+IDs and unique IDs per input, with all inputs in the supplied population and
+matching task/view. It joins labeled targets with finite scores in the selected
+view. Pairwise ranking gives ties half credit. No joined labels yields
+`no_scored_labels`; a joined set lacking either class yields `one_class`.
+Per-quote observations require their own IDs and human labels; joint labels are
+never broadcast. Four judge views reuse the same labels in four separate calls.
+
+`accepted_claim_precision(population, labels, decisions, *, task)` uses only
+external acceptance decisions. The denominator is human-labeled accepted
+targets; no such targets yields `no_labeled_accepted`. Missing acceptance
+decisions are omitted, never inferred. No score join is requested, so score
+counts are zero. These functions establish semantics, not observed quality;
+Stage 11 owns view selection, calibration, pooling, and thresholds.
+
+### `HumanLabel`
+
+| Field | Meaning |
+| --- | --- |
+| `target_id` | Explicit nonblank observation ID, unique within the supplied labels. |
+| `task` | `claim_support` or `joint_support`, matching the selected task. |
+| `supported` | Strict integer `0` or `1`, supplied by a human; booleans refused. |
+
+### `ContinuousSignal`
+
+| Field | Meaning |
+| --- | --- |
+| `target_id` | Explicit nonblank observation ID in the supplied population. |
+| `task` | `claim_support` or `joint_support`, matching the selected task. |
+| `view` | Explicit nonblank score-view name, matching the selected view. |
+| `score` | Finite float in `[0,1]`, or `None` for an unavailable score. |
+
+### `Acceptance`
+
+| Field | Meaning |
+| --- | --- |
+| `target_id` | Explicit nonblank observation ID in the supplied population. |
+| `task` | `claim_support` or `joint_support`, matching the selected task. |
+| `accepted` | Strict bool external decision; never derived by support metrics. |
+
+### `MetricReport`
+
+| Field | Meaning |
+| --- | --- |
+| `value` | Finite metric in `[0,1]`, or `None` when undefined. |
+| `reason` | `None` for a defined value; otherwise `no_scored_labels`, `one_class`, or `no_labeled_accepted`. |
+| `task` | Explicit selected label task. |
+| `view` | Selected score view for AUC, or `external_acceptance` for precision. |
+| `population_count` | Number of unique supplied population IDs. |
+| `labeled_count` | Number of human labels supplied in the population. |
+| `scored_count` | Number of nonmissing selected-view scores; zero for precision. |
+| `joined_count` | Labeled scored targets for AUC; labeled accepted targets for precision. |
+| `accepted_count` | Number of external true decisions, including unlabeled cases; zero for AUC. |
+| `missing_score_count` | Population count minus scored count for AUC, including absent and `None` scores; zero for precision. |
+| `missing_label_count` | Population count minus labeled count, independently of scores/decisions. |
+| `accepted_without_label_count` | External true decisions lacking a human label; zero for AUC. |
+
+All counts are strict nonnegative integers. Input models are revalidated at each
+metric boundary; invalid joins raise only fixed `invalid_references`, and
+malformed records raise fixed `malformed_record`. No artifact is discovered.
+
+### `LocalScorerConfig`
+
+Closed, frozen, safe configuration for an explicitly selected local NLI adapter.
+It is supplied by the caller, never discovered from repository paths. Revisions,
+complete runtime tuple, encoding and mappings are pinned. Primary input limit is
+at most 512, an explicit tokenizer-metadata policy rather than a T5 architectural
+limit. Hashes are checked before heavyweight imports; all local files must appear
+in the manifest and symlink files are refused. Every inference file is confined to
+the absolute directory. No file is downloaded by the adapter.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `kind` | minicheck, deberta | Explicit primary or named alternative selection; no fallback |
+| `local_directory` | string | Absolute supplied checkpoint directory, excluded from repr |
+| `revision` | string | Exact immutable repository revision |
+| `files` | tuple[FileHash, …] | All local file checksums; config, tokenizer and checkpoint required |
+| `runtime_versions` | tuple[tuple[string, string], …] | Ordered exact torch/transformers/sentencepiece/tokenizers/safetensors versions |
+| `device` | cpu, mps | Explicit device bound to scorer identity |
+| `precision` | float32 | Explicit inference precision bound to scorer identity |
+| `input_limit` | strict int > 0 | Complete encoded input budget; primary ≤512, alternative capped by model positions |
+| `encoding_version` | minicheck-first-step/1, deberta-pair/1 | Fixed rendering/kernel version; runtime identity appends checkpoint serialization |
+| `label_mapping` | tuple[strict int, …] | Primary vocabulary IDs (3,209) or alternative ordered NLI indices (0,1,2) |
+| `weight_license` | WeightLicense | Verified weight terms, date and intended use required before dispatch |
+
+`MiniCheckScorer(config)` and `DebertaScorer(config)` implement `EntailmentScorer`.
+Only their constructors import the optional runtime. The primary loads the pinned
+PyTorch checkpoint with `weights_only=True`, `use_safetensors=False`; the alternative
+loads native safetensors. Both use `local_files_only=True`, `trust_remote_code=False`,
+evaluation and inference mode. `count_tokens` counts the complete nontruncated
+encoding; `score` returns raw finite probabilities with identity/hash/latency/tokens
+or fixed unavailable reasons. There is no class decision, generation, aggregation,
+cutoff, wrapper chunking or alternative fallback. Configuration/runtime setup errors
+have fixed `model_mismatch`; inference errors return fixed `scorer_failed`.
