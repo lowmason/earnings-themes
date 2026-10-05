@@ -433,3 +433,29 @@ def test_mutated_canonical_after_dispatch_aborts_and_keeps_completed_raw(
     assert len(list(tmp_path.glob("*.json"))) == 1
     assert len(allowance.snapshot()) == 1
     assert len(scorer.requests) == 1 and all(not j.requests for j in panel)
+
+
+def test_three_family_panel_missing_presentation_is_incomplete(
+    resolved, scorer, panel, policy, allowance, tmp_path
+):
+    result = assess(resolved, scorer, panel, policy, allowance, tmp_path)
+    fourth = result.trials[3]
+    malformed = (
+        *result.trials[:3],
+        fourth.model_copy(
+            update={
+                "identity": fourth.identity.model_copy(
+                    update={"family": "invented-family-third"}
+                ),
+                "presentation": "evidence_first",
+            }
+        ),
+    )
+    outcome = derive_outcome(
+        resolved.record.target_id,
+        result.entailment,
+        malformed,
+        resolved.record.evidence_ids,
+    )
+    assert outcome.status == "incomplete"
+    assert outcome.missing == ("invalid_references",)

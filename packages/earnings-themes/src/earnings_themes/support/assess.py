@@ -437,6 +437,11 @@ def derive_outcome(
     missing = {s.reason for s in signals if s.status == SignalStatus.UNAVAILABLE}
     missing.update(t.reason for t in trials if t.status == SignalStatus.UNAVAILABLE)
     quote_ids = set(evidence_ids)
+    family_presentations: dict[str, set[Presentation]] = {}
+    for trial in trials:
+        family_presentations.setdefault(trial.identity.family, set()).add(
+            trial.presentation
+        )
     if (
         any(s.target_id != target_id for s in signals)
         or any(t.target_id != target_id for t in trials)
@@ -444,7 +449,11 @@ def derive_outcome(
         or len([s for s in signals if s.scope == "joint"]) != 1
         or len(signals) != len(quote_ids) + 1
         or len(trials) != 4
-        or len({(t.identity.family, t.presentation) for t in trials}) != 4
+        or len(family_presentations) != 2
+        or any(
+            presentations != set(_PRESENTATIONS)
+            for presentations in family_presentations.values()
+        )
     ):
         missing.add("invalid_references")
     flags = set()
