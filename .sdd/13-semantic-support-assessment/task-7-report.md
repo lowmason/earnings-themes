@@ -154,3 +154,42 @@ trial, attempt, review, and preflight responsibilities (clean-code G30/G34/N1).
 
 Remaining concerns: none blocking. Real inference/V4, full import/wording guards,
 run storage and Stage 11 calibration/stability remain with their assigned tasks.
+
+
+## Round 1 review fix: complete two-family panel coverage
+
+Implementation commit: `73be715` — `fix(support): require complete two-family outcome panel`.
+Verified the review finding against derive_outcome and the original Task 7 brief
+using receiving-code-review. Four distinct family/presentation pairs alone did
+not establish two complete families. Added an invented regression representing
+(A, evidence_first), (A, claim_theme_first), (B, evidence_first),
+(C, evidence_first), with all other signals positive and available.
+
+RED:
+
+```text
+uv run --locked --all-packages pytest packages/earnings-themes/tests/support/test_assess.py -q
+E   AssertionError: assert <ReviewStatus...D: 'assessed'> == 'incomplete'
+1 failed, 40 passed in 1.67s
+```
+
+Minimal fix: derive_outcome now groups presentation sets by family, requires
+exactly two families, and requires each set to equal the complete configured
+presentation set. The malformed panel becomes incomplete with invalid_references.
+No other outcome, retry, cache, schema, budget or dispatch behavior changed.
+
+GREEN:
+
+```text
+uv run --locked --all-packages pytest packages/earnings-themes/tests/support/test_assess.py -q
+41 passed in 1.61s
+uv run --locked ruff check packages/earnings-themes/src/earnings_themes/support/assess.py packages/earnings-themes/tests/support/test_assess.py
+All checks passed!
+uv run --locked ruff format --check packages/earnings-themes/src/earnings_themes/support/assess.py packages/earnings-themes/tests/support/test_assess.py
+2 files already formatted
+```
+
+All commands exited 0; git diff --check produced no output. Tests use existing
+invented fixtures and inherited no_network guards. No root, Stage 6 wording,
+live/model, data, pilot text/gold, or codebook example access occurred. Self-review
+confirmed the change is confined to the finding and does not amend earlier commits.
