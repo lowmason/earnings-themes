@@ -127,6 +127,33 @@ def test_a_host_off_this_machine_is_refused_when_built(base_url: str) -> None:
 
 
 @pytest.mark.parametrize(
+    ("base_url", "secret", "reason"),
+    [
+        (
+            "http://invented:INVENTED-SECRET@127.0.0.1:8080/v1",
+            "INVENTED-SECRET",
+            "carries credentials",
+        ),
+        ("http://127.0.0.1:INVENTEDPORT/v1", "INVENTEDPORT", "port is not a number"),
+    ],
+    ids=["credentials", "bad-port"],
+)
+def test_a_url_with_credentials_or_a_bad_port_is_refused_naming_no_value(
+    base_url: str, secret: str, reason: str
+) -> None:
+    """The refusal names no part of the URL: a credential would otherwise be printed,
+    and urllib's own port error quotes the port, so it is neither the cause nor shown
+    as the context (GS13)."""
+    config = CONFIG.model_copy(update={"base_url": base_url})
+    with pytest.raises(ValueError, match=reason) as refused:
+        LocalAdapter(config)
+    message = str(refused.value)
+    assert secret not in message
+    assert refused.value.__cause__ is None
+    assert refused.value.__context__ is None or refused.value.__suppress_context__
+
+
+@pytest.mark.parametrize(
     "base_url",
     ["http://127.0.0.1:8080/v1", "http://localhost:11434/v1/", "http://[::1]:8000/v1"],
 )

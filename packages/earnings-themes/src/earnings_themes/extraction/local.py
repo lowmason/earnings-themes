@@ -71,14 +71,26 @@ def load_local_config(path: Path) -> LocalModelConfig:
 
 
 def loopback_url(base_url: str) -> str:
-    """``base_url`` without a trailing slash; raises ``ValueError`` unless its
-    scheme is http or https and its host is a loopback name (R14.1)."""
+    """``base_url`` without a trailing slash. Raises ``ValueError``, naming no part
+    of the URL, unless its scheme is http or https, its host is a loopback name
+    (R14.1), it carries no credentials, and its port, if it has one, is a number
+    from 0 to 65535."""
     parts = urlsplit(base_url)
     if parts.scheme not in {"http", "https"} or parts.hostname not in LOOPBACK:
         raise ValueError(
-            f"{base_url!r} is not on this machine: the local adapter reaches only"
+            "the base URL is not on this machine: the local adapter reaches only"
             f" {sorted(LOOPBACK)}"
         )
+    if parts.username is not None or parts.password is not None:
+        raise ValueError(
+            "the base URL carries credentials: the local adapter sends no key"
+        )
+    try:
+        _ = parts.port  # urllib's own message quotes a bad port
+    except ValueError:
+        raise ValueError(
+            "the base URL's port is not a number from 0 to 65535"
+        ) from None
     return base_url.rstrip("/")
 
 
