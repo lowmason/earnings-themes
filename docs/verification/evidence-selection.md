@@ -202,18 +202,22 @@ governs.
 
 ### The model (ADR 0004)
 
-[GATE: the model, its runtime and version, its weights' SHA-256, and its license, as
-ADR 0004 records them, with the ADR's path.]
+Gemma 4 31B-it, served as `gemma-4-31b-it-qat-q4_0` by llama.cpp's `llama-server`
+0.5.0 (build 11146, commit 7fe450e19). Its weights' SHA-256 is
+`179cfb99212709597eae5929112cfca677e1bbf566178b479ae1da0c4772874b`, over the one
+file `gemma-4-31B_q4_0-it.gguf`, and its license is "Apache 2.0", as
+`docs/adr/0004-use-a-local-open-weight-model-for-the-extractors-live-test.md`
+records them. It serves the live test only, and the production model stays open.
 
 ### The live run
 
-On [GATE: the date], the session ran the live test once, by its node ID, against
-[GATE: the model ID] under [GATE: the runtime and its version]. It printed
-`[GATE: the summary line]`, and its count line, `[GATE: the test's printed line]`.
+On 2026-10-05, the session ran the live test once, by its node ID, against
+`gemma-4-31b-it-qat-q4_0` under llama.cpp's `llama-server` 0.5.0 (build 11146,
+commit 7fe450e19). It printed `1 passed in 90.64s (0:01:30)`, and its count line,
+`0000877860-13-000100_ex-99-1: windows 2, requests 2, prompt tokens 2527, completion tokens 941, unreported 0, quotes 24, claims 23, rejections {}`.
 
 ### The main checkout
 
-On [GATE: the date], the user ran the wording guard in the main checkout at plan B's
-tip, `[GATE: the tip's short hash]`, on a detached HEAD, from a checkout with no
-tracked change. It printed `[GATE: the summary line]`. [GATE: "No test failed.", or
-each failure's node ID and exception type, with its fix's commit.]
+On 2026-10-05, the user ran the wording guard in the main checkout at plan B's
+tip, `6bf06a9`, on a detached HEAD, from a checkout with no tracked change. It
+printed `6 passed in 1.56s`. No test failed.
