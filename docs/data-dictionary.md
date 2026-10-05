@@ -2513,7 +2513,7 @@ from `config/models/local-model.toml`, which ADR 0004 records at plan B's gate.
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `base_url` | string | The server's OpenAI-compatible root; the adapter refuses any host but 127.0.0.1, ::1, or localhost (R14.1), and a URL with credentials, a port that is not a number from 0 to 65535, or one that does not parse; no refusal names any part of the URL |
+| `base_url` | string | The server's OpenAI-compatible root; the adapter refuses any scheme but http or https and any host but 127.0.0.1, ::1, or localhost (R14.1), and a URL with credentials, a port that is not a number from 0 to 65535, surrounding whitespace or an ASCII control character, or one that does not parse; no refusal names any part of the URL |
 | `model_id` | string | The model the server names in each reply |
 | `weights_sha256` | 64 lowercase hex | The weights file's SHA-256 |
 | `runtime` | string | The serving runtime's name |

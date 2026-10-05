@@ -1,11 +1,13 @@
 """The local adapter: one OpenAI-compatible chat endpoint on this machine, over httpx
 (the Stage 7 spec, §The local adapter; R14.1, R14.7, ES15, ES19).
 
-- **Hosts.** Construction refuses a base URL whose host is not 127.0.0.1, ::1, or
-  localhost, so no hosted, billable endpoint is reachable (R14.1). It refuses one
-  that carries credentials, since the adapter sends no key, one whose port is not a
-  number from 0 to 65535, and one that does not parse. No refusal names any part of
-  the URL, so a credential typed into it is never printed. The client reads no proxy
+- **Hosts.** Construction refuses a base URL whose scheme is not http or https, or
+  whose host is not 127.0.0.1, ::1, or localhost, so no hosted, billable endpoint is
+  reachable (R14.1). It refuses one that carries credentials, since the adapter
+  sends no key, one whose port is not a number from 0 to 65535, and one that does
+  not parse or that holds surrounding whitespace or an ASCII control character,
+  which urlsplit and httpx would read differently. No refusal names any part of the
+  URL, so a credential typed into it is never printed. The client reads no proxy
   from the environment and follows no redirect, so no request leaves the machine.
 - **The request.** A POST to ``<base>/chat/completions`` with the messages and the
   parameters, and in structured mode a strict ``response_format`` JSON schema
@@ -74,9 +76,15 @@ def load_local_config(path: Path) -> LocalModelConfig:
 
 def loopback_url(base_url: str) -> str:
     """``base_url`` without a trailing slash. Raises ``ValueError``, naming no part
-    of the URL, unless its scheme is http or https, its host is a loopback name
+    of the URL, unless it has no surrounding whitespace and no ASCII control
+    character, it parses, its scheme is http or https, its host is a loopback name
     (R14.1), it carries no credentials, and its port, if it has one, is a number
     from 0 to 65535."""
+    if base_url != base_url.strip() or any(
+        char.isascii() and not char.isprintable() for char in base_url
+    ):
+        # urlsplit drops some of these before it parses, and httpx would not.
+        raise ValueError("the base URL is not a valid URL")
     try:
         parts = urlsplit(base_url)
     except ValueError:

@@ -142,15 +142,28 @@ def test_a_host_off_this_machine_is_refused_when_built(base_url: str) -> None:
             "INVENTED-SECRET",
             "the base URL is not a valid URL",
         ),
+        (
+            "http://127.0.0.1:8080/v1/INVENTED-SECRET" + chr(7),
+            "INVENTED-SECRET",
+            "the base URL is not a valid URL",
+        ),
+        (
+            " http://127.0.0.1:8080/v1/INVENTED-SECRET",
+            "INVENTED-SECRET",
+            "the base URL is not a valid URL",
+        ),
     ],
-    ids=["credentials", "bad-port", "invalid"],
+    ids=["credentials", "bad-port", "invalid", "control", "whitespace"],
 )
-def test_a_url_with_credentials_or_a_bad_port_is_refused_naming_no_value(
+def test_a_malformed_url_or_one_with_credentials_is_refused_naming_no_value(
     base_url: str, secret: str, reason: str
 ) -> None:
     """The refusal names no part of the URL: a credential would otherwise be printed.
-    urllib's own errors quote a bad port and, for U+2100, which NFKC expands to a
-    slash, the whole netloc, so none is the cause or shown as the context (GS13)."""
+    urllib's own errors quote a bad port and, for U+2100, which NFKC expands to a/c,
+    the whole netloc, so none is the cause or shown as the context (GS13). urlsplit
+    drops some control characters and a leading space before it parses, and httpx
+    refuses or misreads them, so a URL holding one is refused before either reads
+    it."""
     config = CONFIG.model_copy(update={"base_url": base_url})
     with pytest.raises(ValueError, match=reason) as refused:
         LocalAdapter(config)
