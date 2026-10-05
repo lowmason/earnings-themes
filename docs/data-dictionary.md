@@ -2834,7 +2834,7 @@ One immutable support run manifest. Binding tuples are sorted with unique keys. 
 | --- | --- | --- |
 | `schema_version` | 1 | Support record schema version, fixed at 1 |
 | `run_id` | nonblank string | Unique support run identity |
-| `started_at` | UTC-aware datetime | UTC-aware extraction start timestamp |
+| `started_at` | UTC-aware datetime | UTC-aware support run start timestamp |
 | `source_run_id` | nonblank string | Source extraction run ID |
 | `source_run_hash` | SHA-256 | Canonical source-run provenance hash |
 | `documents` | tuple[tuple[nonblank string, SHA-256], …] | Sorted immutable (document ID, canonical SHA-256) bindings |
