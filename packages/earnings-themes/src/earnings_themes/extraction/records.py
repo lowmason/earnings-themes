@@ -153,7 +153,7 @@ class Quote(ExtractionRecord):
     def _id_is_the_span(self) -> Self:
         expected = f"q-{self.span.start}-{self.span.end}"
         if self.quote_id != expected:
-            raise ValueError(f"quote_id {self.quote_id!r} is not {expected!r}")
+            raise ValueError(f"quote_id is not {expected!r}")
         return self
 
 
@@ -320,7 +320,7 @@ class RunRecord(ExtractionRecord):
     def _consistent(self) -> Self:
         unknown = sorted(set(self.rejections_by_reason) - REASONS)
         if unknown:
-            raise ValueError(f"unknown rejection reasons {unknown}")
+            raise ValueError(f"{len(unknown)} unknown rejection reasons")
         expected = 1.0 if self.quotes else None
         if self.exactness_rate != expected:
             raise ValueError(f"exactness_rate is {expected} over {self.quotes} quotes")
