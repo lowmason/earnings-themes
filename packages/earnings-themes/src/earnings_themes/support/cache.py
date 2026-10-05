@@ -18,6 +18,7 @@ from earnings_core import (
     OverlayMask,
     canonical_json,
     digest,
+    sha256_hex,
 )
 from pydantic import Field, model_validator
 
@@ -262,6 +263,28 @@ class SupportCache:
             return request, identity
         except (ValueError, TypeError, KeyError, AttributeError):
             raise SupportError("malformed_record") from None
+
+    def artifact_hash(self, reference: str) -> str:
+        """Hash a validated local cache artifact by its confined digest filename."""
+        try:
+            if (
+                type(reference) is not str
+                or len(reference) != 69
+                or not reference.endswith(".json")
+                or any(c not in "0123456789abcdef" for c in reference[:64])
+            ):
+                raise ValueError
+            path = self._directory / reference
+            if path.is_symlink():
+                raise ValueError
+            payload = path.read_bytes()
+            entry = SupportCacheEntry.model_validate_json(payload)
+            key = SupportCacheKey(entry.material)
+            if reference != self.raw_ref(key) or self._entry(key, entry.kind) != entry:
+                raise ValueError
+            return sha256_hex(payload)
+        except (OSError, ValueError, TypeError, AttributeError):
+            raise SupportError("cache_corrupt") from None
 
     def raw_ref(self, key: SupportCacheKey) -> str:
         try:

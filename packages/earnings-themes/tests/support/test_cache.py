@@ -571,3 +571,17 @@ def test_refusal_metadata_refuses_arbitrary_and_semantic_reasons(
             ModelReply(text="INVENTED_REPLY", model=identity.runtime.model_id),
             refusal_reason=reason,
         )
+
+
+def test_artifact_hash_is_confined_and_checks_entry(tmp_path):
+    from earnings_themes.support.problems import SupportError
+
+    cache = SupportCache(tmp_path, "live")
+    reference = "a" * 64 + ".json"
+    with pytest.raises(SupportError):
+        cache.artifact_hash("../" + reference)
+    with pytest.raises(SupportError):
+        cache.artifact_hash(reference)
+    (tmp_path / reference).write_text("INVENTED_PRIVATE")
+    with pytest.raises(SupportError, match="^cache_corrupt$"):
+        cache.artifact_hash(reference)

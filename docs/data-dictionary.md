@@ -3130,3 +3130,55 @@ an exact trusted builtin exception type name, or fixed `Exception` for custom
 or untrusted class identities. `str` and `repr` remain the fixed reason; exception
 messages, raw replies and source text never enter diagnostics. Completed raw calls
 remain cached; there is no durable process recovery.
+
+### Support run coordination and immutable storage
+
+`assess_run(run_id, sources, targets, scorer, judges, policy, ceilings, *,
+extractor_family, cache, started_at, software)` preflights UTC time, nonblank
+software identities including `lock_hash`, policy hash, typed identities, explicit
+family lineage and all ceilings before resolving any target. Duplicate requested
+identities and mixed source-run/codebook references refuse the run without dispatch.
+Targets are resolved and assessed sequentially in caller order under one shared
+`Allowance`. Refused rows retain IDs/hashes/fixed reasons without evidence links or
+calls. Post-dispatch input mutation aborts the run, retaining completed cache data
+and accounting; it never becomes a zero-dispatch refusal.
+
+The manifest counts each processing status and each missing or semantic reason code
+once per target. Categorical flags remain fully available in outcomes. Evaluation,
+request, reservation, actual token, unreported and cache totals reconcile to usage
+rows. Cache-hit usage is auditable but contributes no dispatch count or reserved
+allowance. Reported overspend remains visible; later reservations still obey the
+ceilings. No processing-status or no-theme observation is invented.
+
+`write_support_run(directory, result, sources)` validates all derived references
+and re-resolves each non-refused target against the supplied extraction records,
+canonical bundles, current masks and frozen codebook before creating a temporary
+sibling. It writes eight explicit Polars schemas (`targets`, `evidence`, `contexts`,
+`entailment`, `trials`, `attempts`, `usage`, `outcomes`) as Parquet plus `run.json`.
+Empty tables retain their declared schemas. Nested identity, theme and answer parts
+use declared structs/lists; nullable scores, reasons, answers and usage remain null.
+No support field duplicates canonical quote/context text. Rationales remain local.
+A complete sibling is renamed into a new destination; failed/interrupted writes
+remove the sibling. Existing destinations are never overwritten.
+
+`SupportRunRecord.artifact_hashes` reserves two namespaces: `<table>.parquet` binds
+the bytes published in the run directory, and `raw/<64-hex-digest>.json` binds the
+bytes of caller-owned raw cache artifacts. `JudgeAttempt.raw_ref` remains the confined
+`<64-hex-digest>.json` cache filename. `SupportCache.artifact_hash(reference)` validates
+the closed envelope, canonical key/request/identity bindings and reply/refusal
+integrity before hashing bytes. It rejects malformed names, symlinks, missing files
+and corrupt entries. No raw request/reply is copied into a support run directory.
+
+`read_support_run(directory)` verifies each Parquet hash/schema, strict closed models,
+unique keys/foreign keys, exact evidence sets, required quote/joint signal slots,
+four family/presentation trials, ordered attempt ownership, identities/hashes,
+recomputed outcomes/counts and dispatch ceilings. Raw-reference manifest bindings
+must be complete and confined. The reader cannot check external cache bytes without
+that cache and does not claim to do so. Inconsistency raises fixed `storage_corrupt`.
+
+Loading establishes structural consistency. Before consuming outcomes, call
+`reverify_support_run(stored, sources)` to repeat exact-span/source/theme/context
+resolution and compare all retained input and scorer hashes. A mismatch refuses
+reuse. Auditable refused rows remain refused; usable results are returned as
+processing outcomes and are never promoted to accepted theme assignments.
+No new persisted models or schema versions are introduced by these seams.
