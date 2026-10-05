@@ -27,8 +27,8 @@ from earnings_themes import records as themes
 from earnings_themes.anchoring import SpanPointer
 from earnings_themes.extraction import adapters, cache, local
 from earnings_themes.extraction import records as extraction
+from earnings_themes.support import judges, scorers
 from earnings_themes.support import records as support
-from earnings_themes.support import scorers
 from earnings_themes.support.problems import SupportProblem
 from pydantic import BaseModel
 
@@ -166,6 +166,8 @@ MODELS = [
     cache.CacheKey,
     cache.CacheEntry,
     local.LocalModelConfig,
+    judges.JudgeSubject,
+    judges.JudgeRequest,
     scorers.ScoreRequest,
     scorers.ScoreReply,
     support.CodebookReference,

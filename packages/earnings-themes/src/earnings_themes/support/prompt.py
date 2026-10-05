@@ -1,14 +1,26 @@
 """Reconstruct separate canonical views; joint scorer input contains evidence only."""
 
-from earnings_core import CanonicalDocument, sha256_hex
+from earnings_core import (
+    VALIDATOR_VERSION,
+    CanonicalDocument,
+    canonical_json,
+    digest,
+    sha256_hex,
+)
 
+from earnings_themes.extraction.adapters import Message
+from earnings_themes.support.judges import JudgeRequest, JudgeSubject
 from earnings_themes.support.problems import SupportError
 from earnings_themes.support.records import (
     ContextReference,
     EvidenceReference,
+    JudgeAnswer,
+    Presentation,
+    RefusedTarget,
     ResolvedInput,
+    SupportPolicy,
 )
-from earnings_themes.support.resolve import _validated
+from earnings_themes.support.resolve import _validated, reverify_input
 
 
 def _canonical_slice(
@@ -71,4 +83,57 @@ def joint_premise(input: ResolvedInput) -> str:
     return "\n\n".join(
         f"PASSAGE {index} [{ref.quote_id}]\n{evidence_text(input, ref)}\nEND PASSAGE {index}"
         for index, ref in enumerate(input.evidence, 1)
+    )
+
+
+def render_judge(
+    input: ResolvedInput, policy: SupportPolicy, presentation: Presentation | str
+) -> JudgeRequest:
+    """Reverify evidence and render identical JSON blocks in two independent orders."""
+    checked = reverify_input(input)
+    if isinstance(checked, RefusedTarget):
+        raise SupportError(checked.outcome.missing[0])
+    policy = _validated(policy, SupportPolicy)
+    if sha256_hex(policy.prompt_text.encode("utf-8")) != policy.prompt_hash:
+        raise SupportError("input_changed")
+    try:
+        order = Presentation(presentation)
+    except (ValueError, TypeError):
+        raise SupportError("malformed_record") from None
+    evidence = {
+        "tag": "quoted_evidence_and_context",
+        "quoted_evidence": [
+            {**ref.model_dump(mode="json"), "text": evidence_text(checked, ref)}
+            for ref in checked.evidence
+        ],
+        "attribution_context": [
+            {**ref.model_dump(mode="json"), "text": context_text(checked, ref)}
+            for ref in checked.contexts
+        ],
+    }
+    claim = {
+        "tag": "claim_and_frozen_theme",
+        "claim": checked.claim,
+        "frozen_theme": checked.record.theme.model_dump(mode="json"),
+    }
+    blocks = (
+        [evidence, claim] if order == Presentation.EVIDENCE_FIRST else [claim, evidence]
+    )
+    schema = JudgeAnswer.model_json_schema()
+    return JudgeRequest(
+        messages=(
+            Message(role="system", content=policy.prompt_text),
+            Message(role="user", content=canonical_json(blocks).decode("utf-8")),
+        ),
+        reply_schema=schema,
+        parameters=policy.parameters,
+        subject=JudgeSubject(
+            target_id=checked.record.target_id,
+            input_hash=checked.record.input_hash,
+            codebook_hash=checked.record.target.codebook.content_hash,
+            presentation=order,
+            prompt_hash=policy.prompt_hash,
+            schema_hash=digest(schema),
+            validator_version=VALIDATOR_VERSION,
+        ),
     )

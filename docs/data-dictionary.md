@@ -2979,3 +2979,57 @@ clipping, and checks strict counts, score validity and reply bindings. Expected
 scorer/transport failures remain unavailable; unexpected adapter exceptions abort
 with a safe fixed reason. `ScriptedScorer(script, token_counter, identity)` accepts
 injected callables and retains requests locally with a safe count-only repr.
+
+### `JudgeSubject`
+
+Support's nonpersisted, strict, closed, frozen request identity. This has no
+extraction-window subject. Its printable representation contains a digest only.
+
+| Field | Meaning |
+| --- | --- |
+| `target_id` | Explicit resolved claim/theme target identity. |
+| `input_hash` | Hash of the immutable resolved evidence, attribution context, claim and frozen theme. |
+| `codebook_hash` | Selected frozen codebook content hash. |
+| `presentation` | `evidence_first` or `claim_theme_first`. |
+| `prompt_hash` | SHA-256 of the caller-supplied complete UTF-8 system text. |
+| `schema_hash` | Canonical digest of the closed judge answer JSON schema. |
+| `support_version` | Literal `semantic-support/1`. |
+| `validator_version` | Exact-span validator version. |
+
+### `JudgeRequest`
+
+Support's nonpersisted local chat request, deriving from `SafePart`. Source-bearing
+fields are excluded from printable representations; JSON serialization retains the
+local request. Neither scorer outputs nor extractor rationale nor previous trials
+appear. `render_judge(input, policy, presentation)` re-verifies all evidence and
+checks the caller-supplied prompt hash. The two independent orders use identical
+content/roles and document-order quotes, in separately tagged JSON blocks.
+
+| Field | Meaning |
+| --- | --- |
+| `messages` | System instructions and one user message holding quoted evidence/context and claim/frozen-theme JSON blocks. |
+| `reply_schema` | Strict closed `JudgeAnswer` JSON schema, including nested quote assessments. |
+| `parameters` | Existing extraction `Parameters`, unchanged. |
+| `subject` | `JudgeSubject`; never sent by the transport. |
+
+`Judge` exposes `identity`, `count_tokens(request)` and `complete(request)`.
+`JudgeBinding(identity, transport, token_counter)` uses a caller-supplied complete
+local tokenizer/chat-template counter bound to the same runtime, covering all
+messages and schema framing, without a character heuristic. Before dispatch it
+checks the transport's local model, weights and runtime identity. For a single
+weight file, Stage 7's `weights_sha256` equals that file's SHA-256; for multiple
+files, it equals the canonical digest of path/hash records sorted by relative path.
+An empty local manifest refuses. `input_limit` is the total context ceiling:
+complete input tokens plus reserved `max_tokens` must fit; `max_tokens` must also
+fit `output_limit`. Over-limit requests refuse `input_too_long` without dispatch,
+clipping or hidden chunking. Token counts reject booleans and negative values.
+
+`validate_panel(extractor_family, identities)` requires two distinct explicitly
+configured judge families, at least one different from the extractor. Aliases
+never establish lineage. `parse_answer(reply, input, identity)` checks tool/model
+refusals, closed schema and exactly one assessment for each supplied quote ID.
+`SupportTransportError.reply` retains a refused transport reply and its usage
+locally; only a fixed reason prints and its exception chain is suppressed.
+`ScriptedJudge(script, token_counter, identity)` is test-only, retains requests
+locally and exposes a count-only representation. No retry, cache or budget policy
+is implemented by these transport seams.

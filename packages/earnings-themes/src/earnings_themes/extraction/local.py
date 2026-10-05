@@ -40,8 +40,8 @@ from pydantic import (
 
 from earnings_themes.extraction.adapters import (
     AdapterError,
+    ChatRequest,
     ModelReply,
-    ModelRequest,
     Usage,
 )
 from earnings_themes.extraction.records import AdapterIdentity, ExtractionProblem
@@ -160,7 +160,7 @@ class LocalAdapter:
     def identity(self) -> AdapterIdentity:
         return self._identity
 
-    def body(self, request: ModelRequest) -> dict[str, Any]:
+    def body(self, request: ChatRequest) -> dict[str, Any]:
         """The JSON body sent for ``request``: never ``tools`` or ``tool_choice``."""
         parameters = request.parameters
         body: dict[str, Any] = {
@@ -181,7 +181,7 @@ class LocalAdapter:
             }
         return body
 
-    def complete(self, request: ModelRequest) -> ModelReply:
+    def complete(self, request: ChatRequest) -> ModelReply:
         started = time.monotonic()
         try:
             with httpx.Client(
