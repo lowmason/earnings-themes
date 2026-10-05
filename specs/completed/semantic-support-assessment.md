@@ -1,11 +1,10 @@
 # Semantic support assessment
 
-**Status: SPEC APPROVED (2026-10-05)** — Stage 8; ready for writing-plans.
+**Status: COMPLETE (2026-10-05)** — Stage 8 implemented by plan 13; nothing deferred.
 
-> For agentic workers: REQUIRED NEXT SKILL: writing-plans. This is the stage spec
-> for Stage 8 of `specs/evidence-linked-theme-extraction-roadmap.md`. Plan this
-> stage alone, in one plan. Do not implement Stage 9 coding or Stage 11 calibration
-> with it.
+> Completed stage spec for Stage 8 of `specs/evidence-linked-theme-extraction-roadmap.md`.
+> Implemented by [plan 13](../plans/completed/13-semantic-support-assessment.md).
+> Stage 9 coding and Stage 11 calibration remain separate downstream work.
 
 Stage 8 assesses a proposed claim–theme pairing against its exact quoted evidence.
 It consumes Stage 7's stored, codebook-free quote-claim contracts, re-verifies the
@@ -636,12 +635,14 @@ judge choice or an agreement floor. Record schema/interfaces in the data diction
 and run relevant package/consumer checks and the root default suite; do not infer
 success from collection or a skipped V4 smoke.
 
-> Roadmap: specs/evidence-linked-theme-extraction-roadmap.md, Stage 8 — on plan
-> completion, tick the stage and re-validate later stages against what shipped.
+> Stage 8: COMPLETE (2026-10-05) — implemented by plan 13
+> (`specs/plans/completed/13-semantic-support-assessment.md`).
+> Next: resume the roadmap.
 
-On implementation completion, stamp this spec with the plan ID/date and retire it
-to `specs/completed/` under the plan-completion protocol. Reconcile Stage 9's runtime
-proposal–assessment ordering, Stage 10's store/gate, and Stage 11's calibration and
-fresh-call obligations against the shipped interfaces. The design approval does not
-tick Stage 8 or establish V4. Planning receives this approved, committed spec in a
-fresh session.
+Plan 13 completed all Stage 8 requirements and retired this spec after the actual
+primary V4 pass, user-reported root/wording passes and cleared final review.
+[Verification evidence](../../docs/verification/semantic-support.md) records the
+counts, pins and limitations. The roadmap reconciles Stages 9/10/11/13/15 against
+shipped interfaces, preserving its earlier user edits. No Stage 8 work is deferred;
+expert labels, calibration, production policy and fresh-call stability remain
+Stage 11 obligations. Integration remains the user’s choice.
