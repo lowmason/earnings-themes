@@ -2217,6 +2217,15 @@ a committed file. A rejection's `detail` and the reply's labels may quote a
 document, so they stay local, and a refusal prints as its reason and IDs alone
 (GS13).
 
+`write_run` (`earnings_themes.extraction.store`) stores a run in a new directory:
+`run.json`, the `RunRecord`, and one Parquet file per record kind, written through
+Polars under an explicit schema: `documents.parquet` (`DocumentRecord`),
+`windows.parquet` (`WindowRecord`), `visits.parquet` (`Visit`), `quotes.parquet`
+(`Quote`), `claims.parquet` (`Claim`), and `rejections.parquet`
+(`ExtractionRejection`). Each column is a field, in the model's order: an enum is
+its value, a tuple a list, and a nested `VerifiedSpan` or `Rejection` a struct of
+its fields.
+
 ### `ExtractionProblem`
 
 The extractor's own refusal reasons; a span check's reason is earnings-core's
