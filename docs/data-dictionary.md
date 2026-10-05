@@ -3182,3 +3182,70 @@ resolution and compare all retained input and scorer hashes. A mismatch refuses
 reuse. Auditable refused rows remain refused; usable results are returned as
 processing outcomes and are never promoted to accepted theme assignments.
 No new persisted models or schema versions are introduced by these seams.
+
+## Explicit support metric parts
+
+These nonpersisted closed, strict, frozen `SafePart` models contain no source
+text. Their printable forms expose only class and content hash. `LabelTask` is
+`Literal["claim_support", "joint_support"]`; each call selects one task.
+
+`auc_roc(population, labels, signals, *, task, view)` requires unique population
+IDs and unique IDs per input, with all inputs in the supplied population and
+matching task/view. It joins labeled targets with finite scores in the selected
+view. Pairwise ranking gives ties half credit. No joined labels yields
+`no_scored_labels`; a joined set lacking either class yields `one_class`.
+Per-quote observations require their own IDs and human labels; joint labels are
+never broadcast. Four judge views reuse the same labels in four separate calls.
+
+`accepted_claim_precision(population, labels, decisions, *, task)` uses only
+external acceptance decisions. The denominator is human-labeled accepted
+targets; no such targets yields `no_labeled_accepted`. Missing acceptance
+decisions are omitted, never inferred. No score join is requested, so score
+counts are zero. These functions establish semantics, not observed quality;
+Stage 11 owns view selection, calibration, pooling, and thresholds.
+
+### `HumanLabel`
+
+| Field | Meaning |
+| --- | --- |
+| `target_id` | Explicit nonblank observation ID, unique within the supplied labels. |
+| `task` | `claim_support` or `joint_support`, matching the selected task. |
+| `supported` | Strict integer `0` or `1`, supplied by a human; booleans refused. |
+
+### `ContinuousSignal`
+
+| Field | Meaning |
+| --- | --- |
+| `target_id` | Explicit nonblank observation ID in the supplied population. |
+| `task` | `claim_support` or `joint_support`, matching the selected task. |
+| `view` | Explicit nonblank score-view name, matching the selected view. |
+| `score` | Finite float in `[0,1]`, or `None` for an unavailable score. |
+
+### `Acceptance`
+
+| Field | Meaning |
+| --- | --- |
+| `target_id` | Explicit nonblank observation ID in the supplied population. |
+| `task` | `claim_support` or `joint_support`, matching the selected task. |
+| `accepted` | Strict bool external decision; never derived by support metrics. |
+
+### `MetricReport`
+
+| Field | Meaning |
+| --- | --- |
+| `value` | Finite metric in `[0,1]`, or `None` when undefined. |
+| `reason` | `None` for a defined value; otherwise `no_scored_labels`, `one_class`, or `no_labeled_accepted`. |
+| `task` | Explicit selected label task. |
+| `view` | Selected score view for AUC, or `external_acceptance` for precision. |
+| `population_count` | Number of unique supplied population IDs. |
+| `labeled_count` | Number of human labels supplied in the population. |
+| `scored_count` | Number of nonmissing selected-view scores; zero for precision. |
+| `joined_count` | Labeled scored targets for AUC; labeled accepted targets for precision. |
+| `accepted_count` | Number of external true decisions, including unlabeled cases; zero for AUC. |
+| `missing_score_count` | Population count minus scored count for AUC, including absent and `None` scores; zero for precision. |
+| `missing_label_count` | Population count minus labeled count, independently of scores/decisions. |
+| `accepted_without_label_count` | External true decisions lacking a human label; zero for AUC. |
+
+All counts are strict nonnegative integers. Input models are revalidated at each
+metric boundary; invalid joins raise only fixed `invalid_references`, and
+malformed records raise fixed `malformed_record`. No artifact is discovered.

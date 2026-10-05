@@ -27,7 +27,7 @@ from earnings_themes import records as themes
 from earnings_themes.anchoring import SpanPointer
 from earnings_themes.extraction import adapters, cache, local
 from earnings_themes.extraction import records as extraction
-from earnings_themes.support import judges, scorers
+from earnings_themes.support import judges, metrics, scorers
 from earnings_themes.support import records as support
 from earnings_themes.support.cache import SupportCacheEntry
 from earnings_themes.support.problems import SupportProblem
@@ -172,6 +172,10 @@ MODELS = [
     scorers.ScoreRequest,
     scorers.ScoreReply,
     SupportCacheEntry,
+    metrics.HumanLabel,
+    metrics.ContinuousSignal,
+    metrics.Acceptance,
+    metrics.MetricReport,
     support.CodebookReference,
     support.Target,
     support.ThemeSnapshot,
