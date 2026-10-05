@@ -183,3 +183,46 @@ def resolved_case(sources, target):
     )
     assert isinstance(result, ResolvedInput)
     return result
+
+
+def judge_reply(
+    *,
+    claim_support="supported",
+    theme_fit="fits",
+    contribution="supporting",
+    reasons=(),
+):
+    """Complete invented answers using only quote IDs from the current request."""
+    import json
+
+    from earnings_themes.extraction.adapters import ModelReply, Usage
+
+    def reply(request):
+        blocks = json.loads(request.messages[1].content)
+        evidence = next(b for b in blocks if "quoted_evidence" in b)
+        return ModelReply(
+            text=json.dumps(
+                {
+                    "claim_support": claim_support,
+                    "theme_fit": theme_fit,
+                    "joint_support_score": 0.9,
+                    "quote_assessments": [
+                        {"quote_id": q["quote_id"], "contribution": contribution}
+                        for q in evidence["quoted_evidence"]
+                    ],
+                    "reason_codes": list(reasons),
+                    "summary": "Invented diagnostic summary.",
+                }
+            ),
+            model="invented-judge",
+            usage=Usage(prompt_tokens=5, completion_tokens=3),
+            latency_ms=2,
+        )
+
+    return reply
+
+
+def negative_reply(reason):
+    return judge_reply(
+        claim_support="unsupported", theme_fit="does_not_fit", reasons=(reason,)
+    )

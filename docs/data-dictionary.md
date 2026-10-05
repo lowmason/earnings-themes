@@ -3049,8 +3049,9 @@ stores review outcomes, verdicts or quote-verification decisions.
 | `material` | Canonical JSON covering the original source run, claim, quote locators, canonical documents, structure/masks, evidence/context bounds, provenance, theme/codebook, request, runtime identity and policy. No codebook examples are dereferenced. |
 | `request` | Typed `ScoreRequest` or `JudgeRequest`, checked against material on reuse. |
 | `identity` | Typed `ScorerIdentity` or `JudgeIdentity`, including limits and runtime/checkpoint metadata. |
-| `reply_hash` | Integrity digest of the raw reply JSON. |
+| `reply_hash` | Integrity digest of raw reply JSON plus fixed transport refusal metadata. |
 | `reply` | Raw `ScoreReply` or `ModelReply`; never a derived assessment. |
+| `refusal_reason` | Optional fixed transport/schema refusal for a judge reply: `transport_error`, `model_mismatch`, `tool_call_refused`, `malformed_reply`, or `invalid_references`. Scorer entries require null. This is not a semantic review decision. |
 
 `scorer_key(input, request, identity, policy)` and `judge_key(...)` return
 `SupportCacheKey`, a SHA-256 `str` subclass with immutable canonical local binding
@@ -3058,12 +3059,19 @@ material. Its string/repr are ordinary safe digest text. Bare digest strings can
 recover expected typed bindings and are refused. Bound material is rehashed and
 checked on every boundary; no mutable registry is used. `SupportCache(directory,
 mode)` supports `live` and `replay`, typed `lookup(key, kind)` returning a raw reply
-or `None`, `put(key, raw)` returning a relative artifact reference, and
+or `None`, `put(key, raw, *, refusal_reason=None)` returning a relative artifact reference,
+`refusal_reason(key)` returning integrity-checked judge refusal metadata, and
 `raw_ref(key)`. Neither mode dispatches itself; the coordinator treats replay
 misses as `replay_miss` and live misses as dispatch candidates. Writes use a
 temporary sibling and atomic replacement; incompatible existing content and
 corruption refuse. Raw model failures stay explicit unavailable responses or local
-attempt artifacts, with model/input mismatches refused before publication. Evidence
+attempt artifacts. Scorer model/input mismatches refuse cache publication; judge
+wrong-model replies are retained under the expected request/identity binding and
+always reparsed as unusable attempts. A cached transport-refused reply remains
+unusable even if its answer body otherwise validates. Metadata changes alter the
+integrity digest and cannot overwrite an existing entry. Earlier Stage 8 development
+cache envelopes without the combined integrity digest are invalidated as corrupt;
+no core, extraction, Stage 6, or support schema version changes. Evidence
 must be reverified outside the cache on every reuse. No bypass or concurrent-writer
 guarantee is provided.
 
@@ -3078,3 +3086,47 @@ retains the full reservation and marks `unreported`. Scorer counts are never
 released. `snapshot()` returns immutable safe `UsageRecord` tuples. All applicable
 target/document/run ceilings are checked before changing state; exhaustion uses
 fixed codes. Cache hits and the one-quote joint alias make no extra reservation.
+
+
+### Assessment orchestration and review outcomes
+
+`assess_target(input, scorer, judges, policy, allowance, *, cache,
+extractor_family)` requires explicitly supplied extractor lineage. The Stage 7
+model alias cannot establish it. Policy hashes, typed scorer/judge identities,
+lineage/panel requirements and bound transport preflight validate before dispatch.
+Current exact evidence gates run before scoring and before result publication.
+Initial integrity failures return a refused result with zero dispatch. A source
+change after dispatch aborts publication with fixed `input_changed`, preserving
+completed raw cache artifacts and settled accounting locally; it never fabricates
+a zero-dispatch refusal record after calls occurred.
+The assessor evaluates each quote and a separate joint premise; a one-quote joint
+signal aliases its sole evaluation. Raw cache hits spend no allowance, replay misses
+remain unavailable, and live misses count complete input before reservation.
+Judge context limits include reserved output and a separate output limit applies.
+
+Two supplied families each receive `evidence_first` and `claim_theme_first`, in
+that order. Four independent trials retain at most two attempts each. Only
+unusable replies retry, with the original trial messages plus fixed reason and
+trusted field feedback. Raw replies/rationales never enter retry feedback or another
+trial. Every dispatched request is settled once, including unavailable requests and
+usage attached to refused raw replies. Cache hits have explicit cached usage rows
+with zero reservation; live result rows preserve reported latency.
+
+`derive_outcome(target_id, entailment, trials, evidence_ids)` consumes quote IDs in
+`evidence_ids`, validates required signal/trial coverage and compares quote
+contributions by ID. Unavailable required signals yield `incomplete`, preserving
+all semantic flags. Complete targets are `flagged` for any reason code,
+`claim_support_unsupported`, `claim_support_uncertain`,
+`theme_fit_does_not_fit`, `theme_fit_uncertain`, `quote_irrelevant`,
+`quote_contradicting`, `quote_uncertain`, or `category_disagreement`.
+Contextual quote contribution alone is permitted; `context_only_support` flags
+assertion support found only in context. Numeric differences and low NLI scores
+never determine a flag or threshold. Complete unflagged targets are `assessed`;
+integrity failures are `refused`. These processing outcomes confer no acceptance.
+
+Unexpected adapter errors abort as `SupportError("unexpected_error")` with no
+printed chain. `unexpected_error(error)` attaches only a safe `diagnostic`:
+an exact trusted builtin exception type name, or fixed `Exception` for custom
+or untrusted class identities. `str` and `repr` remain the fixed reason; exception
+messages, raw replies and source text never enter diagnostics. Completed raw calls
+remain cached; there is no durable process recovery.

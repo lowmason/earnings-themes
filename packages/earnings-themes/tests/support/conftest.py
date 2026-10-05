@@ -66,3 +66,81 @@ def scorer_identity():
             encoding_version="test-1",
         ),
     )
+
+
+@pytest.fixture
+def resolved(case):
+    from .cases import resolved_case
+
+    return resolved_case(*case)
+
+
+@pytest.fixture
+def scorer(scorer_identity):
+    from earnings_themes.support.scorers import ScoreReply, ScriptedScorer
+
+    return ScriptedScorer(
+        lambda r: ScoreReply(
+            score=0.99,
+            reason=None,
+            input_tokens=5,
+            latency_ms=1,
+            identity=scorer_identity,
+            input_hash=r.input_hash,
+        ),
+        lambda r: 5,
+        scorer_identity,
+    )
+
+
+@pytest.fixture
+def panel():
+    from earnings_themes.support.judges import ScriptedJudge
+    from earnings_themes.support.records import JudgeIdentity, RuntimeIdentity
+
+    from .cases import judge_reply
+
+    runtime = RuntimeIdentity(
+        model_id="invented-judge",
+        revision="1",
+        files=(),
+        runtime="scripted",
+        runtime_version="1",
+        device="cpu",
+        precision="float32",
+        encoding_version="1",
+    )
+    return tuple(
+        ScriptedJudge(
+            judge_reply(),
+            lambda r: 5,
+            JudgeIdentity(
+                family=f"invented-family-{i}",
+                runtime=runtime,
+                input_limit=10000,
+                output_limit=2048,
+                hosting="scripted",
+                weight_license=None,
+            ),
+        )
+        for i in range(2)
+    )
+
+
+@pytest.fixture
+def allowance():
+    from earnings_themes.support.allowance import Allowance
+    from earnings_themes.support.records import SupportCeilings
+
+    return Allowance(
+        SupportCeilings(
+            scorer_per_target=20,
+            scorer_per_document=20,
+            scorer_per_run=20,
+            judge_per_target=20,
+            judge_per_document=20,
+            judge_per_run=20,
+            tokens_per_document=100000,
+            tokens_per_run=100000,
+        )
+    )

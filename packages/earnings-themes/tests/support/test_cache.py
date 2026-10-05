@@ -293,15 +293,19 @@ def test_every_theme_field_changes_digest(
     )
 
 
-def test_model_mismatch_never_cached(tmp_path, one_quote, identity, policy):
-    key = judge_key(
-        one_quote, render_judge(one_quote, policy, "evidence_first"), identity, policy
-    )
+def test_wrong_model_raw_is_cached_under_expected_binding(
+    tmp_path, one_quote, identity, policy
+):
+    request = render_judge(one_quote, policy, "evidence_first")
+    key = judge_key(one_quote, request, identity, policy)
+    cache = SupportCache(tmp_path, "live")
+    raw = ModelReply(text="INVENTED_SECRET_REPLY", model="wrong")
+    cache.put(key, raw)
+    assert SupportCache(tmp_path, "replay").lookup(key, "judge") == raw
+    from earnings_themes.support.judges import parse_answer
+
     with pytest.raises(SupportError, match="model_mismatch"):
-        SupportCache(tmp_path, "live").put(
-            key, ModelReply(text="INVENTED_SECRET_REPLY", model="wrong")
-        )
-    assert list(tmp_path.iterdir()) == []
+        parse_answer(raw, one_quote, identity)
 
 
 @pytest.mark.parametrize("field", ["record", "policy", "source_run"])
@@ -531,3 +535,39 @@ def test_cleanup_failure_keeps_fixed_storage_error(
     assert type(caught).__name__ == "SupportError"
     assert str(caught) == "storage_corrupt"
     assert caught.__suppress_context__
+
+
+def test_refusal_metadata_closed_integrity_and_immutable(
+    tmp_path, one_quote, identity, policy
+):
+    request = render_judge(one_quote, policy, "evidence_first")
+    key = judge_key(one_quote, request, identity, policy)
+    cache = SupportCache(tmp_path, "live")
+    raw = ModelReply(text="INVENTED_REPLY", model=identity.runtime.model_id)
+    cache.put(key, raw, refusal_reason="transport_error")
+    assert cache.lookup(key, "judge") == raw
+    assert cache.refusal_reason(key) == "transport_error"
+    with pytest.raises(SupportError, match="cache_corrupt"):
+        cache.put(key, raw)
+    body = json.loads((tmp_path / cache.raw_ref(key)).read_text())
+    body["refusal_reason"] = "model_mismatch"
+    (tmp_path / cache.raw_ref(key)).write_text(json.dumps(body))
+    with pytest.raises(SupportError, match="cache_corrupt"):
+        cache.refusal_reason(key)
+
+
+@pytest.mark.parametrize(
+    "reason", ["SECRET_REASON", "wrong_attribution", "input_too_long"]
+)
+def test_refusal_metadata_refuses_arbitrary_and_semantic_reasons(
+    tmp_path, one_quote, identity, policy, reason
+):
+    request = render_judge(one_quote, policy, "evidence_first")
+    key = judge_key(one_quote, request, identity, policy)
+    cache = SupportCache(tmp_path, "live")
+    with pytest.raises(SupportError, match="malformed_record"):
+        cache.put(
+            key,
+            ModelReply(text="INVENTED_REPLY", model=identity.runtime.model_id),
+            refusal_reason=reason,
+        )

@@ -54,3 +54,27 @@ class SupportError(ValueError):
             if isinstance(reason, str) and reason in REASONS
             else "unexpected_error"
         )
+
+
+_TRUSTED_EXCEPTION_TYPES = {
+    Exception: "Exception",
+    RuntimeError: "RuntimeError",
+    ValueError: "ValueError",
+    TypeError: "TypeError",
+    AttributeError: "AttributeError",
+    KeyError: "KeyError",
+    IndexError: "IndexError",
+    OSError: "OSError",
+    OverflowError: "OverflowError",
+    AssertionError: "AssertionError",
+    NotImplementedError: "NotImplementedError",
+    TimeoutError: "TimeoutError",
+    ConnectionError: "ConnectionError",
+}
+
+
+def unexpected_error(error: Exception) -> SupportError:
+    """Only exact trusted builtin type identities supply a diagnostic name."""
+    safe = SupportError("unexpected_error")
+    safe.diagnostic = _TRUSTED_EXCEPTION_TYPES.get(type(error), "Exception")
+    return safe

@@ -7,7 +7,7 @@ from earnings_core import digest
 from pydantic import Field, NonNegativeInt, model_validator
 
 from earnings_themes.records import Sha256Hex
-from earnings_themes.support.problems import SupportError
+from earnings_themes.support.problems import SupportError, unexpected_error
 from earnings_themes.support.prompt import evidence_text, joint_premise
 from earnings_themes.support.records import (
     SUPPORT_VERSION,
@@ -88,8 +88,8 @@ def evaluate_score(scorer: EntailmentScorer, request: ScoreRequest) -> ScoreRepl
     """
     try:
         adapter_identity = scorer.identity
-    except Exception:  # noqa: BLE001 - redact arbitrary adapter diagnostics
-        raise SupportError("unexpected_error") from None
+    except Exception as error:  # noqa: BLE001 - redact arbitrary adapter diagnostics
+        raise unexpected_error(error) from None
     identity = _validated(adapter_identity, ScorerIdentity)
     request = _validated(request, ScoreRequest)
     if request.input_hash != _request(request.premise, request.hypothesis).input_hash:
@@ -117,9 +117,9 @@ def evaluate_score(scorer: EntailmentScorer, request: ScoreRequest) -> ScoreRepl
     except SupportError as error:
         if str(error) in {"scorer_failed", "transport_error", "input_too_long"}:
             return unavailable(str(error))
-        raise SupportError("unexpected_error") from None
-    except Exception:  # noqa: BLE001 - redact arbitrary adapter diagnostics
-        raise SupportError("unexpected_error") from None
+        raise unexpected_error(error) from None
+    except Exception as error:  # noqa: BLE001 - redact arbitrary adapter diagnostics
+        raise unexpected_error(error) from None
     try:
         if (
             type(raw) is not ScoreReply

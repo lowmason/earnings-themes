@@ -19,7 +19,7 @@ from earnings_core import (
     canonical_json,
     digest,
 )
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from earnings_themes.extraction.adapters import ModelReply
 from earnings_themes.extraction.records import Claim, Quote, RunRecord
@@ -134,6 +134,23 @@ def judge_key(
     return _key(input, request, identity, policy, "judge")
 
 
+_REFUSAL_REASONS = frozenset(
+    {
+        "transport_error",
+        "model_mismatch",
+        "tool_call_refused",
+        "malformed_reply",
+        "invalid_references",
+    }
+)
+
+
+def _raw_hash(raw, refusal_reason):
+    return digest(
+        {"reply": raw.model_dump(mode="json"), "refusal_reason": refusal_reason}
+    )
+
+
 class SupportCacheEntry(SupportRecord):
     key: Sha256Hex
     kind: Literal["scorer", "judge"]
@@ -142,6 +159,15 @@ class SupportCacheEntry(SupportRecord):
     identity: ScorerIdentity | JudgeIdentity = Field(repr=False)
     reply_hash: Sha256Hex
     reply: ScoreReply | ModelReply = Field(repr=False)
+    refusal_reason: str | None = None
+
+    @model_validator(mode="after")
+    def _closed_refusal(self):
+        if self.refusal_reason is not None and (
+            self.kind != "judge" or self.refusal_reason not in _REFUSAL_REASONS
+        ):
+            raise ValueError("invalid_reason")
+        return self
 
 
 class SupportCache:
@@ -255,11 +281,11 @@ class SupportCache:
                 raise SupportError("input_changed")
         else:
             raw = _validated(raw, ModelReply)
-            if raw.model != identity.runtime.model_id:
-                raise SupportError("model_mismatch")
+            # Wrong-model replies remain auditable unusable attempts. The expected
+            # runtime stays bound by the key; parse_answer rejects the raw identity.
         return raw
 
-    def lookup(self, key: SupportCacheKey, kind: Literal["scorer", "judge"]):
+    def _entry(self, key: SupportCacheKey, kind: Literal["scorer", "judge"]):
         request, identity = self._binding(key, kind)
         path = self._directory / self.raw_ref(key)
         if not path.exists():
@@ -272,20 +298,40 @@ class SupportCache:
                 or entry.material != key.material
                 or entry.request != request
                 or entry.identity != identity
-                or entry.reply_hash != digest(entry.reply.model_dump(mode="json"))
+                or entry.reply_hash != _raw_hash(entry.reply, entry.refusal_reason)
             ):
                 raise ValueError
-            return self._reply(key, kind, entry.reply)
+            self._reply(key, kind, entry.reply)
+            return entry
         except (OSError, ValueError, TypeError):
             raise SupportError("cache_corrupt") from None
 
-    def put(self, key: SupportCacheKey, raw: ScoreReply | ModelReply) -> str:
+    def lookup(self, key: SupportCacheKey, kind: Literal["scorer", "judge"]):
+        entry = self._entry(key, kind)
+        return None if entry is None else entry.reply
+
+    def refusal_reason(self, key: SupportCacheKey) -> str | None:
+        """Integrity-checked fixed transport refusal, never a semantic verdict."""
+        entry = self._entry(key, "judge")
+        return None if entry is None else entry.refusal_reason
+
+    def put(
+        self,
+        key: SupportCacheKey,
+        raw: ScoreReply | ModelReply,
+        *,
+        refusal_reason: str | None = None,
+    ) -> str:
         kind = "scorer" if isinstance(raw, ScoreReply) else "judge"
+        if refusal_reason is not None and (
+            kind != "judge" or refusal_reason not in _REFUSAL_REASONS
+        ):
+            raise SupportError("malformed_record")
         request, identity = self._binding(key, kind)
         raw = self._reply(key, kind, raw)
-        existing = self.lookup(key, kind)
+        existing = self._entry(key, kind)
         if existing is not None:
-            if existing != raw:
+            if existing.reply != raw or existing.refusal_reason != refusal_reason:
                 raise SupportError("cache_corrupt")
             return self.raw_ref(key)
         entry = SupportCacheEntry(
@@ -294,8 +340,9 @@ class SupportCache:
             material=key.material,
             request=request,
             identity=identity,
-            reply_hash=digest(raw.model_dump(mode="json")),
+            reply_hash=_raw_hash(raw, refusal_reason),
             reply=raw,
+            refusal_reason=refusal_reason,
         )
         partial = None
         storage_failure = None
