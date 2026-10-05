@@ -11,8 +11,8 @@
 ## Context
 
 What was known on 2026-10-04, at Stage 7's plan B gates
-(`specs/evidence-selection-and-verification.md`, §Gates, plan B;
-`specs/plans/12-evidence-selection-and-verification-plan-b.md`, Completion):
+(`specs/completed/evidence-selection-and-verification.md`, §Gates, plan B;
+`specs/plans/completed/12-evidence-selection-and-verification-plan-b.md`, Completion):
 
 - **The question.** The extractor's live test needs one open-weight model, served on
   this machine through an OpenAI-compatible runtime with JSON-schema output (ES15,

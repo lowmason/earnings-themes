@@ -2208,7 +2208,7 @@ in no partition (GS10), though it carries the pin, as every Stage 6 record does.
 ## earnings-themes extraction records, schema version 1
 
 `earnings_themes.extraction` holds Stage 7's extractor (the Stage 7 spec,
-specs/evidence-selection-and-verification.md). Every model is strict, frozen, and
+specs/completed/evidence-selection-and-verification.md). Every model is strict, frozen, and
 refuses unknown fields. Each stored record carries `schema_version`
 (`earnings_themes.extraction.records.EXTRACTION_SCHEMA_VERSION`), apart from the
 themes records' version, so an extraction change never re-versions the gold or the

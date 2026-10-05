@@ -1,5 +1,7 @@
 # Evidence selection and verification
 
+**Status: COMPLETE (2026-10-05)** — Stage 7; implemented by plans 11 and 12; retired to specs/completed/.
+
 > For agentic workers: REQUIRED NEXT SKILL: writing-plans. This is the stage spec
 > for Stage 7 of `specs/evidence-linked-theme-extraction-roadmap.md`. Plan it as two
 > plans, in order: plan A (§Plan A) first, and plan B (§Plan B) only after plan A has

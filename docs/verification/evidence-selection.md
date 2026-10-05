@@ -1,6 +1,6 @@
 # Evidence selection and verification
 
-Stage 7's verification record (`specs/evidence-selection-and-verification.md`,
+Stage 7's verification record (`specs/completed/evidence-selection-and-verification.md`,
 §Verification). Plan A's section records its proof and the main checkout's gate;
 plan B appends its own. Every entry holds IDs, counts, test names, and hashes, and
 never a release's wording (ES2).
@@ -77,7 +77,7 @@ the worktree ran there and passed. No test failed.
 
 ## Plan B: the extractor (plan 12)
 
-Plan 12 (`specs/plans/12-evidence-selection-and-verification-plan-b.md`) landed the
+Plan 12 (`specs/plans/completed/12-evidence-selection-and-verification-plan-b.md`) landed the
 spec's §Plan B: `earnings_themes.extraction`, its tests, and the local adapter behind
 the `local-model` extra. No committed record changed. No session read pilot text or
 gold, and no default test calls a model or opens a socket (ES2, R14.1).

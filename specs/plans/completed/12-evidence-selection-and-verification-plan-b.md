@@ -7816,7 +7816,7 @@ git status --short
 
 Expected: `git status --short` prints nothing.
 
-- [ ] **Step 10: Backlog triage**
+- [x] **Step 10: Backlog triage**
 
 ```bash
 uv run --no-project --python 3.13 python /Users/lowell/.claude/skills/writing-plans/scripts/deferred_stats.py
@@ -7824,7 +7824,7 @@ uv run --no-project --python 3.13 python /Users/lowell/.claude/skills/writing-pl
 
 Report its summary line, and present the triage rubric if its thresholds trip.
 
-- [ ] **Step 11: Retire this plan and the spec** (P12-1)
+- [x] **Step 11: Retire this plan and the spec** (P12-1)
 
 No other live plan implements the spec, so both retire. Move them:
 
@@ -7874,6 +7874,8 @@ git status --short
 ```
 
 Expected: `1920 passed, 8 skipped, 25 deselected`; then the commit; then nothing.
+
+> Deviation: the suite printed `1926 passed, 8 skipped, 25 deselected`, not 1920, with I9-1's three cases and the final review's three tests (Task 11's Step 3 note). Step 10's stats line read 48 open, 33 ever closed (41%), none aged over 45 days, at the volume threshold; the triage was presented in chat, read-only, and acted on nothing.
 
 - [ ] **Step 12: `CLAUDE.md`'s current state (only on the user's yes)**
 
