@@ -94,12 +94,16 @@ class CacheMode(StrEnum):
 
 
 class CachedAdapter:
-    """The cache wrapper: an adapter over ``inner``, with ``inner``'s identity."""
+    """The cache wrapper: an adapter over ``inner``, with ``inner``'s identity. A mode
+    given as its value reads as its member, so ``"replay"`` never calls ``inner``,
+    and any other value raises ``ValueError`` here."""
 
-    def __init__(self, inner: ModelAdapter, directory: Path, mode: CacheMode) -> None:
+    def __init__(
+        self, inner: ModelAdapter, directory: Path, mode: CacheMode | str
+    ) -> None:
         self._inner = inner
         self._directory = directory
-        self._mode = mode
+        self._mode = CacheMode(mode)
 
     @property
     def identity(self) -> AdapterIdentity:

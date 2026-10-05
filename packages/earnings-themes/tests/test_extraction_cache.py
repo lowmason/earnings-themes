@@ -169,6 +169,19 @@ def test_a_replay_miss_calls_nothing(tmp_path: Path) -> None:
     assert list(tmp_path.iterdir()) == []
 
 
+def test_a_mode_given_as_its_value_reads_as_the_member(tmp_path: Path) -> None:
+    """A command passes its mode as a string: ``"replay"`` still calls nothing, and a
+    misspelled mode refuses construction rather than calling the model."""
+    calls: list = []
+    replay = CachedAdapter(echo(IDENTITY, calls), tmp_path, "replay")
+    with pytest.raises(AdapterError) as raised:
+        replay.complete(request())
+    assert (raised.value.problem, calls) == (ExtractionProblem.REPLAY_MISS, [])
+    assert list(tmp_path.iterdir()) == []
+    with pytest.raises(ValueError):
+        CachedAdapter(echo(IDENTITY, calls), tmp_path, "relpay")
+
+
 def test_the_stored_entry_is_the_raw_reply_under_its_key(tmp_path: Path) -> None:
     calls: list = []
     CachedAdapter(echo(IDENTITY, calls), tmp_path, CacheMode.LIVE).complete(request())
