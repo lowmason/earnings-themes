@@ -1,6 +1,7 @@
 """Closed immutable deductive coding contracts, separate from source evidence."""
 
 import json
+import math
 from enum import StrEnum
 from typing import Any, Literal, Self
 
@@ -100,7 +101,14 @@ def checked[M: Part](value: object, model: type[M]) -> M:
         else:
             data = value
         return model.model_validate_json(json.dumps(data, allow_nan=False))
-    except (ValidationError, ValueError, TypeError, AttributeError, OverflowError):
+    except (
+        ValidationError,
+        ValueError,
+        TypeError,
+        AttributeError,
+        OverflowError,
+        RecursionError,
+    ):
         raise CodingError("malformed_record") from None
 
 
@@ -138,10 +146,32 @@ class CodingSubject(CodingPart):
 
 
 class CodingRequest(CodingPart):
+    """Transport data; mutable schema dictionaries require detached boundary checks."""
+
     messages: tuple[Message, ...] = Field(min_length=2, repr=False)
     reply_schema: dict[str, Any] = Field(repr=False)
     parameters: Parameters
     subject: CodingSubject
+
+    @field_validator("reply_schema", mode="before")
+    @classmethod
+    def _json_schema(cls, value: object) -> object:
+        def json_value(item: object) -> bool:
+            if item is None or type(item) in (str, bool, int):
+                return True
+            if type(item) is float:
+                return math.isfinite(item)
+            if type(item) is list:
+                return all(json_value(part) for part in item)
+            if type(item) is dict:
+                return all(
+                    type(key) is str and json_value(part) for key, part in item.items()
+                )
+            return False
+
+        if type(value) is not dict or not json_value(value):
+            raise ValueError("invalid_json_schema")
+        return value
 
 
 class ProposalRecord(CodingRecord):

@@ -3537,7 +3537,7 @@ must not be logged. The request has no alternative source text or evidence repai
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `messages` | tuple[Message, …], length ≥ 2 | System prompt and one bounded JSON user payload; excluded from printable field output |
-| `reply_schema` | dict[str, Any] | Generated closed CodingReply JSON schema, excluded from printable field output |
+| `reply_schema` | dict[str, Any] | Generated closed CodingReply JSON schema; recursively accepts only JSON primitives, finite numbers, lists and dictionaries with string keys; excluded from printable field output |
 | `parameters` | Parameters | Existing frozen extraction generation settings, unchanged |
 | `subject` | CodingSubject | Non-transported coding integrity bindings |
 
@@ -3623,5 +3623,86 @@ the supplied valid reply is empty. Nonempty parsed proposals return None.
 caller reasons become unexpected_error, without source or model wording.
 
 These seams render and parse only; they dispatch no inference and perform no
-retry. Runtime input limits, bounded attempts, raw audit/cache persistence and
-complete rendered-request/cache binding belong to subsequent coding orchestration.
+retry. Classifier transports and raw caches below enforce structural request and
+runtime bindings. Bounded attempts and comparison with the current complete
+source/policy/generated schema belong to subsequent coding orchestration.
+
+### Classifier protocol and local binding
+
+`earnings_themes.coding.adapters.Classifier` exposes `identity: JudgeIdentity`,
+`count_tokens(request: CodingRequest) -> int`, and `complete(request:
+CodingRequest) -> ModelReply`. The reused JudgeIdentity represents the classifier
+here; its explicit family, runtime file manifest, input/output ceilings and local
+weight license are retained without choosing or loading weights.
+
+`ScriptedClassifier(script, token_counter, identity)` is an invented-reply fake
+with a safe request-count-only representation and a local requests list. It
+requires scripted hosting. Counts must be nonnegative exact integers; bools,
+floats and numeric strings are refused. Completion enforces full input plus
+reserved-output and separate output limits before dispatch.
+
+`earnings_themes.coding.local.ClassifierBinding(identity, transport,
+token_counter)` repeats identity preflight before dispatch and after the callback.
+Local transport identity must match hosting, model ID, full manifest-derived
+weights hash, runtime and runtime version. Missing licensed local weights or an
+empty local file manifest is refused. Scripted transports must match the explicit
+scripted hosting/model identity. Public protocol imports never import this
+concrete binding or construct a client. Neither coding module imports httpx;
+caller-supplied Stage 7 LocalAdapter owns loopback HTTP, credentials refusal,
+tool-free requests and redirect refusal.
+
+Both classifier seams detach and strictly reparse full requests and identities.
+Full request fingerprints before/after counters and transport callbacks detect
+schema, message, parameter and subject mutation; identity changes are also
+refused. Limits include the full request and reserved output, with no clipping.
+The caller must supply a complete runtime tokenizer/chat-template/schema counter;
+no heuristic or production tokenizer is introduced. Unexpected diagnostics use
+fixed unexpected_error; CodingTransportError retains a supplied raw refused
+ModelReply and usage with only the fixed transport reason printable. This guard
+does not establish semantic support or current source/policy correspondence.
+
+### `CodingCacheEntry`
+
+One local raw classifier response, including refused attempts and usage, with no
+accepted decision or assessment verdict. Its strict shape has an independent
+coding schema 1 and a content-hash-only representation.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | literal 1 | Separate persisted coding schema |
+| `key` | SHA-256 | Digest of coding schema/version and complete strictly reparsed request/identity |
+| `request` | CodingRequest | Full rendered messages, closed schema, generation parameters and integrity subject |
+| `identity` | JudgeIdentity | Explicit classifier family, runtime, ceilings, hosting and local license bindings |
+| `input_tokens` | integer ≥ 0 | Caller-counted full request tokens; retained for tokenizer-free replay accounting and bound in raw hash |
+| `reply` | ModelReply | Unmodified raw response, transport-reported usage, model, tool indicator and latency |
+| `reply_hash` | SHA-256 | Digest of the raw reply, fixed refusal reason and counted input tokens |
+| `refusal_reason` | transport_error, model_mismatch, tool_call_refused or null | Raw transport refusal only; unknown, semantic and acceptance reasons are refused |
+
+`CodingCache(directory: Path, mode: Literal["live", "replay"])` selects a local
+raw-artifact directory without startup I/O. Mode strings are exact; neither mode
+provides fresh-call bypass, and lookup performs no inference. The coding cache
+namespace is separate from extraction/support; callers choose its directory.
+`get(request, identity) -> CodingCacheEntry | None` reads only the complete key's
+`<64 lowercase hex>.json` file, returning None only when it is absent. It rechecks
+the entry's key, request, identity and raw reply/count/refusal hash; malformed,
+mismatched, renamed or symlinked entries yield fixed cache_corrupt.
+
+`put(request, identity, reply, *, input_tokens, refusal_reason=None) -> str`
+strictly validates a complete snapshot and writes canonical JSON through a unique
+tempfile sibling. Publication creates a hard link without replacing an existing
+entry, followed by temporary-file cleanup. An identical existing entry is reused;
+different content is refused and preserved. Write/publication/cleanup failures
+use storage_corrupt and source/path text never enters errors. This is sequential
+immutable publication, with no claim of concurrent-writer safety. Files remain
+local and must not be logged or committed.
+
+`artifact_hash(reference: str) -> str` accepts only the exact digest filename,
+revalidates the complete entry and hashes the artifact bytes. `coding_key` includes
+`coding_schema=1`, `coding_version="deductive-coding/1"`, the complete request and
+identity. `raw_reply_hash` binds reply, refusal_reason and input_tokens. A
+structurally valid changed request or identity yields a cache miss; the subsequent
+classification boundary must independently compare current sources, policy and
+generated closed schema before dispatch/publication. Evidence still passes
+current deterministic gates at every consuming boundary. A cached response/count
+does not establish evidence quality, thematic support or acceptance. Stage 11
+owns production model selection, calibration and future fresh-call bypass.
