@@ -4099,3 +4099,129 @@ assignment/link projection in canonical JSON bytes and repeats all requested
 input gates after external policy callbacks. Changed/absent policy visibly
 refuses a saved accepting run. No inference, cache loading or reclassification
 occurs. Stage 11 still owns calibration, production policy approval and quality.
+
+### Public coding library
+
+`earnings_themes.coding` exports the actual record classes, coding schema/version,
+`SupportSources`, `CodingInput`, `ProposalRun`, `AssignmentPolicy`, `DecisionInput`,
+`DecisionSet`, `CodingRun`, and the resolution/reverification, proposal, decision,
+assignment projection/frame, and write/read/reverify functions documented above.
+Existing public record helpers remain available. Its initializer creates no client,
+runtime, cache, configuration, or concrete classifier binding. Callers import
+`ClassifierBinding` from `coding.local` and `CodingCache` from `coding.cache`
+explicitly and supply them to the runner; those objects are not public exports.
+
+`load_codebook(path)` parses a caller-selected frozen artifact through the Stage 6
+contract. This is distinct from `validate_codebook(codebook, *, pin, split,
+bundles, adr_text)`, which validates discovery-corpus and example evidence and
+requires the upstream training bundles. Blind Stage 9 never calls that validator
+on pilot artifacts or dereferences an example. It checks the supplied approved
+record's hash, status, approval metadata, references and hierarchy through the
+current Stage 8 input gate, without claiming to repeat upstream evidence review.
+The v0 and Stage 6 schemas remain unchanged.
+
+### `SupportSources`
+
+The existing Stage 8 frozen dataclass is reused as the coding source boundary;
+there is no copied coding-source schema. Its transient representation omits fields.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `stored_run` | StoredRun | Caller-supplied Stage 7 source records; structural loading alone does not verify evidence |
+| `bundles` | tuple[Bundle, …] | Matching immutable canonical documents, elements and current overlay masks |
+| `codebook` | Codebook | Caller-selected approved frozen record; example pointers stay unopened |
+| `provenance_hash` | SHA-256 string | External source-provenance binding, included in proposal/support source hashes |
+
+### `ProposalRun`
+
+Frozen transient dataclass with disabled field rendering. No assessment or
+acceptance is implied by a completed classification. Its `targets` property
+returns the ordered Stage 8 targets from `proposals` without copying source claims
+or quote text.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `record` | ProposalRunRecord | Original versioned manifest and shared classification accounting |
+| `classifications` | tuple[ClassificationRecord, …] | One final completed/refused/incomplete outcome per requested claim |
+| `attempts` | tuple[CodingAttempt, …] | Bounded raw-response and accounting audit |
+| `proposals` | tuple[ProposalRecord, …] | Explicit frozen claim–theme targets for assessment |
+| `attributes` | tuple[AttributeRecord, …] | Model-derived nullable annotations, separate from unchanged source claims |
+| `novelty` | tuple[NoveltyItem, …] | Pointer-only valid empty classifications for human adjudication |
+
+### `DecisionInput`
+
+Frozen transient view delivered to the external pure policy. It retains every
+original evidence link and separate raw signal view; eligibility alone does not
+create acceptance. Nullable annotations are not substitutes for theme IDs.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `target` | TargetRecord | Fully resolved original claim–theme identity |
+| `evidence` | tuple[EvidenceReference, …] | All original exact quote references, including contextual companions |
+| `entailment` | tuple[EntailmentSignal, …] | Separate raw per-quote and joint views |
+| `trials` | tuple[JudgeTrial, …] | Four complete independent family/presentation trials |
+| `outcome` | ReviewOutcome | Stage 8 processing outcome, independently rederived at consumption |
+| `eligible_quote_ids` | tuple[str, …] | Original quotes consistently supporting in all four trials; an acceptance policy may select only these |
+
+### `DecisionSet`
+
+Frozen transient container with disabled field rendering. With no policy,
+`policy` is `None`; assessed targets become `review/calibration_required` and
+produce no accepted assignment. Missing assessment has null support status and
+`review/missing_assessment`. Neither case means unmatched or no themes.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `decisions` | tuple[AssignmentDecision, …] | Exactly one saved decision for each explicit proposed target |
+| `proposals` | ProposalRun | Original complete classification/proposal provenance |
+| `support` | StoredSupportRun | Matching complete raw assessment tables and manifest |
+| `sources` | SupportSources | Retained current source boundary for deterministic reverification |
+| `policy` | PolicyReference or null | Rebound external policy provenance; null retains no-policy review |
+| `proposal_hash` | SHA-256 string | Complete original proposal-run binding |
+| `support_run_hash` | SHA-256 string | Complete matching support-manifest binding |
+| `source_run_hash` | SHA-256 string | Shared extraction/provenance binding |
+
+### `CodingRun`
+
+Frozen transient container for an immutable publication. Storage validation and
+current evidence/policy reverification remain distinct gates. A declared
+calibrated policy reference is a binding, not proof of Stage 11 approval.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `record` | CodingRunRecord | Publication manifest retaining original proposal and support identities |
+| `classifications` | tuple[ClassificationRecord, …] | Requested claim outcomes, including refused/incomplete claims |
+| `attempts` | tuple[CodingAttempt, …] | Raw-reference and classification allowance audit |
+| `proposals` | tuple[ProposalRecord, …] | Explicit frozen targets assessed downstream |
+| `attributes` | tuple[AttributeRecord, …] | Optional semantic annotations beside source claims |
+| `decisions` | tuple[AssignmentDecision, …] | Accepted/rejected/review/refused policy decisions |
+| `assignments` | tuple[Assignment, …] | Unique accepted document-qualified quote–theme rows |
+| `assignment_claims` | tuple[AssignmentClaimLink, …] | Supporting claim/decision links without duplicated assignments |
+| `novelty` | tuple[NoveltyItem, …] | Valid unmatched classification pointers for review |
+
+### `Coding tables`
+
+One coding run binds one approved codebook ID/version/hash. Every published table
+has exactly its row-model fields and an explicit Polars schema, even when empty.
+Nested codebook/target/policy structs retain named fields and Int64 codebook
+versions. Nullable values survive JSON/Parquet round trips as null, never zero,
+an empty struct, a negative label, or fabricated acceptance.
+
+| Table | Unique logical grain within the publication | Row contract and null semantics |
+| --- | --- | --- |
+| `classifications` | `(coding_run_id, doc_id, claim_id)` | ClassificationRecord; reason is null only for completed outcomes, including valid unmatched |
+| `attempts` | `(classification_id, attempt)` | CodingAttempt; unknown actual usage remains null with explicit unreported accounting; absent raw_ref/raw_hash are both null |
+| `proposals` | `(coding_run_id, doc_id, claim_id, theme_id)` | ProposalRecord; target nests the original source identity and frozen codebook |
+| `attributes` | `(coding_run_id, doc_id, claim_id)` | AttributeRecord; attributes struct persists topic/sentiment/direction/event_type independently, each nullable |
+| `decisions` | `(coding_run_id, target_id)` | AssignmentDecision; policy is null for no-policy review, support_status is null for missing assessment; fixture calibration_reference stays null inside a nonnull policy struct |
+| `assignments` | `(coding_run_id, codebook_id, codebook_version, doc_id, theme_id, quote_id)` | Assignment; accepted eligible evidence only, explicit fixture/calibrated provenance, no copied quotes |
+| `assignment_claims` | `(assignment_id, doc_id, claim_id, decision_id)` | AssignmentClaimLink; multiple supporting claims link to one quote–theme row |
+| `novelty` | `(coding_run_id, classification_id)` | NoveltyItem; only an explicit valid empty theme list produces no_theme_fit |
+
+Stage 10 owns processing/coverage mapping, aggregation, codebook parent/family
+roll-ups, and source-aware cited export. Stage 11 owns calibration artifacts,
+production models/policy, acceptance thresholds, signal selection/pooling,
+agreement floors and fresh-call stability with bypass across all four caches.
+Stage 12 owns reviewed new codebook versions and novelty adjudication; Stage 15
+owns concurrent workers and cache/store safety. None is established by these
+library contracts or fixture-only accepted rows.
