@@ -17,6 +17,10 @@ else:
 ROOT = Path(__file__).resolve().parents[1]
 THEMES = "packages/earnings-themes/tests/"
 GROUPS = {
+    "records": (
+        THEMES + "analysis/test_records.py",
+        THEMES + "analysis/test_safe_output.py",
+    ),
     "runner": ("tests/contracts/test_stage10_check_runner.py",),
     "dictionary": ("tests/contracts/test_data_dictionary.py",),
     "extraction": tuple(

@@ -4272,3 +4272,1070 @@ agreement floors and fresh-call stability with bypass across all four caches.
 Stage 12 owns reviewed new codebook versions and novelty adjudication; Stage 15
 owns concurrent workers and cache/store safety. None is established by these
 library contracts or fixture-only accepted rows.
+
+## earnings-themes analysis records, schema version 1
+
+All records are strict, extra-forbid and frozen. All model repr/str values show only a content digest; transient containers are repr-false. JSON validation is structural. Task 3 owns current source/run/policy/mask rebinding; raw payloads never enter analytical manifests or tables. Task 7/8 own evidence generation/publication. No constructor reads source files or instantiates an adapter. Shared schema 2, coding schema 1, and support schema 1 are unchanged.
+
+Dates use `pl.Date`; UTC timestamps use `pl.Datetime("us", "UTC")`; offsets/counts use `pl.Int64`, flags use `pl.Boolean`, ID collections use `pl.List(pl.String)`, and references use declared `pl.Struct`. Nullable strings retain `pl.String`; empty frames retain every declared type. `PrevalenceRow.numerator` uses `pl.Float64` to support the explicitly labeled equal-issuer mean; ordinary issuer/firm-quarter counts remain integral values.
+
+### `AnalysisPart`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+
+### `ExpectedEvent`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `event_id` | `string` | Frozen expected-event identity; references the selected population. |
+| `entity_id` | `string` | Issuer identity; one headline vote per issuer-period. |
+| `cik` | `string` | Frozen event CIK, zero-padded ten-digit string. |
+| `period_end` | `date` | Source-supported period; separate from publication/retrieval. |
+| `fiscal_year` | `integer or null` | Nullable source-supported fiscal label; unknown remains null. |
+| `fiscal_quarter` | `1 / 2 / 3 / 4 or null` | Nullable source-supported fiscal label; unknown remains null. |
+| `eligibility_status` | `'eligible' / 'ineligible' / 'ambiguous'` | Explicit eligibility status binding; retained separately for audit. |
+| `eligibility_reason` | `'period_end_outside_window' / 'no_release_filing' / 'several_release_filings' / 'published_after_cutoff' / 'member_at_publication' / 'not_member_at_publication' / 'same_day_transition'` | Explicit eligibility reason binding; retained separately for audit. |
+| `membership_assertion_id` | `string` | Explicit membership assertion id binding; retained separately for audit. |
+| `event_manifest_hash` | `string` | Explicit event manifest hash binding; retained separately for audit. |
+| `pilot_hash` | `string` | Explicit pilot hash binding; retained separately for audit. |
+
+### `AcquisitionStatus`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `event_id` | `string` | Frozen expected-event identity; references the selected population. |
+| `document_id` | `string` | Explicit document id binding; retained separately for audit. |
+| `state` | `'expected' / 'acquired' / 'parsed' / 'failed' / 'unavailable' / 'restricted' / 'partial' / 'completed' / 'completed-no-theme'` | Explicit state binding; retained separately for audit. |
+| `missing_reason` | `string or null` | Explicit missing reason binding; retained separately for audit. |
+| `failure_reason` | `'unsupported_media_type' / 'parse_failed' / 'no_native_text' / 'invalid_elements' or null` | Explicit failure reason binding; retained separately for audit. |
+| `doc_id` | `string or null` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `source_document_id` | `string or null` | Explicit source document id binding; retained separately for audit. |
+| `raw_hash` | `string or null` | Explicit raw hash binding; retained separately for audit. |
+| `accession` | `string or null` | Explicit accession binding; retained separately for audit. |
+| `exhibit` | `string or null` | Explicit exhibit binding; retained separately for audit. |
+| `retrieved_at` | `date-time or null` | Explicit retrieved at binding; retained separately for audit. |
+| `state_run_id` | `string` | Explicit state run id binding; retained separately for audit. |
+| `state_schema_version` | `integer` | Explicit state schema version binding; retained separately for audit. |
+| `pilot_hash` | `string` | Explicit pilot hash binding; retained separately for audit. |
+
+### `DocumentMetadata`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `doc_id` | `string` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `event_id` | `string` | Frozen expected-event identity; references the selected population. |
+| `entity_id` | `string` | Issuer identity; one headline vote per issuer-period. |
+| `cik` | `string` | Frozen event CIK, zero-padded ten-digit string. |
+| `doc_type` | `'release'` | Explicit doc type binding; retained separately for audit. |
+| `publisher` | `string` | Explicit publisher binding; retained separately for audit. |
+| `source_url` | `string` | Explicit source url binding; retained separately for audit. |
+| `source_document_id` | `string` | Explicit source document id binding; retained separately for audit. |
+| `raw_artifact` | `ArtifactRef or null` | Explicit raw artifact binding; retained separately for audit. |
+| `raw_hash` | `string` | Explicit raw hash binding; retained separately for audit. |
+| `canonical_hash` | `string` | Explicit canonical hash binding; retained separately for audit. |
+| `canonicalization_version` | `string` | Explicit canonicalization version binding; retained separately for audit. |
+| `parser_version` | `string` | Explicit parser version binding; retained separately for audit. |
+| `canonical_manifest_hash` | `string` | Explicit canonical manifest hash binding; retained separately for audit. |
+| `mask_policy_id` | `string` | Explicit mask policy id binding; retained separately for audit. |
+| `mask_policy_version` | `string` | Explicit mask policy version binding; retained separately for audit. |
+| `mask_manifest_hash` | `string` | Explicit mask manifest hash binding; retained separately for audit. |
+| `filing_at` | `date-time or null` | Explicit filing at binding; retained separately for audit. |
+| `published_at` | `date-time or null` | Explicit published at binding; retained separately for audit. |
+| `event_at` | `date-time or null` | Explicit event at binding; retained separately for audit. |
+| `retrieved_at` | `date-time` | Explicit retrieved at binding; retained separately for audit. |
+| `period_end` | `date` | Source-supported period; separate from publication/retrieval. |
+| `fiscal_year` | `integer or null` | Nullable source-supported fiscal label; unknown remains null. |
+| `fiscal_quarter` | `1 / 2 / 3 / 4 or null` | Nullable source-supported fiscal label; unknown remains null. |
+| `rights_status` | `RightsStatus` | Existing RightsStatus; free access never widens permission. |
+| `rights_basis` | `string` | Source-specific permission basis; private in printable diagnostics. |
+| `access_status` | `'available' / 'unavailable' / 'restricted'` | Explicit access status binding; retained separately for audit. |
+| `retain_text` | `boolean` | Explicit retain text binding; retained separately for audit. |
+| `export_text` | `boolean` | Explicit export text binding; retained separately for audit. |
+| `retain_raw` | `boolean` | Explicit retain raw binding; retained separately for audit. |
+| `export_raw` | `boolean` | Explicit export raw binding; retained separately for audit. |
+| `retain_capture` | `boolean` | Explicit retain capture binding; retained separately for audit. |
+
+### `CopyAssertion`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `copy_id` | `string` | Explicit copy id binding; retained separately for audit. |
+| `event_id` | `string` | Frozen expected-event identity; references the selected population. |
+| `doc_ids` | `tuple of string` | Explicit doc ids binding; retained separately for audit. |
+| `documents` | `tuple of tuple of string` | Explicit documents binding; retained separately for audit. |
+| `method` | `'same_event_exact_hash' / 'reviewed_copy'` | Explicit method binding; retained separately for audit. |
+| `evidence_ref` | `string` | Explicit evidence ref binding; retained separately for audit. |
+| `rule_version` | `string` | Explicit rule version binding; retained separately for audit. |
+| `actor_id` | `string or null` | Explicit actor id binding; retained separately for audit. |
+| `reviewed_at` | `date-time or null` | Explicit reviewed at binding; retained separately for audit. |
+
+### `AnalysisPolicy`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `policy_id` | `'coverage-analysis'` | Explicit policy id binding; retained separately for audit. |
+| `version` | `'1'` | Explicit version binding; retained separately for audit. |
+| `population_id` | `string` | Explicit population id binding; retained separately for audit. |
+| `event_ids` | `tuple of string` | Explicit event ids binding; retained separately for audit. |
+| `population_hash` | `string` | Explicit population hash binding; retained separately for audit. |
+| `doc_types` | `tuple of 'release'` | Explicit doc types binding; retained separately for audit. |
+| `speaker_roles` | `tuple of 'not_applicable'` | Explicit speaker roles binding; retained separately for audit. |
+| `mask_policy_id` | `string` | Explicit mask policy id binding; retained separately for audit. |
+| `mask_policy_version` | `string` | Explicit mask policy version binding; retained separately for audit. |
+| `dedup_rule` | `'same-event-disclosure/1'` | Explicit dedup rule binding; retained separately for audit. |
+| `parent_rule` | `'self-or-descendant/1'` | Explicit parent rule binding; retained separately for audit. |
+| `headline_unit` | `'issuer_period'` | Explicit headline unit binding; retained separately for audit. |
+| `window_issuer_rule` | `'any-complete-period/1'` | Explicit window issuer rule binding; retained separately for audit. |
+| `include_family_view` | `boolean` | Explicit include family view binding; retained separately for audit. |
+| `scope` | `'fixture' / 'research'` | Explicit scope binding; retained separately for audit. |
+
+### `ThemeFamilyMap`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `mapping_id` | `string` | Explicit mapping id binding; retained separately for audit. |
+| `version` | `integer` | Explicit version binding; retained separately for audit. |
+| `content_hash` | `string` | Explicit content hash binding; retained separately for audit. |
+| `codebook` | `CodebookReference` | Existing CodebookReference, with frozen ID/version/content hash. |
+| `memberships` | `tuple of tuple of string` | Explicit memberships binding; retained separately for audit. |
+| `family_labels` | `tuple of tuple of string` | Explicit family labels binding; retained separately for audit. |
+
+### `NoThemeDeclaration`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `doc_id` | `string` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `canonical_hash` | `string` | Explicit canonical hash binding; retained separately for audit. |
+| `source_run_hash` | `string` | Explicit source run hash binding; retained separately for audit. |
+| `coding_run_hash` | `string` | Explicit coding run hash binding; retained separately for audit. |
+| `support_run_hash` | `string` | Explicit support run hash binding; retained separately for audit. |
+| `codebook` | `CodebookReference` | Existing CodebookReference, with frozen ID/version/content hash. |
+| `analysis_policy_hash` | `string` | Explicit analysis policy hash binding; retained separately for audit. |
+| `assignment_policy` | `PolicyReference` | Existing PolicyReference or explicit absence; no implicit calibration. |
+| `actor_id` | `string` | Explicit actor id binding; retained separately for audit. |
+| `declared_at` | `date-time` | Explicit declared at binding; retained separately for audit. |
+| `finding` | `'no_theme'` | Explicit finding binding; retained separately for audit. |
+| `policy_scope` | `'fixture' / 'research'` | Explicit policy scope binding; retained separately for audit. |
+
+### `DocumentCompletion`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `doc_id` | `string` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `event_id` | `string` | Frozen expected-event identity; references the selected population. |
+| `canonical_hash` | `string` | Explicit canonical hash binding; retained separately for audit. |
+| `source_run_hash` | `string` | Explicit source run hash binding; retained separately for audit. |
+| `coding_run_hash` | `string` | Explicit coding run hash binding; retained separately for audit. |
+| `support_run_hash` | `string` | Explicit support run hash binding; retained separately for audit. |
+| `codebook` | `CodebookReference` | Existing CodebookReference, with frozen ID/version/content hash. |
+| `assignment_policy` | `PolicyReference or null` | Existing PolicyReference or explicit absence; no implicit calibration. |
+| `analysis_policy_hash` | `string` | Explicit analysis policy hash binding; retained separately for audit. |
+| `traversal_complete` | `boolean` | Explicit traversal complete binding; retained separately for audit. |
+| `classification_complete` | `boolean` | Explicit classification complete binding; retained separately for audit. |
+| `assessment_complete` | `boolean` | Explicit assessment complete binding; retained separately for audit. |
+| `decision_complete` | `boolean` | Explicit decision complete binding; retained separately for audit. |
+| `eligible_units` | `integer` | Explicit eligible units binding; retained separately for audit. |
+| `completed_windows` | `integer` | Explicit completed windows binding; retained separately for audit. |
+| `failed_windows` | `integer` | Explicit failed windows binding; retained separately for audit. |
+| `accepted_count` | `integer` | Explicit accepted count binding; retained separately for audit. |
+| `masked_count` | `integer` | Explicit masked count binding; retained separately for audit. |
+| `rejected_count` | `integer` | Explicit rejected count binding; retained separately for audit. |
+| `review_count` | `integer` | Explicit review count binding; retained separately for audit. |
+| `refused_count` | `integer` | Explicit refused count binding; retained separately for audit. |
+| `flagged_count` | `integer` | Explicit flagged count binding; retained separately for audit. |
+| `incomplete_count` | `integer` | Explicit incomplete count binding; retained separately for audit. |
+| `unmatched_count` | `integer` | Explicit unmatched count binding; retained separately for audit. |
+| `processing_state` | `'expected' / 'acquired' / 'parsed' / 'failed' / 'unavailable' / 'restricted' / 'partial' / 'completed' / 'completed-no-theme'` | Explicit processing state binding; retained separately for audit. |
+| `reasons` | `tuple of string` | Explicit reasons binding; retained separately for audit. |
+| `declaration_hash` | `string or null` | Explicit declaration hash binding; retained separately for audit. |
+| `observable` | `boolean` | Explicit complete observation; an empty quote/target table alone never grants absence. |
+| `policy_scope` | `'fixture' / 'research'` | Explicit policy scope binding; retained separately for audit. |
+
+### `EvidenceViewReference`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `evidence_id` | `string` | Explicit evidence id binding; retained separately for audit. |
+| `doc_id` | `string` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `quote_id` | `string` | Explicit quote id binding; retained separately for audit. |
+| `canonical_hash` | `string` | Explicit canonical hash binding; retained separately for audit. |
+| `start` | `integer` | Zero-based Python code-point offset, inclusive. |
+| `end` | `integer` | Zero-based Python code-point offset, exclusive and greater than start. |
+| `validator_version` | `string` | Explicit validator version binding; retained separately for audit. |
+| `element_id` | `string` | Explicit element id binding; retained separately for audit. |
+| `mask_ids` | `tuple of string` | Current mask identities, retained in audit and excluded from headline presence. |
+| `locator_hash` | `string` | Explicit locator hash binding; retained separately for audit. |
+| `quote_text_hash` | `string` | Explicit quote text hash binding; retained separately for audit. |
+| `source_fragment_url` | `string or null` | Explicit source fragment url binding; retained separately for audit. |
+| `source_url` | `string or null` | Explicit source url binding; retained separately for audit. |
+| `raw_artifact` | `ArtifactRef or null` | Explicit raw artifact binding; retained separately for audit. |
+| `canonical_artifact` | `ArtifactRef or null` | Explicit canonical artifact binding; retained separately for audit. |
+| `view_artifact` | `ArtifactRef or null` | Explicit view artifact binding; retained separately for audit. |
+| `anchor_id` | `string` | Explicit anchor id binding; retained separately for audit. |
+| `audience` | `'local' / 'export'` | Explicit audience binding; retained separately for audit. |
+| `rights_status` | `RightsStatus` | Existing RightsStatus; free access never widens permission. |
+| `rights_basis` | `string` | Source-specific permission basis; private in printable diagnostics. |
+| `status` | `'available' / 'withheld'` | Explicit status binding; retained separately for audit. |
+| `reason` | `string or null` | Explicit reason binding; retained separately for audit. |
+| `capture_reference` | `string or null` | Explicit capture reference binding; retained separately for audit. |
+
+### `CaptureObservation`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `evidence_id` | `string` | Explicit evidence id binding; retained separately for audit. |
+| `doc_id` | `string` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `quote_id` | `string` | Explicit quote id binding; retained separately for audit. |
+| `canonical_hash` | `string` | Explicit canonical hash binding; retained separately for audit. |
+| `start` | `integer` | Zero-based Python code-point offset, inclusive. |
+| `end` | `integer` | Zero-based Python code-point offset, exclusive and greater than start. |
+| `utf16_start` | `integer` | Explicit utf16 start binding; retained separately for audit. |
+| `utf16_end` | `integer` | Explicit utf16 end binding; retained separately for audit. |
+| `capture_id` | `string or null` | Explicit capture id binding; retained separately for audit. |
+| `capture_artifact` | `ArtifactRef or null` | Explicit capture artifact binding; retained separately for audit. |
+| `policy_hash` | `string or null` | Explicit policy hash binding; retained separately for audit. |
+| `environment_hash` | `string or null` | Explicit environment hash binding; retained separately for audit. |
+| `status` | `'completed' / 'partial' / 'failed' / 'unavailable' / 'not_requested'` | Explicit status binding; retained separately for audit. |
+| `reason` | `string or null` | Explicit reason binding; retained separately for audit. |
+| `screenshots_rights` | `'local_only'` | Explicit screenshots rights binding; retained separately for audit. |
+
+### `RawCacheVerification`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `stage` | `'extraction' / 'classifier' / 'scorer' / 'judge'` | Explicit stage binding; retained separately for audit. |
+| `status` | `'verified' / 'not_supplied' / 'not_bound'` | Explicit status binding; retained separately for audit. |
+| `bindings` | `tuple of FileHash` | Explicit bindings binding; retained separately for audit. |
+| `method` | `string` | Explicit method binding; retained separately for audit. |
+| `version` | `string` | Explicit version binding; retained separately for audit. |
+
+### `QuoteAudit`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `doc_id` | `string` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `quote_id` | `string` | Explicit quote id binding; retained separately for audit. |
+| `canonical_hash` | `string` | Explicit canonical hash binding; retained separately for audit. |
+| `start` | `integer` | Zero-based Python code-point offset, inclusive. |
+| `end` | `integer` | Zero-based Python code-point offset, exclusive and greater than start. |
+| `element_id` | `string` | Explicit element id binding; retained separately for audit. |
+| `validator_version` | `string` | Explicit validator version binding; retained separately for audit. |
+| `mask_ids` | `tuple of string` | Current mask identities, retained in audit and excluded from headline presence. |
+| `source_run_id` | `string` | Explicit source run id binding; retained separately for audit. |
+| `source_run_hash` | `string` | Explicit source run hash binding; retained separately for audit. |
+| `metadata_ref` | `string` | Explicit metadata ref binding; retained separately for audit. |
+| `quote_text` | `string or null` | Rights-filtered canonical-span text; source-bearing and private in repr. |
+
+### `Observation`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `doc_id` | `string` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `quote_id` | `string` | Explicit quote id binding; retained separately for audit. |
+| `canonical_hash` | `string` | Explicit canonical hash binding; retained separately for audit. |
+| `start` | `integer` | Zero-based Python code-point offset, inclusive. |
+| `end` | `integer` | Zero-based Python code-point offset, exclusive and greater than start. |
+| `element_id` | `string` | Explicit element id binding; retained separately for audit. |
+| `validator_version` | `string` | Explicit validator version binding; retained separately for audit. |
+| `mask_ids` | `tuple of string` | Current mask identities, retained in audit and excluded from headline presence. |
+| `source_run_id` | `string` | Explicit source run id binding; retained separately for audit. |
+| `source_run_hash` | `string` | Explicit source run hash binding; retained separately for audit. |
+| `metadata_ref` | `string` | Explicit metadata ref binding; retained separately for audit. |
+| `quote_text` | `string or null` | Rights-filtered canonical-span text; source-bearing and private in repr. |
+| `event_id` | `string` | Frozen expected-event identity; references the selected population. |
+| `entity_id` | `string` | Issuer identity; one headline vote per issuer-period. |
+| `cik` | `string` | Frozen event CIK, zero-padded ten-digit string. |
+| `period_end` | `date` | Source-supported period; separate from publication/retrieval. |
+| `fiscal_year` | `integer or null` | Nullable source-supported fiscal label; unknown remains null. |
+| `fiscal_quarter` | `1 / 2 / 3 / 4 or null` | Nullable source-supported fiscal label; unknown remains null. |
+| `doc_type` | `'release'` | Explicit doc type binding; retained separately for audit. |
+| `speaker_role` | `'not_applicable'` | Explicit speaker role binding; retained separately for audit. |
+| `theme_id` | `string` | Explicit theme id binding; retained separately for audit. |
+| `assignment_id` | `string` | Explicit assignment id binding; retained separately for audit. |
+| `codebook_id` | `string` | Explicit codebook id binding; retained separately for audit. |
+| `codebook_version` | `integer` | Explicit codebook version binding; retained separately for audit. |
+| `codebook_hash` | `string` | Explicit codebook hash binding; retained separately for audit. |
+| `headline_eligible` | `boolean` | Explicit headline eligible binding; retained separately for audit. |
+| `disclosure_group` | `string` | Explicit disclosure group binding; retained separately for audit. |
+| `policy_kind` | `'fixture' / 'calibrated'` | Explicit policy kind binding; retained separately for audit. |
+| `policy_hash` | `string` | Explicit policy hash binding; retained separately for audit. |
+| `policy_scope` | `'fixture' / 'research'` | Explicit policy scope binding; retained separately for audit. |
+| `coding_run_id` | `string` | Explicit coding run id binding; retained separately for audit. |
+| `coding_run_hash` | `string` | Explicit coding run hash binding; retained separately for audit. |
+| `support_run_id` | `string` | Explicit support run id binding; retained separately for audit. |
+| `support_run_hash` | `string` | Explicit support run hash binding; retained separately for audit. |
+| `evidence_id` | `string` | Explicit evidence id binding; retained separately for audit. |
+| `published_at` | `date-time or null` | Explicit published at binding; retained separately for audit. |
+| `retrieved_at` | `date-time` | Explicit retrieved at binding; retained separately for audit. |
+| `extracted_at` | `date-time` | Explicit extracted at binding; retained separately for audit. |
+
+### `ClaimAudit`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `doc_id` | `string` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `claim_id` | `string` | Explicit claim id binding; retained separately for audit. |
+| `window_id` | `string` | Explicit window id binding; retained separately for audit. |
+| `attempt_id` | `string` | Explicit attempt id binding; retained separately for audit. |
+| `interpretation_hash` | `string` | Explicit interpretation hash binding; retained separately for audit. |
+| `interpretation` | `string or null` | Rights-filtered model-derived interpretation; never source disclosure. |
+| `original_quote_ids` | `tuple of string` | Explicit original quote ids binding; retained separately for audit. |
+| `source_run_id` | `string` | Explicit source run id binding; retained separately for audit. |
+| `source_run_hash` | `string` | Explicit source run hash binding; retained separately for audit. |
+
+### `ClaimEvidence`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `doc_id` | `string` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `claim_id` | `string` | Explicit claim id binding; retained separately for audit. |
+| `quote_id` | `string` | Explicit quote id binding; retained separately for audit. |
+
+### `ClassificationAudit`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `classification_id` | `string` | Explicit classification id binding; retained separately for audit. |
+| `coding_run_id` | `string` | Explicit coding run id binding; retained separately for audit. |
+| `doc_id` | `string` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `claim_id` | `string` | Explicit claim id binding; retained separately for audit. |
+| `input_hash` | `string` | Explicit input hash binding; retained separately for audit. |
+| `codebook` | `CodebookReference` | Existing CodebookReference, with frozen ID/version/content hash. |
+| `status` | `'completed' / 'refused' / 'incomplete'` | Explicit status binding; retained separately for audit. |
+| `reason` | `string or null` | Explicit reason binding; retained separately for audit. |
+| `attempt_ids` | `tuple of string` | Explicit attempt ids binding; retained separately for audit. |
+| `proposed_theme_ids` | `tuple of string` | Explicit proposed theme ids binding; retained separately for audit. |
+
+### `DecisionAudit`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `decision_id` | `string` | Explicit decision id binding; retained separately for audit. |
+| `coding_run_id` | `string` | Explicit coding run id binding; retained separately for audit. |
+| `doc_id` | `string` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `claim_id` | `string` | Explicit claim id binding; retained separately for audit. |
+| `theme_id` | `string` | Explicit theme id binding; retained separately for audit. |
+| `target_id` | `string` | Explicit target id binding; retained separately for audit. |
+| `codebook` | `CodebookReference` | Existing CodebookReference, with frozen ID/version/content hash. |
+| `policy` | `PolicyReference or null` | Existing PolicyReference or explicit absence; preserves original decision policy. |
+| `status` | `'accepted' / 'rejected' / 'review' / 'refused'` | Explicit status binding; retained separately for audit. |
+| `reason` | `string` | Explicit reason binding; retained separately for audit. |
+| `support_status` | `'assessed' / 'refused' / 'incomplete' / 'flagged' or null` | Explicit support status binding; retained separately for audit. |
+| `flags` | `tuple of string` | Explicit flags binding; retained separately for audit. |
+| `missing` | `tuple of string` | Explicit missing binding; retained separately for audit. |
+| `original_quote_ids` | `tuple of string` | Explicit original quote ids binding; retained separately for audit. |
+| `supported_quote_ids` | `tuple of string` | Explicit supported quote ids binding; retained separately for audit. |
+| `proposal_hash` | `string` | Explicit proposal hash binding; retained separately for audit. |
+| `input_hash` | `string` | Explicit input hash binding; retained separately for audit. |
+| `support_run_hash` | `string` | Explicit support run hash binding; retained separately for audit. |
+
+### `RejectionAudit`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `source_run_id` | `string` | Explicit source run id binding; retained separately for audit. |
+| `doc_id` | `string` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `window_id` | `string` | Explicit window id binding; retained separately for audit. |
+| `attempt_id` | `string or null` | Explicit attempt id binding; retained separately for audit. |
+| `candidate_index` | `integer or null` | Explicit candidate index binding; retained separately for audit. |
+| `reason` | `string` | Explicit reason binding; retained separately for audit. |
+| `element_ids` | `tuple of string` | Explicit element ids binding; retained separately for audit. |
+
+### `CoverageRow`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `event_id` | `string` | Frozen expected-event identity; references the selected population. |
+| `entity_id` | `string` | Issuer identity; one headline vote per issuer-period. |
+| `cik` | `string` | Frozen event CIK, zero-padded ten-digit string. |
+| `period_end` | `date` | Source-supported period; separate from publication/retrieval. |
+| `fiscal_year` | `integer or null` | Nullable source-supported fiscal label; unknown remains null. |
+| `fiscal_quarter` | `1 / 2 / 3 / 4 or null` | Nullable source-supported fiscal label; unknown remains null. |
+| `doc_type` | `'release' / 'transcript'` | Explicit doc type binding; retained separately for audit. |
+| `speaker_role` | `'not_applicable' / 'unknown'` | Explicit speaker role binding; retained separately for audit. |
+| `eligibility_status` | `'eligible' / 'ineligible' / 'ambiguous'` | Explicit eligibility status binding; retained separately for audit. |
+| `eligibility_reason` | `'period_end_outside_window' / 'no_release_filing' / 'several_release_filings' / 'published_after_cutoff' / 'member_at_publication' / 'not_member_at_publication' / 'same_day_transition'` | Explicit eligibility reason binding; retained separately for audit. |
+| `membership_assertion_id` | `string` | Explicit membership assertion id binding; retained separately for audit. |
+| `expected` | `boolean` | Explicit expected binding; retained separately for audit. |
+| `available` | `boolean` | Explicit available binding; retained separately for audit. |
+| `parsed` | `boolean` | Explicit parsed binding; retained separately for audit. |
+| `observable` | `boolean` | Explicit complete observation; an empty quote/target table alone never grants absence. |
+| `availability` | `'available' / 'unavailable' / 'restricted' / 'not_yet_checked'` | Explicit availability binding; retained separately for audit. |
+| `document_id` | `string or null` | Explicit document id binding; retained separately for audit. |
+| `doc_ids` | `tuple of string` | Explicit doc ids binding; retained separately for audit. |
+| `latest_state` | `'expected' / 'acquired' / 'parsed' / 'failed' / 'unavailable' / 'restricted' / 'partial' / 'completed' / 'completed-no-theme'` | Explicit latest state binding; retained separately for audit. |
+| `state_run_id` | `string or null` | Explicit state run id binding; retained separately for audit. |
+| `state_schema_version` | `integer or null` | Explicit state schema version binding; retained separately for audit. |
+| `missing_reasons` | `tuple of string` | Explicit missing reasons binding; retained separately for audit. |
+| `policy_scope` | `'fixture' / 'research'` | Explicit policy scope binding; retained separately for audit. |
+| `accepted_count` | `integer` | Explicit accepted count binding; retained separately for audit. |
+| `masked_count` | `integer` | Explicit masked count binding; retained separately for audit. |
+| `review_count` | `integer` | Explicit review count binding; retained separately for audit. |
+| `rejected_count` | `integer` | Explicit rejected count binding; retained separately for audit. |
+| `refused_count` | `integer` | Explicit refused count binding; retained separately for audit. |
+| `flagged_count` | `integer` | Explicit flagged count binding; retained separately for audit. |
+| `incomplete_count` | `integer` | Explicit incomplete count binding; retained separately for audit. |
+| `unmatched_count` | `integer` | Explicit unmatched count binding; retained separately for audit. |
+| `copy_refs` | `tuple of string` | Explicit copy refs binding; retained separately for audit. |
+| `metadata_refs` | `tuple of string` | Explicit metadata refs binding; retained separately for audit. |
+| `completion_refs` | `tuple of string` | Explicit completion refs binding; retained separately for audit. |
+
+### `PrevalenceRow`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `population_hash` | `string` | Explicit population hash binding; retained separately for audit. |
+| `period_end` | `date or null` | Source-supported period; separate from publication/retrieval. |
+| `window_start` | `date or null` | Explicit window start binding; retained separately for audit. |
+| `window_end` | `date or null` | Explicit window end binding; retained separately for audit. |
+| `doc_type` | `'release' / 'transcript'` | Explicit doc type binding; retained separately for audit. |
+| `speaker_role` | `'not_applicable' / 'unknown'` | Explicit speaker role binding; retained separately for audit. |
+| `view_kind` | `'direct' / 'parent' / 'family'` | Explicit view kind binding; retained separately for audit. |
+| `view_id` | `string` | Explicit view id binding; retained separately for audit. |
+| `codebook_id` | `string` | Explicit codebook id binding; retained separately for audit. |
+| `codebook_version` | `integer` | Explicit codebook version binding; retained separately for audit. |
+| `codebook_hash` | `string` | Explicit codebook hash binding; retained separately for audit. |
+| `analysis_policy_hash` | `string` | Explicit analysis policy hash binding; retained separately for audit. |
+| `family_map_hash` | `string or null` | Explicit family map hash binding; retained separately for audit. |
+| `unit` | `'issuer_period' / 'issuer_window' / 'firm_quarter' / 'equal_issuer_mean'` | Explicit unit binding; retained separately for audit. |
+| `numerator` | `number` | Explicit numerator binding; retained separately for audit. |
+| `denominator` | `integer` | Explicit denominator binding; retained separately for audit. |
+| `rate` | `number or null` | Explicit rate binding; retained separately for audit. |
+| `reason` | `'empty_denominator' or null` | Explicit reason binding; retained separately for audit. |
+| `expected_count` | `integer` | Explicit expected count binding; retained separately for audit. |
+| `available_count` | `integer` | Explicit available count binding; retained separately for audit. |
+| `parsed_count` | `integer` | Explicit parsed count binding; retained separately for audit. |
+| `observable_count` | `integer` | Explicit observable count binding; retained separately for audit. |
+| `excluded_count` | `integer` | Explicit excluded count binding; retained separately for audit. |
+| `missing_period_count` | `integer` | Explicit missing period count binding; retained separately for audit. |
+| `restrictions` | `tuple of string` | Explicit restrictions binding; retained separately for audit. |
+| `policy_scope` | `'fixture' / 'research'` | Explicit policy scope binding; retained separately for audit. |
+
+### `CopyRow`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `doc_id` | `string` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `event_id` | `string` | Frozen expected-event identity; references the selected population. |
+| `disclosure_group` | `string` | Explicit disclosure group binding; retained separately for audit. |
+| `representative_doc_id` | `string` | Explicit representative doc id binding; retained separately for audit. |
+| `canonical_hash` | `string` | Explicit canonical hash binding; retained separately for audit. |
+| `copy_assertion_id` | `string or null` | Explicit copy assertion id binding; retained separately for audit. |
+| `copy_assertion_hash` | `string or null` | Explicit copy assertion hash binding; retained separately for audit. |
+| `rule_version` | `string` | Explicit rule version binding; retained separately for audit. |
+| `status` | `'consistent' / 'copy_processing_conflict'` | Explicit status binding; retained separately for audit. |
+
+### `AnalysisRunRecord`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Analytical schema version 1; strict integer. |
+| `run_id` | `string` | Explicit run id binding; retained separately for audit. |
+| `created_at` | `date-time` | Explicit created at binding; retained separately for audit. |
+| `scope` | `'fixture' / 'research'` | Explicit scope binding; retained separately for audit. |
+| `audience` | `'local' / 'export'` | Explicit audience binding; retained separately for audit. |
+| `population_hash` | `string` | Explicit population hash binding; retained separately for audit. |
+| `event_manifest_hash` | `string` | Explicit event manifest hash binding; retained separately for audit. |
+| `pilot_hash` | `string` | Explicit pilot hash binding; retained separately for audit. |
+| `universe_hash` | `string` | Explicit universe hash binding; retained separately for audit. |
+| `documents` | `tuple of tuple of string` | Explicit documents binding; retained separately for audit. |
+| `canonical_manifests` | `tuple of tuple of string` | Explicit canonical manifests binding; retained separately for audit. |
+| `mask_manifests` | `tuple of tuple of string` | Explicit mask manifests binding; retained separately for audit. |
+| `source_run_hash` | `string` | Explicit source run hash binding; retained separately for audit. |
+| `coding_run_hash` | `string` | Explicit coding run hash binding; retained separately for audit. |
+| `support_run_hash` | `string` | Explicit support run hash binding; retained separately for audit. |
+| `configuration_hashes` | `tuple of tuple of string` | Explicit configuration hashes binding; retained separately for audit. |
+| `prompt_hashes` | `tuple of tuple of string` | Explicit prompt hashes binding; retained separately for audit. |
+| `identity_hashes` | `tuple of tuple of string` | Explicit identity hashes binding; retained separately for audit. |
+| `codebook` | `CodebookReference` | Existing CodebookReference, with frozen ID/version/content hash. |
+| `assignment_policy` | `PolicyReference or null` | Existing PolicyReference or explicit absence; no implicit calibration. |
+| `analysis_policy` | `AnalysisPolicy` | Explicit analysis policy binding; retained separately for audit. |
+| `family_map` | `ThemeFamilyMap or null` | Explicit family map binding; retained separately for audit. |
+| `completion_hashes` | `tuple of tuple of string` | Explicit completion hashes binding; retained separately for audit. |
+| `copy_hashes` | `tuple of tuple of string` | Explicit copy hashes binding; retained separately for audit. |
+| `validator_version` | `string` | Explicit validator version binding; retained separately for audit. |
+| `software` | `tuple of tuple of string` | Explicit software binding; retained separately for audit. |
+| `lock_hash` | `string` | Explicit lock hash binding; retained separately for audit. |
+| `counts_by_state` | `tuple of tuple of 'expected' / 'acquired' / 'parsed' / 'failed' / 'unavailable' / 'restricted' / 'partial' / 'completed' / 'completed-no-theme'` | Explicit counts by state binding; retained separately for audit. |
+| `counts_by_decision` | `tuple of tuple of 'accepted' / 'rejected' / 'review' / 'refused'` | Explicit counts by decision binding; retained separately for audit. |
+| `counts_by_reason` | `tuple of tuple of string` | Explicit counts by reason binding; retained separately for audit. |
+| `raw_verification` | `tuple of RawCacheVerification` | Recorded cache-verification statuses; current consuming gates must check actual bytes. |
+| `table_hashes` | `tuple of tuple of string` | Explicit table hashes binding; retained separately for audit. |
+| `evidence_hashes` | `tuple of tuple of string` | Explicit evidence hashes binding; retained separately for audit. |
+| `billable_cost` | `'none, self-hosted'` | Explicit billable cost binding; retained separately for audit. |
+| `binding_hash` | `string` | Current checked-content digest, to be recomputed by Task 3; no reusable validity flag. |
+
+### `RawSnapshot`
+
+| Field | Meaning |
+| --- | --- |
+| `doc_id` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `artifact` | Explicit artifact input/reference; no I/O on construction. |
+| `data` | Explicit bytes supplied by the caller; actual hash/rights verified by consuming gates. |
+
+### `RawCacheInputs`
+
+| Field | Meaning |
+| --- | --- |
+| `coding` | Explicit coding input/reference; no I/O on construction. |
+| `support` | Explicit support input/reference; no I/O on construction. |
+
+### `AnalysisInputs`
+
+| Field | Meaning |
+| --- | --- |
+| `sources` | Explicit sources input/reference; no I/O on construction. |
+| `support` | Explicit support input/reference; no I/O on construction. |
+| `coding` | Explicit coding input/reference; no I/O on construction. |
+| `assignment_policy` | Existing PolicyReference or explicit absence; no implicit calibration. |
+| `expected` | Explicit expected input/reference; no I/O on construction. |
+| `acquisition` | Explicit acquisition input/reference; no I/O on construction. |
+| `metadata` | Explicit metadata input/reference; no I/O on construction. |
+| `copies` | Explicit copies input/reference; no I/O on construction. |
+| `no_theme` | Explicit no theme input/reference; no I/O on construction. |
+| `provenance_hash` | Explicit immutable lineage binding, not verification of absent external bytes. |
+| `raw_verification` | Recorded cache-verification statuses; current consuming gates must check actual bytes. |
+| `raw_caches` | Explicit raw caches input/reference; no I/O on construction. |
+| `raw_snapshots` | Explicit document-qualified RawSnapshot tuple; no implicit loader or persisted bytes. |
+
+### `BoundAnalysis`
+
+| Field | Meaning |
+| --- | --- |
+| `inputs` | Explicit inputs input/reference; no I/O on construction. |
+| `decisions` | Explicit decisions input/reference; no I/O on construction. |
+| `expected` | Explicit expected input/reference; no I/O on construction. |
+| `acquisition` | Explicit acquisition input/reference; no I/O on construction. |
+| `metadata` | Explicit metadata input/reference; no I/O on construction. |
+| `copies` | Explicit copies input/reference; no I/O on construction. |
+| `completions` | Explicit completions input/reference; no I/O on construction. |
+| `binding_hash` | Current checked-content digest, to be recomputed by Task 3; no reusable validity flag. |
+
+### `AnalysisTables`
+
+| Field | Meaning |
+| --- | --- |
+| `frames` | Exactly fourteen explicitly typed Polars frames; cloned mapping, structural row/grain/FK validation. |
+
+### `AnalysisRun`
+
+| Field | Meaning |
+| --- | --- |
+| `record` | Explicit record input/reference; no I/O on construction. |
+| `tables` | Explicit tables input/reference; no I/O on construction. |
+
+### `StoredAnalysisRun`
+
+| Field | Meaning |
+| --- | --- |
+| `record` | Explicit record input/reference; no I/O on construction. |
+| `tables` | Explicit tables input/reference; no I/O on construction. |
+| `manifest_hash` | SHA-256 of actual stored manifest bytes; structural reading grants no current validity. |
+| `published_hashes` | Sorted artifact-to-actual-byte hash bindings, checked at storage/publication. |
+
+### `EvidenceView`
+
+| Field | Meaning |
+| --- | --- |
+| `reference` | Explicit reference input/reference; no I/O on construction. |
+| `html` | Explicit html input/reference; no I/O on construction. |
+| `canonical_bytes` | Explicit canonical bytes input/reference; no I/O on construction. |
+| `raw_bytes` | Explicit raw bytes input/reference; no I/O on construction. |
+
+### `Analysis reasons`
+
+| Reason | Meaning |
+| --- | --- |
+| `ambiguous_occurrence` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `assessment_flagged` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `assessment_incomplete` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `assessment_refused` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `blank_claim` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `budget_exhausted` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `cache_corrupt` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `calibration_required` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `canonical_hash_mismatch` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `claim_too_long` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `classification_incomplete` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `codebook_not_approved` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `copy_processing_conflict` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `crosses_speaker_turn` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `crossing_elements` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `document_integrity` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `duplicate_claim` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `duplicate_element` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `duplicate_label` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `duplicate_quote` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `duplicate_theme` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `element_id_mismatch` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `empty_denominator` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `empty_selection` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `explicit_no_theme` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `extraction_partial` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `fixture_policy` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `hierarchy_conflict` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `input_changed` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `input_too_long` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `invalid_bundle` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `invalid_contribution` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `invalid_elements` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `invalid_header_reference` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `invalid_panel` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `invalid_quote` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `invalid_references` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `judge_exhausted` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `locator_mismatch` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `locator_not_found` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `malformed_record` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `malformed_reply` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `masks_mismatch` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `member_at_publication` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `missing_assessment` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `mixed_codebook` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `model_mismatch` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `no_confirmed_release` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `no_eligible_units` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `no_native_text` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `no_release_filing` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `no_theme_fit` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `no_theme_unconfirmed` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `not_found` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `not_member_at_publication` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `not_processed` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `not_requested` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `not_yet_checked` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `ocr_derived_text` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `outside_chunk` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `outside_element` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `outside_parent` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `parent_cycle` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `parent_order` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `parse_failed` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `period_end_outside_window` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `policy_accept` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `policy_mismatch` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `policy_reject` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `policy_review` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `policy_unavailable` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `processing_failed` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `published_after_cutoff` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `quote_text_mismatch` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `raw_snapshot_missing` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `replay_dispatch_forbidden` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `replay_miss` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `requests_exhausted` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `rights_restricted` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `same_day_transition` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `scorer_exhausted` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `scorer_failed` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `several_release_filings` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `snapshot_withheld` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `span_out_of_bounds` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `storage_corrupt` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `table_cell_parent` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `tokens_exhausted` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `tool_call_refused` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `transcript_not_in_scope` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `transport_error` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `unexpected_error` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `unknown_claim` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `unknown_element` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `unknown_label` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `unknown_parent` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `unknown_quote` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `unknown_theme` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `unsupported_media_type` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `valid_unmatched` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `withheld` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `wrong_codebook` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `wrong_document` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+| `wrong_source_run` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+
+### `Analysis tables`
+
+| Table | Row model |
+| --- | --- |
+| `observations` | `Observation`; document-qualified analytical schema 1. |
+| `quotes` | `QuoteAudit`; document-qualified analytical schema 1. |
+| `claims` | `ClaimAudit`; document-qualified analytical schema 1. |
+| `claim_evidence` | `ClaimEvidence`; document-qualified analytical schema 1. |
+| `assignment_claims` | `AssignmentClaimLink`; document-qualified analytical schema 1. |
+| `classifications` | `ClassificationAudit`; document-qualified analytical schema 1. |
+| `decisions` | `DecisionAudit`; document-qualified analytical schema 1. |
+| `novelty` | `NoveltyItem`; document-qualified analytical schema 1. |
+| `rejections` | `RejectionAudit`; document-qualified analytical schema 1. |
+| `completions` | `DocumentCompletion`; document-qualified analytical schema 1. |
+| `coverage` | `CoverageRow`; document-qualified analytical schema 1. |
+| `prevalence` | `PrevalenceRow`; document-qualified analytical schema 1. |
+| `copies` | `CopyRow`; document-qualified analytical schema 1. |
+| `evidence` | `EvidenceViewReference`; document-qualified analytical schema 1. |
+
+### `Analysis table observations`
+
+Grain: `('entity_id', 'period_end', 'doc_type', 'speaker_role', 'theme_id', 'doc_id', 'quote_id', 'codebook_id', 'codebook_version')`. Foreign keys (local columns, target table, target columns): `((('doc_id', 'quote_id'), 'quotes', ('doc_id', 'quote_id')), (('doc_id',), 'completions', ('doc_id',)))`. External event, canonical-document, run, policy, codebook, metadata and artifact references remain bound through the selected manifest/inventories.
+
+| Field | Polars dtype | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Int64` | Analytical schema version 1; strict integer. |
+| `doc_id` | `String` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `quote_id` | `String` | Explicit quote id field; row-model type/nullability applies. |
+| `canonical_hash` | `String` | Explicit canonical hash field; row-model type/nullability applies. |
+| `start` | `Int64` | Zero-based Python code-point offset, inclusive. |
+| `end` | `Int64` | Zero-based Python code-point offset, exclusive and greater than start. |
+| `element_id` | `String` | Explicit element id field; row-model type/nullability applies. |
+| `validator_version` | `String` | Explicit validator version field; row-model type/nullability applies. |
+| `mask_ids` | `List(String)` | Current mask identities, retained in audit and excluded from headline presence. |
+| `source_run_id` | `String` | Explicit source run id field; row-model type/nullability applies. |
+| `source_run_hash` | `String` | Explicit source run hash field; row-model type/nullability applies. |
+| `metadata_ref` | `String` | Explicit metadata ref field; row-model type/nullability applies. |
+| `quote_text` | `String` | Rights-filtered canonical-span text; source-bearing and private in repr. |
+| `event_id` | `String` | Frozen expected-event identity; references the selected population. |
+| `entity_id` | `String` | Issuer identity; one headline vote per issuer-period. |
+| `cik` | `String` | Frozen event CIK, zero-padded ten-digit string. |
+| `period_end` | `Date` | Source-supported period; separate from publication/retrieval. |
+| `fiscal_year` | `Int64` | Nullable source-supported fiscal label; unknown remains null. |
+| `fiscal_quarter` | `Int64` | Nullable source-supported fiscal label; unknown remains null. |
+| `doc_type` | `String` | Explicit doc type field; row-model type/nullability applies. |
+| `speaker_role` | `String` | Explicit speaker role field; row-model type/nullability applies. |
+| `theme_id` | `String` | Explicit theme id field; row-model type/nullability applies. |
+| `assignment_id` | `String` | Explicit assignment id field; row-model type/nullability applies. |
+| `codebook_id` | `String` | Explicit codebook id field; row-model type/nullability applies. |
+| `codebook_version` | `Int64` | Explicit codebook version field; row-model type/nullability applies. |
+| `codebook_hash` | `String` | Explicit codebook hash field; row-model type/nullability applies. |
+| `headline_eligible` | `Boolean` | Explicit headline eligible field; row-model type/nullability applies. |
+| `disclosure_group` | `String` | Explicit disclosure group field; row-model type/nullability applies. |
+| `policy_kind` | `String` | Explicit policy kind field; row-model type/nullability applies. |
+| `policy_hash` | `String` | Explicit policy hash field; row-model type/nullability applies. |
+| `policy_scope` | `String` | Explicit policy scope field; row-model type/nullability applies. |
+| `coding_run_id` | `String` | Explicit coding run id field; row-model type/nullability applies. |
+| `coding_run_hash` | `String` | Explicit coding run hash field; row-model type/nullability applies. |
+| `support_run_id` | `String` | Explicit support run id field; row-model type/nullability applies. |
+| `support_run_hash` | `String` | Explicit support run hash field; row-model type/nullability applies. |
+| `evidence_id` | `String` | Explicit evidence id field; row-model type/nullability applies. |
+| `published_at` | `Datetime(time_unit='us', time_zone='UTC')` | Explicit published at field; row-model type/nullability applies. |
+| `retrieved_at` | `Datetime(time_unit='us', time_zone='UTC')` | Explicit retrieved at field; row-model type/nullability applies. |
+| `extracted_at` | `Datetime(time_unit='us', time_zone='UTC')` | Explicit extracted at field; row-model type/nullability applies. |
+
+### `Analysis table quotes`
+
+Grain: `('doc_id', 'quote_id')`. Foreign keys (local columns, target table, target columns): `()`. External event, canonical-document, run, policy, codebook, metadata and artifact references remain bound through the selected manifest/inventories.
+
+| Field | Polars dtype | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Int64` | Analytical schema version 1; strict integer. |
+| `doc_id` | `String` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `quote_id` | `String` | Explicit quote id field; row-model type/nullability applies. |
+| `canonical_hash` | `String` | Explicit canonical hash field; row-model type/nullability applies. |
+| `start` | `Int64` | Zero-based Python code-point offset, inclusive. |
+| `end` | `Int64` | Zero-based Python code-point offset, exclusive and greater than start. |
+| `element_id` | `String` | Explicit element id field; row-model type/nullability applies. |
+| `validator_version` | `String` | Explicit validator version field; row-model type/nullability applies. |
+| `mask_ids` | `List(String)` | Current mask identities, retained in audit and excluded from headline presence. |
+| `source_run_id` | `String` | Explicit source run id field; row-model type/nullability applies. |
+| `source_run_hash` | `String` | Explicit source run hash field; row-model type/nullability applies. |
+| `metadata_ref` | `String` | Explicit metadata ref field; row-model type/nullability applies. |
+| `quote_text` | `String` | Rights-filtered canonical-span text; source-bearing and private in repr. |
+
+### `Analysis table claims`
+
+Grain: `('doc_id', 'claim_id')`. Foreign keys (local columns, target table, target columns): `()`. External event, canonical-document, run, policy, codebook, metadata and artifact references remain bound through the selected manifest/inventories.
+
+| Field | Polars dtype | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Int64` | Analytical schema version 1; strict integer. |
+| `doc_id` | `String` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `claim_id` | `String` | Explicit claim id field; row-model type/nullability applies. |
+| `window_id` | `String` | Explicit window id field; row-model type/nullability applies. |
+| `attempt_id` | `String` | Explicit attempt id field; row-model type/nullability applies. |
+| `interpretation_hash` | `String` | Explicit interpretation hash field; row-model type/nullability applies. |
+| `interpretation` | `String` | Rights-filtered model-derived interpretation; never source disclosure. |
+| `original_quote_ids` | `List(String)` | Explicit original quote ids field; row-model type/nullability applies. |
+| `source_run_id` | `String` | Explicit source run id field; row-model type/nullability applies. |
+| `source_run_hash` | `String` | Explicit source run hash field; row-model type/nullability applies. |
+
+### `Analysis table claim_evidence`
+
+Grain: `('doc_id', 'claim_id', 'quote_id')`. Foreign keys (local columns, target table, target columns): `((('doc_id', 'claim_id'), 'claims', ('doc_id', 'claim_id')), (('doc_id', 'quote_id'), 'quotes', ('doc_id', 'quote_id')))`. External event, canonical-document, run, policy, codebook, metadata and artifact references remain bound through the selected manifest/inventories.
+
+| Field | Polars dtype | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Int64` | Analytical schema version 1; strict integer. |
+| `doc_id` | `String` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `claim_id` | `String` | Explicit claim id field; row-model type/nullability applies. |
+| `quote_id` | `String` | Explicit quote id field; row-model type/nullability applies. |
+
+### `Analysis table assignment_claims`
+
+Grain: `('assignment_id', 'doc_id', 'claim_id', 'decision_id', 'target_id')`. Foreign keys (local columns, target table, target columns): `((('doc_id', 'claim_id'), 'claims', ('doc_id', 'claim_id')), (('decision_id',), 'decisions', ('decision_id',)))`. External event, canonical-document, run, policy, codebook, metadata and artifact references remain bound through the selected manifest/inventories.
+
+| Field | Polars dtype | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Int64` | Analytical schema version 1; strict integer. |
+| `assignment_id` | `String` | Explicit assignment id field; row-model type/nullability applies. |
+| `doc_id` | `String` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `claim_id` | `String` | Explicit claim id field; row-model type/nullability applies. |
+| `decision_id` | `String` | Explicit decision id field; row-model type/nullability applies. |
+| `target_id` | `String` | Explicit target id field; row-model type/nullability applies. |
+
+### `Analysis table classifications`
+
+Grain: `('classification_id',)`. Foreign keys (local columns, target table, target columns): `((('doc_id', 'claim_id'), 'claims', ('doc_id', 'claim_id')),)`. External event, canonical-document, run, policy, codebook, metadata and artifact references remain bound through the selected manifest/inventories.
+
+| Field | Polars dtype | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Int64` | Analytical schema version 1; strict integer. |
+| `classification_id` | `String` | Explicit classification id field; row-model type/nullability applies. |
+| `coding_run_id` | `String` | Explicit coding run id field; row-model type/nullability applies. |
+| `doc_id` | `String` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `claim_id` | `String` | Explicit claim id field; row-model type/nullability applies. |
+| `input_hash` | `String` | Explicit input hash field; row-model type/nullability applies. |
+| `codebook` | `Struct({'codebook_id': String, 'codebook_version': Int64, 'content_hash': String})` | Existing CodebookReference, with frozen ID/version/content hash. |
+| `status` | `String` | Explicit status field; row-model type/nullability applies. |
+| `reason` | `String` | Explicit reason field; row-model type/nullability applies. |
+| `attempt_ids` | `List(String)` | Explicit attempt ids field; row-model type/nullability applies. |
+| `proposed_theme_ids` | `List(String)` | Explicit proposed theme ids field; row-model type/nullability applies. |
+
+### `Analysis table decisions`
+
+Grain: `('decision_id',)`. Foreign keys (local columns, target table, target columns): `((('doc_id', 'claim_id'), 'claims', ('doc_id', 'claim_id')),)`. External event, canonical-document, run, policy, codebook, metadata and artifact references remain bound through the selected manifest/inventories.
+
+| Field | Polars dtype | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Int64` | Analytical schema version 1; strict integer. |
+| `decision_id` | `String` | Explicit decision id field; row-model type/nullability applies. |
+| `coding_run_id` | `String` | Explicit coding run id field; row-model type/nullability applies. |
+| `doc_id` | `String` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `claim_id` | `String` | Explicit claim id field; row-model type/nullability applies. |
+| `theme_id` | `String` | Explicit theme id field; row-model type/nullability applies. |
+| `target_id` | `String` | Explicit target id field; row-model type/nullability applies. |
+| `codebook` | `Struct({'codebook_id': String, 'codebook_version': Int64, 'content_hash': String})` | Existing CodebookReference, with frozen ID/version/content hash. |
+| `policy` | `Struct({'policy_id': String, 'policy_hash': String, 'kind': String, 'codebook': Struct({'codebook_id': String, 'codebook_version': Int64, 'content_hash': String}), 'classifier_configuration_hash': String, 'support_configuration_hash': String, 'calibration_reference': String})` | Existing PolicyReference or explicit absence; preserves original decision policy. |
+| `status` | `String` | Explicit status field; row-model type/nullability applies. |
+| `reason` | `String` | Explicit reason field; row-model type/nullability applies. |
+| `support_status` | `String` | Explicit support status field; row-model type/nullability applies. |
+| `flags` | `List(String)` | Explicit flags field; row-model type/nullability applies. |
+| `missing` | `List(String)` | Explicit missing field; row-model type/nullability applies. |
+| `original_quote_ids` | `List(String)` | Explicit original quote ids field; row-model type/nullability applies. |
+| `supported_quote_ids` | `List(String)` | Explicit supported quote ids field; row-model type/nullability applies. |
+| `proposal_hash` | `String` | Explicit proposal hash field; row-model type/nullability applies. |
+| `input_hash` | `String` | Explicit input hash field; row-model type/nullability applies. |
+| `support_run_hash` | `String` | Explicit support run hash field; row-model type/nullability applies. |
+
+### `Analysis table novelty`
+
+Grain: `('novelty_id',)`. Foreign keys (local columns, target table, target columns): `((('doc_id', 'claim_id'), 'claims', ('doc_id', 'claim_id')), (('classification_id',), 'classifications', ('classification_id',)))`. External event, canonical-document, run, policy, codebook, metadata and artifact references remain bound through the selected manifest/inventories.
+
+| Field | Polars dtype | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Int64` | Analytical schema version 1; strict integer. |
+| `novelty_id` | `String` | Explicit novelty id field; row-model type/nullability applies. |
+| `coding_run_id` | `String` | Explicit coding run id field; row-model type/nullability applies. |
+| `classification_id` | `String` | Explicit classification id field; row-model type/nullability applies. |
+| `source_run_id` | `String` | Explicit source run id field; row-model type/nullability applies. |
+| `doc_id` | `String` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `claim_id` | `String` | Explicit claim id field; row-model type/nullability applies. |
+| `codebook` | `Struct({'codebook_id': String, 'codebook_version': Int64, 'content_hash': String})` | Existing CodebookReference, with frozen ID/version/content hash. |
+| `input_hash` | `String` | Explicit input hash field; row-model type/nullability applies. |
+| `original_quote_ids` | `List(String)` | Explicit original quote ids field; row-model type/nullability applies. |
+| `reason` | `String` | Explicit reason field; row-model type/nullability applies. |
+
+### `Analysis table rejections`
+
+Grain: `('source_run_id', 'doc_id', 'window_id', 'attempt_id', 'candidate_index', 'reason')`. Foreign keys (local columns, target table, target columns): `()`. External event, canonical-document, run, policy, codebook, metadata and artifact references remain bound through the selected manifest/inventories.
+
+| Field | Polars dtype | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Int64` | Analytical schema version 1; strict integer. |
+| `source_run_id` | `String` | Explicit source run id field; row-model type/nullability applies. |
+| `doc_id` | `String` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `window_id` | `String` | Explicit window id field; row-model type/nullability applies. |
+| `attempt_id` | `String` | Explicit attempt id field; row-model type/nullability applies. |
+| `candidate_index` | `Int64` | Explicit candidate index field; row-model type/nullability applies. |
+| `reason` | `String` | Explicit reason field; row-model type/nullability applies. |
+| `element_ids` | `List(String)` | Explicit element ids field; row-model type/nullability applies. |
+
+### `Analysis table completions`
+
+Grain: `('doc_id',)`. Foreign keys (local columns, target table, target columns): `()`. External event, canonical-document, run, policy, codebook, metadata and artifact references remain bound through the selected manifest/inventories.
+
+| Field | Polars dtype | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Int64` | Analytical schema version 1; strict integer. |
+| `doc_id` | `String` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `event_id` | `String` | Frozen expected-event identity; references the selected population. |
+| `canonical_hash` | `String` | Explicit canonical hash field; row-model type/nullability applies. |
+| `source_run_hash` | `String` | Explicit source run hash field; row-model type/nullability applies. |
+| `coding_run_hash` | `String` | Explicit coding run hash field; row-model type/nullability applies. |
+| `support_run_hash` | `String` | Explicit support run hash field; row-model type/nullability applies. |
+| `codebook` | `Struct({'codebook_id': String, 'codebook_version': Int64, 'content_hash': String})` | Existing CodebookReference, with frozen ID/version/content hash. |
+| `assignment_policy` | `Struct({'policy_id': String, 'policy_hash': String, 'kind': String, 'codebook': Struct({'codebook_id': String, 'codebook_version': Int64, 'content_hash': String}), 'classifier_configuration_hash': String, 'support_configuration_hash': String, 'calibration_reference': String})` | Existing PolicyReference or explicit absence; no implicit calibration. |
+| `analysis_policy_hash` | `String` | Explicit analysis policy hash field; row-model type/nullability applies. |
+| `traversal_complete` | `Boolean` | Explicit traversal complete field; row-model type/nullability applies. |
+| `classification_complete` | `Boolean` | Explicit classification complete field; row-model type/nullability applies. |
+| `assessment_complete` | `Boolean` | Explicit assessment complete field; row-model type/nullability applies. |
+| `decision_complete` | `Boolean` | Explicit decision complete field; row-model type/nullability applies. |
+| `eligible_units` | `Int64` | Explicit eligible units field; row-model type/nullability applies. |
+| `completed_windows` | `Int64` | Explicit completed windows field; row-model type/nullability applies. |
+| `failed_windows` | `Int64` | Explicit failed windows field; row-model type/nullability applies. |
+| `accepted_count` | `Int64` | Explicit accepted count field; row-model type/nullability applies. |
+| `masked_count` | `Int64` | Explicit masked count field; row-model type/nullability applies. |
+| `rejected_count` | `Int64` | Explicit rejected count field; row-model type/nullability applies. |
+| `review_count` | `Int64` | Explicit review count field; row-model type/nullability applies. |
+| `refused_count` | `Int64` | Explicit refused count field; row-model type/nullability applies. |
+| `flagged_count` | `Int64` | Explicit flagged count field; row-model type/nullability applies. |
+| `incomplete_count` | `Int64` | Explicit incomplete count field; row-model type/nullability applies. |
+| `unmatched_count` | `Int64` | Explicit unmatched count field; row-model type/nullability applies. |
+| `processing_state` | `String` | Explicit processing state field; row-model type/nullability applies. |
+| `reasons` | `List(String)` | Explicit reasons field; row-model type/nullability applies. |
+| `declaration_hash` | `String` | Explicit declaration hash field; row-model type/nullability applies. |
+| `observable` | `Boolean` | Explicit complete observation; an empty quote/target table alone never grants absence. |
+| `policy_scope` | `String` | Explicit policy scope field; row-model type/nullability applies. |
+
+### `Analysis table coverage`
+
+Grain: `('event_id', 'doc_type', 'speaker_role')`. Foreign keys (local columns, target table, target columns): `()`. External event, canonical-document, run, policy, codebook, metadata and artifact references remain bound through the selected manifest/inventories.
+
+| Field | Polars dtype | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Int64` | Analytical schema version 1; strict integer. |
+| `event_id` | `String` | Frozen expected-event identity; references the selected population. |
+| `entity_id` | `String` | Issuer identity; one headline vote per issuer-period. |
+| `cik` | `String` | Frozen event CIK, zero-padded ten-digit string. |
+| `period_end` | `Date` | Source-supported period; separate from publication/retrieval. |
+| `fiscal_year` | `Int64` | Nullable source-supported fiscal label; unknown remains null. |
+| `fiscal_quarter` | `Int64` | Nullable source-supported fiscal label; unknown remains null. |
+| `doc_type` | `String` | Explicit doc type field; row-model type/nullability applies. |
+| `speaker_role` | `String` | Explicit speaker role field; row-model type/nullability applies. |
+| `eligibility_status` | `String` | Explicit eligibility status field; row-model type/nullability applies. |
+| `eligibility_reason` | `String` | Explicit eligibility reason field; row-model type/nullability applies. |
+| `membership_assertion_id` | `String` | Explicit membership assertion id field; row-model type/nullability applies. |
+| `expected` | `Boolean` | Explicit expected field; row-model type/nullability applies. |
+| `available` | `Boolean` | Explicit available field; row-model type/nullability applies. |
+| `parsed` | `Boolean` | Explicit parsed field; row-model type/nullability applies. |
+| `observable` | `Boolean` | Explicit complete observation; an empty quote/target table alone never grants absence. |
+| `availability` | `String` | Explicit availability field; row-model type/nullability applies. |
+| `document_id` | `String` | Explicit document id field; row-model type/nullability applies. |
+| `doc_ids` | `List(String)` | Explicit doc ids field; row-model type/nullability applies. |
+| `latest_state` | `String` | Explicit latest state field; row-model type/nullability applies. |
+| `state_run_id` | `String` | Explicit state run id field; row-model type/nullability applies. |
+| `state_schema_version` | `Int64` | Explicit state schema version field; row-model type/nullability applies. |
+| `missing_reasons` | `List(String)` | Explicit missing reasons field; row-model type/nullability applies. |
+| `policy_scope` | `String` | Explicit policy scope field; row-model type/nullability applies. |
+| `accepted_count` | `Int64` | Explicit accepted count field; row-model type/nullability applies. |
+| `masked_count` | `Int64` | Explicit masked count field; row-model type/nullability applies. |
+| `review_count` | `Int64` | Explicit review count field; row-model type/nullability applies. |
+| `rejected_count` | `Int64` | Explicit rejected count field; row-model type/nullability applies. |
+| `refused_count` | `Int64` | Explicit refused count field; row-model type/nullability applies. |
+| `flagged_count` | `Int64` | Explicit flagged count field; row-model type/nullability applies. |
+| `incomplete_count` | `Int64` | Explicit incomplete count field; row-model type/nullability applies. |
+| `unmatched_count` | `Int64` | Explicit unmatched count field; row-model type/nullability applies. |
+| `copy_refs` | `List(String)` | Explicit copy refs field; row-model type/nullability applies. |
+| `metadata_refs` | `List(String)` | Explicit metadata refs field; row-model type/nullability applies. |
+| `completion_refs` | `List(String)` | Explicit completion refs field; row-model type/nullability applies. |
+
+### `Analysis table prevalence`
+
+Grain: `('population_hash', 'period_end', 'window_start', 'window_end', 'doc_type', 'speaker_role', 'view_kind', 'view_id', 'codebook_id', 'codebook_version', 'analysis_policy_hash', 'family_map_hash', 'unit')`. Foreign keys (local columns, target table, target columns): `()`. External event, canonical-document, run, policy, codebook, metadata and artifact references remain bound through the selected manifest/inventories.
+
+| Field | Polars dtype | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Int64` | Analytical schema version 1; strict integer. |
+| `population_hash` | `String` | Explicit population hash field; row-model type/nullability applies. |
+| `period_end` | `Date` | Source-supported period; separate from publication/retrieval. |
+| `window_start` | `Date` | Explicit window start field; row-model type/nullability applies. |
+| `window_end` | `Date` | Explicit window end field; row-model type/nullability applies. |
+| `doc_type` | `String` | Explicit doc type field; row-model type/nullability applies. |
+| `speaker_role` | `String` | Explicit speaker role field; row-model type/nullability applies. |
+| `view_kind` | `String` | Explicit view kind field; row-model type/nullability applies. |
+| `view_id` | `String` | Explicit view id field; row-model type/nullability applies. |
+| `codebook_id` | `String` | Explicit codebook id field; row-model type/nullability applies. |
+| `codebook_version` | `Int64` | Explicit codebook version field; row-model type/nullability applies. |
+| `codebook_hash` | `String` | Explicit codebook hash field; row-model type/nullability applies. |
+| `analysis_policy_hash` | `String` | Explicit analysis policy hash field; row-model type/nullability applies. |
+| `family_map_hash` | `String` | Explicit family map hash field; row-model type/nullability applies. |
+| `unit` | `String` | Explicit unit field; row-model type/nullability applies. |
+| `numerator` | `Float64` | Explicit numerator field; row-model type/nullability applies. |
+| `denominator` | `Int64` | Explicit denominator field; row-model type/nullability applies. |
+| `rate` | `Float64` | Explicit rate field; row-model type/nullability applies. |
+| `reason` | `String` | Explicit reason field; row-model type/nullability applies. |
+| `expected_count` | `Int64` | Explicit expected count field; row-model type/nullability applies. |
+| `available_count` | `Int64` | Explicit available count field; row-model type/nullability applies. |
+| `parsed_count` | `Int64` | Explicit parsed count field; row-model type/nullability applies. |
+| `observable_count` | `Int64` | Explicit observable count field; row-model type/nullability applies. |
+| `excluded_count` | `Int64` | Explicit excluded count field; row-model type/nullability applies. |
+| `missing_period_count` | `Int64` | Explicit missing period count field; row-model type/nullability applies. |
+| `restrictions` | `List(String)` | Explicit restrictions field; row-model type/nullability applies. |
+| `policy_scope` | `String` | Explicit policy scope field; row-model type/nullability applies. |
+
+### `Analysis table copies`
+
+Grain: `('doc_id',)`. Foreign keys (local columns, target table, target columns): `()`. External event, canonical-document, run, policy, codebook, metadata and artifact references remain bound through the selected manifest/inventories.
+
+| Field | Polars dtype | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Int64` | Analytical schema version 1; strict integer. |
+| `doc_id` | `String` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `event_id` | `String` | Frozen expected-event identity; references the selected population. |
+| `disclosure_group` | `String` | Explicit disclosure group field; row-model type/nullability applies. |
+| `representative_doc_id` | `String` | Explicit representative doc id field; row-model type/nullability applies. |
+| `canonical_hash` | `String` | Explicit canonical hash field; row-model type/nullability applies. |
+| `copy_assertion_id` | `String` | Explicit copy assertion id field; row-model type/nullability applies. |
+| `copy_assertion_hash` | `String` | Explicit copy assertion hash field; row-model type/nullability applies. |
+| `rule_version` | `String` | Explicit rule version field; row-model type/nullability applies. |
+| `status` | `String` | Explicit status field; row-model type/nullability applies. |
+
+### `Analysis table evidence`
+
+Grain: `('doc_id', 'quote_id', 'audience')`. Foreign keys (local columns, target table, target columns): `((('doc_id', 'quote_id'), 'quotes', ('doc_id', 'quote_id')),)`. External event, canonical-document, run, policy, codebook, metadata and artifact references remain bound through the selected manifest/inventories.
+
+| Field | Polars dtype | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Int64` | Analytical schema version 1; strict integer. |
+| `evidence_id` | `String` | Explicit evidence id field; row-model type/nullability applies. |
+| `doc_id` | `String` | Immutable canonical document identity; qualifies all quote and claim keys. |
+| `quote_id` | `String` | Explicit quote id field; row-model type/nullability applies. |
+| `canonical_hash` | `String` | Explicit canonical hash field; row-model type/nullability applies. |
+| `start` | `Int64` | Zero-based Python code-point offset, inclusive. |
+| `end` | `Int64` | Zero-based Python code-point offset, exclusive and greater than start. |
+| `validator_version` | `String` | Explicit validator version field; row-model type/nullability applies. |
+| `element_id` | `String` | Explicit element id field; row-model type/nullability applies. |
+| `mask_ids` | `List(String)` | Current mask identities, retained in audit and excluded from headline presence. |
+| `locator_hash` | `String` | Explicit locator hash field; row-model type/nullability applies. |
+| `quote_text_hash` | `String` | Explicit quote text hash field; row-model type/nullability applies. |
+| `source_fragment_url` | `String` | Explicit source fragment url field; row-model type/nullability applies. |
+| `source_url` | `String` | Explicit source url field; row-model type/nullability applies. |
+| `raw_artifact` | `Struct({'schema_version': Int64, 'content_sha256': String, 'media_type': String, 'storage_ref': String, 'rights_status': String, 'rights_basis': String})` | Explicit raw artifact field; row-model type/nullability applies. |
+| `canonical_artifact` | `Struct({'schema_version': Int64, 'content_sha256': String, 'media_type': String, 'storage_ref': String, 'rights_status': String, 'rights_basis': String})` | Explicit canonical artifact field; row-model type/nullability applies. |
+| `view_artifact` | `Struct({'schema_version': Int64, 'content_sha256': String, 'media_type': String, 'storage_ref': String, 'rights_status': String, 'rights_basis': String})` | Explicit view artifact field; row-model type/nullability applies. |
+| `anchor_id` | `String` | Explicit anchor id field; row-model type/nullability applies. |
+| `audience` | `String` | Explicit audience field; row-model type/nullability applies. |
+| `rights_status` | `String` | Existing RightsStatus; free access never widens permission. |
+| `rights_basis` | `String` | Source-specific permission basis; private in printable diagnostics. |
+| `status` | `String` | Explicit status field; row-model type/nullability applies. |
+| `reason` | `String` | Explicit reason field; row-model type/nullability applies. |
+| `capture_reference` | `String` | Explicit capture reference field; row-model type/nullability applies. |
+
+Public producer fixtures: `analysis_inputs` is a fully bound invented fixture-policy source/support/coding run; `review_analysis_inputs` binds a separate actual policy-null review run; `analysis_policy`, `family_map`, and `counting_case` are the invented analytical inputs. `counting_case` is independent hand-normalized completion/audit data, not one mixed-policy accepted run. `analysis_run` is intentionally delayed until Task 6. A-Q1 contributes once despite two claims and an exact copy; A-Q2 has an explicit invented fixture actor declaration; B-Q1 retains masked acceptance; C-Q1 keeps calibration review. Missing, failed, restricted, unmatched, rejected and partial cases remain unobservable. Transcript slots are `not_yet_checked/transcript_not_in_scope`, with no invented document/speaker identity.

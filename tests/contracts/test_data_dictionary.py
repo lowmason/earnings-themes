@@ -25,6 +25,8 @@ from earnings_ingestion.events import records as events
 from earnings_ingestion.fetch import records as fetch
 from earnings_themes import annotation, codebook, gold, problems, split
 from earnings_themes import records as themes
+from earnings_themes.analysis import records as analysis
+from earnings_themes.analysis.problems import ANALYSIS_REASONS
 from earnings_themes.anchoring import SpanPointer
 from earnings_themes.coding import records as coding
 from earnings_themes.coding.cache import CodingCacheEntry
@@ -403,3 +405,78 @@ def test_extraction_stored_run_and_gate_are_documented() -> None:
     text = DICTIONARY.read_text(encoding="utf-8")
     assert "validate_stored_run(run: StoredRun) -> StoredRun" in text
     assert "malformed_record" in text and "storage_corrupt" in text
+
+
+ANALYSIS_MODELS = [
+    analysis.AnalysisPart,
+    analysis.ExpectedEvent,
+    analysis.AcquisitionStatus,
+    analysis.DocumentMetadata,
+    analysis.CopyAssertion,
+    analysis.AnalysisPolicy,
+    analysis.ThemeFamilyMap,
+    analysis.NoThemeDeclaration,
+    analysis.DocumentCompletion,
+    analysis.EvidenceViewReference,
+    analysis.CaptureObservation,
+    analysis.RawCacheVerification,
+    analysis.AnalysisRunRecord,
+    analysis.Observation,
+    analysis.QuoteAudit,
+    analysis.ClaimAudit,
+    analysis.ClaimEvidence,
+    analysis.ClassificationAudit,
+    analysis.DecisionAudit,
+    analysis.RejectionAudit,
+    analysis.CoverageRow,
+    analysis.PrevalenceRow,
+    analysis.CopyRow,
+]
+ANALYSIS_DATACLASSES = [
+    analysis.RawSnapshot,
+    analysis.RawCacheInputs,
+    analysis.AnalysisInputs,
+    analysis.BoundAnalysis,
+    analysis.AnalysisTables,
+    analysis.AnalysisRun,
+    analysis.StoredAnalysisRun,
+    analysis.EvidenceView,
+]
+
+
+@pytest.mark.parametrize("model", ANALYSIS_MODELS, ids=lambda model: model.__name__)
+def test_analysis_fields_documented(model):
+    assert documented(model.__name__) == set(model.model_fields)
+
+
+@pytest.mark.parametrize(
+    "model", ANALYSIS_DATACLASSES, ids=lambda model: model.__name__
+)
+def test_analysis_container_fields_documented(model):
+    assert documented(model.__name__) == {field.name for field in fields(model)}
+
+
+def test_analysis_registry_is_complete():
+    models = {
+        value
+        for value in vars(analysis).values()
+        if isinstance(value, type)
+        and issubclass(value, BaseModel)
+        and value.__module__ == analysis.__name__
+    }
+    assert models == set(ANALYSIS_MODELS)
+    assert documented("Analysis tables") == set(analysis.TABLE_SCHEMAS)
+    assert documented("Analysis reasons") == ANALYSIS_REASONS
+
+
+@pytest.mark.parametrize(
+    "table", tuple(analysis.TABLE_SCHEMAS), ids=tuple(analysis.TABLE_SCHEMAS)
+)
+def test_analysis_table_dtypes_and_foreign_keys_documented(table):
+    text = DICTIONARY.read_text(encoding="utf-8")
+    section = text.split(f"### `Analysis table {table}`\n", 1)[1].split("\n#", 1)[0]
+    assert documented("Analysis table " + table) == set(analysis.TABLE_SCHEMAS[table])
+    for field, dtype in analysis.TABLE_SCHEMAS[table].items():
+        assert f"| `{field}` | `{dtype}` |" in section
+    assert repr(analysis.TABLE_GRAINS[table]) in section
+    assert repr(analysis.TABLE_FOREIGN_KEYS[table]) in section

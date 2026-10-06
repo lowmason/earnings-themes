@@ -1,0 +1,1 @@
+"""Invented analytical contract tests."""
