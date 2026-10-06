@@ -1,6 +1,9 @@
 """In-memory invented coding inputs produced by the real extraction seam."""
 
+import json
+from collections import deque
 from datetime import UTC, date, datetime
+from types import SimpleNamespace
 
 from earnings_core import (
     CanonicalDocument,
@@ -96,7 +99,7 @@ def invented_codebook(base: Codebook) -> Codebook:
 
 
 def make_sources(
-    book: Codebook, bundle: Bundle, template: PromptTemplate
+    book: Codebook, bundle: Bundle, template: PromptTemplate, *, other_bundles=()
 ) -> SupportSources:
     adapter = ScriptedAdapter(
         lambda request: ModelReply(
@@ -105,7 +108,7 @@ def make_sources(
         )
     )
     result = extract_run(
-        (bundle,),
+        (bundle, *other_bundles),
         adapter,
         ExtractionPolicy(),
         template,
@@ -115,5 +118,56 @@ def make_sources(
         software={"fixture": "1"},
     )
     return SupportSources(
-        StoredRun.of(result), (bundle,), book, digest("invented provenance")
+        StoredRun.of(result),
+        (bundle, *other_bundles),
+        book,
+        digest("invented provenance"),
     )
+
+
+def make_proposal_job(sources, policy, identity, root):
+    """Use only the public runner; callbacks and token counts are invented."""
+
+    def run(replies, cache_mode="live", *, ceilings=None, claim_order=None):
+        from earnings_themes.coding.adapters import ScriptedClassifier
+        from earnings_themes.coding.cache import CodingCache
+        from earnings_themes.coding.records import CodingCeilings
+        from earnings_themes.coding.run import propose_run
+
+        queue = deque(replies)
+
+        def script(request):
+            value = queue.popleft()
+            if isinstance(value, ModelReply):
+                return value
+            if isinstance(value, Exception):
+                raise value
+            return ModelReply(
+                model=identity.runtime.model_id,
+                text=value if isinstance(value, str) else json.dumps(value),
+            )
+
+        classifier = ScriptedClassifier(script, lambda request: 5, identity)
+        result = propose_run(
+            "invented-coding-run",
+            sources,
+            tuple((c.doc_id, c.claim_id) for c in sources.stored_run.claims)
+            if claim_order is None
+            else claim_order,
+            classifier,
+            policy,
+            ceilings
+            or CodingCeilings(
+                requests_per_claim=2,
+                requests_per_document=20,
+                requests_per_run=40,
+                tokens_per_document=100000,
+                tokens_per_run=200000,
+            ),
+            cache=CodingCache(root / "classifier-cache", cache_mode),
+            started_at=datetime(2026, 10, 5, tzinfo=UTC),
+            software={"fixture": "1", "lock_hash": digest("invented lock")},
+        )
+        return result, len(classifier.requests)
+
+    return SimpleNamespace(run=run, sources=sources, root=root)

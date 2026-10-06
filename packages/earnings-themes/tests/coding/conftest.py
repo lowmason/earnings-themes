@@ -8,7 +8,7 @@ from earnings_themes.coding.records import CodingPolicy
 from earnings_themes.extraction.records import Parameters
 from earnings_themes.support.records import JudgeIdentity, RuntimeIdentity
 
-from .cases import invented_bundle, invented_codebook, make_sources
+from .cases import invented_bundle, invented_codebook, make_proposal_job, make_sources
 
 
 @pytest.fixture
@@ -57,3 +57,8 @@ def coding_policy():
 @pytest.fixture
 def coding_request(coding_input, coding_policy):
     return render_coding(coding_input, coding_policy)
+
+
+@pytest.fixture
+def proposal_job(coding_case, coding_policy, classifier_identity, tmp_path):
+    return make_proposal_job(coding_case, coding_policy, classifier_identity, tmp_path)

@@ -3706,3 +3706,148 @@ generated closed schema before dispatch/publication. Evidence still passes
 current deterministic gates at every consuming boundary. A cached response/count
 does not establish evidence quality, thematic support or acceptance. Stage 11
 owns production model selection, calibration and future fresh-call bypass.
+
+### `CodingPolicySnapshot`
+
+Hash-only manifest policy. Unlike the transient CodingPolicy, this snapshot
+contains no source-bearing prompt text. Its hash binds the same generation
+parameters and provisional two-attempt validation ceiling.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `coding_version` | deductive-coding/1 | Literal coding version |
+| `prompt_hash` | SHA-256 | Hash of the caller-supplied local prompt |
+| `parameters` | Parameters | Exact generation settings |
+| `max_attempts` | strict literal 2 | Provisional validation retry ceiling |
+
+### `ClassificationRecord`
+
+One requested document-qualified claim per coding run. Completed means a usable
+closed proposal reply, including a valid empty reply. It establishes neither
+thematic support nor acceptance. Refused source inputs have no attempts or
+semantic rows; incomplete classifications never become novelty.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | strict literal 1 | Separate coding schema |
+| `classification_id` | nonblank string | classification- plus digest of coding_run_id, doc_id, claim_id and input_hash |
+| `coding_run_id` | nonblank string | Caller-selected coding run identity |
+| `doc_id` | nonblank string | Immutable canonical document identity |
+| `claim_id` | nonblank string | Original document-qualified claim identity |
+| `input_hash` | SHA-256 | Resolved CodingInput digest, or explicitly refused-only provenance fingerprint |
+| `codebook` | CodebookReference | Exact frozen ID/version/content hash |
+| `status` | completed, refused, incomplete | Classification processing outcome |
+| `reason` | closed fixed reason or null | Null exactly for completed; no source or model wording |
+| `attempt_ids` | tuple[nonblank string, …] | At most two distinct attempts in ordinal order; empty for refused |
+| `theme_ids` | tuple[nonblank string, …] | Sorted distinct explicit proposals; empty for refused/incomplete |
+
+For a preflight source refusal only, input_hash is
+`digest({"kind": "refused-coding-input/1", "coding_version": CODING_VERSION,
+"source_run_hash": source_run_hash, "doc_id": doc_id, "claim_id": claim_id,
+"codebook": reference.model_dump(mode="json")})`. This identifies an unresolved
+boundary; it is never presented as verified evidence. The source-run hash is
+`digest({"record": source_run_record JSON, "provenance_hash": provenance_hash})`,
+matching the Stage 8 source binding. The source run retains extractor identity,
+configuration and document processing outcomes.
+
+### `CodingAttempt`
+
+One complete transmitted request or visible blocked attempt, preserving bounded
+ordinal order. Actual usage is retained even for unusable/refused replies. Cached
+actual counts describe the earlier operation and charge no new allowance.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | strict literal 1 | Separate coding schema |
+| `attempt_id` | nonblank string | Classification ID plus literal -attempt-1 or -attempt-2 |
+| `classification_id` | nonblank string | Owning classification |
+| `doc_id` | nonblank string | Original canonical document identity |
+| `claim_id` | nonblank string | Original document-qualified claim identity |
+| `attempt` | strict literal 1 or 2 | Validation attempt ordinal |
+| `request_hash` | SHA-256 | Digest of the full transmitted messages/schema/parameters/subject |
+| `prompt_hash` | SHA-256 | Base prompt content hash |
+| `schema_hash` | SHA-256 | Exact generated closed CodingReply schema hash |
+| `input_hash` | SHA-256 | Complete current CodingInput digest |
+| `input_tokens` | strict int ≥ 0 | Counted full request including schema/template; retained on cache hits; zero on replay miss |
+| `reserved_tokens` | strict int ≥ 0 | Counted input plus configured maximum output for a fresh dispatch; zero on blocked/cache attempts |
+| `actual_prompt_tokens` | strict int ≥ 0 or null | Transport-reported prompt usage; unknown remains null |
+| `actual_completion_tokens` | strict int ≥ 0 or null | Transport-reported completion usage; unknown remains null |
+| `unreported` | bool | True for a dispatched/cached operation lacking actual usage |
+| `cached` | bool | Raw local response reuse, with zero new reservation |
+| `latency_ms` | strict int ≥ 0 | Original transport latency; zero when no reply exists |
+| `raw_ref` | confined digest.json or null | Separate local cache reference; no paths or raw wording |
+| `raw_hash` | SHA-256 or null | Raw reply/refusal/input-count digest, distinct from artifact byte hash |
+| `reason` | closed fixed reason or null | Attempt failure, null for a usable closed reply |
+
+### `ProposalRunRecord`
+
+Pre-assessment coding manifest, distinct from extraction and support manifests.
+Prompt text, requests and replies stay in the separate local cache. No support
+manifest, acceptance policy, decisions or assignments exist at this boundary.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | strict literal 1 | Separate coding schema |
+| `run_id` | nonblank string | Caller-selected coding-run ID |
+| `started_at` | aware UTC datetime | Caller-supplied zero-offset run time |
+| `source_run_id` | nonblank string | Explicit source extraction-run identity |
+| `source_run_hash` | SHA-256 | Source extraction manifest plus provenance hash |
+| `documents` | sorted tuple[(doc_id, SHA-256), …] | Complete source-run document/canonical-hash mapping |
+| `codebook` | CodebookReference | Frozen codebook ID/version/content hash |
+| `classifier_identity` | JudgeIdentity | Explicit family/runtime/hosting/license and input/output limits |
+| `coding_policy` | CodingPolicySnapshot | Hash-only prompt/generation/version/retry policy |
+| `ceilings` | CodingCeilings | Explicit shared request/token ceilings |
+| `cache_mode` | live, replay | Explicit raw-cache operation mode; no fresh-call bypass |
+| `configuration_hash` | SHA-256 | Exact configuration recipe described below |
+| `requested_claim_order` | tuple[(doc_id, claim_id), …] | Distinct caller-requested order, including refused/incomplete claims |
+| `schema_hash` | SHA-256 | Exact generated closed CodingReply schema |
+| `coding_version` | deductive-coding/1 | Literal coding implementation/policy version |
+| `validator_version` | nonblank string | Current deterministic exactness verifier version |
+| `software` | sorted tuple[(nonblank name, nonblank value), …] | Caller-supplied software identity with lowercase 64-hex lock_hash |
+| `counts_by_status` | sorted tuple[(classification status, strict int ≥ 0), …] | Requested classifications by final processing status |
+| `counts_by_reason` | sorted tuple[(closed fixed reason, strict int ≥ 0), …] | Final classification reasons; no invented no-theme reason on incomplete |
+| `requests` | strict int ≥ 0 | Fresh reservations including retries; excludes cache hits |
+| `prompt_tokens` | strict int ≥ 0 | Sum of known actual fresh prompt usage; unreported counts remain explicit |
+| `completion_tokens` | strict int ≥ 0 | Sum of known actual fresh completion usage |
+| `reserved_tokens` | strict int ≥ 0 | Sum of original fresh full input/output reservations |
+| `charged_tokens` | strict int ≥ 0 | Reconciled actual usage plus intact reservations for unknown usage; overspend is not clamped |
+| `unreported` | strict int ≥ 0 | Fresh dispatched operations with unknown actual usage |
+| `cache_hits` | strict int ≥ 0 | Reused raw attempts, including cached transport refusals |
+| `latency_ms` | strict int ≥ 0 | Sum of fresh original transport latency |
+| `billable_cost` | none, self-hosted | Literal; no hosted inference in the required path |
+| `artifact_hashes` | sorted tuple[(raw/digest.json, SHA-256), …] | Validated external raw-cache artifact byte hashes; table hashes arrive at storage |
+
+The configuration hash digests source_run_id, source_run_hash, documents,
+codebook reference JSON, classifier_identity JSON, coding_policy snapshot JSON,
+ceilings JSON, requested_claim_order, schema_hash, coding_version,
+validator_version and the explicit cache_mode. Run time and run ID are operational
+metadata, outside this configuration digest; software/lock identity is retained
+separately. Cache mode may change the configuration hash between live and replay,
+while reconstructed proposals keep the same coding-run/input identity.
+
+`CodingAllowance(ceilings, *, run_id)` shares strict nonnegative claim/document/run
+request counts and document/run charged token totals. reserve checks request
+ceilings before token ceilings and dispatch; reconcile adds actual minus reserved
+usage, without clamping truthful overspend. Unknown usage retains the full
+reservation and increments unreported. Cache hits spend no allowance.
+
+`classify_claim(input, classifier, policy, allowance, *, cache) -> ClassificationResult`
+returns a frozen transient container for record, attempts, proposals, optional
+attribute and optional novelty. It validates complete generated/transmitted
+request correspondence with current source, prompt, schema, parameters, subject
+and runtime before dispatch, after cache reuse/callbacks and before publication.
+Only malformed_reply, invalid_references, hierarchy_conflict, tool_call_refused,
+model_mismatch and transport_error retry, at most twice. Feedback is one bounded
+fixed-reason message appended to the original request. A valid empty proposal is
+final and enters pointer-only novelty; corruption and unexpected errors abort
+publication with fixed reasons and keep prior raw/accounting local.
+
+`propose_run(run_id, sources, claim_order, classifier, policy, ceilings, *, cache,
+started_at, software) -> ProposalRun` preflights run metadata and every requested
+claim before any dispatch, then preserves caller order with one shared allowance.
+ProposalRun is a frozen transient container for record, classifications, attempts,
+proposals, attributes and novelty; its targets property returns explicit valid
+Stage 8 targets. All original quote links remain source-owned. Final publication
+reconstructs request hashes and raw bindings and repeats current evidence gates.
+The runner performs no support inference, acceptance decision, command discovery
+or processing-state write.

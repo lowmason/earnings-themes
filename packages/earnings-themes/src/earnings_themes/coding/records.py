@@ -2,17 +2,24 @@
 
 import json
 import math
+import re
 from enum import StrEnum
 from typing import Any, Literal, Self
 
 from earnings_core import digest
-from pydantic import Field, ValidationError, field_validator, model_validator
+from pydantic import (
+    AwareDatetime,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from earnings_themes.extraction.adapters import Message
 from earnings_themes.extraction.records import Parameters
 from earnings_themes.records import NonBlank, Part, Sha256Hex
 from earnings_themes.support.problems import REASONS as SUPPORT_REASONS
-from earnings_themes.support.records import CodebookReference, Target
+from earnings_themes.support.records import CodebookReference, JudgeIdentity, Target
 
 CODING_SCHEMA_VERSION = 1
 CODING_VERSION = "deductive-coding/1"
@@ -211,12 +218,154 @@ class CodingPolicy(CodingPart):
     max_attempts: Literal[2] = 2
 
 
+class CodingPolicySnapshot(CodingPart):
+    """Manifest policy binding; source-bearing prompt text stays in the raw cache."""
+
+    coding_version: Literal["deductive-coding/1"] = CODING_VERSION
+    prompt_hash: Sha256Hex
+    parameters: Parameters
+    max_attempts: Literal[2] = 2
+
+
 class CodingCeilings(CodingPart):
     requests_per_claim: int = Field(ge=0)
     requests_per_document: int = Field(ge=0)
     requests_per_run: int = Field(ge=0)
     tokens_per_document: int = Field(ge=0)
     tokens_per_run: int = Field(ge=0)
+
+
+class ClassificationRecord(CodingRecord):
+    classification_id: NonBlank
+    coding_run_id: NonBlank
+    doc_id: NonBlank
+    claim_id: NonBlank
+    input_hash: Sha256Hex
+    codebook: CodebookReference
+    status: Literal["completed", "refused", "incomplete"]
+    reason: str | None
+    attempt_ids: tuple[NonBlank, ...]
+    theme_ids: tuple[NonBlank, ...]
+
+    @model_validator(mode="after")
+    def _outcome(self) -> Self:
+        if (self.status == "completed") != (self.reason is None):
+            raise ValueError("invalid_classification_reason")
+        if len(self.attempt_ids) > 2 or len(set(self.attempt_ids)) != len(
+            self.attempt_ids
+        ):
+            raise ValueError("invalid_attempt_references")
+        if tuple(sorted(set(self.theme_ids))) != self.theme_ids:
+            raise ValueError("invalid_theme_references")
+        if self.status != "completed" and self.theme_ids:
+            raise ValueError("invalid_classification_themes")
+        if self.status == "refused" and self.attempt_ids:
+            raise ValueError("invalid_refused_attempts")
+        return self
+
+
+class CodingAttempt(CodingRecord):
+    attempt_id: NonBlank
+    classification_id: NonBlank
+    doc_id: NonBlank
+    claim_id: NonBlank
+    attempt: Literal[1, 2]
+    request_hash: Sha256Hex
+    prompt_hash: Sha256Hex
+    schema_hash: Sha256Hex
+    input_hash: Sha256Hex
+    input_tokens: int = Field(ge=0)
+    reserved_tokens: int = Field(ge=0)
+    actual_prompt_tokens: int | None = Field(ge=0)
+    actual_completion_tokens: int | None = Field(ge=0)
+    unreported: bool
+    cached: bool
+    latency_ms: int = Field(ge=0)
+    raw_ref: NonBlank | None
+    raw_hash: Sha256Hex | None
+    reason: str | None
+
+    @model_validator(mode="after")
+    def _raw_accounting(self) -> Self:
+        if (self.raw_ref is None) != (self.raw_hash is None):
+            raise ValueError("invalid_raw_binding")
+        if self.raw_ref is not None and not re.fullmatch(
+            r"[0-9a-f]{64}\.json", self.raw_ref
+        ):
+            raise ValueError("invalid_raw_reference")
+        if (self.actual_prompt_tokens is None) != (
+            self.actual_completion_tokens is None
+        ):
+            raise ValueError("invalid_usage_binding")
+        if self.cached and (self.raw_ref is None or self.reserved_tokens):
+            raise ValueError("invalid_cached_attempt")
+        if self.unreported != (
+            self.actual_prompt_tokens is None
+            and (self.cached or self.reserved_tokens > 0)
+        ):
+            raise ValueError("invalid_unreported_usage")
+        return self
+
+
+class ProposalRunRecord(CodingRecord):
+    run_id: NonBlank
+    started_at: AwareDatetime
+    source_run_id: NonBlank
+    source_run_hash: Sha256Hex
+    documents: tuple[tuple[NonBlank, Sha256Hex], ...]
+    codebook: CodebookReference
+    classifier_identity: JudgeIdentity
+    coding_policy: CodingPolicySnapshot
+    ceilings: CodingCeilings
+    cache_mode: Literal["live", "replay"]
+    configuration_hash: Sha256Hex
+    requested_claim_order: tuple[tuple[NonBlank, NonBlank], ...]
+    schema_hash: Sha256Hex
+    coding_version: Literal["deductive-coding/1"] = CODING_VERSION
+    validator_version: NonBlank
+    software: tuple[tuple[NonBlank, NonBlank], ...] = Field(repr=False)
+    counts_by_status: tuple[
+        tuple[Literal["completed", "refused", "incomplete"], int], ...
+    ]
+    counts_by_reason: tuple[tuple[NonBlank, int], ...]
+    requests: int = Field(ge=0)
+    prompt_tokens: int = Field(ge=0)
+    completion_tokens: int = Field(ge=0)
+    reserved_tokens: int = Field(ge=0)
+    charged_tokens: int = Field(ge=0)
+    unreported: int = Field(ge=0)
+    cache_hits: int = Field(ge=0)
+    latency_ms: int = Field(ge=0)
+    billable_cost: Literal["none, self-hosted"]
+    artifact_hashes: tuple[tuple[NonBlank, Sha256Hex], ...]
+
+    @model_validator(mode="after")
+    def _bindings(self) -> Self:
+        if self.started_at.utcoffset().total_seconds() != 0:
+            raise ValueError("invalid_utc_time")
+        for name in (
+            "documents",
+            "software",
+            "counts_by_status",
+            "counts_by_reason",
+            "artifact_hashes",
+        ):
+            values = getattr(self, name)
+            keys = [key for key, _ in values]
+            if keys != sorted(set(keys)):
+                raise ValueError("invalid_sorted_bindings")
+        if not re.fullmatch(r"[0-9a-f]{64}", dict(self.software).get("lock_hash", "")):
+            raise ValueError("missing_lock_hash")
+        if len(set(self.requested_claim_order)) != len(self.requested_claim_order):
+            raise ValueError("duplicate_claim_order")
+        for name in ("counts_by_status", "counts_by_reason"):
+            if any(
+                type(count) is not int or count < 0 for _, count in getattr(self, name)
+            ):
+                raise ValueError("invalid_count")
+        if any(reason not in REASONS for reason, _ in self.counts_by_reason):
+            raise ValueError("invalid_reason")
+        return self
 
 
 class PolicyReference(CodingPart):

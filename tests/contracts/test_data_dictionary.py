@@ -212,7 +212,11 @@ MODELS = [
     coding.NoveltyItem,
     CodingCacheEntry,
     coding.CodingPolicy,
+    coding.CodingPolicySnapshot,
     coding.CodingCeilings,
+    coding.ClassificationRecord,
+    coding.CodingAttempt,
+    coding.ProposalRunRecord,
     coding.PolicyReference,
     coding.PolicyVote,
 ]
