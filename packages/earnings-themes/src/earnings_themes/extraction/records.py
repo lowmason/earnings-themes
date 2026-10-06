@@ -290,6 +290,12 @@ class WindowRecord(ExtractionRecord):
             raise ValueError("invalid_accounting")
         if self.unreported > self.requests:
             raise ValueError("invalid_accounting")
+        if self.attempts == 0 and (
+            self.outcome is not WindowOutcome.FAILED
+            or self.reason is not ExtractionProblem.BUDGET_EXHAUSTED
+            or not self.exhausted
+        ):
+            raise ValueError("invalid_outcome")
         if (self.outcome is WindowOutcome.COMPLETED) != (self.reason is None):
             raise ValueError("invalid_outcome")
         return self

@@ -21,7 +21,6 @@ ES6).
 import hashlib
 import itertools
 import os
-import re
 import shutil
 import tempfile
 from collections import Counter
@@ -35,6 +34,7 @@ from pydantic import BaseModel
 
 from earnings_themes.anchoring import Bundle
 from earnings_themes.extraction.records import (
+    REASONS,
     Claim,
     DocumentOutcome,
     DocumentRecord,
@@ -207,7 +207,8 @@ class StorageRefused(ValueError):
     def __init__(self, refused: Sequence[tuple[str, str, str]]) -> None:
         self.refused = tuple(refused)
         listed = "; ".join(
-            f"{_safe_id(d)} {_safe_id(q)}: {reason}" for d, q, reason in self.refused
+            f"{_diagnostic_id(d)} {_diagnostic_id(q)}: {_diagnostic_reason(reason)}"
+            for d, q, reason in self.refused
         )
         super().__init__(f"{len(self.refused)} quotes failed verification: {listed}")
 
@@ -231,10 +232,15 @@ def refused_quotes(
     return refused
 
 
-def _safe_id(value: str) -> str:
-    if re.fullmatch(r"[A-Za-z0-9_.@#:/-]+", value):
-        return value
+def _diagnostic_id(value: str) -> str:
+    # The exception has no trusted current-document binding; syntax proves none.
+    if type(value) is not str:
+        return "id-invalid"
     return "id-" + hashlib.sha256(value.encode()).hexdigest()[:12]
+
+
+def _diagnostic_reason(value: str) -> str:
+    return value if type(value) is str and value in REASONS else "malformed_record"
 
 
 def _require(condition: bool) -> None:

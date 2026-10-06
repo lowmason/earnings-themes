@@ -337,3 +337,33 @@ def test_replay_misses_and_budget_stopped_unsent_windows_remain_valid():
 def test_run_refuses_unreported_over_requests():
     with pytest.raises(ValidationError):
         run_record(unreported=2)
+
+
+@pytest.mark.parametrize(
+    "state",
+    [
+        {"outcome": WindowOutcome.COMPLETED, "reason": None, "exhausted": False},
+        {
+            "outcome": WindowOutcome.FAILED,
+            "reason": ExtractionProblem.REPLAY_MISS,
+            "exhausted": False,
+        },
+        {
+            "outcome": WindowOutcome.FAILED,
+            "reason": ExtractionProblem.TRANSPORT_ERROR,
+            "exhausted": True,
+        },
+        {
+            "outcome": WindowOutcome.FAILED,
+            "reason": ExtractionProblem.BUDGET_EXHAUSTED,
+            "exhausted": False,
+        },
+    ],
+    ids=["completed", "replay", "transport", "budget-not-exhausted"],
+)
+def test_zero_attempt_requires_an_exhausted_budget_stop(state):
+    from earnings_themes.extraction.records import WindowRecord
+
+    fields = window_fields() | {"attempts": 0, "requests": 0, "unreported": 0}
+    with pytest.raises(ValidationError):
+        WindowRecord.model_validate(fields | state)

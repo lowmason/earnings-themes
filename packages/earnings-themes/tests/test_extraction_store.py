@@ -255,9 +255,38 @@ def validate(run):
 def test_valid_gate_reconstructs_nested_models(case):
     _, _, run = case
     checked = validate(run)
-    assert checked == run
     assert checked is not run
     assert checked.record is not run.record
+    assert checked.record.run_id == run.record.run_id
+    assert checked.record.configuration_hash == run.record.configuration_hash
+    assert checked.record.documents == run.record.documents
+    for kind in SCHEMAS:
+        original_rows = getattr(run, kind)
+        checked_rows = getattr(checked, kind)
+        assert len(checked_rows) == len(original_rows)
+        assert all(
+            left is not right
+            for left, right in zip(checked_rows, original_rows, strict=True)
+        )
+    assert tuple(
+        (
+            quote.span.doc_id,
+            quote.quote_id,
+            quote.span.canonical_hash,
+            quote.span.start,
+            quote.span.end,
+        )
+        for quote in checked.quotes
+    ) == tuple(
+        (
+            quote.span.doc_id,
+            quote.quote_id,
+            quote.span.canonical_hash,
+            quote.span.start,
+            quote.span.end,
+        )
+        for quote in run.quotes
+    )
 
 
 @pytest.mark.parametrize(
@@ -562,3 +591,168 @@ def test_writer_refuses_symlink_or_parent_traversal(synthetic, template, tmp_pat
         with pytest.raises(ValueError, match="^storage_corrupt$"):
             write_run(target, run, [synthetic.bundle])
     assert not list(real.iterdir())
+
+
+@pytest.mark.parametrize(
+    "doc_id",
+    [
+        "/private/tmp/SENTINEL-TEXT-NEVER-PRINTED",
+        "https://invented.example/SENTINEL-TEXT-NEVER-PRINTED",
+        "SENTINEL-TEXT-NEVER-PRINTED",
+    ],
+    ids=["path", "url", "alphanumeric"],
+)
+def test_consistently_forged_identifiers_never_print(
+    synthetic, template, tmp_path, doc_id
+):
+    run = stored([synthetic.bundle], synthetic_reply, template)
+    forged = replace(
+        run,
+        record=run.record.model_copy(
+            update={"documents": {doc_id: run.documents[0].canonical_hash}}
+        ),
+        documents=tuple(
+            row.model_copy(update={"doc_id": doc_id}) for row in run.documents
+        ),
+        windows=tuple(row.model_copy(update={"doc_id": doc_id}) for row in run.windows),
+        visits=tuple(row.model_copy(update={"doc_id": doc_id}) for row in run.visits),
+        quotes=tuple(
+            row.model_copy(
+                update={"span": row.span.model_copy(update={"doc_id": doc_id})}
+            )
+            for row in run.quotes
+        ),
+        claims=tuple(row.model_copy(update={"doc_id": doc_id}) for row in run.claims),
+        rejections=tuple(
+            row.model_copy(update={"doc_id": doc_id}) for row in run.rejections
+        ),
+    )
+    checked = validate(forged)
+    assert len(checked.quotes) == len(run.quotes)
+    with pytest.raises(StorageRefused) as raised:
+        write_run(tmp_path / "run", checked, [synthetic.bundle])
+    assert len(raised.value.refused) == len(run.quotes)
+    assert SENTINEL not in str(raised.value)
+    assert SENTINEL not in repr(raised.value)
+    assert "wrong_document" in str(raised.value)
+    assert not list(tmp_path.iterdir())
+
+
+@pytest.mark.parametrize(
+    "reason,exhausted",
+    [
+        (None, False),
+        (ExtractionProblem.REPLAY_MISS, False),
+        (ExtractionProblem.BUDGET_EXHAUSTED, False),
+    ],
+    ids=["completed", "replay", "budget-not-exhausted"],
+)
+def test_stored_run_refuses_impossible_zero_attempt(
+    synthetic, template, reason, exhausted
+):
+    from earnings_themes.extraction.records import DocumentOutcome, WindowOutcome
+
+    run = stored(
+        [synthetic.bundle],
+        lambda _: ModelReply(text='{"candidates": []}', model="scripted"),
+        template,
+    )
+    outcome = WindowOutcome.COMPLETED if reason is None else WindowOutcome.FAILED
+    failed = int(reason is not None)
+    forged = replace(
+        run,
+        record=run.record.model_copy(
+            update={"requests": 0, "unreported": 0, "exhausted": exhausted}
+        ),
+        documents=(
+            run.documents[0].model_copy(
+                update={
+                    "windows_failed": failed,
+                    "outcome": DocumentOutcome.FAILED
+                    if failed
+                    else DocumentOutcome.COMPLETED,
+                }
+            ),
+        ),
+        windows=(
+            run.windows[0].model_copy(
+                update={
+                    "attempts": 0,
+                    "requests": 0,
+                    "unreported": 0,
+                    "outcome": outcome,
+                    "reason": reason,
+                    "exhausted": exhausted,
+                }
+            ),
+        ),
+        visits=tuple(
+            visit.model_copy(update={"outcome": outcome, "reason": reason})
+            for visit in run.visits
+        ),
+    )
+    with pytest.raises(ValueError, match="^malformed_record$"):
+        validate(forged)
+
+
+@pytest.mark.parametrize("mode", ["budget", "replay"], ids=["budget", "replay"])
+def test_gate_preserves_actual_budget_stop_and_replay_miss(
+    synthetic, template, tmp_path, mode
+):
+    from earnings_themes.extraction.cache import CachedAdapter, CacheMode
+    from earnings_themes.extraction.records import WindowOutcome
+
+    adapter = ScriptedAdapter(
+        lambda _: ModelReply(text='{"candidates": []}', model="scripted")
+    )
+    if mode == "replay":
+        adapter = CachedAdapter(
+            ScriptedAdapter(lambda _: pytest.fail("replay_dispatch_forbidden")),
+            tmp_path / "cache",
+            CacheMode.REPLAY,
+        )
+    result = extract_run(
+        [synthetic.bundle],
+        adapter,
+        ExtractionPolicy(window_budget=40),
+        template,
+        Ceilings(requests_per_document=1, requests_per_run=1, tokens_per_run=1000),
+        run_id="run-compatibility",
+        started_at=datetime(2026, 10, 4, 12, tzinfo=UTC),
+        software={"earnings-themes": "0.1.0"},
+    )
+    checked = validate(StoredRun.of(result))
+    failed = tuple(
+        window for window in checked.windows if window.outcome is WindowOutcome.FAILED
+    )
+    assert len(failed) > 0
+    if mode == "budget":
+        assert all(
+            window.attempts == 0
+            and window.exhausted
+            and window.reason is ExtractionProblem.BUDGET_EXHAUSTED
+            for window in failed
+        )
+        assert checked.record.requests == 1
+    else:
+        assert all(
+            window.attempts == 2
+            and not window.exhausted
+            and window.reason is ExtractionProblem.REPLAY_MISS
+            for window in failed
+        )
+        assert checked.record.requests == 0
+    target = write_run(tmp_path / "run", checked, [synthetic.bundle])
+    loaded = read_run(target)
+    assert loaded.record.configuration_hash == checked.record.configuration_hash
+    assert loaded.record.requests == checked.record.requests
+    assert tuple(window.attempts for window in loaded.windows) == tuple(
+        window.attempts for window in checked.windows
+    )
+
+
+def test_public_refusal_formatter_closes_untrusted_reason():
+    refused = StorageRefused((("invented-doc", "q-0-5", SENTINEL),))
+    assert SENTINEL not in str(refused)
+    assert SENTINEL not in repr(refused)
+    assert "malformed_record" in str(refused)

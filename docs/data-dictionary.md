@@ -2251,7 +2251,9 @@ rejection reasons and request/cache/usage totals. Candidate counts equal retaine
 claims plus candidate-scoped rejections; transport, document and blocked-dispatch
 refusals do not add candidates. Attempts remain at most two and may exceed
 requests plus cache hits because a replay miss is dispatched but sends no request.
-A budget-stopped unsent window may have zero attempts. Claim IDs bind window
+Zero attempts are permitted only for a failed budget-exhausted window with
+`exhausted=true`; a completed window requires at least one dispatched attempt.
+Claim IDs bind window
 coordinates, attempt and a nonnegative candidate index. Quote links and window
 unit IDs are nonempty and unique; window spans are nonempty and their IDs match
 coordinates; unreported usage cannot exceed requests; failed windows cannot exceed
@@ -2263,7 +2265,10 @@ exception chains suppressed. Existing destinations raise `FileExistsError` with
 `run_exists`, without a path. Symlinks and explicit parent traversal are refused
 before reading or writing. Writer quote reverification still uses the supplied
 current bundles through `refused_quotes` and retains `StorageRefused`'s ID/reason
-interface. This structural gate does not establish current evidence validity:
+interface. Displayed `StorageRefused` identifiers are always hashes because the
+exception has no trusted current-document binding; syntax alone cannot establish
+identity. Unknown formatter reasons become the closed `malformed_record` reason.
+This structural gate does not establish current evidence validity:
 consumers must still reverify exact text, attribution and current masks before
 analysis and publication. The extraction schema, extractor version and cache key
 remain unchanged; valid Stage 7 schema-1 runs require no migration.
