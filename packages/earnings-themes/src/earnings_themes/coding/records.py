@@ -3,6 +3,7 @@
 import json
 import math
 import re
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Literal, Self
 
@@ -501,3 +502,45 @@ class AssignmentClaimLink(CodingRecord):
     claim_id: NonBlank
     decision_id: NonBlank
     target_id: NonBlank
+
+
+class CodingRunRecord(ProposalRunRecord):
+    """Coding manifest; original proposal identity survives table publication."""
+
+    proposal_hash: Sha256Hex
+    support_run_id: NonBlank
+    support_run_hash: Sha256Hex
+    support_configuration_hash: Sha256Hex
+    policy: PolicyReference | None
+    counts_by_decision: tuple[
+        tuple[Literal["accepted", "rejected", "review", "refused"], int], ...
+    ]
+    counts_by_decision_reason: tuple[tuple[NonBlank, int], ...]
+
+    @model_validator(mode="after")
+    def _decision_counts(self) -> Self:
+        for name in ("counts_by_decision", "counts_by_decision_reason"):
+            values = getattr(self, name)
+            keys = [key for key, _ in values]
+            if keys != sorted(set(keys)) or any(
+                type(count) is not int or count < 0 for _, count in values
+            ):
+                raise ValueError("invalid_count")
+        if any(reason not in REASONS for reason, _ in self.counts_by_decision_reason):
+            raise ValueError("invalid_reason")
+        return self
+
+
+@dataclass(frozen=True, repr=False)
+class CodingRun:
+    """Eight immutable analytical row tuples and their coding manifest."""
+
+    record: CodingRunRecord
+    classifications: tuple[ClassificationRecord, ...]
+    attempts: tuple[CodingAttempt, ...]
+    proposals: tuple[ProposalRecord, ...]
+    attributes: tuple[AttributeRecord, ...]
+    decisions: tuple[AssignmentDecision, ...]
+    assignments: tuple[Assignment, ...]
+    assignment_claims: tuple[AssignmentClaimLink, ...]
+    novelty: tuple[NoveltyItem, ...]

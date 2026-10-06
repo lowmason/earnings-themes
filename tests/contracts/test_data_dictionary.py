@@ -222,6 +222,7 @@ MODELS = [
     coding.AssignmentDecision,
     coding.Assignment,
     coding.AssignmentClaimLink,
+    coding.CodingRunRecord,
 ]
 ENUMS = [
     core.RightsStatus,

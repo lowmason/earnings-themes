@@ -13,6 +13,7 @@ from .cases import (
     invented_bundle,
     invented_codebook,
     make_assessed_case,
+    make_coding_run,
     make_proposal_job,
     make_sources,
 )
@@ -151,3 +152,13 @@ def two_claim_decisions(assignment_case_factory):
 def two_document_decisions(assignment_case_factory):
     case = assignment_case_factory(documents=2)
     return case.decide(FixturePolicy(case.proposals, case.support)), case.support
+
+
+@pytest.fixture
+def complete_coding_case(assessed_case, fixture_policy):
+    return (
+        make_coding_run(assessed_case, fixture_policy),
+        assessed_case.sources,
+        assessed_case.support,
+        fixture_policy,
+    )

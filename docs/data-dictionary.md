@@ -4013,3 +4013,89 @@ keep this same schema. Nonsequences and unrepresentable frame values refuse with
 fixed `malformed_record`, without a pandas intermediary or input-bearing errors.
 Frame construction validates supplied records and scope; it does not replace the
 source-aware projection or downstream consuming gate.
+
+### `CodingRunRecord`
+
+Immutable coding-publication manifest, distinct from the original proposal and
+support manifests. The eight explicit analytical tables are `classifications`,
+`attempts`, `proposals`, `attributes`, `decisions`, `assignments`,
+`assignment_claims`, and `novelty`, each published as its named Parquet file.
+Each schema has exactly its row-model fields with explicit Int64, Boolean,
+String, list and named struct dtypes, including nullable and empty tables.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | strict literal 1 | Separate coding schema |
+| `run_id` | nonblank string | Original caller-selected coding-run ID |
+| `started_at` | aware UTC datetime | Original zero-offset run time |
+| `source_run_id` | nonblank string | Bound extraction-run identity |
+| `source_run_hash` | SHA-256 | Extraction manifest JSON plus source provenance hash |
+| `documents` | sorted tuple[(doc_id, SHA-256), …] | Complete original source-run document/canonical-hash mapping |
+| `codebook` | CodebookReference | Frozen codebook ID/version/content hash |
+| `classifier_identity` | JudgeIdentity | Original classifier family/runtime/hosting/license and limits |
+| `coding_policy` | CodingPolicySnapshot | Hash-only coding prompt/parameters/version/retry snapshot |
+| `ceilings` | CodingCeilings | Original explicit shared request/token ceilings |
+| `cache_mode` | live, replay | Original cache operation, including empty/refused runs |
+| `configuration_hash` | SHA-256 | Unchanged Task 5 coding configuration hash |
+| `requested_claim_order` | tuple[(doc_id, claim_id), …] | Original distinct requested order, including refused/incomplete claims |
+| `schema_hash` | SHA-256 | Exact closed generated CodingReply schema hash |
+| `coding_version` | deductive-coding/1 | Literal coding implementation version |
+| `validator_version` | nonblank string | Current deterministic exactness verifier version |
+| `software` | sorted tuple[(name, value), …] | Original software identity including SHA-256 lock_hash |
+| `counts_by_status` | sorted tuple[(classification status, strict int ≥ 0), …] | Recomputed final classification counts |
+| `counts_by_reason` | sorted tuple[(closed fixed reason, strict int ≥ 0), …] | Recomputed final classification reason counts |
+| `requests` | strict int ≥ 0 | Fresh dispatch reservations, excluding cache hits |
+| `prompt_tokens` | strict int ≥ 0 | Known actual fresh prompt tokens |
+| `completion_tokens` | strict int ≥ 0 | Known actual fresh completion tokens |
+| `reserved_tokens` | strict int ≥ 0 | Original fresh input/output reservations |
+| `charged_tokens` | strict int ≥ 0 | Actual known usage plus preserved unknown-usage reservations |
+| `unreported` | strict int ≥ 0 | Fresh operations whose actual usage remains unknown |
+| `cache_hits` | strict int ≥ 0 | Reused raw attempts; historical usage creates no new charge |
+| `latency_ms` | strict int ≥ 0 | Original fresh transport latency total |
+| `billable_cost` | none, self-hosted | Literal required-path cost provenance |
+| `artifact_hashes` | sorted tuple[(confined filename, SHA-256), …] | Exact eight published table-byte hashes plus external raw/digest.json bindings |
+| `proposal_hash` | SHA-256 | Original ProposalRunRecord plus ordered five proposal row arrays |
+| `support_run_id` | nonblank string | Consumed support-run identity, checked against supplied support at consumption |
+| `support_run_hash` | SHA-256 | Complete published support manifest JSON hash |
+| `support_configuration_hash` | SHA-256 | Consumed support configuration, checked at consumption and against policy |
+| `policy` | PolicyReference or null | Explicit acceptance-policy/configuration/calibration reference; null requires review |
+| `counts_by_decision` | sorted tuple[(accepted/rejected/review/refused, strict int ≥ 0), …] | Recomputed decision status counts |
+| `counts_by_decision_reason` | sorted tuple[(closed fixed reason, strict int ≥ 0), …] | Recomputed decision reason counts |
+
+`CodingRun` is a frozen, non-rendering dataclass containing `record` and those
+eight row tuples. The original `ProposalRunRecord` is reconstructed using exactly
+its original field registry, with `artifact_hashes` restricted to the exact
+allowed `raw/<ref>` subset. Its original metadata/configuration/counts are
+preserved. `proposal_run_hash` then binds that reconstructed manifest plus the
+ordered classifications, attempts, proposals, attributes and novelty JSON arrays;
+publication's new table hashes never replace the original proposal identity.
+The unchanged configuration recipe is documented under `ProposalRunRecord`.
+
+`write_coding_run(directory: Path, result: CodingRun, sources: SupportSources,
+support: StoredSupportRun, policy: AssignmentPolicy | None) -> Path` validates
+structure and repeats current evidence/policy checks before any output I/O. It
+publishes through a unique sibling and rename, cleans failed partials and refuses
+an existing destination with fixed `coding_destination_exists`. Other public
+read/write errors use fixed `storage_corrupt`. Sequential publication does not
+claim coordinated concurrent-writer safety; Stage 15 owns that work.
+
+`read_coding_run(directory: Path) -> CodingRun` reads only `run.json` and those
+eight named files, rejects symlinks, verifies table byte hashes, exact schemas,
+closed JSON-mode records, row relationships, original proposal identity and
+dispatch/reservation accounting. It checks complete raw-reference/hash bindings
+without opening external raw-cache bytes. Those bindings are provenance, not a
+claim of external byte verification. Structural reading does not verify current
+source text, masks, support identity or policy approval.
+
+`reverify_coding_run(stored: CodingRun, sources: SupportSources,
+support: StoredSupportRun, policy: AssignmentPolicy | None) -> DecisionSet`
+repeats the public support and full coding-input evidence gates, including
+unmatched/incomplete/refused classifications. Refused-only fingerprints must
+repeat the same unresolved reason; repairing their evidence refuses the saved
+boundary. It repeats frozen IDs/hierarchy and pointer-only novelty bindings,
+checks the supplied support and policy configuration, and calls the actual pure
+`decide_assignments` with the supplied policy. It compares decisions and Task 7
+assignment/link projection in canonical JSON bytes and repeats all requested
+input gates after external policy callbacks. Changed/absent policy visibly
+refuses a saved accepting run. No inference, cache loading or reclassification
+occurs. Stage 11 still owns calibration, production policy approval and quality.

@@ -368,3 +368,40 @@ class FixturePolicy:
             else self.vote_quote_ids
         )
         return PolicyVote(action="accept", supporting_quote_ids=ids)
+
+
+def make_coding_run(case, policy):
+    """Assemble actual Task 6/7 outputs without mutating the proposal manifest."""
+    from collections import Counter
+
+    from earnings_themes.coding.assignments import project_assignments
+    from earnings_themes.coding.records import CodingRun, CodingRunRecord
+
+    decisions = case.decide(policy)
+    assignments, links = project_assignments(decisions, case.support)
+    proposal = case.proposals
+    record = CodingRunRecord(
+        **proposal.record.model_dump(),
+        proposal_hash=decisions.proposal_hash,
+        support_run_id=case.support.record.run_id,
+        support_run_hash=decisions.support_run_hash,
+        support_configuration_hash=case.support.record.configuration_hash,
+        policy=decisions.policy,
+        counts_by_decision=tuple(
+            sorted(Counter(r.status for r in decisions.decisions).items())
+        ),
+        counts_by_decision_reason=tuple(
+            sorted(Counter(r.reason for r in decisions.decisions).items())
+        ),
+    )
+    return CodingRun(
+        record,
+        proposal.classifications,
+        proposal.attempts,
+        proposal.proposals,
+        proposal.attributes,
+        decisions.decisions,
+        assignments,
+        links,
+        proposal.novelty,
+    )
