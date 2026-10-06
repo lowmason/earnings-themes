@@ -2,10 +2,12 @@
 
 Date: 2026-10-05. Branch: `codex/stage9-deductive-coding`.
 Task 10 execution checkpoint: `94f3beb6547a841969a33875d57620c0c71d8e18`.
+Final whole-branch code review: `e95a6b04eac5a1a8d205fdcd8874d89e959a7f13`.
 
 The library boundary and its blind fixture checks are implemented. **Stage 9
-completion remains unverified:** final whole-branch review and the user-only full
-root and both Stage 6 wording gates remain pending. No stage tick, authoritative
+completion remains unverified:** the user-only full-root and both Stage 6 wording
+gates remain pending. Final whole-branch review is specification-conformant and
+quality-approved, with no implementation findings. No stage tick, authoritative
 completion stamp, plan retirement or branch integration is established here.
 The shared system specification remains live.
 
@@ -151,11 +153,26 @@ inference calls and zero model downloads** occurred in this task. Scripted
 request/token-accounting assertions are not observed production usage or quality.
 Planning baseline counts are not Stage 9 implementation acceptance evidence.
 
+The controller independently ran the same scoped selections sequentially:
+**1110 passed in 51.35s**, exit 0, no warnings; then **700 passed, 2 live
+deselected, 1 existing Torch FutureWarning in 7.78s**, exit 0. Root Ruff passed,
+**385 files** were already formatted, and the diff whitespace check passed.
+The final reviewer checked the entire ten-task branch from
+`2bd535f5993b922ddd11b1995c015628a0361a21` through
+`e95a6b04eac5a1a8d205fdcd8874d89e959a7f13`, the complete plan, contracts,
+reported checks and cross-task gates. Its verdict was specification-conformant
+and quality-approved, with no Critical, Important or new Minor implementation
+findings. Merge readiness remains conditional on the user-only gates and
+controller completion work. The reviewer opened no protected artifacts and
+ran no tests or inference. The separate Codex CLI review was skipped under
+the review skill's same-model-family rule because the controller is Codex;
+no completed Codex second-opinion review is claimed.
+
 ## Pending completion gates and downstream ownership
 
 | Gate | Current status |
 | --- | --- |
-| Final whole-branch specification and code-quality review | Pending controller-owned review |
+| Final whole-branch specification and code-quality review | Approved at the code revision above; no implementation findings |
 | Full root default suite (`packages apps tests`) | Pending user-only result; unverified |
 | `test_stage6_wording.py::test_no_stage_6_file_quotes_a_stage_1_fixture` | Pending user-only result; unverified |
 | `test_stage6_wording.py::test_no_stage_6_file_quotes_a_pilot_document` | Pending user-only result; unverified |
