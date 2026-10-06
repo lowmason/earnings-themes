@@ -34,6 +34,7 @@ from earnings_themes.coding.run import ProposalRun
 from earnings_themes.coding.store import SCHEMAS
 from earnings_themes.extraction import adapters, cache, local
 from earnings_themes.extraction import records as extraction
+from earnings_themes.extraction.store import StoredRun
 from earnings_themes.support import judges, metrics, scorers
 from earnings_themes.support import records as support
 from earnings_themes.support.cache import SupportCacheEntry
@@ -395,3 +396,10 @@ def test_the_documented_coding_versions_are_the_package() -> None:
         f'`"{coding.CODING_VERSION}"` (`earnings_themes.coding.records.CODING_VERSION`)'
         in text
     )
+
+
+def test_extraction_stored_run_and_gate_are_documented() -> None:
+    assert documented("StoredRun") == {field.name for field in fields(StoredRun)}
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert "validate_stored_run(run: StoredRun) -> StoredRun" in text
+    assert "malformed_record" in text and "storage_corrupt" in text

@@ -8,3 +8,7 @@ adapter protocol, with no framework and no provider SDK (ES10). The one local
 adapter, ``local``, sits behind the ``local-model`` extra, and nothing here imports
 it, so no other module loads an HTTP client (ES15).
 """
+
+from earnings_themes.extraction.store import validate_stored_run
+
+__all__ = ["validate_stored_run"]

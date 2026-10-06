@@ -2226,6 +2226,48 @@ Polars under an explicit schema: `documents.parquet` (`DocumentRecord`),
 its value, a tuple a list, and a nested `VerifiedSpan` or `Rejection` a struct of
 its fields.
 
+### `StoredRun`
+
+The frozen in-memory schema-1 extraction container used by storage and consuming
+stages. `validate_stored_run(run: StoredRun) -> StoredRun`, publicly exported by
+`earnings_themes.extraction`, returns a new strict copy. It dumps original Python
+values before canonical JSON reconstruction so bypassed boolean or string counters
+cannot become valid integers during serialization. Every nested model then passes
+its real constructor; no source loader, adapter, or model is invoked by the gate.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `record` | `RunRecord` | Versioned configuration, document/hash bindings, aggregate counts and usage |
+| `documents` | tuple of `DocumentRecord` | Unique document IDs and counters bound to the actual rows |
+| `windows` | tuple of `WindowRecord` | Unique document-qualified windows in traversal order |
+| `visits` | tuple of `Visit` | Exactly the ordered window units, once per document, with matching outcome/reason |
+| `quotes` | tuple of `Quote` | Unique document-qualified quote IDs, correct document/hash and linked window unit |
+| `claims` | tuple of `Claim` | Unique document-qualified claim IDs with every quote link retained and resolved |
+| `rejections` | tuple of `ExtractionRejection` | Bound document/window/attempt and unique candidate-scoped refusals |
+
+The gate checks configuration hashes, document/hash mappings, row references,
+unique keys, ordered visits, per-document outcomes and counts, aggregate counts,
+rejection reasons and request/cache/usage totals. Candidate counts equal retained
+claims plus candidate-scoped rejections; transport, document and blocked-dispatch
+refusals do not add candidates. Attempts remain at most two and may exceed
+requests plus cache hits because a replay miss is dispatched but sends no request.
+A budget-stopped unsent window may have zero attempts. Claim IDs bind window
+coordinates, attempt and a nonnegative candidate index. Quote links and window
+unit IDs are nonempty and unique; window spans are nonempty and their IDs match
+coordinates; unreported usage cannot exceed requests; failed windows cannot exceed
+windows. Failed window/visit outcomes have a closed reason, completed ones none.
+
+`write_run` and `read_run` both call this gate. A structural refusal is a fixed
+`malformed_record`; reader/storage errors are a fixed `storage_corrupt`, with
+exception chains suppressed. Existing destinations raise `FileExistsError` with
+`run_exists`, without a path. Symlinks and explicit parent traversal are refused
+before reading or writing. Writer quote reverification still uses the supplied
+current bundles through `refused_quotes` and retains `StorageRefused`'s ID/reason
+interface. This structural gate does not establish current evidence validity:
+consumers must still reverify exact text, attribution and current masks before
+analysis and publication. The extraction schema, extractor version and cache key
+remain unchanged; valid Stage 7 schema-1 runs require no migration.
+
 ### `ExtractionProblem`
 
 The extractor's own refusal reasons; a span check's reason is earnings-core's

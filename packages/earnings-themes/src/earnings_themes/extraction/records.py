@@ -20,6 +20,7 @@ ES22).
   prompt and schema hashes: what every request of a run shares (R14.6).
 """
 
+import re
 from collections.abc import Iterator
 from enum import StrEnum
 from typing import Annotated, Literal, Self
@@ -168,6 +169,24 @@ class Claim(ExtractionRecord):
     claim: NonBlank
     quote_ids: Annotated[tuple[NonBlank, ...], Field(min_length=1)]
 
+    @model_validator(mode="after")
+    def _identity_and_links(self) -> Self:
+        match = re.fullmatch(
+            r"c-(0|[1-9][0-9]*)-(0|[1-9][0-9]*)-([12])-(0|[1-9][0-9]*)", self.claim_id
+        )
+        if match is None:
+            raise ValueError("invalid_claim")
+        start, end, attempt, _ = map(int, match.groups())
+        if (
+            start >= end
+            or self.window_id != f"w-{start}-{end}"
+            or self.attempt != attempt
+        ):
+            raise ValueError("invalid_claim")
+        if len(set(self.quote_ids)) != len(self.quote_ids):
+            raise ValueError("invalid_quote_links")
+        return self
+
 
 class ExtractionRejection(ExtractionRecord):
     """A refusal and its subject: a core ``Rejection`` from verification or
@@ -262,9 +281,17 @@ class WindowRecord(ExtractionRecord):
     """Whether a ceiling stopped one of its dispatches."""
 
     @model_validator(mode="after")
-    def _reason_when_failed(self) -> Self:
-        if (self.outcome is WindowOutcome.FAILED) != (self.reason is not None):
-            raise ValueError("a failed window has a reason, and a completed one none")
+    def _window_invariants(self) -> Self:
+        if self.start >= self.end or self.window_id != f"w-{self.start}-{self.end}":
+            raise ValueError("invalid_window")
+        if len(set(self.unit_ids)) != len(self.unit_ids):
+            raise ValueError("invalid_units")
+        if self.attempts > 2 or self.requests + self.cache_hits > self.attempts:
+            raise ValueError("invalid_accounting")
+        if self.unreported > self.requests:
+            raise ValueError("invalid_accounting")
+        if (self.outcome is WindowOutcome.COMPLETED) != (self.reason is None):
+            raise ValueError("invalid_outcome")
         return self
 
 
@@ -281,6 +308,12 @@ class DocumentRecord(ExtractionRecord):
     quotes: NonNegativeInt
     claims: NonNegativeInt
     rejections: NonNegativeInt
+
+    @model_validator(mode="after")
+    def _failed_windows_are_bounded(self) -> Self:
+        if self.windows_failed > self.windows:
+            raise ValueError("invalid_accounting")
+        return self
 
 
 REASONS = frozenset(
@@ -319,6 +352,8 @@ class RunRecord(ExtractionRecord):
 
     @model_validator(mode="after")
     def _consistent(self) -> Self:
+        if self.unreported > self.requests:
+            raise ValueError("invalid_accounting")
         unknown = sorted(set(self.rejections_by_reason) - REASONS)
         if unknown:
             raise ValueError(f"{len(unknown)} unknown rejection reasons")

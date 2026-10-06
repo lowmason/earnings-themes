@@ -187,3 +187,153 @@ def test_a_run_starts_at_an_aware_time() -> None:
     naive = datetime(2026, 10, 4, tzinfo=UTC).replace(tzinfo=None)
     with pytest.raises(ValidationError):
         run_record(started_at=naive)
+
+
+def window_fields():
+    return {
+        "doc_id": "invented-doc",
+        "window_id": "w-0-10",
+        "start": 0,
+        "end": 10,
+        "unit_ids": ("paragraph-0-10",),
+        "attempts": 1,
+        "outcome": WindowOutcome.COMPLETED,
+        "reason": None,
+        "requests": 1,
+        "cache_hits": 0,
+        "prompt_tokens": 3,
+        "completion_tokens": 2,
+        "unreported": 0,
+        "latency_ms": 0,
+        "exhausted": False,
+    }
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"end": 0},
+        {"start": 11},
+        {"window_id": "w-1-10"},
+        {"requests": 2},
+        {"cache_hits": 1},
+        {"unreported": 2},
+        {"attempts": 3},
+        {"reason": ExtractionProblem.TRANSPORT_ERROR},
+        {"outcome": WindowOutcome.FAILED},
+        {"reason": "unknown"},
+        {"unit_ids": ("paragraph-0-10", "paragraph-0-10")},
+        {"unit_ids": ()},
+        {"attempts": True},
+        {"requests": 1.0},
+        {"prompt_tokens": "3"},
+    ],
+    ids=[
+        "empty",
+        "reversed",
+        "wrong-id",
+        "requests",
+        "hits",
+        "unreported",
+        "third-attempt",
+        "completed-reason",
+        "failed-no-reason",
+        "unknown-reason",
+        "duplicate-unit",
+        "empty-units",
+        "bool",
+        "float",
+        "string",
+    ],
+)
+def test_window_refuses_impossible_record(change):
+    from earnings_themes.extraction.records import WindowRecord
+
+    with pytest.raises(ValidationError):
+        WindowRecord.model_validate(window_fields() | change)
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"claim_id": "malformed"},
+        {"claim_id": "c-1-10-1-0"},
+        {"claim_id": "c-0-10-2-0"},
+        {"claim_id": "c-0-10-1--1"},
+        {"attempt": 3, "claim_id": "c-0-10-3-0"},
+        {"quote_ids": ("q-0-5", "q-0-5")},
+        {"quote_ids": ()},
+        {"attempt": True},
+        {"window_id": "w-0-0", "claim_id": "c-0-0-1-0"},
+    ],
+    ids=[
+        "malformed",
+        "window",
+        "attempt",
+        "index",
+        "third-attempt",
+        "duplicate-links",
+        "empty-links",
+        "bool",
+        "empty-window",
+    ],
+)
+def test_claim_refuses_invalid_identity_and_links(changes):
+    from earnings_themes.extraction.records import Claim
+
+    fields = {
+        "claim_id": "c-0-10-1-0",
+        "doc_id": "doc",
+        "window_id": "w-0-10",
+        "attempt": 1,
+        "claim": "Invented claim.",
+        "quote_ids": ("q-0-5",),
+    }
+    with pytest.raises(ValidationError):
+        Claim.model_validate(fields | changes)
+
+
+def test_document_failed_windows_are_bounded():
+    from earnings_themes.extraction.records import DocumentOutcome, DocumentRecord
+
+    with pytest.raises(ValidationError):
+        DocumentRecord(
+            doc_id="doc",
+            canonical_hash=HASH,
+            outcome=DocumentOutcome.FAILED,
+            units=1,
+            windows=1,
+            windows_failed=2,
+            candidates=0,
+            quotes=0,
+            claims=0,
+            rejections=0,
+        )
+
+
+def test_replay_misses_and_budget_stopped_unsent_windows_remain_valid():
+    from earnings_themes.extraction.records import WindowRecord
+
+    base = window_fields() | {"requests": 0, "outcome": WindowOutcome.FAILED}
+    assert (
+        WindowRecord.model_validate(
+            base | {"attempts": 2, "reason": ExtractionProblem.REPLAY_MISS}
+        ).attempts
+        == 2
+    )
+    assert (
+        WindowRecord.model_validate(
+            base
+            | {
+                "attempts": 0,
+                "reason": ExtractionProblem.BUDGET_EXHAUSTED,
+                "exhausted": True,
+            }
+        ).attempts
+        == 0
+    )
+
+
+def test_run_refuses_unreported_over_requests():
+    with pytest.raises(ValidationError):
+        run_record(unreported=2)
