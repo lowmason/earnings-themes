@@ -651,3 +651,6 @@ a fixture (`A §769`).
 
 > Stage 2: COMPLETE (2026-09-25) — implemented by plan 3 (specs/plans/completed/3-core-evidence-spine.md).
 > Next: resume the roadmap.
+
+> Stage 9: COMPLETE (2026-10-06) — implemented by plan 14 (specs/plans/completed/14-evidence-linked-theme-extraction.md).
+> Next: resume the roadmap.

@@ -1,15 +1,16 @@
 # Deductive coding: verified library behavior
 
-Date: 2026-10-05. Branch: `codex/stage9-deductive-coding`.
+Implemented: 2026-10-05. Completion verified: 2026-10-06.
+Branch: `codex/stage9-deductive-coding`.
 Task 10 execution checkpoint: `94f3beb6547a841969a33875d57620c0c71d8e18`.
 Final whole-branch code review: `e95a6b04eac5a1a8d205fdcd8874d89e959a7f13`.
 
-The library boundary and its blind fixture checks are implemented. **Stage 9
-completion remains unverified:** the user-only full-root and both Stage 6 wording
-gates remain pending. Final whole-branch review is specification-conformant and
-quality-approved, with no implementation findings. No stage tick, authoritative
-completion stamp, plan retirement or branch integration is established here.
-The shared system specification remains live.
+**Stage 9 is complete (2026-10-06).** The library boundary, blind fixture checks,
+final review and required user-only gates are resolved. Final whole-branch review
+is specification-conformant and quality-approved, with no implementation findings.
+The completion commits reconcile the roadmap and authoritative stamp and retire
+plan 14. Branch integration remains the user's choice. The shared system
+specification remains live.
 
 ## Implemented boundary
 
@@ -162,21 +163,49 @@ The final reviewer checked the entire ten-task branch from
 `e95a6b04eac5a1a8d205fdcd8874d89e959a7f13`, the complete plan, contracts,
 reported checks and cross-task gates. Its verdict was specification-conformant
 and quality-approved, with no Critical, Important or new Minor implementation
-findings. Merge readiness remains conditional on the user-only gates and
-controller completion work. The reviewer opened no protected artifacts and
-ran no tests or inference. The separate Codex CLI review was skipped under
+findings. At that checkpoint, merge readiness was conditional on the user-only
+gates and controller completion work, now resolved below. The reviewer opened
+no protected artifacts and ran no tests or inference. The separate Codex CLI review was skipped under
 the review skill's same-model-family rule because the controller is Codex;
 no completed Codex second-opinion review is claimed.
 
-## Pending completion gates and downstream ownership
+## User-reported completion gates and downstream ownership
+
+On 2026-10-06 the user ran the three required protected-reader gates in their own
+session and returned counts, test IDs and fixed reasons. The implementing and
+reviewing sessions did not run these gates or open their protected artifacts.
+The checkout remained at the prepared `c5a7d4fe583efed39094d28c32430ea839cade99`
+before completion bookkeeping. The user-reported commands were:
+
+```bash
+uv run --locked --all-packages pytest packages apps tests -m 'not live and not browser' -q -rs --tb=short
+uv run --locked --all-packages pytest tests/integration/test_stage6_wording.py::test_no_stage_6_file_quotes_a_stage_1_fixture -q -rs --tb=short
+uv run --locked --all-packages pytest tests/integration/test_stage6_wording.py::test_no_stage_6_file_quotes_a_pilot_document -q -rs --tb=short
+```
 
 | Gate | Current status |
 | --- | --- |
 | Final whole-branch specification and code-quality review | Approved at the code revision above; no implementation findings |
-| Full root default suite (`packages apps tests`) | Pending user-only result; unverified |
-| `test_stage6_wording.py::test_no_stage_6_file_quotes_a_stage_1_fixture` | Pending user-only result; unverified |
-| `test_stage6_wording.py::test_no_stage_6_file_quotes_a_pilot_document` | Pending user-only result; unverified |
-| Roadmap tick, authoritative stamp, reconciliation, retirement and integration | Pending controller after required gates resolve |
+| Full root default suite (`packages apps tests`) | User reported 3532 passed, 1 skipped, 27 deselected, 1 existing Torch warning in 165.61s |
+| `test_stage6_wording.py::test_no_stage_6_file_quotes_a_stage_1_fixture` | User reported 1 passed in 0.19s |
+| `test_stage6_wording.py::test_no_stage_6_file_quotes_a_pilot_document` | User reported 1 passed in 0.63s |
+| Roadmap tick, authoritative stamp, reconciliation and plan retirement | Completed by the 2026-10-06 completion/retirement commits |
+| Branch integration | Awaiting the user's merge/PR/keep/discard choice |
+
+The one root-suite skip was reported at
+`tests/integration/test_event_store_v1.py:42`, with fixed reason:
+`the first acquisition has run: docs/verification/djia-events.md records its count`.
+It is unrelated to the protected wording gates; both of those nodes ran and
+passed explicitly. The warning is the same existing optional Torch warning
+recorded above. No required Stage 9 verification or review remains unresolved,
+and no new Stage 9 work is deferred. Existing unrelated deferred items remain
+unchanged.
+
+Completion bookkeeping changed Markdown only. No additional application tests
+or live extraction ran for those edits; implementation code and test sources
+remain identical to the reviewed and gated revision. Preservation checks confirm
+the GS13 row is verbatim, all roadmap routing lines and later-stage ticks are
+unchanged, and the completed plan 13 and unrelated deferred backlog are unchanged.
 
 User gate reports must contain only counts, test IDs and fixed reasons. An absent
 gate is unverified, never passing. GS13 remains binding through Stage 14's final
