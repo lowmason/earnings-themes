@@ -27,7 +27,7 @@ from earnings_themes.extraction.adapters import ModelReply, ScriptedAdapter
 from earnings_themes.extraction.prompt import PromptTemplate
 from earnings_themes.extraction.records import Ceilings, ExtractionPolicy
 from earnings_themes.extraction.run import extract_run
-from earnings_themes.extraction.store import StoredRun
+from earnings_themes.extraction.store import StoredRun, read_run, write_run
 from earnings_themes.support.records import SupportSources
 
 
@@ -106,6 +106,7 @@ def make_sources(
     other_bundles=(),
     quote_labels=("U1",),
     claim_texts=("An invented operating claim.",),
+    extraction_directory=None,
 ) -> SupportSources:
     adapter = ScriptedAdapter(
         lambda request: ModelReply(
@@ -133,16 +134,26 @@ def make_sources(
         started_at=datetime(2026, 10, 5, tzinfo=UTC),
         software={"fixture": "1"},
     )
+    stored = StoredRun.of(result)
+    if extraction_directory is not None:
+        stored = read_run(
+            write_run(extraction_directory, stored, (bundle, *other_bundles))
+        )
     return SupportSources(
-        StoredRun.of(result),
+        stored,
         (bundle, *other_bundles),
         book,
         digest("invented provenance"),
     )
 
 
+def forbidden_replay_callback(*args, **kwargs):
+    raise AssertionError("offline_replay_callback_forbidden")
+
+
 def make_proposal_job(sources, policy, identity, root):
     """Use only the public runner; callbacks and token counts are invented."""
+    requests = []
 
     def run(replies, cache_mode="live", *, ceilings=None, claim_order=None):
         from earnings_themes.coding.adapters import ScriptedClassifier
@@ -163,7 +174,11 @@ def make_proposal_job(sources, policy, identity, root):
                 text=value if isinstance(value, str) else json.dumps(value),
             )
 
-        classifier = ScriptedClassifier(script, lambda request: 5, identity)
+        classifier = ScriptedClassifier(
+            forbidden_replay_callback if cache_mode == "replay" else script,
+            forbidden_replay_callback if cache_mode == "replay" else lambda request: 5,
+            identity,
+        )
         result = propose_run(
             "invented-coding-run",
             sources,
@@ -184,12 +199,13 @@ def make_proposal_job(sources, policy, identity, root):
             started_at=datetime(2026, 10, 5, tzinfo=UTC),
             software={"fixture": "1", "lock_hash": digest("invented lock")},
         )
+        requests.extend(classifier.requests)
         return result, len(classifier.requests)
 
-    return SimpleNamespace(run=run, sources=sources, root=root)
+    return SimpleNamespace(run=run, sources=sources, root=root, requests=requests)
 
 
-def make_support_parts(contribution="supporting", *, score=0.25):
+def make_support_parts(contribution="supporting", *, score=0.25, replay=False):
     """Scripted Stage 8 inputs; no fabricated processing outcome."""
     from earnings_themes.support.judges import ScriptedJudge
     from earnings_themes.support.records import (
@@ -210,16 +226,20 @@ def make_support_parts(contribution="supporting", *, score=0.25):
         encoding_version="fixture-1",
     )
     scorer_id = ScorerIdentity(kind="scripted", runtime=runtime, input_limit=100000)
-    scorer = ScriptedScorer(
-        lambda request: ScoreReply(
+
+    def score_answer(request):
+        return ScoreReply(
             score=score,
             reason=None,
             input_tokens=5,
             latency_ms=1,
             identity=scorer_id,
             input_hash=request.input_hash,
-        ),
-        lambda request: 5,
+        )
+
+    scorer = ScriptedScorer(
+        forbidden_replay_callback if replay else score_answer,
+        forbidden_replay_callback if replay else lambda request: 5,
         scorer_id,
     )
 
@@ -252,8 +272,8 @@ def make_support_parts(contribution="supporting", *, score=0.25):
 
     panel = tuple(
         ScriptedJudge(
-            answer,
-            lambda request: 5,
+            forbidden_replay_callback if replay else answer,
+            forbidden_replay_callback if replay else lambda request: 5,
             JudgeIdentity(
                 family=f"invented-family-{i}",
                 runtime=runtime,
@@ -277,6 +297,8 @@ def make_assessed_case(
     parts=None,
     ceilings=None,
     targets=None,
+    cache_mode="live",
+    cache_directory=None,
 ):
     from pathlib import Path
 
@@ -286,7 +308,9 @@ def make_assessed_case(
     from earnings_themes.support.cache import SupportCache
     from earnings_themes.support.records import SupportCeilings, SupportPolicy
 
-    scorer, panel = parts or make_support_parts(contribution)
+    scorer, panel = parts or make_support_parts(
+        contribution, replay=cache_mode == "replay"
+    )
     prompt = (
         Path(__file__).resolve().parents[4] / "prompts/support/judge-1.md"
     ).read_text(encoding="utf-8")
@@ -315,7 +339,7 @@ def make_assessed_case(
             tokens_per_run=200000,
         ),
         extractor_family="invented-extractor",
-        cache=SupportCache(root / "support-cache", "live"),
+        cache=SupportCache(cache_directory or root / "support-cache", cache_mode),
         started_at=datetime(2026, 10, 5, tzinfo=UTC),
         software={"fixture": "1", "lock_hash": digest("invented lock")},
     )

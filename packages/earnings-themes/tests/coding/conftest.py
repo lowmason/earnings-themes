@@ -7,6 +7,7 @@ from earnings_themes.coding.prompt import render_coding
 from earnings_themes.coding.records import CodingPolicy
 from earnings_themes.extraction.records import Parameters
 from earnings_themes.support.records import JudgeIdentity, RuntimeIdentity
+from earnings_themes.synthetic import injection_bundle
 
 from .cases import (
     FixturePolicy,
@@ -70,6 +71,22 @@ def coding_request(coding_input, coding_policy):
 @pytest.fixture
 def proposal_job(coding_case, coding_policy, classifier_identity, tmp_path):
     return make_proposal_job(coding_case, coding_policy, classifier_identity, tmp_path)
+
+
+@pytest.fixture
+def injection_job(
+    codebook, template, coding_policy, classifier_identity, tmp_path, no_network
+):
+    sources = make_sources(
+        invented_codebook(codebook),
+        injection_bundle().bundle,
+        template,
+        quote_labels=tuple(f"U{i}" for i in range(2, 8)),
+        claim_texts=("Customer orders increased in an invented quarter.",),
+        extraction_directory=tmp_path / "extraction",
+    )
+    yield make_proposal_job(sources, coding_policy, classifier_identity, tmp_path)
+    assert no_network == []
 
 
 @pytest.fixture

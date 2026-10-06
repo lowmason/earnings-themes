@@ -61,7 +61,12 @@ MODULES = [
         )
     ),
 ]
-PIPELINE_PREFIXES = ("earnings_themes.extraction", "earnings_themes.support")
+PIPELINE_PREFIXES = (
+    "earnings_themes.extraction",
+    "earnings_themes.support",
+    "earnings_themes.coding",
+    "earnings_pipeline",
+)
 NLI_RUNTIME = {
     "torch",
     "transformers",
@@ -162,7 +167,7 @@ def extraction_imports(path: Path) -> list[str]:
 
 def test_the_drafting_modules_import_nothing_from_the_extractor() -> None:
     """GS13: no drafting session sees Stage 7's code. The six modules import nothing
-    from extraction or support, directly or through another module."""
+    from extraction, support, coding or the application, directly or transitively."""
     assert {name: pipeline_imports(SOURCE / name) for name in DRAFTING} == {
         name: [] for name in DRAFTING
     }
@@ -203,6 +208,27 @@ def test_pipeline_scan_detects_planted_support_and_relative_imports(
     ]
 
 
+def test_pipeline_scan_detects_planted_coding_import(tmp_path: Path) -> None:
+    package = tmp_path / "earnings_themes"
+    package.mkdir()
+    module = package / "gold.py"
+    module.write_text(
+        "def later():\n    from .coding import records\n", encoding="utf-8"
+    )
+    assert pipeline_imports(module) == [
+        "earnings_themes.coding.records",
+        "earnings_themes.coding",
+    ]
+
+
+def test_pipeline_scan_detects_planted_application_import(tmp_path: Path) -> None:
+    module = tmp_path / "gold.py"
+    module.write_text(
+        "def later():\n    from earnings_pipeline import cli\n", encoding="utf-8"
+    )
+    assert pipeline_imports(module) == ["earnings_pipeline.cli", "earnings_pipeline"]
+
+
 def test_drafting_closure_has_no_pipeline_modules() -> None:
     modules = [f"earnings_themes.{n.removesuffix('.py')}" for n in DRAFTING]
     assert forbidden_pipeline(modules_loaded_by(modules)) == []
@@ -217,6 +243,45 @@ def test_fresh_process_guard_detects_planted_transitive_support(tmp_path: Path) 
         stream.write("\nimport earnings_themes.support.records\n")
     loaded = modules_loaded_by(["earnings_themes.gold"], cwd=tmp_path)
     assert "earnings_themes.support.records" in forbidden_pipeline(loaded)
+
+
+def test_fresh_process_guard_detects_planted_transitive_coding(tmp_path: Path) -> None:
+    import shutil
+
+    package = tmp_path / "earnings_themes"
+    shutil.copytree(SOURCE, package, ignore=shutil.ignore_patterns("__pycache__"))
+    with (package / "tomlfile.py").open("a", encoding="utf-8") as stream:
+        stream.write("\nimport earnings_themes.coding.records\n")
+    loaded = modules_loaded_by(["earnings_themes.gold"], cwd=tmp_path)
+    assert "earnings_themes.coding.records" in forbidden_pipeline(loaded)
+
+
+def test_fresh_process_guard_detects_planted_application_import(tmp_path: Path) -> None:
+    import shutil
+
+    package = tmp_path / "earnings_themes"
+    shutil.copytree(SOURCE, package, ignore=shutil.ignore_patterns("__pycache__"))
+    application = tmp_path / "earnings_pipeline"
+    application.mkdir()
+    (application / "__init__.py").write_text(
+        "import earnings_themes.coding.records\n", encoding="utf-8"
+    )
+    with (package / "tomlfile.py").open("a", encoding="utf-8") as stream:
+        stream.write("\nimport earnings_pipeline\n")
+    loaded = modules_loaded_by(["earnings_themes.gold"], cwd=tmp_path)
+    assert {"earnings_pipeline", "earnings_themes.coding.records"} <= set(
+        forbidden_pipeline(loaded)
+    )
+
+
+def test_public_coding_import_loads_no_optional_or_concrete_adapter() -> None:
+    loaded = modules_loaded_by(["earnings_themes.coding"])
+    assert top_level(loaded) & (FORBIDDEN | NLI_RUNTIME) == set()
+    assert {
+        LOCAL,
+        "earnings_themes.support.nli",
+        "earnings_themes.coding.local",
+    }.isdisjoint(loaded)
 
 
 def test_nli_import_loads_no_optional_runtime():
