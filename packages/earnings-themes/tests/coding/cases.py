@@ -105,6 +105,7 @@ def make_sources(
     *,
     other_bundles=(),
     quote_labels=("U1",),
+    claim_texts=("An invented operating claim.",),
 ) -> SupportSources:
     adapter = ScriptedAdapter(
         lambda request: ModelReply(
@@ -113,8 +114,9 @@ def make_sources(
                     "candidates": [
                         {
                             "quote_labels": quote_labels,
-                            "claim": "An invented operating claim.",
+                            "claim": claim,
                         }
+                        for claim in claim_texts
                     ]
                 }
             ),

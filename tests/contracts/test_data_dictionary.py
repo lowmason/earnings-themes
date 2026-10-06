@@ -220,6 +220,8 @@ MODELS = [
     coding.PolicyReference,
     coding.PolicyVote,
     coding.AssignmentDecision,
+    coding.Assignment,
+    coding.AssignmentClaimLink,
 ]
 ENUMS = [
     core.RightsStatus,

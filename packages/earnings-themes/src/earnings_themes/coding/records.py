@@ -466,3 +466,38 @@ class AssignmentDecision(CodingRecord):
         if self.policy is not None and self.policy.codebook != self.codebook:
             raise ValueError("invalid_policy_codebook")
         return self
+
+
+class Assignment(CodingRecord):
+    """One document-qualified quote–theme row with unchanged evidence pointers."""
+
+    assignment_id: NonBlank
+    coding_run_id: NonBlank
+    doc_id: NonBlank
+    quote_id: NonBlank
+    theme_id: NonBlank
+    codebook: CodebookReference
+    canonical_hash: Sha256Hex
+    start: int = Field(ge=0)
+    end: int = Field(gt=0)
+    validator_version: NonBlank
+    mask_ids: tuple[NonBlank, ...]
+    support_run_hash: Sha256Hex
+    policy_hash: Sha256Hex
+    policy_kind: Literal["fixture", "calibrated"]
+
+    @model_validator(mode="after")
+    def _evidence(self) -> Self:
+        if self.end <= self.start:
+            raise ValueError("invalid_span")
+        if len(set(self.mask_ids)) != len(self.mask_ids):
+            raise ValueError("duplicate_reference")
+        return self
+
+
+class AssignmentClaimLink(CodingRecord):
+    assignment_id: NonBlank
+    doc_id: NonBlank
+    claim_id: NonBlank
+    decision_id: NonBlank
+    target_id: NonBlank

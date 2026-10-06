@@ -3934,8 +3934,82 @@ All digests use core's SHA-256 over UTF-8 canonical JSON. The exact recipes are:
   "proposal_hash": proposal_hash, "support_run_hash": support_run_hash,
   "policy": policy_reference_json_or_null})`.
 
-The assignment module writes no state or files and runs no classifier, scorer,
-judge or inference callback. It does not construct accepted assignment tables or
-production frame selection; those consume its explicit policy provenance in the
-next coding task. Coverage/state/export belong to Stage 10, calibration/thresholds
-and fresh-call stability to Stage 11.
+The decision module writes no state or files and runs no classifier, scorer,
+judge or inference callback. Its saved policy provenance is consumed by the
+assignment projection below. Coverage/state/export belong to Stage 10,
+calibration/thresholds and fresh-call stability to Stage 11.
+
+### `Assignment`
+
+One accepted quote–theme association at document-qualified grain
+`(coding_run_id, codebook_id, codebook_version, doc_id, theme_id, quote_id)`.
+Multiple themes share the original quote ID; multiple supporting claims link
+to this row through `AssignmentClaimLink`. There is no copied quote text or
+implicit parent/family roll-up. Boilerplate mask IDs remain audit references.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | strict literal 1 | Separate coding schema |
+| `assignment_id` | nonblank string | `"assignment-" + digest(assignment_key)`, using the grain tuple above |
+| `coding_run_id` | nonblank string | Original proposal-run identity |
+| `doc_id` | nonblank string | Immutable document identity qualifying the original quote ID |
+| `quote_id` | nonblank string | Unchanged original document-scoped quote identifier |
+| `theme_id` | nonblank string | Explicit frozen theme identifier, including a subtheme when proposed |
+| `codebook` | CodebookReference | Frozen codebook identifier, version and content hash |
+| `canonical_hash` | SHA-256 | Saved canonical hash from the matching Stage 8 EvidenceReference |
+| `start` | strict nonnegative integer | Saved zero-based Python character start offset |
+| `end` | strict positive integer | Saved half-open end offset; greater than start |
+| `validator_version` | nonblank string | Saved evidence verifier version, rebound at current evidence consumption |
+| `mask_ids` | distinct tuple[nonblank string, …] | Saved overlay-mask identities; never a headline filter at this stage |
+| `support_run_hash` | SHA-256 | Matching support-run manifest digest |
+| `policy_hash` | SHA-256 | Exact retained common external policy hash |
+| `policy_kind` | fixture or calibrated | Scope provenance; fixture rows refuse default production frame selection |
+
+### `AssignmentClaimLink`
+
+One supporting source claim/decision link to an assignment. Links deduplicate at
+`(assignment_id, doc_id, claim_id, decision_id)` and keep contradictory claim
+interpretations and their separate AttributeRecords reachable.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | strict literal 1 | Separate coding schema |
+| `assignment_id` | nonblank string | Projected quote–theme row identity |
+| `doc_id` | nonblank string | Original document identity qualifying the claim |
+| `claim_id` | nonblank string | Unchanged original source claim identifier |
+| `decision_id` | nonblank string | Accepted saved assignment decision identity |
+| `target_id` | nonblank string | Matching Stage 8 target identity |
+
+`project_assignments(decisions: DecisionSet, support: StoredSupportRun) ->
+tuple[tuple[Assignment, ...], tuple[AssignmentClaimLink, ...]]` validates strict
+transient containers, the matching retained support run, common proposal/support/
+source hashes, and the frozen policy codebook and classifier/support configuration
+references. Public `reverify_support_run` checks the complete stored support graph
+and current canonical evidence. Public `resolve_coding_input` rebinds all proposed
+claim/theme inputs. Each saved decision must correspond uniquely to one proposal
+and the actual support outcome, flags and missing reasons. Accepted references
+must be nonempty and remain eligible under public `eligible_quote_ids`; contextual,
+irrelevant, contradicting or uncertain quotes cannot be promoted. The matching
+`(target_id, doc_id, quote_id)` EvidenceReference supplies the unchanged span,
+hash, masks and verifier version. Rows and links are sorted for stable output;
+conflicting rows at the same assignment key refuse with `invalid_references`.
+
+These are structural provenance and current evidence/safety checks. Projection
+does not call or manufacture an accepting policy, reproduce an external policy's
+vote, or establish that a declared calibrated artifact is approved. Full decision
+recomputation with the actual external pure policy belongs to the coding store
+consuming gate. Empty projection preserves its original decision audit and does
+not establish no themes or a perfect exactness rate.
+
+`assignment_frame(rows: Sequence[Assignment], *, scope="production") ->
+pl.DataFrame` reparses rows, refuses mixed `(codebook_id, codebook_version,
+content_hash)` with `mixed_codebook`, and requires calibrated rows for production
+or exclusively fixture rows for fixture scope. Invalid/mixed scopes refuse with
+`fixture_policy`; duplicate assignment keys or IDs refuse with
+`invalid_references`. Its explicit `ASSIGNMENT_SCHEMA` has exactly the Assignment
+fields: integer fields use Polars Int64, strings use String, masks use List(String),
+and codebook uses a Struct of ID/version/hash with Int64 version. Empty sequences
+keep this same schema. Nonsequences and unrepresentable frame values refuse with
+fixed `malformed_record`, without a pandas intermediary or input-bearing errors.
+Frame construction validates supplied records and scope; it does not replace the
+source-aware projection or downstream consuming gate.

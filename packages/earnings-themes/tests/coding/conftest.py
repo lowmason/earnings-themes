@@ -90,3 +90,64 @@ def contextual_case(assessed_case, tmp_path):
 @pytest.fixture
 def fixture_policy(assessed_case):
     return FixturePolicy(assessed_case.proposals, assessed_case.support)
+
+
+@pytest.fixture
+def assignment_case_factory(
+    coding_case, coding_policy, classifier_identity, template, tmp_path
+):
+    counter = 0
+
+    def make(
+        *,
+        themes=("capacity",),
+        claims=("An invented operating claim.",),
+        documents=1,
+        book=None,
+        attributes=None,
+        bundle=None,
+    ):
+        nonlocal counter
+        counter += 1
+        root = tmp_path / f"assignments-{counter}"
+        sources = make_sources(
+            book or coding_case.codebook,
+            bundle or invented_bundle("invented-first"),
+            template,
+            other_bundles=tuple(
+                invented_bundle(f"invented-{i}") for i in range(1, documents)
+            ),
+            claim_texts=claims,
+        )
+        job = make_proposal_job(sources, coding_policy, classifier_identity, root)
+        replies = [
+            {
+                "theme_ids": themes,
+                "attributes": (attributes or [{}])[i % len(attributes or [{}])],
+            }
+            for i in range(len(sources.stored_run.claims))
+        ]
+        proposals, _ = job.run(replies)
+        return make_assessed_case(proposals, sources, root)
+
+    return make
+
+
+@pytest.fixture
+def multilabel_decisions(assignment_case_factory):
+    case = assignment_case_factory(themes=("capacity", "demand"))
+    return case.decide(FixturePolicy(case.proposals, case.support)), case.support
+
+
+@pytest.fixture
+def two_claim_decisions(assignment_case_factory):
+    case = assignment_case_factory(
+        claims=("An invented equipment claim.", "A second invented equipment claim.")
+    )
+    return case.decide(FixturePolicy(case.proposals, case.support)), case.support
+
+
+@pytest.fixture
+def two_document_decisions(assignment_case_factory):
+    case = assignment_case_factory(documents=2)
+    return case.decide(FixturePolicy(case.proposals, case.support)), case.support
