@@ -8,7 +8,14 @@ from earnings_themes.coding.records import CodingPolicy
 from earnings_themes.extraction.records import Parameters
 from earnings_themes.support.records import JudgeIdentity, RuntimeIdentity
 
-from .cases import invented_bundle, invented_codebook, make_proposal_job, make_sources
+from .cases import (
+    FixturePolicy,
+    invented_bundle,
+    invented_codebook,
+    make_assessed_case,
+    make_proposal_job,
+    make_sources,
+)
 
 
 @pytest.fixture
@@ -62,3 +69,24 @@ def coding_request(coding_input, coding_policy):
 @pytest.fixture
 def proposal_job(coding_case, coding_policy, classifier_identity, tmp_path):
     return make_proposal_job(coding_case, coding_policy, classifier_identity, tmp_path)
+
+
+@pytest.fixture
+def assessed_case(proposal_job, tmp_path):
+    proposals, _ = proposal_job.run([{"theme_ids": ["capacity"], "attributes": {}}])
+    return make_assessed_case(proposals, proposal_job.sources, tmp_path)
+
+
+@pytest.fixture
+def contextual_case(assessed_case, tmp_path):
+    return make_assessed_case(
+        assessed_case.proposals,
+        assessed_case.sources,
+        tmp_path / "contextual",
+        contribution="contextual",
+    )
+
+
+@pytest.fixture
+def fixture_policy(assessed_case):
+    return FixturePolicy(assessed_case.proposals, assessed_case.support)

@@ -219,6 +219,7 @@ MODELS = [
     coding.ProposalRunRecord,
     coding.PolicyReference,
     coding.PolicyVote,
+    coding.AssignmentDecision,
 ]
 ENUMS = [
     core.RightsStatus,

@@ -19,7 +19,12 @@ from earnings_themes.extraction.adapters import Message
 from earnings_themes.extraction.records import Parameters
 from earnings_themes.records import NonBlank, Part, Sha256Hex
 from earnings_themes.support.problems import REASONS as SUPPORT_REASONS
-from earnings_themes.support.records import CodebookReference, JudgeIdentity, Target
+from earnings_themes.support.records import (
+    CodebookReference,
+    JudgeIdentity,
+    ReviewStatus,
+    Target,
+)
 
 CODING_SCHEMA_VERSION = 1
 CODING_VERSION = "deductive-coding/1"
@@ -373,6 +378,7 @@ class PolicyReference(CodingPart):
     policy_hash: Sha256Hex
     kind: Literal["fixture", "calibrated"]
     codebook: CodebookReference
+    classifier_configuration_hash: Sha256Hex
     support_configuration_hash: Sha256Hex
     calibration_reference: Sha256Hex | None
 
@@ -392,4 +398,71 @@ class PolicyVote(CodingPart):
         ids = self.supporting_quote_ids
         if len(ids) != len(set(ids)) or ((self.action == "accept") != bool(ids)):
             raise ValueError("invalid_policy_references")
+        return self
+
+
+class AssignmentDecision(CodingRecord):
+    """One proposal target's decision, retaining separate assessment provenance."""
+
+    coding_run_id: NonBlank
+    decision_id: NonBlank
+    doc_id: NonBlank
+    claim_id: NonBlank
+    theme_id: NonBlank
+    codebook: CodebookReference
+    target_id: NonBlank
+    support_run_hash: Sha256Hex
+    support_status: ReviewStatus | None
+    flags: tuple[NonBlank, ...]
+    missing: tuple[NonBlank, ...]
+    status: Literal["accepted", "rejected", "review", "refused"]
+    reason: str
+    policy: PolicyReference | None
+    supporting_quote_ids: tuple[NonBlank, ...]
+    proposal_hash: Sha256Hex
+    input_hash: Sha256Hex
+
+    @model_validator(mode="after")
+    def _decision_binding(self) -> Self:
+        expected_id = "decision-" + digest(
+            {
+                "target_id": self.target_id,
+                "proposal_hash": self.proposal_hash,
+                "support_run_hash": self.support_run_hash,
+                "policy": self.policy.model_dump(mode="json")
+                if self.policy is not None
+                else None,
+            }
+        )
+        if self.decision_id != expected_id:
+            raise ValueError("invalid_decision_id")
+        if tuple(sorted(set(self.supporting_quote_ids))) != self.supporting_quote_ids:
+            raise ValueError("invalid_quote_references")
+        for values in (self.flags, self.missing):
+            if tuple(sorted(set(values))) != values:
+                raise ValueError("invalid_outcome_references")
+        if any(reason not in REASONS for reason in self.missing):
+            raise ValueError("invalid_missing_reason")
+        expected = {
+            "policy_accept": ("accepted", "assessed"),
+            "policy_reject": ("rejected", "assessed"),
+            "policy_review": ("review", "assessed"),
+            "calibration_required": ("review", "assessed"),
+            "assessment_refused": ("refused", "refused"),
+            "assessment_incomplete": ("review", "incomplete"),
+            "assessment_flagged": ("review", "flagged"),
+            "missing_assessment": ("review", None),
+        }
+        if expected.get(self.reason) != (self.status, self.support_status):
+            raise ValueError("invalid_decision_reason")
+        if (self.status == "accepted") != bool(self.supporting_quote_ids):
+            raise ValueError("invalid_accepted_evidence")
+        if self.reason.startswith("policy_") and self.policy is None:
+            raise ValueError("missing_policy")
+        if self.reason == "calibration_required" and self.policy is not None:
+            raise ValueError("unexpected_policy")
+        if self.support_status == "assessed" and (self.flags or self.missing):
+            raise ValueError("invalid_assessed_outcome")
+        if self.policy is not None and self.policy.codebook != self.codebook:
+            raise ValueError("invalid_policy_codebook")
         return self

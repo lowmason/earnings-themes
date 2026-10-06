@@ -99,11 +99,25 @@ def invented_codebook(base: Codebook) -> Codebook:
 
 
 def make_sources(
-    book: Codebook, bundle: Bundle, template: PromptTemplate, *, other_bundles=()
+    book: Codebook,
+    bundle: Bundle,
+    template: PromptTemplate,
+    *,
+    other_bundles=(),
+    quote_labels=("U1",),
 ) -> SupportSources:
     adapter = ScriptedAdapter(
         lambda request: ModelReply(
-            text='{"candidates":[{"quote_labels":["U1"],"claim":"An invented operating claim."}]}',
+            text=json.dumps(
+                {
+                    "candidates": [
+                        {
+                            "quote_labels": quote_labels,
+                            "claim": "An invented operating claim.",
+                        }
+                    ]
+                }
+            ),
             model="scripted",
         )
     )
@@ -171,3 +185,184 @@ def make_proposal_job(sources, policy, identity, root):
         return result, len(classifier.requests)
 
     return SimpleNamespace(run=run, sources=sources, root=root)
+
+
+def make_support_parts(contribution="supporting", *, score=0.25):
+    """Scripted Stage 8 inputs; no fabricated processing outcome."""
+    from earnings_themes.support.judges import ScriptedJudge
+    from earnings_themes.support.records import (
+        JudgeIdentity,
+        RuntimeIdentity,
+        ScorerIdentity,
+    )
+    from earnings_themes.support.scorers import ScoreReply, ScriptedScorer
+
+    runtime = RuntimeIdentity(
+        model_id="invented-support",
+        revision="fixture-1",
+        files=(),
+        runtime="scripted",
+        runtime_version="1",
+        device="cpu",
+        precision="float32",
+        encoding_version="fixture-1",
+    )
+    scorer_id = ScorerIdentity(kind="scripted", runtime=runtime, input_limit=100000)
+    scorer = ScriptedScorer(
+        lambda request: ScoreReply(
+            score=score,
+            reason=None,
+            input_tokens=5,
+            latency_ms=1,
+            identity=scorer_id,
+            input_hash=request.input_hash,
+        ),
+        lambda request: 5,
+        scorer_id,
+    )
+
+    def answer(request):
+        blocks = json.loads(request.messages[1].content)
+        evidence = next(b["quoted_evidence"] for b in blocks if "quoted_evidence" in b)
+        return ModelReply(
+            model=runtime.model_id,
+            text=json.dumps(
+                {
+                    "claim_support": "supported",
+                    "theme_fit": "fits",
+                    "joint_support_score": 0.25,
+                    "quote_assessments": [
+                        {
+                            "quote_id": q["quote_id"],
+                            "contribution": contribution.get(
+                                q["quote_id"], "supporting"
+                            )
+                            if isinstance(contribution, dict)
+                            else contribution,
+                        }
+                        for q in evidence
+                    ],
+                    "reason_codes": [],
+                    "summary": "Invented fixture assessment.",
+                }
+            ),
+        )
+
+    panel = tuple(
+        ScriptedJudge(
+            answer,
+            lambda request: 5,
+            JudgeIdentity(
+                family=f"invented-family-{i}",
+                runtime=runtime,
+                input_limit=100000,
+                output_limit=2048,
+                hosting="scripted",
+                weight_license=None,
+            ),
+        )
+        for i in range(2)
+    )
+    return scorer, panel
+
+
+def make_assessed_case(
+    proposals,
+    sources,
+    root,
+    *,
+    contribution="supporting",
+    parts=None,
+    ceilings=None,
+    targets=None,
+):
+    from pathlib import Path
+
+    from earnings_core import sha256_hex
+    from earnings_themes.extraction.records import Parameters
+    from earnings_themes.support import assess_run, read_support_run, write_support_run
+    from earnings_themes.support.cache import SupportCache
+    from earnings_themes.support.records import SupportCeilings, SupportPolicy
+
+    scorer, panel = parts or make_support_parts(contribution)
+    prompt = (
+        Path(__file__).resolve().parents[4] / "prompts/support/judge-1.md"
+    ).read_text(encoding="utf-8")
+    policy = SupportPolicy(
+        support_version="semantic-support/1",
+        prompt_text=prompt,
+        prompt_hash=sha256_hex(prompt.encode("utf-8")),
+        parameters=Parameters(max_tokens=64),
+    )
+    result = assess_run(
+        "invented-support-run",
+        sources,
+        proposals.targets if targets is None else targets,
+        scorer,
+        panel,
+        policy,
+        ceilings
+        or SupportCeilings(
+            scorer_per_target=40,
+            scorer_per_document=40,
+            scorer_per_run=40,
+            judge_per_target=40,
+            judge_per_document=40,
+            judge_per_run=40,
+            tokens_per_document=200000,
+            tokens_per_run=200000,
+        ),
+        extractor_family="invented-extractor",
+        cache=SupportCache(root / "support-cache", "live"),
+        started_at=datetime(2026, 10, 5, tzinfo=UTC),
+        software={"fixture": "1", "lock_hash": digest("invented lock")},
+    )
+    write_support_run(root / "support", result, sources)
+    stored = read_support_run(root / "support")
+    case = SimpleNamespace(
+        proposals=proposals,
+        sources=sources,
+        support=stored,
+        result=result,
+        scorer=scorer,
+        panel=panel,
+        context_quote_ids=tuple(e.quote_id for e in stored.evidence)
+        if contribution == "contextual"
+        else (),
+    )
+
+    def decide(policy=None):
+        from earnings_themes.coding.decide import decide_assignments
+
+        return decide_assignments(case.proposals, case.support, case.sources, policy)
+
+    case.decide = decide
+    return case
+
+
+class FixturePolicy:
+    """Explicit fixture-only acceptance, never a package default."""
+
+    def __init__(self, proposals, support):
+        from earnings_themes.coding.records import PolicyReference
+
+        self.reference = PolicyReference(
+            policy_id="fixture-only",
+            policy_hash=digest("fixture-only/1"),
+            kind="fixture",
+            codebook=support.record.codebook,
+            classifier_configuration_hash=proposals.record.configuration_hash,
+            support_configuration_hash=support.record.configuration_hash,
+            calibration_reference=None,
+        )
+        self.vote_quote_ids = None
+
+    def evaluate(self, view):
+        from earnings_themes.coding.records import PolicyVote
+
+        ids = (
+            view.eligible_quote_ids
+            if self.vote_quote_ids is None
+            else self.vote_quote_ids
+        )
+        return PolicyVote(action="accept", supporting_quote_ids=ids)

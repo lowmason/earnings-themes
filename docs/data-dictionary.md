@@ -3411,7 +3411,7 @@ allowed. No ceiling is an acceptance threshold or production inference budget.
 ### `PolicyReference`
 
 Explicit acceptance-policy provenance bound to codebook ID, version and content
-hash, and the complete support configuration. A calibrated policy requires a
+hash, and the complete classifier and support configurations. A calibrated policy requires a
 calibration reference; a fixture policy requires null. No reference implements a
 threshold or approves a production policy.
 
@@ -3421,6 +3421,7 @@ threshold or approves a production policy.
 | `policy_hash` | SHA-256 | External policy content hash |
 | `kind` | fixture, calibrated | Fixture-only or externally calibrated policy provenance |
 | `codebook` | CodebookReference | Frozen codebook identifier, version and content hash |
+| `classifier_configuration_hash` | SHA-256 | Exact classifier proposal configuration to which the policy applies; required before first coding release |
 | `support_configuration_hash` | SHA-256 | Exact support configuration to which the policy applies |
 | `calibration_reference` | SHA-256 or null | Calibration artifact hash, present exactly for calibrated kind |
 
@@ -3851,3 +3852,90 @@ Stage 8 targets. All original quote links remain source-owned. Final publication
 reconstructs request hashes and raw bindings and repeats current evidence gates.
 The runner performs no support inference, acceptance decision, command discovery
 or processing-state write.
+
+### `AssignmentDecision`
+
+One row per explicit proposal target, separate from the raw support processing
+outcome. An `assessed` outcome without an externally bound policy is
+`review/calibration_required`. Refused, incomplete and flagged assessments bypass
+policy evaluation and retain their flags and missing reasons. Missing target
+assessments are visible `review/missing_assessment`, with null support status;
+they never enter novelty. Fixture-policy accepted rows retain fixture provenance
+and require explicit fixture scope at downstream production consumption.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | strict literal 1 | Separate coding schema |
+| `coding_run_id` | nonblank string | Original proposal-run identity |
+| `decision_id` | nonblank string | Content-derived decision identity; recipe below is revalidated |
+| `doc_id` | nonblank string | Original immutable document identity, qualifying claim and quote IDs |
+| `claim_id` | nonblank string | Unchanged original claim identifier |
+| `theme_id` | nonblank string | Explicit proposed frozen theme identifier |
+| `codebook` | CodebookReference | Frozen codebook ID/version/content hash |
+| `target_id` | nonblank string | Matching stored Stage 8 target identity; currently resolved identity when assessment is missing |
+| `support_run_hash` | SHA-256 | Exact support-run manifest digest, including published table and external raw artifact hashes |
+| `support_status` | ReviewStatus or null | Raw refused/incomplete/flagged/assessed processing result; null for missing assessment |
+| `flags` | sorted distinct tuple[nonblank string, …] | Raw support semantic flags, never votes or numeric cutoffs |
+| `missing` | sorted distinct tuple[fixed reason, …] | Raw unavailable-signal/refusal reasons, or missing_assessment |
+| `status` | accepted, rejected, review, refused | Separate assignment-policy decision |
+| `reason` | fixed reason | policy_accept/reject/review, calibration_required, assessment_refused/incomplete/flagged, or missing_assessment; checked against statuses |
+| `policy` | PolicyReference or null | Exact external policy provenance, null for no-policy decisions |
+| `supporting_quote_ids` | sorted distinct tuple[nonblank string, …] | Nonempty original eligible document-scoped quote IDs only for accepted decisions; otherwise empty |
+| `proposal_hash` | SHA-256 | Complete proposal-run content digest described below |
+| `input_hash` | SHA-256 | Original complete CodingInput hash, re-resolved at consumption |
+
+`DecisionInput` is a frozen dataclass with disabled transient repr and fields
+`target: TargetRecord`, `evidence: tuple[EvidenceReference, ...]`,
+`entailment: tuple[EntailmentSignal, ...]`, `trials: tuple[JudgeTrial, ...]`,
+`outcome: ReviewOutcome`, and `eligible_quote_ids: tuple[str, ...]`. It retains
+all original evidence and raw per-quote/joint/family/presentation views. The
+eligible set includes a quote only when all four complete independent trials
+label it `supporting`. This is an eligibility restriction, never sufficient
+acceptance; contextual companions remain raw provenance.
+
+`AssignmentPolicy.reference: PolicyReference` and
+`evaluate(view: DecisionInput) -> PolicyVote` form a pure deterministic external
+policy seam. No accepting implementation is shipped in the package. Tests supply
+an explicit fixture-only policy. Calibrated references require an artifact hash,
+but this declaration is not independent evidence of calibration or approval;
+Stage 11 must produce and approve that artifact and its production configuration.
+Stage 9 loads no labels, sets no cutoff, pools no score and approves no model.
+
+`decide_assignments(proposals: ProposalRun, support: StoredSupportRun,
+sources: SupportSources, policy: AssignmentPolicy | None) -> DecisionSet` first
+calls public `reverify_support_run` for complete support graph/accounting and
+current evidence/theme/context hashes, then recomputes proposed inputs through
+public `resolve_coding_input`. Full frozen Target identities must match exactly;
+unknown extra or duplicate assessments refuse. Raw outcomes are independently
+derived by Stage 8's stored validation. The policy codebook and both configuration
+hashes are rebound before evaluation. After reference-property access and policy
+callbacks, the gate checks the complete proposal and support contents, raw view,
+reference and current source resolution again. External exceptions render only
+`unexpected_error`, with suppressed causes. Policies cannot alter evidence,
+claims, themes or safety outcomes.
+
+`DecisionSet` is a frozen dataclass with disabled transient repr and fields
+`decisions`, `proposals`, `support`, `sources`, `policy`, `proposal_hash`,
+`support_run_hash`, and `source_run_hash`. The retained ProposalRun,
+StoredSupportRun and SupportSources preserve all original raw signals and
+source/codebook/context provenance; hashes are common bindings across decisions.
+These transient references require reverification at downstream consumption.
+
+All digests use core's SHA-256 over UTF-8 canonical JSON. The exact recipes are:
+
+- `proposal_run_hash(proposals)`: digest of `record` JSON and ordered JSON arrays
+  `classifications`, `attempts`, `proposals`, `attributes`, and `novelty`.
+- `support_run_hash(support)`: digest of `support.record` JSON. Its artifact hashes
+  bind published Parquet and external raw cache bytes. This seam does not reread
+  those external bytes; the Stage 8 reader already validates published tables.
+- `source_run_hash`: the inherited digest of extraction `record` JSON and
+  `provenance_hash`, required to agree across proposal and support manifests.
+- `decision_id`: `"decision-" + digest({"target_id": target_id,
+  "proposal_hash": proposal_hash, "support_run_hash": support_run_hash,
+  "policy": policy_reference_json_or_null})`.
+
+The assignment module writes no state or files and runs no classifier, scorer,
+judge or inference callback. It does not construct accepted assignment tables or
+production frame selection; those consume its explicit policy provenance in the
+next coding task. Coverage/state/export belong to Stage 10, calibration/thresholds
+and fresh-call stability to Stage 11.

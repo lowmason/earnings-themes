@@ -45,6 +45,7 @@ def payloads():
                 "codebook_version": 0,
                 "content_hash": H,
             },
+            "classifier_configuration_hash": H,
             "support_configuration_hash": H,
             "calibration_reference": None,
         },
