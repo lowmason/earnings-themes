@@ -2,13 +2,14 @@
 and of the ingestion records: the canonicalizer's, the capture's, layout-1's, the
 retrieval metadata, the cohort's records and curated files, and Stage 5's event,
 pilot, processing-state, and coverage records; and earnings-themes' Stage 6 records
-and Stage 7's extraction records.
+and Stages 7–9's extraction, support, and coding records.
 
 AGENTS.md §191: document public interfaces and update the data dictionary in the
 same change. A contract that gains, loses, or renames a field fails here.
 """
 
 import re
+from dataclasses import fields
 from enum import StrEnum
 from pathlib import Path
 
@@ -25,6 +26,12 @@ from earnings_ingestion.fetch import records as fetch
 from earnings_themes import annotation, codebook, gold, problems, split
 from earnings_themes import records as themes
 from earnings_themes.anchoring import SpanPointer
+from earnings_themes.coding import records as coding
+from earnings_themes.coding.cache import CodingCacheEntry
+from earnings_themes.coding.decide import DecisionInput, DecisionSet
+from earnings_themes.coding.input import CodingInput
+from earnings_themes.coding.run import ProposalRun
+from earnings_themes.coding.store import SCHEMAS
 from earnings_themes.extraction import adapters, cache, local
 from earnings_themes.extraction import records as extraction
 from earnings_themes.support import judges, metrics, scorers
@@ -199,6 +206,28 @@ MODELS = [
     support.SupportPolicy,
     support.SupportRunRecord,
     LocalScorerConfig,
+    coding.CodingPart,
+    coding.CodingRecord,
+    coding.CodingAttributes,
+    coding.CodingReply,
+    coding.CodingSubject,
+    coding.CodingRequest,
+    coding.ProposalRecord,
+    coding.AttributeRecord,
+    coding.NoveltyItem,
+    CodingCacheEntry,
+    coding.CodingPolicy,
+    coding.CodingPolicySnapshot,
+    coding.CodingCeilings,
+    coding.ClassificationRecord,
+    coding.CodingAttempt,
+    coding.ProposalRunRecord,
+    coding.PolicyReference,
+    coding.PolicyVote,
+    coding.AssignmentDecision,
+    coding.Assignment,
+    coding.AssignmentClaimLink,
+    coding.CodingRunRecord,
 ]
 ENUMS = [
     core.RightsStatus,
@@ -249,6 +278,15 @@ ENUMS = [
     support.Presentation,
     support.ReviewStatus,
     support.ReasonCode,
+    coding.CodingProblem,
+]
+CODING_DATACLASSES = [
+    support.SupportSources,
+    CodingInput,
+    ProposalRun,
+    DecisionInput,
+    DecisionSet,
+    coding.CodingRun,
 ]
 
 
@@ -269,6 +307,52 @@ def test_every_field_is_documented(model: type[BaseModel]) -> None:
 @pytest.mark.parametrize("enum", ENUMS, ids=lambda enum: enum.__name__)
 def test_every_value_is_documented(enum: type[StrEnum]) -> None:
     assert documented(enum.__name__) == {member.value for member in enum}
+
+
+def test_coding_registry_covers_every_defined_record_and_enum() -> None:
+    models = {
+        value
+        for value in vars(coding).values()
+        if isinstance(value, type)
+        and issubclass(value, BaseModel)
+        and value.__module__ == coding.__name__
+    }
+    enums = {
+        value
+        for value in vars(coding).values()
+        if isinstance(value, type)
+        and issubclass(value, StrEnum)
+        and value.__module__ == coding.__name__
+    }
+    assert models == {model for model in MODELS if model.__module__ == coding.__name__}
+    assert enums == {enum for enum in ENUMS if enum.__module__ == coding.__name__}
+    assert CodingCacheEntry in MODELS
+
+
+@pytest.mark.parametrize(
+    "record", CODING_DATACLASSES, ids=lambda record: record.__name__
+)
+def test_coding_transient_fields_are_documented(record: type) -> None:
+    assert documented(record.__name__) == {field.name for field in fields(record)}
+
+
+def test_coding_table_registry_and_grains_are_documented() -> None:
+    assert documented("Coding tables") == set(SCHEMAS)
+    assert {field.name for field in fields(coding.CodingRun)} == {"record", *SCHEMAS}
+    text = DICTIONARY.read_text(encoding="utf-8")
+    grains = {
+        "classifications": "(coding_run_id, doc_id, claim_id)",
+        "attempts": "(classification_id, attempt)",
+        "proposals": "(coding_run_id, doc_id, claim_id, theme_id)",
+        "attributes": "(coding_run_id, doc_id, claim_id)",
+        "decisions": "(coding_run_id, target_id)",
+        "assignments": "(coding_run_id, codebook_id, codebook_version, doc_id, theme_id, quote_id)",
+        "assignment_claims": "(assignment_id, doc_id, claim_id, decision_id)",
+        "novelty": "(coding_run_id, classification_id)",
+    }
+    section = text.split("### `Coding tables`\n", 1)[1].split("\n#", 1)[0]
+    for table, grain in grains.items():
+        assert f"| `{table}` | `{grain}` |" in section
 
 
 def test_the_documented_versions_are_the_packages() -> None:
@@ -297,5 +381,17 @@ def test_the_documented_support_versions_are_the_package() -> None:
     )
     assert (
         f'`"{support.SUPPORT_VERSION}"` (`earnings_themes.support.records.SUPPORT_VERSION`)'
+        in text
+    )
+
+
+def test_the_documented_coding_versions_are_the_package() -> None:
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert (
+        f"## earnings-themes coding records, schema version {coding.CODING_SCHEMA_VERSION}\n"
+        in text
+    )
+    assert (
+        f'`"{coding.CODING_VERSION}"` (`earnings_themes.coding.records.CODING_VERSION`)'
         in text
     )

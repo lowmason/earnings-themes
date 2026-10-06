@@ -3309,3 +3309,919 @@ encoding; `score` returns raw finite probabilities with identity/hash/latency/to
 or fixed unavailable reasons. There is no class decision, generation, aggregation,
 cutoff, wrapper chunking or alternative fallback. Configuration/runtime setup errors
 have fixed `model_mismatch`; inference errors return fixed `scorer_failed`.
+
+## earnings-themes coding records, schema version 1
+
+The Stage 9 deductive contracts (`earnings_themes.coding.records`) have coding
+policy version `"deductive-coding/1"` (`earnings_themes.coding.records.CODING_VERSION`).
+Core schema 2, validator `"3"`, Stage 6 records, extraction schema 1 and
+`"pointer-traversal/1"`, support schema 1 and `"semantic-support/1"` are unchanged.
+All coding parts are frozen, closed, strict Pydantic contracts. Integer literals,
+attempts, offsets, ceilings and counts reject bools, floats and numeric strings.
+`CodingRecord` is the separate base for persisted coding schema 1 records.
+
+`checked(value, model)` reparses JSON mode at untrusted boundaries. For a supplied
+Part, it first validates the Python-mode data, because JSON serialization can
+coerce an invalid copied boolean to an integer. Both dumps suppress serializer
+warnings, which can contain input text. Copied and constructed instances receive
+the same invariant checks as fresh inputs. Boundary errors are fixed
+`CodingError("malformed_record")` with source-bearing exception chaining suppressed.
+`CodingError` admits only exact string values in the union of support/core reasons
+and CodingProblem; unknown values become `unexpected_error` without printing the
+value. The reusable reason-field guard enforces that same vocabulary.
+
+Printable coding parts expose only their class and content SHA-256. Local JSON
+intentionally retains local attributes and prompt data and must not be logged.
+Tests use invented text and identifiers; these contracts do not open pilot text,
+gold, codebook examples or source artifacts. The contracts introduce no numeric
+acceptance policy. Topic, sentiment, direction and event type are optional
+model-derived attributes beside the unchanged claim, with no quality evaluation
+implied. Theme IDs alone represent themes and subthemes; hierarchy is resolved
+from the approved definition's parent_id during reply parsing and target resolution.
+
+### `CodingPart`
+
+Fieldless strict immutable base for new coding parts, with hash-only diagnostics,
+strict integer-literal guards and fixed reason validation. It inherits Part,
+separately from support SafePart so coding reasons retain their own vocabulary.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+
+### `CodingRecord`
+
+Base for persisted coding records. Integer schema literals receive validation
+before Pydantic can accept boolean or floating-point equivalents.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | 1 | Strict literal integer coding schema version, default 1 |
+
+### `CodingAttributes`
+
+Optional semantic annotations, separate from closed theme identifiers. No
+importance, rank, cluster label, acceptance, claim or replacement evidence field
+exists. Null means no supplied annotation, and the default for every field is null.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `topic` | nonblank string or null | Local model-derived topic, excluded from printable field output |
+| `sentiment` | positive, negative, neutral, mixed, unknown or null | Optional categorical sentiment; never an importance score |
+| `direction` | increase, decrease, unchanged, mixed, unknown or null | Optional categorical direction beside the claim |
+| `event_type` | nonblank string or null | Local model-derived event type, excluded from printable field output |
+
+### `CodingReply`
+
+Typed multi-label classifier response. Theme IDs must be distinct and nonblank;
+an empty tuple is allowed. Reply parsing and target resolution check frozen-codebook
+membership and hierarchy. Extra fields cannot request tools, rewrite
+definitions or evidence, create themes, or declare acceptance.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `theme_ids` | tuple[nonblank string, …] | Distinct proposed theme identifiers, preserving caller order |
+| `attributes` | CodingAttributes | Separate optional semantic annotations |
+
+### `CodingPolicy`
+
+Versioned classifier prompt and generation settings. Exactly two attempts are
+permitted provisionally; this retry ceiling does not decide semantic acceptance.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `coding_version` | deductive-coding/1 | Literal coding policy version, default deductive-coding/1 |
+| `prompt_text` | nonblank string | Caller-supplied local prompt, excluded from printable field output |
+| `prompt_hash` | SHA-256 | Prompt content hash |
+| `parameters` | Parameters | Existing frozen extraction generation Parameters, unchanged |
+| `max_attempts` | 2 | Strict literal integer 2, provisional retry ceiling |
+
+### `CodingCeilings`
+
+Explicit caller-supplied nonnegative ceilings, with no numeric defaults. Zero is
+allowed. No ceiling is an acceptance threshold or production inference budget.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `requests_per_claim` | strict int ≥ 0 | Classifier request ceiling for one claim, including retries |
+| `requests_per_document` | strict int ≥ 0 | Classifier request ceiling for one document |
+| `requests_per_run` | strict int ≥ 0 | Classifier request ceiling for one run |
+| `tokens_per_document` | strict int ≥ 0 | Classifier token ceiling for one document |
+| `tokens_per_run` | strict int ≥ 0 | Classifier token ceiling for one run |
+
+### `PolicyReference`
+
+Explicit acceptance-policy provenance bound to codebook ID, version and content
+hash, and the complete classifier and support configurations. A calibrated policy requires a
+calibration reference; a fixture policy requires null. No reference implements a
+threshold or approves a production policy.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `policy_id` | nonblank string | Explicit external acceptance-policy identifier |
+| `policy_hash` | SHA-256 | External policy content hash |
+| `kind` | fixture, calibrated | Fixture-only or externally calibrated policy provenance |
+| `codebook` | CodebookReference | Frozen codebook identifier, version and content hash |
+| `classifier_configuration_hash` | SHA-256 | Exact classifier proposal configuration to which the policy applies; required before first coding release |
+| `support_configuration_hash` | SHA-256 | Exact support configuration to which the policy applies |
+| `calibration_reference` | SHA-256 or null | Calibration artifact hash, present exactly for calibrated kind |
+
+### `PolicyVote`
+
+External policy decision and supporting quote identifiers. Accept requires at
+least one distinct quote ID; reject and review require an empty tuple. Subsequent
+consuming gates establish evidence validity and supporting contributions; a
+well-formed vote alone cannot establish acceptance.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `action` | accept, reject, review | Explicit external policy decision |
+| `supporting_quote_ids` | tuple[nonblank string, …] | Distinct original document-scoped quote IDs for accept; otherwise empty, default empty |
+
+### `CodingProblem`
+
+Fixed coding reason vocabulary. It also supplies permitted persisted reason
+strings alongside the unchanged support/core reason vocabulary.
+
+| Value | Meaning |
+| --- | --- |
+| `malformed_record` | Record fails the closed typed coding contract |
+| `malformed_reply` | Classifier response fails its closed reply contract |
+| `invalid_references` | Response or decision contains unusable identifiers |
+| `hierarchy_conflict` | Proposal contains an incompatible ancestor/descendant combination |
+| `input_changed` | Current input differs from its recorded binding |
+| `input_too_long` | Complete rendered input exceeds the explicit adapter limit |
+| `model_mismatch` | Model identity differs from the configured runtime |
+| `tool_call_refused` | Model response requests a tool that coding does not supply |
+| `transport_error` | Classifier transport fails without a usable response |
+| `cache_corrupt` | Cached artifact fails integrity or parsing checks |
+| `replay_miss` | Offline replay has no matching stored response |
+| `requests_exhausted` | Explicit classifier request ceiling prevents dispatch |
+| `tokens_exhausted` | Explicit token ceiling prevents dispatch |
+| `calibration_required` | No externally calibrated acceptance policy is supplied |
+| `policy_mismatch` | External policy bindings differ from the current inputs |
+| `policy_accept` | Explicit external policy requests acceptance, subject to consuming gates |
+| `policy_reject` | Explicit external policy rejects the target |
+| `policy_review` | Explicit external policy requests review |
+| `assessment_refused` | Stage 8 assessment processing refused the target |
+| `assessment_incomplete` | Stage 8 assessment processing lacks required signals |
+| `assessment_flagged` | Stage 8 assessment processing records review flags |
+| `missing_assessment` | Required support assessment is unavailable |
+| `invalid_contribution` | Selected quote lacks the required supporting contribution |
+| `no_theme_fit` | Valid empty proposal finds no theme fit, eligible for novelty review |
+| `mixed_codebook` | Inputs combine incompatible codebook identities or versions |
+| `fixture_policy` | Result uses an explicitly fixture-only acceptance policy |
+| `storage_corrupt` | Stored coding artifact fails integrity or parsing checks |
+| `unexpected_error` | Unknown caller reason or unexpected failure is redacted |
+
+### `CodingInput`
+
+`earnings_themes.coding.input.CodingInput` is a frozen transient dataclass,
+outside the persisted coding schema. Its `repr` and `str` omit all fields,
+including source text, claim wording, definitions, and prompts.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `sources` | SupportSources | Caller-supplied saved extraction records, immutable canonical bundles, approved codebook, and provenance hash |
+| `doc_id` | str | Immutable canonical document identity for the requested claim |
+| `claim_id` | str | Original Stage 7 claim identity, resolved within doc_id |
+| `probes` | tuple[ResolvedInput, …] | Complete integrity probes, ordered by theme_id, for every frozen theme; no proposals, assessments, or assignment decisions |
+| `input_hash` | SHA-256 | Digest of deductive-coding/1, document and claim identities, and the ordered Stage 8 input hashes |
+
+`resolve_coding_input(sources: SupportSources, doc_id: str, claim_id: str) ->
+CodingInput` resolves every theme through Stage 8's public `resolve_target`.
+The gate requires exact source dataclass and tuple container types, a nonempty
+approved codebook, its identifier/version/content hash, a valid theme graph,
+the original claim and every original quote link, strict offsets, current masks,
+and source-run/configuration bindings. A bad original link refuses the whole
+input even when another link is good. Each snapshot contains definition and
+inclusion/exclusion rules without example fields. Supplied example metadata
+participates in the frozen codebook hash; examples, discovery bundles, signed
+records, and files are never dereferenced or opened by this boundary.
+
+`reverify_coding_input(input: CodingInput) -> CodingInput` first revalidates each
+retained probe through Stage 8's public `reverify_input`, then resolves the
+complete current input anew. Equal-valued copied booleans or floats cannot
+stand in for strict offsets. The input hash, ordered target records, evidence,
+contexts, and unchanged claim must agree with the new resolution. Valid source
+changes still refuse with `input_changed`; integrity failures retain the first
+closed Stage 8/core reason from flags and missing reasons, with
+`invalid_references` as the fallback. Other malformed inputs produce the fixed
+`malformed_record` error with source-bearing exception chaining suppressed.
+No classifier, scorer, judge, acceptance policy, or filesystem operation is
+dispatched here. These checks establish integrity only, never semantic support
+or acceptance.
+
+### `CodingSubject`
+
+The classification request's integrity subject, kept separate from transported
+messages. It binds the original document and claim, complete coding input, frozen
+codebook reference, prompt and reply schema, and coding/verifier versions. It has
+no extraction-window or support-trial fields.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `doc_id` | nonblank string | Original immutable canonical document identity |
+| `claim_id` | nonblank string | Original Stage 7 claim identity within doc_id |
+| `input_hash` | SHA-256 | Complete ordered CodingInput digest |
+| `codebook` | CodebookReference | Frozen approved codebook identifier, version and content hash |
+| `prompt_hash` | SHA-256 | Hash of exact caller-supplied prompt UTF-8 bytes |
+| `schema_hash` | SHA-256 | Digest of the generated CodingReply JSON schema |
+| `coding_version` | deductive-coding/1 | Literal coding policy version, default deductive-coding/1 |
+| `validator_version` | nonblank string | Current exact-evidence validator version |
+
+### `CodingRequest`
+
+A structural Stage 7 ChatRequest with a coding subject. Printable representations
+expose only the coding part's content hash. Local JSON contains supplied data and
+must not be logged. The request has no alternative source text or evidence repair.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `messages` | tuple[Message, …], length ≥ 2 | System prompt and one bounded JSON user payload; excluded from printable field output |
+| `reply_schema` | dict[str, Any] | Generated closed CodingReply JSON schema; recursively accepts only JSON primitives, finite numbers, lists and dictionaries with string keys; excluded from printable field output |
+| `parameters` | Parameters | Existing frozen extraction generation settings, unchanged |
+| `subject` | CodingSubject | Non-transported coding integrity bindings |
+
+### `ProposalRecord`
+
+One explicit proposed claim–theme target, before assessment or acceptance. Several
+proposals may share the same original document and claim; evidence remains linked
+through the unchanged source claim rather than copied into each proposal.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | 1 | Strict literal integer coding schema version, default 1 |
+| `proposal_id` | nonblank string | Proposal identity |
+| `coding_run_id` | nonblank string | Coding run that produced the proposal |
+| `classification_id` | nonblank string | Classification result that selected this target |
+| `target` | Target | Original source run, document, claim, selected theme and frozen codebook reference |
+| `input_hash` | SHA-256 | Complete ordered CodingInput digest |
+
+### `AttributeRecord`
+
+Separate optional model-derived annotations beside the unchanged Stage 7 claim.
+They cannot change evidence, supply theme identifiers or confer acceptance.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | 1 | Strict literal integer coding schema version, default 1 |
+| `coding_run_id` | nonblank string | Coding run that produced the annotations |
+| `doc_id` | nonblank string | Original immutable canonical document identity |
+| `claim_id` | nonblank string | Original Stage 7 claim identity within doc_id |
+| `input_hash` | SHA-256 | Complete ordered CodingInput digest |
+| `attributes` | CodingAttributes | Separate nullable topic, sentiment, direction and event_type |
+
+### `NoveltyItem`
+
+A valid empty classification's pointer-only human-review item. It creates no
+production theme identifier, inferred definition, copied quote, or annotation.
+The novelty identity binds coding run, classification, input hash and no_theme_fit.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | 1 | Strict literal integer coding schema version, default 1 |
+| `novelty_id` | nonblank string | novelty- followed by the digest of coding_run_id, classification_id, input_hash and reason |
+| `coding_run_id` | nonblank string | Coding run that produced the unmatched result |
+| `classification_id` | nonblank string | Valid empty classification result |
+| `source_run_id` | nonblank string | Original Stage 7 extraction run identity |
+| `doc_id` | nonblank string | Original immutable canonical document identity |
+| `claim_id` | nonblank string | Original Stage 7 claim identity within doc_id |
+| `codebook` | CodebookReference | Frozen approved codebook identifier, version and content hash |
+| `input_hash` | SHA-256 | Complete ordered CodingInput digest |
+| `original_quote_ids` | tuple[nonblank string, …] | Original claim links in their original order; scoped by doc_id |
+| `reason` | no_theme_fit | Literal unmatched reason, default no_theme_fit |
+
+`render_coding(input: CodingInput, policy: CodingPolicy) -> CodingRequest` first
+reverifies the complete input through the public coding input gate and validates
+the policy and exact prompt hash. It renders the unchanged claim, individually
+bounded exact quoted slices, separately labeled attribution-context slices, every
+ordered ThemeSnapshot, and exact frozen multi-label/boilerplate strings in one
+JSON user message. Offsets remain canonical Python character spans; no text is
+normalized, stitched or clipped. Examples are not opened or rendered, parent
+rules are not inherited, sector tags are not inferred issuer classifications,
+and no extractor rationale or accepted status enters the payload. Unstructured
+generation appends the generated closed reply schema to the system prompt while
+preserving the separate exact prompt and schema hashes.
+
+`parse_coding_reply(reply: ModelReply, input: CodingInput, model_id: str) ->
+CodingReply` repeats input verification, validates the reply, refuses tool calls
+or model mismatch, then parses the closed JSON response. Malformed JSON, extra
+keys and invalid attribute values produce fixed malformed_reply; unknown theme
+IDs produce invalid_references. It considers the complete frozen snapshot and
+refuses any selected ancestor together with its descendant as hierarchy_conflict.
+Sibling selections, child-only selections, and parent-only selections remain
+possible under each theme's own definition; there is no automatic parent target
+or candidate pruning. A valid empty tuple remains a valid unmatched result.
+
+`targets_for(input: CodingInput, reply: CodingReply) -> tuple[Target, ...]` repeats
+input/reply validation and frozen membership/hierarchy checks, returning only
+explicit selected original targets sorted by theme ID. `novelty_for(input,
+reply, *, coding_run_id, classification_id) -> NoveltyItem | None` repeats input
+and reply validation and returns the original evidence pointers exactly when
+the supplied valid reply is empty. Nonempty parsed proposals return None.
+`unusable_feedback(reason: str) -> str` formats a closed reason as
+`Unusable reply: <closed reason>. Return the closed JSON response only.` Unknown
+caller reasons become unexpected_error, without source or model wording.
+
+These seams render and parse only; they dispatch no inference and perform no
+retry. Classifier transports and raw caches below enforce structural request and
+runtime bindings. Bounded attempts and comparison with the current complete
+source/policy/generated schema belong to subsequent coding orchestration.
+
+### Classifier protocol and local binding
+
+`earnings_themes.coding.adapters.Classifier` exposes `identity: JudgeIdentity`,
+`count_tokens(request: CodingRequest) -> int`, and `complete(request:
+CodingRequest) -> ModelReply`. The reused JudgeIdentity represents the classifier
+here; its explicit family, runtime file manifest, input/output ceilings and local
+weight license are retained without choosing or loading weights.
+
+`ScriptedClassifier(script, token_counter, identity)` is an invented-reply fake
+with a safe request-count-only representation and a local requests list. It
+requires scripted hosting. Counts must be nonnegative exact integers; bools,
+floats and numeric strings are refused. Completion enforces full input plus
+reserved-output and separate output limits before dispatch.
+
+`earnings_themes.coding.local.ClassifierBinding(identity, transport,
+token_counter)` repeats identity preflight before dispatch and after the callback.
+Local transport identity must match hosting, model ID, full manifest-derived
+weights hash, runtime and runtime version. Missing licensed local weights or an
+empty local file manifest is refused. Scripted transports must match the explicit
+scripted hosting/model identity. Public protocol imports never import this
+concrete binding or construct a client. Neither coding module imports httpx;
+caller-supplied Stage 7 LocalAdapter owns loopback HTTP, credentials refusal,
+tool-free requests and redirect refusal.
+
+Both classifier seams detach and strictly reparse full requests and identities.
+Full request fingerprints before/after counters and transport callbacks detect
+schema, message, parameter and subject mutation; identity changes are also
+refused. Limits include the full request and reserved output, with no clipping.
+The caller must supply a complete runtime tokenizer/chat-template/schema counter;
+no heuristic or production tokenizer is introduced. Unexpected diagnostics use
+fixed unexpected_error; CodingTransportError retains a supplied raw refused
+ModelReply and usage with only the fixed transport reason printable. This guard
+does not establish semantic support or current source/policy correspondence.
+
+### `CodingCacheEntry`
+
+One local raw classifier response, including refused attempts and usage, with no
+accepted decision or assessment verdict. Its strict shape has an independent
+coding schema 1 and a content-hash-only representation.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | literal 1 | Separate persisted coding schema |
+| `key` | SHA-256 | Digest of coding schema/version and complete strictly reparsed request/identity |
+| `request` | CodingRequest | Full rendered messages, closed schema, generation parameters and integrity subject |
+| `identity` | JudgeIdentity | Explicit classifier family, runtime, ceilings, hosting and local license bindings |
+| `input_tokens` | integer ≥ 0 | Caller-counted full request tokens; retained for tokenizer-free replay accounting and bound in raw hash |
+| `reply` | ModelReply | Unmodified raw response, transport-reported usage, model, tool indicator and latency |
+| `reply_hash` | SHA-256 | Digest of the raw reply, fixed refusal reason and counted input tokens |
+| `refusal_reason` | transport_error, model_mismatch, tool_call_refused or null | Raw transport refusal only; unknown, semantic and acceptance reasons are refused |
+
+`CodingCache(directory: Path, mode: Literal["live", "replay"])` selects a local
+raw-artifact directory without startup I/O. Mode strings are exact; neither mode
+provides fresh-call bypass, and lookup performs no inference. The coding cache
+namespace is separate from extraction/support; callers choose its directory.
+`get(request, identity) -> CodingCacheEntry | None` reads only the complete key's
+`<64 lowercase hex>.json` file, returning None only when it is absent. It rechecks
+the entry's key, request, identity and raw reply/count/refusal hash; malformed,
+mismatched, renamed or symlinked entries yield fixed cache_corrupt.
+
+`put(request, identity, reply, *, input_tokens, refusal_reason=None) -> str`
+strictly validates a complete snapshot and writes canonical JSON through a unique
+tempfile sibling. Publication creates a hard link without replacing an existing
+entry, followed by temporary-file cleanup. An identical existing entry is reused;
+different content is refused and preserved. Write/publication/cleanup failures
+use storage_corrupt and source/path text never enters errors. This is sequential
+immutable publication, with no claim of concurrent-writer safety. Files remain
+local and must not be logged or committed.
+
+`artifact_hash(reference: str) -> str` accepts only the exact digest filename,
+revalidates the complete entry and hashes the artifact bytes. `coding_key` includes
+`coding_schema=1`, `coding_version="deductive-coding/1"`, the complete request and
+identity. `raw_reply_hash` binds reply, refusal_reason and input_tokens. A
+structurally valid changed request or identity yields a cache miss; the subsequent
+classification boundary must independently compare current sources, policy and
+generated closed schema before dispatch/publication. Evidence still passes
+current deterministic gates at every consuming boundary. A cached response/count
+does not establish evidence quality, thematic support or acceptance. Stage 11
+owns production model selection, calibration and future fresh-call bypass.
+
+### `CodingPolicySnapshot`
+
+Hash-only manifest policy. Unlike the transient CodingPolicy, this snapshot
+contains no source-bearing prompt text. Its hash binds the same generation
+parameters and provisional two-attempt validation ceiling.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `coding_version` | deductive-coding/1 | Literal coding version |
+| `prompt_hash` | SHA-256 | Hash of the caller-supplied local prompt |
+| `parameters` | Parameters | Exact generation settings |
+| `max_attempts` | strict literal 2 | Provisional validation retry ceiling |
+
+### `ClassificationRecord`
+
+One requested document-qualified claim per coding run. Completed means a usable
+closed proposal reply, including a valid empty reply. It establishes neither
+thematic support nor acceptance. Refused source inputs have no attempts or
+semantic rows; incomplete classifications never become novelty.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | strict literal 1 | Separate coding schema |
+| `classification_id` | nonblank string | classification- plus digest of coding_run_id, doc_id, claim_id and input_hash |
+| `coding_run_id` | nonblank string | Caller-selected coding run identity |
+| `doc_id` | nonblank string | Immutable canonical document identity |
+| `claim_id` | nonblank string | Original document-qualified claim identity |
+| `input_hash` | SHA-256 | Resolved CodingInput digest, or explicitly refused-only provenance fingerprint |
+| `codebook` | CodebookReference | Exact frozen ID/version/content hash |
+| `status` | completed, refused, incomplete | Classification processing outcome |
+| `reason` | closed fixed reason or null | Null exactly for completed; no source or model wording |
+| `attempt_ids` | tuple[nonblank string, …] | At most two distinct attempts in ordinal order; empty for refused |
+| `theme_ids` | tuple[nonblank string, …] | Sorted distinct explicit proposals; empty for refused/incomplete |
+
+For a preflight source refusal only, input_hash is
+`digest({"kind": "refused-coding-input/1", "coding_version": CODING_VERSION,
+"source_run_hash": source_run_hash, "doc_id": doc_id, "claim_id": claim_id,
+"codebook": reference.model_dump(mode="json")})`. This identifies an unresolved
+boundary; it is never presented as verified evidence. The source-run hash is
+`digest({"record": source_run_record JSON, "provenance_hash": provenance_hash})`,
+matching the Stage 8 source binding. The source run retains extractor identity,
+configuration and document processing outcomes.
+
+### `CodingAttempt`
+
+One complete transmitted request or visible blocked attempt, preserving bounded
+ordinal order. Actual usage is retained even for unusable/refused replies. Cached
+actual counts describe the earlier operation and charge no new allowance.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | strict literal 1 | Separate coding schema |
+| `attempt_id` | nonblank string | Classification ID plus literal -attempt-1 or -attempt-2 |
+| `classification_id` | nonblank string | Owning classification |
+| `doc_id` | nonblank string | Original canonical document identity |
+| `claim_id` | nonblank string | Original document-qualified claim identity |
+| `attempt` | strict literal 1 or 2 | Validation attempt ordinal |
+| `request_hash` | SHA-256 | Digest of the full transmitted messages/schema/parameters/subject |
+| `prompt_hash` | SHA-256 | Base prompt content hash |
+| `schema_hash` | SHA-256 | Exact generated closed CodingReply schema hash |
+| `input_hash` | SHA-256 | Complete current CodingInput digest |
+| `input_tokens` | strict int ≥ 0 | Counted full request including schema/template; retained on cache hits; zero on replay miss |
+| `reserved_tokens` | strict int ≥ 0 | Counted input plus configured maximum output for a fresh dispatch; zero on blocked/cache attempts |
+| `actual_prompt_tokens` | strict int ≥ 0 or null | Transport-reported prompt usage; unknown remains null |
+| `actual_completion_tokens` | strict int ≥ 0 or null | Transport-reported completion usage; unknown remains null |
+| `unreported` | bool | True for a dispatched/cached operation lacking actual usage |
+| `cached` | bool | Raw local response reuse, with zero new reservation |
+| `latency_ms` | strict int ≥ 0 | Original transport latency; zero when no reply exists |
+| `raw_ref` | confined digest.json or null | Separate local cache reference; no paths or raw wording |
+| `raw_hash` | SHA-256 or null | Raw reply/refusal/input-count digest, distinct from artifact byte hash |
+| `reason` | closed fixed reason or null | Attempt failure, null for a usable closed reply |
+
+### `ProposalRunRecord`
+
+Pre-assessment coding manifest, distinct from extraction and support manifests.
+Prompt text, requests and replies stay in the separate local cache. No support
+manifest, acceptance policy, decisions or assignments exist at this boundary.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | strict literal 1 | Separate coding schema |
+| `run_id` | nonblank string | Caller-selected coding-run ID |
+| `started_at` | aware UTC datetime | Caller-supplied zero-offset run time |
+| `source_run_id` | nonblank string | Explicit source extraction-run identity |
+| `source_run_hash` | SHA-256 | Source extraction manifest plus provenance hash |
+| `documents` | sorted tuple[(doc_id, SHA-256), …] | Complete source-run document/canonical-hash mapping |
+| `codebook` | CodebookReference | Frozen codebook ID/version/content hash |
+| `classifier_identity` | JudgeIdentity | Explicit family/runtime/hosting/license and input/output limits |
+| `coding_policy` | CodingPolicySnapshot | Hash-only prompt/generation/version/retry policy |
+| `ceilings` | CodingCeilings | Explicit shared request/token ceilings |
+| `cache_mode` | live, replay | Explicit raw-cache operation mode; no fresh-call bypass |
+| `configuration_hash` | SHA-256 | Exact configuration recipe described below |
+| `requested_claim_order` | tuple[(doc_id, claim_id), …] | Distinct caller-requested order, including refused/incomplete claims |
+| `schema_hash` | SHA-256 | Exact generated closed CodingReply schema |
+| `coding_version` | deductive-coding/1 | Literal coding implementation/policy version |
+| `validator_version` | nonblank string | Current deterministic exactness verifier version |
+| `software` | sorted tuple[(nonblank name, nonblank value), …] | Caller-supplied software identity with lowercase 64-hex lock_hash |
+| `counts_by_status` | sorted tuple[(classification status, strict int ≥ 0), …] | Requested classifications by final processing status |
+| `counts_by_reason` | sorted tuple[(closed fixed reason, strict int ≥ 0), …] | Final classification reasons; no invented no-theme reason on incomplete |
+| `requests` | strict int ≥ 0 | Fresh reservations including retries; excludes cache hits |
+| `prompt_tokens` | strict int ≥ 0 | Sum of known actual fresh prompt usage; unreported counts remain explicit |
+| `completion_tokens` | strict int ≥ 0 | Sum of known actual fresh completion usage |
+| `reserved_tokens` | strict int ≥ 0 | Sum of original fresh full input/output reservations |
+| `charged_tokens` | strict int ≥ 0 | Reconciled actual usage plus intact reservations for unknown usage; overspend is not clamped |
+| `unreported` | strict int ≥ 0 | Fresh dispatched operations with unknown actual usage |
+| `cache_hits` | strict int ≥ 0 | Reused raw attempts, including cached transport refusals |
+| `latency_ms` | strict int ≥ 0 | Sum of fresh original transport latency |
+| `billable_cost` | none, self-hosted | Literal; no hosted inference in the required path |
+| `artifact_hashes` | sorted tuple[(raw/digest.json, SHA-256), …] | Validated external raw-cache artifact byte hashes; table hashes arrive at storage |
+
+The configuration hash digests source_run_id, source_run_hash, documents,
+codebook reference JSON, classifier_identity JSON, coding_policy snapshot JSON,
+ceilings JSON, requested_claim_order, schema_hash, coding_version,
+validator_version and the explicit cache_mode. Run time and run ID are operational
+metadata, outside this configuration digest; software/lock identity is retained
+separately. Cache mode may change the configuration hash between live and replay,
+while reconstructed proposals keep the same coding-run/input identity.
+
+`CodingAllowance(ceilings, *, run_id)` shares strict nonnegative claim/document/run
+request counts and document/run charged token totals. reserve checks request
+ceilings before token ceilings and dispatch; reconcile adds actual minus reserved
+usage, without clamping truthful overspend. Unknown usage retains the full
+reservation and increments unreported. Cache hits spend no allowance.
+
+`classify_claim(input, classifier, policy, allowance, *, cache) -> ClassificationResult`
+returns a frozen transient container for record, attempts, proposals, optional
+attribute and optional novelty. It validates complete generated/transmitted
+request correspondence with current source, prompt, schema, parameters, subject
+and runtime before dispatch, after cache reuse/callbacks and before publication.
+Only malformed_reply, invalid_references, hierarchy_conflict, tool_call_refused,
+model_mismatch and transport_error retry, at most twice. Feedback is one bounded
+fixed-reason message appended to the original request. A valid empty proposal is
+final and enters pointer-only novelty; corruption and unexpected errors abort
+publication with fixed reasons and keep prior raw/accounting local.
+
+`propose_run(run_id, sources, claim_order, classifier, policy, ceilings, *, cache,
+started_at, software) -> ProposalRun` preflights run metadata and every requested
+claim before any dispatch, then preserves caller order with one shared allowance.
+ProposalRun is a frozen transient container for record, classifications, attempts,
+proposals, attributes and novelty; its targets property returns explicit valid
+Stage 8 targets. All original quote links remain source-owned. Final publication
+reconstructs request hashes and raw bindings and repeats current evidence gates.
+The runner performs no support inference, acceptance decision, command discovery
+or processing-state write.
+
+### `AssignmentDecision`
+
+One row per explicit proposal target, separate from the raw support processing
+outcome. An `assessed` outcome without an externally bound policy is
+`review/calibration_required`. Refused, incomplete and flagged assessments bypass
+policy evaluation and retain their flags and missing reasons. Missing target
+assessments are visible `review/missing_assessment`, with null support status;
+they never enter novelty. Fixture-policy accepted rows retain fixture provenance
+and require explicit fixture scope at downstream production consumption.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | strict literal 1 | Separate coding schema |
+| `coding_run_id` | nonblank string | Original proposal-run identity |
+| `decision_id` | nonblank string | Content-derived decision identity; recipe below is revalidated |
+| `doc_id` | nonblank string | Original immutable document identity, qualifying claim and quote IDs |
+| `claim_id` | nonblank string | Unchanged original claim identifier |
+| `theme_id` | nonblank string | Explicit proposed frozen theme identifier |
+| `codebook` | CodebookReference | Frozen codebook ID/version/content hash |
+| `target_id` | nonblank string | Matching stored Stage 8 target identity; currently resolved identity when assessment is missing |
+| `support_run_hash` | SHA-256 | Exact support-run manifest digest, including published table and external raw artifact hashes |
+| `support_status` | ReviewStatus or null | Raw refused/incomplete/flagged/assessed processing result; null for missing assessment |
+| `flags` | sorted distinct tuple[nonblank string, …] | Raw support semantic flags, never votes or numeric cutoffs |
+| `missing` | sorted distinct tuple[fixed reason, …] | Raw unavailable-signal/refusal reasons, or missing_assessment |
+| `status` | accepted, rejected, review, refused | Separate assignment-policy decision |
+| `reason` | fixed reason | policy_accept/reject/review, calibration_required, assessment_refused/incomplete/flagged, or missing_assessment; checked against statuses |
+| `policy` | PolicyReference or null | Exact external policy provenance, null for no-policy decisions |
+| `supporting_quote_ids` | sorted distinct tuple[nonblank string, …] | Nonempty original eligible document-scoped quote IDs only for accepted decisions; otherwise empty |
+| `proposal_hash` | SHA-256 | Complete proposal-run content digest described below |
+| `input_hash` | SHA-256 | Original complete CodingInput hash, re-resolved at consumption |
+
+`DecisionInput` is a frozen dataclass with disabled transient repr and fields
+`target: TargetRecord`, `evidence: tuple[EvidenceReference, ...]`,
+`entailment: tuple[EntailmentSignal, ...]`, `trials: tuple[JudgeTrial, ...]`,
+`outcome: ReviewOutcome`, and `eligible_quote_ids: tuple[str, ...]`. It retains
+all original evidence and raw per-quote/joint/family/presentation views. The
+eligible set includes a quote only when all four complete independent trials
+label it `supporting`. This is an eligibility restriction, never sufficient
+acceptance; contextual companions remain raw provenance.
+
+`AssignmentPolicy.reference: PolicyReference` and
+`evaluate(view: DecisionInput) -> PolicyVote` form a pure deterministic external
+policy seam. No accepting implementation is shipped in the package. Tests supply
+an explicit fixture-only policy. Calibrated references require an artifact hash,
+but this declaration is not independent evidence of calibration or approval;
+Stage 11 must produce and approve that artifact and its production configuration.
+Stage 9 loads no labels, sets no cutoff, pools no score and approves no model.
+
+`decide_assignments(proposals: ProposalRun, support: StoredSupportRun,
+sources: SupportSources, policy: AssignmentPolicy | None) -> DecisionSet` first
+calls public `reverify_support_run` for complete support graph/accounting and
+current evidence/theme/context hashes, then recomputes proposed inputs through
+public `resolve_coding_input`. Full frozen Target identities must match exactly;
+unknown extra or duplicate assessments refuse. Raw outcomes are independently
+derived by Stage 8's stored validation. The policy codebook and both configuration
+hashes are rebound before evaluation. After reference-property access and policy
+callbacks, the gate checks the complete proposal and support contents, raw view,
+reference and current source resolution again. External exceptions render only
+`unexpected_error`, with suppressed causes. Policies cannot alter evidence,
+claims, themes or safety outcomes.
+
+`DecisionSet` is a frozen dataclass with disabled transient repr and fields
+`decisions`, `proposals`, `support`, `sources`, `policy`, `proposal_hash`,
+`support_run_hash`, and `source_run_hash`. The retained ProposalRun,
+StoredSupportRun and SupportSources preserve all original raw signals and
+source/codebook/context provenance; hashes are common bindings across decisions.
+These transient references require reverification at downstream consumption.
+
+All digests use core's SHA-256 over UTF-8 canonical JSON. The exact recipes are:
+
+- `proposal_run_hash(proposals)`: digest of `record` JSON and ordered JSON arrays
+  `classifications`, `attempts`, `proposals`, `attributes`, and `novelty`.
+- `support_run_hash(support)`: digest of `support.record` JSON. Its artifact hashes
+  bind published Parquet and external raw cache bytes. This seam does not reread
+  those external bytes; the Stage 8 reader already validates published tables.
+- `source_run_hash`: the inherited digest of extraction `record` JSON and
+  `provenance_hash`, required to agree across proposal and support manifests.
+- `decision_id`: `"decision-" + digest({"target_id": target_id,
+  "proposal_hash": proposal_hash, "support_run_hash": support_run_hash,
+  "policy": policy_reference_json_or_null})`.
+
+The decision module writes no state or files and runs no classifier, scorer,
+judge or inference callback. Its saved policy provenance is consumed by the
+assignment projection below. Coverage/state/export belong to Stage 10,
+calibration/thresholds and fresh-call stability to Stage 11.
+
+### `Assignment`
+
+One accepted quote–theme association at document-qualified grain
+`(coding_run_id, codebook_id, codebook_version, doc_id, theme_id, quote_id)`.
+Multiple themes share the original quote ID; multiple supporting claims link
+to this row through `AssignmentClaimLink`. There is no copied quote text or
+implicit parent/family roll-up. Boilerplate mask IDs remain audit references.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | strict literal 1 | Separate coding schema |
+| `assignment_id` | nonblank string | `"assignment-" + digest(assignment_key)`, using the grain tuple above |
+| `coding_run_id` | nonblank string | Original proposal-run identity |
+| `doc_id` | nonblank string | Immutable document identity qualifying the original quote ID |
+| `quote_id` | nonblank string | Unchanged original document-scoped quote identifier |
+| `theme_id` | nonblank string | Explicit frozen theme identifier, including a subtheme when proposed |
+| `codebook` | CodebookReference | Frozen codebook identifier, version and content hash |
+| `canonical_hash` | SHA-256 | Saved canonical hash from the matching Stage 8 EvidenceReference |
+| `start` | strict nonnegative integer | Saved zero-based Python character start offset |
+| `end` | strict positive integer | Saved half-open end offset; greater than start |
+| `validator_version` | nonblank string | Saved evidence verifier version, rebound at current evidence consumption |
+| `mask_ids` | distinct tuple[nonblank string, …] | Saved overlay-mask identities; never a headline filter at this stage |
+| `support_run_hash` | SHA-256 | Matching support-run manifest digest |
+| `policy_hash` | SHA-256 | Exact retained common external policy hash |
+| `policy_kind` | fixture or calibrated | Scope provenance; fixture rows refuse default production frame selection |
+
+### `AssignmentClaimLink`
+
+One supporting source claim/decision link to an assignment. Links deduplicate at
+`(assignment_id, doc_id, claim_id, decision_id)` and keep contradictory claim
+interpretations and their separate AttributeRecords reachable.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | strict literal 1 | Separate coding schema |
+| `assignment_id` | nonblank string | Projected quote–theme row identity |
+| `doc_id` | nonblank string | Original document identity qualifying the claim |
+| `claim_id` | nonblank string | Unchanged original source claim identifier |
+| `decision_id` | nonblank string | Accepted saved assignment decision identity |
+| `target_id` | nonblank string | Matching Stage 8 target identity |
+
+`project_assignments(decisions: DecisionSet, support: StoredSupportRun) ->
+tuple[tuple[Assignment, ...], tuple[AssignmentClaimLink, ...]]` validates strict
+transient containers, the matching retained support run, common proposal/support/
+source hashes, and the frozen policy codebook and classifier/support configuration
+references. Public `reverify_support_run` checks the complete stored support graph
+and current canonical evidence. Public `resolve_coding_input` rebinds all proposed
+claim/theme inputs. Each saved decision must correspond uniquely to one proposal
+and the actual support outcome, flags and missing reasons. Accepted references
+must be nonempty and remain eligible under public `eligible_quote_ids`; contextual,
+irrelevant, contradicting or uncertain quotes cannot be promoted. The matching
+`(target_id, doc_id, quote_id)` EvidenceReference supplies the unchanged span,
+hash, masks and verifier version. Rows and links are sorted for stable output;
+conflicting rows at the same assignment key refuse with `invalid_references`.
+
+These are structural provenance and current evidence/safety checks. Projection
+does not call or manufacture an accepting policy, reproduce an external policy's
+vote, or establish that a declared calibrated artifact is approved. Full decision
+recomputation with the actual external pure policy belongs to the coding store
+consuming gate. Empty projection preserves its original decision audit and does
+not establish no themes or a perfect exactness rate.
+
+`assignment_frame(rows: Sequence[Assignment], *, scope="production") ->
+pl.DataFrame` reparses rows, refuses mixed `(codebook_id, codebook_version,
+content_hash)` with `mixed_codebook`, and requires calibrated rows for production
+or exclusively fixture rows for fixture scope. Invalid/mixed scopes refuse with
+`fixture_policy`; duplicate assignment keys or IDs refuse with
+`invalid_references`. Its explicit `ASSIGNMENT_SCHEMA` has exactly the Assignment
+fields: integer fields use Polars Int64, strings use String, masks use List(String),
+and codebook uses a Struct of ID/version/hash with Int64 version. Empty sequences
+keep this same schema. Nonsequences and unrepresentable frame values refuse with
+fixed `malformed_record`, without a pandas intermediary or input-bearing errors.
+Frame construction validates supplied records and scope; it does not replace the
+source-aware projection or downstream consuming gate.
+
+### `CodingRunRecord`
+
+Immutable coding-publication manifest, distinct from the original proposal and
+support manifests. The eight explicit analytical tables are `classifications`,
+`attempts`, `proposals`, `attributes`, `decisions`, `assignments`,
+`assignment_claims`, and `novelty`, each published as its named Parquet file.
+Each schema has exactly its row-model fields with explicit Int64, Boolean,
+String, list and named struct dtypes, including nullable and empty tables.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | strict literal 1 | Separate coding schema |
+| `run_id` | nonblank string | Original caller-selected coding-run ID |
+| `started_at` | aware UTC datetime | Original zero-offset run time |
+| `source_run_id` | nonblank string | Bound extraction-run identity |
+| `source_run_hash` | SHA-256 | Extraction manifest JSON plus source provenance hash |
+| `documents` | sorted tuple[(doc_id, SHA-256), …] | Complete original source-run document/canonical-hash mapping |
+| `codebook` | CodebookReference | Frozen codebook ID/version/content hash |
+| `classifier_identity` | JudgeIdentity | Original classifier family/runtime/hosting/license and limits |
+| `coding_policy` | CodingPolicySnapshot | Hash-only coding prompt/parameters/version/retry snapshot |
+| `ceilings` | CodingCeilings | Original explicit shared request/token ceilings |
+| `cache_mode` | live, replay | Original cache operation, including empty/refused runs |
+| `configuration_hash` | SHA-256 | Unchanged Task 5 coding configuration hash |
+| `requested_claim_order` | tuple[(doc_id, claim_id), …] | Original distinct requested order, including refused/incomplete claims |
+| `schema_hash` | SHA-256 | Exact closed generated CodingReply schema hash |
+| `coding_version` | deductive-coding/1 | Literal coding implementation version |
+| `validator_version` | nonblank string | Current deterministic exactness verifier version |
+| `software` | sorted tuple[(name, value), …] | Original software identity including SHA-256 lock_hash |
+| `counts_by_status` | sorted tuple[(classification status, strict int ≥ 0), …] | Recomputed final classification counts |
+| `counts_by_reason` | sorted tuple[(closed fixed reason, strict int ≥ 0), …] | Recomputed final classification reason counts |
+| `requests` | strict int ≥ 0 | Fresh dispatch reservations, excluding cache hits |
+| `prompt_tokens` | strict int ≥ 0 | Known actual fresh prompt tokens |
+| `completion_tokens` | strict int ≥ 0 | Known actual fresh completion tokens |
+| `reserved_tokens` | strict int ≥ 0 | Original fresh input/output reservations |
+| `charged_tokens` | strict int ≥ 0 | Actual known usage plus preserved unknown-usage reservations |
+| `unreported` | strict int ≥ 0 | Fresh operations whose actual usage remains unknown |
+| `cache_hits` | strict int ≥ 0 | Reused raw attempts; historical usage creates no new charge |
+| `latency_ms` | strict int ≥ 0 | Original fresh transport latency total |
+| `billable_cost` | none, self-hosted | Literal required-path cost provenance |
+| `artifact_hashes` | sorted tuple[(confined filename, SHA-256), …] | Exact eight published table-byte hashes plus external raw/digest.json bindings |
+| `proposal_hash` | SHA-256 | Original ProposalRunRecord plus ordered five proposal row arrays |
+| `support_run_id` | nonblank string | Consumed support-run identity, checked against supplied support at consumption |
+| `support_run_hash` | SHA-256 | Complete published support manifest JSON hash |
+| `support_configuration_hash` | SHA-256 | Consumed support configuration, checked at consumption and against policy |
+| `policy` | PolicyReference or null | Explicit acceptance-policy/configuration/calibration reference; null requires review |
+| `counts_by_decision` | sorted tuple[(accepted/rejected/review/refused, strict int ≥ 0), …] | Recomputed decision status counts |
+| `counts_by_decision_reason` | sorted tuple[(closed fixed reason, strict int ≥ 0), …] | Recomputed decision reason counts |
+
+`CodingRun` is a frozen, non-rendering dataclass containing `record` and those
+eight row tuples. The original `ProposalRunRecord` is reconstructed using exactly
+its original field registry, with `artifact_hashes` restricted to the exact
+allowed `raw/<ref>` subset. Its original metadata/configuration/counts are
+preserved. `proposal_run_hash` then binds that reconstructed manifest plus the
+ordered classifications, attempts, proposals, attributes and novelty JSON arrays;
+publication's new table hashes never replace the original proposal identity.
+The unchanged configuration recipe is documented under `ProposalRunRecord`.
+
+`write_coding_run(directory: Path, result: CodingRun, sources: SupportSources,
+support: StoredSupportRun, policy: AssignmentPolicy | None) -> Path` validates
+structure and repeats current evidence/policy checks before any output I/O. It
+publishes through a unique sibling and rename, cleans failed partials and refuses
+an existing destination with fixed `coding_destination_exists`. Other public
+read/write errors use fixed `storage_corrupt`. Sequential publication does not
+claim coordinated concurrent-writer safety; Stage 15 owns that work.
+
+`read_coding_run(directory: Path) -> CodingRun` reads only `run.json` and those
+eight named files, rejects symlinks, verifies table byte hashes, exact schemas,
+closed JSON-mode records, row relationships, original proposal identity and
+dispatch/reservation accounting. It checks complete raw-reference/hash bindings
+without opening external raw-cache bytes. Those bindings are provenance, not a
+claim of external byte verification. Structural reading does not verify current
+source text, masks, support identity or policy approval.
+
+`reverify_coding_run(stored: CodingRun, sources: SupportSources,
+support: StoredSupportRun, policy: AssignmentPolicy | None) -> DecisionSet`
+repeats the public support and full coding-input evidence gates, including
+unmatched/incomplete/refused classifications. Refused-only fingerprints must
+repeat the same unresolved reason; repairing their evidence refuses the saved
+boundary. It repeats frozen IDs/hierarchy and pointer-only novelty bindings,
+checks the supplied support and policy configuration, and calls the actual pure
+`decide_assignments` with the supplied policy. It compares decisions and Task 7
+assignment/link projection in canonical JSON bytes and repeats all requested
+input gates after external policy callbacks. Changed/absent policy visibly
+refuses a saved accepting run. No inference, cache loading or reclassification
+occurs. Stage 11 still owns calibration, production policy approval and quality.
+
+### Public coding library
+
+`earnings_themes.coding` exports the actual record classes, coding schema/version,
+`SupportSources`, `CodingInput`, `ProposalRun`, `AssignmentPolicy`, `DecisionInput`,
+`DecisionSet`, `CodingRun`, and the resolution/reverification, proposal, decision,
+assignment projection/frame, and write/read/reverify functions documented above.
+Existing public record helpers remain available. Its initializer creates no client,
+runtime, cache, configuration, or concrete classifier binding. Callers import
+`ClassifierBinding` from `coding.local` and `CodingCache` from `coding.cache`
+explicitly and supply them to the runner; those objects are not public exports.
+
+`load_codebook(path)` parses a caller-selected frozen artifact through the Stage 6
+contract. This is distinct from `validate_codebook(codebook, *, pin, split,
+bundles, adr_text)`, which validates discovery-corpus and example evidence and
+requires the upstream training bundles. Blind Stage 9 never calls that validator
+on pilot artifacts or dereferences an example. It checks the supplied approved
+record's hash, status, approval metadata, references and hierarchy through the
+current Stage 8 input gate, without claiming to repeat upstream evidence review.
+The v0 and Stage 6 schemas remain unchanged.
+
+### `SupportSources`
+
+The existing Stage 8 frozen dataclass is reused as the coding source boundary;
+there is no copied coding-source schema. Its transient representation omits fields.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `stored_run` | StoredRun | Caller-supplied Stage 7 source records; structural loading alone does not verify evidence |
+| `bundles` | tuple[Bundle, …] | Matching immutable canonical documents, elements and current overlay masks |
+| `codebook` | Codebook | Caller-selected approved frozen record; example pointers stay unopened |
+| `provenance_hash` | SHA-256 string | External source-provenance binding, included in proposal/support source hashes |
+
+### `ProposalRun`
+
+Frozen transient dataclass with disabled field rendering. No assessment or
+acceptance is implied by a completed classification. Its `targets` property
+returns the ordered Stage 8 targets from `proposals` without copying source claims
+or quote text.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `record` | ProposalRunRecord | Original versioned manifest and shared classification accounting |
+| `classifications` | tuple[ClassificationRecord, …] | One final completed/refused/incomplete outcome per requested claim |
+| `attempts` | tuple[CodingAttempt, …] | Bounded raw-response and accounting audit |
+| `proposals` | tuple[ProposalRecord, …] | Explicit frozen claim–theme targets for assessment |
+| `attributes` | tuple[AttributeRecord, …] | Model-derived nullable annotations, separate from unchanged source claims |
+| `novelty` | tuple[NoveltyItem, …] | Pointer-only valid empty classifications for human adjudication |
+
+### `DecisionInput`
+
+Frozen transient view delivered to the external pure policy. It retains every
+original evidence link and separate raw signal view; eligibility alone does not
+create acceptance. Nullable annotations are not substitutes for theme IDs.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `target` | TargetRecord | Fully resolved original claim–theme identity |
+| `evidence` | tuple[EvidenceReference, …] | All original exact quote references, including contextual companions |
+| `entailment` | tuple[EntailmentSignal, …] | Separate raw per-quote and joint views |
+| `trials` | tuple[JudgeTrial, …] | Four complete independent family/presentation trials |
+| `outcome` | ReviewOutcome | Stage 8 processing outcome, independently rederived at consumption |
+| `eligible_quote_ids` | tuple[str, …] | Original quotes consistently supporting in all four trials; an acceptance policy may select only these |
+
+### `DecisionSet`
+
+Frozen transient container with disabled field rendering. With no policy,
+`policy` is `None`; assessed targets become `review/calibration_required` and
+produce no accepted assignment. Missing assessment has null support status and
+`review/missing_assessment`. Neither case means unmatched or no themes.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `decisions` | tuple[AssignmentDecision, …] | Exactly one saved decision for each explicit proposed target |
+| `proposals` | ProposalRun | Original complete classification/proposal provenance |
+| `support` | StoredSupportRun | Matching complete raw assessment tables and manifest |
+| `sources` | SupportSources | Retained current source boundary for deterministic reverification |
+| `policy` | PolicyReference or null | Rebound external policy provenance; null retains no-policy review |
+| `proposal_hash` | SHA-256 string | Complete original proposal-run binding |
+| `support_run_hash` | SHA-256 string | Complete matching support-manifest binding |
+| `source_run_hash` | SHA-256 string | Shared extraction/provenance binding |
+
+### `CodingRun`
+
+Frozen transient container for an immutable publication. Storage validation and
+current evidence/policy reverification remain distinct gates. A declared
+calibrated policy reference is a binding, not proof of Stage 11 approval.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `record` | CodingRunRecord | Publication manifest retaining original proposal and support identities |
+| `classifications` | tuple[ClassificationRecord, …] | Requested claim outcomes, including refused/incomplete claims |
+| `attempts` | tuple[CodingAttempt, …] | Raw-reference and classification allowance audit |
+| `proposals` | tuple[ProposalRecord, …] | Explicit frozen targets assessed downstream |
+| `attributes` | tuple[AttributeRecord, …] | Optional semantic annotations beside source claims |
+| `decisions` | tuple[AssignmentDecision, …] | Accepted/rejected/review/refused policy decisions |
+| `assignments` | tuple[Assignment, …] | Unique accepted document-qualified quote–theme rows |
+| `assignment_claims` | tuple[AssignmentClaimLink, …] | Supporting claim/decision links without duplicated assignments |
+| `novelty` | tuple[NoveltyItem, …] | Valid unmatched classification pointers for review |
+
+### `Coding tables`
+
+One coding run binds one approved codebook ID/version/hash. Every published table
+has exactly its row-model fields and an explicit Polars schema, even when empty.
+Nested codebook/target/policy structs retain named fields and Int64 codebook
+versions. Nullable values survive JSON/Parquet round trips as null, never zero,
+an empty struct, a negative label, or fabricated acceptance.
+
+| Table | Unique logical grain within the publication | Row contract and null semantics |
+| --- | --- | --- |
+| `classifications` | `(coding_run_id, doc_id, claim_id)` | ClassificationRecord; reason is null only for completed outcomes, including valid unmatched |
+| `attempts` | `(classification_id, attempt)` | CodingAttempt; unknown actual usage remains null with explicit unreported accounting; absent raw_ref/raw_hash are both null |
+| `proposals` | `(coding_run_id, doc_id, claim_id, theme_id)` | ProposalRecord; target nests the original source identity and frozen codebook |
+| `attributes` | `(coding_run_id, doc_id, claim_id)` | AttributeRecord; attributes struct persists topic/sentiment/direction/event_type independently, each nullable |
+| `decisions` | `(coding_run_id, target_id)` | AssignmentDecision; policy is null for no-policy review, support_status is null for missing assessment; fixture calibration_reference stays null inside a nonnull policy struct |
+| `assignments` | `(coding_run_id, codebook_id, codebook_version, doc_id, theme_id, quote_id)` | Assignment; accepted eligible evidence only, explicit fixture/calibrated provenance, no copied quotes |
+| `assignment_claims` | `(assignment_id, doc_id, claim_id, decision_id)` | AssignmentClaimLink; multiple supporting claims link to one quote–theme row |
+| `novelty` | `(coding_run_id, classification_id)` | NoveltyItem; only an explicit valid empty theme list produces no_theme_fit |
+
+Stage 10 owns processing/coverage mapping, aggregation, codebook parent/family
+roll-ups, and source-aware cited export. Stage 11 owns calibration artifacts,
+production models/policy, acceptance thresholds, signal selection/pooling,
+agreement floors and fresh-call stability with bypass across all four caches.
+Stage 12 owns reviewed new codebook versions and novelty adjudication; Stage 15
+owns concurrent workers and cache/store safety. None is established by these
+library contracts or fixture-only accepted rows.
