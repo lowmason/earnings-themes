@@ -1166,7 +1166,7 @@
       `validate_span`, so a drift could change a reason or an ID but cannot
       weaken exactness. Size: plan. Done when: anchoring's freeze lifts and each
       pair shares one definition, with the suites unchanged.
-- [ ] Enforce the extraction records' invariants (plan 12's pre-flight F5, its
+- [x] Enforce the extraction records' invariants (plan 12's pre-flight F5, its
       review's I3-2 and M3-1 to M3-3, and its final review's m3; deferred by the
       user). In packages/earnings-themes/src/earnings_themes/extraction/records.py:
       `WindowRecord` checks neither `end > start` nor its `window_id`'s format,
@@ -1178,6 +1178,9 @@
       `WindowRecord.unit_ids` is untested. New validators shift the test counts,
       so they wait. Size: plan. Done when: the validators land with tests, before
       Stage 10 reads a stored run back.
+      → done in Stage 10 plan 15 Tasks 1/3: strict validators and stored-run
+      gates, with independent specification/quality approvals and current
+      consuming checks (`7820506`, `38bd613`; 199 extraction tests passed).
 - [ ] Make the cache and the store safe for concurrent workers (plan 12's
       review's M5-2, M5-3, M8-1, and M8-2; deferred by the user).
       packages/earnings-themes/src/earnings_themes/extraction/adapters.py's
