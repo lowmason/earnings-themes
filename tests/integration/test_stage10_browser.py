@@ -231,6 +231,52 @@ def observed_row(
     }
 
 
+def capture_observations(
+    rows, views, renderer, session, store, *, capture_observer="fixture-renderer"
+):
+    """Persist explicitly supplied invented views through an injected renderer."""
+    captured = []
+
+    class PersistingRenderer:
+        environment = renderer.environment
+
+        def capture(self, saved_html, policy, *, source_document_id):
+            capture = renderer.capture(
+                saved_html, policy, source_document_id=source_document_id
+            )
+            captured.append(capture)
+            store.put(capture)
+            data = canonical_json(capture)
+            path = session / "prepared-captures" / (sha256_hex(data) + ".json")
+            path.parent.mkdir(exist_ok=True)
+            with path.open("xb") as out:
+                out.write(data)
+            return capture
+
+    observations = []
+    for row, view in zip(rows, views):
+        captured.clear()
+        observation = capture_evidence_view(view, PersistingRenderer(), ISOLATED_1)
+        assert (observation.canonical_hash, observation.start, observation.end) == (
+            row["canonical_hash"],
+            row["start"],
+            row["end"],
+        )
+        assert (observation.utf16_start, observation.utf16_end) == (
+            row["utf16_start"],
+            row["utf16_end"],
+        )
+        assert observation.screenshots_rights == "local_only"
+        result_row = observed_row(row, observation)
+        result_row["capture_observer"] = capture_observer
+        result_row["capture_observed_at"] = datetime.now(UTC).isoformat()
+        result_row["screenshot_artifact_ids"] = (
+            [a.content_sha256 for a in captured[-1].screenshots] if captured else []
+        )
+        observations.append(result_row)
+    return observations
+
+
 def test_invented_v5_public_capture(tmp_path, monkeypatch):
     """USER ONLY: no setup/download; records failure/unavailability separately."""
     directory, rows, views = build_artifacts(ROOT, tmp_path, monkeypatch)
@@ -257,44 +303,9 @@ def test_invented_v5_public_capture(tmp_path, monkeypatch):
             ),
         )
 
-    captured = []
-
-    class PersistingRenderer:
-        environment = renderer.environment
-
-        def capture(self, saved_html, policy, *, source_document_id):
-            capture = renderer.capture(
-                saved_html, policy, source_document_id=source_document_id
-            )
-            captured.append(capture)
-            store.put(capture)
-            data = canonical_json(capture)
-            path = session / "prepared-captures" / (sha256_hex(data) + ".json")
-            path.parent.mkdir(exist_ok=True)
-            with path.open("xb") as out:
-                out.write(data)
-            return capture
-
-    observations = []
-    for row, view in zip(rows, views):
-        observation = capture_evidence_view(view, PersistingRenderer(), ISOLATED_1)
-        assert (observation.canonical_hash, observation.start, observation.end) == (
-            row["canonical_hash"],
-            row["start"],
-            row["end"],
-        )
-        assert (observation.utf16_start, observation.utf16_end) == (
-            row["utf16_start"],
-            row["utf16_end"],
-        )
-        assert observation.screenshots_rights == "local_only"
-        result_row = observed_row(row, observation)
-        result_row["capture_observer"] = "user-command"
-        result_row["capture_observed_at"] = datetime.now(UTC).isoformat()
-        result_row["screenshot_artifact_ids"] = (
-            [a.content_sha256 for a in captured[-1].screenshots] if captured else []
-        )
-        observations.append(result_row)
+    observations = capture_observations(
+        rows, views, renderer, session, store, capture_observer="user-command"
+    )
     (session / "observations.json").write_text(
         json.dumps(observations, sort_keys=True, indent=2)
     )

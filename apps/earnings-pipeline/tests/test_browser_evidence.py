@@ -292,3 +292,48 @@ def test_fake_manual_statuses_stay_separate_from_capture(
     )
     assert row["native"] == row["fallback"] == "pending"
     assert result["screenshots_rights"] == "local_only"
+
+
+def test_next_failed_capture_does_not_inherit_previous_screenshot_ids(
+    tmp_path, monkeypatch
+):
+    path = (
+        Path(__file__).resolve().parents[3]
+        / "tests/integration/test_stage10_browser.py"
+    )
+    spec = importlib.util.spec_from_file_location("stage10_fake_capture_sequence", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    view = capture_view(tmp_path, monkeypatch)
+    ref = view.reference
+    payload = __import__("json").loads(view.canonical_bytes)
+    text = payload["document"]["canonical_text"]
+    row = {
+        "canonical_hash": ref.canonical_hash,
+        "start": ref.start,
+        "end": ref.end,
+        "utf16_start": len(text[: ref.start].encode("utf-16-le")) // 2,
+        "utf16_end": len(text[: ref.end].encode("utf-16-le")) // 2,
+    }
+    session = tmp_path / "capture-session"
+    session.mkdir()
+    store = importlib.import_module("earnings_ingestion.browser.store").CaptureStore(
+        session / "captures", session
+    )
+    shot = store.screenshot(b"invented screenshot bytes")
+
+    class SequenceRenderer(Renderer):
+        def capture(self, *args, **kwargs):
+            if self.calls:
+                raise RuntimeError("Invented SENTINEL sequence failure")
+            capture = super().capture(*args, **kwargs)
+            return capture.model_copy(update={"screenshots": (shot,)})
+
+    rows = module.capture_observations(
+        [row, row], [view, view], SequenceRenderer(), session, store
+    )
+    assert rows[0]["capture"] == "completed"
+    assert rows[0]["screenshot_artifact_ids"] == [shot.content_sha256]
+    assert rows[1]["capture"] == "failed"
+    assert rows[1]["screenshot_artifact_ids"] == []
+    assert rows[1]["capture_observation"]["capture_artifact"] is None
