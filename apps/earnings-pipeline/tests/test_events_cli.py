@@ -669,15 +669,25 @@ def test_acquire_s_cap_is_the_approved_count(repo, moved, monkeypatch) -> None:
     assert budgets == [56]
 
 
-def test_acquire_refuses_a_run_file_it_cannot_read(repo, moved, monkeypatch) -> None:
+@pytest.mark.parametrize(
+    "filename",
+    [
+        pytest.param("acquire-x.parquet", id="plain"),
+        pytest.param("acquire-diagnostic-sentinel.parquet", id="diagnostic-sentinel"),
+    ],
+)
+def test_acquire_refuses_a_run_file_it_cannot_read(
+    repo, moved, monkeypatch, filename
+) -> None:
+    """Malformed state bytes refuse with a closed reason before a client opens."""
     budgets = client(monkeypatch, served())
     states = repo / "data" / "runs" / "events" / "states"
     states.mkdir(parents=True)
-    (states / "acquire-x.parquet").write_bytes(b"not parquet")
+    (states / filename).write_bytes(b"not parquet")
     result = run(repo, "acquire", "--max-requests", "1", store=EVENTS_STORE)
     assert result.exit_code == 1
     assert budgets == []
-    assert result.stderr.startswith("Refused: acquire-x.parquet cannot be read")
+    assert result.stderr == "Refused: state_storage_corrupt\n"
 
 
 def test_acquire_refuses_while_another_run_holds_its_runs(

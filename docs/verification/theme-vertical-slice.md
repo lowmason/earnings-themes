@@ -266,3 +266,59 @@ and V5 evidence at the later reviewed implementation HEAD remain pending;
 prior whole-branch approvals cover cb1cda8, not this new source. The controller
 owns fresh scoped reviews and subsequent gates; this repair asserts no Stage 10
 completion.
+
+
+## Task 12 synthetic event CLI refusal-contract repair
+
+At clean BASE `7b65a77d75bdd549d8809d73963b208e0e0352a8`, the human's
+full-root guarded run reported 4,239 passed, one failed, nine skipped and 28
+deselected, with zero collection failures or pytest warnings. Its sole safe
+failure ID was
+`apps/earnings-pipeline/tests/test_events_cli.py::test_acquire_refuses_a_run_file_it_cannot_read`,
+with reason `test_failed`. No process exit or current-run duration was supplied;
+the shell prompt's preceding duration does not establish this run's timing. The
+full-root human gate remains failed; skips and deselections are not passes. The
+VIRTUAL_ENV warning concerns uv's worktree environment choice, not pytest warnings.
+
+Source investigation identifies a legacy synthetic assertion mismatch. The
+Stage 10 state reader deliberately emits the closed `state_storage_corrupt`
+reason for malformed acquisition Parquet, and the acquisition preflight refuses
+before opening the SEC client. The old test expected a filename-bearing message.
+Production behavior remains unchanged. The repaired test passes invented
+`b"not parquet"` to the real state reader, requires exact stderr
+`Refused: state_storage_corrupt\n`, and retains exit 1 and an empty client-budget
+list. Explicit safe `plain` and `diagnostic-sentinel` parameter IDs cover the
+original filename and a wholly invented sentinel filename with the same refusal.
+No parser, reader or CLI stub replaces that path.
+
+The implementer's pre-mutation guarded exact-node RED reported zero passed and
+one failed, all other counters zero, the same sole safe ID and reason
+`test_failed`; the fully awaited child exit was 1. After repair, the exact covering
+selection comprised that node's two parameters,
+`test_acquire_refuses_while_another_run_holds_its_runs`, and
+`test_acquire_needs_the_approved_count_when_it_would_fetch`. GREEN reported four
+passed, all other counters zero, empty failure IDs, reason null and child exit 0.
+Both runs used locked/offline/no-sync all-packages Python, the fixed temporary
+cache, POLARS_MAX_THREADS=2 and the captured `run_checks` boundary with timeout
+300 and marker `not live and not browser`. Selected nodes, helpers, application
+autouse lock isolation and relevant acquisition/reader paths were source-audited;
+fixture copies and invented data directories stay in pytest temporary roots, and
+the client helper uses MockTransport. The prior 253-file audit is supporting
+provenance: 251 hashes remain equal, with the two approved root-deadline repair
+paths accounting for its differences. No protected reader was authorized by
+that earlier audit.
+
+Scoped locked/offline/no-sync Ruff lint and format-check of the modified Python
+test passed, as did git diff-check. Their subprocess output was captured and
+only closed status/count metadata reported. No unchanged domain suite, root,
+Stage 6 wording, actual browser/SDK/install inventory, live request or model call
+ran. Safe RED/GREEN/static records and the detailed implementer report are kept
+in the ignored task directory; these are fresh scoped results, not full-root
+success or Stage 10 completion.
+
+Fresh sequential scoped reviews, a new human full-root gate, both Stage 6 wording
+gates and observed/disposed V5 remain pending at the final reviewed HEAD. Earlier
+approvals apply to their recorded ranges. Historical timeout evidence and the
+existing deviations/controller-triage findings above remain unchanged. Screenshots
+remain unopened and local_only; ignored-byte equality remains unverified. No
+stamp, deferred disposition, plan retirement, integration or cleanup is asserted.
