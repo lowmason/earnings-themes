@@ -486,4 +486,6 @@ def test_analysis_final_validation_gate_is_documented():
     text = DICTIONARY.read_text(encoding="utf-8")
     assert "validate_analysis_tables(tables: AnalysisTables) -> AnalysisTables" in text
     assert "AnalysisRun" in text and "StoredAnalysisRun" in text
-    assert "Task 6 storage/serialization" in text and "Task 8 publication" in text
+    assert "Task 6 builds completion, coverage and prevalence" in text
+    assert "Task 8 owns storage, serialization, reverification and publication" in text
+    assert "Task 6 storage/serialization" not in text
