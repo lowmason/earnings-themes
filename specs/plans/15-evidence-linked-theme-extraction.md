@@ -75,13 +75,57 @@ The user approved both explicit raw-snapshot seams before implementation. Task 2
 
 Task 7 also changes the explicit public signature to `make_evidence_view(bound: BoundAnalysis, doc_id: str, quote_id: str, *, audience: Literal["local", "export"], raw_snapshot: RawSnapshot | None) -> EvidenceView`. Its required keyword argument must match the selected document's snapshot in the currently rebound `AnalysisInputs`; mismatched or omitted available snapshots refuse as `input_changed`. `None` represents an explicitly absent/withheld snapshot, never an implicit lookup. Missing retainable raw bytes retain the planned `raw_snapshot_missing` publication gate. Task 8 rechecks every actual byte/hash/rights binding before including a permitted snapshot. Tasks 2/3/7/8/9, their tests, dictionary and later briefs carry both seams together. No core, canonical coordinate, acquisition schema, rights rule or protected artifact authorization changes.
 
+### Approved execution amendment C2 (2026-10-06)
+
+The user approved the minimal explicit binding amendment after Task 3 identified missing verification material, before runtime edits or tests. Task 3 may extend Task 2 analytical records/exports/fixtures/dictionary to implement these required fields. No upstream/core schema or ingestion dependency is added. Application validation owns faithful derivation from original event/pilot/state artifacts; themes verifies the explicitly supplied current projections, canonical bytes, and existing upstream-bound provenance. Independent reconstruction of original ingestion manifests in themes is not claimed.
+
+### Explicit input contract
+
+Add three explicit fields to `AnalysisInputs`:
+
+```python
+analysis_policy: AnalysisPolicy
+canonical_snapshots: tuple[CanonicalSnapshot, ...]
+fixture_authorization: FixtureAuthorization | None
+```
+
+New frozen `repr=False` dataclasses, defined in analysis records:
+
+```python
+CanonicalSnapshot(doc_id: str, data: bytes)
+FixtureAuthorization(
+    corpus_id: Literal["djia-synthetic", "stage10-invented"],
+    event_manifest_hash: str,
+    pilot_hash: str,
+    provenance_hash: str,
+)
+```
+
+`CanonicalSnapshot.data` is the existing full canonical JSON artifact, not a new external manifest format. It contains exactly `document`, `elements`, `manifest`, `masks`. The application validates it with the existing ingestion reader. Themes independently decodes this explicit in-memory JSON, reconstructs its core document/elements/masks contracts, checks equality with the current bundle, and checks manifest source/version/raw hash, policy/version/count, and element counts. No ingestion runtime import, callback, implicit loader, or HTML reparsing is needed. Duplicate/missing/extra selected snapshots refuse. Empty masks still have a manifest and explicit policy binding.
+
+The fixture authorization is an explicit approval inventory entry, never inferred from a book/document name. Only an application-supplied allowlisted inventory, or an explicitly constructed invented test inventory, may supply it. Bind its event/pilot/provenance hashes to all current expected/acquisition records. Fixture scope requires this entry; research scope refuses it and fixture assignment policies. A filesystem root is unnecessary inside the pure gate: Task 9 confines selected paths before reading bytes. The pure gate binds the explicit authorization inventory; the application additionally confines selected paths. No filename or root assertion alone authorizes fixture acceptance.
+
+### Normative analytical hash meanings
+
+Existing canonical serialization has no self-hash and there is no separate mask manifest. The user approved the following exact analytical meanings, using existing `earnings_core.digest` and `sha256_hex`:
+
+- `canonical_manifest_hash = digest(decoded_canonical_json["manifest"])`.
+- `mask_manifest_hash = digest({"doc_id": doc_id, "canonical_hash": canonical_hash, "mask_policy_id": manifest["mask_policy_id"], "mask_policy_version": manifest["mask_policy_version"], "masks": decoded_canonical_json["masks"]})`. This is an analytical digest of published fields, not a new on-disk mask manifest.
+- `AnalysisPolicy.population_hash = the selected pilot's published content hash`; `event_ids` must equal the declared selected expected population and each expected row must carry that pilot hash. Empty selection retains explicit handling; it does not silently choose a population.
+- Define `provenance_hash = digest({"expected": sorted ExpectedEvent JSON rows by event_id, "acquisition": sorted AcquisitionStatus JSON rows by document_id, "metadata": sorted DocumentMetadata JSON rows by doc_id, "canonical_artifacts": sorted [{"doc_id": snapshot.doc_id, "sha256": sha256_hex(snapshot.data)}] by doc_id})`. This normative formula makes every supplied current projection and artifact inventory independently comparable to the already upstream-bound provenance hash, including empty targets/assignments. Assignment/analysis policy hashes are excluded to avoid declaration cycles and preserve null-policy review; codebook/policy gates bind these separately. `no_theme` declarations compare their source/coding/support/book/analysis/assignment hashes directly with current checked values; they do not enter source provenance.
+- Analysis policy hash remains its shipped `content_hash` property. Canonical text hash remains SHA-256 of UTF-8 bytes. Raw snapshots retain existing C1 byte/artifact/rights checks independently.
+
+These formulas are a deliberate compatibility amendment: existing invented sources use arbitrary provenance/HASH values and must be regenerated through these formulas before creating support/coding runs. Existing upstream schema/version and reader signatures do not change. No retrospective claim is made that older arbitrary provenance labels were material-verified. Task 3 can fail closed on older AnalysisInputs lacking this explicit material.
+
+Tasks 5/6/8 reject a caller analysis policy differing from `inputs.analysis_policy`. Task 9 loads only selected confined canonical files through the public ingestion reader, constructs projections and these hashes before replay, and supplies the matching approved fixture authorization inventory. Canonical snapshot payloads remain input-only and are never silently placed in analytical/export manifests. Tasks 7/8 rebind at publication; C1 raw snapshot semantics remain unchanged. Later briefs, dictionary and contracts carry this additive compatibility decision.
+
 ### Inputs and policy scope
 
 The first command is `earnings-pipeline extract run --config <explicit-json>`. It supports **replay only** in Stage 10. There is no implicit current/latest discovery, paid provider, model launcher, tokenizer download or callback import by dotted path. The application supplies identity-only replay façades and the existing caches to the shipped functions; their dispatch/tokenizer methods raise fixed `replay_dispatch_forbidden` if reached. Shipped replay paths read cached input counts before dispatch, so no heuristic tokenizer is needed.
 
 Programmatic `run_theme_workflow(config, runtime, *, now)` keeps an explicit injected protocol seam for future local production adapters and `AssignmentPolicy`; the Stage 10 CLI constructs only replay façades. A registered `fixture-supporting/1` deterministic policy is available solely with `scope="fixture"` and an allowlisted invented/synthetic corpus. It accepts only currently eligible, semantically supporting quote IDs offered by Stage 9, including masked evidence retained for audit; headline counting excludes masks afterwards. It contains no numeric score threshold, panel vote pooling or signal-view selection. `policy=null` keeps review. A calibrated-policy reference without its actual explicitly bound policy implementation is refused as `policy_unavailable`; Stage 11 supplies that implementation.
 
-The fixture-policy corpus allowlist is exactly `djia-synthetic` and `stage10-invented`, additionally bound to the supplied permitted/invented manifest hashes and temporary fixture root. A name alone cannot authorize acceptance. `WorkflowConfig.fixture_started_at` is an optional UTC fixture clock, permitted only in fixture scope; stage run IDs, that fixed clock, policies, source provenance and software/lock identity are shared by the test cache seeder and CLI replay. The workflow receipt separately records actual execution UTC time. Research scope refuses a fixture clock and uses actual times or explicitly selected immutable stored runs. This avoids silently backdating research extraction to make a cache hit.
+The fixture-policy corpus allowlist is exactly `djia-synthetic` and `stage10-invented`, additionally bound to the supplied permitted/invented manifest hashes and explicit `FixtureAuthorization` inventory. The application confines all selected paths, including temporary fixture roots; the pure themes gate validates the inventory without filesystem lookup. A name alone cannot authorize acceptance. `WorkflowConfig.fixture_started_at` is an optional UTC fixture clock, permitted only in fixture scope; stage run IDs, that fixed clock, policies, source provenance and software/lock identity are shared by the test cache seeder and CLI replay. The workflow receipt separately records actual execution UTC time. Research scope refuses a fixture clock and uses actual times or explicitly selected immutable stored runs. This avoids silently backdating research extraction to make a cache hit.
 
 Caches and optional stored runs are explicit paths in the config. Source directories are never recursively scanned for documents. Read only the selected event IDs/doc IDs and their exact files. No Stage 6 pin, gold, draft, view or `validate_codebook(..., bundles=pilot)` call is part of this workflow. Loading frozen codebook metadata/rules via `load_codebook` is permitted; examples remain pointers and are never resolved.
 
@@ -225,8 +269,10 @@ All new analytical models use a strict, extra-forbid, frozen `AnalysisPart` with
 | `CaptureObservation` | `evidence_id`, `doc_id`, `quote_id`, `canonical_hash`, CP span and browser-boundary UTF-16 span, nullable capture ID/artifact refs, capture policy/environment identity, `status="completed"/"partial"/"failed"/"unavailable"/"not_requested"`, nullable closed reason, `screenshots_rights="local_only"`; capture status is not highlight success or quote verification |
 | `RawCacheVerification` | stage (`extraction/classifier/scorer/judge`), status (`verified/not_supplied/not_bound`), sorted confined reference/hash bindings, verification method/version; `verified` only after actual supplied bytes have passed the appropriate cache reader/hash method |
 | `AnalysisRunRecord` | analysis schema/version; run ID/UTC date; scope/audience; population/event/pilot/universe hashes; ordered doc/hash, canonical/mask manifest, extraction/coding/support/configuration/prompt/identity references; codebook, assignment policy or null, analysis policy, family map or null; completion/copy hashes; validator/software/lock identities; counts by state/decision/reason; raw verification statuses; sorted table and evidence artifact hashes; `billable_cost="none, self-hosted"`; canonical hashing excludes only explicitly documented operational publication fields; a separate report manifest binds the report bytes, avoiding a circular hash or mutation of published `run.json` |
-| `AnalysisInputs` | frozen repr-false dataclass holding `SupportSources`, stored support/coding runs, actual `AssignmentPolicy | None`, normalized expected events/acquisition/doc metadata, copy assertions, no-theme declarations, explicit provenance hash, raw-verification records, `RawCacheInputs`, and `raw_snapshots: tuple[RawSnapshot, ...]`; not an ingestion/network client |
+| `AnalysisInputs` | frozen repr-false dataclass holding `SupportSources`, stored support/coding runs, actual `AssignmentPolicy | None`, normalized expected events/acquisition/doc metadata, copy assertions, no-theme declarations, explicit provenance hash, raw-verification records, `RawCacheInputs`, `raw_snapshots: tuple[RawSnapshot, ...]`, `analysis_policy: AnalysisPolicy`, `canonical_snapshots: tuple[CanonicalSnapshot, ...]`, and `fixture_authorization: FixtureAuthorization | None`; not an ingestion/network client |
 | `RawSnapshot` | frozen repr-false dataclass: `doc_id: str`, `artifact: ArtifactRef`, `data: bytes`; explicitly supplied raw source bytes, actual hash and source/rights binding checked at consuming/publication gates; no loader or persisted raw payload |
+| `CanonicalSnapshot` | frozen repr-false dataclass: `doc_id: str`, `data: bytes`; explicit existing four-part canonical JSON snapshot; pure gate reconstructs core document/elements/masks and compares current bindings, application validates full artifact through public ingestion reader; no implicit loader |
+| `FixtureAuthorization` | frozen repr-false dataclass: `corpus_id: Literal["djia-synthetic", "stage10-invented"]`, `event_manifest_hash: str`, `pilot_hash: str`, `provenance_hash: str`; explicit approved fixture inventory binding; fixture scope requires it, research scope refuses it and fixture policies; no name/root inference |
 | `RawCacheInputs` | frozen repr-false dataclass: `coding: CodingCache | None`, `support: SupportCache | None`; neither constructor opens a cache; extraction stored-run raw bindings remain `not_bound` because schema 1 publishes none |
 | `BoundAnalysis` | frozen repr-false dataclass: `inputs: AnalysisInputs`, `decisions: DecisionSet`, strict normalized inventories, `binding_hash: Sha256Hex`; hash computed from current checked contents; no reusable unchecked validity flag |
 | `AnalysisTables` | frozen repr-false dataclass: `frames: Mapping[str, pl.DataFrame]`, with exactly the fourteen declared table names and explicit schemas; row/grain/FK validation before serialization |
@@ -433,6 +479,9 @@ class AnalysisInputs:
     raw_verification: tuple[RawCacheVerification, ...]
     raw_caches: RawCacheInputs
     raw_snapshots: tuple[RawSnapshot, ...]
+    analysis_policy: AnalysisPolicy
+    canonical_snapshots: tuple[CanonicalSnapshot, ...]
+    fixture_authorization: FixtureAuthorization | None
 ```
 
 `ANALYSIS_REASONS` is the closed union of reasons explicitly specified in this plan plus `malformed_record/storage_corrupt/input_changed/mixed_codebook/policy_mismatch/rights_restricted/empty_denominator/copy_processing_conflict/empty_selection/unexpected_error`. Upstream closed statuses/reasons are retained as fields, not reinterpreted by string matching.
