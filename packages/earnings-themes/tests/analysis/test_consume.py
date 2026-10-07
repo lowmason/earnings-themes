@@ -752,3 +752,82 @@ def test_foreign_policy_reference_analysis_error_chain_is_suppressed(analysis_in
     assert raised.value.__cause__ is None
     assert raised.value.__suppress_context__
     assert "SENTINEL" not in repr(raised.value)
+
+
+@pytest.mark.parametrize("mode", ["accepted", "empty"], ids=["accepted", "empty"])
+def test_changed_selected_universe_refuses_current_lineage(
+    analysis_input_factory, mode
+):
+    inputs, _ = analysis_input_factory(claims=() if mode == "empty" else None)
+    changed = replace(inputs, selected_universe_hash="f" * 64)
+    with pytest.raises(AnalysisError, match="^input_changed$"):
+        gate(changed)
+
+
+def test_forged_selected_universe_refuses(analysis_inputs):
+    object.__setattr__(analysis_inputs, "selected_universe_hash", None)
+    with pytest.raises(AnalysisError):
+        gate(analysis_inputs)
+
+
+def test_selected_universe_callback_mutation_refuses(analysis_inputs):
+    actual = analysis_inputs.assignment_policy
+    touched = []
+
+    class MutatingPolicy:
+        reference = actual.reference
+
+        def evaluate(self, view):
+            if not touched:
+                touched.append(True)
+                object.__setattr__(changed, "selected_universe_hash", "f" * 64)
+            return actual.evaluate(view)
+
+    changed = replace(analysis_inputs, assignment_policy=MutatingPolicy())
+    with pytest.raises(AnalysisError, match="^input_changed$"):
+        gate(changed)
+    assert touched == [True]
+
+
+def test_selected_universe_normative_digest(analysis_inputs):
+    from earnings_core import digest, sha256_hex
+    from earnings_themes.analysis.consume import analysis_provenance_hash
+
+    i = analysis_inputs
+    material = {
+        "selected_universe_hash": i.selected_universe_hash,
+        "expected": [
+            r.model_dump(mode="json")
+            for r in sorted(i.expected, key=lambda r: r.event_id)
+        ],
+        "acquisition": [
+            r.model_dump(mode="json")
+            for r in sorted(i.acquisition, key=lambda r: r.document_id)
+        ],
+        "metadata": [
+            r.model_dump(mode="json")
+            for r in sorted(i.metadata, key=lambda r: r.doc_id)
+        ],
+        "canonical_artifacts": [
+            {"doc_id": s.doc_id, "sha256": sha256_hex(s.data)}
+            for s in sorted(i.canonical_snapshots, key=lambda s: s.doc_id)
+        ],
+    }
+    assert i.provenance_hash == digest(material)
+    del material["selected_universe_hash"]
+    assert i.provenance_hash != digest(material)
+    with pytest.raises(TypeError):
+        analysis_provenance_hash(
+            expected=i.expected,
+            acquisition=i.acquisition,
+            metadata=i.metadata,
+            canonical_snapshots=i.canonical_snapshots,
+        )
+    with pytest.raises(AnalysisError):
+        analysis_provenance_hash(
+            selected_universe_hash="A" * 64,
+            expected=i.expected,
+            acquisition=i.acquisition,
+            metadata=i.metadata,
+            canonical_snapshots=i.canonical_snapshots,
+        )

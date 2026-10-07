@@ -608,3 +608,50 @@ def test_document_level_refusal_preserves_absent_window():
     tables = r.AnalysisTables(frames)
     assert tables.frames["rejections"]["window_id"].null_count() == 1
     assert tables.frames["rejections"]["attempt_id"].null_count() == 1
+
+
+def test_declared_no_theme_preserves_unmatched_audit(counting_case):
+    row = next(
+        r
+        for r in counting_case.completions
+        if r.processing_state == "completed-no-theme"
+    )
+    data = row.model_dump()
+    data["unmatched_count"] = 2
+    checked = r.DocumentCompletion.model_validate(data)
+    assert checked.observable and checked.unmatched_count == 2
+    for changes in (
+        {"declaration_hash": None},
+        {"processing_state": "completed", "accepted_count": 1},
+        {"processing_state": "partial"},
+        {"review_count": 1},
+        {"refused_count": 1},
+        {"incomplete_count": 1},
+        {"traversal_complete": False},
+    ):
+        with pytest.raises(ValidationError):
+            r.DocumentCompletion.model_validate(data | changes)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [None, "", "A" * 64, "0" * 63, 0],
+    ids=["null", "empty", "uppercase", "short", "integer"],
+)
+def test_selected_universe_hash_is_required_strict(analysis_inputs, value):
+    with pytest.raises(AnalysisError):
+        replace(analysis_inputs, selected_universe_hash=value)
+
+
+def test_selected_universe_field_required(analysis_inputs):
+    from dataclasses import fields
+
+    assert "selected_universe_hash" in {f.name for f in fields(type(analysis_inputs))}
+
+
+def test_selected_universe_hash_refuses_string_subclass(analysis_inputs):
+    class HashSubclass(str):
+        pass
+
+    with pytest.raises(AnalysisError):
+        replace(analysis_inputs, selected_universe_hash=HashSubclass("c" * 64))

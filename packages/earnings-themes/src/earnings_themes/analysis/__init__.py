@@ -1,6 +1,9 @@
 """Public analytical contracts; importing performs no I/O."""
 
+from .completion import document_completions
 from .consume import analysis_provenance_hash, reverify_analysis_inputs
+from .coverage import build_coverage
+from .prevalence import build_analysis, prevalence
 from .problems import ANALYSIS_REASONS, AnalysisError
 from .records import (
     TABLE_FOREIGN_KEYS,
@@ -86,8 +89,12 @@ __all__ = [
     "StoredAnalysisRun",
     "ThemeFamilyMap",
     "analysis_provenance_hash",
+    "build_analysis",
+    "build_coverage",
     "build_observations",
+    "document_completions",
     "family_map_hash",
+    "prevalence",
     "reverify_analysis_inputs",
     "validate_analysis_tables",
 ]

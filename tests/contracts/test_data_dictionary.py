@@ -540,3 +540,18 @@ def test_analysis_row_projection_interface_and_null_refusal_documented():
     assert (
         "copy_processing_conflict" in text.split("### Analytical row projection", 1)[1]
     )
+
+
+def test_task6_public_completion_and_selected_universe_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    for name in (
+        "document_completions",
+        "build_coverage",
+        "prevalence",
+        "build_analysis",
+        "selected_universe_hash",
+        "operative_hash",
+        "equal_issuer_mean",
+        "completed-no-theme",
+    ):
+        assert name in text

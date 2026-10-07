@@ -473,7 +473,9 @@ class DocumentCompletion(AnalysisPart):
                         self.refused_count,
                         self.flagged_count,
                         self.incomplete_count,
-                        self.unmatched_count,
+                        self.unmatched_count
+                        if self.processing_state != "completed-no-theme"
+                        else 0,
                     )
                 )
             ):
@@ -1057,6 +1059,7 @@ class AnalysisInputs:
     copies: tuple[CopyAssertion, ...]
     no_theme: tuple[NoThemeDeclaration, ...]
     provenance_hash: str
+    selected_universe_hash: str
     raw_verification: tuple[RawCacheVerification, ...]
     raw_caches: RawCacheInputs
     raw_snapshots: tuple[RawSnapshot, ...]
@@ -1099,6 +1102,12 @@ class AnalysisInputs:
             type(self.provenance_hash) is not str
             or len(self.provenance_hash) != 64
             or any(c not in "0123456789abcdef" for c in self.provenance_hash)
+        ):
+            raise AnalysisError("malformed_record")
+        if (
+            type(self.selected_universe_hash) is not str
+            or len(self.selected_universe_hash) != 64
+            or any(c not in "0123456789abcdef" for c in self.selected_universe_hash)
         ):
             raise AnalysisError("malformed_record")
         events = {row.event_id: row for row in self.expected}

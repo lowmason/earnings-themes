@@ -48,3 +48,10 @@ def analysis_input_factory(codebook, template, tmp_path, no_network):
 
     yield make
     assert no_network == []
+
+
+@pytest.fixture
+def analysis_run(analysis_inputs, family_map):
+    from earnings_themes.analysis import build_analysis
+
+    return build_analysis(analysis_inputs, analysis_inputs.analysis_policy, family_map)

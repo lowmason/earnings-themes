@@ -151,14 +151,21 @@ def strict_analysis_inputs(inputs: AnalysisInputs) -> AnalysisInputs:
 
 def analysis_provenance_hash(
     *,
+    selected_universe_hash: str,
     expected: tuple[ExpectedEvent, ...],
     acquisition: tuple[AcquisitionStatus, ...],
     metadata: tuple[DocumentMetadata, ...],
     canonical_snapshots: tuple[CanonicalSnapshot, ...],
 ) -> str:
     """C2 current-projection digest; no policy/declaration cycle or external lookup."""
+    _require(
+        type(selected_universe_hash) is str
+        and len(selected_universe_hash) == 64
+        and all(c in "0123456789abcdef" for c in selected_universe_hash)
+    )
     return digest(
         {
+            "selected_universe_hash": selected_universe_hash,
             "expected": [
                 r.model_dump(mode="json")
                 for r in sorted(expected, key=lambda r: r.event_id)
@@ -293,6 +300,7 @@ def verify_current_inventory(inputs: AnalysisInputs, extraction: StoredRun) -> N
         {a.doc_id for a in inputs.acquisition if a.doc_id is not None} == set(bundles)
     )
     actual_provenance = analysis_provenance_hash(
+        selected_universe_hash=inputs.selected_universe_hash,
         expected=inputs.expected,
         acquisition=inputs.acquisition,
         metadata=inputs.metadata,
@@ -483,6 +491,7 @@ def _binding_material(inputs):
 
     return {
         "provenance_hash": inputs.provenance_hash,
+        "selected_universe_hash": inputs.selected_universe_hash,
         "analysis_policy": inputs.analysis_policy.model_dump(mode="json"),
         "source": stored(inputs.sources.stored_run),
         "book": inputs.sources.codebook.model_dump(mode="json"),

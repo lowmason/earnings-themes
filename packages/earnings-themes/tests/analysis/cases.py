@@ -124,12 +124,12 @@ def make_families(book):
         "codebook": reference(book).model_dump(mode="json"),
         "memberships": (
             ("capacity", "operations"),
+            ("capacity_expansion", "expansion"),
             ("capacity_expansion", "operations"),
-            ("capacity_expansion", "resilience"),
         ),
         "family_labels": (
+            ("expansion", "Invented expansion"),
             ("operations", "Invented operations"),
-            ("resilience", "Invented resilience"),
         ),
     }
     values["content_hash"] = r.family_map_hash(values)
@@ -256,6 +256,13 @@ def make_inputs(
     retain_text=True,
     classification_reply=None,
     event_ids_by_document=None,
+    extraction_options=None,
+    selected_expected=None,
+    extra_acquisition=(),
+    original_slots=None,
+    claim_order=None,
+    support_ceilings=None,
+    selected_universe_hash="c" * 64,
 ):
     first_text = first_text or "Invented 🛠 press expanded."
     text = first_text + "\nInvented 🛠 press expanded."
@@ -304,23 +311,97 @@ def make_inputs(
             for e in elements
         )
         bundles.append(Bundle("stage10-invented", other_doc, other_elements, ()))
-    sources = make_sources(
-        make_book(base),
-        bundle,
-        template,
-        claim_texts=("Invented equipment grew.", "Invented second equipment claim.")
+    if extraction_options and extraction_options.get("no_units"):
+        bundles = [replace(b, elements=()) for b in bundles]
+        bundle = bundles[0]
+    claim_texts = (
+        ("Invented equipment grew.", "Invented second equipment claim.")
         if claims is None
-        else claims,
-        quote_labels=quote_labels,
-        other_bundles=tuple(bundles[1:]),
-        extraction_directory=root / "extraction",
+        else claims
     )
-    selected_events = tuple(
-        event(key) for key in (event_ids_by_document or ("A-Q1",) * documents)
+    if extraction_options:
+        from earnings_themes.extraction.adapters import (
+            AdapterError,
+            ModelReply,
+            ScriptedAdapter,
+        )
+        from earnings_themes.extraction.cache import CachedAdapter
+        from earnings_themes.extraction.records import (
+            Ceilings,
+            ExtractionPolicy,
+            ExtractionProblem,
+        )
+        from earnings_themes.extraction.run import extract_run
+        from earnings_themes.extraction.store import StoredRun, read_run, write_run
+        from earnings_themes.support.records import SupportSources
+
+        options = extraction_options
+        mode = options.get("mode", "complete")
+
+        def reply(request):
+            if (
+                mode == "failed"
+                or mode == "partial"
+                and not request.subject.window_id.startswith("w-0-")
+            ):
+                raise AdapterError(ExtractionProblem.TRANSPORT_ERROR)
+            if mode == "replay":
+                raise AssertionError("fixture_replay_dispatch_forbidden")
+            return ModelReply(
+                model="scripted",
+                text=json.dumps(
+                    {
+                        "candidates": [
+                            {"quote_labels": ["U1"], "claim": c} for c in claim_texts
+                        ]
+                    }
+                ),
+            )
+
+        adapter = ScriptedAdapter(reply)
+        if mode == "replay":
+            adapter = CachedAdapter(adapter, root / "extraction-cache", "replay")
+        result = extract_run(
+            tuple(replace(b, elements=b.elements[:1]) for b in bundles)
+            if mode == "subset"
+            else tuple(bundles),
+            adapter,
+            ExtractionPolicy(window_budget=options.get("budget", 4000)),
+            template,
+            Ceilings(
+                requests_per_document=options.get("requests", 8),
+                requests_per_run=options.get("run_requests", 8 * documents),
+                tokens_per_run=1000000,
+            ),
+            run_id="invented-extraction",
+            started_at=NOW,
+            software={"fixture": "1"},
+        )
+        stored = read_run(
+            write_run(root / "extraction", StoredRun.of(result), tuple(bundles))
+        )
+        sources = SupportSources(stored, tuple(bundles), make_book(base), HASH)
+    else:
+        sources = make_sources(
+            make_book(base),
+            bundle,
+            template,
+            claim_texts=claim_texts,
+            quote_labels=quote_labels,
+            other_bundles=tuple(bundles[1:]),
+            extraction_directory=root / "extraction",
+        )
+    selected_events = (
+        tuple(selected_expected[:documents])
+        if selected_expected is not None
+        else tuple(
+            event(key) for key in (event_ids_by_document or ("A-Q1",) * documents)
+        )
     )
     expected_rows = tuple(
         sorted(
-            {row.event_id: row for row in selected_events}.values(),
+            selected_expected
+            or {row.event_id: row for row in selected_events}.values(),
             key=lambda row: row.event_id,
         )
     )
@@ -347,7 +428,9 @@ def make_inputs(
         acquisitions.append(
             r.AcquisitionStatus(
                 event_id=expected.event_id,
-                document_id="release-A-Q1-" + str(i),
+                document_id=original_slots[i].document_id
+                if original_slots
+                else "release-A-Q1-" + str(i),
                 state="parsed",
                 missing_reason=None,
                 failure_reason=None,
@@ -359,12 +442,14 @@ def make_inputs(
                 retrieved_at=NOW,
                 state_run_id="invented-acquisition",
                 state_schema_version=1,
-                pilot_hash=HASH,
+                pilot_hash=expected.pilot_hash,
             )
         )
+    acquisitions.extend(extra_acquisition)
     from earnings_themes.analysis.consume import analysis_provenance_hash
 
     provenance = analysis_provenance_hash(
+        selected_universe_hash=selected_universe_hash,
         expected=expected_rows,
         acquisition=tuple(acquisitions),
         metadata=tuple(metadata_rows),
@@ -409,8 +494,12 @@ def make_inputs(
         if classification_reply is None
         else [classification_reply] * (2 * len(sources.stored_run.claims))
     )
-    proposals, _ = job.run(replies)
-    assessed = make_assessed_case(proposals, sources, root, contribution=contribution)
+    proposals, _ = job.run(
+        replies, claim_order=claim_order(sources) if claim_order else None
+    )
+    assessed = make_assessed_case(
+        proposals, sources, root, contribution=contribution, ceilings=support_ceilings
+    )
     assignment_policy = None if review else FixturePolicy(proposals, assessed.support)
     if assignment_action is not None and not review:
         from earnings_themes.coding.records import PolicyVote
@@ -448,6 +537,7 @@ def make_inputs(
         copies=(),
         no_theme=(),
         provenance_hash=sources.provenance_hash,
+        selected_universe_hash=selected_universe_hash,
         raw_verification=(
             r.RawCacheVerification(
                 stage="extraction",
@@ -462,10 +552,15 @@ def make_inputs(
             SupportCache(root / "support-cache", "replay") if caches else None,
         ),
         raw_snapshots=tuple(raw_rows),
-        analysis_policy=make_policy(tuple(row.event_id for row in expected_rows)),
+        analysis_policy=make_policy(
+            tuple(row.event_id for row in expected_rows)
+        ).model_copy(update={"population_hash": expected_rows[0].pilot_hash}),
         canonical_snapshots=tuple(canonical_rows),
         fixture_authorization=r.FixtureAuthorization(
-            "stage10-invented", HASH, HASH, provenance
+            "stage10-invented",
+            expected_rows[0].event_manifest_hash,
+            expected_rows[0].pilot_hash,
+            provenance,
         ),
     )
 
@@ -785,11 +880,13 @@ def make_counting_case(book, assignment_policy):
             "eligibility_reason": e.eligibility_reason,
             "membership_assertion_id": e.membership_assertion_id,
             "expected": True,
-            "available": state not in ("unavailable", "restricted"),
+            "available": available,
             "parsed": available,
             "observable": observable,
             "availability": "available"
-            if state not in ("unavailable", "restricted")
+            if available
+            else "unavailable"
+            if state == "failed"
             else state,
             "document_id": "release-" + e.event_id,
             "doc_ids": (doc, copied_doc)
