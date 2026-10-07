@@ -81,12 +81,13 @@ The user approved the minimal explicit binding amendment after Task 3 identified
 
 ### Explicit input contract
 
-Add three explicit fields to `AnalysisInputs`:
+Add four explicit fields to `AnalysisInputs`:
 
 ```python
 analysis_policy: AnalysisPolicy
 canonical_snapshots: tuple[CanonicalSnapshot, ...]
 fixture_authorization: FixtureAuthorization | None
+selected_universe_hash: str
 ```
 
 New frozen `repr=False` dataclasses, defined in analysis records:
@@ -112,12 +113,20 @@ Existing canonical serialization has no self-hash and there is no separate mask 
 - `canonical_manifest_hash = digest(decoded_canonical_json["manifest"])`.
 - `mask_manifest_hash = digest({"doc_id": doc_id, "canonical_hash": canonical_hash, "mask_policy_id": manifest["mask_policy_id"], "mask_policy_version": manifest["mask_policy_version"], "masks": decoded_canonical_json["masks"]})`. This is an analytical digest of published fields, not a new on-disk mask manifest.
 - `AnalysisPolicy.population_hash = the selected pilot's published content hash`; `event_ids` must equal the declared selected expected population and each expected row must carry that pilot hash. Empty selection retains explicit handling; it does not silently choose a population.
-- Define `provenance_hash = digest({"expected": sorted ExpectedEvent JSON rows by event_id, "acquisition": sorted AcquisitionStatus JSON rows by document_id, "metadata": sorted DocumentMetadata JSON rows by doc_id, "canonical_artifacts": sorted [{"doc_id": snapshot.doc_id, "sha256": sha256_hex(snapshot.data)}] by doc_id})`. This normative formula makes every supplied current projection and artifact inventory independently comparable to the already upstream-bound provenance hash, including empty targets/assignments. Assignment/analysis policy hashes are excluded to avoid declaration cycles and preserve null-policy review; codebook/policy gates bind these separately. `no_theme` declarations compare their source/coding/support/book/analysis/assignment hashes directly with current checked values; they do not enter source provenance.
+- Define `provenance_hash = digest({"selected_universe_hash": selected_universe_hash, "expected": sorted ExpectedEvent JSON rows by event_id, "acquisition": sorted AcquisitionStatus JSON rows by document_id, "metadata": sorted DocumentMetadata JSON rows by doc_id, "canonical_artifacts": sorted [{"doc_id": snapshot.doc_id, "sha256": sha256_hex(snapshot.data)}] by doc_id})`. This normative formula makes every supplied current projection and artifact inventory independently comparable to the already upstream-bound provenance hash, including empty targets/assignments. Assignment/analysis policy hashes are excluded to avoid declaration cycles and preserve null-policy review; codebook/policy gates bind these separately. `no_theme` declarations compare their source/coding/support/book/analysis/assignment hashes directly with current checked values; they do not enter source provenance.
 - Analysis policy hash remains its shipped `content_hash` property. Canonical text hash remains SHA-256 of UTF-8 bytes. Raw snapshots retain existing C1 byte/artifact/rights checks independently.
 
 These formulas are a deliberate compatibility amendment: existing invented sources use arbitrary provenance/HASH values and must be regenerated through these formulas before creating support/coding runs. Existing upstream schema/version and reader signatures do not change. No retrospective claim is made that older arbitrary provenance labels were material-verified. Task 3 can fail closed on older AnalysisInputs lacking this explicit material.
 
 Tasks 5/6/8 reject a caller analysis policy differing from `inputs.analysis_policy`. Task 9 loads only selected confined canonical files through the public ingestion reader, constructs projections and these hashes before replay, and supplies the matching approved fixture authorization inventory. Canonical snapshot payloads remain input-only and are never silently placed in analytical/export manifests. Tasks 7/8 rebind at publication; C1 raw snapshot semantics remain unchanged. Later briefs, dictionary and contracts carry this additive compatibility decision.
+
+### Approved selected-universe extension to C2 (2026-10-06)
+
+The user approved this extension after Task 6 identified the missing selected-universe binding. AnalysisInputs.selected_universe_hash is required: an exact built-in string of 64 lowercase hexadecimal SHA-256 characters. It means the selected universe's public earnings_ingestion.cohort.identity.operative_hash, the cutoff-admissible eligibility facts whose hash must equal the selected event and pilot universe_operative_hash. Keep this distinct from the codebook's discovery universe and source/artifact byte checksums.
+
+analysis_provenance_hash adds required keyword-only selected_universe_hash: str and includes this value as a top-level member in the normative payload above. Strict input reconstruction, inventory recomputation and repeated binding checks retain it. Its digest must match current input, upstream source/coding/support lineage and fixture authorization, including empty work. AnalysisRunRecord.universe_hash comes solely from the checked selected value. Task 9 validates original selected universe/event/pilot/state artifacts through confined public readers before supplying the operative hash; pure themes does not import ingestion or verify absent universe bytes.
+
+This required-field/helper/hash change fails closed for older inputs and intentionally invalidates older C2 provenance. Regenerate invented upstream runs, related cache identities, declarations, fixture authorizations and analytical bindings before verification; never relabel old runs. No core or upstream schema/reader changes, original-artifact rewrite, discovery-hash fallback, or hash inference is authorized. Tasks 8/9 test current publication and original derivation respectively.
 
 ### Task 5 projection clarification (2026-10-06)
 
