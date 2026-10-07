@@ -163,6 +163,7 @@ USER_GROUPS = {
 }
 TIMEOUT_SECONDS = 300
 COMBINED_TIMEOUT_SECONDS = 900
+ROOT_USER_TIMEOUT_SECONDS = 1800
 SAFE_ID = re.compile(
     r"(?:test-[a-f0-9]{12}|[A-Za-z0-9_./-]+(?:::[A-Za-z0-9_:]+)?)(?:\[case-[a-f0-9]{8}\])?"
 )
@@ -254,17 +255,26 @@ def run_checks(
         return 3
 
 
+def group_timeout_seconds(group: str) -> int:
+    """Select a fixed deadline without dispatching any test group."""
+    if group == "root-user":
+        return ROOT_USER_TIMEOUT_SECONDS
+    if group == "stage10":
+        return COMBINED_TIMEOUT_SECONDS
+    return TIMEOUT_SECONDS
+
+
 def main(args: Sequence[str] | None = None) -> int:
     args = sys.argv[1:] if args is None else args
     if len(args) == 2 and args[0] in USER_GROUPS and args[1] == "--user-only":
         nodes, marker = USER_GROUPS[args[0]]
-        return run_checks(nodes, marker=marker)
+        return run_checks(nodes, marker=marker, timeout=group_timeout_seconds(args[0]))
     if len(args) != 1 or args[0] not in GROUPS:
         emit("runner_failed")
         return 3
     return run_checks(
         GROUPS[args[0]],
-        timeout=COMBINED_TIMEOUT_SECONDS if args[0] == "stage10" else TIMEOUT_SECONDS,
+        timeout=group_timeout_seconds(args[0]),
     )
 
 

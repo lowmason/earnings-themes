@@ -309,12 +309,16 @@ UV_CACHE_DIR=/private/tmp/earnings-stage10-uv uv run --locked --offline --no-syn
 
 Run these from the repository root with the reviewed environment already present.
 There is no implicit sync or download. `stage10` is a deduplicated 72-file allowlist
-with a 900-second child deadline; individual groups retain 300 seconds. It is not
+with a 900-second child deadline; individual groups retain 300 seconds. The
+human-only `root-user --user-only` route has the approved fixed 1800-second
+deadline; wording and browser routes retain 300 seconds. The stage10 union is not
 the full-root suite. The runner captures child output and emits only validated
 counts, safe test IDs and closed reasons. Audit selected readers before execution;
 output guarding does not authorize protected readers. Agents never run full-root,
 either Stage 6 wording node or browser/user-only modes. The controller obtains
-those human gates at the final reviewed HEAD. See the
+those human gates at the final reviewed HEAD. The earlier human root run returned
+`runner_timeout` at 300 seconds; its zero counters and empty IDs are placeholders,
+not successful test results. A successful full-root duration remains unknown. See the
 [verification record](docs/verification/theme-vertical-slice.md) for exact results
 and the separate [V5 protocol](docs/verification/stage10-browser.md).
 

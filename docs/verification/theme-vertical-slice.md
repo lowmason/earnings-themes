@@ -131,7 +131,9 @@ UV_CACHE_DIR=/private/tmp/earnings-stage10-uv uv run --locked --offline --no-syn
 Each runtime is fully awaited before another starts. The captured-output runner
 prints safe counts/IDs/fixed reasons, disables external pytest plugin autoloading
 and explicitly loads the reviewed pytest_asyncio plugin. Its 72-file stage10 union
-has a bounded 900-second deadline; all individual and human modes retain 300.
+has a bounded 900-second deadline; all individual groups retain 300. The
+approved human-only root-user deadline is 1800 seconds; wording and browser
+modes retain 300. The pure selector does not admit additional groups or options.
 The runner cannot authorize a protected reader. Agents never invoke root/Stage 6
 wording/browser/user-only modes or raw-output diagnostics. No type checker is
 configured. Task 12 source-only preflight confirms all 253 audited source/helper
@@ -226,3 +228,41 @@ null. Ruff lint exited zero with zero findings; Ruff format-check exited zero wi
 codes/counts emitted. Diff-check passes; only the four assigned documentation
 paths changed. No type checker, native/human gate or live extraction ran. This
 result-only record awaits fresh task review and does not establish Stage 10 completion.
+
+
+## Task 12 approved root-only deadline repair
+
+At the previously reviewed `cb1cda84be1e2b4387641e2744af2d37d7468b51`, the human
+invoked the complete root-user command and received `runner_timeout` at its
+inherited 300-second bound. All-zero counters and empty IDs are timeout
+placeholders, not evidence of zero tests executed or successful tests. No failing
+or stalled test was isolated. The active-primary-VIRTUAL_ENV warning described
+uv choosing the worktree environment; it was not a pytest warning. No successful
+full-root runtime duration is inferred.
+
+The narrowly approved repair changes only the fixed root-user bound to 1800
+seconds. The stage10 bound stays 900; every other group stays 300; run_checks
+retains its default 300 and signature. Root nodes remain packages/apps/tests with
+marker `not live and not browser` and explicit `--user-only` admission. The
+captured-output boundary, exact allowlists, plugin/hash-safe diagnostics, closed
+reasons, unknown-option refusal and absence of automatic retries are unchanged.
+
+The source-only preflight matched all 253 prior audited hashes at dispatch HEAD
+`0938af8ba44c316f2360134ae8782e2f1a9dd17a`. The full captured runner group ran
+sequentially with the same locked/offline/no-sync command and approved temporary
+cache/POLARS_MAX_THREADS=2: RED 16 passed/1 failed, with only
+`tests/contracts/test_stage10_check_runner.py::test_full_root_deadline_is_fixed_without_dispatching_human_modes`
+and reason test_failed; GREEN 17 passed, all other counters zero, IDs empty and
+reason null. The regression discriminates inherited 300 from approved 1800,
+requires the pure selector, checks every fixed deadline, unchanged default and
+root node/marker metadata, and inspects both dispatch paths without invoking
+root or wording modes. Existing invented stage10/coverage stubs verify dispatch;
+the browser stub explicitly expects its unchanged 300 seconds.
+
+Scoped Ruff lint and format-check for tools/stage10_checks.py and
+tests/contracts/test_stage10_check_runner.py passed, and git diff-check passed.
+No unchanged domain suite was repeated. Actual human root/both Stage 6 wording
+and V5 evidence at the later reviewed implementation HEAD remain pending;
+prior whole-branch approvals cover cb1cda8, not this new source. The controller
+owns fresh scoped reviews and subsequent gates; this repair asserts no Stage 10
+completion.

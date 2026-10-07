@@ -108,6 +108,11 @@ other-workflow reuse needs explicit pinned analysis and all stage selections.
 Use the guarded commands in README and
 `docs/verification/theme-vertical-slice.md`, after auditing readers. The 72-file
 `stage10` union has a 900-second deadline; individual groups have 300 seconds.
+The human-only `root-user --user-only` route has the approved fixed 1800-second
+deadline; wording and browser routes retain 300 seconds. The prior human root
+run timed out at 300 seconds with placeholder zero counters/empty IDs; it
+establishes no passed tests or successful duration. Fresh human root/wording and
+V5 evidence at the later reviewed implementation HEAD remains pending.
 Agents must not run root/Stage 6 wording/browser/user-only modes, inspect protected
 artifacts, resolve examples or load a model. Fixture checks establish V8/V10
 machinery, not acceptance quality, pilot prevalence or native browser behavior.

@@ -172,7 +172,10 @@ def test_user_browser_routes_only_explicit_guard_with_invented_stub(
     assert calls == []
     assert stage10_checks.main(["browser-user", "--user-only"]) == 0
     assert calls == [
-        ((("tests/integration/test_stage10_browser.py",),), {"marker": "browser"})
+        (
+            (("tests/integration/test_stage10_browser.py",),),
+            {"marker": "browser", "timeout": 300},
+        )
     ]
     assert "browser-user" not in capsys.readouterr().out
 
@@ -240,3 +243,42 @@ def test_combined_timeout_is_bounded_without_changing_individual_groups(monkeypa
     assert stage10_checks.main(["coverage"]) == 0
     assert calls == [(stage10_checks.GROUPS["coverage"], 300)]
     assert stage10_checks.TIMEOUT_SECONDS == 300
+
+
+def test_full_root_deadline_is_fixed_without_dispatching_human_modes():
+    import ast
+    import inspect
+
+    from tools import stage10_checks
+
+    default_timeout = (
+        inspect.signature(stage10_checks.run_checks).parameters["timeout"].default
+    )
+    selector = getattr(stage10_checks, "group_timeout_seconds", None)
+    root_timeout = selector("root-user") if selector is not None else default_timeout
+    assert root_timeout == 1800
+    assert callable(selector)
+    assert stage10_checks.USER_GROUPS["root-user"] == (
+        ("packages", "apps", "tests"),
+        "not live and not browser",
+    )
+    assert selector("stage10") == 900
+    for group in (*stage10_checks.GROUPS, *stage10_checks.USER_GROUPS):
+        if group not in {"root-user", "stage10"}:
+            assert selector(group) == 300
+    assert default_timeout == stage10_checks.TIMEOUT_SECONDS == 300
+
+    dispatch = ast.parse(inspect.getsource(stage10_checks.main))
+    calls = [
+        node
+        for node in ast.walk(dispatch)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "run_checks"
+    ]
+    assert len(calls) == 2
+    for call in calls:
+        timeout = next(
+            keyword.value for keyword in call.keywords if keyword.arg == "timeout"
+        )
+        assert ast.unparse(timeout) == "group_timeout_seconds(args[0])"
