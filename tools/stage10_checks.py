@@ -17,6 +17,10 @@ else:
 ROOT = Path(__file__).resolve().parents[1]
 THEMES = "packages/earnings-themes/tests/"
 GROUPS = {
+    "export": (
+        THEMES + "analysis/test_store.py",
+        "apps/earnings-pipeline/tests/test_theme_report.py",
+    ),
     "evidence": (
         "apps/earnings-pipeline/tests/test_evidence_views.py",
         "apps/earnings-pipeline/tests/test_browser_evidence.py",
@@ -137,6 +141,9 @@ def run_checks(
             )
         emit(reason, metadata)
         return result.returncode
+    except KeyboardInterrupt:
+        emit("runner_interrupted")
+        return 130
     except subprocess.TimeoutExpired:
         emit("runner_timeout")
         return 124

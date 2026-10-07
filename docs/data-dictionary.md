@@ -5710,3 +5710,90 @@ Source links validate HTTP(S), no user info/control characters, retain legitimat
 Renderer completed/partial/failed/unavailable statuses and their closed public reasons remain distinct. Arbitrary adapter errors become failed/capture_failure with no detail, layout text or exception chain. Policy hash is digest(asdict(policy) with required_resource_types sorted); environment hash is digest(asdict(renderer.environment)). A prepared capture JSON reference hashes canonical_json(RenderedCapture), uses prepared-captures/SHA256.json and remains local_only, as do screenshots. The reference does not assert durable capture storage: later publication requires verified actual bytes and persistence. Capture completion does not establish quote exactness or observed highlighting. Task 10 owns V5 observed browser highlighting/degradation.
 
 Task 7 nested rights and raw-withholding correction: a forbidden nested artifact reference inside immutable canonical JSON cannot acquire the outer document's permissions. The current canonical schema's independently governed reference is CanonicalDocument.text_artifact; current consuming gates bind that field exactly to the supplied canonical JSON. A local_only nested reference may remain in a permitted local view, but export withholds the complete view as withheld/rights_restricted. A restricted nested reference also withholds locally. Withheld outputs contain no canonical/view/raw bytes or private artifact/fragment references. Input JSON is neither rewritten nor relabeled, and no derivative is created. An available text-permitted fallback denied raw retention or audience export carries snapshot_withheld and its existing rights_basis. Actually absent required retainable raw bytes retain raw_snapshot_missing precedence and the downstream publication gate.
+
+## Stage 10 immutable publication
+
+`write_analysis_run(directory: Path, result: AnalysisRun, inputs: AnalysisInputs,
+policy: AnalysisPolicy, families: ThemeFamilyMap | None,
+evidence: tuple[EvidenceViewReference, ...]) -> Path` rebuilds current analysis,
+compares every original analytical row and semantic record binding, validates
+supplied evidence references, and writes fourteen explicitly typed Parquet tables
+into a new sibling directory. `run.json` is written last; a single rename publishes
+the run. An existing destination is never overwritten. Symlinked destinations,
+ancestors and manifest/table files are refused. Failure removes only the writer's
+owned temporary sibling.
+
+`read_analysis_run(directory: Path) -> StoredAnalysisRun` validates the exact file
+set, strict manifest, actual Parquet byte hashes, declared dtypes, typed rows,
+row grains, foreign keys and manifest state/decision/reason/completion/copy counts.
+It never opens an external raw source, canonical view or cache path. Evidence
+hashes bind the validated reference records, not absent external bytes. The
+original current gates remain necessary even for empty tables or cached results.
+
+`reverify_analysis_run(stored: StoredAnalysisRun, inputs: AnalysisInputs,
+policy: AnalysisPolicy, families: ThemeFamilyMap | None) -> None` rebuilds current
+analysis and checks sources, masks, codebook, policy, families and every table's
+content again. Structural reading alone does not authorize publication.
+
+The analytical content hash excludes only `table_hashes`, `evidence_hashes`, and
+the separately supplied `evidence` frame. All other manifest fields and all other
+table rows are included, in their existing order. Before serialization,
+`AnalysisRunRecord.table_hashes` binds logical rows by table name; after publication
+it binds actual file bytes by the exact `<table>.parquet` filename.
+`StoredAnalysisRun.published_hashes` equals those published byte bindings.
+`manifest_hash` is SHA-256 of the exact saved `run.json` bytes. Evidence references
+bind exact spans, locators, rights and explicit source/canonical inventories; they
+do not claim that an external HTML snapshot or capture has been saved.
+
+`write_theme_report(directory: Path, stored: StoredAnalysisRun, inputs: AnalysisInputs,
+policy: AnalysisPolicy, families: ThemeFamilyMap | None, views: tuple[EvidenceView, ...],
+*, audience: Literal["local", "export"]) -> Path` rechecks current analysis,
+regenerates each provided view with `make_evidence_view`, compares original
+canonical/view/raw bytes and hashes, requires evidence for every cited observation,
+and publishes a separate immutable audience-specific bundle. Retainable missing raw
+bytes refuse complete publication as `raw_snapshot_missing`. Rights-denied raw
+snapshots remain `snapshot_withheld`. Withheld canonical views suppress quote text,
+model-derived interpretations, fragments and private artifact links, including when
+nested canonical artifact rights prohibit export despite outer permission.
+
+Only actually included bytes receive bundle-relative content-hashed references:
+`artifacts/<sha256>.html`, `.json`, or `.source`. Original source/cache storage paths
+are never followed to acquire missing bytes. Forbidden absolute/traversal pointers
+inside canonical JSON refuse publication rather than rewriting immutable payloads.
+`report.html` uses escaped static HTML and stable anchors; it uses no JavaScript,
+remote resources, live fetch or browser capture. Source links remain external
+citations. Prevalence and coverage rows come from validated analytical tables;
+release and transcript coverage, policy scope, denominator restrictions, masks,
+copies and nonacceptance outcomes remain visible. No extraction accuracy or
+configuration quality claim is made.
+
+The separate `report.json` binds the already published analytical manifest and
+all included report/evidence bytes. It does not mutate `run.json`, copy analytical
+local text into an exported table, or create a circular report/analysis hash.
+Raw-cache `not_supplied`/`not_bound` remain honest limitations. This interface
+receives no capture bytes or browser observations, so it records
+`capture_not_supplied` and `browser_observation_not_supplied`; even an opaque
+capture reference grants no durable fallback claim. Screenshots stay `local_only`
+in their separate local capture store.
+
+### `ReportManifest`
+
+Strict, extra-forbid, frozen application record inheriting `AnalysisPart`; no source
+wording, rationale, rejection detail, cache path or original storage path is stored.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Separate report schema. |
+| `report_id` | `string` | Content identity from analysis manifest, audience and included artifact hashes. |
+| `created_at` | `UTC datetime` | Bound analytical run clock. |
+| `audience` | `local/export` | Explicit publication profile. |
+| `scope` | `fixture/research` | Fixture acceptance is visibly scoped. |
+| `analysis_manifest_hash` | `SHA-256` | Exact already published analytical manifest bytes. |
+| `binding_hash` | `SHA-256` | Currently reverified input binding. |
+| `codebook` | `CodebookReference` | One frozen selected version/hash. |
+| `assignment_policy` | `PolicyReference or null` | Explicit current assignment policy; null retains review. |
+| `analysis_policy` | `AnalysisPolicy` | Population and analytical counting rules. |
+| `family_map` | `ThemeFamilyMap or null` | Explicit versioned analysis mapping. |
+| `artifact_hashes` | `sorted filename/hash pairs` | All included HTML/view/canonical/raw bytes; no external artifact claim. |
+| `evidence_ids` | `sorted unique strings` | Original document-qualified evidence identities. |
+| `limitations` | `closed string list` | `rights_restricted`, `snapshot_withheld`, `capture_not_supplied`, `browser_observation_not_supplied`, `raw_cache_not_supplied`, `raw_cache_not_bound`. |

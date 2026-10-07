@@ -119,3 +119,19 @@ def test_unknown_options_never_echo_input(capsys):
 
     assert main([SENTINEL]) == 3
     assert SENTINEL not in capsys.readouterr().out
+
+
+def test_keyboard_interrupt_is_metadata_only(tmp_path, capsys, monkeypatch):
+    from tools import stage10_checks
+
+    def interrupted(*args, **kwargs):
+        raise KeyboardInterrupt(SENTINEL)
+
+    monkeypatch.setattr(stage10_checks.subprocess, "run", interrupted)
+    assert run_checks(("test_invented.py",), root=tmp_path) == 130
+    output = capsys.readouterr()
+    assert SENTINEL not in output.out + output.err
+    metadata = json.loads(output.out)
+    assert metadata["reason"] == "runner_interrupted"
+    assert metadata["ids"] == []
+    assert all(metadata[name] == 0 for name in stage10_checks.COUNTS)

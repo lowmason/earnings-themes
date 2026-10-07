@@ -578,3 +578,24 @@ def test_snapshot_withholding_and_nested_export_rights_documented():
         "### `Analysis tables`", 1
     )[0]
     assert "\n\n| `browser_unavailable`" not in reasons
+
+
+def test_report_manifest_and_publication_interfaces_documented():
+    import earnings_themes.analysis as public
+    from earnings_pipeline.theme_report import ReportManifest
+
+    assert documented("ReportManifest") == set(ReportManifest.model_fields)
+    text = DICTIONARY.read_text(encoding="utf-8")
+    for name in (
+        "write_analysis_run",
+        "read_analysis_run",
+        "reverify_analysis_run",
+        "write_theme_report",
+    ):
+        assert name in text
+    assert all(
+        callable(getattr(public, name))
+        for name in ("write_analysis_run", "read_analysis_run", "reverify_analysis_run")
+    )
+    assert "published byte bindings" in text
+    assert "capture_not_supplied" in text and "browser_observation_not_supplied" in text
