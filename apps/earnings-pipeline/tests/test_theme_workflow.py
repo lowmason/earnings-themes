@@ -59,7 +59,7 @@ def socket_guard(monkeypatch):
     assert trips == []
 
 
-def seed_case(tmp_path, *, seed=True, review=False, empty=False):
+def seed_case(tmp_path, *, seed=True, review=False, empty=False, local_only=False):
     """Copy only permitted frozen synthetic metadata; every canonical/source is invented."""
     from earnings_ingestion.cohort.freeze import load_manifest
     from earnings_ingestion.cohort.identity import operative_hash
@@ -133,6 +133,24 @@ def seed_case(tmp_path, *, seed=True, review=False, empty=False):
     )
     bundle = coding_cases.invented_bundle("invented-workflow-source")
     meta, raw = analysis_cases.metadata(bundle, expected)
+    if local_only:
+        from dataclasses import replace
+
+        from earnings_core import RightsStatus
+
+        artifact = raw.artifact.model_copy(
+            update={"rights_status": RightsStatus.LOCAL_ONLY}
+        )
+        raw = replace(raw, artifact=artifact)
+        meta = meta.model_copy(
+            update={
+                "rights_status": RightsStatus.LOCAL_ONLY,
+                "raw_artifact": artifact,
+                "export_text": False,
+                "export_raw": False,
+                "retain_capture": True,
+            }
+        )
     snap = analysis_cases.canonical_snapshot(bundle, meta, raw)
     from earnings_core import digest
 
@@ -656,3 +674,327 @@ def test_source_selection_refuses_source_bearing_identity():
             metadata={"path": "inputs/metadata.json", "sha256": "a" * 64},
             raw=None,
         )
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        "stored-extraction",
+        "stored-support",
+        "stored-coding",
+        "stored-analysis",
+        "own-extraction",
+        "own-support",
+        "own-coding",
+        "own-analysis",
+        "configuration",
+        "report-manifest",
+        "history",
+        "extraction-cache",
+        "support-cache",
+        "coding-cache",
+        "own-table-extraction",
+        "own-table-support",
+        "own-table-coding",
+        "own-table-analysis",
+    ],
+    ids=lambda value: value,
+)
+def test_selected_child_symlink_refuses_before_any_external_reader(
+    tmp_path, monkeypatch, kind
+):
+    config, payload = seed_case(tmp_path)
+    module = importlib.import_module("earnings_pipeline.theme_workflow")
+    external = tmp_path.parent / (tmp_path.name + "-invented-outside.json")
+    external.write_bytes(b"Invented external fixture bytes")
+    if kind.startswith("stored-"):
+        stage = kind.removeprefix("stored-")
+        directory = "data/runs/selected/" + stage
+        child = tmp_path / directory / "run.json"
+        payload["stored_" + stage] = {
+            "directory": directory,
+            "sha256": sha256_hex(b"Invented external fixture bytes"),
+        }
+        if stage == "analysis":
+            for other in ("extraction", "support", "coding"):
+                companion = tmp_path / "data/runs/selected" / other / "run.json"
+                companion.parent.mkdir(parents=True, exist_ok=True)
+                companion.write_bytes(b"Invented companion manifest")
+                payload["stored_" + other] = {
+                    "directory": "data/runs/selected/" + other,
+                    "sha256": sha256_hex(b"Invented companion manifest"),
+                }
+    elif kind.startswith("own-table-"):
+        stage = kind.removeprefix("own-table-")
+        if stage == "analysis":
+            from earnings_themes.analysis.records import TABLE_SCHEMAS
+
+            names = TABLE_SCHEMAS
+        else:
+            names = importlib.import_module(
+                "earnings_themes." + stage + ".store"
+            ).SCHEMAS
+        child = tmp_path / config.output_dir / stage / (next(iter(names)) + ".parquet")
+    elif kind.startswith("own-"):
+        child = tmp_path / config.output_dir / kind.removeprefix("own-") / "run.json"
+    elif kind == "configuration":
+        child = tmp_path / config.output_dir / "configuration.json"
+    elif kind == "report-manifest":
+        child = tmp_path / config.output_dir / "report/report.json"
+    elif kind == "history":
+        child = tmp_path / config.states_dir / "invented-extra.parquet"
+    else:
+        child = (
+            tmp_path / getattr(config, kind.replace("-", "_")) / (("b" * 64) + ".json")
+        )
+    child.parent.mkdir(parents=True, exist_ok=True)
+    child.symlink_to(external)
+    from earnings_pipeline.theme_config import load_workflow_config
+
+    selected = load_workflow_config(
+        config_cases.write_config(tmp_path, payload), repo=tmp_path
+    )
+    trips = []
+    original_bytes, original_text = Path.read_bytes, Path.read_text
+
+    def guarded_bytes(path, *args, **kwargs):
+        if path.resolve() == external:
+            trips.append(True)
+            raise RuntimeError("invented-external-read-sentinel")
+        return original_bytes(path, *args, **kwargs)
+
+    def guarded_text(path, *args, **kwargs):
+        if path.resolve() == external:
+            trips.append(True)
+            raise RuntimeError("invented-external-read-sentinel")
+        return original_text(path, *args, **kwargs)
+
+    original_history = module.read_runs
+
+    def guarded_history(directory):
+        if kind == "history":
+            trips.append(True)
+            raise RuntimeError("invented-history-reader-sentinel")
+        return original_history(directory)
+
+    monkeypatch.setattr(Path, "read_bytes", guarded_bytes)
+    monkeypatch.setattr(Path, "read_text", guarded_text)
+    monkeypatch.setattr(module, "read_runs", guarded_history)
+    output = tmp_path / config.output_dir
+    before = (
+        {p.relative_to(output).as_posix() for p in output.rglob("*")}
+        if output.exists()
+        else set()
+    )
+    with pytest.raises(module.WorkflowError, match="^malformed_record$"):
+        module.run_theme_workflow(
+            selected, module.replay_runtime(selected), now=lambda: NOW
+        )
+    assert trips == []
+    after = (
+        {p.relative_to(output).as_posix() for p in output.rglob("*")}
+        if output.exists()
+        else set()
+    )
+    assert before == after
+    assert sorted(
+        p.name for p in (tmp_path / config.states_dir).glob("*.parquet")
+    ) == sorted(
+        [Path(config.acquisition_files[0].path).name]
+        + ([child.name] if kind == "history" else [])
+    )
+
+
+def test_optional_capture_skips_fully_withheld_export_view(tmp_path):
+    from dataclasses import asdict, replace
+
+    from earnings_ingestion.browser.policy import ISOLATED_1
+    from earnings_pipeline.theme_config import load_workflow_config
+    from earnings_themes.analysis import read_analysis_run
+
+    _config, payload = seed_case(tmp_path, local_only=True)
+    capture_policy = asdict(ISOLATED_1)
+    capture_policy["required_resource_types"] = sorted(
+        ISOLATED_1.required_resource_types
+    )
+    payload.update(
+        audience="export",
+        capture=True,
+        capture_policy=capture_policy,
+        installed_binary_reference={
+            "path": "inputs/invented-browser-reference.json",
+            "sha256": sha256_hex(b"Invented browser identity"),
+        },
+    )
+    (tmp_path / payload["installed_binary_reference"]["path"]).write_bytes(
+        b"Invented browser identity"
+    )
+    selected = load_workflow_config(
+        config_cases.write_config(tmp_path, payload), repo=tmp_path
+    )
+    module = importlib.import_module("earnings_pipeline.theme_workflow")
+
+    class ForbiddenRenderer:
+        def __init__(self):
+            self.calls = 0
+
+        @property
+        def environment(self):
+            self.calls += 1
+            raise RuntimeError("invented-renderer-sentinel")
+
+        def capture(self, *args, **kwargs):
+            self.calls += 1
+            raise RuntimeError("invented-renderer-sentinel")
+
+    renderer = ForbiddenRenderer()
+    runtime = replace(module.replay_runtime(selected), renderer=renderer)
+    result = module.run_theme_workflow(selected, runtime, now=lambda: NOW)
+    assert result.status == "state_recorded" and result.failure_hash is None
+    assert renderer.calls == 0
+    stored = read_analysis_run(tmp_path / selected.output_dir / "analysis")
+    rows = stored.tables.frames["evidence"].to_dicts()
+    assert rows and all(
+        row["status"] == "withheld" and row["reason"] == "rights_restricted"
+        for row in rows
+    )
+    assert all(
+        row["rights_status"] == "local_only"
+        and all(
+            row[key] is None
+            for key in ("raw_artifact", "canonical_artifact", "view_artifact")
+        )
+        for row in rows
+    )
+    report = json.loads(
+        (tmp_path / selected.output_dir / "report/report.json").read_bytes()
+    )
+    assert report["audience"] == "export" and report["scope"] == "fixture"
+    receipt = json.loads((tmp_path / result.receipt_id).read_bytes())
+    assert (
+        "capture_nondurable" in receipt["limitations"]
+        and "browser_observation_not_supplied" in receipt["limitations"]
+    )
+    latest = current_states(
+        module.read_runs(tmp_path / selected.states_dir), selected.pilot_hash
+    )
+    assert any(row.to_state.value == "completed" for row in latest.values())
+
+
+@pytest.mark.parametrize(
+    "kind", ["report-artifact", "receipt"], ids=["report-artifact", "receipt"]
+)
+def test_existing_publication_child_symlink_refuses_before_new_publication(
+    tmp_path, monkeypatch, kind
+):
+    config, _ = seed_case(tmp_path)
+    module = importlib.import_module("earnings_pipeline.theme_workflow")
+    first = module.run_theme_workflow(
+        config, module.replay_runtime(config), now=lambda: NOW
+    )
+    assert first.status == "state_recorded"
+    child = tmp_path / (
+        first.receipt_id
+        if kind == "receipt"
+        else config.output_dir + "/report/report.html"
+    )
+    external = tmp_path.parent / (tmp_path.name + "-invented-published-target")
+    external.write_bytes(child.read_bytes())
+    child.unlink()
+    child.symlink_to(external)
+    trips = []
+    original = Path.read_bytes
+
+    def guarded(path, *args, **kwargs):
+        if path.resolve() == external:
+            trips.append(True)
+            raise RuntimeError("invented-target-sentinel")
+        return original(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_bytes", guarded)
+    output = tmp_path / config.output_dir
+    before = {p.relative_to(output).as_posix() for p in output.rglob("*")}
+    state_hash = sha256_hex((tmp_path / first.state_id).read_bytes())
+    with pytest.raises(module.WorkflowError, match="^malformed_record$"):
+        module.run_theme_workflow(
+            config, module.replay_runtime(config), now=lambda: NOW
+        )
+    assert trips == []
+    assert before == {p.relative_to(output).as_posix() for p in output.rglob("*")}
+    assert state_hash == sha256_hex((tmp_path / first.state_id).read_bytes())
+
+
+def test_permitted_optional_capture_dispatches_public_fake_renderer(tmp_path):
+    from dataclasses import asdict, replace
+
+    from earnings_ingestion.browser import CaptureEnvironment, CaptureStatus
+    from earnings_ingestion.browser.policy import ISOLATED_1
+    from earnings_ingestion.browser.records import CaptureReason
+    from earnings_ingestion.browser.renderer import unrendered
+    from earnings_pipeline.theme_config import load_workflow_config
+    from earnings_themes.analysis import read_analysis_run
+
+    _config, payload = seed_case(tmp_path, local_only=True)
+    capture_policy = asdict(ISOLATED_1)
+    capture_policy["required_resource_types"] = sorted(
+        ISOLATED_1.required_resource_types
+    )
+    payload.update(
+        capture=True,
+        capture_policy=capture_policy,
+        installed_binary_reference={
+            "path": "inputs/invented-browser-reference.json",
+            "sha256": sha256_hex(b"Invented browser identity"),
+        },
+    )
+    (tmp_path / payload["installed_binary_reference"]["path"]).write_bytes(
+        b"Invented browser identity"
+    )
+    selected = load_workflow_config(
+        config_cases.write_config(tmp_path, payload), repo=tmp_path
+    )
+    module = importlib.import_module("earnings_pipeline.theme_workflow")
+
+    class Renderer:
+        environment = CaptureEnvironment(
+            "invented", "1", "1", "1", "invented", "1", "invented"
+        )
+
+        def __init__(self):
+            self.calls = []
+
+        def capture(self, saved_html, capture_policy, *, source_document_id):
+            self.calls.append(
+                (sha256_hex(saved_html), source_document_id, capture_policy)
+            )
+            return unrendered(
+                saved_html,
+                capture_policy,
+                self.environment,
+                source_document_id=source_document_id,
+                status=CaptureStatus.UNAVAILABLE,
+                reason=CaptureReason.BROWSER_UNAVAILABLE,
+                detail="Invented unavailable fake",
+                captured_at=NOW,
+            )
+
+    renderer = Renderer()
+    result = module.run_theme_workflow(
+        selected,
+        replace(module.replay_runtime(selected), renderer=renderer),
+        now=lambda: NOW,
+    )
+    assert result.status == "state_recorded" and result.failure_hash is None
+    assert len(renderer.calls) == 1 and renderer.calls[0][2] == ISOLATED_1
+    stored = read_analysis_run(tmp_path / selected.output_dir / "analysis")
+    evidence = stored.tables.frames["evidence"].to_dicts()
+    assert len(evidence) == 1 and evidence[0]["status"] == "available"
+    assert renderer.calls[0][:2] == (
+        evidence[0]["view_artifact"]["content_sha256"],
+        "invented-workflow-source",
+    )
+    receipt = json.loads((tmp_path / result.receipt_id).read_bytes())
+    assert (
+        "capture_nondurable" in receipt["limitations"]
+        and "browser_observation_not_supplied" in receipt["limitations"]
+    )

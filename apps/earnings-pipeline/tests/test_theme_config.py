@@ -3,6 +3,8 @@
 import importlib
 import importlib.util
 import json
+from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 from earnings_core import sha256_hex
@@ -242,3 +244,64 @@ def test_research_cannot_use_fixture_policy_or_clock(tmp_path):
     payload["scope"] = payload["analysis_policy"]["scope"] = "research"
     with pytest.raises(m.WorkflowError, match="^malformed_record$"):
         m.load_workflow_config(write_config(tmp_path, payload), repo=tmp_path)
+
+
+@pytest.mark.parametrize(
+    "input_root", ["data", "data/invented"], ids=["exact-root", "descendant"]
+)
+def test_actual_protected_fixture_root_refuses_before_source_loading(
+    tmp_path, monkeypatch, input_root
+):
+    m = module()
+    workflow = importlib.import_module("earnings_pipeline.theme_workflow")
+    repo = Path(m.__file__).resolve().parents[4]
+    payload = invented_replay_config(tmp_path)
+    payload["input_root"] = input_root
+    for name in (
+        "universe",
+        "events",
+        "pilot",
+        "codebook",
+        "extraction_prompt",
+        "coding_prompt",
+        "support_prompt",
+    ):
+        payload[name]["path"] = payload[name]["path"].replace(
+            "inputs/", input_root + "/"
+        )
+    selected_reads = []
+
+    def forbidden_reader(*args):
+        selected_reads.append(True)
+        raise RuntimeError("invented-reader-sentinel")
+
+    monkeypatch.setattr(workflow, "_load_metadata", forbidden_reader)
+    config = m.WorkflowConfig.model_validate_json(json.dumps(payload))
+    config._repo = repo
+    with pytest.raises(m.WorkflowError, match="^malformed_record$"):
+        workflow.run_theme_workflow(
+            config,
+            workflow.replay_runtime(config),
+            now=lambda: datetime(2026, 10, 7, tzinfo=UTC),
+        )
+    assert selected_reads == []
+    with pytest.raises(m.WorkflowError, match="^malformed_record$"):
+        m.load_workflow_config(write_config(tmp_path, payload), repo=repo)
+
+
+def test_invented_miniature_repository_data_root_remains_allowed(tmp_path):
+    m = module()
+    payload = invented_replay_config(tmp_path)
+    payload["input_root"] = "data"
+    for name in (
+        "universe",
+        "events",
+        "pilot",
+        "codebook",
+        "extraction_prompt",
+        "coding_prompt",
+        "support_prompt",
+    ):
+        payload[name]["path"] = payload[name]["path"].replace("inputs/", "data/")
+    config = m.load_workflow_config(write_config(tmp_path, payload), repo=tmp_path)
+    assert config.repo == tmp_path.resolve() and config.input_root == "data"

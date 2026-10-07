@@ -44,6 +44,7 @@ from earnings_themes.analysis import (
     reverify_analysis_run,
     write_analysis_run,
 )
+from earnings_themes.analysis.records import TABLE_SCHEMAS
 from earnings_themes.anchoring import Bundle
 from earnings_themes.codebook import load_codebook
 from earnings_themes.coding.adapters import Classifier
@@ -57,6 +58,7 @@ from earnings_themes.coding.records import (
     PolicyVote,
 )
 from earnings_themes.coding.run import ProposalRun, propose_run
+from earnings_themes.coding.store import SCHEMAS as CODING_SCHEMAS
 from earnings_themes.coding.store import (
     read_coding_run,
     reverify_coding_run,
@@ -66,6 +68,7 @@ from earnings_themes.extraction.adapters import ModelAdapter
 from earnings_themes.extraction.cache import CachedAdapter
 from earnings_themes.extraction.prompt import parse_template
 from earnings_themes.extraction.run import extract_run
+from earnings_themes.extraction.store import SCHEMAS as EXTRACTION_SCHEMAS
 from earnings_themes.extraction.store import StoredRun, read_run, write_run
 from earnings_themes.support import (
     assess_run,
@@ -77,6 +80,7 @@ from earnings_themes.support.cache import SupportCache
 from earnings_themes.support.judges import Judge, validate_panel
 from earnings_themes.support.records import SupportSources
 from earnings_themes.support.scorers import EntailmentScorer
+from earnings_themes.support.store import SCHEMAS as SUPPORT_SCHEMAS
 from pydantic import AwareDatetime, Field, model_validator
 
 from earnings_pipeline.evidence_views import make_evidence_view
@@ -355,6 +359,7 @@ def _reason(error: Exception) -> str:
 
 
 def _artifact(config, path):
+    path = confined_path(config.repo, path.relative_to(config.repo).as_posix())
     return WorkflowArtifact(
         artifact_id=path.relative_to(config.repo).as_posix(),
         sha256=sha256_hex(path.read_bytes()),
@@ -363,8 +368,10 @@ def _artifact(config, path):
 
 def _publish_metadata(config, name, record):
     data = canonical_json(record.model_dump(mode="json"))
-    path = confined_path(config.repo, config.output_dir) / (
-        name + "-" + sha256_hex(data) + ".json"
+    path = _confined_child(
+        config,
+        confined_path(config.repo, config.output_dir),
+        name + "-" + sha256_hex(data) + ".json",
     )
     if path.exists():
         _require(path.read_bytes() == data)
@@ -584,12 +591,77 @@ def _projections(config, baseline, metadata):
     return tuple(result)
 
 
+def _confined_child(config, directory, name):
+    return confined_path(
+        config.repo,
+        (directory / name).relative_to(config.repo).as_posix(),
+        directory.relative_to(config.repo).as_posix(),
+    )
+
+
 def _stage_directory(config, kind, selected):
+    reference = (
+        selected.directory if selected is not None else config.output_dir + "/" + kind
+    )
+    directory = confined_path(config.repo, reference, "data/runs")
+    schemas = {
+        "extraction": EXTRACTION_SCHEMAS,
+        "support": SUPPORT_SCHEMAS,
+        "coding": CODING_SCHEMAS,
+        "analysis": TABLE_SCHEMAS,
+    }[kind]
+    manifest = _confined_child(config, directory, "run.json")
+    for name in schemas:
+        _confined_child(config, directory, name + ".parquet")
     if selected is not None:
-        directory = confined_path(config.repo, selected.directory)
-        _require(sha256_hex((directory / "run.json").read_bytes()) == selected.sha256)
-        return directory
-    return confined_path(config.repo, config.output_dir) / kind
+        _require(sha256_hex(manifest.read_bytes()) == selected.sha256)
+    return directory
+
+
+def _check_history_paths(config, directory):
+    _confined_child(config, directory, ".acquire.lock")
+    for child in directory.glob("*.parquet"):
+        _confined_child(config, directory, child.name)
+
+
+def _checked_history(config, directory):
+    _check_history_paths(config, directory)
+    return read_runs(directory)
+
+
+def _preflight_children(config):
+    """Check only configured layouts' child path metadata before public readers."""
+    output = confined_path(config.repo, config.output_dir)
+    _confined_child(config, output, "configuration.json")
+    for pattern in ("receipt-*.json", "failure-*.json"):
+        for child in output.glob(pattern):
+            _confined_child(config, output, child.name)
+    for kind, selected in (
+        ("extraction", config.stored_extraction),
+        ("support", config.stored_support),
+        ("coding", config.stored_coding),
+        ("analysis", config.stored_analysis),
+    ):
+        _stage_directory(config, kind, selected)
+    states = confined_path(config.repo, config.states_dir)
+    _check_history_paths(config, states)
+    for reference in (
+        config.extraction_cache,
+        config.coding_cache,
+        config.support_cache,
+    ):
+        directory = confined_path(config.repo, reference)
+        for child in directory.glob("*.json"):
+            if len(child.name) == 69 and all(
+                c in "0123456789abcdef" for c in child.name[:64]
+            ):
+                _confined_child(config, directory, child.name)
+    report = confined_path(config.repo, config.output_dir + "/report")
+    manifest = _confined_child(config, report, "report.json")
+    if manifest.exists():
+        record = ReportManifest.model_validate_json(manifest.read_bytes())
+        for name, _ in record.artifact_hashes:
+            _confined_child(config, report, name)
 
 
 def _extraction(config, runtime, bundles, template, started, directory):
@@ -806,30 +878,24 @@ def run_theme_workflow(
         root = config.repo
         config = WorkflowConfig.model_validate_json(config.model_dump_json())
         validate_paths(config, repo=root)
+        _preflight_children(config)
         stamp = _utc(now())
         expected, bundles, metadata, canonical, raw, book, template = _load_metadata(
             config, runtime
         )
         output = confined_path(config.repo, config.output_dir)
         config_bytes = canonical_json(config.model_dump(mode="json"))
-        configuration_path = output / "configuration.json"
+        configuration_path = _confined_child(config, output, "configuration.json")
         if configuration_path.exists():
             _require(configuration_path.read_bytes() == config_bytes)
         analysis_dir = _stage_directory(config, "analysis", config.stored_analysis)
         existing = read_analysis_run(analysis_dir) if analysis_dir.exists() else None
-        for selected in (
-            config.stored_extraction,
-            config.stored_support,
-            config.stored_coding,
-        ):
-            if selected is not None:
-                _stage_directory(config, "unused", selected)
     except Exception as error:  # noqa: BLE001 - checked closed-reason workflow boundary.
         raise WorkflowError(_reason(error)) from None
     states_dir = confined_path(config.repo, config.states_dir)
     try:
         with ProcessLock(states_dir / ".acquire.lock"):
-            history = read_runs(states_dir)
+            history = _checked_history(config, states_dir)
             baseline, terminals = _baseline(config, history, existing)
             acquisition = _projections(config, baseline, metadata)
             provenance = analysis_provenance_hash(
@@ -1045,13 +1111,17 @@ def run_theme_workflow(
 
                 from earnings_pipeline.browser_evidence import capture_evidence_view
 
+                policy_fields = asdict(ISOLATED_1)
+                policy_fields["required_resource_types"] = sorted(
+                    ISOLATED_1.required_resource_types
+                )
                 _require(
-                    config.capture_policy
-                    == json.loads(canonical_json(asdict(ISOLATED_1)))
+                    config.capture_policy == json.loads(canonical_json(policy_fields))
                 )
                 read_selected(config, config.installed_binary_reference)
                 for view in views:
-                    capture_evidence_view(view, runtime.renderer, ISOLATED_1)
+                    if view.reference.status != "withheld":
+                        capture_evidence_view(view, runtime.renderer, ISOLATED_1)
             if existing is None:
                 write_analysis_run(
                     analysis_dir,
@@ -1076,7 +1146,9 @@ def run_theme_workflow(
             phase = "state"
             # Recheck actual originals and combined history immediately before append.
             _load_metadata(config, runtime)
-            _require(read_runs(states_dir) == history, "state_not_processable")
+            _require(
+                _checked_history(config, states_dir) == history, "state_not_processable"
+            )
             if terminals:
                 state_paths = {
                     states_dir / (r.run_id + ".parquet") for r in terminals.values()
@@ -1150,7 +1222,9 @@ def run_theme_workflow(
         count = 0
         try:
             with ProcessLock(states_dir / ".acquire.lock"):
-                current = current_states(read_runs(states_dir), config.pilot_hash)
+                current = current_states(
+                    _checked_history(config, states_dir), config.pilot_hash
+                )
                 affected = [
                     s for s in baseline.values() if s.to_state is DocumentState.PARSED
                 ]

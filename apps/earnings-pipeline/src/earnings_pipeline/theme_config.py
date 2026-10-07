@@ -224,7 +224,14 @@ def confined_path(repo: Path, reference: str, root: str = ".") -> Path:
 
 
 def validate_paths(config: WorkflowConfig, *, repo: Path) -> None:
-    confined_path(repo, config.input_root)
+    input_root = confined_path(repo, config.input_root)
+    project = Path(__file__).resolve().parents[4]
+    if (
+        repo.resolve() == project
+        and config.scope == "fixture"
+        and input_root.resolve().is_relative_to((project / "data").resolve())
+    ):
+        raise WorkflowError("malformed_record")
     for selected in (
         config.universe,
         config.events,
@@ -260,14 +267,6 @@ def validate_paths(config: WorkflowConfig, *, repo: Path) -> None:
     confined_path(repo, config.lockfile.path)
     if config.installed_binary_reference is not None:
         confined_path(repo, config.installed_binary_reference.path, config.input_root)
-    # Fixture authorization cannot turn this checkout's protected tree into input.
-    project = Path(__file__).resolve().parents[4]
-    if (
-        repo.resolve() == project
-        and config.scope == "fixture"
-        and config.input_root.startswith("data/")
-    ):
-        raise WorkflowError("malformed_record")
     config._repo = repo.resolve()
 
 
