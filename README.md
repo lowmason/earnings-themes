@@ -3,14 +3,13 @@
 Evidence-linked research infrastructure for company data and earnings themes.
 
 > [!IMPORTANT]
-> **Project status (2026-10-03): Stages 1 to 6 complete.**
-> The `uv` workspace, package boundaries, specifications, and staged roadmap exist.
-> `earnings-core` holds the shared evidence contracts, and `earnings-ingestion`
-> canonicalizes releases, rebuilds the point-in-time DJIA cohort, discovers and
-> freezes its earnings events and pilot, and acquires the pilot's releases, each with
-> offline tests. `earnings-themes` holds the pilot's split and its codebook and gold
-> contracts. Codebook v0, the pilot codebook, is approved, and three gold bundles are
-> signed; there is no theme extraction or published dataset yet.
+> **Project status (2026-10-07): Stages 1–9 are complete; Stage 10 is under review.**
+> The workspace implements acquisition, canonical evidence, extraction, support
+> assessment and coding libraries. Stage 10 adds an offline replay command,
+> coverage-aware analytical tables and cited reports, verified on permitted
+> synthetic/invented fixtures. No pilot document has been extracted and no research
+> theme dataset is published. Native V5 observations, final independent reviews
+> and the human-only completion gates remain pending.
 
 ## Stage 8 library status (2026-10-05)
 
@@ -36,8 +35,8 @@ optional `support-nli` extra; ordinary imports need no model runtime or weights.
 [ADR 0005](docs/adr/0005-adopt-local-minicheck-for-support-signals.md) records the
 pinned MiniCheck primary, explicit DeBERTa alternative, external configuration,
 local-file and rights requirements, and the passed network-denied primary smoke.
-The alternative’s real-checkpoint smoke remains unrun. Stage 9 owns assignment
-decisions; Stage 10 adds the application command and coverage mapping; Stage 11
+The alternative’s real-checkpoint smoke remains unrun. Stage 9 supplies assignment
+decisions; Stage 10 implements the replay application command and coverage mapping; Stage 11
 owns expert labels, calibration, thresholds, production judge selection, and
 fresh-call stability. The offline evidence establishes no pilot accuracy or
 stability result.
@@ -129,8 +128,8 @@ claim; support is assessed separately.
 | --- | --- | --- |
 | `packages/earnings-core/` | Shared contracts, identifiers, hashes, provenance, and pure span helpers | Stage 2 contracts and exactness checks (schema v2) |
 | `packages/earnings-ingestion/` | Source adapters, raw snapshots, deterministic parsing, canonicalization, and entity resolution | Stage 3's canonicalizer and browser diagnostic path; Stage 4's artifact store, shared SEC client, and point-in-time DJIA cohort; Stage 5's event discovery, eligibility, and pilot selection; Stage 6's coverage report |
-| `packages/earnings-themes/` | Quote-claim extraction, exact-span verification, support assessment, codebooks, and evaluation | Stage 6's split, codebook, and gold contracts, with their anchor, validator, and wording guard |
-| `apps/earnings-pipeline/` | Thin application layer for configuration, stage coordination, checkpoints, and reporting | `earnings-pipeline browser setup`, and the `earnings-pipeline cohort`, `events`, `pilot`, `codebook`, and `gold` commands |
+| `packages/earnings-themes/` | Quote-claim extraction, exact-span verification, support assessment, codebooks, and evaluation | Stages 6–9 contracts, extractor, support and coding; Stage 10 current analytical gates and fourteen typed tables |
+| `apps/earnings-pipeline/` | Thin application layer for configuration, stage coordination, checkpoints, and reporting | `earnings-pipeline browser setup`, and the `earnings-pipeline cohort`, `events`, `pilot`, `codebook`, and `gold` commands, plus `extract run --config PATH` for explicit offline replay |
 | `docs/` | Source notes and, as the project develops, methodology, source registers, verification reports, and decisions | Source notes, the release and membership source registers, verification records V1 and V2 and those of Stages 3 to 6, ADRs 0001 to 0003, and the data dictionary |
 | `specs/` | Binding and exploratory system specifications, reviews, and the staged implementation roadmap | Present |
 | `expirements/parser-fidelity/` | Stage 1's investigation harness: parser candidates, scorer, and selection rule | Complete; a record, not product code |
@@ -162,7 +161,8 @@ using those primitives.
 ## Current roadmap
 
 The implementation is organized as a staged, evidence-first roadmap of sixteen
-stages. Stages 1 to 6 are complete.
+stages. Stages 1–9 are complete; Stage 10 implementation has fixture evidence and
+awaits completion gates. The live roadmap remains authoritative.
 
 The roadmap was amended on 2026-09-22 by
 [the point-in-time DJIA cohort specification](specs/point-in-time-djia-cohort.md).
@@ -292,30 +292,97 @@ The required workspace contains four installable distributions:
 uv run python -c "import earnings_core, earnings_ingestion, earnings_themes, earnings_pipeline"
 ```
 
-`earnings_core` exposes the Stage 2 contracts; the other three still expose only
-placeholder functions. The import is a workspace smoke check, not proof that the
-research pipeline exists.
+The packages expose their implemented stage-specific modules. Ordinary imports
+perform no acquisition or model call; this import checks only workspace packaging.
 
 ### Development checks
 
-Run the configured checks:
+Stage 10 agent checks use the source-audited, metadata-only runner:
 
 ```bash
-uv run --locked ruff check .
-uv run --locked ruff format --check .
-uv run --locked --all-packages pytest packages apps tests -m "not live and not browser"
+POLARS_MAX_THREADS=2 UV_CACHE_DIR=/private/tmp/earnings-stage10-uv uv run --locked --offline --no-sync --all-packages python tools/stage10_checks.py contracts
+POLARS_MAX_THREADS=2 UV_CACHE_DIR=/private/tmp/earnings-stage10-uv uv run --locked --offline --no-sync --all-packages python tools/stage10_checks.py vertical
+POLARS_MAX_THREADS=2 UV_CACHE_DIR=/private/tmp/earnings-stage10-uv uv run --locked --offline --no-sync --all-packages python tools/stage10_checks.py stage10
+UV_CACHE_DIR=/private/tmp/earnings-stage10-uv uv run --locked --offline --no-sync ruff check packages apps tests tools
+UV_CACHE_DIR=/private/tmp/earnings-stage10-uv uv run --locked --offline --no-sync ruff format --check packages apps tests tools
 ```
 
-The root `pyproject.toml` configures pytest. Test modules are imported by path,
-so members may reuse a module name; unknown markers and configuration keys are
-errors; and a test that needs the network, credentials, or a billable service
-carries the `live` marker and runs only with `-m live`. A test that needs the
-pinned Chrome for Testing carries the `browser` marker and runs only with
-`-m browser`; without the browser or the `browser-capture` extra it skips and
-says why. The Stage 1 harness keeps its own command, given under "Current
-roadmap". There is no CI configuration yet.
+Run these from the repository root with the reviewed environment already present.
+There is no implicit sync or download. `stage10` is a deduplicated 72-file allowlist
+with a 900-second child deadline; individual groups retain 300 seconds. It is not
+the full-root suite. The runner captures child output and emits only validated
+counts, safe test IDs and closed reasons. Audit selected readers before execution;
+output guarding does not authorize protected readers. Agents never run full-root,
+either Stage 6 wording node or browser/user-only modes. The controller obtains
+those human gates at the final reviewed HEAD. See the
+[verification record](docs/verification/theme-vertical-slice.md) for exact results
+and the separate [V5 protocol](docs/verification/stage10-browser.md).
 
-Default tests must not make network requests or billable model calls.
+Pytest uses importlib handling, strict configuration and `live`/`browser` markers.
+Default tests make no network or billable calls. No type checker or CI configuration
+is configured. The Stage 1 harness retains its separate historical command above.
+
+### Offline replay extraction
+
+The implemented entry point is:
+
+```bash
+UV_CACHE_DIR=/private/tmp/earnings-stage10-uv uv run --locked --offline --no-sync --all-packages earnings-pipeline extract run --config /absolute/path/to/prepared-replay.json
+```
+
+The JSON must be fully prepared for the repository used as the command's current
+working directory. `load_workflow_config(path: Path, *, repo: Path)` confines
+selected paths before loading bytes. The schema requires explicit universe/event/
+pilot selections and pins, sorted selected event IDs, acquisition/canonical/source
+metadata, frozen codebook, prompts, policies, identities, ceilings, stage run IDs,
+cache paths, optional pinned stored stages, analysis policy, family/copy/no-theme
+choices, rights audience, output directory and software/lock identity. See the
+[workflow contract](docs/data-dictionary.md#explicit-replay-extraction-workflow-schema-1).
+`tests/fixtures/themes/stage10/replay-config.json` is a template, not a directly
+runnable configuration. The audited `tests/integration/stage10_cases.py` helper
+fills its confined temporary paths, hashes, identities, ceilings and fixture clock,
+and seeds caches with scripted invented replies; the `vertical` check exercises
+that complete route through the actual CLI.
+
+The CLI supports replay only. Its inner dispatch and tokenizer methods refuse with
+`replay_dispatch_forbidden`; a cache miss stays explicit. Programmatic
+`run_theme_workflow(config, runtime, *, now)` accepts explicit injected adapters and
+an actual assignment policy, without authorizing a model call. No calibrated
+assignment-policy implementation is registered: a CLI policy reference refuses
+`policy_unavailable`, while null policy retains `review/calibration_required`.
+`fixture-supporting/1` requires fixture scope and an explicit authorization inventory
+bound to current corpus/event/pilot/provenance hashes. The allowlist is
+`djia-synthetic` and `stage10-invented`; a corpus name alone grants no acceptance.
+
+Analytical schema 1 contains fourteen typed Parquet tables and retains all original
+claim–quote and assignment–claim links. Current source/hash/span/mask/book/policy
+checks run before aggregation and again before publication. Headline prevalence
+counts eligible, fully observed issuer-periods from the declared expected-event
+population, at most once per issuer-period. Masked quotes remain in audit and are
+excluded from headlines. Disclosure copies count once; parent self-or-descendant
+and optional overlapping versioned family views remain separate from direct themes.
+An empty quote/target table never proves no theme: `completed-no-theme` needs an
+explicit currently bound processing declaration and complete layer evidence.
+Release roles are `not_applicable`; transcript slots are unobservable with
+`transcript_not_in_scope` and cannot support a negative transcript signal.
+
+The immutable analysis binds its parsed acquisition baseline. A separate receipt
+binds actual appended schema-2 processing bytes. Same-workflow retries recheck exact
+analysis bytes, completions and the immediate immutable parsed predecessor; they
+append once or reuse the recorded state. Another workflow requires an explicit
+stored analysis directory and manifest SHA plus all pinned stage runs and current
+gates. There is no terminal reopening, latest-run discovery or inferred provenance.
+
+Local and export reports apply current text/raw rights, including nested canonical
+artifact rights. Permitted static canonical views highlight the exact occurrence
+and work without a browser; required missing raw bytes refuse complete publication.
+Rights-denied raw inclusion records `snapshot_withheld`; text-denied evidence is
+`withheld/rights_restricted`. Browser UTF-16 coordinates exist only at the application
+boundary; stored evidence uses Python code-point offsets. Screenshots are always
+`local_only`. Static marks, fake renderer checks and capture completion establish
+no native highlighting. V5 native/capture/manual fallback remains pending, and
+external HTTPS behavior is unverified. Stage 11 owns first pilot extraction,
+calibration and fresh-call stability; fixture exactness establishes no model quality.
 
 ## Optional dependencies
 

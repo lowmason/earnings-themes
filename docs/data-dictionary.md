@@ -5059,7 +5059,7 @@ Dates use `pl.Date`; UTC timestamps use `pl.Datetime("us", "UTC")`; offsets/coun
 | `sources` | Explicit sources input/reference; no I/O on construction. |
 | `support` | Explicit support input/reference; no I/O on construction. |
 | `coding` | Explicit coding input/reference; no I/O on construction. |
-| `assignment_policy` | Existing PolicyReference or explicit absence; no implicit calibration. |
+| `assignment_policy` | Actual explicitly supplied `AssignmentPolicy` implementation or null; its reference is checked separately, with no implicit calibration. |
 | `expected` | Explicit expected input/reference; no I/O on construction. |
 | `acquisition` | Explicit acquisition input/reference; no I/O on construction. |
 | `metadata` | Explicit metadata input/reference; no I/O on construction. |
@@ -5598,13 +5598,13 @@ Grain: `('doc_id', 'quote_id', 'audience')`. Foreign keys (local columns, target
 | `reason` | `String` | Explicit reason field; row-model type/nullability applies. |
 | `capture_reference` | `String` | Explicit capture reference field; row-model type/nullability applies. |
 
-Public producer fixtures: `analysis_inputs` is a fully bound invented fixture-policy source/support/coding run; `review_analysis_inputs` binds a separate actual policy-null review run; `analysis_policy`, `family_map`, and `counting_case` are the invented analytical inputs. `counting_case` is independent hand-normalized completion/audit data, not one mixed-policy accepted run. `analysis_run` is intentionally delayed until Task 6. A-Q1 contributes once despite two claims and an exact copy; A-Q2 has an explicit invented fixture actor declaration; B-Q1 retains masked acceptance; C-Q1 keeps calibration review. Missing, failed, restricted, unmatched, rejected and partial cases remain unobservable. Transcript slots are `not_yet_checked/transcript_not_in_scope`, with no invented document/speaker identity.
+Public producer fixtures: `analysis_inputs` is a fully bound invented fixture-policy source/support/coding run; `review_analysis_inputs` binds a separate actual policy-null review run; `analysis_policy`, `family_map`, and `counting_case` are the invented analytical inputs. `counting_case` is independent hand-normalized completion/audit data, not one mixed-policy accepted run. `analysis_run` is the complete builder result supplied by the implemented Task 6 fixture. A-Q1 contributes once despite two claims and an exact copy; A-Q2 has an explicit invented fixture actor declaration; B-Q1 retains masked acceptance; C-Q1 keeps calibration review. Missing, failed, restricted, unmatched, rejected and partial cases remain unobservable. Transcript slots are `not_yet_checked/transcript_not_in_scope`, with no invented document/speaker identity.
 
 ### Analytical intermediate and final validation
 
 `AnalysisTables` remains a frames-only frozen dataclass. Its constructor validates every row, schema, grain, current present audit relationship and accepted observation book/policy binding. Task 5 may return observation/audit/copy frames with typed-empty completions, coverage, prevalence and evidence. Only the observation-to-completion relationship is deferred when the completions table is empty; a nonempty partial completion table still fails if it omits a referenced document.
 
-`validate_analysis_tables(tables: AnalysisTables) -> AnalysisTables` is the pure public final gate. It returns a freshly reconstructed/checked container and enforces **all** TABLE_FOREIGN_KEYS, including observation-to-completion links. It performs no I/O, supplies no fabricated completion and persists no unchecked validity flag. Both existing `AnalysisRun` and `StoredAnalysisRun` constructors invoke it. Task 6 builds completion, coverage and prevalence, then constructs `AnalysisRun`, which already invokes the full gate. Task 8 owns storage, serialization, reverification and publication and must invoke the full gate on current complete tables before writing bytes; Task 3's current source/policy/mask/byte/rights rebinding remains separately necessary. Assignment-to-decision FKs retain document, claim, decision and target identity; novelty-to-classification FKs retain document, claim and classification identity.
+`validate_analysis_tables(tables: AnalysisTables) -> AnalysisTables` is the pure public final gate. It returns a freshly reconstructed/checked container and enforces **all** TABLE_FOREIGN_KEYS, including observation-to-completion links. It performs no I/O, supplies no fabricated completion and persists no unchecked validity flag. Both existing `AnalysisRun` and `StoredAnalysisRun` constructors invoke it. Task 6 builds completion, coverage and prevalence, then constructs `AnalysisRun`, which already invokes the full gate. Task 8 owns storage, serialization, reverification and publication; its implemented paths invoke the full gate on current complete tables before writing bytes; Task 3's current source/policy/mask/byte/rights rebinding remains separately necessary. Assignment-to-decision FKs retain document, claim, decision and target identity; novelty-to-classification FKs retain document, claim and classification identity.
 
 `PrevalenceRow` uses Float64 numerator representation for all views, but issuer_period, issuer_window and firm_quarter require integral values. Only the explicitly labeled equal_issuer_mean may contain a fractional sum of issuer fractions. Release rows always have speaker_role=not_applicable, including prevalence rows.
 
@@ -5615,7 +5615,7 @@ The independent count-only copy fixture now retains accepted observations, quote
 
 `reverify_analysis_inputs(inputs: AnalysisInputs) -> BoundAnalysis` strictly reconstructs inputs and validates every current canonical source, quote and original claim link before calling the shipped support/coding consuming gates. It repeats these checks after the explicitly supplied deterministic assignment policy, including original caller references and detached checked records. It creates no analytical rows/files and invokes no inference. The application validates original event/pilot/state derivation; themes independently checks the supplied current projections and canonical bytes, without importing ingestion or resolving examples. Older arbitrary provenance labels are not accepted as verified material.
 
-`strict_analysis_inputs`, `verify_current_inventory`, `verify_original_links_and_masks`, and `bind_checked_analysis` live in `analysis.consume`. They reconstruct contracts; bind source inventory/provenance/metadata/policies/rights; check every quote/link/mask; and retain checked references with a content digest, respectively. Completion construction and no-theme adjudication remain Task 5/6 responsibilities: an empty tuple of completions is not an absence claim.
+`strict_analysis_inputs`, `verify_current_inventory`, `verify_original_links_and_masks`, and `bind_checked_analysis` live in `analysis.consume`. They reconstruct contracts; bind source inventory/provenance/metadata/policies/rights; check every quote/link/mask; and retain checked references with a content digest, respectively. Completion construction and explicit no-theme adjudication use the implemented completion gate: an empty tuple of completions is not an absence claim.
 
 `analysis_provenance_hash(*, selected_universe_hash, expected, acquisition, metadata, canonical_snapshots) -> str` is the public pure C2 digest helper. It computes `digest({"selected_universe_hash": selected_universe_hash, "expected": ExpectedEvent JSON rows sorted by event_id, "acquisition": AcquisitionStatus JSON rows sorted by document_id, "metadata": DocumentMetadata JSON rows sorted by doc_id, "canonical_artifacts": [{"doc_id": doc_id, "sha256": sha256_hex(data)}] sorted by doc_id})`. The digest must match both AnalysisInputs and SupportSources provenance already bound by support/coding runs. Policies/declarations are excluded to avoid cycles and retain null-policy review; their explicit references/hashes are checked separately.
 
@@ -5707,7 +5707,7 @@ Source links validate HTTP(S), no user info/control characters, retain legitimat
 
 `capture_evidence_view(view: EvidenceView, renderer: BrowserRenderer, policy: CapturePolicy) -> CaptureObservation` validates saved byte hashes, source identity, exact CP evidence and current masks from the canonical JSON through the public ingestion decoder. It computes UTF-16 endpoints from the same saved canonical text only at this boundary. These endpoints describe the canonical text coordinate projection, never browser DOM verification. Fully withheld views refuse rights_restricted; available denied capture is not_requested/rights_restricted without accessing the renderer. Permitted capture passes exact prepared HTML bytes and the saved document source_document_id to the public ingestion renderer; no Selenium implementation/import is introduced. It binds raw_sha256 to those HTML bytes solely as rendering provenance.
 
-Renderer completed/partial/failed/unavailable statuses and their closed public reasons remain distinct. Arbitrary adapter errors become failed/capture_failure with no detail, layout text or exception chain. Policy hash is digest(asdict(policy) with required_resource_types sorted); environment hash is digest(asdict(renderer.environment)). A prepared capture JSON reference hashes canonical_json(RenderedCapture), uses prepared-captures/SHA256.json and remains local_only, as do screenshots. The reference does not assert durable capture storage: later publication requires verified actual bytes and persistence. Capture completion does not establish quote exactness or observed highlighting. Task 10 owns V5 observed browser highlighting/degradation.
+Renderer completed/partial/failed/unavailable statuses and their closed public reasons remain distinct. Arbitrary adapter errors become failed/capture_failure with no detail, layout text or exception chain. Policy hash is digest(asdict(policy) with required_resource_types sorted); environment hash is digest(asdict(renderer.environment)). A prepared capture JSON reference hashes canonical_json(RenderedCapture), uses prepared-captures/SHA256.json and remains local_only, as do screenshots. The reference does not assert durable capture storage: later publication requires verified actual bytes and persistence. Capture completion does not establish quote exactness or observed highlighting. The V5 protocol separately collects human browser highlighting/degradation observations; those observations remain pending.
 
 Task 7 nested rights and raw-withholding correction: a forbidden nested artifact reference inside immutable canonical JSON cannot acquire the outer document's permissions. The current canonical schema's independently governed reference is CanonicalDocument.text_artifact; current consuming gates bind that field exactly to the supplied canonical JSON. A local_only nested reference may remain in a permitted local view, but export withholds the complete view as withheld/rights_restricted. A restricted nested reference also withholds locally. Withheld outputs contain no canonical/view/raw bytes or private artifact/fragment references. Input JSON is neither rewritten nor relabeled, and no derivative is created. An available text-permitted fallback denied raw retention or audience export carries snapshot_withheld and its existing rights_basis. Actually absent required retainable raw bytes retain raw_snapshot_missing precedence and the downstream publication gate.
 
@@ -6096,3 +6096,77 @@ Malformed configuration or selected-source preflight refuses without artifacts/s
 ### Stage 10 V5 observation protocol
 
 `docs/verification/stage10-browser.md` defines a separate invented manual observation record; it adds no analytical table/schema field. CP `[start,end)` coordinates, UTF-16 boundary metadata, canonical/source-artifact hashes and anchor IDs are expected values; `native`, `fallback`, and `capture` are independent outcomes, initially pending. Native outcomes are `highlighted/page_top/not_highlighted/wrong_occurrence/failed/unavailable`; fallback outcomes are `span_visible/failed/withheld`. `tested_transport=local_file` does not verify external HTTPS. Observer/UTC date, fixed failure reasons and local-only screenshot artifact IDs accompany actual human observations. A successful capture is not native or manual fallback success. The existing CaptureObservation contract/versions and analytical dictionary registry stay unchanged.
+
+
+## Stage 10 documentation checkpoint and compatibility
+
+The implemented public analytical inventory is `TABLE_MODELS`, `TABLE_SCHEMAS`,
+`TABLE_GRAINS` and `TABLE_FOREIGN_KEYS` in `earnings_themes.analysis.records`.
+The fourteen table sections above enumerate every persisted field/dtype, exact
+row grain and FK; analytical and workflow records, closed analysis/workflow
+reasons, and schema-2 processing fields/reasons are also enumerated above.
+Empty frames preserve the declared schema. Dates are `pl.Date`, UTC instants are
+`pl.Datetime("us", "UTC")`, offsets/counts/schema versions are `pl.Int64`, flags
+are `pl.Boolean`, IDs/nullable text are `pl.String`, lists and nested artifact,
+policy and codebook references have explicit List/Struct dtypes. Prevalence's
+numerator and rate use `pl.Float64`; only `equal_issuer_mean` permits a fractional
+numerator. No pandas conversion or dtype inference is part of publication.
+The guarded `contracts` group checks fields/enums/dtypes/grains/FKs and actual
+public function identities; its `dictionary` subset checks the documented inventory.
+
+`AnalysisInputs.assignment_policy` holds an actual `AssignmentPolicy | None`,
+not merely a `PolicyReference`. The explicit implementation's current reference,
+source evidence and support/coding decisions are rechecked at consuming gates.
+`read_analysis_run(directory: Path) -> StoredAnalysisRun` is a structural read;
+`reverify_analysis_run(stored, inputs, policy, families) -> None` requires current
+material. All listed `policy`, `families`, `evidence` and `views` publication
+arguments are required; `None` is an explicit family/policy choice. Report audience
+and evidence-view `raw_snapshot` are required keyword arguments.
+`EvidenceView.retain_capture` is a required built-in bool from current permissions;
+old four-argument in-memory constructors must supply it. Core schema 2, canonical
+text and Python code-point `[start,end)` coordinates remain unchanged. Browser
+UTF-16 projection cannot become an exactness authority.
+
+C1/C2 are compatibility decisions, not a migration of published upstream artifacts.
+Explicit raw/canonical byte inventories and required `selected_universe_hash`
+fail closed for older inputs. C2 digests include the selected universe operative
+hash plus every selected expected/acquisition/metadata projection and actual
+canonical artifact SHA. Legitimate invented stage runs/cache identities,
+declarations and authorizations must be regenerated under that formula; never
+relabel old arbitrary provenance or omit baseline state/reason fields to force a
+match. Upstream core/acquisition schemas and reader signatures are unchanged.
+Valid schema-1 partial/null missingness remains compatible; malformed schema-2
+partial/null/unknown/processing_failed missingness now refuses, with no silent
+migration. Schema-2 processing appends alongside immutable acquisition history.
+
+The analysis-as-published acquisition baseline and the receipt's independently
+verified current processing artifact have different identities. Coverage uses
+checked completion outcomes while retaining the baseline state run/schema.
+Same-workflow retry binds actual saved analysis bytes, independently recomputed
+completion outcomes/reasons, ownership, the immediate parsed predecessor and all
+current selected inputs. It appends an identical pending transition once or
+reuses matching recorded state. Different-workflow reuse requires the paired
+`stored_analysis` directory/manifest SHA, every stored extraction/support/coding
+selection and current history/policy/family/declaration gates; it returns
+`no_state_change` without manufacturing a state file. General terminal reopening,
+latest discovery, inferred predecessor provenance and concurrency/backfill safety
+are not provided by this sequential seam.
+
+Publication profiles remain distinct. Rights-denied text, fragment links, nested
+canonical artifacts and source snapshots are withheld rather than becoming lost
+extraction. Available reasons are null, `raw_snapshot_missing` or
+`snapshot_withheld`; required retainable missing raw bytes refuse complete cited
+publication, while explicit denied raw inclusion permits the labeled canonical
+fallback. Screenshots/capture artifacts remain local_only and are not report
+inputs. The report manifest records capture/browser-observation limitations and
+actual included byte hashes separately from immutable analysis `run.json`.
+Reports preserve expected release/transcript coverage, policy scope, all original
+links, audit outcomes and direct/parent/optional-family counting restrictions.
+Empty tables, unmatched/review/failed/partial cases supply no negative observation;
+only currently bound explicit processing adjudication can establish no-theme.
+
+The [fixture verification record](verification/theme-vertical-slice.md) records
+actual V8/V10 arithmetic, guarded commands and compatibility/procedure history.
+This documentation checkpoint does not discharge native V5, human-only tests,
+final reviews or Stage 10 completion. Production policy, pilot extraction,
+calibration, transcript schemas and fresh-call stability remain later work.
