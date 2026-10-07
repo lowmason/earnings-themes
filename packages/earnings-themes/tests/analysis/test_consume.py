@@ -727,3 +727,28 @@ def test_forged_c2_container_types_refuse(analysis_inputs, field):
         changed = forged(analysis_inputs, canonical_snapshots=(snapshot,))
     with pytest.raises(AnalysisError):
         gate(changed)
+
+
+def test_foreign_policy_reference_analysis_error_chain_is_suppressed(analysis_inputs):
+    thrown = []
+
+    class ChainedReferencePolicy:
+        @property
+        def reference(self):
+            try:
+                raise RuntimeError("Invented SENTINEL property cause")
+            except RuntimeError as inner:
+                error = AnalysisError("input_changed")
+                thrown.append(error)
+                raise error from inner
+
+        def evaluate(self, view):
+            raise AssertionError("invented-evaluation-forbidden")
+
+    with pytest.raises(AnalysisError) as raised:
+        gate(replace(analysis_inputs, assignment_policy=ChainedReferencePolicy()))
+    assert str(raised.value) == "input_changed"
+    assert raised.value is not thrown[0]
+    assert raised.value.__cause__ is None
+    assert raised.value.__suppress_context__
+    assert "SENTINEL" not in repr(raised.value)

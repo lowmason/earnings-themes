@@ -346,11 +346,14 @@ def verify_current_inventory(inputs: AnalysisInputs, extraction: StoredRun) -> N
                 raise AnalysisError("storage_corrupt")
             _require(len(raw.data) == manifest["raw_bytes"])
     reference = inputs.coding.record.policy
-    actual_reference = (
-        _fresh(inputs.assignment_policy.reference, PolicyReference)
-        if inputs.assignment_policy is not None
-        else None
-    )
+    try:
+        actual_reference = (
+            _fresh(inputs.assignment_policy.reference, PolicyReference)
+            if inputs.assignment_policy is not None
+            else None
+        )
+    except Exception:  # noqa: BLE001 - foreign properties may carry arbitrary causes
+        raise AnalysisError("input_changed") from None
     _require(reference == actual_reference)
     if actual_reference is not None:
         _require(actual_reference.kind != "fixture" or policy.scope == "fixture")
