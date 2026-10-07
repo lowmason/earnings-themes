@@ -176,3 +176,34 @@ was run. `preregister.py amend` recorded the old/new hashes and exact approved
 exception note; source-only `preregister.py verify` is the consistency check. V5
 native availability/presentation/manual fallback remain pending in
 `docs/verification/stage10-browser.md`; fake capture is not native/manual evidence.
+
+
+## Stage 10 redirect-refusal completion (2026-10-07)
+
+Fix-round review found that the dedicated no-proxy debugger discovery opener
+still inherited urllib's redirect handler. It could leave the validated loopback
+endpoint before WebSocket validation. The opener now refuses every redirect,
+including another loopback destination, before a second request. This completes
+the existing user-approved validated-loopback isolation exception for the three
+disclosed lifecycle repairs; it is not a fourth exception. The existing broader
+`crash` classification is used with that explicit approval and retained first
+amendment, rather than claiming a crash on an actual fixture capture.
+
+Validation used invented in-memory HTTP responses and isolated SDK doubles only:
+the public capture boundary records startup failure and closes the fake browser,
+without a WebSocket, actual network, actual fixture or native observation. The
+adapter implementation precedes this second standalone amendment, at commit
+`981573b40f867071a9c3cdd415da063e996e91a9`.
+
+| Adapter SHA-256 | Value |
+| --- | --- |
+| Previous first-amendment hash | `ff6d6dceb97ada698dd3bcdd6e1d547a9df5b6f6ce615c1204c4cab1ad7daab9` |
+| Second amended hash | `0ce37500b561c3642d971dc587e02e2e144a966581496c548017024d45f627b8` |
+
+The second `[[changes]]` entry in `layout1-preregistered.toml` preserves the first
+entry and original 23-key inventory. Comparison inputs, type decisions, mapping
+rules, units, metrics, browser pins and capture-policy semantics remain unchanged.
+All historical measured numbers and Stage 3 capture/report bytes are retained;
+no parser-fidelity remeasurement was performed. As with the first amendment, the
+comparison is disclosed as post-hoc under the frozen protocol. Native/manual V5
+observations remain pending.

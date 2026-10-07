@@ -34,3 +34,11 @@ previous_sha256 = "be19ecc2cfe65575b693d39a14af59b38cdd875335c078b4ac0c947dcdb03
 sha256 = "ff6d6dceb97ada698dd3bcdd6e1d547a9df5b6f6ce615c1204c4cab1ad7daab9"
 date = 2026-10-07
 note = "Stage 10: user-approved exception for three lifecycle/isolation repairs under the existing crash category; invented fake validation only, no actual fixture/native observation; comparison inputs and metrics unchanged."
+
+[[changes]]
+file = "packages/earnings-ingestion/src/earnings_ingestion/browser/selenium_capture.py"
+reason = "crash"
+previous_sha256 = "ff6d6dceb97ada698dd3bcdd6e1d547a9df5b6f6ce615c1204c4cab1ad7daab9"
+sha256 = "0ce37500b561c3642d971dc587e02e2e144a966581496c548017024d45f627b8"
+date = 2026-10-07
+note = "Stage 10 fix 1: redirect refusal completes the existing user-approved validated-loopback isolation exception for the three lifecycle repairs under the broader crash category, not a fourth exception; invented fake validation only, no actual native/fixture observation; comparison inputs, metrics, pins and capture-policy semantics unchanged."
