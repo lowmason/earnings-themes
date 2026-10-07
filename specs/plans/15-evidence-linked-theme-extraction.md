@@ -396,7 +396,7 @@ Task 1 checkpoint (2026-10-06): implemented in `04a9db1..7820506`; independent S
 
 **Interfaces:** Consumes core schema-2 contracts, existing `Codebook`/`CodebookReference`, `PolicyReference`, `SupportSources`, `StoredSupportRun`, `CodingRun`, `DecisionSet`, `AssignmentPolicy` and existing caches. Produces all strict inventory models and these fixture names in `analysis/conftest.py`: `analysis_inputs` (one fully bound invented fixture-policy source/run set); `analysis_policy`; `family_map`; `counting_case` (the independent V10 tables/coverage/book/policy/families); and `analysis_run` once Task 6 exists. `cases.py` owns deterministic constructors, not gold. Check: `records`, plus `test_data_dictionary.py` through the runner's named `dictionary` group, red/green as above.
 
-- [ ] **1. Write failing record tests.** Exercise unknown/extra fields, boolean offsets/counters, missing codebook/policy hashes, conflicting event/doc fiscal facts, non-UTC timestamps, duplicate memberships, mixed/stale book, fixture acceptance on research scope, widened rights, empty typed tables and source-bearing `repr/str`. Use invented metadata and `earnings_themes.synthetic`/existing coding fixture patterns. Do not import test helpers into runtime modules.
+- [x] **1. Write failing record tests.** Exercise unknown/extra fields, boolean offsets/counters, missing codebook/policy hashes, conflicting event/doc fiscal facts, non-UTC timestamps, duplicate memberships, mixed/stale book, fixture acceptance on research scope, widened rights, empty typed tables and source-bearing `repr/str`. Use invented metadata and `earnings_themes.synthetic`/existing coding fixture patterns. Do not import test helpers into runtime modules.
 
 ```python
 def test_family_map_refuses_duplicate_pair(family_map):
@@ -439,9 +439,9 @@ class AnalysisInputs:
 
 Define the table-row models in `records.py` as `Observation`, `QuoteAudit`, `ClaimAudit`, `ClaimEvidence`, `ClassificationAudit`, `DecisionAudit`, `RejectionAudit`, `CoverageRow`, `PrevalenceRow` and `CopyRow`, with exactly the fields/grains in the persisted-table inventory. Existing `AssignmentClaimLink` and pointer-only `NoveltyItem` supply the original link/novelty payloads; analytical schema/FKs are added explicitly in the frames. These names also define the row-model-to-table schema registry; no later task invents an alternative schema.
 
-- [ ] **2. Implement strict models and explicit `TABLE_SCHEMAS`.** Use existing canonical JSON/digest, core ID/hash/contracts and Stage 9 CodebookReference/PolicyReference objects; no copied codebook schema. Add complete field validators and foreign-key documentation. Nullable fiscal/time metadata stays null. This event-bound slice requires the frozen event's zero-padded ten-character CIK; missing or conflicting identity refuses publication with a fixed binding reason rather than inventing an identifier or adding an unspecified metadata extension. No schema-global ingestion/core bump.
+- [x] **2. Implement strict models and explicit `TABLE_SCHEMAS`.** Use existing canonical JSON/digest, core ID/hash/contracts and Stage 9 CodebookReference/PolicyReference objects; no copied codebook schema. Add complete field validators and foreign-key documentation. Nullable fiscal/time metadata stays null. This event-bound slice requires the frozen event's zero-padded ten-character CIK; missing or conflicting identity refuses publication with a fixed binding reason rather than inventing an identifier or adding an unspecified metadata extension. No schema-global ingestion/core bump.
 
-- [ ] **3. Build the following hand fixture as typed in-memory inputs.** Literal IDs below are invented. Use a two-level book `capacity -> capacity_expansion`, plus `demand`; no positive/negative example reader. Fixed date Q1=2025-03-31, Q2=2025-06-30. Per-span repeated text/astral characters are invented in `analysis/cases.py`.
+- [x] **3. Build the following hand fixture as typed in-memory inputs.** Literal IDs below are invented. Use a two-level book `capacity -> capacity_expansion`, plus `demand`; no positive/negative example reader. Fixed date Q1=2025-03-31, Q2=2025-06-30. Per-span repeated text/astral characters are invented in `analysis/cases.py`.
 
 | Event | Acquisition / processing | Assignment/completion evidence | Headline observable / capacity presence |
 | --- | --- | --- | --- |
@@ -458,9 +458,11 @@ Define the table-row models in `records.py` as `Observation`, `QuoteAudit`, `Cla
 
 The mixed policy corpus above is an audit/completion fixture, not one publishable accepted run: use separate explicitly bound coding runs for `policy=null` and fixture-policy cases, then normalized event-level completion rows for the count-only V10 fixture. Publication refuses mixing those policy bindings in one analytical accepted-run selection. This prevents a test shortcut from weakening the real consuming gate.
 
-- [ ] **4. Run `records` green; add public-object identity tests and dictionary entries.** Check that no initializer loads concrete adapters or source files.
+- [x] **4. Run `records` green; add public-object identity tests and dictionary entries.** Check that no initializer loads concrete adapters or source files.
 
-- [ ] **5. Checkpoint:** both task approvals. No acceptance/quality claim follows from invented records.
+- [x] **5. Checkpoint:** both task approvals. No acceptance/quality claim follows from invented records.
+
+Task 2 checkpoint (2026-10-06): implemented in `04b3043..af6d59e`; Sol Ultra specification and quality approved after scoped fixes. Records 55 and dictionary 293 passed with all other counts zero; scoped Ruff passed. Public `validate_analysis_tables(tables: AnalysisTables) -> AnalysisTables` reconstructs current frames and enforces full references; complete run containers retain its result. Intermediate tables defer only empty completion references. Task 6 constructs complete runs; Task 8 invokes the full gate before serialization/publication. Exact `records` group registration was the narrow audited runner ownership correction.
 
 ### Task 3: Rebind and reverify every current input before analysis
 
