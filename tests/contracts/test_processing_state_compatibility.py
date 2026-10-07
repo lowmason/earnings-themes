@@ -616,3 +616,31 @@ def test_canonical_selector_retains_document_after_processing_failure(tmp_path):
     )
     assert report.count(states.DocumentState.COMPLETED_NO_THEME) == 0
     assert report.no_theme == ()
+
+
+def test_processing_partial_projects_closed_missingness():
+    from earnings_themes.analysis import AcquisitionStatus
+
+    row = processing(
+        to_state="partial",
+        missing_reason="policy_review",
+        processing_reason="policy_review",
+    )
+    projection = AcquisitionStatus(
+        event_id=row.event_id,
+        document_id=row.document_id,
+        state=row.to_state.value,
+        missing_reason=row.missing_reason.value,
+        failure_reason=None,
+        doc_id=row.doc_id,
+        source_document_id="invented-source",
+        raw_hash=row.artifact_sha256,
+        accession=row.accession,
+        exhibit=row.exhibit,
+        retrieved_at=row.retrieved_at,
+        state_run_id=row.run_id,
+        state_schema_version=row.schema_version,
+        pilot_hash=row.pilot_hash,
+    )
+    assert projection.missing_reason == "policy_review"
+    assert projection.state_schema_version == 2

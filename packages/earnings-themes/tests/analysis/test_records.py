@@ -756,3 +756,32 @@ def test_snapshot_withheld_marker_refuses_inconsistent_artifacts(change):
         fields[change + "_artifact"] = None
     with pytest.raises(ValidationError):
         r.EvidenceViewReference(**fields)
+
+
+@pytest.mark.parametrize(
+    "reason",
+    ["extraction_partial", "calibration_required", "valid_unmatched"],
+    ids=["extraction", "review", "unmatched"],
+)
+def test_schema_two_partial_retains_closed_missingness(analysis_inputs, reason):
+    fields = analysis_inputs.acquisition[0].model_dump()
+    fields.update(state="partial", state_schema_version=2, missing_reason=reason)
+    assert r.AcquisitionStatus.model_validate(fields).missing_reason == reason
+
+
+@pytest.mark.parametrize(
+    "reason",
+    [None, "processing_failed", "invented-unknown"],
+    ids=["null", "failed", "unknown"],
+)
+def test_schema_two_partial_refuses_invalid_missingness(analysis_inputs, reason):
+    fields = analysis_inputs.acquisition[0].model_dump()
+    fields.update(state="partial", state_schema_version=2, missing_reason=reason)
+    with pytest.raises(ValidationError):
+        r.AcquisitionStatus.model_validate(fields)
+
+
+def test_schema_one_partial_keeps_legacy_null(analysis_inputs):
+    fields = analysis_inputs.acquisition[0].model_dump()
+    fields.update(state="partial", state_schema_version=1, missing_reason=None)
+    assert r.AcquisitionStatus.model_validate(fields).missing_reason is None

@@ -186,6 +186,20 @@ class AcquisitionStatus(AnalysisPart):
             "restricted": {"rights_restricted"},
             "failed": {"parse_failed", "processing_failed"},
         }
+        if self.state == "partial" and self.state_schema_version == 2:
+            allowed["partial"] = {
+                "extraction_partial",
+                "classification_incomplete",
+                "assessment_refused",
+                "assessment_incomplete",
+                "assessment_flagged",
+                "calibration_required",
+                "policy_review",
+                "valid_unmatched",
+                "no_theme_unconfirmed",
+                "no_eligible_units",
+                "copy_processing_conflict",
+            }
         if self.missing_reason not in allowed.get(self.state, {None}):
             raise ValueError("invalid_state_reason")
         if (self.missing_reason == "parse_failed") != (self.failure_reason is not None):

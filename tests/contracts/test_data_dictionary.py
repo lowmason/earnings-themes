@@ -23,6 +23,7 @@ from earnings_ingestion.cohort import register as cohort_register
 from earnings_ingestion.events import acceptance, coverage, states
 from earnings_ingestion.events import records as events
 from earnings_ingestion.fetch import records as fetch
+from earnings_pipeline import theme_config, theme_workflow
 from earnings_themes import annotation, codebook, gold, problems, split
 from earnings_themes import records as themes
 from earnings_themes.analysis import records as analysis
@@ -599,3 +600,35 @@ def test_report_manifest_and_publication_interfaces_documented():
     )
     assert "published byte bindings" in text
     assert "capture_not_supplied" in text and "browser_observation_not_supplied" in text
+
+
+WORKFLOW_MODELS = [
+    theme_config.FileSelection,
+    theme_config.StoredSelection,
+    theme_config.SourceSelection,
+    theme_config.WorkflowConfig,
+    theme_workflow.WorkflowArtifact,
+    theme_workflow.WorkflowFailure,
+    theme_workflow.WorkflowReceipt,
+]
+WORKFLOW_DATACLASSES = [theme_workflow.WorkflowRuntime, theme_workflow.WorkflowResult]
+
+
+@pytest.mark.parametrize("model", WORKFLOW_MODELS, ids=lambda model: model.__name__)
+def test_workflow_fields_documented(model):
+    assert documented(model.__name__) == set(model.model_fields)
+
+
+@pytest.mark.parametrize(
+    "model", WORKFLOW_DATACLASSES, ids=lambda model: model.__name__
+)
+def test_workflow_dataclass_fields_documented(model):
+    assert documented(model.__name__) == {field.name for field in fields(model)}
+
+
+def test_workflow_closed_reasons_and_baseline_contract_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert documented("Workflow reasons") == theme_config.WORKFLOW_REASONS
+    assert "immediate immutable parsed predecessor" in text
+    assert "stored_analysis" in text and "capture_nondurable" in text
+    assert "schema-2 partial" in text and "schema-1 partial" in text

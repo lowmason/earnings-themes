@@ -300,3 +300,39 @@ def test_shared_analysis_run_fixture_is_complete(
     assert len(analysis_run.tables.frames) == 14
     assert analysis_run.record.universe_hash == analysis_inputs.selected_universe_hash
     assert analysis_run.record.family_map == family_map
+
+
+def test_schema_two_partial_reason_survives_coverage(analysis_input_factory):
+    from .cases import event
+
+    expected = (event("A-Q1"), event("B-Q1"))
+    extra = analysis.AcquisitionStatus(
+        event_id="B-Q1",
+        document_id="B-Q1:release",
+        state="partial",
+        missing_reason="policy_review",
+        failure_reason=None,
+        doc_id="invented-extra-doc",
+        source_document_id="invented-extra-source",
+        raw_hash=None,
+        accession=None,
+        exhibit=None,
+        retrieved_at=None,
+        state_run_id="invented-processing",
+        state_schema_version=2,
+        pilot_hash=expected[1].pilot_hash,
+    )
+    # Exercise the coverage projection on an independently constructed checked matrix;
+    # a missing canonical source cannot be fabricated merely to satisfy a gate.
+    inputs, _ = analysis_input_factory()
+    from dataclasses import replace
+
+    from earnings_themes.analysis.coverage import _release
+
+    bound = analysis.reverify_analysis_inputs(inputs)
+    projected = _release(
+        replace(bound, acquisition=(extra,), metadata=()), expected[1], (), ()
+    )
+    assert projected.latest_state == "partial"
+    assert "policy_review" in projected.missing_reasons
+    assert not projected.observable

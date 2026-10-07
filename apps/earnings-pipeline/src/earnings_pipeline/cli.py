@@ -27,6 +27,7 @@ from earnings_ingestion.browser.install import (
 from earnings_pipeline.codebook_cli import codebook
 from earnings_pipeline.cohort_cli import cohort
 from earnings_pipeline.events_cli import events
+from earnings_pipeline.extract_cli import extract
 from earnings_pipeline.gold_cli import gold
 from earnings_pipeline.pilot_cli import pilot
 
@@ -37,6 +38,7 @@ browser = typer.Typer(
 app.add_typer(browser, name="browser")
 app.add_typer(cohort, name="cohort")
 app.add_typer(events, name="events")
+app.add_typer(extract, name="extract")
 app.add_typer(pilot, name="pilot")
 app.add_typer(codebook, name="codebook")
 app.add_typer(gold, name="gold")

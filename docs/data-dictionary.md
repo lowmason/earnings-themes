@@ -5797,3 +5797,297 @@ wording, rationale, rejection detail, cache path or original storage path is sto
 | `artifact_hashes` | `sorted filename/hash pairs` | All included HTML/view/canonical/raw bytes; no external artifact claim. |
 | `evidence_ids` | `sorted unique strings` | Original document-qualified evidence identities. |
 | `limitations` | `closed string list` | `rights_restricted`, `snapshot_withheld`, `capture_not_supplied`, `browser_observation_not_supplied`, `raw_cache_not_supplied`, `raw_cache_not_bound`. |
+
+
+## Explicit replay extraction workflow (schema 1)
+
+`extract run --config <explicit JSON>` loads one configuration, then uses identity-only replay façades. Any reached tokenizer or model dispatch fails closed; there is no provider or live mode. `load_workflow_config(path: Path, *, repo: Path) -> WorkflowConfig` confines paths before loading selected source bytes. Every input selection binds actual bytes by SHA-256, including prompts, metadata, canonical snapshots, raw snapshots when supplied, and lockfile. Run/event/artifact identities use portable safe components, and document identities preserve the public source@canonicalization#hash16 grammar; receipt phase counts are nonnegative, a positive appended count requires its state artifact, and every result requires its receipt ID/SHA pair; diagnostic output contains only closed reasons, counts and validated hash-derived IDs. Fixture timestamps and policy selectors are restricted to fixture scope and explicit permitted synthetic population IDs. Research cannot select the fixture assignment policy. A nonnull CLI policy reference refuses `policy_unavailable`; programmatic callers supply and reverify the actual policy object.
+
+`run_theme_workflow(config: WorkflowConfig, runtime: WorkflowRuntime, *, now: Callable[[], datetime]) -> WorkflowResult` composes public extraction, proposal, support, coding, analytical publication and report gates. Processing append uses the acquisition ProcessLock. The first publication binds its latest parsed acquisition baseline, preserving every C2 field. Coverage outcome comes from checked completions, while state_run_id/schema remain that baseline. Receipts separately bind actual current state-file bytes; `analysis_as_published` identifies this immutable publication/current-processing separation. Same-workflow retry reconstructs only the immediate immutable parsed predecessor of a terminal owned by this workflow, whose actual selected analysis manifest SHA and independently reverified completion hashes/outcomes/reasons must match. Pending retry appends once; a matching recorded terminal reuses its bytes without reopening it. Other-workflow consumption requires explicit stored_analysis plus all stored stages, exact manifest SHAs and current gates, returning no_state_change without a zero-transition file. A failure-hash terminal cannot become analysis success.
+
+The schema-2 partial acquisition projections retain exactly one of extraction_partial, classification_incomplete, assessment_refused, assessment_incomplete, assessment_flagged, calibration_required, policy_review, valid_unmatched, no_theme_unconfirmed, no_eligible_units, or copy_processing_conflict; processing_failed and null refuse. Legacy schema-1 partial retains null missingness. No provenance member or analytical schema changes.
+
+Capture uses only an explicitly supplied public renderer, exact isolated-1 policy and selected installed-binary reference. The current capture adapter returns nondurable in-memory capture data; the workflow cannot attach a durable capture manifest or browser observation and receipts honestly record capture_nondurable/browser_observation_not_supplied. With no renderer it records capture_not_supplied.
+
+### `FileSelection`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Literal[1]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `path` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `sha256` | `str` | SHA-256 of actual selected immutable bytes. |
+
+### `StoredSelection`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Literal[1]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `directory` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `sha256` | `str` | SHA-256 of actual selected immutable bytes. |
+
+### `SourceSelection`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Literal[1]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `event_id` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `doc_id` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `canonical` | `FileSelection` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `metadata` | `FileSelection` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `raw` | `FileSelection or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+
+### `WorkflowConfig`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Literal[1]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `run_id` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `scope` | `Literal['fixture', 'research']` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `mode` | `Literal['replay']` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `fixture_started_at` | `datetime or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `input_root` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `universe` | `FileSelection` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `universe_hash` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `events` | `FileSelection` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `event_hash` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `pilot` | `FileSelection` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `pilot_hash` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `selected_event_ids` | `tuple[str, ...]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `states_dir` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `acquisition_files` | `tuple[FileSelection, ...]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `sources` | `tuple[SourceSelection, ...]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `codebook` | `FileSelection` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `extraction_prompt` | `FileSelection` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `coding_prompt` | `FileSelection` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `support_prompt` | `FileSelection` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `extraction_policy` | `ExtractionPolicy` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `extraction_ceilings` | `Ceilings` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `extraction_identity` | `AdapterIdentity` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `extractor_family` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `coding_policy` | `CodingPolicy` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `coding_ceilings` | `CodingCeilings` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `classifier_identity` | `JudgeIdentity` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `support_policy` | `SupportPolicy` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `support_ceilings` | `SupportCeilings` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `scorer_identity` | `ScorerIdentity` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `judge_identities` | `tuple[JudgeIdentity, JudgeIdentity]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `extraction_run_id` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `coding_run_id` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `support_run_id` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `extraction_cache` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `coding_cache` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `support_cache` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `stored_extraction` | `StoredSelection or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `stored_support` | `StoredSelection or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `stored_coding` | `StoredSelection or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `stored_analysis` | `StoredSelection or None` | Explicit paired directory and manifest SHA selection required for another workflow to consume completed processing. |
+| `assignment_policy` | `Literal['fixture-supporting/1'] or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `policy_reference` | `PolicyReference or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `analysis_policy` | `AnalysisPolicy` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `families` | `ThemeFamilyMap or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `copies` | `tuple[CopyAssertion, ...]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `no_theme` | `tuple[NoThemeDeclaration, ...]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `audience` | `Literal['local', 'export']` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `output_dir` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `capture` | `bool` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `capture_policy` | `dict or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `installed_binary_reference` | `FileSelection or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `software` | `dict[str, str]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `lockfile` | `FileSelection` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+
+### `WorkflowArtifact`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Literal[1]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `artifact_id` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `sha256` | `str` | SHA-256 of actual selected immutable bytes. |
+
+### `WorkflowFailure`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Literal[1]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `run_id` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `phase` | `Phase` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `event_ids` | `tuple[str, ...]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `doc_ids` | `tuple[str, ...]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `reason` | `str` | Exact closed workflow reason, never exception text. |
+| `completed_stages` | `tuple[WorkflowArtifact, ...]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `usage_availability` | `Literal['known', 'unreported']` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `created_at` | `AwareDatetime` | Actual operational UTC timestamp. |
+
+### `WorkflowReceipt`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Literal[1]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `run_id` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `created_at` | `AwareDatetime` | Actual operational UTC timestamp. |
+| `config_hash` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `scope` | `Literal['fixture', 'research']` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `status` | `Status` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `analysis` | `WorkflowArtifact or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `report` | `WorkflowArtifact or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `failure` | `WorkflowArtifact or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `state` | `WorkflowArtifact or None` | Actual appended or current processing file reference, separate from immutable analytical baseline. |
+| `state_count` | `int` | Number of newly appended transitions; zero for reused terminal or no_state_change. |
+| `phase_counts` | `tuple[tuple[Phase, int], ...]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `reason` | `str or None` | Exact closed workflow reason, never exception text. |
+| `limitations` | `tuple[Literal['capture_not_supplied', 'browser_observation_not_supplied', 'capture_nondurable', 'analysis_as_published'], ...]` | Honest current capture and publication limitations. |
+
+### `WorkflowRuntime`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `extractor` | `ModelAdapter` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `classifier` | `Classifier` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `scorer` | `EntailmentScorer` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `judges` | `tuple[Judge, Judge]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `assignment_policy` | `AssignmentPolicy or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `renderer` | `BrowserRenderer or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+
+### `WorkflowResult`
+
+| Field | Type / allowed values | Meaning |
+| --- | --- | --- |
+| `run_id` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `status` | `Status` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `reason` | `str or None` | Exact closed workflow reason, never exception text. |
+| `receipt_id` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `receipt_hash` | `str` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `analysis_id` | `str or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `analysis_hash` | `str or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `report_id` | `str or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `report_hash` | `str or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `failure_id` | `str or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `failure_hash` | `str or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `state_id` | `str or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `state_hash` | `str or None` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `state_count` | `int` | Number of newly appended transitions; zero for reused terminal or no_state_change. |
+| `phase_counts` | `tuple[tuple[Phase, int], ...]` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+| `scope` | `Literal['fixture', 'research']` | Explicit selection or checked workflow metadata; no discovery or source-text diagnostics. |
+
+### `Workflow reasons`
+
+| Value | Meaning |
+| --- | --- |
+| `ambiguous_occurrence` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `assessment_flagged` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `assessment_incomplete` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `assessment_refused` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `blank_claim` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `blocked_required_resource` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `browser_unavailable` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `budget_exhausted` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `cache_corrupt` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `calibration_required` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `canonical_hash_mismatch` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `capture_failure` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `claim_too_long` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `classification_incomplete` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `codebook_not_approved` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `copy_processing_conflict` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `crosses_speaker_turn` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `crossing_elements` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `document_integrity` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `document_load_failure` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `duplicate_claim` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `duplicate_element` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `duplicate_label` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `duplicate_quote` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `duplicate_theme` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `element_id_mismatch` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `empty_denominator` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `empty_selection` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `explicit_no_theme` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `extraction_partial` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `fixture_policy` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `hierarchy_conflict` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `input_changed` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `input_too_long` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `invalid_bundle` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `invalid_contribution` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `invalid_elements` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `invalid_header_reference` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `invalid_panel` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `invalid_quote` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `invalid_references` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `judge_exhausted` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `locator_mismatch` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `locator_not_found` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `malformed_record` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `malformed_reply` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `masks_mismatch` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `member_at_publication` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `missing_assessment` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `mixed_codebook` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `model_mismatch` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `no_confirmed_release` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `no_eligible_units` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `no_native_text` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `no_release_filing` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `no_theme_fit` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `no_theme_unconfirmed` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `not_found` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `not_member_at_publication` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `not_processed` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `not_requested` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `not_yet_checked` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `ocr_derived_text` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `outside_chunk` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `outside_element` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `outside_parent` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `parent_cycle` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `parent_order` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `parse_failed` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `period_end_outside_window` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `policy_accept` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `policy_mismatch` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `policy_reject` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `policy_review` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `policy_unavailable` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `processing_failed` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `published_after_cutoff` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `quote_text_mismatch` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `raw_snapshot_missing` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `replay_dispatch_forbidden` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `replay_miss` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `requests_exhausted` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `rights_restricted` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `same_day_transition` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `scorer_exhausted` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `scorer_failed` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `several_release_filings` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `snapshot_withheld` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `span_out_of_bounds` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `startup_failure` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `state_history_invalid` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `state_not_processable` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `state_predecessor_mismatch` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `state_record_invalid` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `state_run_conflict` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `state_schema_invalid` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `state_storage_corrupt` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `storage_corrupt` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `table_cell_parent` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `timeout` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `tokens_exhausted` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `tool_call_refused` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `transcript_not_in_scope` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `transport_error` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `unexpected_error` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `unknown_claim` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `unknown_element` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `unknown_label` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `unknown_parent` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `unknown_quote` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `unknown_theme` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `unsupported_media_type` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `valid_unmatched` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `withheld` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `wrong_codebook` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `wrong_document` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+| `wrong_source_run` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
+
+Malformed configuration or selected-source preflight refuses without artifacts/state. Ownership/history conflicts encountered inside the pipeline publish only metadata-only WorkflowFailure and its receipt with state_not_processable; they cannot mutate an incompatible terminal.
