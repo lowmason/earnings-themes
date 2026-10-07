@@ -523,7 +523,16 @@ class EvidenceViewReference(AnalysisPart):
 
     @model_validator(mode="after")
     def _view_rights(self) -> Self:
-        if (self.status == "available") != (self.reason is None):
+        if self.status == "available":
+            if self.reason not in (None, "raw_snapshot_missing"):
+                raise ValueError("invalid_view_status")
+            if self.reason == "raw_snapshot_missing" and (
+                self.raw_artifact is not None
+                or self.canonical_artifact is None
+                or self.view_artifact is None
+            ):
+                raise ValueError("invalid_view_status")
+        elif self.reason != "rights_restricted":
             raise ValueError("invalid_view_status")
         private = (
             self.source_fragment_url,
@@ -1316,8 +1325,13 @@ class EvidenceView:
     html: bytes | None
     canonical_bytes: bytes | None
     raw_bytes: bytes | None
+    retain_capture: bool
 
     def __post_init__(self) -> None:
+        if type(self.retain_capture) is not bool:
+            raise AnalysisError("malformed_record")
+        if self.reference.status == "withheld" and self.retain_capture:
+            raise AnalysisError("rights_restricted")
         for payload, artifact in (
             (self.html, self.reference.view_artifact),
             (self.canonical_bytes, self.reference.canonical_artifact),

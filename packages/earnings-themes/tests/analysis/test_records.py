@@ -655,3 +655,77 @@ def test_selected_universe_hash_refuses_string_subclass(analysis_inputs):
 
     with pytest.raises(AnalysisError):
         replace(analysis_inputs, selected_universe_hash=HashSubclass("c" * 64))
+
+
+def fallback_reference_fields():
+    from earnings_core import ArtifactRef, RightsStatus, sha256_hex
+
+    def artifact(payload, suffix):
+        return ArtifactRef.for_bytes(
+            payload,
+            media_type="text/plain",
+            storage_ref="invented/" + suffix,
+            rights_status=RightsStatus.REDISTRIBUTABLE,
+            rights_basis="Invented permission",
+        )
+
+    return {
+        "evidence_id": "invented-evidence",
+        "doc_id": "invented-document",
+        "quote_id": "invented-quote",
+        "canonical_hash": sha256_hex(b"invented"),
+        "start": 0,
+        "end": 8,
+        "validator_version": "3",
+        "element_id": "invented-element",
+        "mask_ids": (),
+        "locator_hash": sha256_hex(b"locator"),
+        "quote_text_hash": sha256_hex(b"invented"),
+        "source_fragment_url": None,
+        "source_url": "https://example.invalid/source",
+        "raw_artifact": None,
+        "canonical_artifact": artifact(b"invented", "canonical"),
+        "view_artifact": artifact(b"escaped invented", "view"),
+        "anchor_id": "p-invented",
+        "audience": "local",
+        "rights_status": RightsStatus.REDISTRIBUTABLE,
+        "rights_basis": "Invented permission",
+        "status": "available",
+        "reason": "raw_snapshot_missing",
+    }
+
+
+def test_available_canonical_fallback_marks_missing_raw():
+    reference = r.EvidenceViewReference(**fallback_reference_fields())
+    assert reference.status == "available"
+    assert reference.reason == "raw_snapshot_missing"
+    view = r.EvidenceView(reference, b"escaped invented", b"invented", None, False)
+    assert view.raw_bytes is None and view.html is not None
+
+
+@pytest.mark.parametrize(
+    "change",
+    ["arbitrary", "canonical", "view", "raw"],
+    ids=["arbitrary", "no-canonical", "no-view", "with-raw"],
+)
+def test_missing_raw_marker_requires_valid_fallback(change):
+    fields = fallback_reference_fields()
+    if change == "arbitrary":
+        fields["reason"] = "input_changed"
+    elif change == "raw":
+        fields["raw_artifact"] = fields["canonical_artifact"]
+    else:
+        fields[change + "_artifact"] = None
+    with pytest.raises(ValidationError):
+        r.EvidenceViewReference(**fields)
+
+
+@pytest.mark.parametrize(
+    "permission", [None, 0, 1, "true"], ids=["null", "zero", "one", "string"]
+)
+def test_view_capture_permission_is_builtin_bool(permission):
+    fields = fallback_reference_fields()
+    fields["reason"] = None
+    reference = r.EvidenceViewReference(**fields)
+    with pytest.raises(AnalysisError):
+        r.EvidenceView(reference, b"escaped invented", b"invented", None, permission)

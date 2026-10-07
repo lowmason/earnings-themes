@@ -17,6 +17,12 @@ else:
 ROOT = Path(__file__).resolve().parents[1]
 THEMES = "packages/earnings-themes/tests/"
 GROUPS = {
+    "evidence": (
+        "apps/earnings-pipeline/tests/test_evidence_views.py",
+        "apps/earnings-pipeline/tests/test_browser_evidence.py",
+        "packages/earnings-core/tests/test_locators.py",
+        "packages/earnings-core/tests/test_evidence.py",
+    ),
     "coverage": (
         THEMES + "analysis/test_completion.py",
         THEMES + "analysis/test_coverage.py",

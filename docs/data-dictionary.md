@@ -4720,7 +4720,7 @@ Dates use `pl.Date`; UTC timestamps use `pl.Datetime("us", "UTC")`; offsets/coun
 | `rights_status` | `RightsStatus` | Existing RightsStatus; free access never widens permission. |
 | `rights_basis` | `string` | Source-specific permission basis; private in printable diagnostics. |
 | `status` | `'available' / 'withheld'` | Explicit status binding; retained separately for audit. |
-| `reason` | `string or null` | Explicit reason binding; retained separately for audit. |
+| `reason` | `string or null` | Available permits null or raw_snapshot_missing only. The missing marker requires absent raw and present canonical/view artifacts; Task 8 refuses complete cited publication when required raw bytes are missing. |
 | `capture_reference` | `string or null` | Explicit capture reference binding; retained separately for audit. |
 
 ### `CaptureObservation`
@@ -5117,6 +5117,7 @@ Dates use `pl.Date`; UTC timestamps use `pl.Datetime("us", "UTC")`; offsets/coun
 | `html` | Explicit html input/reference; no I/O on construction. |
 | `canonical_bytes` | Explicit canonical bytes input/reference; no I/O on construction. |
 | `raw_bytes` | Explicit raw bytes input/reference; no I/O on construction. |
+| `retain_capture` | Required built-in bool from current selected metadata permission and allowed view retention/access; withheld is False. Capture permission is never inferred from rights labels or text retention. |
 
 ### `Analysis reasons`
 
@@ -5226,6 +5227,13 @@ Dates use `pl.Date`; UTC timestamps use `pl.Datetime("us", "UTC")`; offsets/coun
 | `wrong_codebook` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
 | `wrong_document` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
 | `wrong_source_run` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
+
+| `browser_unavailable` | Closed public renderer outcome; private detail never exported. |
+| `startup_failure` | Closed public renderer outcome; private detail never exported. |
+| `timeout` | Closed public renderer outcome; private detail never exported. |
+| `blocked_required_resource` | Closed public renderer outcome; private detail never exported. |
+| `document_load_failure` | Closed public renderer outcome; private detail never exported. |
+| `capture_failure` | Closed public renderer outcome; private detail never exported. |
 
 ### `Analysis tables`
 
@@ -5689,3 +5697,15 @@ The analysis manifest binds selected population/event/pilot/universe; canonical 
 
 
 The public prevalence helper requires one **exact full assignment-policy reference** across every observable completion, including a corpus made entirely of explicitly declared completed-no-theme units with no observation rows. Accepted observations for those observable documents must match that reference's policy kind/hash and codebook identity. A mismatch refuses as `policy_mismatch` before counting. Non-observable completion audit rows may retain distinct or null assignment policies; they do not select the observable binding. This is an additional pure counting gate, with no schema, normative hash or policy interpretation change.
+
+## Application canonical evidence preparation
+
+`make_evidence_view(bound: BoundAnalysis, doc_id: str, quote_id: str, *, audience: Literal["local", "export"], raw_snapshot: RawSnapshot | None) -> EvidenceView` repeats current analytical gates, compares the checked binding hash with the supplied BoundAnalysis, selects a document-qualified retained quote, reverifies its canonical span and attribution, and derives the current locator and masks before any HTML. The required explicit raw snapshot equals the selected currently rebound inventory entry, including actual artifact and bytes; None is explicit absence, never a lookup. Raw-byte absence retains canonical fallback with raw_snapshot_missing where permitted. This is preparation without filesystem I/O; publication must verify and atomically persist the content-hashed bytes before citing a durable snapshot.
+
+The escaped standalone UTF-8 template is `canonical-evidence-html/1`. Python code-point slices are escaped separately before/inside/after a single marked span. Inline fixed CSS preserves whitespace and shows the mark. No source JavaScript, external resource, HTML reparsing or rendered text enters quote verification. Independent views preserve overlapping quotations. Fixture scope is visible. `evidence_id = "evidence-" + digest((doc_id, quote_id, canonical_hash, start, end, validator_version))`, matching observations; `anchor_id = "p-" +` the same digest. Content paths are views/SHA256.html and canonical/SHA256.json. The canonical artifact hash covers the full supplied canonical JSON bytes; canonical_hash covers canonical text UTF-8; raw_hash covers separate original bytes; view hash covers actual HTML UTF-8. Locator hash is digest(SpanLocator); quote_text_hash is SHA256 of the saved canonical slice UTF-8.
+
+Source links validate HTTP(S), no user info/control characters, retain legitimate queries and replace old fragments. Terms percent-encode dash/comma/quotes/Unicode; optional exact occurrence prefix and suffix use the native text-directive delimiters. The saved view's #p- anchor is independent of native text-fragment highlighting. Export omits forbidden text-bearing links and local raw/canonical/view refs; IDs/hashes/CP offsets and the validated plain source URL remain. A plain source URL is supplemental provenance, never an assertion of passage highlighting.
+
+`capture_evidence_view(view: EvidenceView, renderer: BrowserRenderer, policy: CapturePolicy) -> CaptureObservation` validates saved byte hashes, source identity, exact CP evidence and current masks from the canonical JSON through the public ingestion decoder. It computes UTF-16 endpoints from the same saved canonical text only at this boundary. These endpoints describe the canonical text coordinate projection, never browser DOM verification. Fully withheld views refuse rights_restricted; available denied capture is not_requested/rights_restricted without accessing the renderer. Permitted capture passes exact prepared HTML bytes and the saved document source_document_id to the public ingestion renderer; no Selenium implementation/import is introduced. It binds raw_sha256 to those HTML bytes solely as rendering provenance.
+
+Renderer completed/partial/failed/unavailable statuses and their closed public reasons remain distinct. Arbitrary adapter errors become failed/capture_failure with no detail, layout text or exception chain. Policy hash is digest(asdict(policy) with required_resource_types sorted); environment hash is digest(asdict(renderer.environment)). A prepared capture JSON reference hashes canonical_json(RenderedCapture), uses prepared-captures/SHA256.json and remains local_only, as do screenshots. The reference does not assert durable capture storage: later publication requires verified actual bytes and persistence. Capture completion does not establish quote exactness or observed highlighting. Task 10 owns V5 observed browser highlighting/degradation.

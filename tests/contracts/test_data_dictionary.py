@@ -555,3 +555,13 @@ def test_task6_public_completion_and_selected_universe_documented():
         "completed-no-theme",
     ):
         assert name in text
+
+
+def test_evidence_preparation_and_capture_boundaries_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert "make_evidence_view(bound: BoundAnalysis" in text
+    assert "raw_snapshot: RawSnapshot | None" in text
+    assert "capture_evidence_view(view: EvidenceView" in text
+    assert "canonical-evidence-html/1" in text
+    assert "raw_snapshot_missing" in text
+    assert "prepared capture" in text

@@ -423,7 +423,8 @@ def make_inputs(
             }
         )
         metadata_rows.append(meta)
-        raw_rows.append(raw)
+        if meta.retain_raw:
+            raw_rows.append(raw)
         canonical_rows.append(canonical)
         acquisitions.append(
             r.AcquisitionStatus(
