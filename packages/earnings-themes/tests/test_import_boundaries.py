@@ -65,6 +65,7 @@ PIPELINE_PREFIXES = (
     "earnings_themes.extraction",
     "earnings_themes.support",
     "earnings_themes.coding",
+    "earnings_themes.analysis",
     "earnings_pipeline",
 )
 NLI_RUNTIME = {
@@ -309,3 +310,42 @@ def test_fresh_guard_detects_planted_nli(tmp_path):
     assert "earnings_themes.support.nli" in forbidden_pipeline(
         modules_loaded_by(["earnings_themes.gold"], cwd=tmp_path)
     )
+
+
+def test_public_analysis_import_loads_no_optional_adapter():
+    loaded = modules_loaded_by(["earnings_themes.analysis"])
+    assert top_level(loaded) & (FORBIDDEN | NLI_RUNTIME) == set()
+    assert {LOCAL, "earnings_themes.support.nli"}.isdisjoint(loaded)
+
+
+def test_pipeline_scan_detects_planted_analysis_import(tmp_path):
+    package = tmp_path / "earnings_themes"
+    package.mkdir()
+    path = package / "gold.py"
+    path.write_text("def later():\n    from .analysis import records\n")
+    assert len(pipeline_imports(path)) == 2
+
+
+def test_ordinary_cli_help_loads_no_concrete_runtime():
+    code = (
+        "import json, sys; from typer.testing import CliRunner; "
+        "from earnings_pipeline.cli import app; "
+        "result=CliRunner().invoke(app,['extract','run','--help']); "
+        "print(json.dumps({'ok':result.exit_code==0,'modules':sorted(sys.modules)}))"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True
+    )
+    summary = json.loads(result.stdout)
+    assert summary["ok"] is True
+    names = set(summary["modules"])
+    assert (
+        top_level(names)
+        & (MODEL_SDKS | FRAMEWORKS | NLI_RUNTIME | {"selenium", "websocket"})
+        == set()
+    )
+    assert {
+        LOCAL,
+        "earnings_themes.support.nli",
+        "earnings_ingestion.browser.selenium_capture",
+    }.isdisjoint(names)

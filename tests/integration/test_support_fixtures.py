@@ -121,6 +121,8 @@ def curated_cases(
                 negative.claim,
                 tuple((q.span.start, q.span.end, q.span.element_id) for q in quotes),
             )
+            extraction_claim = sources.stored_run.claims[0]
+            claim_id_map = {negative.claim_id: extraction_claim.claim_id}
             config = sources.stored_run.record.configuration
             config = config.model_copy(
                 update={
@@ -141,12 +143,15 @@ def curated_cases(
                         "fixture_sha256": file_hash,
                         "fixture_id": document.fixture_id,
                         "fixture_quote_id_map": json.dumps(id_map, sort_keys=True),
+                        "fixture_claim_id_map": json.dumps(
+                            claim_id_map, sort_keys=True
+                        ),
                     },
                 }
             )
             claim = sources.stored_run.claims[0].model_copy(
                 update={
-                    "claim_id": negative.claim_id,
+                    "claim_id": claim_id_map[negative.claim_id],
                     "quote_ids": tuple(id_map[q] for q in negative.quote_ids),
                 }
             )
@@ -158,6 +163,7 @@ def curated_cases(
                     "curated_sha256": file_hash,
                     "fixture_id": document.fixture_id,
                     "quote_id_map": id_map,
+                    "claim_id_map": claim_id_map,
                 }
             )
             sources = replace(sources, stored_run=stored, provenance_hash=provenance)
@@ -192,7 +198,11 @@ def test_curated_claims_preserve_partial_evidence(curated):
     }
     partial = 0
     for sources, target, _ in curated:
-        document, negative = by_claim[target.claim_id]
+        mapping = json.loads(sources.stored_run.record.software["fixture_claim_id_map"])
+        original_id = next(
+            key for key, value in mapping.items() if value == target.claim_id
+        )
+        document, negative = by_claim[original_id]
         pointers = {p.quote_id: p for p in document.quotes}
         resolved = resolve_target(
             sources.stored_run,

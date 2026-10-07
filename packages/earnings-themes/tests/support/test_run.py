@@ -9,6 +9,7 @@ from earnings_themes.support.cache import SupportCache
 from earnings_themes.support.problems import SupportError
 from earnings_themes.support.run import assess_run
 
+from .cases import append_fixture_claim
 from .test_prompt import policy as policy  # noqa: PLC0414
 
 
@@ -46,14 +47,9 @@ def test_caller_order_and_shared_document_ceiling(
     case, scorer, panel, policy, allowance, tmp_path
 ):
     sources, target = case
-    claim = sources.stored_run.claims[0].model_copy(update={"claim_id": "claim-2"})
-    sources = replace(
-        sources,
-        stored_run=replace(
-            sources.stored_run, claims=(*sources.stored_run.claims, claim)
-        ),
-    )
-    second = target.model_copy(update={"claim_id": "claim-2"})
+    original_id = sources.stored_run.claims[0].claim_id
+    sources, claim = append_fixture_claim(sources)
+    second = target.model_copy(update={"claim_id": claim.claim_id})
     ceilings = allowance.ceilings.model_copy(
         update={"scorer_per_document": 3, "judge_per_document": 4}
     )
@@ -61,8 +57,8 @@ def test_caller_order_and_shared_document_ceiling(
         (sources, target), scorer, panel, policy, ceilings, tmp_path, (second, target)
     )
     assert [a.target.target.claim_id for a in result.assessments] == [
-        "claim-2",
-        "claim-1",
+        claim.claim_id,
+        original_id,
     ]
     assert result.assessments[1].outcome.status == "incomplete"
     assert set(result.assessments[1].outcome.missing) == {

@@ -17,6 +17,12 @@ else:
 ROOT = Path(__file__).resolve().parents[1]
 THEMES = "packages/earnings-themes/tests/"
 GROUPS = {
+    "vertical": (
+        "tests/integration/test_theme_vertical_slice.py",
+        "tests/integration/test_theme_coverage.py",
+        "tests/integration/test_theme_frozen_v0.py",
+        "tests/integration/test_theme_wording.py",
+    ),
     "browser-unit": (
         "packages/earnings-ingestion/tests/test_browser_evidence_lifecycle.py",
         "packages/earnings-ingestion/tests/test_browser_renderer.py",
@@ -24,8 +30,8 @@ GROUPS = {
         "packages/earnings-ingestion/tests/test_browser_store.py",
         "apps/earnings-pipeline/tests/test_browser_evidence.py",
     ),
-    # Task 11 adds its not-yet-created test_analysis_contracts.py explicitly.
     "contracts": (
+        "tests/contracts/test_analysis_contracts.py",
         "tests/contracts/test_processing_state_compatibility.py",
         "tests/contracts/test_data_dictionary.py",
         "tests/contracts/test_import_scan.py",
@@ -87,7 +93,76 @@ GROUPS = {
         )
     ),
 }
+GROUPS["upstream"] = (
+    *GROUPS["extraction"],
+    *(
+        THEMES + "support/" + name + ".py"
+        for name in (
+            "test_allowance",
+            "test_assess",
+            "test_cache",
+            "test_context",
+            "test_injection",
+            "test_judges",
+            "test_metrics",
+            "test_nli",
+            "test_prompt",
+            "test_records",
+            "test_resolve",
+            "test_run",
+            "test_safe_output",
+            "test_scorers",
+            "test_store",
+        )
+    ),
+    *(
+        THEMES + "coding/" + name + ".py"
+        for name in (
+            "test_adapters",
+            "test_assignments",
+            "test_cache",
+            "test_classify",
+            "test_decide",
+            "test_injection",
+            "test_input",
+            "test_prompt",
+            "test_records",
+            "test_run",
+            "test_safe_output",
+            "test_store",
+        )
+    ),
+    "tests/integration/test_support_fixtures.py",
+    "tests/integration/test_support_wording.py",
+    "tests/integration/test_coding_frozen_v0.py",
+    "tests/integration/test_coding_wording.py",
+)
+GROUPS["stage10"] = tuple(
+    dict.fromkeys(
+        node
+        for group, nodes in GROUPS.items()
+        if group != "browser-unit"
+        for node in nodes
+    )
+)
+USER_GROUPS = {
+    "browser-user": (("tests/integration/test_stage10_browser.py",), "browser"),
+    "root-user": (("packages", "apps", "tests"), "not live and not browser"),
+    "wording-fixture-user": (
+        (
+            "tests/integration/test_stage6_wording.py::test_no_stage_6_file_quotes_a_stage_1_fixture",
+        ),
+        "not live and not browser",
+    ),
+    "wording-pilot-user": (
+        (
+            "tests/integration/test_stage6_wording.py::test_no_stage_6_file_quotes_a_pilot_document",
+        ),
+        "not live and not browser",
+    ),
+}
 TIMEOUT_SECONDS = 300
+COMBINED_TIMEOUT_SECONDS = 900
 SAFE_ID = re.compile(
     r"(?:test-[a-f0-9]{12}|[A-Za-z0-9_./-]+(?:::[A-Za-z0-9_:]+)?)(?:\[case-[a-f0-9]{8}\])?"
 )
@@ -181,14 +256,16 @@ def run_checks(
 
 def main(args: Sequence[str] | None = None) -> int:
     args = sys.argv[1:] if args is None else args
-    if list(args) == ["browser-user", "--user-only"]:
-        return run_checks(
-            ("tests/integration/test_stage10_browser.py",), marker="browser"
-        )
+    if len(args) == 2 and args[0] in USER_GROUPS and args[1] == "--user-only":
+        nodes, marker = USER_GROUPS[args[0]]
+        return run_checks(nodes, marker=marker)
     if len(args) != 1 or args[0] not in GROUPS:
         emit("runner_failed")
         return 3
-    return run_checks(GROUPS[args[0]])
+    return run_checks(
+        GROUPS[args[0]],
+        timeout=COMBINED_TIMEOUT_SECONDS if args[0] == "stage10" else TIMEOUT_SECONDS,
+    )
 
 
 if __name__ == "__main__":

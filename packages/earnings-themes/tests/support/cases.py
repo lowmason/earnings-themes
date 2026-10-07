@@ -1,5 +1,6 @@
 """Invented inputs with exact original spans, including partial spans."""
 
+from dataclasses import replace
 from datetime import UTC, datetime
 
 from earnings_core import (
@@ -21,8 +22,11 @@ from earnings_themes.extraction.records import (
     Quote,
     RunConfiguration,
     RunRecord,
+    Visit,
+    WindowOutcome,
+    WindowRecord,
 )
-from earnings_themes.extraction.store import StoredRun
+from earnings_themes.extraction.store import StoredRun, validate_stored_run
 from earnings_themes.support.records import CodebookReference, SupportSources, Target
 
 
@@ -65,14 +69,42 @@ def stored_case(bundle, codebook, claim, spans):
         validator_version=quotes[0].span.validator_version,
     )
     doc = bundle.document
+    start, end = min(q.span.start for q in quotes), max(q.span.end for q in quotes)
+    unit_ids = tuple(dict.fromkeys(q.span.element_id for q in quotes))
+    window_id = f"w-{start}-{end}"
+    window = WindowRecord(
+        doc_id=doc.doc_id,
+        window_id=window_id,
+        start=start,
+        end=end,
+        unit_ids=unit_ids,
+        attempts=1,
+        outcome=WindowOutcome.COMPLETED,
+        requests=0,
+        cache_hits=0,
+        prompt_tokens=0,
+        completion_tokens=0,
+        unreported=0,
+        latency_ms=0,
+        exhausted=False,
+    )
+    visits = tuple(
+        Visit(
+            doc_id=doc.doc_id,
+            element_id=unit,
+            window_id=window_id,
+            outcome=WindowOutcome.COMPLETED,
+        )
+        for unit in unit_ids
+    )
     record = RunRecord(
         run_id="fixture-run",
         started_at=datetime(2026, 10, 5, tzinfo=UTC),
         configuration=config,
         configuration_hash=digest(config.model_dump(mode="json")),
         documents={doc.doc_id: doc.canonical_hash},
-        units=len(spans),
-        windows=0,
+        units=len(unit_ids),
+        windows=1,
         candidates=1,
         quotes=len(quotes),
         claims=1,
@@ -90,8 +122,8 @@ def stored_case(bundle, codebook, claim, spans):
         doc_id=doc.doc_id,
         canonical_hash=doc.canonical_hash,
         outcome=DocumentOutcome.COMPLETED,
-        units=len(spans),
-        windows=0,
+        units=len(unit_ids),
+        windows=1,
         windows_failed=0,
         candidates=1,
         quotes=len(quotes),
@@ -100,9 +132,9 @@ def stored_case(bundle, codebook, claim, spans):
     )
     row = DocumentRecord.model_validate_json(row.model_dump_json())
     claim_row = Claim(
-        claim_id="claim-1",
+        claim_id=f"c-{start}-{end}-1-0",
         doc_id=doc.doc_id,
-        window_id="fixture-window",
+        window_id=window_id,
         attempt=1,
         claim=claim,
         quote_ids=tuple(q.quote_id for q in quotes),
@@ -110,12 +142,13 @@ def stored_case(bundle, codebook, claim, spans):
     run = StoredRun(
         record=record,
         documents=(row,),
-        windows=(),
-        visits=(),
+        windows=(window,),
+        visits=visits,
         quotes=tuple(quotes),
         claims=(claim_row,),
         rejections=(),
     )
+    run = validate_stored_run(run)
     sources = SupportSources(
         run, (bundle,), codebook, digest("invented fixture provenance")
     )
@@ -131,6 +164,51 @@ def stored_case(bundle, codebook, claim, spans):
         ),
     )
     return sources, target
+
+
+def append_fixture_claim(sources, *, interpretation=None):
+    """Add a valid candidate to an existing invented window and its typed counts."""
+    original = sources.stored_run.claims[0]
+    prefix = original.claim_id.rsplit("-", 1)[0]
+    index = (
+        max(
+            int(c.claim_id.rsplit("-", 1)[1])
+            for c in sources.stored_run.claims
+            if c.window_id == original.window_id and c.attempt == original.attempt
+        )
+        + 1
+    )
+    claim = Claim.model_validate(
+        {
+            **original.model_dump(),
+            "claim_id": f"{prefix}-{index}",
+            "claim": interpretation or original.claim,
+        }
+    )
+    record = RunRecord.model_validate(
+        {
+            **sources.stored_run.record.model_dump(),
+            "candidates": sources.stored_run.record.candidates + 1,
+            "claims": sources.stored_run.record.claims + 1,
+        }
+    )
+    documents = tuple(
+        DocumentRecord.model_validate(
+            {**d.model_dump(), "candidates": d.candidates + 1, "claims": d.claims + 1}
+        )
+        if d.doc_id == original.doc_id
+        else d
+        for d in sources.stored_run.documents
+    )
+    run = validate_stored_run(
+        replace(
+            sources.stored_run,
+            record=record,
+            documents=documents,
+            claims=(*sources.stored_run.claims, claim),
+        )
+    )
+    return replace(sources, stored_run=run), run.claims[-1]
 
 
 def context_bundle():

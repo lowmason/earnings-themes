@@ -1,0 +1,28 @@
+{
+  "mapping_id": "invented-families",
+  "version": 1,
+  "memberships": [
+    [
+      "capacity",
+      "operations"
+    ],
+    [
+      "capacity_expansion",
+      "expansion"
+    ],
+    [
+      "capacity_expansion",
+      "operations"
+    ]
+  ],
+  "family_labels": [
+    [
+      "expansion",
+      "Invented expansion"
+    ],
+    [
+      "operations",
+      "Invented operations"
+    ]
+  ]
+}

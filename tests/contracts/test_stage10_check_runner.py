@@ -148,6 +148,7 @@ def test_browser_unit_and_existing_contracts_have_exact_allowlists():
         "apps/earnings-pipeline/tests/test_browser_evidence.py",
     )
     assert GROUPS.get("contracts") == (
+        "tests/contracts/test_analysis_contracts.py",
         "tests/contracts/test_processing_state_compatibility.py",
         "tests/contracts/test_data_dictionary.py",
         "tests/contracts/test_import_scan.py",
@@ -186,3 +187,56 @@ def test_browser_marker_reaches_only_invented_child(tmp_path, capsys):
     assert run_checks((path.name,), root=tmp_path, timeout=20, marker="browser") == 0
     metadata = json.loads(capsys.readouterr().out)
     assert metadata["passed"] == 1 and metadata["deselected"] == 0
+
+
+def test_task11_groups_are_exact_bounded_and_blind():
+    from tools.stage10_checks import GROUPS, USER_GROUPS
+
+    assert GROUPS["vertical"] == (
+        "tests/integration/test_theme_vertical_slice.py",
+        "tests/integration/test_theme_coverage.py",
+        "tests/integration/test_theme_frozen_v0.py",
+        "tests/integration/test_theme_wording.py",
+    )
+    expected = tuple(
+        dict.fromkeys(
+            node
+            for group, nodes in GROUPS.items()
+            if group not in ("stage10", "browser-unit")
+            for node in nodes
+        )
+    )
+    assert GROUPS["stage10"] == expected
+    assert len(expected) == len(set(expected)) == 72
+    assert set(USER_GROUPS) == {
+        "browser-user",
+        "root-user",
+        "wording-fixture-user",
+        "wording-pilot-user",
+    }
+    assert all(
+        node.endswith(".py")
+        and "stage6_wording" not in node
+        and "nli_live" not in node
+        and "stage10_browser" not in node
+        for node in expected
+    )
+    assert "packages/earnings-themes/tests/support/test_nli.py" in GROUPS["upstream"]
+
+
+def test_combined_timeout_is_bounded_without_changing_individual_groups(monkeypatch):
+    from tools import stage10_checks
+
+    calls = []
+
+    def invented(nodes, *, timeout=stage10_checks.TIMEOUT_SECONDS, **kwargs):
+        calls.append((nodes, timeout))
+        return 0
+
+    monkeypatch.setattr(stage10_checks, "run_checks", invented)
+    assert stage10_checks.main(["stage10"]) == 0
+    assert calls == [(stage10_checks.GROUPS["stage10"], 900)]
+    calls.clear()
+    assert stage10_checks.main(["coverage"]) == 0
+    assert calls == [(stage10_checks.GROUPS["coverage"], 300)]
+    assert stage10_checks.TIMEOUT_SECONDS == 300
