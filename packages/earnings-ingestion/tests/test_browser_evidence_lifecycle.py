@@ -10,8 +10,28 @@ import pytest
 
 @pytest.mark.parametrize(
     "case",
-    ["url", "proxy", "frame", "fetch", "remote-http", "remote-ws", "process"],
-    ids=["url", "proxy", "frame", "fetch", "remote-http", "remote-ws", "process"],
+    [
+        "url",
+        "proxy",
+        "frame",
+        "fetch",
+        "remote-http",
+        "remote-ws",
+        "process",
+        "redirect-external",
+        "redirect-loopback",
+    ],
+    ids=[
+        "url",
+        "proxy",
+        "frame",
+        "fetch",
+        "remote-http",
+        "remote-ws",
+        "process",
+        "redirect-external",
+        "redirect-loopback",
+    ],
 )
 def test_lifecycle_is_bounded_and_clean(case):
     child = subprocess.run(
@@ -135,6 +155,72 @@ def exercise(case):
             safe = False
         return {"safe": safe, "clean": cleaned == ["browser", "interceptor"]}
 
+    if case.startswith("redirect-"):
+        from email.message import Message
+        from urllib.response import addinfourl
+
+        requests = []
+        connections = []
+        original_build = module.urllib.request.build_opener
+
+        class MemoryHTTP(module.urllib.request.HTTPHandler):
+            def http_open(self, request):
+                requests.append(request.full_url)
+                headers = Message()
+                if len(requests) == 1:
+                    headers["Location"] = (
+                        "http://example.invalid:9123/json"
+                        if case == "redirect-external"
+                        else "http://127.0.0.1:9123/redirected"
+                    )
+                    response = addinfourl(
+                        io.BytesIO(b""), headers, request.full_url, 302
+                    )
+                    response.msg = "Found"
+                else:
+                    response = addinfourl(
+                        io.BytesIO(b"[]"), headers, request.full_url, 200
+                    )
+                    response.msg = "OK"
+                return response
+
+        module.urllib.request.build_opener = lambda *handlers: original_build(
+            *handlers, MemoryHTTP()
+        )
+        module.websocket.create_connection = lambda *a, **k: connections.append(True)
+
+        class Browser:
+            def __init__(self, *args):
+                pass
+
+            def start(self):
+                return types.SimpleNamespace(
+                    capabilities={
+                        "goog:chromeOptions": {"debuggerAddress": "127.0.0.1:9123"}
+                    }
+                )
+
+            def kill(self):
+                cleaned.append("kill")
+
+            def close(self, *args):
+                cleaned.append("browser")
+
+        module._Browser = Browser
+        renderer = module.SeleniumRenderer(
+            types.SimpleNamespace(version="invented", present=lambda: True)
+        )
+        renderer._check_versions = lambda _: None
+        result = renderer.capture(
+            b"<p>Invented</p>", ISOLATED_1, source_document_id="invented"
+        )
+        return {
+            "safe": requests == ["http://127.0.0.1:9123/json"]
+            and result.status.value == "failed"
+            and result.reason.value == "startup_failure",
+            "clean": not connections and cleaned == ["browser"],
+        }
+
     inherited = []
     openers = []
 
@@ -158,8 +244,8 @@ def exercise(case):
         inherited.append(True)
         return reply()
 
-    def build_opener(handler):
-        openers.append(handler.proxies)
+    def build_opener(*handlers):
+        openers.append(handlers[0].proxies)
         return types.SimpleNamespace(open=lambda *a, **k: reply())
 
     module.urllib.request.urlopen = inherited_open

@@ -120,6 +120,13 @@ def _loopback_endpoint(url: str, scheme: str) -> None:
         raise ValueError("invalid loopback debugger endpoint")
 
 
+class _NoRedirects(urllib.request.HTTPRedirectHandler):
+    """Debugger discovery stays at its validated endpoint, even on a redirect."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
 class _Interceptor:
     """Pauses every request of the page and lets through only the saved file.
 
@@ -133,7 +140,9 @@ class _Interceptor:
     ):
         discovery = f"http://{debugger_address}/json"
         _loopback_endpoint(discovery, "http")
-        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        opener = urllib.request.build_opener(
+            urllib.request.ProxyHandler({}), _NoRedirects()
+        )
         with opener.open(discovery, timeout=10) as reply:
             targets = json.load(reply)
         page = next(target for target in targets if target["type"] == "page")

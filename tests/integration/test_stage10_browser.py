@@ -39,6 +39,24 @@ CASES = (
 )
 
 
+def publish_bytes(path, data):
+    """Publish a complete test artifact without replacing a prior record."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        if path.read_bytes() == data:
+            return
+        raise FileExistsError("existing_v5_record")
+    with tempfile.TemporaryDirectory(prefix=".v5-write-", dir=path.parent) as temporary:
+        staged = Path(temporary) / "data"
+        with staged.open("xb") as out:
+            out.write(data)
+        try:
+            os.link(staged, path)
+        except FileExistsError:
+            if path.read_bytes() != data:
+                raise
+
+
 def build_artifacts(root, work, monkeypatch):
     """Publish only invented, content-addressed static pages; never overwrite."""
     helpers = importlib.import_module(
@@ -184,11 +202,7 @@ def build_artifacts(root, work, monkeypatch):
         + '/index.html">Open the content-bound invented V5 index</a></body></html>'
     ).encode()
     pointer_path = root / "index.html"
-    if pointer_path.exists():
-        assert pointer_path.read_bytes() == pointer
-    else:
-        with pointer_path.open("xb") as out:
-            out.write(pointer)
+    publish_bytes(pointer_path, pointer)
     return directory, rows, tuple(views)
 
 
@@ -248,9 +262,7 @@ def capture_observations(
             store.put(capture)
             data = canonical_json(capture)
             path = session / "prepared-captures" / (sha256_hex(data) + ".json")
-            path.parent.mkdir(exist_ok=True)
-            with path.open("xb") as out:
-                out.write(data)
+            publish_bytes(path, data)
             return capture
 
     observations = []
@@ -275,6 +287,14 @@ def capture_observations(
         )
         observations.append(result_row)
     return observations
+
+
+def publish_observations(session, observations):
+    """Persist the test-only session record independently of browser execution."""
+    publish_bytes(
+        session / "observations.json",
+        json.dumps(observations, sort_keys=True, indent=2).encode("utf-8"),
+    )
 
 
 def test_invented_v5_public_capture(tmp_path, monkeypatch):
@@ -306,9 +326,7 @@ def test_invented_v5_public_capture(tmp_path, monkeypatch):
     observations = capture_observations(
         rows, views, renderer, session, store, capture_observer="user-command"
     )
-    (session / "observations.json").write_text(
-        json.dumps(observations, sort_keys=True, indent=2)
-    )
+    publish_observations(session, observations)
     # Native/manual outcomes remain pending regardless of successful capture.
     assert all(r["native"] == r["fallback"] == "pending" for r in observations)
     assert all(

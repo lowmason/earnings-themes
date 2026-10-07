@@ -8,7 +8,7 @@ The complete target set is Chrome for Testing **154.0.8037.57**, matching chrome
 
 ## Concrete offline artifacts
 
-Open `/private/tmp/earnings-stage10-v5/v1/index.html`. Its static link opens the content-bound six-case index. The bundle is `70f13f640e1ee84fa9372d19256c2873cb8c4ff188b7450dd4522c61c1c83129`; `expected.json` beside that index pins every expected CP/UTF-16 coordinate, canonical hash, mark anchor, exact saved-source/fallback filename, source-artifact SHA-256, and pending observation. These are invented sources. Files survive pytest temporary-fixture cleanup and command exit; the operating system may eventually clean `/private/tmp`, so the human command recreates the same immutable artifact set if absent. Conflicting bytes refuse instead of overwriting.
+Open `/private/tmp/earnings-stage10-v5/v1/index.html`. Its static link opens the content-bound six-case index. The bundle is `70f13f640e1ee84fa9372d19256c2873cb8c4ff188b7450dd4522c61c1c83129`; `expected.json` beside that index pins every expected CP/UTF-16 coordinate, canonical hash, mark anchor, exact saved-source/fallback filename, source-artifact SHA-256, and pending observation. These are invented sources. Files survive pytest temporary-fixture cleanup and command exit; the operating system may eventually clean `/private/tmp`, so the human command recreates the same immutable artifact set if absent. Conflicting bytes refuse instead of overwriting. The index pointer, prepared capture JSON and session observations are fully staged in a temporary file and published with a no-replace hard link; interrupted writes leave no partial final-name file and clean up temporary files. The bundle retains its existing staging/rename boundary.
 
 The saved-source passage link points to the **content-hashed invented saved HTML** using the same text directive as the evidence source link. The canonical fallback link points to a separate content-hashed canonical HTML artifact’s exact stable mark anchor. The external source URL is metadata only; do not browse it. `tested_transport="local_file"`; external HTTPS remains `unverified`. Local-file success is not an HTTPS highlighting claim. The no-text-fragment case supplies both the primary directive link and an explicit control link with no directive. The drift case deliberately saves changed invented source wording while preserving the immutable canonical span. The repeated case targets the second occurrence. The long-page case uses an invented vertical CR-line prefix and marks visible target text after it; its CP offsets still refer to saved canonical text.
 
@@ -40,3 +40,14 @@ If no target is available or `local_file` cannot exercise native highlighting, r
 ## Agent evidence and freeze exception
 
 Invented fake lifecycle checks reproduce navigation exception, inherited-proxy use and leaked startup sockets. The user explicitly approved exactly the three disclosed lifecycle/isolation repairs on 2026-10-07. Only the unbounded current URL read is an uncaught capture crash; the other two are startup/isolation/cleanup repairs. The existing `crash` amendment category is used as an explicitly approved exception to the literal fixture-capture-crash restriction, not evidence that any actual fixture/native capture crashed. No comparison type/mapping/unit/metric/input, Stage 3 capture/report bytes, pin or capture-policy semantics changed. Standalone amendment and preregistration verification follow the committed adapter implementation. Native availability, manual V5 behavior and external HTTPS remain pending/unverified.
+
+
+The dedicated no-proxy debugger discovery opener now refuses every HTTP redirect,
+including a redirect to another loopback URL, before a second request. This
+completes the already approved validated-loopback isolation repair; it is not a
+fourth lifecycle exception. Invented in-memory HTTP responses exercise the real
+urllib redirect machinery without network or browser execution. The public
+startup-failure reason and cleanup boundary remain unchanged. A second standalone
+amendment retains the first record and discloses the same user-approved broader
+crash classification; no actual native/fixture observation or remeasurement is
+claimed.

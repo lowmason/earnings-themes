@@ -337,3 +337,121 @@ def test_next_failed_capture_does_not_inherit_previous_screenshot_ids(
     assert rows[1]["capture"] == "failed"
     assert rows[1]["screenshot_artifact_ids"] == []
     assert rows[1]["capture_observation"]["capture_artifact"] is None
+
+
+@pytest.mark.parametrize("kind", ["pointer", "prepared", "observations"])
+@pytest.mark.parametrize("failure", ["interrupted", "existing"])
+def test_v5_publication_is_atomic_and_preserves_existing(
+    tmp_path, monkeypatch, kind, failure
+):
+    path = (
+        Path(__file__).resolve().parents[3]
+        / "tests/integration/test_stage10_browser.py"
+    )
+    spec = importlib.util.spec_from_file_location("stage10_atomic_v5", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "CASES", (module.CASES[0],))
+    root = tmp_path / "published"
+    _, rows, views = module.build_artifacts(root, tmp_path / "work", monkeypatch)
+    session = tmp_path / "session"
+    session.mkdir()
+    store = importlib.import_module("earnings_ingestion.browser.store").CaptureStore(
+        session / "captures", session
+    )
+    capture = Renderer().capture(
+        views[0].html,
+        ISOLATED_1,
+        source_document_id=__import__("json").loads(views[0].canonical_bytes)[
+            "document"
+        ]["source_document_id"],
+    )
+
+    class StaticRenderer:
+        environment = ENV
+
+        def capture(self, *args, **kwargs):
+            return capture
+
+    if kind == "pointer":
+        target = root / "index.html"
+        expected = target.read_bytes()
+        target.unlink()
+
+        attempts = []
+
+        def publish():
+            attempts.append(True)
+            return module.build_artifacts(
+                root, tmp_path / ("retry-work-" + str(len(attempts))), monkeypatch
+            )
+
+    elif kind == "prepared":
+        expected = importlib.import_module("earnings_core").canonical_json(capture)
+        target = session / "prepared-captures" / (sha256_hex(expected) + ".json")
+
+        def publish():
+            return module.capture_observations(
+                rows, views, StaticRenderer(), session, store
+            )
+
+    else:
+        observation = [
+            {"case_id": "unique", "native": "pending", "fallback": "pending"}
+        ]
+        expected = (
+            __import__("json").dumps(observation, sort_keys=True, indent=2).encode()
+        )
+        target = session / "observations.json"
+
+        def publish():
+            return module.publish_observations(session, observation)
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if failure == "existing":
+        target.write_bytes(b"Invented existing immutable record")
+        try:
+            publish()
+        except (FileExistsError, AssertionError):
+            pass
+        assert target.read_bytes() == b"Invented existing immutable record"
+    else:
+        original_open = Path.open
+
+        class InterruptedWriter:
+            def __init__(self, file):
+                self.file = file
+
+            def __enter__(self):
+                self.file.__enter__()
+                return self
+
+            def __exit__(self, *args):
+                return self.file.__exit__(*args)
+
+            def write(self, data):
+                self.file.write(data[:7])
+                self.file.flush()
+                raise OSError("Invented interrupted write")
+
+        def interrupted_open(path, mode="r", *args, **kwargs):
+            file = original_open(path, mode, *args, **kwargs)
+            if ("w" in mode or "x" in mode) and (
+                path == target
+                or (path.name == "data" and path.parent.parent == target.parent)
+            ):
+                return InterruptedWriter(file)
+            return file
+
+        with monkeypatch.context() as patch:
+            patch.setattr(Path, "open", interrupted_open)
+            try:
+                publish()
+            except OSError:
+                pass
+        assert not target.exists()
+        assert not list(target.parent.glob(".v5-write-*"))
+        publish()
+        assert target.read_bytes() == expected
+        assert sha256_hex(target.read_bytes()) == sha256_hex(expected)
+    assert not list(target.parent.glob(".v5-write-*"))
