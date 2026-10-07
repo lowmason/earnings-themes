@@ -2,7 +2,7 @@
 
 import json
 from dataclasses import replace
-from datetime import timedelta, timezone
+from datetime import date, timedelta, timezone
 
 import polars as pl
 import pytest
@@ -156,8 +156,8 @@ def test_matrix_denominators_and_outcomes(counting_case):
         for row in counting_case.coverage
         if row.doc_type == "transcript"
     )
-    assert len(counting_case.observations) == 2
-    assert len(counting_case.claim_evidence) == 9
+    assert len(counting_case.observations) == 3
+    assert len(counting_case.claim_evidence) == 11
     assert len(counting_case.copies) == 3
 
 
@@ -271,7 +271,7 @@ def test_tables_validate_required_values(counting_case):
 
 def test_nonempty_null_metadata_keeps_declared_dtype(counting_case):
     frame = counting_case.tables.frames["observations"]
-    assert frame["published_at"].null_count() == 2
+    assert frame["published_at"].null_count() == 3
     assert frame.schema["published_at"] == pl.Datetime("us", "UTC")
     assert frame.schema["fiscal_quarter"] == pl.Int64
     assert frame.schema["mask_ids"] == pl.List(pl.String)
@@ -307,3 +307,255 @@ def test_inputs_acquisition_agrees_with_metadata(analysis_inputs):
     row = analysis_inputs.acquisition[0].model_copy(update={"raw_hash": "0" * 64})
     with pytest.raises(AnalysisError):
         replace(analysis_inputs, acquisition=(row,))
+
+
+def intermediate_tables(counting_case):
+    frames = dict(counting_case.tables.frames)
+    for name in ("completions", "coverage", "prevalence", "evidence"):
+        frames[name] = frames[name].clear()
+    return r.AnalysisTables(frames)
+
+
+def test_intermediate_audit_frames_do_not_require_invented_completion(counting_case):
+    tables = intermediate_tables(counting_case)
+    assert tables.frames["observations"].height > 0
+    assert tables.frames["completions"].height == 0
+    assert tables.frames["coverage"].height == 0
+
+
+def test_final_table_gate_requires_completion(counting_case):
+    tables = intermediate_tables(counting_case)
+    with pytest.raises(AnalysisError, match="^invalid_references$"):
+        r.validate_analysis_tables(tables)
+    assert (
+        r.validate_analysis_tables(counting_case.tables).frames["observations"].height
+        > 0
+    )
+
+
+@pytest.mark.parametrize(
+    "change",
+    ["cross_document", "same_document_claim", "target"],
+    ids=["document", "claim", "target"],
+)
+def test_assignment_links_refuse_borrowed_context(counting_case, change):
+    rows = list(counting_case.rows["assignment_claims"])
+    first = rows[0]
+    donor = (
+        next(row for row in rows if row.doc_id != first.doc_id)
+        if change == "cross_document"
+        else next(
+            row
+            for row in rows
+            if row.doc_id == first.doc_id and row.claim_id != first.claim_id
+        )
+    )
+    updates = {"target_id": donor.target_id}
+    if change != "target":
+        updates["decision_id"] = donor.decision_id
+    rows[0] = first.model_copy(update=updates)
+    frames = dict(counting_case.tables.frames)
+    frames["assignment_claims"] = pl.DataFrame(
+        [row.model_dump() for row in rows],
+        schema=r.TABLE_SCHEMAS["assignment_claims"],
+        strict=True,
+    )
+    with pytest.raises(AnalysisError, match="^invalid_references$"):
+        r.AnalysisTables(frames)
+
+
+@pytest.mark.parametrize(
+    "change", ["cross_document", "same_document_claim"], ids=["document", "claim"]
+)
+def test_novelty_refuses_borrowed_classification_context(counting_case, change):
+    row = counting_case.rows["novelty"][0]
+    classes = counting_case.rows["classifications"]
+    donor = classes[0]
+    updates = {"classification_id": donor.classification_id}
+    if change == "same_document_claim":
+        other = next(
+            part
+            for part in classes
+            if part.doc_id == donor.doc_id and part.claim_id != donor.claim_id
+        )
+        updates.update(doc_id=other.doc_id, claim_id=other.claim_id)
+    changed = row.model_copy(update=updates)
+    frames = dict(counting_case.tables.frames)
+    frames["novelty"] = pl.DataFrame(
+        [changed.model_dump()], schema=r.TABLE_SCHEMAS["novelty"], strict=True
+    )
+    with pytest.raises(AnalysisError, match="^invalid_references$"):
+        r.AnalysisTables(frames)
+
+
+def prevalence_fields(
+    counting_case, *, unit="issuer_period", numerator=1.0, role="not_applicable"
+):
+    return {
+        "population_hash": counting_case.policy.population_hash,
+        "period_end": date(2025, 3, 31) if unit == "issuer_period" else None,
+        "window_start": None if unit == "issuer_period" else date(2025, 3, 31),
+        "window_end": None if unit == "issuer_period" else date(2025, 6, 30),
+        "doc_type": "release",
+        "speaker_role": role,
+        "view_kind": "direct",
+        "view_id": "capacity",
+        "codebook_id": counting_case.book.codebook_id,
+        "codebook_version": counting_case.book.codebook_version,
+        "codebook_hash": counting_case.book.content_hash,
+        "analysis_policy_hash": counting_case.policy.content_hash,
+        "family_map_hash": None,
+        "unit": unit,
+        "numerator": numerator,
+        "denominator": 1,
+        "rate": numerator,
+        "reason": None,
+        "expected_count": 1,
+        "available_count": 1,
+        "parsed_count": 1,
+        "observable_count": 1,
+        "excluded_count": 0,
+        "missing_period_count": 0,
+        "restrictions": (),
+        "policy_scope": "fixture",
+    }
+
+
+@pytest.mark.parametrize(
+    "unit",
+    ["issuer_period", "issuer_window", "firm_quarter"],
+    ids=["period", "window", "quarter"],
+)
+def test_count_unit_refuses_fractional_numerator(counting_case, unit):
+    with pytest.raises(ValidationError):
+        r.PrevalenceRow.model_validate(
+            prevalence_fields(counting_case, unit=unit, numerator=0.5)
+        )
+    assert (
+        r.PrevalenceRow.model_validate(
+            prevalence_fields(counting_case, unit=unit)
+        ).numerator
+        == 1.0
+    )
+
+
+def test_equal_issuer_mean_permits_fractional_sum(counting_case):
+    assert (
+        r.PrevalenceRow.model_validate(
+            prevalence_fields(counting_case, unit="equal_issuer_mean", numerator=0.5)
+        ).numerator
+        == 0.5
+    )
+
+
+def test_prevalence_release_role_is_not_applicable(counting_case):
+    with pytest.raises(ValidationError):
+        r.PrevalenceRow.model_validate(prevalence_fields(counting_case, role="unknown"))
+
+
+def test_duplicate_disclosure_has_accepted_and_original_audit_rows(counting_case):
+    doc_ids = {"invented-doc-A-Q1", "invented-doc-A-Q1-copy"}
+    rows = counting_case.rows
+    assert {
+        row.doc_id for row in rows["observations"] if row.event_id == "A-Q1"
+    } == doc_ids
+    assert {row.doc_id for row in rows["quotes"] if row.doc_id in doc_ids} == doc_ids
+    assert {
+        row.doc_id for row in rows["assignment_claims"] if row.doc_id in doc_ids
+    } == doc_ids
+    assert (
+        len(
+            {
+                row.disclosure_group
+                for row in rows["observations"]
+                if row.event_id == "A-Q1"
+            }
+        )
+        == 1
+    )
+    slot = next(
+        row
+        for row in counting_case.coverage
+        if row.event_id == "A-Q1" and row.doc_type == "release"
+    )
+    assert set(slot.doc_ids) == doc_ids
+
+
+def count_only_record(case):
+    from datetime import UTC, datetime
+
+    from earnings_core import digest
+
+    h = digest("invented-final-reference-test")
+    return r.AnalysisRunRecord(
+        run_id="invented-final-reference-test",
+        created_at=datetime(2026, 10, 5, tzinfo=UTC),
+        scope="fixture",
+        audience="local",
+        population_hash=case.policy.population_hash,
+        event_manifest_hash=h,
+        pilot_hash=h,
+        universe_hash=h,
+        documents=(),
+        canonical_manifests=(),
+        mask_manifests=(),
+        source_run_hash=h,
+        coding_run_hash=h,
+        support_run_hash=h,
+        configuration_hashes=(),
+        prompt_hashes=(),
+        identity_hashes=(),
+        codebook=case.completions[0].codebook,
+        assignment_policy=case.completions[0].assignment_policy,
+        analysis_policy=case.policy,
+        family_map=case.families,
+        completion_hashes=(),
+        copy_hashes=(),
+        validator_version="invented-1",
+        software=(),
+        lock_hash=h,
+        counts_by_state=(),
+        counts_by_decision=(),
+        counts_by_reason=(),
+        raw_verification=(),
+        table_hashes=(),
+        evidence_hashes=(),
+        binding_hash=h,
+    )
+
+
+@pytest.mark.parametrize(
+    "container", [r.AnalysisRun, r.StoredAnalysisRun], ids=["run", "stored"]
+)
+def test_complete_run_container_requires_final_foreign_keys(counting_case, container):
+    record = count_only_record(counting_case)
+    extra = (
+        {}
+        if container is r.AnalysisRun
+        else {"manifest_hash": record.binding_hash, "published_hashes": ()}
+    )
+    with pytest.raises(AnalysisError, match="^invalid_references$"):
+        container(record=record, tables=intermediate_tables(counting_case), **extra)
+    complete = container(record=record, tables=counting_case.tables, **extra)
+    assert complete.tables.frames["observations"].height == 3
+    assert complete.tables is not counting_case.tables
+
+
+def test_partial_nonempty_completion_table_is_not_deferred(counting_case):
+    frames = dict(counting_case.tables.frames)
+    frames["completions"] = frames["completions"].filter(
+        pl.col("doc_id") != "invented-doc-A-Q1-copy"
+    )
+    with pytest.raises(AnalysisError, match="^invalid_references$"):
+        r.AnalysisTables(frames)
+
+
+def test_final_table_gate_rechecks_mutated_frame(counting_case):
+    tables = r.AnalysisTables(counting_case.tables.frames)
+    frame = tables.frames["observations"]
+    frame.replace_column(
+        frame.columns.index("schema_version"),
+        pl.Series("schema_version", [9] * frame.height, dtype=pl.Int64),
+    )
+    with pytest.raises(AnalysisError, match="^malformed_record$"):
+        r.validate_analysis_tables(tables)

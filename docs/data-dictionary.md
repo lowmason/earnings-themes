@@ -4838,7 +4838,7 @@ Dates use `pl.Date`; UTC timestamps use `pl.Datetime("us", "UTC")`; offsets/coun
 
 | Field | Meaning |
 | --- | --- |
-| `frames` | Exactly fourteen explicitly typed Polars frames; cloned mapping, structural row/grain/FK validation. |
+| `frames` | Exactly fourteen explicitly typed Polars frames; cloned mapping, structural row/grain/audit-FK validation. An empty later-stage completion table is deferred only during intermediate construction; the final gate enforces every FK. |
 
 ### `AnalysisRun`
 
@@ -5089,7 +5089,7 @@ Grain: `('doc_id', 'claim_id', 'quote_id')`. Foreign keys (local columns, target
 
 ### `Analysis table assignment_claims`
 
-Grain: `('assignment_id', 'doc_id', 'claim_id', 'decision_id', 'target_id')`. Foreign keys (local columns, target table, target columns): `((('doc_id', 'claim_id'), 'claims', ('doc_id', 'claim_id')), (('decision_id',), 'decisions', ('decision_id',)))`. External event, canonical-document, run, policy, codebook, metadata and artifact references remain bound through the selected manifest/inventories.
+Grain: `('assignment_id', 'doc_id', 'claim_id', 'decision_id', 'target_id')`. Foreign keys (local columns, target table, target columns): `((('doc_id', 'claim_id'), 'claims', ('doc_id', 'claim_id')), (('doc_id', 'claim_id', 'decision_id', 'target_id'), 'decisions', ('doc_id', 'claim_id', 'decision_id', 'target_id')))`. External event, canonical-document, run, policy, codebook, metadata and artifact references remain bound through the selected manifest/inventories.
 
 | Field | Polars dtype | Meaning |
 | --- | --- | --- |
@@ -5146,7 +5146,7 @@ Grain: `('decision_id',)`. Foreign keys (local columns, target table, target col
 
 ### `Analysis table novelty`
 
-Grain: `('novelty_id',)`. Foreign keys (local columns, target table, target columns): `((('doc_id', 'claim_id'), 'claims', ('doc_id', 'claim_id')), (('classification_id',), 'classifications', ('classification_id',)))`. External event, canonical-document, run, policy, codebook, metadata and artifact references remain bound through the selected manifest/inventories.
+Grain: `('novelty_id',)`. Foreign keys (local columns, target table, target columns): `((('doc_id', 'claim_id'), 'claims', ('doc_id', 'claim_id')), (('doc_id', 'claim_id', 'classification_id'), 'classifications', ('doc_id', 'claim_id', 'classification_id')))`. External event, canonical-document, run, policy, codebook, metadata and artifact references remain bound through the selected manifest/inventories.
 
 | Field | Polars dtype | Meaning |
 | --- | --- | --- |
@@ -5339,3 +5339,13 @@ Grain: `('doc_id', 'quote_id', 'audience')`. Foreign keys (local columns, target
 | `capture_reference` | `String` | Explicit capture reference field; row-model type/nullability applies. |
 
 Public producer fixtures: `analysis_inputs` is a fully bound invented fixture-policy source/support/coding run; `review_analysis_inputs` binds a separate actual policy-null review run; `analysis_policy`, `family_map`, and `counting_case` are the invented analytical inputs. `counting_case` is independent hand-normalized completion/audit data, not one mixed-policy accepted run. `analysis_run` is intentionally delayed until Task 6. A-Q1 contributes once despite two claims and an exact copy; A-Q2 has an explicit invented fixture actor declaration; B-Q1 retains masked acceptance; C-Q1 keeps calibration review. Missing, failed, restricted, unmatched, rejected and partial cases remain unobservable. Transcript slots are `not_yet_checked/transcript_not_in_scope`, with no invented document/speaker identity.
+
+### Analytical intermediate and final validation
+
+`AnalysisTables` remains a frames-only frozen dataclass. Its constructor validates every row, schema, grain, current present audit relationship and accepted observation book/policy binding. Task 5 may return observation/audit/copy frames with typed-empty completions, coverage, prevalence and evidence. Only the observation-to-completion relationship is deferred when the completions table is empty; a nonempty partial completion table still fails if it omits a referenced document.
+
+`validate_analysis_tables(tables: AnalysisTables) -> AnalysisTables` is the pure public final gate. It returns a freshly reconstructed/checked container and enforces **all** TABLE_FOREIGN_KEYS, including observation-to-completion links. It performs no I/O, supplies no fabricated completion and persists no unchecked validity flag. Both existing `AnalysisRun` and `StoredAnalysisRun` constructors invoke it. Future Task 6 storage/serialization and Task 8 publication must invoke it on the current complete tables before writing bytes; Task 3's current source/policy/mask/byte/rights rebinding remains separately necessary. Assignment-to-decision FKs retain document, claim, decision and target identity; novelty-to-classification FKs retain document, claim and classification identity.
+
+`PrevalenceRow` uses Float64 numerator representation for all views, but issuer_period, issuer_window and firm_quarter require integral values. Only the explicitly labeled equal_issuer_mean may contain a fractional sum of issuer fractions. Release rows always have speaker_role=not_applicable, including prevalence rows.
+
+The independent count-only copy fixture now retains accepted observations, quotes, two claims, original claim-evidence links, classifications, decisions, assignment-claim links and explicit hand-declared completion evidence for both A-Q1 documents in one disclosure group. The release coverage slot names both documents. There are three accepted observation rows and eleven original claim-evidence links across the matrix; the issuer-period contribution remains one for the copied A-Q1 disclosure. These are fixture adjudications, not evaluation gold or a publishable mixed-policy run.

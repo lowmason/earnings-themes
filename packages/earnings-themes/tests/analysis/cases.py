@@ -417,6 +417,32 @@ def make_counting_case(book, assignment_policy):
                     status="consistent",
                 )
             )
+    original_doc = "invented-doc-A-Q1"
+    copied_doc = original_doc + "-copy"
+    for rows in (
+        observations,
+        quotes,
+        claims,
+        links,
+        classifications,
+        decisions,
+        assignment_claims,
+    ):
+        for row in tuple(rows):
+            if row.doc_id != original_doc:
+                continue
+            updates = {"doc_id": copied_doc}
+            for field in (
+                "assignment_id",
+                "claim_id",
+                "classification_id",
+                "decision_id",
+                "target_id",
+                "evidence_id",
+            ):
+                if field in type(row).model_fields:
+                    updates[field] = getattr(row, field) + "-copy"
+            rows.append(type(row).model_validate({**row.model_dump(), **updates}))
     outcomes = {
         "A-Q1": ("completed", (), 1, 0, 0, 0, 0, 0, 0, 0, True),
         "A-Q2": (
@@ -522,6 +548,12 @@ def make_counting_case(book, assignment_policy):
                 policy_scope="fixture",
             )
             completions.append(completion)
+            if e.event_id == "A-Q1":
+                completions.append(
+                    r.DocumentCompletion.model_validate(
+                        {**completion.model_dump(), "doc_id": copied_doc}
+                    )
+                )
         acquisition_state = "parsed" if available else state
         acquisitions.append(
             r.AcquisitionStatus(
@@ -561,7 +593,11 @@ def make_counting_case(book, assignment_policy):
             if state not in ("unavailable", "restricted")
             else state,
             "document_id": "release-" + e.event_id,
-            "doc_ids": (doc,) if available else (),
+            "doc_ids": (doc, copied_doc)
+            if e.event_id == "A-Q1"
+            else (doc,)
+            if available
+            else (),
             "latest_state": state,
             "state_run_id": "invented-state",
             "state_schema_version": 1,

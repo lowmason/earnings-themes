@@ -855,6 +855,10 @@ class PrevalenceRow(AnalysisPart):
 
     @model_validator(mode="after")
     def _prevalence(self) -> Self:
+        if self.doc_type == "release" and self.speaker_role != "not_applicable":
+            raise ValueError("invalid_release_role")
+        if self.unit != "equal_issuer_mean" and not self.numerator.is_integer():
+            raise ValueError("invalid_count_numerator")
         if self.numerator > self.denominator:
             raise ValueError("invalid_numerator")
         if self.denominator == 0:
@@ -1162,20 +1166,7 @@ class AnalysisTables:
             if frame.height and frame.select(grain).is_duplicated().any():
                 raise AnalysisError("invalid_references")
             detached[name] = frame.clone()
-        for name, foreign_keys in TABLE_FOREIGN_KEYS.items():
-            for local, target, remote in foreign_keys:
-                if (
-                    detached[name]
-                    .select(local)
-                    .join(
-                        detached[target].select(remote).unique(),
-                        left_on=local,
-                        right_on=remote,
-                        how="anti",
-                    )
-                    .height
-                ):
-                    raise AnalysisError("invalid_references")
+        _check_table_foreign_keys(detached, complete=False)
         book_bindings = (
             detached["observations"]
             .select("codebook_id", "codebook_version", "codebook_hash")
@@ -1202,10 +1193,56 @@ class AnalysisTables:
         )
 
 
+def _check_table_foreign_keys(
+    frames: Mapping[str, pl.DataFrame], *, complete: bool
+) -> None:
+    for name, foreign_keys in TABLE_FOREIGN_KEYS.items():
+        for local, target, remote in foreign_keys:
+            # Task 5 produces audit frames before Task 6 adjudicates completion.
+            # Only that empty later-stage relation can be deferred; final gates
+            # enforce it without inventing a completion row.
+            if (
+                not complete
+                and name == "observations"
+                and target == "completions"
+                and frames[target].is_empty()
+            ):
+                continue
+            if (
+                frames[name]
+                .select(local)
+                .join(
+                    frames[target].select(remote).unique(),
+                    left_on=local,
+                    right_on=remote,
+                    how="anti",
+                )
+                .height
+            ):
+                raise AnalysisError("invalid_references")
+
+
+def validate_analysis_tables(tables: AnalysisTables) -> AnalysisTables:
+    """Recheck structural rows/grains and every final FK before storage/export.
+
+    Task 5 may construct intermediate frames with empty completions. Complete
+    run containers and future serialization/publication call this full gate.
+    Source exactness/current permissions still require the consuming gates.
+    """
+    if type(tables) is not AnalysisTables:
+        raise AnalysisError("malformed_record")
+    checked = AnalysisTables(tables.frames)
+    _check_table_foreign_keys(checked.frames, complete=True)
+    return checked
+
+
 @dataclass(frozen=True, repr=False)
 class AnalysisRun:
     record: AnalysisRunRecord
     tables: AnalysisTables
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "tables", validate_analysis_tables(self.tables))
 
 
 @dataclass(frozen=True, repr=False)
@@ -1214,6 +1251,9 @@ class StoredAnalysisRun:
     tables: AnalysisTables
     manifest_hash: Sha256Hex
     published_hashes: tuple[tuple[str, Sha256Hex], ...]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "tables", validate_analysis_tables(self.tables))
 
 
 @dataclass(frozen=True, repr=False)
@@ -1328,13 +1368,21 @@ TABLE_FOREIGN_KEYS = {
     ),
     "assignment_claims": (
         (("doc_id", "claim_id"), "claims", ("doc_id", "claim_id")),
-        (("decision_id",), "decisions", ("decision_id",)),
+        (
+            ("doc_id", "claim_id", "decision_id", "target_id"),
+            "decisions",
+            ("doc_id", "claim_id", "decision_id", "target_id"),
+        ),
     ),
     "classifications": ((("doc_id", "claim_id"), "claims", ("doc_id", "claim_id")),),
     "decisions": ((("doc_id", "claim_id"), "claims", ("doc_id", "claim_id")),),
     "novelty": (
         (("doc_id", "claim_id"), "claims", ("doc_id", "claim_id")),
-        (("classification_id",), "classifications", ("classification_id",)),
+        (
+            ("doc_id", "claim_id", "classification_id"),
+            "classifications",
+            ("doc_id", "claim_id", "classification_id"),
+        ),
     ),
     "rejections": (),
     "completions": (),
@@ -1380,6 +1428,7 @@ PUBLIC_NAMES = (
     "TABLE_GRAINS",
     "TABLE_FOREIGN_KEYS",
     "family_map_hash",
+    "validate_analysis_tables",
 )
 
 TABLE_SCHEMAS = {

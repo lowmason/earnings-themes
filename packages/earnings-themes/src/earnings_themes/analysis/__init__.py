@@ -38,6 +38,7 @@ from .records import (
     StoredAnalysisRun,
     ThemeFamilyMap,
     family_map_hash,
+    validate_analysis_tables,
 )
 
 __all__ = [
@@ -79,4 +80,5 @@ __all__ = [
     "StoredAnalysisRun",
     "ThemeFamilyMap",
     "family_map_hash",
+    "validate_analysis_tables",
 ]

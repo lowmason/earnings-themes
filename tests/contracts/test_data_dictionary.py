@@ -480,3 +480,10 @@ def test_analysis_table_dtypes_and_foreign_keys_documented(table):
         assert f"| `{field}` | `{dtype}` |" in section
     assert repr(analysis.TABLE_GRAINS[table]) in section
     assert repr(analysis.TABLE_FOREIGN_KEYS[table]) in section
+
+
+def test_analysis_final_validation_gate_is_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert "validate_analysis_tables(tables: AnalysisTables) -> AnalysisTables" in text
+    assert "AnalysisRun" in text and "StoredAnalysisRun" in text
+    assert "Task 6 storage/serialization" in text and "Task 8 publication" in text
