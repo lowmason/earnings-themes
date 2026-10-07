@@ -121,6 +121,7 @@ MODELS = [
     events.PilotManifest,
     states.ExhibitAttempt,
     states.StateTransition,
+    states.ProcessingTransition,
     coverage.PilotPin,
     coverage.StateCount,
     coverage.CoverageGap,
@@ -263,6 +264,8 @@ ENUMS = [
     events.TransitionKind,
     states.DocumentState,
     states.MissingReason,
+    states.ProcessingMissingReason,
+    states.ProcessingReason,
     states.ExhibitChoice,
     states.AttemptOutcome,
     problems.Problem,
@@ -499,3 +502,22 @@ def test_analysis_consuming_gate_and_c2_hashes_documented():
     assert "analysis_provenance_hash" in text
     assert "schema 1 binds judge cache files" in text
     assert "application validates original event/pilot/state derivation" in text
+
+
+def test_processing_schema_two_is_additive_and_documented():
+    from earnings_ingestion.events.state_table import PROCESSING_SCHEMA, SCHEMA
+
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert documented("Processing table") == set(PROCESSING_SCHEMA)
+    section = text.split("### `Processing table`\n", 1)[1].split("\n#", 1)[0]
+    for field, dtype in PROCESSING_SCHEMA.items():
+        assert f"| `{field}` | `{dtype}` |" in section
+    assert set(PROCESSING_SCHEMA) == set(SCHEMA) | {
+        "processing_run_id",
+        "processing_run_hash",
+        "completion_hash",
+        "processing_reason",
+    }
+    assert "write_processing_run" in text and "StateRecord" in text
+    assert "schema-1 writer bytes" in text
+    assert "WorkflowFailure" in text and "DocumentCompletion" in text

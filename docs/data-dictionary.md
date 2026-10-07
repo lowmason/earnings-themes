@@ -1619,6 +1619,226 @@ Why an exhibit was tried, in R1.2's order.
 | `corpus_error` | string or null | Set when the override's filing would change the event's eligibility, for the next corpus version |
 | `attempts` | tuple of `ExhibitAttempt` | Every exhibit tried, in order, on the transition that concludes them |
 
+## earnings-ingestion processing outcomes, schema version 2
+
+`ProcessingTransition` overrides the inherited `_state` validator by the same
+name. `StateTransition`, `SCHEMA`, `state_frame` and `write_run` remain unchanged,
+including schema-1 writer bytes. `StateRecord` is their explicit union.
+`in_order`, `check_histories` and `current_states` accept mixed records and retain
+ordering by earliest UTC run time, run ID, then sequence. No global ingestion or
+core schema bump or acquisition artifact migration is required.
+
+The schema-2 graph is `parsed -> partial/completed/completed-no-theme/failed`.
+A failed outcome requires `processing_failed` and a closed cause, never a parse
+`FailureReason`. The failed state tags `completion_hash` as **WorkflowFailure**
+evidence; other states bind **DocumentCompletion**. This state layer checks hash
+shape and provenance, while the application must supply and validate the actual
+evidence artifact. Partial requires both a missing and processing reason;
+completed has neither; completed-no-theme requires `explicit_no_theme` and null
+missingness. An empty quote table cannot create that explicit declaration.
+
+Every processing transition copies document/event/pilot identity, frozen and
+acquired accession, exhibit, raw hash, retrieval time, canonical doc ID, and retained
+override ID/corpus-error provenance exactly from its current parsed predecessor.
+New attempts are empty; acquisition attempts and override history stay in their
+original rows. UTC offset zero is required for recorded and retrieval timestamps.
+No new acquisition override, transcript slot, or terminal reopen is permitted.
+
+`write_processing_run(directory, transitions) -> Path` writes one immutable
+processing state run atomically using `write_new`, after revalidating records and
+combined history. It requires one state run ID and one processing run ID/hash.
+Identical file bytes under the existing state run are idempotent (history is still
+validated); different bytes refuse `state_run_conflict`. A processing-run ID cannot
+alias another state run file or hash. A partial/terminal document from another
+processing run refuses `state_not_processable`; new analytical publication over a
+completed stored run writes no new transition. Recovery/reprocessing policy is
+reserved for Stage 11/15.
+
+`read_runs(directory) -> list[StateRecord]` dispatches the exact legacy `SCHEMA`
+or additive `PROCESSING_SCHEMA`, requires uniform version 1 or 2 in each file,
+validates the appropriate model and combined history, and refuses unknown schemas.
+Schema-2 files additionally bind their file stem to their state run ID. This
+reader and the new writer expose closed reasons only, suppressing source-bearing
+validation details, paths and exception chains. Reader reasons are
+`state_storage_corrupt`, `state_schema_invalid`, `state_record_invalid`, and
+`state_history_invalid`; writer also uses `state_not_processable`,
+`state_predecessor_mismatch`, and `state_run_conflict`.
+
+### `ProcessingTransition`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | strict literal `2` | Additive processing schema; ingestion global schema stays 1 |
+| `document_id` | ID part | `<event_id>:release` |
+| `event_id` | ID part | The pilot event |
+| `run_id` | ID part | The run that recorded it, and its file's name |
+| `sequence` | int ≥ 0 | Its position in its run |
+| `recorded_at` | UTC datetime | When it was recorded |
+| `from_state` | parsed | Exact current predecessor must be parsed |
+| `to_state` | partial, completed, completed-no-theme, failed | Schema-2 processing outcomes only; terminal for Stage 10 |
+| `missing_reason` | `ProcessingMissingReason` or null | Closed processing missingness; null for completed and completed-no-theme |
+| `failure_reason` | null | Canonical parse failure metadata is forbidden |
+| `pilot_id` | ID part | The pilot the run read |
+| `pilot_version` | int ≥ 1 | Its version |
+| `pilot_hash` | 64 lowercase hex | Its `content_hash`, which scopes the current state |
+| `frozen_accession` | accession | The event manifest's `release_accession` for the event |
+| `accession` | accession | The filing whose exhibit was acquired: the frozen one, or an override's |
+| `exhibit` | string | The acquired exhibit's file name |
+| `artifact_sha256` | 64 lowercase hex | Its saved bytes' SHA-256 |
+| `retrieved_at` | UTC datetime | When those bytes were retrieved |
+| `doc_id` | string | Its `walker-1` canonical document, for `parsed` |
+| `override_id` | ID part or null | Exactly the predecessor’s retained acquisition override ID; no new override |
+| `corpus_error` | string or null | Set when the override's filing would change the event's eligibility, for the next corpus version |
+| `attempts` | empty tuple | No new acquisition attempt; original history remains retained |
+| `processing_run_id` | ID part | The bound workflow/analytical run; unique state-file binding |
+| `processing_run_hash` | 64 lowercase hex | Hash of that processing run |
+| `completion_hash` | 64 lowercase hex | DocumentCompletion hash, or WorkflowFailure hash for failed state (explicit failure evidence) |
+| `processing_reason` | ProcessingReason or null | Closed cause; explicit_no_theme for completed-no-theme; null for completed |
+
+### `ProcessingMissingReason`
+
+| Value | Meaning |
+| --- | --- |
+| `processing_failed` | Closed processing missingness; not an observed absence of a theme |
+| `extraction_partial` | Closed processing missingness; not an observed absence of a theme |
+| `classification_incomplete` | Closed processing missingness; not an observed absence of a theme |
+| `assessment_refused` | Closed processing missingness; not an observed absence of a theme |
+| `assessment_incomplete` | Closed processing missingness; not an observed absence of a theme |
+| `assessment_flagged` | Closed processing missingness; not an observed absence of a theme |
+| `calibration_required` | Closed processing missingness; not an observed absence of a theme |
+| `policy_review` | Closed processing missingness; not an observed absence of a theme |
+| `valid_unmatched` | Closed processing missingness; not an observed absence of a theme |
+| `no_theme_unconfirmed` | Closed processing missingness; not an observed absence of a theme |
+| `no_eligible_units` | Closed processing missingness; not an observed absence of a theme |
+| `copy_processing_conflict` | Closed processing missingness; not an observed absence of a theme |
+
+### `ProcessingReason`
+
+Pinned closed extraction/support/coding and core-verification vocabulary plus
+processing summaries. The local enum intentionally imports no themes internals;
+compatibility tests check the published upstream values. Canonical parse reasons
+are disjoint. An enum cause alone does not establish completion or acceptance.
+
+| Value | Meaning |
+| --- | --- |
+| `ambiguous_occurrence` | Closed processing cause or summary; no source wording |
+| `assessment_flagged` | Closed processing cause or summary; no source wording |
+| `assessment_incomplete` | Closed processing cause or summary; no source wording |
+| `assessment_refused` | Closed processing cause or summary; no source wording |
+| `blank_claim` | Closed processing cause or summary; no source wording |
+| `budget_exhausted` | Closed processing cause or summary; no source wording |
+| `cache_corrupt` | Closed processing cause or summary; no source wording |
+| `calibration_required` | Closed processing cause or summary; no source wording |
+| `canonical_hash_mismatch` | Closed processing cause or summary; no source wording |
+| `claim_too_long` | Closed processing cause or summary; no source wording |
+| `classification_incomplete` | Closed processing cause or summary; no source wording |
+| `codebook_not_approved` | Closed processing cause or summary; no source wording |
+| `copy_processing_conflict` | Closed processing cause or summary; no source wording |
+| `crosses_speaker_turn` | Closed processing cause or summary; no source wording |
+| `crossing_elements` | Closed processing cause or summary; no source wording |
+| `document_integrity` | Closed processing cause or summary; no source wording |
+| `duplicate_claim` | Closed processing cause or summary; no source wording |
+| `duplicate_element` | Closed processing cause or summary; no source wording |
+| `duplicate_label` | Closed processing cause or summary; no source wording |
+| `duplicate_quote` | Closed processing cause or summary; no source wording |
+| `duplicate_theme` | Closed processing cause or summary; no source wording |
+| `element_id_mismatch` | Closed processing cause or summary; no source wording |
+| `explicit_no_theme` | Closed processing cause or summary; no source wording |
+| `extraction_partial` | Closed processing cause or summary; no source wording |
+| `fixture_policy` | Closed processing cause or summary; no source wording |
+| `hierarchy_conflict` | Closed processing cause or summary; no source wording |
+| `input_changed` | Closed processing cause or summary; no source wording |
+| `input_too_long` | Closed processing cause or summary; no source wording |
+| `invalid_bundle` | Closed processing cause or summary; no source wording |
+| `invalid_contribution` | Closed processing cause or summary; no source wording |
+| `invalid_header_reference` | Closed processing cause or summary; no source wording |
+| `invalid_panel` | Closed processing cause or summary; no source wording |
+| `invalid_quote` | Closed processing cause or summary; no source wording |
+| `invalid_references` | Closed processing cause or summary; no source wording |
+| `judge_exhausted` | Closed processing cause or summary; no source wording |
+| `locator_mismatch` | Closed processing cause or summary; no source wording |
+| `locator_not_found` | Closed processing cause or summary; no source wording |
+| `malformed_record` | Closed processing cause or summary; no source wording |
+| `malformed_reply` | Closed processing cause or summary; no source wording |
+| `masks_mismatch` | Closed processing cause or summary; no source wording |
+| `missing_assessment` | Closed processing cause or summary; no source wording |
+| `mixed_codebook` | Closed processing cause or summary; no source wording |
+| `model_mismatch` | Closed processing cause or summary; no source wording |
+| `no_eligible_units` | Closed processing cause or summary; no source wording |
+| `no_theme_fit` | Closed processing cause or summary; no source wording |
+| `no_theme_unconfirmed` | Closed processing cause or summary; no source wording |
+| `ocr_derived_text` | Closed processing cause or summary; no source wording |
+| `outside_chunk` | Closed processing cause or summary; no source wording |
+| `outside_element` | Closed processing cause or summary; no source wording |
+| `outside_parent` | Closed processing cause or summary; no source wording |
+| `parent_cycle` | Closed processing cause or summary; no source wording |
+| `parent_order` | Closed processing cause or summary; no source wording |
+| `policy_accept` | Closed processing cause or summary; no source wording |
+| `policy_mismatch` | Closed processing cause or summary; no source wording |
+| `policy_reject` | Closed processing cause or summary; no source wording |
+| `policy_review` | Closed processing cause or summary; no source wording |
+| `processing_failed` | Closed processing cause or summary; no source wording |
+| `quote_text_mismatch` | Closed processing cause or summary; no source wording |
+| `replay_miss` | Closed processing cause or summary; no source wording |
+| `requests_exhausted` | Closed processing cause or summary; no source wording |
+| `scorer_exhausted` | Closed processing cause or summary; no source wording |
+| `scorer_failed` | Closed processing cause or summary; no source wording |
+| `span_out_of_bounds` | Closed processing cause or summary; no source wording |
+| `storage_corrupt` | Closed processing cause or summary; no source wording |
+| `table_cell_parent` | Closed processing cause or summary; no source wording |
+| `tokens_exhausted` | Closed processing cause or summary; no source wording |
+| `tool_call_refused` | Closed processing cause or summary; no source wording |
+| `transport_error` | Closed processing cause or summary; no source wording |
+| `unexpected_error` | Closed processing cause or summary; no source wording |
+| `unknown_claim` | Closed processing cause or summary; no source wording |
+| `unknown_element` | Closed processing cause or summary; no source wording |
+| `unknown_label` | Closed processing cause or summary; no source wording |
+| `unknown_parent` | Closed processing cause or summary; no source wording |
+| `unknown_quote` | Closed processing cause or summary; no source wording |
+| `unknown_theme` | Closed processing cause or summary; no source wording |
+| `valid_unmatched` | Closed processing cause or summary; no source wording |
+| `wrong_codebook` | Closed processing cause or summary; no source wording |
+| `wrong_document` | Closed processing cause or summary; no source wording |
+| `wrong_source_run` | Closed processing cause or summary; no source wording |
+
+### `Processing table`
+
+One row per `(run_id, sequence)`; document histories chain independently under
+`(pilot_hash, document_id)`. `PROCESSING_SCHEMA` keeps every legacy dtype and adds
+four typed string columns. Null-only columns retain their declared types.
+Document/event/pilot/acquired references resolve through the retained schema-1
+predecessor; `processing_run_id`/hash and `completion_hash` resolve to the explicitly
+supplied workflow and completion/failure artifacts.
+
+| Field | Dtype | Meaning |
+| --- | --- | --- |
+| `schema_version` | `Int64` | Declared processing column; model rules above govern nullability |
+| `document_id` | `String` | Declared processing column; model rules above govern nullability |
+| `event_id` | `String` | Declared processing column; model rules above govern nullability |
+| `run_id` | `String` | Declared processing column; model rules above govern nullability |
+| `sequence` | `Int64` | Declared processing column; model rules above govern nullability |
+| `recorded_at` | `Datetime(time_unit='us', time_zone='UTC')` | Declared processing column; model rules above govern nullability |
+| `from_state` | `String` | Declared processing column; model rules above govern nullability |
+| `to_state` | `String` | Declared processing column; model rules above govern nullability |
+| `missing_reason` | `String` | Declared processing column; model rules above govern nullability |
+| `failure_reason` | `String` | Declared processing column; model rules above govern nullability |
+| `pilot_id` | `String` | Declared processing column; model rules above govern nullability |
+| `pilot_version` | `Int64` | Declared processing column; model rules above govern nullability |
+| `pilot_hash` | `String` | Declared processing column; model rules above govern nullability |
+| `frozen_accession` | `String` | Declared processing column; model rules above govern nullability |
+| `accession` | `String` | Declared processing column; model rules above govern nullability |
+| `exhibit` | `String` | Declared processing column; model rules above govern nullability |
+| `artifact_sha256` | `String` | Declared processing column; model rules above govern nullability |
+| `retrieved_at` | `Datetime(time_unit='us', time_zone='UTC')` | Declared processing column; model rules above govern nullability |
+| `doc_id` | `String` | Declared processing column; model rules above govern nullability |
+| `override_id` | `String` | Declared processing column; model rules above govern nullability |
+| `corpus_error` | `String` | Declared processing column; model rules above govern nullability |
+| `attempts` | `List(Struct({'accession': String, 'filename': String, 'exhibit_type': String, 'choice': String, 'outcome': String, 'artifact_sha256': String, 'failure_reason': String, 'detail': String}))` | Declared processing column; model rules above govern nullability |
+| `processing_run_id` | `String` | Declared processing column; model rules above govern nullability |
+| `processing_run_hash` | `String` | Declared processing column; model rules above govern nullability |
+| `completion_hash` | `String` | Declared processing column; model rules above govern nullability |
+| `processing_reason` | `String` | Declared processing column; model rules above govern nullability |
+
 ## Processing-state runs
 
 - **Where.** `data/runs/events/states/<run_id>.parquet` holds one run's transitions

@@ -17,6 +17,13 @@ else:
 ROOT = Path(__file__).resolve().parents[1]
 THEMES = "packages/earnings-themes/tests/"
 GROUPS = {
+    "states": (
+        "packages/earnings-ingestion/tests/test_events_states.py",
+        "packages/earnings-ingestion/tests/test_events_state_table.py",
+        "tests/contracts/test_processing_state_compatibility.py",
+        "tests/integration/test_event_fixtures.py",
+        "tests/integration/test_event_corpus_v1.py",
+    ),
     "consume": (
         THEMES + "analysis/test_consume.py",
         "tests/contracts/test_support_contracts.py",
