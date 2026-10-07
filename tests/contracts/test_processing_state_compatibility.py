@@ -445,3 +445,174 @@ def test_pinned_processing_vocabulary_covers_upstream_failures_without_runtime_i
     )
     assert reasons == expected
     assert not reasons & {r.value for r in FailureReason}
+
+
+def synthetic_metadata():
+    from earnings_ingestion.cohort.freeze import load_manifest
+    from earnings_ingestion.events.fixture import COHORT_MANIFEST
+    from earnings_ingestion.events.freeze import load_event_manifest
+    from earnings_ingestion.events.pilot import load_pilot
+
+    universe = load_manifest(REPO / COHORT_MANIFEST)
+    events = load_event_manifest(REPO / FIXTURE_DIR / "events-v1.json")
+    pilot = load_pilot(REPO / FIXTURE_DIR / "pilot-v1.json", universe)
+    return universe, events, pilot
+
+
+def acquisition_override(predecessor):
+    from earnings_ingestion.cohort.records import OverrideCitation
+    from earnings_ingestion.events.records import (
+        AcquisitionOverride,
+        AcquisitionOverridesFile,
+    )
+
+    override = AcquisitionOverride(
+        override_id="invented-recovery",
+        kind="set_release_document",
+        event_id=predecessor.event_id,
+        accession=predecessor.accession,
+        exhibit=predecessor.exhibit,
+        citations=(
+            OverrideCitation(
+                source_id="sec-edgar", url="https://fixture.example/index"
+            ),
+        ),
+        rationale="Invented fixture choice",
+        reviewer="invented-reviewer",
+        recorded_on=AT.date(),
+    )
+    return AcquisitionOverridesFile(schema_version=1, overrides=(override,))
+
+
+def fail_closed_acquisition_boundaries(monkeypatch):
+    from earnings_ingestion.events import acquire as consumer
+    from earnings_ingestion.fetch.store import ArtifactStore
+
+    calls = {"source_dispatch": 0, "canonical_write": 0, "store_write": 0, "fetch": 0}
+
+    def blocked(kind):
+        def refuse(*args, **kwargs):
+            calls[kind] += 1
+            raise ValueError("fixture_dispatch_forbidden")
+
+        return refuse
+
+    # A source-dispatch sentinel prevents any source read even on the RED path.
+    monkeypatch.setattr(consumer, "_named", blocked("source_dispatch"))
+    monkeypatch.setattr(consumer, "_write", blocked("canonical_write"))
+    monkeypatch.setattr(ArtifactStore, "put", blocked("store_write"))
+    return calls, blocked("fetch")
+
+
+def test_acquisition_consumer_refuses_processing_failure_before_dispatch(
+    tmp_path, monkeypatch
+):
+    from earnings_ingestion.events import acquire as consumer
+    from earnings_ingestion.fetch.store import ArtifactStore
+
+    universe, events, pilot = synthetic_metadata()
+    state_dir = tmp_path / "states"
+    state_table.write_run(state_dir, acquisition())
+    row = processing()
+    state_table.write_processing_run(state_dir, [row])
+    before = {p.name: sha256_hex(p.read_bytes()) for p in state_dir.glob("*.parquet")}
+    calls, fetch = fail_closed_acquisition_boundaries(monkeypatch)
+    store = ArtifactStore(tmp_path / "raw", tmp_path)
+    overrides = acquisition_override(parsed())
+    planned = consumer.planned_requests(events, pilot, store, state_dir, overrides)
+    result = consumer.acquire(
+        events,
+        pilot,
+        universe,
+        store,
+        fetch,
+        overrides=overrides,
+        states_dir=state_dir,
+        canonical_dir=tmp_path / "canonical",
+        run_id="forbidden-reacquisition",
+        now=lambda: AT + timedelta(hours=1),
+    )
+    assert calls == dict.fromkeys(calls, 0)
+    assert planned == (0, 0)
+    assert result.problems == ("state_not_processable",)
+    assert result.transitions == () and result.path is None and result.fetched == ()
+    assert result.states[row.document_id] == row
+    assert not (tmp_path / "canonical").exists()
+    assert not (tmp_path / "raw").exists()
+    assert {
+        p.name: sha256_hex(p.read_bytes()) for p in state_dir.glob("*.parquet")
+    } == before
+    assert len(state_table.read_runs(state_dir)) == len(acquisition()) + 1
+
+
+def test_legacy_parse_failure_still_dispatches_acquisition_override(
+    tmp_path, monkeypatch
+):
+    from earnings_ingestion.events import acquire as consumer
+    from earnings_ingestion.fetch.store import ArtifactStore
+
+    universe, events, pilot = synthetic_metadata()
+    history = acquisition()
+    failed = next(t for t in history if t.to_state is states.DocumentState.FAILED)
+    acquired = next(
+        t
+        for t in history
+        if t.document_id == failed.document_id
+        and t.to_state is states.DocumentState.ACQUIRED
+    )
+    state_dir = tmp_path / "states"
+    state_table.write_run(state_dir, history)
+    calls, fetch = fail_closed_acquisition_boundaries(monkeypatch)
+    store = ArtifactStore(tmp_path / "raw", tmp_path)
+    overrides = acquisition_override(acquired)
+    assert consumer.planned_requests(events, pilot, store, state_dir, overrides) == (
+        1,
+        1,
+    )
+    result = consumer.acquire(
+        events,
+        pilot,
+        universe,
+        store,
+        fetch,
+        overrides=overrides,
+        states_dir=state_dir,
+        canonical_dir=tmp_path / "canonical",
+        run_id="legacy-recovery",
+        now=lambda: AT + timedelta(hours=1),
+    )
+    assert calls["source_dispatch"] == 1
+    assert calls["canonical_write"] == calls["store_write"] == calls["fetch"] == 0
+    assert result.transitions == () and result.path is None
+    assert len(list(state_dir.glob("*.parquet"))) == 1
+
+
+def test_canonical_selector_retains_document_after_processing_failure(tmp_path):
+    from earnings_ingestion.events.coverage import (
+        build_coverage,
+        parsed_documents,
+        pilot_pin,
+    )
+
+    universe, events, pilot = synthetic_metadata()
+    history = acquisition()
+    row = processing()
+    state_table.write_run(tmp_path, history)
+    state_table.write_processing_run(tmp_path, [row])
+    mixed = state_table.read_runs(tmp_path)
+    documents = parsed_documents(mixed, row.pilot_hash)
+    assert documents[row.event_id] == row.doc_id
+    for legacy in states.current_states(history, row.pilot_hash).values():
+        if legacy.to_state is states.DocumentState.FAILED:
+            assert legacy.event_id not in documents
+    latest = states.current_states(mixed, row.pilot_hash)[row.document_id]
+    assert latest.to_state is states.DocumentState.FAILED
+    assert latest.missing_reason is states.ProcessingMissingReason.PROCESSING_FAILED
+    report = build_coverage(pilot, pilot_pin(pilot, events, universe), mixed)
+    baseline = build_coverage(pilot, pilot_pin(pilot, events, universe), history)
+    assert (
+        report.count(states.DocumentState.FAILED)
+        == baseline.count(states.DocumentState.FAILED) + 1
+    )
+    assert report.count(states.DocumentState.COMPLETED_NO_THEME) == 0
+    assert report.no_theme == ()

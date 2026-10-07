@@ -40,7 +40,8 @@ from earnings_ingestion.events.states import (
     AttemptOutcome,
     DocumentState,
     ExhibitChoice,
-    StateTransition,
+    ProcessingTransition,
+    StateRecord,
     current_states,
     in_order,
 )
@@ -157,7 +158,7 @@ def coverage_hash(report: CoverageReport) -> str:
     return digest(report.model_dump(mode="json", exclude={"content_hash"}))
 
 
-def _runs(transitions: Iterable[StateTransition]) -> list[str]:
+def _runs(transitions: Iterable[StateRecord]) -> list[str]:
     seen: list[str] = []
     for transition in in_order(transitions):
         if transition.run_id not in seen:
@@ -166,7 +167,7 @@ def _runs(transitions: Iterable[StateTransition]) -> list[str]:
 
 
 def _overrides(
-    transitions: Iterable[StateTransition], documents: Collection[str]
+    transitions: Iterable[StateRecord], documents: Collection[str]
 ) -> tuple[AppliedOverride, ...]:
     kept: dict[tuple[str, str], AttemptOutcome] = {}
     for transition in in_order(transitions):
@@ -185,7 +186,7 @@ def _overrides(
 def build_coverage(
     pilot: PilotManifest,
     pin: PilotPin,
-    transitions: Iterable[StateTransition],
+    transitions: Iterable[StateRecord],
     *,
     run_ids: Collection[str] | None = None,
     version: int = 1,
@@ -235,10 +236,12 @@ AFTER_PARSED = frozenset(
 
 
 def parsed_documents(
-    transitions: Iterable[StateTransition], pilot_hash: str
+    transitions: Iterable[StateRecord], pilot_hash: str
 ) -> dict[str, str]:
     """Each pilot event whose document is ``parsed`` or later, with the ``doc_id``
-    its ``parsed`` transition named: later stages' runs need not repeat it."""
+    its ``parsed`` transition named: later stages' runs need not repeat it.
+    A processing failure preserves canonical availability; a parse failure does
+    not. Availability here confers no successful analytical observation."""
     under = [t for t in in_order(transitions) if t.pilot_hash == pilot_hash]
     doc_ids = {
         t.event_id: t.doc_id
@@ -249,7 +252,8 @@ def parsed_documents(
     return {
         state.event_id: doc_ids[state.event_id]
         for state in current.values()
-        if state.to_state in AFTER_PARSED and state.event_id in doc_ids
+        if (state.to_state in AFTER_PARSED or isinstance(state, ProcessingTransition))
+        and state.event_id in doc_ids
     }
 
 

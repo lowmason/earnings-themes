@@ -521,3 +521,6 @@ def test_processing_schema_two_is_additive_and_documented():
     assert "write_processing_run" in text and "StateRecord" in text
     assert "schema-1 writer bytes" in text
     assert "WorkflowFailure" in text and "DocumentCompletion" in text
+    assert "parsed_documents(transitions, pilot_hash)" in text
+    assert "Schema-1 parse failure recovery" in text
+    assert "canonical availability, not analytical" in text

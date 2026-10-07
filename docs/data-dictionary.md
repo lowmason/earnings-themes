@@ -1654,6 +1654,19 @@ processing run refuses `state_not_processable`; new analytical publication over 
 completed stored run writes no new transition. Recovery/reprocessing policy is
 reserved for Stage 11/15.
 
+The acquisition consumer's shared dispatch guard distinguishes schema-2 processing
+terminals before checking acquisition overrides or attempts. A new override over
+such a state reports `state_not_processable`, forecasts zero requests, and performs
+no source/store/canonical/state write. Without an override it remains unchanged.
+Schema-1 parse failure recovery under an acquisition override keeps its existing
+behavior. `Acquisition.states` may now contain either `StateRecord` variant.
+
+`parsed_documents(transitions, pilot_hash)` preserves the canonical ID from the
+parsed predecessor after a schema-2 processing failure. Schema-1 parse failures
+remain excluded. This selector reports canonical availability, not analytical
+observability: coverage retains `failed/processing_failed`, and the failure never
+becomes completed or a no-theme observation.
+
 `read_runs(directory) -> list[StateRecord]` dispatches the exact legacy `SCHEMA`
 or additive `PROCESSING_SCHEMA`, requires uniform version 1 or 2 in each file,
 validates the appropriate model and combined history, and refuses unknown schemas.
