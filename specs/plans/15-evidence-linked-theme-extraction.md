@@ -618,7 +618,7 @@ Task 4 checkpoint (2026-10-06): implemented in `947f35f..04be9a1`; independent S
 
 **Interfaces:** Consumes checked Task 3 `BoundAnalysis`, Stage 9 `Assignment`/`AssignmentClaimLink` and Task 2 row schemas. Produces `build_observations(bound: BoundAnalysis) -> AnalysisTables`, with original and audit frames plus copies; completion/coverage/prevalence/evidence frames initially keep their declared empty schema for later stages. Check: `rows`, `consume`, `dictionary`.
 
-- [ ] **1. Red tests establish row grain and link cardinality.** One verified quote accepted for two themes gives two observation rows with the same document-qualified quote; two claims supporting the same quote/theme yield one observation and two assignment-claim links. Two documents with equal local quote IDs remain distinct. All original claim links survive even contextual/irrelevant/unselected ones. Zero-assignment runs retain quote/claim/rejection/outcome tables. Release rows all have `not_applicable`; sentiment/topic/cluster/attributes never populate `theme_id`. Masked assignments remain audit with `headline_eligible=false`.
+- [x] **1. Red tests establish row grain and link cardinality.** One verified quote accepted for two themes gives two observation rows with the same document-qualified quote; two claims supporting the same quote/theme yield one observation and two assignment-claim links. Two documents with equal local quote IDs remain distinct. All original claim links survive even contextual/irrelevant/unselected ones. Zero-assignment runs retain quote/claim/rejection/outcome tables. Release rows all have `not_applicable`; sentiment/topic/cluster/attributes never populate `theme_id`. Masked assignments remain audit with `headline_eligible=false`.
 
 ```python
 def test_projection_keeps_every_original_link(analysis_inputs):
@@ -652,13 +652,15 @@ def original_links(run: StoredRun) -> tuple[ClaimEvidence, ...]:
     )
 ```
 
-- [ ] **2. Implement exact projection.** Build quote lookup by `(span.doc_id,quote_id)`, source metadata by doc ID, and event metadata by event ID. Materialize text only from canonical `[start:end]`; recomputed mask overlap controls headline eligibility. Keep assignment policy/source/support/codebook hashes and every link. Copy refusal reason/IDs only; never `str(rejection)` from a core rejection with detail or whole Pydantic rows. Use explicit Polars schemas for all tables, including empty output.
+- [x] **2. Implement exact projection.** Build quote lookup by `(span.doc_id,quote_id)`, source metadata by doc ID, and event metadata by event ID. Materialize text only from canonical `[start:end]`; recomputed mask overlap controls headline eligibility. Keep assignment policy/source/support/codebook hashes and every link. Copy refusal reason/IDs only; never `str(rejection)` from a core rejection with detail or whole Pydantic rows. Use explicit Polars schemas for all tables, including empty output.
 
-- [ ] **3. Implement disclosure groups and audit conflicts.** Exact-hash copies can group only within one event/issuer/period/type; reviewed assertions require their metadata/hash binding. Do not remap original doc/quote IDs or rewrite source assignments. Count group/span occurrences separately from source-copy row counts. Two equal strings at different offsets remain distinct. Detect incompatible copy outcomes before prevalence; retain all rows and flag `copy_processing_conflict`. A copied disclosure is never independent corroboration.
+- [x] **3. Implement disclosure groups and audit conflicts.** Exact-hash copies can group only within one event/issuer/period/type; reviewed assertions require their metadata/hash binding. Do not remap original doc/quote IDs or rewrite source assignments. Count group/span occurrences separately from source-copy row counts. Two equal strings at different offsets remain distinct. Detect incompatible copy outcomes before prevalence; retain all rows and flag `copy_processing_conflict`. A copied disclosure is never independent corroboration.
 
-- [ ] **4. Run `rows` and `consume` green, scoped Ruff.** Test deliberate mixed-version assignment/source inputs refuse rather than concatenate.
+- [x] **4. Run `rows` and `consume` green, scoped Ruff.** Test deliberate mixed-version assignment/source inputs refuse rather than concatenate.
 
-- [ ] **5. Checkpoint:** both approvals; immutable upstream row hashes unchanged.
+- [x] **5. Checkpoint:** both approvals; immutable upstream row hashes unchanged.
+
+Task 5 checkpoint (2026-10-06): implemented in `6c1c541..9be7800`; fresh Sol Ultra specification conformance and code quality approved, with no findings. Guarded rows 24, consume 93, records 61 and dictionary 301 passed with all other counts zero; scoped Ruff passed. Public `build_observations` repeats current gates and preserves original/audit links and source IDs, exact canonical slices, masked evidence and copy conflict status. The documented nullable refusal window and derived window/attempt pointers preserve valid upstream cases; intermediate completion/count/evidence frames remain typed and empty.
 
 ### Task 6: Derive completion, expected coverage and hand-computed prevalence
 
