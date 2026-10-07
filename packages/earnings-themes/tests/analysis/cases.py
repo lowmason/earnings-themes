@@ -17,6 +17,8 @@ from earnings_core import (
     CanonicalDocument,
     DocumentElement,
     ElementType,
+    MaskCategory,
+    OverlayMask,
     RightsStatus,
     TextSpan,
     digest,
@@ -247,6 +249,13 @@ def make_inputs(
     first_text=None,
     contribution="supporting",
     caches=False,
+    masked=False,
+    themes_by_document=None,
+    copy_first_text=None,
+    assignment_action=None,
+    retain_text=True,
+    classification_reply=None,
+    event_ids_by_document=None,
 ):
     first_text = first_text or "Invented 🛠 press expanded."
     text = first_text + "\nInvented 🛠 press expanded."
@@ -262,13 +271,29 @@ def make_inputs(
         )
         for start, end in ((0, boundary), (boundary + 1, len(text)))
     )
-    bundle = Bundle("stage10-invented", document, elements, ())
+    masks = (
+        (
+            OverlayMask(
+                doc_id=document.doc_id,
+                canonical_hash=document.canonical_hash,
+                span=elements[0].span,
+                category=MaskCategory.SAFE_HARBOR,
+                policy_id="invented-mask",
+                policy_version="1",
+            ),
+        )
+        if masked
+        else ()
+    )
+    bundle = Bundle("stage10-invented", document, elements, masks)
     bundles = [bundle]
     for i in range(1, documents):
         other_doc = CanonicalDocument.create(
             source_document_id="stage10-invented-copy-" + str(i),
             canonicalization_version="invented-1",
-            canonical_text=text,
+            canonical_text=(copy_first_text + text[boundary:])
+            if copy_first_text
+            else text,
         )
         other_elements = tuple(
             DocumentElement.create(
@@ -290,13 +315,24 @@ def make_inputs(
         other_bundles=tuple(bundles[1:]),
         extraction_directory=root / "extraction",
     )
-    expected = event("A-Q1")
+    selected_events = tuple(
+        event(key) for key in (event_ids_by_document or ("A-Q1",) * documents)
+    )
+    expected_rows = tuple(
+        sorted(
+            {row.event_id: row for row in selected_events}.values(),
+            key=lambda row: row.event_id,
+        )
+    )
     metadata_rows = []
     raw_rows = []
     canonical_rows = []
     acquisitions = []
     for i, selected in enumerate(bundles):
+        expected = selected_events[i]
         meta, raw = metadata(selected, expected)
+        if not retain_text:
+            meta = meta.model_copy(update={"retain_text": False, "export_text": False})
         canonical = canonical_snapshot(selected, meta, raw)
         payload = json.loads(canonical.data)
         meta = meta.model_copy(
@@ -329,7 +365,7 @@ def make_inputs(
     from earnings_themes.analysis.consume import analysis_provenance_hash
 
     provenance = analysis_provenance_hash(
-        expected=(expected,),
+        expected=expected_rows,
         acquisition=tuple(acquisitions),
         metadata=tuple(metadata_rows),
         canonical_snapshots=tuple(canonical_rows),
@@ -360,11 +396,36 @@ def make_inputs(
         parameters=Parameters(max_tokens=64),
     )
     job = make_proposal_job(sources, policy, identity, root)
-    proposals, _ = job.run(
-        [{"theme_ids": list(themes), "attributes": {}}] * len(sources.stored_run.claims)
+    per_doc_themes = (
+        dict(zip((b.document.doc_id for b in bundles), themes_by_document))
+        if themes_by_document is not None
+        else {}
     )
+    replies = (
+        [
+            {"theme_ids": list(per_doc_themes.get(c.doc_id, themes)), "attributes": {}}
+            for c in sources.stored_run.claims
+        ]
+        if classification_reply is None
+        else [classification_reply] * (2 * len(sources.stored_run.claims))
+    )
+    proposals, _ = job.run(replies)
     assessed = make_assessed_case(proposals, sources, root, contribution=contribution)
     assignment_policy = None if review else FixturePolicy(proposals, assessed.support)
+    if assignment_action is not None and not review:
+        from earnings_themes.coding.records import PolicyVote
+
+        class ActionPolicy(FixturePolicy):
+            def evaluate(self, view):
+                return PolicyVote(action=assignment_action)
+
+        assignment_policy = ActionPolicy(proposals, assessed.support)
+        assignment_policy.reference = assignment_policy.reference.model_copy(
+            update={
+                "policy_id": "invented-row-action",
+                "policy_hash": digest(("invented-row-action", assignment_action)),
+            }
+        )
     coding = make_coding_run(assessed, assignment_policy)
     from earnings_themes.coding.store import read_coding_run, write_coding_run
 
@@ -381,7 +442,7 @@ def make_inputs(
         support=assessed.support,
         coding=coding,
         assignment_policy=assignment_policy,
-        expected=(expected,),
+        expected=expected_rows,
         acquisition=tuple(acquisitions),
         metadata=tuple(metadata_rows),
         copies=(),
@@ -401,7 +462,7 @@ def make_inputs(
             SupportCache(root / "support-cache", "replay") if caches else None,
         ),
         raw_snapshots=tuple(raw_rows),
-        analysis_policy=make_policy((expected.event_id,)),
+        analysis_policy=make_policy(tuple(row.event_id for row in expected_rows)),
         canonical_snapshots=tuple(canonical_rows),
         fixture_authorization=r.FixtureAuthorization(
             "stage10-invented", HASH, HASH, provenance

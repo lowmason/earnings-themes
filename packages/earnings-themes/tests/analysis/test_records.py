@@ -589,3 +589,22 @@ def test_canonical_snapshot_duplicate_refused(analysis_inputs):
     snapshot = analysis_inputs.canonical_snapshots[0]
     with pytest.raises(AnalysisError, match="^malformed_record$"):
         replace(analysis_inputs, canonical_snapshots=(snapshot, snapshot))
+
+
+def test_document_level_refusal_preserves_absent_window():
+    row = r.RejectionAudit(
+        source_run_id="invented-run",
+        doc_id="invented-doc",
+        window_id=None,
+        attempt_id=None,
+        candidate_index=None,
+        reason="wrong_document",
+        element_ids=(),
+    )
+    frames = dict(r.AnalysisTables.empty().frames)
+    frames["rejections"] = pl.DataFrame(
+        [row.model_dump()], schema=r.TABLE_SCHEMAS["rejections"]
+    )
+    tables = r.AnalysisTables(frames)
+    assert tables.frames["rejections"]["window_id"].null_count() == 1
+    assert tables.frames["rejections"]["attempt_id"].null_count() == 1

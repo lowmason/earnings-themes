@@ -4825,7 +4825,7 @@ Dates use `pl.Date`; UTC timestamps use `pl.Datetime("us", "UTC")`; offsets/coun
 | `doc_id` | `string` | Immutable canonical document identity; qualifies all quote and claim keys. |
 | `claim_id` | `string` | Explicit claim id binding; retained separately for audit. |
 | `window_id` | `string` | Explicit window id binding; retained separately for audit. |
-| `attempt_id` | `string` | Explicit attempt id binding; retained separately for audit. |
+| `attempt_id` | `string` | Derived `a-{window_id}-{attempt}` pointer scoped by source run and document; not an upstream artifact ID. |
 | `interpretation_hash` | `string` | Explicit interpretation hash binding; retained separately for audit. |
 | `interpretation` | `string or null` | Rights-filtered model-derived interpretation; never source disclosure. |
 | `original_quote_ids` | `tuple of string` | Explicit original quote ids binding; retained separately for audit. |
@@ -4888,8 +4888,8 @@ Dates use `pl.Date`; UTC timestamps use `pl.Datetime("us", "UTC")`; offsets/coun
 | `schema_version` | `1` | Analytical schema version 1; strict integer. |
 | `source_run_id` | `string` | Explicit source run id binding; retained separately for audit. |
 | `doc_id` | `string` | Immutable canonical document identity; qualifies all quote and claim keys. |
-| `window_id` | `string` | Explicit window id binding; retained separately for audit. |
-| `attempt_id` | `string or null` | Explicit attempt id binding; retained separately for audit. |
+| `window_id` | `string or null` | Original extraction window; null preserves a document-level refusal. |
+| `attempt_id` | `string or null` | Derived `a-{window_id}-{attempt}` pointer scoped by source run and document; null preserves an absent original attempt. |
 | `candidate_index` | `integer or null` | Explicit candidate index binding; retained separately for audit. |
 | `reason` | `string` | Explicit reason binding; retained separately for audit. |
 | `element_ids` | `tuple of string` | Explicit element ids binding; retained separately for audit. |
@@ -5616,3 +5616,55 @@ Canonical JSON bytes retain the published `document/elements/manifest/masks` for
 AnalysisPolicy.population_hash is the selected pilot's published content hash. Its event IDs equal the declared expected population; each expected row carries that pilot hash. Fixture scope requires the matching explicit approved FixtureAuthorization inventory; research rejects it and fixture assignment policies. The application confines selected paths; an arbitrary root/filename is not authorization. NoThemeDeclaration source/coding/support/codebook/analysis/assignment bindings are compared to these current checked inputs.
 
 RawCacheVerification is recomputed from actual supplied CodingCache/SupportCache instances through their public artifact_hash methods, compared to the upstream manifest's raw-file hashes. CodingAttempt.raw_hash is a typed reply hash, distinct from the cache-file byte hash; it is not compared as though it were a file checksum. Support schema 1 binds judge cache files; it does not publish scorer raw-file bindings. Thus supplied classifier/judge caches yield verified referenced-file inventories, absent caches yield not_supplied, and scorer status is not_bound with a supplied support cache. Extraction remains not_bound because extraction schema 1 publishes no external raw-cache bindings. A replay's prior request-cache check is a separate claim. Caller-supplied verified labels cannot grant verification, missing snapshots remain explicit, and corrupt supplied bytes raise storage_corrupt. Raw and canonical payloads are input-only and are not copied into analytical manifests/tables by this gate.
+
+### Analytical row projection
+
+`earnings_themes.analysis.build_observations(bound: BoundAnalysis) -> AnalysisTables`
+reverifies `bound.inputs` through the current consuming gate and checks its binding
+hash before building fourteen explicitly typed frames. A stale bound wrapper grants
+no acceptance. The projection is pure and uses no implicit file reader or model call.
+All quote and claim keys remain document-qualified, and every original claim–quote
+and assignment–claim–decision–target link survives. An accepted quote supporting two
+themes yields two observations; several supporting claims do not multiply the
+observation grain. Attributes, sentiment, topics and clusters never become theme IDs.
+Release speaker roles remain `not_applicable`.
+
+Quotes, including masked and unassigned evidence, materialize exact canonical
+`[start:end]` slices only where `retain_text` permits local retention. Claim
+interpretations use the same retention permission and remain model-derived;
+`interpretation_hash` is SHA-256 of their original UTF-8 bytes. Metadata references
+are digests of the complete checked `DocumentMetadata`, preserving separately
+reachable filing, publication, event and retrieval times, permissions and source
+identity. The source and support hashes retain their upstream checked meanings.
+`coding_run_hash` is the digest of the current coding manifest and every coding row,
+using dataclass field names and JSON-mode row dictionaries. `extracted_at` is the
+source extraction run's recorded start time. Evidence IDs are `evidence-` plus the
+digest of `(doc_id, quote_id, canonical_hash, start, end, validator_version)`.
+
+Disclosure groups combine exact canonical hashes only within one event, issuer,
+period and document type, or currently hash-bound reviewed copy assertions in that
+same unit. Group IDs bind the rule, all sorted checked member metadata and all sorted
+assertions; original documents, quotes and assignments are never remapped. Every
+document has one copy row and the lexicographically first member is its
+representative. An explicit assertion pointer records that document's first sorted
+assertion; the group digest additionally binds the complete assertion inventory,
+which remains in the analytical input inventory. Singleton or implicit exact-hash
+members without an explicit assertion have null assertion fields.
+
+`copy_processing_conflict` flags disagreement in acquisition states, extraction
+completeness/windows/refusals, quote occurrences/text, current masks, claim
+multiplicity, classifications or assignment decisions. Raw score/rationale differences
+alone are not processing outcomes. Conflict detection preserves every source row;
+a copied disclosure supplies no independent corroboration. Source-copy row counts,
+disclosure-group counts and distinct canonical span occurrences are different units:
+identical text at different offsets remains distinct. Across reviewed copies with
+unequal canonical hashes, retain the canonical hash in occurrence comparisons.
+Headline eligibility here records current mask exclusion; downstream coverage must
+exclude unresolved copy conflicts from observation denominators.
+
+Document-level refusals keep null window/attempt pointers, original subject IDs and
+closed reasons. Rejection labels, detail, raw replies and source-bearing core
+rejection strings are omitted. Only current element IDs are retained.
+The intermediate `completions`, `coverage`, `prevalence` and `evidence` frames are
+empty with their declared schemas; zero observations is never `completed-no-theme`.
+Final completion/publication stages must run the full foreign-key validator.

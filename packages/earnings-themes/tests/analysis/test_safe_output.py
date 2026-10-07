@@ -22,3 +22,20 @@ def test_error_is_closed():
     error = AnalysisError("Invented untrusted diagnostic")
     assert str(error) == "unexpected_error"
     assert "Invented" not in repr(error)
+
+
+def test_projection_policy_exception_has_closed_diagnostic(analysis_inputs):
+    import pytest
+    from earnings_themes.analysis import build_observations, reverify_analysis_inputs
+
+    bound = reverify_analysis_inputs(analysis_inputs)
+
+    def fail(view):
+        raise RuntimeError("Invented source-bearing policy diagnostic")
+
+    bound.inputs.assignment_policy.evaluate = fail
+    with pytest.raises(AnalysisError) as error:
+        build_observations(bound)
+    assert str(error.value) == "input_changed"
+    assert "Invented" not in repr(error.value)
+    assert error.value.__suppress_context__

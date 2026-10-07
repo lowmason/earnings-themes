@@ -747,7 +747,7 @@ class DecisionAudit(AnalysisPart):
 class RejectionAudit(AnalysisPart):
     source_run_id: NonBlank
     doc_id: NonBlank
-    window_id: NonBlank
+    window_id: NonBlank | None
     attempt_id: NonBlank | None
     candidate_index: Count | None
     reason: str

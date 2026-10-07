@@ -43,6 +43,7 @@ from .records import (
     family_map_hash,
     validate_analysis_tables,
 )
+from .rows import build_observations
 
 __all__ = [
     "ANALYSIS_REASONS",
@@ -85,6 +86,7 @@ __all__ = [
     "StoredAnalysisRun",
     "ThemeFamilyMap",
     "analysis_provenance_hash",
+    "build_observations",
     "family_map_hash",
     "reverify_analysis_inputs",
     "validate_analysis_tables",

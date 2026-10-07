@@ -524,3 +524,19 @@ def test_processing_schema_two_is_additive_and_documented():
     assert "parsed_documents(transitions, pilot_hash)" in text
     assert "Schema-1 parse failure recovery" in text
     assert "canonical availability, not analytical" in text
+
+
+def test_analysis_row_projection_interface_and_null_refusal_documented():
+    import inspect
+
+    import earnings_themes.analysis as public
+
+    assert tuple(inspect.signature(public.build_observations).parameters) == ("bound",)
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert "build_observations(bound: BoundAnalysis) -> AnalysisTables" in text
+    section = text.split("### `RejectionAudit`\n", 1)[1].split("\n### ", 1)[0]
+    assert "| `window_id` | `string or null` |" in section
+    assert "a-{window_id}-{attempt}" in section
+    assert (
+        "copy_processing_conflict" in text.split("### Analytical row projection", 1)[1]
+    )
