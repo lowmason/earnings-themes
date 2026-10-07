@@ -106,6 +106,42 @@ def _rates(rows, positives):
     }
 
 
+def _verify_observable_policies(
+    completions: list[dict], observations: pl.DataFrame
+) -> None:
+    """Complete units share one full reference, including declared negatives."""
+    observable = [row for row in completions if row["observable"]]
+    if not observable:
+        return
+    reference = observable[0]["assignment_policy"]
+    if reference is None or any(
+        row["assignment_policy"] != reference for row in observable
+    ):
+        raise AnalysisError("policy_mismatch")
+    doc_ids = {row["doc_id"] for row in observable}
+    book = reference["codebook"]
+    expected = (
+        reference["kind"],
+        reference["policy_hash"],
+        book["codebook_id"],
+        book["codebook_version"],
+        book["content_hash"],
+    )
+    for row in observations.iter_rows(named=True):
+        if (
+            row["doc_id"] in doc_ids
+            and (
+                row["policy_kind"],
+                row["policy_hash"],
+                row["codebook_id"],
+                row["codebook_version"],
+                row["codebook_hash"],
+            )
+            != expected
+        ):
+            raise AnalysisError("policy_mismatch")
+
+
 def prevalence(
     tables: AnalysisTables,
     coverage: pl.DataFrame,
@@ -145,6 +181,7 @@ def prevalence(
             or set(observations["policy_scope"]) != {policy.scope}
         ):
             raise AnalysisError("mixed_codebook")
+        _verify_observable_policies(completions, observations)
         # Document-qualified membership is checked before the m:1 coverage join.
         by_event = {r["event_id"]: r for r in rows if r["doc_type"] == "release"}
         for observation in observations.iter_rows(named=True):

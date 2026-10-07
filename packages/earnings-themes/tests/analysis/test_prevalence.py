@@ -217,19 +217,130 @@ def test_no_mapping_means_no_invented_family_view(counting_case):
     assert "family" not in set(frame["view_kind"])
 
 
-def test_observed_assignment_policies_cannot_mix(counting_case):
+@pytest.mark.parametrize(
+    "doc_id", ["invented-doc-B-Q1", "invented-doc-A-Q2"], ids=["positive", "no-theme"]
+)
+def test_observed_assignment_policies_cannot_mix(counting_case, doc_id):
     frames = dict(counting_case.tables.frames)
     rows = frames["completions"].to_dicts()
-    row = next(r for r in rows if r["doc_id"] == "invented-doc-B-Q1")
+    row = next(r for r in rows if r["doc_id"] == doc_id)
     row["assignment_policy"]["policy_hash"] = "f" * 64
     frames["completions"] = pl.DataFrame(
         rows, schema=analysis.TABLE_SCHEMAS["completions"]
     )
-    with pytest.raises(analysis.AnalysisError):
+    with pytest.raises(analysis.AnalysisError, match="^policy_mismatch$"):
         analysis.prevalence(
             analysis.AnalysisTables(frames),
-            counting_case.coverage,
+            frames["coverage"],
             counting_case.book,
             counting_case.policy,
             counting_case.families,
         )
+
+
+def test_observed_policy_must_match_accepted_observations(counting_case):
+    frames = dict(counting_case.tables.frames)
+    rows = frames["completions"].to_dicts()
+    for row in rows:
+        if row["observable"]:
+            row["assignment_policy"]["policy_hash"] = "f" * 64
+    frames["completions"] = pl.DataFrame(
+        rows, schema=analysis.TABLE_SCHEMAS["completions"]
+    )
+    with pytest.raises(analysis.AnalysisError, match="^policy_mismatch$"):
+        analysis.prevalence(
+            analysis.AnalysisTables(frames),
+            frames["coverage"],
+            counting_case.book,
+            counting_case.policy,
+            counting_case.families,
+        )
+
+
+def no_theme_tables(analysis_input_factory):
+    from dataclasses import replace
+
+    from .test_completion import declare
+
+    inputs, _ = analysis_input_factory(
+        documents=2, claims=(), event_ids_by_document=("A-Q1", "A-Q2")
+    )
+    declaration = declare(inputs).no_theme[0]
+    inputs = replace(
+        inputs,
+        no_theme=tuple(
+            declaration.model_copy(
+                update={"doc_id": m.doc_id, "canonical_hash": m.canonical_hash}
+            )
+            for m in inputs.metadata
+        ),
+    )
+    result = analysis.build_analysis(inputs, inputs.analysis_policy, None)
+    assert result.tables.frames["observations"].is_empty()
+    assert result.tables.frames["completions"]["observable"].to_list() == [True, True]
+    return inputs, dict(result.tables.frames)
+
+
+@pytest.mark.parametrize(
+    "mixed", [False, True], ids=["matching", "different-reference-same-hash"]
+)
+def test_all_no_theme_corpus_requires_one_exact_policy(analysis_input_factory, mixed):
+    inputs, frames = no_theme_tables(analysis_input_factory)
+    if mixed:
+        rows = frames["completions"].to_dicts()
+        rows[0]["assignment_policy"]["policy_id"] = "invented-other-policy"
+        frames["completions"] = pl.DataFrame(
+            rows, schema=analysis.TABLE_SCHEMAS["completions"]
+        )
+        with pytest.raises(analysis.AnalysisError, match="^policy_mismatch$"):
+            analysis.prevalence(
+                analysis.AnalysisTables(frames),
+                frames["coverage"],
+                inputs.sources.codebook,
+                inputs.analysis_policy,
+                None,
+            )
+    else:
+        result = analysis.prevalence(
+            analysis.AnalysisTables(frames),
+            frames["coverage"],
+            inputs.sources.codebook,
+            inputs.analysis_policy,
+            None,
+        )
+        release = result.filter(
+            (pl.col("doc_type") == "release") & (pl.col("unit") == "firm_quarter")
+        )
+        assert set(release["numerator"]) == {0.0}
+        assert set(release["denominator"]) == {2}
+        assert set(release["rate"]) == {0.0}
+
+
+@pytest.mark.parametrize("policy", ["distinct", "null"], ids=["distinct", "null"])
+def test_nonobservable_audit_policy_does_not_change_selected_binding(
+    counting_case, policy
+):
+    frames = dict(counting_case.tables.frames)
+    rows = frames["completions"].to_dicts()
+    row = next(r for r in rows if r["doc_id"] == "invented-doc-F-Q1")
+    assert not row["observable"]
+    if policy == "null":
+        row["assignment_policy"] = None
+    else:
+        row["assignment_policy"]["policy_hash"] = "f" * 64
+    frames["completions"] = pl.DataFrame(
+        rows, schema=analysis.TABLE_SCHEMAS["completions"]
+    )
+    result = analysis.prevalence(
+        analysis.AnalysisTables(frames),
+        frames["coverage"],
+        counting_case.book,
+        counting_case.policy,
+        counting_case.families,
+    )
+    parent = result.filter(
+        (pl.col("view_kind") == "parent")
+        & (pl.col("unit") == "issuer_period")
+        & (pl.col("doc_type") == "release")
+    ).sort("period_end")
+    assert parent.select("numerator", "denominator").rows() == [(1.0, 2), (0.0, 1)]
