@@ -4,6 +4,9 @@ The mixed-policy matrix is count-only adjudication data, never one accepted run.
 The public input constructor binds a separate actual scripted source/support/run.
 """
 
+import json
+from collections import Counter
+from dataclasses import replace
 from datetime import UTC, date, datetime
 from importlib import import_module
 from types import SimpleNamespace
@@ -17,6 +20,7 @@ from earnings_core import (
     RightsStatus,
     TextSpan,
     digest,
+    sha256_hex,
 )
 from earnings_themes.analysis import records as r
 from earnings_themes.anchoring import Bundle
@@ -175,8 +179,77 @@ def metadata(bundle, expected):
     return row, r.RawSnapshot(row.doc_id, artifact, raw)
 
 
-def make_inputs(base, template, root, *, review=False):
-    text = "Invented 🛠 press expanded.\nInvented 🛠 press expanded."
+def mask_hash(payload):
+    manifest = payload["manifest"]
+    document = payload["document"]
+    return digest(
+        {
+            "doc_id": document["doc_id"],
+            "canonical_hash": document["canonical_hash"],
+            "mask_policy_id": manifest["mask_policy_id"],
+            "mask_policy_version": manifest["mask_policy_version"],
+            "masks": payload["masks"],
+        }
+    )
+
+
+def canonical_snapshot(bundle, meta, raw):
+    from earnings_core import apply_masks
+    from earnings_ingestion.canonical import CanonicalizationManifest, Canonicalized
+    from earnings_ingestion.canonical.serialize import to_fixture_json
+
+    manifest = CanonicalizationManifest(
+        canonicalization_version=bundle.document.canonicalization_version,
+        components={"parser": "invented-1"},
+        lxml_version="invented-1",
+        libxml2_version="invented-1",
+        python_version="invented-1",
+        source_document_id=bundle.document.source_document_id,
+        raw_sha256=meta.raw_hash,
+        raw_bytes=len(raw.data),
+        encoding="utf-8",
+        encoding_basis="invented",
+        element_counts=dict(Counter(e.type.value for e in bundle.elements)),
+        image_count=0,
+        replacement_characters=0,
+        retypes={},
+        limitations=(),
+        mask_policy_id=meta.mask_policy_id,
+        mask_policy_version=meta.mask_policy_version,
+        mask_count=len(bundle.masks),
+    )
+    result = Canonicalized(
+        document=bundle.document,
+        elements=bundle.elements,
+        masked=apply_masks(
+            bundle.document,
+            bundle.masks,
+            policy_id=meta.mask_policy_id,
+            policy_version=meta.mask_policy_version,
+        ),
+        manifest=manifest,
+    )
+    return r.CanonicalSnapshot(
+        bundle.document.doc_id, to_fixture_json(result).encode("utf-8")
+    )
+
+
+def make_inputs(
+    base,
+    template,
+    root,
+    *,
+    review=False,
+    claims=None,
+    themes=("capacity_expansion",),
+    documents=1,
+    quote_labels=("U1", "U2"),
+    first_text=None,
+    contribution="supporting",
+    caches=False,
+):
+    first_text = first_text or "Invented 🛠 press expanded."
+    text = first_text + "\nInvented 🛠 press expanded."
     document = CanonicalDocument.create(
         source_document_id="stage10-invented-A-Q1",
         canonicalization_version="invented-1",
@@ -190,12 +263,78 @@ def make_inputs(base, template, root, *, review=False):
         for start, end in ((0, boundary), (boundary + 1, len(text)))
     )
     bundle = Bundle("stage10-invented", document, elements, ())
+    bundles = [bundle]
+    for i in range(1, documents):
+        other_doc = CanonicalDocument.create(
+            source_document_id="stage10-invented-copy-" + str(i),
+            canonicalization_version="invented-1",
+            canonical_text=text,
+        )
+        other_elements = tuple(
+            DocumentElement.create(
+                other_doc,
+                ElementType.PARAGRAPH,
+                TextSpan(start=e.span.start, end=e.span.end),
+            )
+            for e in elements
+        )
+        bundles.append(Bundle("stage10-invented", other_doc, other_elements, ()))
     sources = make_sources(
         make_book(base),
         bundle,
         template,
-        claim_texts=("Invented equipment grew.", "Invented second equipment claim."),
+        claim_texts=("Invented equipment grew.", "Invented second equipment claim.")
+        if claims is None
+        else claims,
+        quote_labels=quote_labels,
+        other_bundles=tuple(bundles[1:]),
+        extraction_directory=root / "extraction",
     )
+    expected = event("A-Q1")
+    metadata_rows = []
+    raw_rows = []
+    canonical_rows = []
+    acquisitions = []
+    for i, selected in enumerate(bundles):
+        meta, raw = metadata(selected, expected)
+        canonical = canonical_snapshot(selected, meta, raw)
+        payload = json.loads(canonical.data)
+        meta = meta.model_copy(
+            update={
+                "canonical_manifest_hash": digest(payload["manifest"]),
+                "mask_manifest_hash": mask_hash(payload),
+            }
+        )
+        metadata_rows.append(meta)
+        raw_rows.append(raw)
+        canonical_rows.append(canonical)
+        acquisitions.append(
+            r.AcquisitionStatus(
+                event_id=expected.event_id,
+                document_id="release-A-Q1-" + str(i),
+                state="parsed",
+                missing_reason=None,
+                failure_reason=None,
+                doc_id=selected.document.doc_id,
+                source_document_id=selected.document.source_document_id,
+                raw_hash=meta.raw_hash,
+                accession=None,
+                exhibit=None,
+                retrieved_at=NOW,
+                state_run_id="invented-acquisition",
+                state_schema_version=1,
+                pilot_hash=HASH,
+            )
+        )
+    from earnings_themes.analysis.consume import analysis_provenance_hash
+
+    provenance = analysis_provenance_hash(
+        expected=(expected,),
+        acquisition=tuple(acquisitions),
+        metadata=tuple(metadata_rows),
+        canonical_snapshots=tuple(canonical_rows),
+    )
+    sources = replace(sources, provenance_hash=provenance)
     identity = JudgeIdentity(
         family="invented-classifier",
         runtime=RuntimeIdentity(
@@ -214,7 +353,6 @@ def make_inputs(base, template, root, *, review=False):
         weight_license=None,
     )
     text_policy = "Classify the invented expansion."
-    from earnings_core import sha256_hex
 
     policy = CodingPolicy(
         prompt_text=text_policy,
@@ -223,37 +361,29 @@ def make_inputs(base, template, root, *, review=False):
     )
     job = make_proposal_job(sources, policy, identity, root)
     proposals, _ = job.run(
-        [{"theme_ids": ["capacity_expansion"], "attributes": {}}] * 2
+        [{"theme_ids": list(themes), "attributes": {}}] * len(sources.stored_run.claims)
     )
-    assessed = make_assessed_case(proposals, sources, root)
+    assessed = make_assessed_case(proposals, sources, root, contribution=contribution)
     assignment_policy = None if review else FixturePolicy(proposals, assessed.support)
     coding = make_coding_run(assessed, assignment_policy)
-    expected = event("A-Q1")
-    meta, raw = metadata(bundle, expected)
-    acquisition = r.AcquisitionStatus(
-        event_id=expected.event_id,
-        document_id="release-A-Q1",
-        state="parsed",
-        missing_reason=None,
-        failure_reason=None,
-        doc_id=document.doc_id,
-        source_document_id=document.source_document_id,
-        raw_hash=meta.raw_hash,
-        accession=None,
-        exhibit=None,
-        retrieved_at=NOW,
-        state_run_id="invented-acquisition",
-        state_schema_version=1,
-        pilot_hash=HASH,
+    from earnings_themes.coding.store import read_coding_run, write_coding_run
+
+    coding = read_coding_run(
+        write_coding_run(
+            root / "coding", coding, sources, assessed.support, assignment_policy
+        )
     )
+    from earnings_themes.coding.cache import CodingCache
+    from earnings_themes.support.cache import SupportCache
+
     return r.AnalysisInputs(
         sources=sources,
         support=assessed.support,
         coding=coding,
         assignment_policy=assignment_policy,
         expected=(expected,),
-        acquisition=(acquisition,),
-        metadata=(meta,),
+        acquisition=tuple(acquisitions),
+        metadata=tuple(metadata_rows),
         copies=(),
         no_theme=(),
         provenance_hash=sources.provenance_hash,
@@ -266,8 +396,16 @@ def make_inputs(base, template, root, *, review=False):
                 version="1",
             ),
         ),
-        raw_caches=r.RawCacheInputs(None, None),
-        raw_snapshots=(raw,),
+        raw_caches=r.RawCacheInputs(
+            CodingCache(root / "classifier-cache", "replay") if caches else None,
+            SupportCache(root / "support-cache", "replay") if caches else None,
+        ),
+        raw_snapshots=tuple(raw_rows),
+        analysis_policy=make_policy((expected.event_id,)),
+        canonical_snapshots=tuple(canonical_rows),
+        fixture_authorization=r.FixtureAuthorization(
+            "stage10-invented", HASH, HASH, provenance
+        ),
     )
 
 

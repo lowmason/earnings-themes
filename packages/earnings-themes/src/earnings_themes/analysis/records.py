@@ -988,6 +988,42 @@ class AnalysisRunRecord(AnalysisPart):
 
 
 @dataclass(frozen=True, repr=False)
+class CanonicalSnapshot:
+    doc_id: str
+    data: bytes
+
+    def __post_init__(self) -> None:
+        if (
+            type(self.doc_id) is not str
+            or not self.doc_id.strip()
+            or type(self.data) is not bytes
+        ):
+            raise AnalysisError("malformed_record")
+
+
+@dataclass(frozen=True, repr=False)
+class FixtureAuthorization:
+    corpus_id: Literal["djia-synthetic", "stage10-invented"]
+    event_manifest_hash: str
+    pilot_hash: str
+    provenance_hash: str
+
+    def __post_init__(self) -> None:
+        if type(self.corpus_id) is not str or self.corpus_id not in (
+            "djia-synthetic",
+            "stage10-invented",
+        ):
+            raise AnalysisError("malformed_record")
+        for value in (self.event_manifest_hash, self.pilot_hash, self.provenance_hash):
+            if (
+                type(value) is not str
+                or len(value) != 64
+                or any(c not in "0123456789abcdef" for c in value)
+            ):
+                raise AnalysisError("malformed_record")
+
+
+@dataclass(frozen=True, repr=False)
 class RawSnapshot:
     doc_id: str
     artifact: ArtifactRef
@@ -1024,6 +1060,9 @@ class AnalysisInputs:
     raw_verification: tuple[RawCacheVerification, ...]
     raw_caches: RawCacheInputs
     raw_snapshots: tuple[RawSnapshot, ...]
+    analysis_policy: AnalysisPolicy
+    canonical_snapshots: tuple[CanonicalSnapshot, ...]
+    fixture_authorization: FixtureAuthorization | None
 
     def __post_init__(self) -> None:
         containers = (
@@ -1034,6 +1073,7 @@ class AnalysisInputs:
             ("no_theme", NoThemeDeclaration, "doc_id"),
             ("raw_verification", RawCacheVerification, "stage"),
             ("raw_snapshots", RawSnapshot, "doc_id"),
+            ("canonical_snapshots", CanonicalSnapshot, "doc_id"),
         )
         for name, model, key in containers:
             rows = getattr(self, name)
@@ -1047,6 +1087,11 @@ class AnalysisInputs:
             type(self.sources) is not SupportSources
             or type(self.support) is not StoredSupportRun
             or type(self.coding) is not CodingRun
+            or type(self.analysis_policy) is not AnalysisPolicy
+            or (
+                self.fixture_authorization is not None
+                and type(self.fixture_authorization) is not FixtureAuthorization
+            )
             or type(self.raw_caches) is not RawCacheInputs
         ):
             raise AnalysisError("malformed_record")
@@ -1406,6 +1451,8 @@ PUBLIC_NAMES = (
     "RawCacheVerification",
     "AnalysisRunRecord",
     "RawSnapshot",
+    "CanonicalSnapshot",
+    "FixtureAuthorization",
     "RawCacheInputs",
     "AnalysisInputs",
     "BoundAnalysis",

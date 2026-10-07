@@ -1,5 +1,6 @@
 """Public analytical contracts; importing performs no I/O."""
 
+from .consume import analysis_provenance_hash, reverify_analysis_inputs
 from .problems import ANALYSIS_REASONS, AnalysisError
 from .records import (
     TABLE_FOREIGN_KEYS,
@@ -14,6 +15,7 @@ from .records import (
     AnalysisRunRecord,
     AnalysisTables,
     BoundAnalysis,
+    CanonicalSnapshot,
     CaptureObservation,
     ClaimAudit,
     ClaimEvidence,
@@ -27,6 +29,7 @@ from .records import (
     EvidenceView,
     EvidenceViewReference,
     ExpectedEvent,
+    FixtureAuthorization,
     NoThemeDeclaration,
     Observation,
     PrevalenceRow,
@@ -56,6 +59,7 @@ __all__ = [
     "AnalysisRunRecord",
     "AnalysisTables",
     "BoundAnalysis",
+    "CanonicalSnapshot",
     "CaptureObservation",
     "ClaimAudit",
     "ClaimEvidence",
@@ -69,6 +73,7 @@ __all__ = [
     "EvidenceView",
     "EvidenceViewReference",
     "ExpectedEvent",
+    "FixtureAuthorization",
     "NoThemeDeclaration",
     "Observation",
     "PrevalenceRow",
@@ -79,6 +84,8 @@ __all__ = [
     "RejectionAudit",
     "StoredAnalysisRun",
     "ThemeFamilyMap",
+    "analysis_provenance_hash",
     "family_map_hash",
+    "reverify_analysis_inputs",
     "validate_analysis_tables",
 ]

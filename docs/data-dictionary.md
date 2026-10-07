@@ -4340,10 +4340,10 @@ Dates use `pl.Date`; UTC timestamps use `pl.Datetime("us", "UTC")`; offsets/coun
 | `canonical_hash` | `string` | Explicit canonical hash binding; retained separately for audit. |
 | `canonicalization_version` | `string` | Explicit canonicalization version binding; retained separately for audit. |
 | `parser_version` | `string` | Explicit parser version binding; retained separately for audit. |
-| `canonical_manifest_hash` | `string` | Explicit canonical manifest hash binding; retained separately for audit. |
+| `canonical_manifest_hash` | `string` | C2 digest of the supplied canonical JSON manifest object. |
 | `mask_policy_id` | `string` | Explicit mask policy id binding; retained separately for audit. |
 | `mask_policy_version` | `string` | Explicit mask policy version binding; retained separately for audit. |
-| `mask_manifest_hash` | `string` | Explicit mask manifest hash binding; retained separately for audit. |
+| `mask_manifest_hash` | `string` | C2 digest of document identity/hash, manifest mask policy/version, and original mask list, including empty lists. |
 | `filing_at` | `date-time or null` | Explicit filing at binding; retained separately for audit. |
 | `published_at` | `date-time or null` | Explicit published at binding; retained separately for audit. |
 | `event_at` | `date-time or null` | Explicit event at binding; retained separately for audit. |
@@ -4788,6 +4788,22 @@ Dates use `pl.Date`; UTC timestamps use `pl.Datetime("us", "UTC")`; offsets/coun
 | `billable_cost` | `'none, self-hosted'` | Explicit billable cost binding; retained separately for audit. |
 | `binding_hash` | `string` | Current checked-content digest, to be recomputed by Task 3; no reusable validity flag. |
 
+### `CanonicalSnapshot`
+
+| Field | Meaning |
+| --- | --- |
+| `doc_id` | Document-qualified immutable canonical identity; duplicates or stale selections refuse. |
+| `data` | Explicit immutable bytes in the existing four-part canonical JSON format; no loader or implicit I/O. |
+
+### `FixtureAuthorization`
+
+| Field | Meaning |
+| --- | --- |
+| `corpus_id` | Explicit approved inventory entry: djia-synthetic or stage10-invented; a name alone authorizes nothing. |
+| `event_manifest_hash` | Approved event-manifest hash matching every current expected projection. |
+| `pilot_hash` | Approved selected pilot hash matching population and acquisition projections. |
+| `provenance_hash` | Exact current projection/artifact digest already bound by upstream consumers. |
+
 ### `RawSnapshot`
 
 | Field | Meaning |
@@ -4820,6 +4836,9 @@ Dates use `pl.Date`; UTC timestamps use `pl.Datetime("us", "UTC")`; offsets/coun
 | `raw_verification` | Recorded cache-verification statuses; current consuming gates must check actual bytes. |
 | `raw_caches` | Explicit raw caches input/reference; no I/O on construction. |
 | `raw_snapshots` | Explicit document-qualified RawSnapshot tuple; no implicit loader or persisted bytes. |
+| `analysis_policy` | Explicit strict current AnalysisPolicy; binds scope, population and mask policy. |
+| `canonical_snapshots` | Explicit document-qualified CanonicalSnapshot tuple, exactly matching every selected bundle. |
+| `fixture_authorization` | Matching explicit approved fixture inventory entry or null; research rejects fixture authorization. |
 
 ### `BoundAnalysis`
 
@@ -5349,3 +5368,18 @@ Public producer fixtures: `analysis_inputs` is a fully bound invented fixture-po
 `PrevalenceRow` uses Float64 numerator representation for all views, but issuer_period, issuer_window and firm_quarter require integral values. Only the explicitly labeled equal_issuer_mean may contain a fractional sum of issuer fractions. Release rows always have speaker_role=not_applicable, including prevalence rows.
 
 The independent count-only copy fixture now retains accepted observations, quotes, two claims, original claim-evidence links, classifications, decisions, assignment-claim links and explicit hand-declared completion evidence for both A-Q1 documents in one disclosure group. The release coverage slot names both documents. There are three accepted observation rows and eleven original claim-evidence links across the matrix; the issuer-period contribution remains one for the copied A-Q1 disclosure. These are fixture adjudications, not evaluation gold or a publishable mixed-policy run.
+
+
+### Analytical consuming gate and C2 bindings
+
+`reverify_analysis_inputs(inputs: AnalysisInputs) -> BoundAnalysis` strictly reconstructs inputs and validates every current canonical source, quote and original claim link before calling the shipped support/coding consuming gates. It repeats these checks after the explicitly supplied deterministic assignment policy, including original caller references and detached checked records. It creates no analytical rows/files and invokes no inference. The application validates original event/pilot/state derivation; themes independently checks the supplied current projections and canonical bytes, without importing ingestion or resolving examples. Older arbitrary provenance labels are not accepted as verified material.
+
+`strict_analysis_inputs`, `verify_current_inventory`, `verify_original_links_and_masks`, and `bind_checked_analysis` live in `analysis.consume`. They reconstruct contracts; bind source inventory/provenance/metadata/policies/rights; check every quote/link/mask; and retain checked references with a content digest, respectively. Completion construction and no-theme adjudication remain Task 5/6 responsibilities: an empty tuple of completions is not an absence claim.
+
+`analysis_provenance_hash(*, expected, acquisition, metadata, canonical_snapshots) -> str` is the public pure C2 digest helper. It computes `digest({"expected": ExpectedEvent JSON rows sorted by event_id, "acquisition": AcquisitionStatus JSON rows sorted by document_id, "metadata": DocumentMetadata JSON rows sorted by doc_id, "canonical_artifacts": [{"doc_id": doc_id, "sha256": sha256_hex(data)}] sorted by doc_id})`. The digest must match both AnalysisInputs and SupportSources provenance already bound by support/coding runs. Policies/declarations are excluded to avoid cycles and retain null-policy review; their explicit references/hashes are checked separately.
+
+Canonical JSON bytes retain the published `document/elements/manifest/masks` format. `canonical_manifest_hash = digest(decoded["manifest"])`. `mask_manifest_hash = digest({"doc_id": doc_id, "canonical_hash": canonical_hash, "mask_policy_id": manifest["mask_policy_id"], "mask_policy_version": manifest["mask_policy_version"], "masks": decoded["masks"]})`. This is an analytical digest, not a new stored mask manifest. Element counts, source/version/raw hash and mask counts/policies are compared to current core contracts, including empty masks. Supplied RawSnapshot bytes separately match artifact/content hash, canonical manifest raw-byte count, document identity, rights basis/status and current retention permission.
+
+AnalysisPolicy.population_hash is the selected pilot's published content hash. Its event IDs equal the declared expected population; each expected row carries that pilot hash. Fixture scope requires the matching explicit approved FixtureAuthorization inventory; research rejects it and fixture assignment policies. The application confines selected paths; an arbitrary root/filename is not authorization. NoThemeDeclaration source/coding/support/codebook/analysis/assignment bindings are compared to these current checked inputs.
+
+RawCacheVerification is recomputed from actual supplied CodingCache/SupportCache instances through their public artifact_hash methods, compared to the upstream manifest's raw-file hashes. CodingAttempt.raw_hash is a typed reply hash, distinct from the cache-file byte hash; it is not compared as though it were a file checksum. Support schema 1 binds judge cache files; it does not publish scorer raw-file bindings. Thus supplied classifier/judge caches yield verified referenced-file inventories, absent caches yield not_supplied, and scorer status is not_bound with a supplied support cache. Extraction remains not_bound because extraction schema 1 publishes no external raw-cache bindings. A replay's prior request-cache check is a separate claim. Caller-supplied verified labels cannot grant verification, missing snapshots remain explicit, and corrupt supplied bytes raise storage_corrupt. Raw and canonical payloads are input-only and are not copied into analytical manifests/tables by this gate.

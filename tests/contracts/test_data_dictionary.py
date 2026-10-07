@@ -434,6 +434,8 @@ ANALYSIS_MODELS = [
 ]
 ANALYSIS_DATACLASSES = [
     analysis.RawSnapshot,
+    analysis.CanonicalSnapshot,
+    analysis.FixtureAuthorization,
     analysis.RawCacheInputs,
     analysis.AnalysisInputs,
     analysis.BoundAnalysis,
@@ -489,3 +491,11 @@ def test_analysis_final_validation_gate_is_documented():
     assert "Task 6 builds completion, coverage and prevalence" in text
     assert "Task 8 owns storage, serialization, reverification and publication" in text
     assert "Task 6 storage/serialization" not in text
+
+
+def test_analysis_consuming_gate_and_c2_hashes_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert "reverify_analysis_inputs(inputs: AnalysisInputs) -> BoundAnalysis" in text
+    assert "analysis_provenance_hash" in text
+    assert "schema 1 binds judge cache files" in text
+    assert "application validates original event/pilot/state derivation" in text

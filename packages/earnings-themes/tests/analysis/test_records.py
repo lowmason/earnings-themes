@@ -559,3 +559,33 @@ def test_final_table_gate_rechecks_mutated_frame(counting_case):
     )
     with pytest.raises(AnalysisError, match="^malformed_record$"):
         r.validate_analysis_tables(tables)
+
+
+@pytest.mark.parametrize(
+    "kind", ["canonical", "authorization"], ids=["canonical", "authorization"]
+)
+def test_c2_containers_are_frozen_and_repr_false(analysis_inputs, kind):
+    from dataclasses import FrozenInstanceError
+
+    value = (
+        analysis_inputs.canonical_snapshots[0]
+        if kind == "canonical"
+        else analysis_inputs.fixture_authorization
+    )
+    assert "data=" not in repr(value) and "provenance_hash=" not in repr(value)
+    with pytest.raises(FrozenInstanceError):
+        value.doc_id = "invented-other"
+
+
+def test_canonical_snapshot_strict_bytes(analysis_inputs):
+    snapshot = analysis_inputs.canonical_snapshots[0]
+    with pytest.raises(AnalysisError, match="^malformed_record$"):
+        r.CanonicalSnapshot(snapshot.doc_id, bytearray(snapshot.data))
+    with pytest.raises(AnalysisError, match="^malformed_record$"):
+        r.FixtureAuthorization("invented-unapproved", "0" * 64, "0" * 64, "0" * 64)
+
+
+def test_canonical_snapshot_duplicate_refused(analysis_inputs):
+    snapshot = analysis_inputs.canonical_snapshots[0]
+    with pytest.raises(AnalysisError, match="^malformed_record$"):
+        replace(analysis_inputs, canonical_snapshots=(snapshot, snapshot))

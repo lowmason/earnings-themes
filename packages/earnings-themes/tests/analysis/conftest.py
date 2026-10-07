@@ -34,3 +34,17 @@ def counting_case(analysis_inputs):
     return make_counting_case(
         analysis_inputs.sources.codebook, analysis_inputs.assignment_policy.reference
     )
+
+
+@pytest.fixture
+def analysis_input_factory(codebook, template, tmp_path, no_network):
+    counter = 0
+
+    def make(**kwargs):
+        nonlocal counter
+        counter += 1
+        root = tmp_path / ("invented-" + str(counter))
+        return make_inputs(codebook, template, root, **kwargs), root
+
+    yield make
+    assert no_network == []
