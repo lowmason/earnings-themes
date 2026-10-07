@@ -185,6 +185,7 @@ def _checked_evidence(evidence, bound):
             _require(ref.source_fragment_url == plain + directive, "input_changed")
             _require(
                 ref.canonical_artifact is not None
+                and ref.canonical_artifact.media_type == "application/json"
                 and ref.canonical_artifact.matches(snapshots[ref.doc_id].data)
                 and ref.view_artifact is not None
                 and ref.view_artifact.media_type == "text/html; charset=utf-8",

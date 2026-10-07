@@ -156,8 +156,13 @@ def test_existing_destination_and_own_cleanup(
     assert not list(tmp_path.glob(".failed-*"))
 
 
+@pytest.mark.parametrize(
+    "change",
+    ["quote_hash", "canonical_media_type"],
+    ids=["quote-hash", "canonical-media-type"],
+)
 def test_evidence_reference_is_current_but_external_html_not_claimed(
-    analysis_inputs, family_map, tmp_path
+    analysis_inputs, family_map, tmp_path, change
 ):
     from earnings_pipeline.evidence_views import make_evidence_view
     from earnings_themes.analysis import reverify_analysis_inputs
@@ -190,7 +195,16 @@ def test_evidence_reference_is_current_but_external_html_not_claimed(
     store().reverify_analysis_run(
         saved, analysis_inputs, analysis_inputs.analysis_policy, family_map
     )
-    altered = view.reference.model_copy(update={"quote_text_hash": "0" * 64})
+    if change == "canonical_media_type":
+        altered = view.reference.model_copy(
+            update={
+                "canonical_artifact": view.reference.canonical_artifact.model_copy(
+                    update={"media_type": "text/plain"}
+                )
+            }
+        )
+    else:
+        altered = view.reference.model_copy(update={"quote_text_hash": "0" * 64})
     with pytest.raises(AnalysisError, match="^input_changed$"):
         store().write_analysis_run(
             tmp_path / "stale-evidence",
