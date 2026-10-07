@@ -948,6 +948,8 @@ Do not change extraction/canonical text, layout mapping/metrics, capture pin, so
 
 **Execution amendment disposition (2026-10-07):** The user explicitly approved exactly these three disclosed lifecycle repairs after the implementer identified the literal freeze mismatch. Only the unbounded current URL read is an uncaught capture crash; debugger proxy isolation and initialization socket cleanup address caught startup failures and cleanup. This is a narrow exception to the existing fixture-capture crash rule, authorizing the existing `crash` amendment category as an explicitly disclosed broader lifecycle/isolation classification for these three fixes only. No actual fixture/native capture prerequisite is claimed: agent validation uses invented injected doubles. Preserve comparison inputs, mapping/types/metrics, Stage 3 capture bytes/reports and measured results, browser pin and policy semantics. Record old/new adapter hashes and the user-approved exception in the standalone amendment/disclosure; no other frozen-file changes are authorized.
 
+**Review safety clarification (2026-10-07):** Task 10 review reproduced an external redirect using invented in-memory HTTP responses, with zero network calls. The literal `build_opener(ProxyHandler({}))` sample retains urllib's default redirect handler and therefore fails this plan's validated-loopback requirement. Reject every redirect in the dedicated discovery opener before a second request, preserving the global opener/environment and existing bounded startup reason. This completes the already user-approved loopback-isolation repair, not a fourth lifecycle exception or a policy/metric/input change. Record a second standalone amendment with the previous/current adapter hashes and the same explicitly approved broader `crash` classification; retain the first amendment. Final V5 pointer, prepared capture JSON and observations also require temporary-file atomic publication with a no-replace boundary, not direct exclusive/final writes. Use invented interrupted-write and existing-target regressions; no new infrastructure or actual browser is authorized.
+
 - [ ] **3. Red fake lifecycle tests, minimal fix, green.** Invoke the existing adapter with injected invented driver/socket/discovery doubles; a failing current URL returns `failed`, a proxy environment never routes debugger discovery to an external proxy, and both initialization failures close the socket. Assert child/process/interceptor cleanup at the current public boundary. Guard exception output. Use only this module for Selenium/websocket imports and retain its optional import isolation. No actual browser or protected install directory is inspected by an agent.
 
 The three concrete replacements retain the existing watchdog/reason vocabulary:
@@ -960,7 +962,10 @@ if current_url.partition("#")[0] != url:
     raise _Failure(CaptureReason.DOCUMENT_LOAD_FAILURE,
                    "the browser did not stay on the saved file")
 
-opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+# _NoRedirects refuses every redirect before a second HTTP operation.
+opener = urllib.request.build_opener(
+    urllib.request.ProxyHandler({}), _NoRedirects(),
+)
 with opener.open(f"http://{debugger_address}/json", timeout=10) as reply:
     targets = json.load(reply)
 
