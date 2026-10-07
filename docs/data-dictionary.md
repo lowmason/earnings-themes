@@ -4720,7 +4720,7 @@ Dates use `pl.Date`; UTC timestamps use `pl.Datetime("us", "UTC")`; offsets/coun
 | `rights_status` | `RightsStatus` | Existing RightsStatus; free access never widens permission. |
 | `rights_basis` | `string` | Source-specific permission basis; private in printable diagnostics. |
 | `status` | `'available' / 'withheld'` | Explicit status binding; retained separately for audit. |
-| `reason` | `string or null` | Available permits null or raw_snapshot_missing only. The missing marker requires absent raw and present canonical/view artifacts; Task 8 refuses complete cited publication when required raw bytes are missing. |
+| `reason` | `string or null` | Available permits null, raw_snapshot_missing, or snapshot_withheld only. Both markers require absent raw and present canonical/view artifacts. snapshot_withheld records deliberately denied raw inclusion with rights_basis; raw_snapshot_missing takes precedence for absent required retained bytes and Task 8 refuses complete cited publication. |
 | `capture_reference` | `string or null` | Explicit capture reference binding; retained separately for audit. |
 
 ### `CaptureObservation`
@@ -5227,7 +5227,6 @@ Dates use `pl.Date`; UTC timestamps use `pl.Datetime("us", "UTC")`; offsets/coun
 | `wrong_codebook` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
 | `wrong_document` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
 | `wrong_source_run` | Closed analytical or original upstream outcome; no arbitrary detail/rationale. |
-
 | `browser_unavailable` | Closed public renderer outcome; private detail never exported. |
 | `startup_failure` | Closed public renderer outcome; private detail never exported. |
 | `timeout` | Closed public renderer outcome; private detail never exported. |
@@ -5709,3 +5708,5 @@ Source links validate HTTP(S), no user info/control characters, retain legitimat
 `capture_evidence_view(view: EvidenceView, renderer: BrowserRenderer, policy: CapturePolicy) -> CaptureObservation` validates saved byte hashes, source identity, exact CP evidence and current masks from the canonical JSON through the public ingestion decoder. It computes UTF-16 endpoints from the same saved canonical text only at this boundary. These endpoints describe the canonical text coordinate projection, never browser DOM verification. Fully withheld views refuse rights_restricted; available denied capture is not_requested/rights_restricted without accessing the renderer. Permitted capture passes exact prepared HTML bytes and the saved document source_document_id to the public ingestion renderer; no Selenium implementation/import is introduced. It binds raw_sha256 to those HTML bytes solely as rendering provenance.
 
 Renderer completed/partial/failed/unavailable statuses and their closed public reasons remain distinct. Arbitrary adapter errors become failed/capture_failure with no detail, layout text or exception chain. Policy hash is digest(asdict(policy) with required_resource_types sorted); environment hash is digest(asdict(renderer.environment)). A prepared capture JSON reference hashes canonical_json(RenderedCapture), uses prepared-captures/SHA256.json and remains local_only, as do screenshots. The reference does not assert durable capture storage: later publication requires verified actual bytes and persistence. Capture completion does not establish quote exactness or observed highlighting. Task 10 owns V5 observed browser highlighting/degradation.
+
+Task 7 nested rights and raw-withholding correction: a forbidden nested artifact reference inside immutable canonical JSON cannot acquire the outer document's permissions. The current canonical schema's independently governed reference is CanonicalDocument.text_artifact; current consuming gates bind that field exactly to the supplied canonical JSON. A local_only nested reference may remain in a permitted local view, but export withholds the complete view as withheld/rights_restricted. A restricted nested reference also withholds locally. Withheld outputs contain no canonical/view/raw bytes or private artifact/fragment references. Input JSON is neither rewritten nor relabeled, and no derivative is created. An available text-permitted fallback denied raw retention or audience export carries snapshot_withheld and its existing rights_basis. Actually absent required retainable raw bytes retain raw_snapshot_missing precedence and the downstream publication gate.

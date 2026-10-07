@@ -524,9 +524,9 @@ class EvidenceViewReference(AnalysisPart):
     @model_validator(mode="after")
     def _view_rights(self) -> Self:
         if self.status == "available":
-            if self.reason not in (None, "raw_snapshot_missing"):
+            if self.reason not in (None, "raw_snapshot_missing", "snapshot_withheld"):
                 raise ValueError("invalid_view_status")
-            if self.reason == "raw_snapshot_missing" and (
+            if self.reason in ("raw_snapshot_missing", "snapshot_withheld") and (
                 self.raw_artifact is not None
                 or self.canonical_artifact is None
                 or self.view_artifact is None

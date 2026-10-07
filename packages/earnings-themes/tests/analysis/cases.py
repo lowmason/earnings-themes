@@ -263,6 +263,7 @@ def make_inputs(
     claim_order=None,
     support_ceilings=None,
     selected_universe_hash="c" * 64,
+    text_artifact_rights=None,
 ):
     first_text = first_text or "Invented 🛠 press expanded."
     text = first_text + "\nInvented 🛠 press expanded."
@@ -270,6 +271,15 @@ def make_inputs(
         source_document_id="stage10-invented-A-Q1",
         canonicalization_version="invented-1",
         canonical_text=text,
+        text_artifact=ArtifactRef.for_bytes(
+            text.encode("utf-8"),
+            media_type="text/plain",
+            storage_ref="invented/canonical-text.txt",
+            rights_status=text_artifact_rights,
+            rights_basis="Invented independently governed canonical text artifact",
+        )
+        if text_artifact_rights is not None
+        else None,
     )
     boundary = text.index("\n")
     elements = tuple(

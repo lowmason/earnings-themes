@@ -729,3 +729,30 @@ def test_view_capture_permission_is_builtin_bool(permission):
     reference = r.EvidenceViewReference(**fields)
     with pytest.raises(AnalysisError):
         r.EvidenceView(reference, b"escaped invented", b"invented", None, permission)
+
+
+def test_available_snapshot_withheld_requires_canonical_fallback():
+    fields = fallback_reference_fields()
+    fields["reason"] = "snapshot_withheld"
+    reference = r.EvidenceViewReference(**fields)
+    assert reference.status == "available" and reference.reason == "snapshot_withheld"
+    assert (
+        r.EvidenceView(
+            reference, b"escaped invented", b"invented", None, False
+        ).raw_bytes
+        is None
+    )
+
+
+@pytest.mark.parametrize(
+    "change", ["raw", "canonical", "view"], ids=["with-raw", "no-canonical", "no-view"]
+)
+def test_snapshot_withheld_marker_refuses_inconsistent_artifacts(change):
+    fields = fallback_reference_fields()
+    fields["reason"] = "snapshot_withheld"
+    if change == "raw":
+        fields["raw_artifact"] = fields["canonical_artifact"]
+    else:
+        fields[change + "_artifact"] = None
+    with pytest.raises(ValidationError):
+        r.EvidenceViewReference(**fields)

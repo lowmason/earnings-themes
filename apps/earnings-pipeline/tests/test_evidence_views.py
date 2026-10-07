@@ -345,3 +345,78 @@ def test_publisher_metadata_and_anchor_attributes_are_escaped(tmp_path, monkeypa
     assert 'id="&quot; onmouseover=&quot;invented"' in view_module().marked_text(
         "abc", 0, 1, '" onmouseover="invented'
     )
+
+
+@pytest.mark.parametrize(
+    "nested_rights",
+    [RightsStatus.LOCAL_ONLY, RightsStatus.RESTRICTED],
+    ids=["nested-local", "nested-restricted"],
+)
+def test_export_withholds_forbidden_nested_canonical_artifacts(
+    tmp_path, monkeypatch, nested_rights
+):
+    bound = make_case(tmp_path, monkeypatch, text_artifact_rights=nested_rights)
+    original = bound.inputs.canonical_snapshots[0].data
+    local = prepare(bound)
+    exported = prepare(bound, audience="export")
+    if nested_rights == RightsStatus.LOCAL_ONLY:
+        assert local.reference.status == "available"
+        assert local.canonical_bytes == original
+    else:
+        assert local.reference.status == "withheld"
+        assert local.reference.reason == "rights_restricted"
+        assert local.html is local.canonical_bytes is local.raw_bytes is None
+    assert exported.reference.status == "withheld"
+    assert exported.reference.reason == "rights_restricted"
+    assert exported.html is exported.canonical_bytes is exported.raw_bytes is None
+    assert exported.reference.source_fragment_url is None
+    assert (
+        exported.reference.view_artifact
+        is exported.reference.canonical_artifact
+        is exported.reference.raw_artifact
+        is None
+    )
+    assert bound.inputs.canonical_snapshots[0].data == original
+    assert exported.reference.evidence_id == local.reference.evidence_id
+
+
+def test_export_preserves_permitted_nested_canonical_artifact(tmp_path, monkeypatch):
+    bound = make_case(
+        tmp_path, monkeypatch, text_artifact_rights=RightsStatus.REDISTRIBUTABLE
+    )
+    exported = prepare(bound, audience="export")
+    assert exported.reference.status == "available"
+    assert exported.canonical_bytes == bound.inputs.canonical_snapshots[0].data
+
+
+@pytest.mark.parametrize(
+    "audience", ["local", "export"], ids=["local-no-retain", "export-no-export"]
+)
+def test_raw_rights_withholding_preserves_explicit_canonical_fallback(
+    tmp_path, monkeypatch, audience
+):
+    options = (
+        {"retain_raw": False, "export_raw": False}
+        if audience == "local"
+        else {"export_raw": False}
+    )
+    bound = make_case(tmp_path, monkeypatch, metadata_changes=options)
+    view = prepare(bound, audience=audience)
+    assert view.reference.status == "available"
+    assert view.reference.reason == "snapshot_withheld"
+    assert view.reference.raw_artifact is None and view.raw_bytes is None
+    assert view.reference.canonical_artifact.matches(view.canonical_bytes)
+    assert view.reference.view_artifact.matches(view.html)
+    assert view.reference.rights_basis == bound.metadata[0].rights_basis
+
+
+def test_missing_required_raw_takes_precedence_over_export_withholding(
+    tmp_path, monkeypatch
+):
+    bound = make_case(tmp_path, monkeypatch, metadata_changes={"export_raw": False})
+    bound = reverify_analysis_inputs(replace(bound.inputs, raw_snapshots=()))
+    view = prepare(bound, audience="export", raw=False)
+    assert view.reference.status == "available"
+    assert view.reference.reason == "raw_snapshot_missing"
+    assert view.reference.raw_artifact is None
+    assert view.canonical_bytes is not None and view.html is not None

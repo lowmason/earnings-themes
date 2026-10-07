@@ -565,3 +565,16 @@ def test_evidence_preparation_and_capture_boundaries_documented():
     assert "canonical-evidence-html/1" in text
     assert "raw_snapshot_missing" in text
     assert "prepared capture" in text
+
+
+def test_snapshot_withholding_and_nested_export_rights_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    section = text.split("### `EvidenceViewReference`", 1)[1].split(
+        "### `CaptureObservation`", 1
+    )[0]
+    assert "snapshot_withheld" in section
+    assert "forbidden nested artifact" in text
+    reasons = text.split("### `Analysis reasons`", 1)[1].split(
+        "### `Analysis tables`", 1
+    )[0]
+    assert "\n\n| `browser_unavailable`" not in reasons

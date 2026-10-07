@@ -159,8 +159,16 @@ def make_evidence_view(
         )
         anchor = "p-" + identity
         plain_url = source_url(metadata.source_url)
+        text_artifact = bundle.document.text_artifact
+        allowed_nested_artifact = (
+            text_artifact is None
+            or text_artifact.rights_status == RightsStatus.REDISTRIBUTABLE
+            or audience == "local"
+            and text_artifact.rights_status == RightsStatus.LOCAL_ONLY
+        )
         allowed_text = (
-            metadata.retain_text
+            allowed_nested_artifact
+            and metadata.retain_text
             and metadata.access_status == "available"
             and (
                 audience == "local"
@@ -235,6 +243,8 @@ def make_evidence_view(
             status="available",
             reason="raw_snapshot_missing"
             if metadata.retain_raw and raw_snapshot is None
+            else "snapshot_withheld"
+            if not allowed_raw
             else None,
         )
         return EvidenceView(
