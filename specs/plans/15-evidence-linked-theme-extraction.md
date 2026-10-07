@@ -119,6 +119,10 @@ These formulas are a deliberate compatibility amendment: existing invented sourc
 
 Tasks 5/6/8 reject a caller analysis policy differing from `inputs.analysis_policy`. Task 9 loads only selected confined canonical files through the public ingestion reader, constructs projections and these hashes before replay, and supplies the matching approved fixture authorization inventory. Canonical snapshot payloads remain input-only and are never silently placed in analytical/export manifests. Tasks 7/8 rebind at publication; C1 raw snapshot semantics remain unchanged. Later briefs, dictionary and contracts carry this additive compatibility decision.
 
+### Task 5 projection clarification (2026-10-06)
+
+Preserve document-level extraction refusals with `RejectionAudit.window_id: NonBlank | None`; its declared Polars String dtype and row grain remain unchanged. Null means the original refusal had no extraction window. Upstream claims/refusals expose a window and integer attempt ordinal, rather than an attempt ID. Analytical `attempt_id` is a derived pointer `a-{window_id}-{attempt}` when both original fields exist, scoped by source run and document; absent original attempts remain null. This pointer is not an upstream artifact ID. No upstream schema changes or published analytical artifacts require migration.
+
 ### Inputs and policy scope
 
 The first command is `earnings-pipeline extract run --config <explicit-json>`. It supports **replay only** in Stage 10. There is no implicit current/latest discovery, paid provider, model launcher, tokenizer download or callback import by dotted path. The application supplies identity-only replay façades and the existing caches to the shipped functions; their dispatch/tokenizer methods raise fixed `replay_dispatch_forbidden` if reached. Shipped replay paths read cached input counts before dispatch, so no heuristic tokenizer is needed.
