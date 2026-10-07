@@ -15,6 +15,7 @@ paused request through once its client had gone.
 
 import base64
 import contextlib
+import ipaddress
 import json
 import os
 import signal
@@ -26,6 +27,7 @@ import urllib.request
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import selenium
 import websocket
@@ -94,6 +96,30 @@ class _Watchdog:
         self._kill()
 
 
+def _loopback_endpoint(url: str, scheme: str) -> None:
+    """Refuse non-loopback debugger endpoints before any HTTP/socket operation."""
+    parsed = urlsplit(url)
+    host = parsed.hostname
+    try:
+        loopback = host == "localhost" or (
+            host is not None and ipaddress.ip_address(host).is_loopback
+        )
+        valid_port = parsed.port is not None and 1 <= parsed.port <= 65535
+    except ValueError:
+        loopback, valid_port = False, False
+    if (
+        parsed.scheme != scheme
+        or not loopback
+        or not valid_port
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.query
+        or parsed.fragment
+        or any(ord(c) <= 32 for c in url)
+    ):
+        raise ValueError("invalid loopback debugger endpoint")
+
+
 class _Interceptor:
     """Pauses every request of the page and lets through only the saved file.
 
@@ -105,13 +131,16 @@ class _Interceptor:
     def __init__(
         self, debugger_address: str, allowed_url: str, required: frozenset[str]
     ):
-        with urllib.request.urlopen(
-            f"http://{debugger_address}/json", timeout=10
-        ) as reply:
+        discovery = f"http://{debugger_address}/json"
+        _loopback_endpoint(discovery, "http")
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        with opener.open(discovery, timeout=10) as reply:
             targets = json.load(reply)
         page = next(target for target in targets if target["type"] == "page")
+        socket_url = page["webSocketDebuggerUrl"]
+        _loopback_endpoint(socket_url, "ws")
         self._socket = websocket.create_connection(
-            page["webSocketDebuggerUrl"], suppress_origin=True, timeout=10
+            socket_url, suppress_origin=True, timeout=10
         )
         self._allowed = allowed_url
         self._required = required
@@ -120,14 +149,19 @@ class _Interceptor:
         self._lock = threading.Lock()
         self.blocked: list[BlockedRequest] = []
         self.error: str | None = None
-        self._main_frame = self._call("Page.getFrameTree", {})["frameTree"]["frame"][
-            "id"
-        ]
-        self._call(
-            "Fetch.enable",
-            {"patterns": [{"urlPattern": "*", "requestStage": "Request"}]},
-        )
-        self._socket.settimeout(0.2)
+        try:
+            self._main_frame = self._call("Page.getFrameTree", {})["frameTree"][
+                "frame"
+            ]["id"]
+            self._call(
+                "Fetch.enable",
+                {"patterns": [{"urlPattern": "*", "requestStage": "Request"}]},
+            )
+            self._socket.settimeout(0.2)
+        except BaseException:
+            with contextlib.suppress(Exception):
+                self._socket.close()
+            raise
         self._thread = threading.Thread(target=self._loop, daemon=True)
         self._thread.start()
 
@@ -375,7 +409,12 @@ class SeleniumRenderer:
             _step(
                 watchdog, CaptureReason.DOCUMENT_LOAD_FAILURE, lambda: driver.get(url)
             )
-            if driver.current_url.partition("#")[0] != url:
+            current_url = _step(
+                watchdog,
+                CaptureReason.DOCUMENT_LOAD_FAILURE,
+                lambda: driver.current_url,
+            )
+            if current_url.partition("#")[0] != url:
                 raise _Failure(
                     CaptureReason.DOCUMENT_LOAD_FAILURE,
                     "the browser did not stay on the saved file",

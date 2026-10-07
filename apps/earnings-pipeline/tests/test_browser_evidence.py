@@ -3,6 +3,7 @@
 import importlib
 import importlib.util
 from dataclasses import replace
+from pathlib import Path
 
 import pytest
 from earnings_core import ArtifactRef, RightsStatus, sha256_hex
@@ -178,3 +179,116 @@ def test_screenshot_artifact_rights_are_always_local(tmp_path, monkeypatch, righ
         "completed" if rights == RightsStatus.LOCAL_ONLY else "failed"
     )
     assert observation.screenshots_rights == "local_only"
+
+
+@pytest.mark.parametrize(
+    "case_id",
+    ["unique", "repeated", "astral", "long-page", "drift", "no-text-fragment"],
+    ids=["unique", "repeated", "astral", "long-page", "drift", "no-text-fragment"],
+)
+def test_v5_static_index_is_durable_exact_and_pending(tmp_path, monkeypatch, case_id):
+    path = (
+        Path(__file__).resolve().parents[3]
+        / "tests/integration/test_stage10_browser.py"
+    )
+    spec = importlib.util.spec_from_file_location("stage10_invented_v5", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(
+        module, "CASES", tuple(c for c in module.CASES if c[0] == case_id)
+    )
+    directory, rows, views = module.build_artifacts(
+        tmp_path / "published", tmp_path / "work", monkeypatch
+    )
+    assert (directory / "index.html").is_file()
+    assert [r["case_id"] for r in rows] == [case_id]
+    for row, view in zip(rows, views):
+        assert row["native"] == row["fallback"] == row["capture"] == "pending"
+        assert row["tested_transport"] == "local_file"
+        assert row["https_behavior"] == "unverified"
+        assert (
+            sha256_hex((directory / row["source_file"]).read_bytes())
+            == row["source_artifact_hash"]
+        )
+        assert row["saved_source_link"].startswith(row["source_file"] + "#:~:text=")
+        assert row["fallback_link"].endswith("#" + view.reference.anchor_id)
+        page = (directory / row["fallback_file"]).read_bytes()
+        assert page == view.html
+        assert row["canonical_hash"] == view.reference.canonical_hash
+        assert (row["start"], row["end"]) == (view.reference.start, view.reference.end)
+        assert page.count(b"<mark ") == 1
+    if case_id == "long-page":
+        payload = __import__("json").loads(views[0].canonical_bytes)
+        text = payload["document"]["canonical_text"]
+        assert text[: rows[0]["start"]].count("\r") == 100
+        assert not text[rows[0]["start"] : rows[0]["end"]].startswith(("\n", "\r"))
+    if case_id == "astral":
+        assert rows[0]["utf16_start"] > rows[0]["start"]
+    if case_id == "no-text-fragment":
+        assert rows[0]["control_link"] == rows[0]["source_file"]
+
+
+def test_v5_full_invented_bundle_remains_available_after_fixture_cleanup(
+    tmp_path, monkeypatch
+):
+    path = (
+        Path(__file__).resolve().parents[3]
+        / "tests/integration/test_stage10_browser.py"
+    )
+    spec = importlib.util.spec_from_file_location("stage10_invented_bundle", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    directory, rows, views = module.build_artifacts(
+        module.ROOT, tmp_path / "work", monkeypatch
+    )
+    assert (module.ROOT / "index.html").is_file()
+    assert len(rows) == len(views) == 6
+    for row, view in zip(rows, views):
+        assert row["native"] == row["fallback"] == "pending"
+        renderer = Renderer()
+        capture = capture_module().capture_evidence_view(view, renderer, ISOLATED_1)
+        assert capture.status == "completed"
+        assert row["native"] == row["fallback"] == "pending"
+        assert (directory / row["fallback_file"]).read_bytes() == view.html
+
+
+@pytest.mark.parametrize(
+    "native,fallback",
+    [
+        ("highlighted", "span_visible"),
+        ("page_top", "span_visible"),
+        ("not_highlighted", "span_visible"),
+        ("wrong_occurrence", "span_visible"),
+        ("failed", "failed"),
+        ("unavailable", "withheld"),
+    ],
+    ids=["highlighted", "top", "not-highlighted", "wrong", "failed", "unavailable"],
+)
+def test_fake_manual_statuses_stay_separate_from_capture(
+    tmp_path, monkeypatch, native, fallback
+):
+    path = (
+        Path(__file__).resolve().parents[3]
+        / "tests/integration/test_stage10_browser.py"
+    )
+    spec = importlib.util.spec_from_file_location("stage10_fake_statuses", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    view = capture_view(tmp_path, monkeypatch)
+    capture = capture_module().capture_evidence_view(view, Renderer(), ISOLATED_1)
+    row = {"case_id": "unique", "native": "pending", "fallback": "pending"}
+    result = module.observed_row(
+        row,
+        capture,
+        native=native,
+        fallback=fallback,
+        observer="invented-observer",
+        observed_at="2026-10-07T12:00:00Z",
+    )
+    assert (result["native"], result["fallback"], result["capture"]) == (
+        native,
+        fallback,
+        "completed",
+    )
+    assert row["native"] == row["fallback"] == "pending"
+    assert result["screenshots_rights"] == "local_only"

@@ -135,3 +135,54 @@ def test_keyboard_interrupt_is_metadata_only(tmp_path, capsys, monkeypatch):
     assert metadata["reason"] == "runner_interrupted"
     assert metadata["ids"] == []
     assert all(metadata[name] == 0 for name in stage10_checks.COUNTS)
+
+
+def test_browser_unit_and_existing_contracts_have_exact_allowlists():
+    from tools.stage10_checks import GROUPS
+
+    assert GROUPS.get("browser-unit") == (
+        "packages/earnings-ingestion/tests/test_browser_evidence_lifecycle.py",
+        "packages/earnings-ingestion/tests/test_browser_renderer.py",
+        "packages/earnings-ingestion/tests/test_browser_records.py",
+        "packages/earnings-ingestion/tests/test_browser_store.py",
+        "apps/earnings-pipeline/tests/test_browser_evidence.py",
+    )
+    assert GROUPS.get("contracts") == (
+        "tests/contracts/test_processing_state_compatibility.py",
+        "tests/contracts/test_data_dictionary.py",
+        "tests/contracts/test_import_scan.py",
+        "tests/contracts/test_support_contracts.py",
+        "tests/contracts/test_coding_contracts.py",
+        "packages/earnings-themes/tests/test_import_boundaries.py",
+        "packages/earnings-ingestion/tests/test_import_boundaries.py",
+    )
+
+
+def test_user_browser_routes_only_explicit_guard_with_invented_stub(
+    monkeypatch, capsys
+):
+    from tools import stage10_checks
+
+    calls = []
+    monkeypatch.setattr(
+        stage10_checks, "run_checks", lambda *a, **k: calls.append((a, k)) or 0
+    )
+    assert stage10_checks.main(["browser-user"]) == 3
+    assert calls == []
+    assert stage10_checks.main(["browser-user", "--user-only"]) == 0
+    assert calls == [
+        ((("tests/integration/test_stage10_browser.py",),), {"marker": "browser"})
+    ]
+    assert "browser-user" not in capsys.readouterr().out
+
+
+def test_browser_marker_reaches_only_invented_child(tmp_path, capsys):
+    (tmp_path / "pytest.ini").write_text(
+        "[pytest]\nmarkers = browser: invented marker\n"
+    )
+    path = child(
+        tmp_path, "import pytest\n@pytest.mark.browser\ndef test_ok(): assert True\n"
+    )
+    assert run_checks((path.name,), root=tmp_path, timeout=20, marker="browser") == 0
+    metadata = json.loads(capsys.readouterr().out)
+    assert metadata["passed"] == 1 and metadata["deselected"] == 0

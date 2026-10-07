@@ -17,6 +17,23 @@ else:
 ROOT = Path(__file__).resolve().parents[1]
 THEMES = "packages/earnings-themes/tests/"
 GROUPS = {
+    "browser-unit": (
+        "packages/earnings-ingestion/tests/test_browser_evidence_lifecycle.py",
+        "packages/earnings-ingestion/tests/test_browser_renderer.py",
+        "packages/earnings-ingestion/tests/test_browser_records.py",
+        "packages/earnings-ingestion/tests/test_browser_store.py",
+        "apps/earnings-pipeline/tests/test_browser_evidence.py",
+    ),
+    # Task 11 adds its not-yet-created test_analysis_contracts.py explicitly.
+    "contracts": (
+        "tests/contracts/test_processing_state_compatibility.py",
+        "tests/contracts/test_data_dictionary.py",
+        "tests/contracts/test_import_scan.py",
+        "tests/contracts/test_support_contracts.py",
+        "tests/contracts/test_coding_contracts.py",
+        "packages/earnings-themes/tests/test_import_boundaries.py",
+        "packages/earnings-ingestion/tests/test_import_boundaries.py",
+    ),
     "workflow": (
         "apps/earnings-pipeline/tests/test_theme_config.py",
         "apps/earnings-pipeline/tests/test_theme_workflow.py",
@@ -99,7 +116,11 @@ def checked_metadata(path: Path) -> dict:
 
 
 def run_checks(
-    nodes: Sequence[str], *, root: Path = ROOT, timeout: float = TIMEOUT_SECONDS
+    nodes: Sequence[str],
+    *,
+    root: Path = ROOT,
+    timeout: float = TIMEOUT_SECONDS,
+    marker: str = "not live and not browser",
 ) -> int:
     """Capture child output; only validated metadata leaves this boundary."""
     try:
@@ -126,7 +147,7 @@ def run_checks(
                     "pytest_asyncio.plugin",
                     *nodes,
                     "-m",
-                    "not live and not browser",
+                    marker,
                     "--tb=no",
                     "--show-capture=no",
                     "-q",
@@ -160,6 +181,10 @@ def run_checks(
 
 def main(args: Sequence[str] | None = None) -> int:
     args = sys.argv[1:] if args is None else args
+    if list(args) == ["browser-user", "--user-only"]:
+        return run_checks(
+            ("tests/integration/test_stage10_browser.py",), marker="browser"
+        )
     if len(args) != 1 or args[0] not in GROUPS:
         emit("runner_failed")
         return 3

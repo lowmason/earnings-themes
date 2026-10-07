@@ -305,3 +305,8 @@ artifact references while deriving every highlight from canonical spans.
 
 This design does not itself complete or amend the status of any roadmap stage.
 Implementation remains deferred to the corresponding stage plans.
+
+
+## Stage 10 V5 handoff (2026-10-07)
+
+The concrete invented `local_file` presentation protocol and durable index are recorded in `docs/verification/stage10-browser.md`. Agent fake/canonical checks do not establish native text-fragment support or manual fallback visibility. The human-only guarded `browser-user --user-only` route performs no setup/download and records unavailable/failed capture separately. Target remains Chrome for Testing 154.0.8037.57 mac-arm64 only; external HTTPS behavior is unverified. V5 completion remains pending human observations and any unavailable/transport-limited disposition.

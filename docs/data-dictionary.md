@@ -6091,3 +6091,8 @@ Capture uses only an explicitly supplied public renderer, exact isolated-1 polic
 | `wrong_source_run` | Closed metadata-only refusal/outcome; no raw diagnostic detail. |
 
 Malformed configuration or selected-source preflight refuses without artifacts/state. Ownership/history conflicts encountered inside the pipeline publish only metadata-only WorkflowFailure and its receipt with state_not_processable; they cannot mutate an incompatible terminal.
+
+
+### Stage 10 V5 observation protocol
+
+`docs/verification/stage10-browser.md` defines a separate invented manual observation record; it adds no analytical table/schema field. CP `[start,end)` coordinates, UTF-16 boundary metadata, canonical/source-artifact hashes and anchor IDs are expected values; `native`, `fallback`, and `capture` are independent outcomes, initially pending. Native outcomes are `highlighted/page_top/not_highlighted/wrong_occurrence/failed/unavailable`; fallback outcomes are `span_visible/failed/withheld`. `tested_transport=local_file` does not verify external HTTPS. Observer/UTC date, fixed failure reasons and local-only screenshot artifact IDs accompany actual human observations. A successful capture is not native or manual fallback success. The existing CaptureObservation contract/versions and analytical dictionary registry stay unchanged.
