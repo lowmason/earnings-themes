@@ -32,7 +32,7 @@ The final browser checks ran on 2026-09-26: `22 passed, 642 deselected`.
 
 - **The freeze.** Commit `cdc77b87bd94` froze 23 files on 2026-09-26, before any
   release was captured.
-- **Post-freeze fixes.** None.
+- **Post-freeze fixes.** The 2026-10-07 Stage 10 lifecycle/isolation exception below is recorded; none was applied before the original 2026-09-26 measurements.
 - **A corrected check.** After the release captures, one unfrozen plan test failed on
   Pharmacyclics (`0000949699-08-000023_ex-99-1`):
   `test_every_layout1_unit_is_an_exact_span_or_an_alignment_failure`, in
@@ -142,3 +142,68 @@ gate"). Each now has a disposition (plan 5, PB-21). This closes the deferred ite
   `ForeignCurrencyTranslation`. A change to canonical text needs a new policy
   version (SC14), so this stays a limitation of `walker-1`. Table cells are cell
   evidence, outside narrative extraction (R4.2).
+
+
+## Stage 10 post-freeze lifecycle/isolation exception (2026-10-07)
+
+The user approved **exactly these three disclosed lifecycle repairs** after a
+source-only assessment identified that only the unbounded current URL read is an
+uncaught capture crash. Proxy isolation and initialization socket cleanup address
+caught startup failures and resource cleanup. This is an explicit narrow exception
+to the literal fixture-capture-crash restriction, recorded under the existing
+`crash` amendment category. It does not assert that an actual fixture/native capture
+crashed or was tested in Stage 10; verification uses invented injected SDK,
+driver/socket/discovery/process doubles only.
+
+Implementation commit: `23ff212` (adapter change committed before amendment).
+
+| Adapter binding | SHA-256 |
+| --- | --- |
+| Previous | `be19ecc2cfe65575b693d39a14af59b38cdd875335c078b4ac0c947dcdb039c3` |
+| Amended | `ff6d6dceb97ada698dd3bcdd6e1d547a9df5b6f6ce615c1204c4cab1ad7daab9` |
+
+The fixes wrap `driver.current_url` in the existing bounded navigation step, use a
+dedicated no-proxy opener for validated loopback debugger discovery and validate
+the loopback WebSocket endpoint, and close the already-open socket when
+`Page.getFrameTree`/`Fetch.enable` initialization fails. Pin, `isolated/1`, disabled
+source scripts, network policy, layout/type/mapping decisions, units, metrics,
+comparison inputs and all Stage 3 capture/report bytes remain unchanged.
+
+The amendment makes subsequent use of this adapter **post-hoc** relative to the
+frozen comparison. Every original measured number above remains the original
+2026-09-26 observation; no parser-fidelity remeasurement or capture regeneration
+was run. `preregister.py amend` recorded the old/new hashes and exact approved
+exception note; source-only `preregister.py verify` is the consistency check. V5
+native availability/presentation/manual fallback remain pending in
+`docs/verification/stage10-browser.md`; fake capture is not native/manual evidence.
+
+
+## Stage 10 redirect-refusal completion (2026-10-07)
+
+Fix-round review found that the dedicated no-proxy debugger discovery opener
+still inherited urllib's redirect handler. It could leave the validated loopback
+endpoint before WebSocket validation. The opener now refuses every redirect,
+including another loopback destination, before a second request. This completes
+the existing user-approved validated-loopback isolation exception for the three
+disclosed lifecycle repairs; it is not a fourth exception. The existing broader
+`crash` classification is used with that explicit approval and retained first
+amendment, rather than claiming a crash on an actual fixture capture.
+
+Validation used invented in-memory HTTP responses and isolated SDK doubles only:
+the public capture boundary records startup failure and closes the fake browser,
+without a WebSocket, actual network, actual fixture or native observation. The
+adapter implementation precedes this second standalone amendment, at commit
+`981573b40f867071a9c3cdd415da063e996e91a9`.
+
+| Adapter SHA-256 | Value |
+| --- | --- |
+| Previous first-amendment hash | `ff6d6dceb97ada698dd3bcdd6e1d547a9df5b6f6ce615c1204c4cab1ad7daab9` |
+| Second amended hash | `0ce37500b561c3642d971dc587e02e2e144a966581496c548017024d45f627b8` |
+
+The second `[[changes]]` entry in `layout1-preregistered.toml` preserves the first
+entry and original 23-key inventory. Comparison inputs, type decisions, mapping
+rules, units, metrics, browser pins and capture-policy semantics remain unchanged.
+All historical measured numbers and Stage 3 capture/report bytes are retained;
+no parser-fidelity remeasurement was performed. As with the first amendment, the
+comparison is disclosed as post-hoc under the frozen protocol. Native/manual V5
+observations remain pending.

@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "kind": "human_supplied_presentation_metadata",
+  "implementation_head": "611f84a564ed9bfd4a52cf6682bf2c6a88676a23",
+  "bundle_hash": "70f13f640e1ee84fa9372d19256c2873cb8c4ff188b7450dd4522c61c1c83129",
+  "observation_utc_date": "2026-10-08",
+  "observer_id": "Lowell Mason",
+  "operating_system": "macOS",
+  "declared_target": {
+    "browser": "Chrome for Testing",
+    "human_reports_available_and_used": true,
+    "platform": "mac-arm64",
+    "version": "154.0.8037.57"
+  },
+  "other_browser": {
+    "name": "Codex in-app browser",
+    "version": "not_supplied"
+  },
+  "reported_clock": {
+    "start": "1:30 PM",
+    "finish": "1:59 PM",
+    "timezone": "not_supplied"
+  },
+  "tested_transport": "local_file",
+  "https_behavior": "unverified",
+  "long_page_automatic_scroll": "unverified",
+  "native_highlighted": 5,
+  "native_not_highlighted": 1,
+  "fallback_span_visible": 6,
+  "capture_runner": {
+    "passed": 0,
+    "skipped": 1,
+    "failed": 0,
+    "deselected": 0,
+    "collection_failures": 0,
+    "warnings": 0,
+    "ids": [],
+    "reason": null,
+    "unavailability_cause": "not_supplied"
+  },
+  "actual_capture": "unverified",
+  "workflow_capture": "nondurable",
+  "plain_control": {
+    "opened": true,
+    "item_count": 2,
+    "highlighted_item_count": 0
+  },
+  "cases": [
+    {
+      "case_id": "unique",
+      "fallback": "span_visible",
+      "native": "highlighted",
+      "code_point_span": [
+        0,
+        24
+      ],
+      "utf16_span": [
+        0,
+        24
+      ],
+      "capture": "unverified",
+      "repeated_occurrence": "not_applicable"
+    },
+    {
+      "case_id": "repeated",
+      "fallback": "span_visible",
+      "native": "highlighted",
+      "code_point_span": [
+        27,
+        53
+      ],
+      "utf16_span": [
+        28,
+        55
+      ],
+      "capture": "unverified",
+      "repeated_occurrence": "second"
+    },
+    {
+      "case_id": "astral",
+      "fallback": "span_visible",
+      "native": "highlighted",
+      "code_point_span": [
+        21,
+        47
+      ],
+      "utf16_span": [
+        23,
+        50
+      ],
+      "capture": "unverified",
+      "repeated_occurrence": "not_applicable"
+    },
+    {
+      "case_id": "long-page",
+      "fallback": "span_visible",
+      "native": "highlighted",
+      "code_point_span": [
+        1701,
+        1727
+      ],
+      "utf16_span": [
+        1701,
+        1728
+      ],
+      "capture": "unverified",
+      "repeated_occurrence": "not_applicable"
+    },
+    {
+      "case_id": "drift",
+      "fallback": "span_visible",
+      "native": "not_highlighted",
+      "code_point_span": [
+        0,
+        30
+      ],
+      "utf16_span": [
+        0,
+        30
+      ],
+      "capture": "unverified",
+      "repeated_occurrence": "not_applicable"
+    },
+    {
+      "case_id": "no-text-fragment",
+      "fallback": "span_visible",
+      "native": "highlighted",
+      "code_point_span": [
+        0,
+        26
+      ],
+      "utf16_span": [
+        0,
+        26
+      ],
+      "capture": "unverified",
+      "repeated_occurrence": "not_applicable"
+    }
+  ],
+  "agent_browser_execution": false,
+  "v5_status": "observed_native_and_manual_fallback_complete",
+  "freeze": {
+    "input_count": 23,
+    "approved_amendments": 2,
+    "adapter_sha256": "0ce37500b561c3642d971dc587e02e2e144a966581496c548017024d45f627b8"
+  },
+  "source_observation_record_sha256": [
+    {
+      "case_id": "unique",
+      "kind": "native",
+      "sha256": "5829cfe371a893c42668b83636eeed3c675973d57f00236b2f496fff45607117"
+    },
+    {
+      "case_id": "unique",
+      "kind": "fallback",
+      "sha256": "aacd7d8305a7e358088755d74348c7fcc589a4cb8f2d7323cc1c7fb07bb1e48b"
+    },
+    {
+      "case_id": "repeated",
+      "kind": "native",
+      "sha256": "bfa3a331b36ac38673cf78a3bf4b8f55f15fd9428d27881b5a73760f347ea838"
+    },
+    {
+      "case_id": "repeated",
+      "kind": "fallback",
+      "sha256": "b871c3ad9401680bb4395ea1412d6127422819f1445d54bfabea90a1d8f0a6f4"
+    },
+    {
+      "case_id": "astral",
+      "kind": "native",
+      "sha256": "2603b09353239f3491b887fdcaea61ccf4ba4dbd7001fa4d3151792c321ce424"
+    },
+    {
+      "case_id": "astral",
+      "kind": "fallback",
+      "sha256": "ee325d2e8eebd06cd49fa1a1db68594b736b7167f463734185155d8855bdec25"
+    },
+    {
+      "case_id": "long-page",
+      "kind": "native",
+      "sha256": "1fa70ad19f3ffd2187603cea98694e448baac45008622c1ff81f9cce4381fc2b"
+    },
+    {
+      "case_id": "long-page",
+      "kind": "fallback",
+      "sha256": "96984670a9afe990087849ad524fc482eba2193dcbac462203e7c872888f1126"
+    },
+    {
+      "case_id": "drift",
+      "kind": "native",
+      "sha256": "fcf8436df978702cda5e74435ca12633b808401140737d43a677a9315d1c764b"
+    },
+    {
+      "case_id": "drift",
+      "kind": "fallback",
+      "sha256": "69d503e8ab15237a60b34f0e2ca37c9eb854d09a491fd02d7415742a663a4180"
+    },
+    {
+      "case_id": "no-text-fragment",
+      "kind": "native",
+      "sha256": "2c88ee2e66f7c455f52cda72144805950a452a8bedfad2d81db821ce52098859"
+    },
+    {
+      "case_id": "no-text-fragment",
+      "kind": "fallback",
+      "sha256": "5aa9e910da3518cb162edd5e4348a843805f0631fa5f2814b2194a0aeb812b58"
+    }
+  ]
+}

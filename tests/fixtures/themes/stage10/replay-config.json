@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "run_id": "invented-workflow",
+  "scope": "fixture",
+  "mode": "replay",
+  "fixture_started_at": "2026-10-07T12:00:00Z",
+  "input_root": "inputs",
+  "universe": {
+    "path": "inputs/djia-synthetic-v1.json",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "universe_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "events": {
+    "path": "inputs/events-v1.json",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "event_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "pilot": {
+    "path": "inputs/pilot-v1.json",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "pilot_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "selected_event_ids": [
+    "invented-event"
+  ],
+  "states_dir": "data/runs/events/states",
+  "acquisition_files": [
+    {
+      "path": "data/runs/events/states/invented-acquire.parquet",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ],
+  "sources": [],
+  "codebook": {
+    "path": "inputs/book.json",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "extraction_prompt": {
+    "path": "inputs/extraction.md",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "coding_prompt": {
+    "path": "inputs/coding.md",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "support_prompt": {
+    "path": "inputs/support.md",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "extraction_policy": {
+    "parameters": {
+      "temperature": 0.0,
+      "seed": 0,
+      "max_tokens": 64,
+      "structured": true
+    },
+    "window_budget": 4000,
+    "claim_limit": 500
+  },
+  "extraction_ceilings": {
+    "requests_per_document": 8,
+    "requests_per_run": 40,
+    "tokens_per_run": 100000
+  },
+  "extraction_identity": {
+    "adapter_kind": "scripted",
+    "model_id": "scripted",
+    "weights_sha256": null,
+    "runtime": null,
+    "runtime_version": null
+  },
+  "extractor_family": "invented-extractor",
+  "coding_policy": {
+    "coding_version": "deductive-coding/1",
+    "prompt_text": "Invented classification instructions.",
+    "prompt_hash": "c31c8a397db08954873d2e057d1a721fe4daa66ec24595e7fada46c2b48f7a73",
+    "parameters": {
+      "temperature": 0.0,
+      "seed": 0,
+      "max_tokens": 64,
+      "structured": true
+    },
+    "max_attempts": 2
+  },
+  "coding_ceilings": {
+    "requests_per_claim": 2,
+    "requests_per_document": 20,
+    "requests_per_run": 40,
+    "tokens_per_document": 100000,
+    "tokens_per_run": 200000
+  },
+  "classifier_identity": {
+    "family": "invented-classifier",
+    "runtime": {
+      "model_id": "invented-support",
+      "revision": "fixture-1",
+      "files": [],
+      "runtime": "scripted",
+      "runtime_version": "1",
+      "device": "cpu",
+      "precision": "float32",
+      "encoding_version": "fixture-1"
+    },
+    "input_limit": 100000,
+    "output_limit": 2048,
+    "hosting": "scripted",
+    "weight_license": null
+  },
+  "support_policy": {
+    "support_version": "semantic-support/1",
+    "prompt_text": "Invented support instructions.",
+    "prompt_hash": "e4bd764acdab2023480edf0a089ae6c0df6901bbe7f49702d2815f9b4641797e",
+    "parameters": {
+      "temperature": 0.0,
+      "seed": 0,
+      "max_tokens": 64,
+      "structured": true
+    },
+    "max_attempts": 2
+  },
+  "support_ceilings": {
+    "scorer_per_target": 40,
+    "scorer_per_document": 40,
+    "scorer_per_run": 40,
+    "judge_per_target": 40,
+    "judge_per_document": 40,
+    "judge_per_run": 40,
+    "tokens_per_document": 200000,
+    "tokens_per_run": 200000
+  },
+  "scorer_identity": {
+    "kind": "scripted",
+    "runtime": {
+      "model_id": "invented-support",
+      "revision": "fixture-1",
+      "files": [],
+      "runtime": "scripted",
+      "runtime_version": "1",
+      "device": "cpu",
+      "precision": "float32",
+      "encoding_version": "fixture-1"
+    },
+    "input_limit": 100000
+  },
+  "judge_identities": [
+    {
+      "family": "invented-family-0",
+      "runtime": {
+        "model_id": "invented-support",
+        "revision": "fixture-1",
+        "files": [],
+        "runtime": "scripted",
+        "runtime_version": "1",
+        "device": "cpu",
+        "precision": "float32",
+        "encoding_version": "fixture-1"
+      },
+      "input_limit": 100000,
+      "output_limit": 2048,
+      "hosting": "scripted",
+      "weight_license": null
+    },
+    {
+      "family": "invented-family-1",
+      "runtime": {
+        "model_id": "invented-support",
+        "revision": "fixture-1",
+        "files": [],
+        "runtime": "scripted",
+        "runtime_version": "1",
+        "device": "cpu",
+        "precision": "float32",
+        "encoding_version": "fixture-1"
+      },
+      "input_limit": 100000,
+      "output_limit": 2048,
+      "hosting": "scripted",
+      "weight_license": null
+    }
+  ],
+  "extraction_run_id": "invented-extraction",
+  "coding_run_id": "invented-coding",
+  "support_run_id": "invented-support",
+  "extraction_cache": "data/runs/caches/extraction",
+  "coding_cache": "data/runs/caches/coding",
+  "support_cache": "data/runs/caches/support",
+  "stored_extraction": null,
+  "stored_support": null,
+  "stored_coding": null,
+  "stored_analysis": null,
+  "assignment_policy": "fixture-supporting/1",
+  "policy_reference": null,
+  "analysis_policy": {
+    "schema_version": 1,
+    "policy_id": "coverage-analysis",
+    "version": "1",
+    "population_id": "djia-synthetic",
+    "event_ids": [
+      "invented-event"
+    ],
+    "population_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "doc_types": [
+      "release"
+    ],
+    "speaker_roles": [
+      "not_applicable"
+    ],
+    "mask_policy_id": "invented-mask",
+    "mask_policy_version": "1",
+    "dedup_rule": "same-event-disclosure/1",
+    "parent_rule": "self-or-descendant/1",
+    "headline_unit": "issuer_period",
+    "window_issuer_rule": "any-complete-period/1",
+    "include_family_view": false,
+    "scope": "fixture"
+  },
+  "families": null,
+  "copies": [],
+  "no_theme": [],
+  "audience": "local",
+  "output_dir": "data/runs/workflows/invented-workflow",
+  "capture": false,
+  "capture_policy": null,
+  "installed_binary_reference": null,
+  "software": {
+    "fixture": "1",
+    "lock_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "lockfile": {
+    "path": "uv.lock",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  }
+}

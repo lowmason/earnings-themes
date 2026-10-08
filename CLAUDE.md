@@ -4,7 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Document status — read before trusting any file here
 
-This repo is documentation-first: its working code is the Stage 1 investigation harness in `expirements/parser-fidelity/`, the Stage 2 contracts in `packages/earnings-core`, Stage 3's canonicalizer and browser diagnostic path in `packages/earnings-ingestion`, Stage 4's point-in-time DJIA cohort and shared SEC client there too, and Stage 5's event discovery, eligibility, pilot selection, and acquisition and Stage 6's coverage report beside them; `earnings-themes` holds Stage 6's split, codebook, and gold contracts and Stage 7's extractor, and the rest is instructions.
+Working code implements completed Stages 1–10: parser investigation, canonical evidence,
+point-in-time cohort, frozen events/acquisition, split/codebook/gold contracts,
+extraction, support and coding. Stage 10 implements explicit replay composition,
+current analytical gates, coverage/prevalence and cited publication on permitted
+synthetic/invented fixtures. Stage 10 technical reviews, native/manual V5 and human
+completion gates are observed on 2026-10-08. Completion documentation awaits scoped
+review and branch integration remains pending. No pilot extraction or calibration is
+claimed. The binding specifications and live roadmap govern completion.
 Not all of it is binding.
 
 | File | Status |
@@ -25,7 +32,7 @@ Not all of it is binding.
 
 **Deliberately unresolved — do not silently pick one** (AGENTS.md §"Source basis and unresolved choices"): the production provider/model, the final theme taxonomy, and non-exactness quality thresholds. Record these in config or a decision record; do not invent agreement. The fourth such choice, an approved inference budget, is now recorded by `specs/evidence-linked-theme-extraction.md` R14.2: **$100, for the optional hosted-ceiling ablation only**, not prompt-optimizer compiles or any other billable call. The required path needs no billable inference: R14.1 limits it to open-weight, self-hosted models, which narrows the model choice without making it.
 
-## Current state: Stages 1–7 complete
+## Current state: Stages 1–10 complete; integration pending
 
 Stage 1 of the roadmap (release parser fidelity, `specs/release-parser-fidelity.md`) is done:
 
@@ -83,9 +90,46 @@ Plan B (plan 12) built the extractor, `earnings_themes.extraction`:
 - A unit is a leaf narrative element, in P9-19's order (ES12). Units pack by block into windows of at most 4000 characters, and the model sees labels `U1`…`Un` only: Stage 1's fixtures hold 797 units in 37 windows. `extract_window` renders `prompts/extraction/pointer-1.md`, which the caller reads (ES17), sends at most 2 attempts through a `ModelAdapter`, and keeps a candidate only if every label verifies (ES20). `extract_run` gates each document with `bundle_problems`, under explicit ceilings (ES21).
 - `write_run` verifies every quote again before it writes `run.json` and one Parquet file per record kind; `read_run` reads a run back. Each core `Rejection` is paired with its subject (ES6), and a refusal prints as its reason and IDs.
 - `ScriptedAdapter` serves the tests, and `CachedAdapter` keys each reply by R14.6's 21 components, with replay. `LocalAdapter`, behind the `local-model` extra, is the only themes module that imports httpx, and reaches only a loopback OpenAI-compatible server. ADR 0004 records the live test's local model, and `config/models/local-model.toml` its endpoint. The production model stays open.
-- No command runs extraction yet: Stage 10 adds the first. No pilot document has been extracted. The live test runs only by its node ID, with `-m live`.
+- Stage 10 now supplies the replay-only `earnings-pipeline extract run --config PATH` command. No pilot document has been extracted. The historical Stage 7 live test remains a separately authorized, explicitly selected node.
 
-The top-level modules of `earnings-themes`, `earnings-ingestion`, and `apps/earnings-pipeline` still hold only a `hello()` stub; the application's commands are `earnings-pipeline browser setup` and the `earnings-pipeline cohort`, `events`, `pilot`, `codebook`, and `gold` groups. `data/` is gitignored and holds only local, uncommitted material: fetched pages under `data/raw/`, the cohort's saved evidence under `data/raw/cohort/`, Stage 5's saved SEC responses, the pilot's exhibits among them, under `data/raw/events/`, and under `data/runs/` Stage 1's run outputs and live lock, the user's rendered copies, the browser capture store, the cohort's live-verification records, Stage 5's processing states and canonical documents under `data/runs/events/`, and Stage 6's texts, drafts, working copies, anchored files, and views under `data/runs/gold/`; `prompts/extraction/pointer-1.md` is the extractor's prompt. `origin` is set to https://github.com/lowmason/earnings-themes, which is **public** — treat anything committed here as publicly visible.
+Stage 8 exposes semantic-support signals without conferring acceptance; Stage 9
+exposes fixed-codebook coding and explicit assignment decisions. Stage 10's command
+composes those libraries with fourteen typed analytical tables, expected-event
+coverage, mask/copy/hierarchy/family counting and immutable local/export reports.
+`tests/fixtures/themes/stage10/replay-config.json` is a template filled by the
+invented integration helper, not a directly runnable config. `load_workflow_config`
+requires explicit repository confinement; the CLI supplies `Path.cwd()`.
+`fixture-supporting/1` requires current hash-bound fixture authorization, while null
+policy retains review and an unavailable calibrated CLI policy refuses. Current
+consuming gates run again before publication, including empty work. The analysis
+binds the parsed acquisition baseline; a separate receipt binds appended schema-2
+state bytes. Retry rechecks exact analysis/completion/predecessor/current inputs;
+other-workflow reuse needs explicit pinned analysis and all stage selections.
+
+Use the guarded commands in README and
+`docs/verification/theme-vertical-slice.md`, after auditing readers. The 72-file
+`stage10` union has a 900-second deadline; individual groups have 300 seconds.
+The human-only `root-user --user-only` route has the approved fixed 1800-second
+deadline; wording and browser routes retain 300 seconds. The prior human root
+run timed out at 300 seconds with placeholder zero counters/empty IDs; it
+establishes no passed tests or successful duration. At reviewed implementation
+HEAD `611f84a`, the human root passed 4241 with 9 skips and 28 deselections,
+and both wording gates passed one each; all failure/collection/warning counters
+were zero. Root exit/elapsed were not supplied. Native/manual V5 is observed;
+see the durable verification record for exact SHA bindings and historical failures.
+Agents must not run root/Stage 6 wording/browser/user-only modes, inspect protected
+artifacts, resolve examples or load a model. Fixture checks establish V8/V10
+machinery, not acceptance quality, pilot prevalence or native browser behavior.
+Static canonical views use CP spans; UTF-16 exists only at the browser boundary.
+Export obeys nested artifact rights and explicit raw/text permissions; screenshots
+stay local_only. Human V5 records five native highlights, drift not_highlighted
+and six visible fallbacks in the pinned available/used target. Actual capture
+and external HTTPS remain unverified; the capture skip cause is unspecified.
+Stage 11 owns pilot extraction and calibration; later-stage
+ownership and GS13 remain unchanged.
+
+The top-level modules retain their `hello()` stubs alongside implemented
+stage-specific modules; the CLI includes the existing groups and `extract`. `data/` is gitignored and holds only local, uncommitted material: fetched pages under `data/raw/`, the cohort's saved evidence under `data/raw/cohort/`, Stage 5's saved SEC responses, the pilot's exhibits among them, under `data/raw/events/`, and under `data/runs/` Stage 1's run outputs and live lock, the user's rendered copies, the browser capture store, the cohort's live-verification records, Stage 5's processing states and canonical documents under `data/runs/events/`, and Stage 6's texts, drafts, working copies, anchored files, and views under `data/runs/gold/`; `prompts/extraction/pointer-1.md` is the extractor's prompt. `origin` is set to https://github.com/lowmason/earnings-themes, which is **public** — treat anything committed here as publicly visible.
 
 ### Workspace root is virtual — do not add `[project]` to it
 

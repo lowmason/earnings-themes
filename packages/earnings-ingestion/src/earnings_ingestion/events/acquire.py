@@ -31,7 +31,8 @@ P8-6 to P8-12).
   cited as ``build.citations_refused`` checks. Its document, once it canonicalizes,
   is the release, and ``release-content/1``'s verdict is recorded without deciding.
   An override applies to a document that is ``expected``, ``acquired``,
-  ``unavailable``, or ``failed``, and each of its transitions names it. When the
+  ``unavailable``, or schema-1 parse ``failed``, and each transition names it.
+  Schema-2 processing outcomes are terminal and never dispatch acquisition. When the
   other filing's acceptance would change the event's eligibility, each marks a
   ``corpus_error`` for the next corpus version, and nothing is fixed in place (P8-11).
   An override that does not check is a problem, and its document is not attempted.
@@ -90,6 +91,8 @@ from earnings_ingestion.events.states import (
     ExhibitAttempt,
     ExhibitChoice,
     MissingReason,
+    ProcessingTransition,
+    StateRecord,
     StateTransition,
     current_states,
     in_order,
@@ -131,7 +134,7 @@ class Acquisition:
     run_id: str
     transitions: tuple[StateTransition, ...]
     """This run's."""
-    states: dict[str, StateTransition]
+    states: dict[str, StateRecord]
     """Each pilot document's current state after the run, in selection order."""
     fetched: tuple[str, ...]
     """The URLs fetched and saved."""
@@ -183,14 +186,16 @@ def _target(override: AcquisitionOverride) -> Target:
 
 
 def _pending(
-    state: StateTransition | None,
+    state: StateRecord | None,
     override: AcquisitionOverride | None,
     applied: Target | None,
 ) -> str | None:
     """What a run does with a document: ``override`` applies its override,
     ``attempt`` tries its exhibits, ``refused`` reports an override of a document
     no override moves, ``edited`` one whose ID was ``applied`` to another target,
-    and ``None`` leaves it."""
+    ``state_not_processable`` refuses a processing terminal, and ``None`` leaves it."""
+    if isinstance(state, ProcessingTransition):
+        return "state_not_processable" if override is not None else None
     current = DocumentState.EXPECTED if state is None else state.to_state
     if override is not None:
         if applied is not None and applied != _target(override):
@@ -202,7 +207,7 @@ def _pending(
     return "attempt" if current in ATTEMPTED else None
 
 
-def _applications(transitions: Iterable[StateTransition]) -> dict[str, Target]:
+def _applications(transitions: Iterable[StateRecord]) -> dict[str, Target]:
     """Each override's latest target, by ``override_id``, under any pilot, so an ID
     keeps one meaning: as its acquisition names it, or its attempt when it failed
     from ``acquired`` and recorded no acquisition of its own."""
@@ -682,6 +687,9 @@ def acquire(
             override = named.get(row.event_id)
             last = None if override is None else applications.get(override.override_id)
             pending = _pending(state, override, last)
+            if pending == "state_not_processable":
+                problems.append("state_not_processable")
+                continue
             if pending == "edited":
                 problems.append(
                     f"{override.override_id} was applied to {' '.join(last)} and now"

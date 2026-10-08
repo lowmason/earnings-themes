@@ -23,8 +23,11 @@ from earnings_ingestion.cohort import register as cohort_register
 from earnings_ingestion.events import acceptance, coverage, states
 from earnings_ingestion.events import records as events
 from earnings_ingestion.fetch import records as fetch
+from earnings_pipeline import theme_config, theme_workflow
 from earnings_themes import annotation, codebook, gold, problems, split
 from earnings_themes import records as themes
+from earnings_themes.analysis import records as analysis
+from earnings_themes.analysis.problems import ANALYSIS_REASONS
 from earnings_themes.anchoring import SpanPointer
 from earnings_themes.coding import records as coding
 from earnings_themes.coding.cache import CodingCacheEntry
@@ -34,6 +37,7 @@ from earnings_themes.coding.run import ProposalRun
 from earnings_themes.coding.store import SCHEMAS
 from earnings_themes.extraction import adapters, cache, local
 from earnings_themes.extraction import records as extraction
+from earnings_themes.extraction.store import StoredRun
 from earnings_themes.support import judges, metrics, scorers
 from earnings_themes.support import records as support
 from earnings_themes.support.cache import SupportCacheEntry
@@ -118,6 +122,7 @@ MODELS = [
     events.PilotManifest,
     states.ExhibitAttempt,
     states.StateTransition,
+    states.ProcessingTransition,
     coverage.PilotPin,
     coverage.StateCount,
     coverage.CoverageGap,
@@ -260,6 +265,8 @@ ENUMS = [
     events.TransitionKind,
     states.DocumentState,
     states.MissingReason,
+    states.ProcessingMissingReason,
+    states.ProcessingReason,
     states.ExhibitChoice,
     states.AttemptOutcome,
     problems.Problem,
@@ -395,3 +402,233 @@ def test_the_documented_coding_versions_are_the_package() -> None:
         f'`"{coding.CODING_VERSION}"` (`earnings_themes.coding.records.CODING_VERSION`)'
         in text
     )
+
+
+def test_extraction_stored_run_and_gate_are_documented() -> None:
+    assert documented("StoredRun") == {field.name for field in fields(StoredRun)}
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert "validate_stored_run(run: StoredRun) -> StoredRun" in text
+    assert "malformed_record" in text and "storage_corrupt" in text
+
+
+ANALYSIS_MODELS = [
+    analysis.AnalysisPart,
+    analysis.ExpectedEvent,
+    analysis.AcquisitionStatus,
+    analysis.DocumentMetadata,
+    analysis.CopyAssertion,
+    analysis.AnalysisPolicy,
+    analysis.ThemeFamilyMap,
+    analysis.NoThemeDeclaration,
+    analysis.DocumentCompletion,
+    analysis.EvidenceViewReference,
+    analysis.CaptureObservation,
+    analysis.RawCacheVerification,
+    analysis.AnalysisRunRecord,
+    analysis.Observation,
+    analysis.QuoteAudit,
+    analysis.ClaimAudit,
+    analysis.ClaimEvidence,
+    analysis.ClassificationAudit,
+    analysis.DecisionAudit,
+    analysis.RejectionAudit,
+    analysis.CoverageRow,
+    analysis.PrevalenceRow,
+    analysis.CopyRow,
+]
+ANALYSIS_DATACLASSES = [
+    analysis.RawSnapshot,
+    analysis.CanonicalSnapshot,
+    analysis.FixtureAuthorization,
+    analysis.RawCacheInputs,
+    analysis.AnalysisInputs,
+    analysis.BoundAnalysis,
+    analysis.AnalysisTables,
+    analysis.AnalysisRun,
+    analysis.StoredAnalysisRun,
+    analysis.EvidenceView,
+]
+
+
+@pytest.mark.parametrize("model", ANALYSIS_MODELS, ids=lambda model: model.__name__)
+def test_analysis_fields_documented(model):
+    assert documented(model.__name__) == set(model.model_fields)
+
+
+@pytest.mark.parametrize(
+    "model", ANALYSIS_DATACLASSES, ids=lambda model: model.__name__
+)
+def test_analysis_container_fields_documented(model):
+    assert documented(model.__name__) == {field.name for field in fields(model)}
+
+
+def test_analysis_registry_is_complete():
+    models = {
+        value
+        for value in vars(analysis).values()
+        if isinstance(value, type)
+        and issubclass(value, BaseModel)
+        and value.__module__ == analysis.__name__
+    }
+    assert models == set(ANALYSIS_MODELS)
+    assert documented("Analysis tables") == set(analysis.TABLE_SCHEMAS)
+    assert documented("Analysis reasons") == ANALYSIS_REASONS
+
+
+@pytest.mark.parametrize(
+    "table", tuple(analysis.TABLE_SCHEMAS), ids=tuple(analysis.TABLE_SCHEMAS)
+)
+def test_analysis_table_dtypes_and_foreign_keys_documented(table):
+    text = DICTIONARY.read_text(encoding="utf-8")
+    section = text.split(f"### `Analysis table {table}`\n", 1)[1].split("\n#", 1)[0]
+    assert documented("Analysis table " + table) == set(analysis.TABLE_SCHEMAS[table])
+    for field, dtype in analysis.TABLE_SCHEMAS[table].items():
+        assert f"| `{field}` | `{dtype}` |" in section
+    assert repr(analysis.TABLE_GRAINS[table]) in section
+    assert repr(analysis.TABLE_FOREIGN_KEYS[table]) in section
+
+
+def test_analysis_final_validation_gate_is_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert "validate_analysis_tables(tables: AnalysisTables) -> AnalysisTables" in text
+    assert "AnalysisRun" in text and "StoredAnalysisRun" in text
+    assert "Task 6 builds completion, coverage and prevalence" in text
+    assert "Task 8 owns storage, serialization, reverification and publication" in text
+    assert "Task 6 storage/serialization" not in text
+
+
+def test_analysis_consuming_gate_and_c2_hashes_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert "reverify_analysis_inputs(inputs: AnalysisInputs) -> BoundAnalysis" in text
+    assert "analysis_provenance_hash" in text
+    assert "schema 1 binds judge cache files" in text
+    assert "application validates original event/pilot/state derivation" in text
+
+
+def test_processing_schema_two_is_additive_and_documented():
+    from earnings_ingestion.events.state_table import PROCESSING_SCHEMA, SCHEMA
+
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert documented("Processing table") == set(PROCESSING_SCHEMA)
+    section = text.split("### `Processing table`\n", 1)[1].split("\n#", 1)[0]
+    for field, dtype in PROCESSING_SCHEMA.items():
+        assert f"| `{field}` | `{dtype}` |" in section
+    assert set(PROCESSING_SCHEMA) == set(SCHEMA) | {
+        "processing_run_id",
+        "processing_run_hash",
+        "completion_hash",
+        "processing_reason",
+    }
+    assert "write_processing_run" in text and "StateRecord" in text
+    assert "schema-1 writer bytes" in text
+    assert "WorkflowFailure" in text and "DocumentCompletion" in text
+    assert "parsed_documents(transitions, pilot_hash)" in text
+    assert "Schema-1 parse failure recovery" in text
+    assert "canonical availability, not analytical" in text
+
+
+def test_analysis_row_projection_interface_and_null_refusal_documented():
+    import inspect
+
+    import earnings_themes.analysis as public
+
+    assert tuple(inspect.signature(public.build_observations).parameters) == ("bound",)
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert "build_observations(bound: BoundAnalysis) -> AnalysisTables" in text
+    section = text.split("### `RejectionAudit`\n", 1)[1].split("\n### ", 1)[0]
+    assert "| `window_id` | `string or null` |" in section
+    assert "a-{window_id}-{attempt}" in section
+    assert (
+        "copy_processing_conflict" in text.split("### Analytical row projection", 1)[1]
+    )
+
+
+def test_task6_public_completion_and_selected_universe_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    for name in (
+        "document_completions",
+        "build_coverage",
+        "prevalence",
+        "build_analysis",
+        "selected_universe_hash",
+        "operative_hash",
+        "equal_issuer_mean",
+        "completed-no-theme",
+    ):
+        assert name in text
+
+
+def test_evidence_preparation_and_capture_boundaries_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert "make_evidence_view(bound: BoundAnalysis" in text
+    assert "raw_snapshot: RawSnapshot | None" in text
+    assert "capture_evidence_view(view: EvidenceView" in text
+    assert "canonical-evidence-html/1" in text
+    assert "raw_snapshot_missing" in text
+    assert "prepared capture" in text
+
+
+def test_snapshot_withholding_and_nested_export_rights_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    section = text.split("### `EvidenceViewReference`", 1)[1].split(
+        "### `CaptureObservation`", 1
+    )[0]
+    assert "snapshot_withheld" in section
+    assert "forbidden nested artifact" in text
+    reasons = text.split("### `Analysis reasons`", 1)[1].split(
+        "### `Analysis tables`", 1
+    )[0]
+    assert "\n\n| `browser_unavailable`" not in reasons
+
+
+def test_report_manifest_and_publication_interfaces_documented():
+    import earnings_themes.analysis as public
+    from earnings_pipeline.theme_report import ReportManifest
+
+    assert documented("ReportManifest") == set(ReportManifest.model_fields)
+    text = DICTIONARY.read_text(encoding="utf-8")
+    for name in (
+        "write_analysis_run",
+        "read_analysis_run",
+        "reverify_analysis_run",
+        "write_theme_report",
+    ):
+        assert name in text
+    assert all(
+        callable(getattr(public, name))
+        for name in ("write_analysis_run", "read_analysis_run", "reverify_analysis_run")
+    )
+    assert "published byte bindings" in text
+    assert "capture_not_supplied" in text and "browser_observation_not_supplied" in text
+
+
+WORKFLOW_MODELS = [
+    theme_config.FileSelection,
+    theme_config.StoredSelection,
+    theme_config.SourceSelection,
+    theme_config.WorkflowConfig,
+    theme_workflow.WorkflowArtifact,
+    theme_workflow.WorkflowFailure,
+    theme_workflow.WorkflowReceipt,
+]
+WORKFLOW_DATACLASSES = [theme_workflow.WorkflowRuntime, theme_workflow.WorkflowResult]
+
+
+@pytest.mark.parametrize("model", WORKFLOW_MODELS, ids=lambda model: model.__name__)
+def test_workflow_fields_documented(model):
+    assert documented(model.__name__) == set(model.model_fields)
+
+
+@pytest.mark.parametrize(
+    "model", WORKFLOW_DATACLASSES, ids=lambda model: model.__name__
+)
+def test_workflow_dataclass_fields_documented(model):
+    assert documented(model.__name__) == {field.name for field in fields(model)}
+
+
+def test_workflow_closed_reasons_and_baseline_contract_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert documented("Workflow reasons") == theme_config.WORKFLOW_REASONS
+    assert "immediate immutable parsed predecessor" in text
+    assert "stored_analysis" in text and "capture_nondurable" in text
+    assert "schema-2 partial" in text and "schema-1 partial" in text

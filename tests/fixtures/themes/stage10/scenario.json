@@ -1,0 +1,93 @@
+{
+  "scope": "fixture",
+  "cases": [
+    {
+      "event_id": "A-Q1",
+      "processing_state": "completed",
+      "reasons": [],
+      "finding": null,
+      "actor_id": null
+    },
+    {
+      "event_id": "A-Q2",
+      "processing_state": "completed-no-theme",
+      "reasons": [
+        "explicit_no_theme"
+      ],
+      "finding": "no_theme",
+      "actor_id": "invented-fixture-actor"
+    },
+    {
+      "event_id": "B-Q1",
+      "processing_state": "completed",
+      "reasons": [],
+      "finding": null,
+      "actor_id": null
+    },
+    {
+      "event_id": "B-Q2",
+      "processing_state": "unavailable",
+      "reasons": [
+        "not_found"
+      ],
+      "finding": null,
+      "actor_id": null
+    },
+    {
+      "event_id": "C-Q1",
+      "processing_state": "partial",
+      "reasons": [
+        "calibration_required"
+      ],
+      "finding": null,
+      "actor_id": null
+    },
+    {
+      "event_id": "D-Q1",
+      "processing_state": "failed",
+      "reasons": [
+        "parse_failed"
+      ],
+      "finding": null,
+      "actor_id": null
+    },
+    {
+      "event_id": "E-Q1",
+      "processing_state": "restricted",
+      "reasons": [
+        "rights_restricted"
+      ],
+      "finding": null,
+      "actor_id": null
+    },
+    {
+      "event_id": "F-Q1",
+      "processing_state": "partial",
+      "reasons": [
+        "valid_unmatched"
+      ],
+      "finding": null,
+      "actor_id": null
+    },
+    {
+      "event_id": "G-Q1",
+      "processing_state": "partial",
+      "reasons": [
+        "no_theme_unconfirmed"
+      ],
+      "finding": null,
+      "actor_id": null
+    },
+    {
+      "event_id": "H-Q1",
+      "processing_state": "partial",
+      "reasons": [
+        "assessment_refused",
+        "assessment_flagged",
+        "assessment_incomplete"
+      ],
+      "finding": null,
+      "actor_id": null
+    }
+  ]
+}

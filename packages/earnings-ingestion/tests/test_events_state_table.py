@@ -121,11 +121,11 @@ def test_a_run_file_holds_one_run(tmp_path) -> None:
 
 def test_reading_refuses_another_schema_or_a_broken_history(tmp_path) -> None:
     state_frame(RUN).drop("corpus_error").write_parquet(tmp_path / "odd.parquet")
-    with pytest.raises(ValueError, match="odd.parquet does not have the state table"):
+    with pytest.raises(ValueError, match="state_schema_invalid"):
         read_runs(tmp_path)
     (tmp_path / "odd.parquet").unlink()
     write_run(tmp_path, RUN[1:])
-    with pytest.raises(ValueError, match="starts at expected"):
+    with pytest.raises(ValueError, match="state_history_invalid"):
         read_runs(tmp_path)
 
 
@@ -133,7 +133,7 @@ def test_no_directory_is_no_run(tmp_path) -> None:
     assert read_runs(tmp_path / "absent") == []
 
 
-def test_a_run_file_that_cannot_be_read_is_refused_by_name(tmp_path) -> None:
+def test_a_run_file_that_cannot_be_read_has_a_closed_reason(tmp_path) -> None:
     (tmp_path / "acquire-x.parquet").write_bytes(b"not parquet")
-    with pytest.raises(ValueError, match="acquire-x.parquet cannot be read"):
+    with pytest.raises(ValueError, match="state_storage_corrupt"):
         read_runs(tmp_path)

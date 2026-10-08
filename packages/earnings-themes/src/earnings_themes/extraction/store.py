@@ -10,33 +10,41 @@ ES6).
   visits, quotes, claims, and rejections. The files are written into a hidden
   sibling, which is then renamed, so a run directory is whole or absent, and an
   existing one is never overwritten.
-- **Reading.** ``read_run`` refuses a file of another schema, and reads each row back
-  through its model in JSON mode, so strict typing holds. A refused row is named by
-  its file, row, and fields, never its text (GS13). Each consumer verifies the quotes
-  again at its own gate.
+- **Reading.** ``read_run`` refuses a file of another schema, revalidates nested
+  models, and enforces the shared relational gate. Refusals carry fixed reasons,
+  with no row values, paths or exception chain (GS13). Each consumer verifies
+  quotes again at its own gate.
 - **Where.** The caller supplies the directory. Stage 7 writes only to test temporary
   directories: never to ``data/``, and never a committed file.
 """
 
+import hashlib
+import itertools
 import os
 import shutil
 import tempfile
-from collections.abc import Sequence
+from collections import Counter
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
 import polars as pl
-from earnings_core import Rejection, reverify_span
+from earnings_core import Rejection, canonical_json, digest, reverify_span
+from pydantic import BaseModel
 
 from earnings_themes.anchoring import Bundle
 from earnings_themes.extraction.records import (
+    REASONS,
     Claim,
+    DocumentOutcome,
     DocumentRecord,
+    ExtractionProblem,
     ExtractionRecord,
     ExtractionRejection,
     Quote,
     RunRecord,
     Visit,
+    WindowOutcome,
     WindowRecord,
 )
 from earnings_themes.extraction.run import RunResult
@@ -198,7 +206,10 @@ class StorageRefused(ValueError):
 
     def __init__(self, refused: Sequence[tuple[str, str, str]]) -> None:
         self.refused = tuple(refused)
-        listed = "; ".join(f"{d} {q}: {reason}" for d, q, reason in self.refused)
+        listed = "; ".join(
+            f"{_diagnostic_id(d)} {_diagnostic_id(q)}: {_diagnostic_reason(reason)}"
+            for d, q, reason in self.refused
+        )
         super().__init__(f"{len(self.refused)} quotes failed verification: {listed}")
 
 
@@ -221,42 +232,243 @@ def refused_quotes(
     return refused
 
 
+def _diagnostic_id(value: str) -> str:
+    # The exception has no trusted current-document binding; syntax proves none.
+    if type(value) is not str:
+        return "id-invalid"
+    return "id-" + hashlib.sha256(value.encode()).hexdigest()[:12]
+
+
+def _diagnostic_reason(value: str) -> str:
+    return value if type(value) is str and value in REASONS else "malformed_record"
+
+
+def _require(condition: bool) -> None:
+    if not condition:
+        raise ValueError("malformed_record")
+
+
+def _fresh_record[M: BaseModel](record: M, model: type[M]) -> M:
+    _require(type(record) is model)
+    return model.model_validate_json(
+        canonical_json(record.model_dump(mode="python", warnings=False))
+    )
+
+
+def validate_stored_run(run: StoredRun) -> StoredRun:
+    """Return strictly reconstructed, relationally checked schema-1 records.
+
+    This gate performs no I/O or evidence-text verification. Consumers still
+    reverify spans against their current immutable bundles and masks.
+    """
+    try:
+        _require(type(run) is StoredRun)
+        rows = {}
+        for kind, (model, _) in SCHEMAS.items():
+            given = getattr(run, kind)
+            _require(type(given) is tuple)
+            rows[kind] = tuple(_fresh_record(row, model) for row in given)
+        checked = StoredRun(record=_fresh_record(run.record, RunRecord), **rows)
+        _validate_relations(checked)
+        return checked
+    except Exception:  # noqa: BLE001 - storage boundaries suppress untrusted diagnostics
+        raise ValueError("malformed_record") from None
+
+
+def _unique[R, K](rows: Sequence[R], key: Callable[[R], K]) -> dict[K, R]:
+    indexed = {key(row): row for row in rows}
+    _require(len(indexed) == len(rows))
+    return indexed
+
+
+def _validate_relations(run: StoredRun) -> None:
+    documents = _unique(run.documents, lambda d: d.doc_id)
+    windows = _unique(run.windows, lambda w: (w.doc_id, w.window_id))
+    quotes = _unique(run.quotes, lambda q: (q.span.doc_id, q.quote_id))
+    _unique(run.claims, lambda c: (c.doc_id, c.claim_id))
+    _unique(run.visits, lambda v: (v.doc_id, v.element_id))
+    _require(
+        run.record.documents == {d.doc_id: d.canonical_hash for d in run.documents}
+    )
+    _require(run.record.configuration_hash == digest(run.record.configuration))
+    for window in run.windows:
+        _require(window.doc_id in documents)
+    expected_visits = tuple(
+        (w.doc_id, unit, w.window_id, w.outcome, w.reason)
+        for w in run.windows
+        for unit in w.unit_ids
+    )
+    actual_visits = tuple(
+        (v.doc_id, v.element_id, v.window_id, v.outcome, v.reason) for v in run.visits
+    )
+    _require(actual_visits == expected_visits)
+    linked = set()
+    candidate_keys = set()
+    for claim in run.claims:
+        window = windows.get((claim.doc_id, claim.window_id))
+        _require(window is not None)
+        _require(
+            window.outcome is WindowOutcome.COMPLETED
+            and claim.attempt <= window.attempts
+        )
+        index = int(claim.claim_id.rsplit("-", 1)[1])
+        key = (claim.doc_id, claim.window_id, claim.attempt, index)
+        _require(key not in candidate_keys)
+        candidate_keys.add(key)
+        for quote_id in claim.quote_ids:
+            quote = quotes.get((claim.doc_id, quote_id))
+            _require(quote is not None)
+            _require(quote.span.element_id in window.unit_ids)
+            _require(window.start <= quote.span.start < quote.span.end <= window.end)
+            linked.add((claim.doc_id, quote_id))
+    _require(linked == set(quotes))
+    for quote in run.quotes:
+        document = documents.get(quote.span.doc_id)
+        _require(
+            document is not None
+            and quote.span.canonical_hash == document.canonical_hash
+        )
+    for rejection in run.rejections:
+        _require(rejection.doc_id in documents)
+        if rejection.window_id is None:
+            _require(rejection.attempt is None and rejection.candidate_index is None)
+            _require(rejection.rejection is not None)
+            continue
+        window = windows.get((rejection.doc_id, rejection.window_id))
+        _require(window is not None and rejection.attempt is not None)
+        blocked = rejection.problem is ExtractionProblem.BUDGET_EXHAUSTED
+        maximum = window.attempts + (1 if blocked and window.exhausted else 0)
+        _require(rejection.attempt <= min(2, maximum))
+        _require(all(unit in window.unit_ids for unit in rejection.element_ids))
+        if rejection.candidate_index is not None:
+            _require(not blocked)
+            key = (
+                rejection.doc_id,
+                rejection.window_id,
+                rejection.attempt,
+                rejection.candidate_index,
+            )
+            _require(key not in candidate_keys)
+            candidate_keys.add(key)
+    for document in run.documents:
+        _validate_document(document, run)
+    record = run.record
+    for field in ("units", "windows", "candidates", "quotes", "claims"):
+        _require(
+            getattr(record, field) == sum(getattr(d, field) for d in run.documents)
+        )
+    _require(
+        record.rejections_by_reason == dict(Counter(r.reason for r in run.rejections))
+    )
+    for field in (
+        "requests",
+        "cache_hits",
+        "prompt_tokens",
+        "completion_tokens",
+        "unreported",
+    ):
+        _require(getattr(record, field) == sum(getattr(w, field) for w in run.windows))
+    _require(record.exhausted == any(w.exhausted for w in run.windows))
+
+
+def _validate_document(document: DocumentRecord, run: StoredRun) -> None:
+    doc_id = document.doc_id
+    windows = tuple(w for w in run.windows if w.doc_id == doc_id)
+    claims = tuple(c for c in run.claims if c.doc_id == doc_id)
+    quotes = tuple(q for q in run.quotes if q.span.doc_id == doc_id)
+    rejections = tuple(r for r in run.rejections if r.doc_id == doc_id)
+    units = tuple(unit for w in windows for unit in w.unit_ids)
+    _require(len(units) == len(set(units)))
+    _require(
+        all(left.end <= right.start for left, right in itertools.pairwise(windows))
+    )
+    failed = sum(w.outcome is WindowOutcome.FAILED for w in windows)
+    expected = {
+        "units": len(units),
+        "windows": len(windows),
+        "windows_failed": failed,
+        "candidates": len(claims)
+        + sum(r.candidate_index is not None for r in rejections),
+        "quotes": len(quotes),
+        "claims": len(claims),
+        "rejections": len(rejections),
+    }
+    _require(all(getattr(document, key) == value for key, value in expected.items()))
+    refused_document = any(r.window_id is None for r in rejections)
+    if refused_document:
+        _require(not windows and not claims and not quotes)
+        outcome = DocumentOutcome.FAILED
+    elif not failed:
+        outcome = DocumentOutcome.COMPLETED
+    elif failed == len(windows):
+        outcome = DocumentOutcome.FAILED
+    else:
+        outcome = DocumentOutcome.PARTIAL
+    _require(document.outcome is outcome)
+
+
+def _safe_path(path: Path) -> None:
+    # Check before resolving or reading; a symlink must not expose other inputs.
+    if ".." in path.parts or any(p.is_symlink() for p in (path, *path.parents)):
+        raise ValueError("storage_corrupt")
+
+
 def write_run(directory: Path, run: StoredRun, bundles: Sequence[Bundle]) -> Path:
-    """Write ``run`` to the new directory ``directory``, once every quote verifies
-    again against ``bundles``; raises ``StorageRefused`` and writes nothing if any
-    fails, and ``FileExistsError`` if ``directory`` exists."""
-    refused = refused_quotes(run, bundles)
+    """Publish a new structurally valid run after current quote reverification.
+
+    Structural refusals are ``malformed_record``; storage failures are
+    ``storage_corrupt``. Existing directories raise a fixed ``FileExistsError``.
+    """
+    run = validate_stored_run(run)
+    try:
+        refused = refused_quotes(run, bundles)
+    except Exception:  # noqa: BLE001 - storage boundaries suppress untrusted diagnostics
+        raise ValueError("malformed_record") from None
     if refused:
         raise StorageRefused(refused)
-    if directory.exists():
-        raise FileExistsError(f"{directory} exists; a run is never overwritten")
-    directory.parent.mkdir(parents=True, exist_ok=True)
-    partial = Path(tempfile.mkdtemp(dir=directory.parent, prefix=f".{directory.name}-"))
+    partial = None
     try:
+        _safe_path(directory)
+        if directory.exists():
+            raise FileExistsError("run_exists")
+        directory.parent.mkdir(parents=True, exist_ok=True)
+        partial = Path(tempfile.mkdtemp(dir=directory.parent, prefix=".extraction-"))
         for kind, (_, schema) in SCHEMAS.items():
             rows = [record.model_dump(mode="json") for record in getattr(run, kind)]
             frame = pl.DataFrame(rows, schema=schema, orient="row")
             frame.write_parquet(partial / f"{kind}.parquet")
         (partial / RUN_FILE).write_bytes(record_json(run.record))
         os.rename(partial, directory)
-    except BaseException:
-        shutil.rmtree(partial, ignore_errors=True)
-        raise
+    except FileExistsError:
+        raise FileExistsError("run_exists") from None
+    except Exception:  # noqa: BLE001 - storage boundaries suppress untrusted diagnostics
+        raise ValueError("storage_corrupt") from None
+    finally:
+        if partial is not None:
+            shutil.rmtree(partial, ignore_errors=True)
     return directory
 
 
 def read_run(directory: Path) -> StoredRun:
-    """The run stored in ``directory``; raises ``ValueError`` for a file of another
-    schema, and ``RecordError`` for a record its model refuses."""
-    record = parse(read_json(directory / RUN_FILE), RunRecord, RUN_FILE)
-    kinds = {}
-    for kind, (model, schema) in SCHEMAS.items():
-        path = directory / f"{kind}.parquet"
-        frame = pl.read_parquet(path)
-        if frame.schema != schema:
-            raise ValueError(f"{path.name} does not have the {kind} schema")
-        kinds[kind] = tuple(
-            parse(row, model, f"{path.name} row {index}")
-            for index, row in enumerate(frame.iter_rows(named=True))
-        )
-    return StoredRun(record=record, **kinds)
+    """Load only exact schemas, then enforce the public structural gate.
+
+    Files, schemas, rows, and relationships fail as ``storage_corrupt`` without
+    their values, paths, details, or exception chains.
+    """
+    try:
+        _safe_path(directory)
+        record_path = directory / RUN_FILE
+        _safe_path(record_path)
+        record = parse(read_json(record_path), RunRecord, RUN_FILE)
+        kinds = {}
+        for kind, (model, schema) in SCHEMAS.items():
+            path = directory / f"{kind}.parquet"
+            _safe_path(path)
+            frame = pl.read_parquet(path)
+            _require(frame.schema == schema)
+            kinds[kind] = tuple(
+                parse(row, model, kind) for row in frame.iter_rows(named=True)
+            )
+        return validate_stored_run(StoredRun(record=record, **kinds))
+    except Exception:  # noqa: BLE001 - storage boundaries suppress untrusted diagnostics
+        raise ValueError("storage_corrupt") from None

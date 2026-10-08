@@ -654,3 +654,6 @@ a fixture (`A §769`).
 
 > Stage 9: COMPLETE (2026-10-06) — implemented by plan 14 (specs/plans/completed/14-evidence-linked-theme-extraction.md).
 > Next: resume the roadmap.
+
+> Stage 10: COMPLETE (2026-10-08) — implemented by plan 15 (specs/plans/completed/15-evidence-linked-theme-extraction.md).
+> Next: resume the roadmap.

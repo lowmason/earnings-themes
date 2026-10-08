@@ -443,3 +443,22 @@ def test_nli_scan_detects_planted_forbidden_imports(tmp_path, source):
     path = package / "ordinary.py"
     path.write_text(source, encoding="utf-8")
     assert nli_import_violations(path)
+
+
+def test_analysis_and_application_composition_boundaries():
+    paths = sorted((SOURCES["earnings_themes"] / "analysis").glob("*.py"))
+    assert len(paths) >= 8
+    violations = [
+        (line, name)
+        for path in paths
+        for line, name in imported(path)
+        if name.startswith(("earnings_ingestion", "earnings_pipeline"))
+    ]
+    assert len(violations) == 0
+    workflow = SOURCES["earnings_pipeline"] / "theme_workflow.py"
+    names = {name for _, name in imported(workflow)}
+    assert {
+        "earnings_themes.analysis",
+        "earnings_ingestion.events.state_table",
+    } <= names
+    assert not any(".tests." in name for name in names)

@@ -50,9 +50,9 @@ def test_upstream_contracts_are_unchanged():
 
 def test_producer_serialization_is_unchanged():
     claim = Claim(
-        claim_id="c",
+        claim_id="c-0-10-1-0",
         doc_id="d",
-        window_id="w",
+        window_id="w-0-10",
         attempt=1,
         claim="Invented claim.",
         quote_ids=("q-0-10",),
@@ -60,13 +60,13 @@ def test_producer_serialization_is_unchanged():
     expected = """{
  "attempt": 1,
  "claim": "Invented claim.",
- "claim_id": "c",
+ "claim_id": "c-0-10-1-0",
  "doc_id": "d",
  "quote_ids": [
   "q-0-10"
  ],
  "schema_version": 1,
- "window_id": "w"
+ "window_id": "w-0-10"
 }
 """
     assert record_json(claim) == expected.encode("utf-8")

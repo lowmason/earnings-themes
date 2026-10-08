@@ -1,5 +1,6 @@
 """Ordered fake proposal runs; no support inference or source discovery."""
 
+import importlib
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta, timezone
 
@@ -163,10 +164,9 @@ def test_two_claims_keep_requested_order_and_share_request_ceiling(
     coding_case, coding_policy, classifier_identity, tmp_path
 ):
     claim = coding_case.stored_run.claims[0]
-    other = claim.model_copy(update={"claim_id": "invented-second-claim"})
-    sources = replace(
-        coding_case, stored_run=replace(coding_case.stored_run, claims=(claim, other))
-    )
+    sources, other = importlib.import_module(
+        "packages.earnings-themes.tests.support.cases"
+    ).append_fixture_claim(coding_case)
     order = ((other.doc_id, other.claim_id), (claim.doc_id, claim.claim_id))
     limits = CodingCeilings(
         requests_per_claim=2,
@@ -194,11 +194,9 @@ def test_two_claims_keep_requested_order_and_share_request_ceiling(
 def test_all_claims_are_resolved_before_any_dispatch(
     coding_case, coding_policy, classifier_identity, tmp_path
 ):
-    claim = coding_case.stored_run.claims[0]
-    other = claim.model_copy(update={"claim_id": "invented-second-claim"})
-    sources = replace(
-        coding_case, stored_run=replace(coding_case.stored_run, claims=(claim, other))
-    )
+    sources, other = importlib.import_module(
+        "packages.earnings-themes.tests.support.cases"
+    ).append_fixture_claim(coding_case)
 
     def mutate(request):
         object.__setattr__(other, "claim", "An altered invented later claim.")
@@ -449,11 +447,9 @@ def test_final_identity_read_precedes_pure_binding_checks(
 def test_second_claim_crosses_shared_run_and_document_limits(
     coding_case, coding_policy, classifier_identity, tmp_path, limit, reason
 ):
-    claim = coding_case.stored_run.claims[0]
-    other = claim.model_copy(update={"claim_id": "invented-second-claim"})
-    sources = replace(
-        coding_case, stored_run=replace(coding_case.stored_run, claims=(claim, other))
-    )
+    sources, _other = importlib.import_module(
+        "packages.earnings-themes.tests.support.cases"
+    ).append_fixture_claim(coding_case)
     limits = CodingCeilings(
         requests_per_claim=2,
         requests_per_document=20,
