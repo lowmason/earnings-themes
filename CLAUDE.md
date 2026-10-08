@@ -4,12 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Document status — read before trusting any file here
 
-Working code implements Stages 1–9: parser investigation, canonical evidence,
+Working code implements completed Stages 1–10: parser investigation, canonical evidence,
 point-in-time cohort, frozen events/acquisition, split/codebook/gold contracts,
 extraction, support and coding. Stage 10 implements explicit replay composition,
 current analytical gates, coverage/prevalence and cited publication on permitted
-synthetic/invented fixtures. Stage 10 remains under review; final reviews, native
-V5 and human completion gates are pending. No pilot extraction or calibration is
+synthetic/invented fixtures. Stage 10 technical reviews, native/manual V5 and human
+completion gates are observed on 2026-10-08. Completion documentation awaits scoped
+review and branch integration remains pending. No pilot extraction or calibration is
 claimed. The binding specifications and live roadmap govern completion.
 Not all of it is binding.
 
@@ -31,7 +32,7 @@ Not all of it is binding.
 
 **Deliberately unresolved — do not silently pick one** (AGENTS.md §"Source basis and unresolved choices"): the production provider/model, the final theme taxonomy, and non-exactness quality thresholds. Record these in config or a decision record; do not invent agreement. The fourth such choice, an approved inference budget, is now recorded by `specs/evidence-linked-theme-extraction.md` R14.2: **$100, for the optional hosted-ceiling ablation only**, not prompt-optimizer compiles or any other billable call. The required path needs no billable inference: R14.1 limits it to open-weight, self-hosted models, which narrows the model choice without making it.
 
-## Current state: Stages 1–9 complete; Stage 10 under review
+## Current state: Stages 1–10 complete; integration pending
 
 Stage 1 of the roadmap (release parser fidelity, `specs/release-parser-fidelity.md`) is done:
 
@@ -111,15 +112,20 @@ Use the guarded commands in README and
 The human-only `root-user --user-only` route has the approved fixed 1800-second
 deadline; wording and browser routes retain 300 seconds. The prior human root
 run timed out at 300 seconds with placeholder zero counters/empty IDs; it
-establishes no passed tests or successful duration. Fresh human root/wording and
-V5 evidence at the later reviewed implementation HEAD remains pending.
+establishes no passed tests or successful duration. At reviewed implementation
+HEAD `611f84a`, the human root passed 4241 with 9 skips and 28 deselections,
+and both wording gates passed one each; all failure/collection/warning counters
+were zero. Root exit/elapsed were not supplied. Native/manual V5 is observed;
+see the durable verification record for exact SHA bindings and historical failures.
 Agents must not run root/Stage 6 wording/browser/user-only modes, inspect protected
 artifacts, resolve examples or load a model. Fixture checks establish V8/V10
 machinery, not acceptance quality, pilot prevalence or native browser behavior.
 Static canonical views use CP spans; UTF-16 exists only at the browser boundary.
 Export obeys nested artifact rights and explicit raw/text permissions; screenshots
-stay local_only. V5 native/capture/manual fallback and external HTTPS remain
-pending/unverified. Stage 11 owns pilot extraction and calibration; later-stage
+stay local_only. Human V5 records five native highlights, drift not_highlighted
+and six visible fallbacks in the pinned available/used target. Actual capture
+and external HTTPS remain unverified; the capture skip cause is unspecified.
+Stage 11 owns pilot extraction and calibration; later-stage
 ownership and GS13 remain unchanged.
 
 The top-level modules retain their `hello()` stubs alongside implemented

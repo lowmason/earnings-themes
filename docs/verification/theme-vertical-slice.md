@@ -1,5 +1,9 @@
 # Stage 10 fixture vertical slice verification
 
+## Historical documentation and implementation checkpoints
+
+The following record preserves the earlier pending states, failures, skips and deviations as history; the current completion reconciliation is appended below.
+
 Documentation checkpoint, 2026-10-07. Stage 10 implementation has fixture V8/V10
 proof; overall completion remains pending. Task 11 specification and quality were
 approved at `25d71813041b7e5b5f2ee7345fc0da533502517b`. This Task 12 documentation
@@ -322,3 +326,46 @@ approvals apply to their recorded ranges. Historical timeout evidence and the
 existing deviations/controller-triage findings above remain unchanged. Screenshots
 remain unopened and local_only; ignored-byte equality remains unverified. No
 stamp, deferred disposition, plan retirement, integration or cleanup is asserted.
+
+## Completion reconciliation — 2026-10-08
+
+Stage 10 technical implementation and human completion gates are satisfied; its shared Rollout stamp and roadmap tick are recorded and only plan 15 is retired. The new completion documentation delta awaits sequential scoped controller review. Integration selection, branch/worktree cleanup and final controller report remain pending. The original checkpoint sections above are historical, including their pending-gate wording.
+
+Both sequential independent whole-branch seats approved `7d9b2cb7d989a769ae1429afe8d3f3b1d180dea4` → `cb1cda84be1e2b4387641e2744af2d37d7468b51`; both scoped seats approved the root-timeout delta `cb1cda84be1e2b4387641e2744af2d37d7468b51` → `7b65a77d75bdd549d8809d73963b208e0e0352a8` and the refusal-test delta `7b65a77d75bdd549d8809d73963b208e0e0352a8` → `611f84a564ed9bfd4a52cf6682bf2c6a88676a23`. No Critical/Important finding remains in those ranges. Human root at the latter HEAD: 4241 passed, 9 skipped, 28 deselected; fixture wording and exact-HEAD-guarded pilot helper: 1 passed each, no skips. Zero failures/collection failures/warnings, empty safe IDs and null reasons. Root exit and elapsed time were not supplied. Binding for subsequent human reports uses the continuous same-checkout metadata and helper guard, rather than a separately repasted SHA.
+
+V5 native/manual gate is observed on 2026-10-08: pinned Chrome target available/used; five highlighted and drift not_highlighted; all six independent canonical fallbacks span_visible, repeated second occurrence; plain control opened with two unhighlighted items. Capture command skipped once with cause unspecified, actual screenshot capture unverified; local-file results do not establish HTTPS or automatic long-page scrolling. Original scenario order/status vocabulary, 23 freeze inputs and two approved amendments are retained.
+
+
+Resolve-before-defer: both final seats classify the orchestration/helper-typing M1 and variable fixture tuple M2 as nonblocking maintenance, now P15-M1/P15-M2 (Size: plan) with explicit triggers and Done when conditions in `specs/deferred_items.md`. M3’s protocol-ordering history is retained without a checkbox. The fully repaired renderer group alone closes; the durable 47-item baseline and current proposal are in [stage10-backlog-triage.md](stage10-backlog-triage.md). No unrelated deferred work executes.
+
+The original named final-review role was unavailable; the controller used two fresh full-form Sol Ultra seats sequentially at the same implementation HEAD. The subsequent two review pairs are scoped to their exact repair ranges. The later clarification removed a reviewer-inferred extra protected-hash-attestation gate; it did not relax GC/GS13. Protected ignored-byte equality remains unverified, while the tracked reviewed ranges contain no protected changes and agents made no protected reader/writer operation. Neither old reviews nor human gates review this new documentation delta.
+
+Actual public seams remain `load_workflow_config(path: Path, *, repo: Path) -> WorkflowConfig`, `run_theme_workflow(config: WorkflowConfig, runtime: WorkflowRuntime, *, now: Callable[[], datetime]) -> WorkflowResult`, structural `read_analysis_run(directory: Path) -> StoredAnalysisRun` and current `reverify_analysis_run(stored, inputs, policy, families) -> None`. Fourteen analytical table schemas and analysis/report/workflow schema 1; processing schema 2 preserves legacy schema 1; core schema 2 remains unchanged. No pilot extraction, production quality/calibration, all-four-cache fresh stability, transcript extraction, SEC request, model call/download or hosted dispatch is claimed.
+
+Human native/manual V5 details and limitations are durable in [stage10-browser.md](stage10-browser.md) and its safe observation JSON. All six fallback outcomes reflect human inline invented-page evidence; no actual capture files were opened by agents or copied into Git/export. The capture skip’s SDK/binary/platform cause remains unreported despite the available pinned manual target.
+
+### Executed deferred statistics
+
+Required developer Python 3.13 ran offline without downloads, exit 0:
+
+```bash
+UV_CACHE_DIR=/private/tmp/earnings-stage10-uv uv run --no-project --python 3.13 --offline --no-python-downloads python /Users/lowell/.agents/skills/writing-plans/scripts/deferred_stats.py --json
+```
+
+Post-completion: **48 open / 35 closed / 83 total**, closure rate **0.4217 (42.17%)**. All 48 open items are 0–14 days old; 15–30, 31–45, 46–90 and 91+ buckets are zero. Aged >45 days and undated open items are zero. Oldest is 13 days (`1-release-parser-fidelity`). With at least 20 open items, the read-only proposal follows these statistics in `docs/verification/stage10-backlog-triage.md`; unrelated dispositions still require human `/deferred` selection. The 47-open baseline is retained distinctly. No aged-tail acknowledgement is needed.
+
+### Fresh completion documentation checks
+
+After allowlisted source comparison against the retained 253-source audit, 251 sources matched; only the previously reviewed guarded runner and its regression test differed. The changed guard and exact selected contracts/vertical registries, imports, fixtures and readers were audited before collection. Selected readers use permitted Stage 1/synthetic event fixtures, invented temporary repositories or source/docs/AST; no protected real-data/example reader is dispatched. The human modes were never invoked, even through a fake transport.
+
+Sequential captured checks with `POLARS_MAX_THREADS=2` and `UV_CACHE_DIR=/private/tmp/earnings-stage10-uv`:
+
+```bash
+uv run --locked --offline --no-sync --all-packages python tools/stage10_checks.py contracts
+uv run --locked --offline --no-sync --all-packages python tools/stage10_checks.py vertical
+uv run --locked --offline --no-sync ruff check packages apps tests tools --output-format json
+uv run --locked --offline --no-sync ruff format --check packages apps tests tools
+git diff --check
+```
+
+Fresh contracts: **548 passed**; vertical: **21 passed**. Both exit 0 with zero failures, collection failures, skips, deselections and warnings, IDs [] and reason null. Ruff lint exit 0, zero findings; format exit 0, **368 files already formatted**. Diff check exit 0. Probe construction and execution were inside an outer catch, with captured output and only closed safe metadata emitted. Stage10/root/Stage6 wording/browser were not rerun for this documentation delta. No artificial documentation RED was added; the prior 547/1 regression and corrected 548 remain in the historical record. These checks establish this delta’s consistency, not the pending scoped review or integration.

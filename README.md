@@ -3,13 +3,14 @@
 Evidence-linked research infrastructure for company data and earnings themes.
 
 > [!IMPORTANT]
-> **Project status (2026-10-07): Stages 1–9 are complete; Stage 10 is under review.**
+> **Project status (2026-10-08): Stages 1–10 are implemented and complete; integration is pending.**
 > The workspace implements acquisition, canonical evidence, extraction, support
 > assessment and coding libraries. Stage 10 adds an offline replay command,
 > coverage-aware analytical tables and cited reports, verified on permitted
 > synthetic/invented fixtures. No pilot document has been extracted and no research
-> theme dataset is published. Native V5 observations, final independent reviews
-> and the human-only completion gates remain pending.
+> theme dataset is published. Technical reviews, human-only completion gates and
+> V5 native/manual observations are recorded. The completion documentation delta
+> awaits scoped review; branch integration remains pending.
 
 ## Stage 8 library status (2026-10-05)
 
@@ -161,8 +162,9 @@ using those primitives.
 ## Current roadmap
 
 The implementation is organized as a staged, evidence-first roadmap of sixteen
-stages. Stages 1–9 are complete; Stage 10 implementation has fixture evidence and
-awaits completion gates. The live roadmap remains authoritative.
+stages. Stages 1–10 are complete. Stage 10 has fixture V8/V10 evidence and observed
+human gates; its completion documentation awaits scoped review and integration.
+Resume Stage 11 planning through `derive-roadmap`; the live roadmap remains authoritative.
 
 The roadmap was amended on 2026-09-22 by
 [the point-in-time DJIA cohort specification](specs/point-in-time-djia-cohort.md).
@@ -384,9 +386,15 @@ Rights-denied raw inclusion records `snapshot_withheld`; text-denied evidence is
 `withheld/rights_restricted`. Browser UTF-16 coordinates exist only at the application
 boundary; stored evidence uses Python code-point offsets. Screenshots are always
 `local_only`. Static marks, fake renderer checks and capture completion establish
-no native highlighting. V5 native/capture/manual fallback remains pending, and
-external HTTPS behavior is unverified. Stage 11 owns first pilot extraction,
+no native highlighting. Human V5 observations on 2026-10-08 established five native
+highlights, one drift non-highlight and six visible canonical fallbacks in the
+pinned available Chrome target. Actual screenshot capture and external HTTPS are
+unverified; the capture command skipped once with its cause unspecified. See
+[the V5 record](docs/verification/stage10-browser.md) and
+[completion verification](docs/verification/theme-vertical-slice.md). Stage 11 owns first pilot extraction,
 calibration and fresh-call stability; fixture exactness establishes no model quality.
+
+Completion records: [retired plan 15](specs/plans/completed/15-evidence-linked-theme-extraction.md) and [read-only backlog proposal](docs/verification/stage10-backlog-triage.md). The observed human root result at `611f84a` is 4241 passed / 9 skipped / 28 deselected with zero failures, collection failures and warnings; both wording gates passed one each. No root exit or elapsed time was supplied.
 
 ## Optional dependencies
 

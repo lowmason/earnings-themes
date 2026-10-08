@@ -266,6 +266,10 @@ No stage order or ROUTING changed, no later stage began, and no unrelated deferr
 item was closed. Integration remains the user's choice. Next: Stage 10 via
 writing-plans in a fresh session.
 
+## Stage 10 reconciliation — 2026-10-08
+
+The shared specification Rollout stamps Stage 10 COMPLETE through completed plan 15. Only Stage 10 is newly ticked; stages 11–16 retain their order, ROUTING, requirements and ownership, revalidated below against the shipped seams. `read_analysis_run(directory: Path) -> StoredAnalysisRun` checks structural published byte bindings; `reverify_analysis_run(stored, inputs, policy, families) -> None` checks current inputs before consumption/export. Fourteen table schemas and analysis/report/workflow schema 1 shipped; processing schema 2 retains legacy schema 1; core schema 2 is unchanged. V8/V10 prove fixture machinery/arithmetic only. Human V5 native/manual outcomes are observed, capture/HTTPS unverified. Technical review and human counts/SHAs appear in `docs/verification/theme-vertical-slice.md`; completion documentation review and integration remain pending. Next: Stage 11 planning through derive-roadmap/brainstorming, with no later execution here.
+
 ## Gap analysis
 
 ¹ Searched `packages/*/src`, `apps/*/src`, `tests/{contracts,fixtures,integration}`,
@@ -499,7 +503,7 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Shipped: plan 14 (`specs/plans/completed/14-evidence-linked-theme-extraction.md`), coding schema 1 / `deductive-coding/1`; complete frozen-theme proposals, bounded two-attempt classification and replay, explicit external-policy decisions, default calibration-required review, fixture-scoped acceptance, document-qualified quote–theme assignments and all supporting claim links, pointer-only valid-unmatched novelty, eight typed Parquet tables and current-evidence/policy consuming gates. Nullable topic/sentiment/direction/event-type annotations remain separate and unevaluated. Controller scoped gate 1110 passed; user full root 3532 passed and both protected wording nodes passed; final whole-branch review approved with no implementation findings. No pilot coding, calibration, production model/policy, command, state write or concurrent runtime workers.
       ROUTING: writing-plans
 
-- [ ] Stage 10: Coverage-aware aggregation and cited export (theme vertical slice)
+- [x] Stage 10: Coverage-aware aggregation and cited export (theme vertical slice)
       Objective: Produce analytical rows, coverage-aware prevalence, and a source-linked report that carry one release end to end.
       Spec: R2.3, R3.4 (headline exclusion), R6.1 (before export), R7.1, R7.2, R11.1–R11.6, V5, V8, V10; `specs/browser-rendering-integration.md` (B1, B5, B6, and its Stage 10 sections).
       Gap closed: R2.3, R3.4, R7.1, R7.2, R11.1, R11.2, R11.3, R11.4, R11.5; R11.6 (release roles); V5, V8, V10.
@@ -517,6 +521,8 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Exit: the pilot report gives every R13.1 metric's observed distribution with event-level intervals, labeled feasibility-only (R12.2/R12.7); the V6 record gates only pilot-estimable metrics, marks rare-theme recall, sector prevalence, and source-selection bias descriptive-only, and is committed before any configuration comparison (V6/R13.1, D1); judge agreement with the user's labels is reported against its pre-registered floor, with AUC-ROC for both scorers (R8.4/R8.6/R8.2); a reject-everything configuration fails the suite (R12.8); k-run stability is computed with extraction, classifier, scorer and judge response-cache hits bypassed (R12.10); the D4 coverage report gains the observed no-theme count over the annotated train and dev partitions (R12.4, D4); pilot metrics include the annotated hard-negative claims (R12.5, D4).
       ROUTING: brainstorming
 
+      Stage 10 handoff (plan 15, 2026-10-08): First pilot extraction; `load_workflow_config(Path, *, repo) -> WorkflowConfig` and `run_theme_workflow(config, runtime, *, now) -> WorkflowResult` provide explicit replay/current-gate composition. Schema-2 processing preserves schema-1 acquisition, expected coverage and fixture scope. Own production adapters/panel/policy, at least 50 expert labels, calibration/views/pooling/agreement floors/V6 and bypass of all four extraction/classifier/scorer/judge caches. Terminal/partial reprocessing requires an explicit policy; assessed and fixture V8 make no acceptance-quality claim.
+
 - [ ] Stage 12: Inductive and hybrid codebook
       Objective: Discover candidate themes offline from training-partition evidence, approve them as a new codebook version, and re-code the declared corpus.
       Spec: R9.1 (inductive, hybrid), R9.3 (approval), R9.5, R10.3, R12.3.
@@ -525,6 +531,8 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Produces: an offline clustering aid outside the application pipeline; consolidation preserving evidence pointers and contradictory claims; an approval path from candidate codebook to a new frozen version; a hybrid mode; re-coding under the new version.
       Exit: a test shows candidate themes derive from training-partition data only (R12.3); a test shows consolidation keeps every evidence pointer and contradictory claim (R10.3); approval is recorded in a decision record and re-coded rows carry the new version (R9.1/R9.3); an import check shows no clustering dependency reachable from the application pipeline (R9.5, `embeddings` row).
       ROUTING: brainstorming
+
+      Stage 10 handoff (plan 15, 2026-10-08): Versioned analytical family mappings and self-or-descendant parent counts are views over unchanged v0. New taxonomy/hierarchy or inductive/hybrid book requires training-only discovery, approval, new version and re-coding; mappings do not create themes.
 
 - [ ] Stage 13: Transcript extension (conditional on V7)
       Objective: Add lawfully usable transcripts with speaker roles, or record that no candidate corpus qualifies.
@@ -535,6 +543,8 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Exit: V7 records each candidate's license, redistribution terms, and diarization accuracy against a user-labeled sample (V7); if none supports the management/analyst split, R2.2 is recorded as failed and the stage parks; otherwise fixture transcripts yield role-attributed turns, unresolved roles stay `other`/`unknown`, and restricted text is never redistributed (R2.1/R2.2/R11.6).
       ROUTING: brainstorming
 
+      Stage 10 handoff (plan 15, 2026-10-08): Release roles remain not_applicable and absent transcripts explicitly not in scope. Conditional V7 owns lawful transcripts, transcript identity/speaker attribution/context and producer-consumer changes to Stage 5 release-only IDs and speaker schemas. Missing transcript coverage is no negative signal.
+
 - [ ] Stage 14: Configuration comparison and held-out evaluation
       Objective: Run R12.9's ablations against the V6 gates, freeze one selected configuration, and evaluate it once on the held-out split.
       Spec: R5.2, R10.1 (whole-document arm), R10.2 (retrieval-only arm), R11.5 (dedup arm), R12.9, R13.3; D1.
@@ -543,6 +553,8 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Produces: a generate-then-verify comparator; whole-document and retrieval-only modes; an ablation report with quality, latency, tokens, and cost per arm; a selection decision record; one held-out evaluation report.
       Exit: a test shows generate-then-verify rejects every unresolvable candidate and never repairs wording (R5.2); the ablation report covers every available R12.9 arm and adjudicates against V6's gates (R12.9); the selected configuration is frozen by hash and evaluated on the held-out split once, a second run under the same protocol is refused, and the report is labeled feasibility-level (R13.3, D1).
       ROUTING: writing-plans
+
+      Stage 10 handoff (plan 15, 2026-10-08): Stable analytical/coverage/export artifacts and explicit copy/mask/book/policy/family controls support required ablations. GS18 configuration freeze precedes test text/gold; GS13 remains unchanged through final test-gold drafting. Stage 10 ran no held-out extraction or fresh-call stability.
 
 - [ ] Stage 15: Full DJIA eight-quarter run
       Objective: Run the configuration frozen by Stage 14 over every eligible event in the complete DJIA manifest, reporting the observed corpus shape rather than forcing it to a target.
@@ -553,6 +565,8 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Exit: every expected-event ledger row carries an eligibility and coverage status, and every eligible event a terminal or resumable processing status (P-A15); ineligible and ambiguous rows appear in coverage and status output without being processed as eligible, alongside the failed, unavailable, partial, and completed-no-theme cases; a test shows compatible pilot artifacts reused without producing duplicate accepted rows; a test shows the run performing no reselection, and the reported count is the observed count, never forced to equal `30 × 8` (P-C6); the coverage report names the transitions and missing events behind any departure from that shape; the default suite makes no network or billable call, live acquisition runs only at a request count approved at a gate (`--max-requests`), and live tests only behind the `live` marker (R1.3, R14.1).
       ROUTING: writing-plans — `specs/point-in-time-djia-cohort.md` is this stage's spec; it needs no brainstorming pass.
 
+      Stage 10 handoff (plan 15, 2026-10-08): Immutable append/read schemas, expected-event selection and current gates feed the full cohort. Own recovery/reprocessing, concurrent worker/cache/store/pickle/allowance safety and coordinated SEC/source traffic. Sequential .acquire.lock append reuse supplies no concurrency/backfill proof.
+
 - [ ] Stage 16: Hosted quality ceiling (optional)
       Objective: Measure a hosted frontier model's quality ceiling on a frozen subset within the $100 authorization.
       Spec: R14.2; D3.
@@ -561,6 +575,8 @@ Totals: 91 missing · 2 implemented-as-specified · 4 in-code-but-not-in-spec ·
       Produces: a hosted adapter behind per-document and per-run ceilings enforced before dispatch; a ceiling report.
       Exit: an offline budget-exhaustion test yields a visible partial or failed status, never silent truncation; recorded spend stays within $100 with a pricing basis; no required-path module imports the hosted adapter; the report is labeled an ablation ceiling (R14.2).
       ROUTING: writing-plans
+
+      Stage 10 handoff (plan 15, 2026-10-08): Pure policy/evidence/export seam remains available. Optional hosted calls, budget and privacy review are separate and unimplemented.
 
 ## Stage-spec stamp
 

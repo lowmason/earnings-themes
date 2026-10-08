@@ -11,9 +11,19 @@
 > Roadmap: specs/evidence-linked-theme-extraction-roadmap.md, Stage 10 — on plan
 > completion, tick the stage and re-validate later stages against what shipped.
 
-**Status:** Planned on 2026-10-06. This document authorizes no execution in the planning session. Stage 10 remains unticked. Its authoritative completion stamp belongs in the shared system specification's **Rollout**, after execution and observed gates. Keep that specification live.
+**Status: COMPLETE (2026-10-08)** — executed via subagent-driven-development; deferred items in `specs/deferred_items.md`. Technical reviews and human gates are observed. This completion documentation delta awaits the controller’s scoped review; integration and final controller reporting remain pending.
 
-## Reconciliation and inspected baseline
+## Completion reconciliation — 2026-10-08
+
+Tasks 1–11 and Task 12 Steps 1–5 are satisfied by the implementation, technical reviews and human observations recorded in `docs/verification/theme-vertical-slice.md` and `docs/verification/stage10-browser.md`. The earlier planning baseline and pending checkpoints below are historical. Task 12 Step 6 has performed plan retirement and completion records, but remains unchecked until the controller’s new scoped documentation review. Steps 7–8 remain pending: integration selection/cleanup and the final controller report. Prior review SHAs do not approve this later documentation delta.
+
+Both sequential independent whole-branch seats approved `7d9b2cb7d989a769ae1429afe8d3f3b1d180dea4` → `cb1cda84be1e2b4387641e2744af2d37d7468b51`; both scoped seats approved the root-timeout delta `cb1cda84be1e2b4387641e2744af2d37d7468b51` → `7b65a77d75bdd549d8809d73963b208e0e0352a8` and the refusal-test delta `7b65a77d75bdd549d8809d73963b208e0e0352a8` → `611f84a564ed9bfd4a52cf6682bf2c6a88676a23`. No Critical/Important finding remains in those ranges. Human root at the latter HEAD: 4241 passed, 9 skipped, 28 deselected; fixture wording and exact-HEAD-guarded pilot helper: 1 passed each, no skips. Zero failures/collection failures/warnings, empty safe IDs and null reasons. Root exit and elapsed time were not supplied. Binding for subsequent human reports uses the continuous same-checkout metadata and helper guard, rather than a separately repasted SHA.
+
+V5 native/manual gate is observed on 2026-10-08: pinned Chrome target available/used; five highlighted and drift not_highlighted; all six independent canonical fallbacks span_visible, repeated second occurrence; plain control opened with two unhighlighted items. Capture command skipped once with cause unspecified, actual screenshot capture unverified; local-file results do not establish HTTPS or automatic long-page scrolling. Original scenario order/status vocabulary, 23 freeze inputs and two approved amendments are retained.
+
+Resolve-before-defer: M1/M2 are nonblocking maintenance, now P15-M1/P15-M2 (Size: plan), triggered only by later authorized workflow/fixture maintenance. M3’s past protocol ordering remains disclosed, with no manufactured follow-up. Only the fully repaired three-defect renderer item closes; all unrelated triggers remain. `docs/verification/stage10-backlog-triage.md` retains the 47-item baseline proposal and records that single closure plus two follow-ups. No new runtime, protected reader, browser, model, source acquisition or later-stage implementation occurred.
+
+## Historical reconciliation and inspected baseline
 
 The first command in the planning session was Git status. It showed clean `main...origin/main`; HEAD was `7d9b2cb7d989a769ae1429afe8d3f3b1d180dea4`. The user supplied Stage 9's merge through [PR #13](https://github.com/lowmason/earnings-themes/pull/13) and deletion of its local/remote branches. No branch, worktree, extraction, runtime change, stage tick, specification retirement, staging, or commit occurred while writing this plan.
 
@@ -1063,9 +1073,9 @@ These helper outputs are booleans/counts/hashes only; assert no whole result/rep
 
 - [x] **1. Finish public documentation.** Update the data dictionary for every analytical/state model, schema, dtype, grain, FK, closed reason and consuming interface; describe compatibility, report audience/rights and browser-boundary offsets. README documents exact replay CLI/config and guarded checks, honest fixture scope, explicit policy/denominators and optional V5 status; refresh only the relevant README/CLAUDE current-state sections. `docs/verification/theme-vertical-slice.md` records actual safe commands/counts/test IDs, V8/V10 arithmetic, V5 observation reference, known limitations and no pilot/model/SEC call. Record every deviation and actual public signature before downstream reconciliation.
 
-- [ ] **2. Task review and final whole-branch review.** After Task 12 documentation changes pass `contracts`, `vertical`, `stage10`, Ruff and its task spec/quality review, dispatch one read-only Sol Ultra `code-reviewer` over the merge BASE to final implementation HEAD. Give the full plan/identical Global Constraints, authoritative requirements, diff file and unresolved Minor list. When it returns, dispatch the independent Sol Ultra second opinion at the **same HEAD**, sequentially. No edits or workers while either review runs. Verify findings rather than blindly applying them; one fix implementer handles the combined required findings, with covering blind red/green checks and scoped re-review. Record both reviewed SHAs and outcomes; a skipped/unavailable second seat is explicit, not “approved”.
+- [x] **2. Task review and final whole-branch review.** After Task 12 documentation changes pass `contracts`, `vertical`, `stage10`, Ruff and its task spec/quality review, dispatch one read-only Sol Ultra `code-reviewer` over the merge BASE to final implementation HEAD. Give the full plan/identical Global Constraints, authoritative requirements, diff file and unresolved Minor list. When it returns, dispatch the independent Sol Ultra second opinion at the **same HEAD**, sequentially. No edits or workers while either review runs. Verify findings rather than blindly applying them; one fix implementer handles the combined required findings, with covering blind red/green checks and scoped re-review. Record both reviewed SHAs and outcomes; a skipped/unavailable second seat is explicit, not “approved”.
 
-- [ ] **3. Obtain the future user-only gates at the final reviewed implementation head.** The user runs full-root default tests and both Stage 6 wording nodes in their artifact checkout, preferably through the guarded runner's explicit `root-user`, `wording-fixture-user`, `wording-pilot-user` modes. Those modes are available only for a human-invoked command; every agent brief forbids invoking them. They collect exactly:
+- [x] **3. Obtain the future user-only gates at the final reviewed implementation head.** The user runs full-root default tests and both Stage 6 wording nodes in their artifact checkout, preferably through the guarded runner's explicit `root-user`, `wording-fixture-user`, `wording-pilot-user` modes. Those modes are available only for a human-invoked command; every agent brief forbids invoking them. They collect exactly:
 
 ```bash
 # USER ONLY; the wrapper captures all failure output and prints safe metadata.
@@ -1078,7 +1088,7 @@ The `root-user` node set is exactly `packages apps tests` with `-m 'not live and
 
 Request **only** counts, safe test IDs, fixed reasons and reviewed HEAD, never source text, gold, screenshots or traceback. Raw terminal output from the underlying commands must not be pasted. If a gate fails, reproduce/isolate with permitted invented inputs and obtain new user counts after a fix; never open protected artifacts to diagnose it. User-run V5 from Task 10 must also be observed with honest native/fallback outcomes or an explicit unavailable-target completion disposition. Upstream Stage 9 results do not discharge these Stage 10 gates. Do not stamp COMPLETE while a required gate/review/availability disposition is pending.
 
-- [ ] **4. Run writing-plans' resolve-before-defer and completion protocol.** Collect leftovers/review findings in one batch, resolve necessary in-scope work before deferring; mark every task checkbox from evidence, add exact deviations/skips and actual test results. Do not tick an earlier grouped deferred item until **all** its obligations are satisfied. Close extraction invariants only if Task 1 completed fully; close renderer hardening only if all three fixes/amendment/tests completed. Leave partial-record/concurrency/cache/allowance/safety, gold, transcript, canonical table fidelity and unrelated work under their original triggers. Add any approved new deferral with ID/context/source, scope/trigger, size, reason and concrete done-when. Run:
+- [x] **4. Run writing-plans' resolve-before-defer and completion protocol.** Collect leftovers/review findings in one batch, resolve necessary in-scope work before deferring; mark every task checkbox from evidence, add exact deviations/skips and actual test results. Do not tick an earlier grouped deferred item until **all** its obligations are satisfied. Close extraction invariants only if Task 1 completed fully; close renderer hardening only if all three fixes/amendment/tests completed. Leave partial-record/concurrency/cache/allowance/safety, gold, transcript, canonical table fidelity and unrelated work under their original triggers. Add any approved new deferral with ID/context/source, scope/trigger, size, reason and concrete done-when. Run:
 
 ```bash
 uv run --no-project --python 3.13 python /Users/lowell/.agents/skills/writing-plans/scripts/deferred_stats.py
@@ -1086,7 +1096,7 @@ uv run --no-project --python 3.13 python /Users/lowell/.agents/skills/writing-pl
 
 This is a dev statistics command, not the workspace runtime interpreter. It reads only the deferred specification. If environment setup would download, obtain setup authorization or report the limitation; do not silently install. At >=20 open items or any aged >45 days, do the skill's read-only triage and present dispositions for the user's `/deferred` decision; don't rewrite unrelated deferred work or invent an aged-tail acknowledgement. Record statistics, pending dispositions and resolve-before-defer decisions.
 
-- [ ] **5. Stamp the authoritative shared specification and reconcile the roadmap.** Append to **`specs/evidence-linked-theme-extraction.md`, Rollout**, with the actual completion date (the token below is replaced only at observed completion):
+- [x] **5. Stamp the authoritative shared specification and reconcile the roadmap.** Append to **`specs/evidence-linked-theme-extraction.md`, Rollout**, with the actual completion date (the token below is replaced only at observed completion):
 
 ```text
 > Stage 10: COMPLETE (YYYY-MM-DD) — implemented by plan 15 (specs/plans/completed/15-evidence-linked-theme-extraction.md).
@@ -1143,18 +1153,44 @@ Self-review performed while drafting: each Stage 10 entry/exit and cited binding
 
 **Decisions still requiring observed evidence/disposition during execution:** native V5 behavior and target availability; any truthful frozen-adapter amendment disposition under the existing preregistration restriction; final user-only checks; final code review and branch integration. These are concrete gates, not blank implementation requirements. Production policy/model/quality thresholds and later-stage research choices remain deliberately owned by Stage 11. No implementation or current-stage success is claimed by this plan. Human review of the saved plan is pending; no independent plan-review agent was dispatched in the planning session.
 
-## Fresh-session execution handoff
+## Historical fresh-session execution handoff
 
 Use a fresh GPT-6.1 Sol Medium execution session in `/Users/lowell/Projects/earnings-themes` and invoke `subagent-driven-development` on this saved plan. Read its complete Global Constraints, recheck current Git state, preserve uncommitted work, and perform the preflight plan-conflict review before any implementation. Use the approved Sol Ultra structural/reviewer route where specified. Execute Tasks 1–12 sequentially with identical blinding for every agent and both task approvals before proceeding; take durable fresh-session checkpoints when needed. Begin with the diagnostic guard and extraction invariant prerequisite. Do not read pilot/gold/data, run root/Stage 6 gates, download/call models, or begin Stage 11. This planning session stops at the saved plan.
 
-## Task 12 Step 1 execution checkpoint
+## Historical Task 12 Step 1 execution checkpoint
 
 Documentation-only implementation `be1d1561b724c51d4468079b81bc471337e41c1a` received fresh Sol Medium specification and quality approval. Exactly README, CLAUDE, the data dictionary and vertical-slice verification changed. Fresh corrected contracts: 548 passed; vertical: 21 passed; Stage 10 union: 2,736 passed and one optional-runtime skip; all other final counters zero. Ruff lint: zero findings; format: 368 files; final permitted Stage 10 wording: one passed. The initial 547/1 dictionary phrase regression and source-only stdlib diagnostic deviation are retained in the verification record. Task 12 Steps 2–8 and overall Stage 10 completion remain pending; this checkpoint grants no V5, human-gate, stamp, retirement or integration disposition.
 
-## Task 12 approved root-user deadline disposition (2026-10-07)
+## Historical Task 12 approved root-user deadline disposition (2026-10-07)
 
 The human ran the exact guarded `root-user --user-only` command from the reviewed Stage10 worktree at current implementation HEAD `cb1cda84be1e2b4387641e2744af2d37d7468b51`. It returned `runner_timeout` with all-zero placeholder counters and no IDs. No completed root test result or failing/stalled test was established. Source inspection confirms this route inherited the 300-second default; the smaller audited Stage10 union previously exceeded 300 and passed after its bounded 900-second disposition.
 
 The human explicitly approved **"Approve root-only 30-minute cap"**. This narrow approval supersedes the Task11 statement that every user-only group retains 300 seconds **only for `root-user`**, whose new fixed deadline is 1,800 seconds. `stage10` remains 900; every individual, wording and browser group remains 300. Full-root selection stays exactly `packages apps tests -m 'not live and not browser'`, guarded by explicit `--user-only`, with captured output and validated metadata only. No caller-configurable timeout, retry, test exclusion, process concurrency, model/network/download, protected agent reader, schema/rights/capture-policy change or other deadline is authorized.
 
 Task12 may own a narrow utility repair in `tools/stage10_checks.py`, `tests/contracts/test_stage10_check_runner.py`, and the relevant deadline/result prose in README, CLAUDE and `docs/verification/theme-vertical-slice.md`. A pure deadline selector permits an invented regression of actual old300 versus approved1800 without dispatching any human mode. Retain the original timeout result. Require guarded invented RED/GREEN, scoped Ruff/diff checks, clean scoped commit and fresh sequential scoped same-HEAD reviews of all new changes before requesting human results at the new reviewed implementation HEAD. Earlier whole-branch reviews remain evidence for their exact original range and unaffected code, not review of this later delta. The actual full-root outcome under the new cap remains human-owned and unknown; the cap is not a successful runtime estimate or a completion waiver. Stage10 remains pending all human gates/V5 dispositions and completion protocol.
+
+### Executed deferred statistics
+
+Required developer Python 3.13 ran offline without downloads, exit 0:
+
+```bash
+UV_CACHE_DIR=/private/tmp/earnings-stage10-uv uv run --no-project --python 3.13 --offline --no-python-downloads python /Users/lowell/.agents/skills/writing-plans/scripts/deferred_stats.py --json
+```
+
+Post-completion: **48 open / 35 closed / 83 total**, closure rate **0.4217 (42.17%)**. All 48 open items are 0–14 days old; 15–30, 31–45, 46–90 and 91+ buckets are zero. Aged >45 days and undated open items are zero. Oldest is 13 days (`1-release-parser-fidelity`). With at least 20 open items, the read-only proposal follows these statistics in `docs/verification/stage10-backlog-triage.md`; unrelated dispositions still require human `/deferred` selection. The 47-open baseline is retained distinctly. No aged-tail acknowledgement is needed.
+
+### Fresh completion documentation checks
+
+After allowlisted source comparison against the retained 253-source audit, 251 sources matched; only the previously reviewed guarded runner and its regression test differed. The changed guard and exact selected contracts/vertical registries, imports, fixtures and readers were audited before collection. Selected readers use permitted Stage 1/synthetic event fixtures, invented temporary repositories or source/docs/AST; no protected real-data/example reader is dispatched. The human modes were never invoked, even through a fake transport.
+
+Sequential captured checks with `POLARS_MAX_THREADS=2` and `UV_CACHE_DIR=/private/tmp/earnings-stage10-uv`:
+
+```bash
+uv run --locked --offline --no-sync --all-packages python tools/stage10_checks.py contracts
+uv run --locked --offline --no-sync --all-packages python tools/stage10_checks.py vertical
+uv run --locked --offline --no-sync ruff check packages apps tests tools --output-format json
+uv run --locked --offline --no-sync ruff format --check packages apps tests tools
+git diff --check
+```
+
+Fresh contracts: **548 passed**; vertical: **21 passed**. Both exit 0 with zero failures, collection failures, skips, deselections and warnings, IDs [] and reason null. Ruff lint exit 0, zero findings; format exit 0, **368 files already formatted**. Diff check exit 0. Probe construction and execution were inside an outer catch, with captured output and only closed safe metadata emitted. Stage10/root/Stage6 wording/browser were not rerun for this documentation delta. No artificial documentation RED was added; the prior 547/1 regression and corrected 548 remain in the historical record. These checks establish this delta’s consistency, not the pending scoped review or integration.

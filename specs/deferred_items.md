@@ -218,7 +218,7 @@
       capture policy version, write a fixed placeholder for the scratch prefix.
       Size: quick-fix. Revisit if: the committed captures are regenerated, such
       as for a new pin or capture policy version.
-- [ ] Harden the frozen capture adapter (final review, Minor #4). Three defects
+- [x] Harden the frozen capture adapter (final review, Minor #4). Three defects
       in `packages/earnings-ingestion/src/earnings_ingestion/browser/selenium_capture.py`:
       - `driver.current_url`, read after navigation, runs outside `_step`, so a
         WebDriver error there escapes `capture()` instead of returning a
@@ -233,7 +233,10 @@
       The file is frozen by `expirements/parser-fidelity/layout1-preregistered.toml`
       and changes only through `preregister.py amend`, for a crash or an invalid
       element set. Size: plan. Done when: the next adapter or capture policy
-      version lands all three, with tests.
+      version lands all three, with tests. → done in plan 15
+      (`specs/plans/completed/15-evidence-linked-theme-extraction.md`): all three
+      lifecycle/isolation fixes, covering invented tests and two approved frozen
+      adapter amendments landed; no actual capture regeneration is asserted.
 - [ ] Report `browser setup`'s ordinary failures in one line (final review,
       Minor #5): `apps/earnings-pipeline/src/earnings_pipeline/cli.py` catches
       only `ValueError`, so an `httpx.HTTPError`, an `OSError`, or
@@ -1283,3 +1286,33 @@
       never interleave blocks, and test_extraction_windows.py would catch it on
       the fixtures. Size: design. Revisit if: transcripts add speaker turns or
       sections as blocks.
+
+## 15-evidence-linked-theme-extraction — 2026-10-08
+
+- [ ] **P15-M1 — Typed workflow phases and helper results.** Both independent
+      final technical review seats identified the large public orchestration
+      function (about 429 lines) and 15 untyped private helpers in
+      `apps/earnings-pipeline/src/earnings_pipeline/theme_workflow.py` as
+      nonblocking maintenance. Source: completed plan 15, final reviews over
+      `7d9b2cb` → `cb1cda8`, and `docs/verification/theme-vertical-slice.md`,
+      completion reconciliation. Size: plan. Revisit if: the next authorized
+      workflow maintenance change touches orchestration or identity/retry phases.
+      Use typed internal phase/result records and smaller helpers while preserving
+      public signatures, current consuming gates, lock scope and receipt bindings.
+      Deferred because current gates and regression coverage are sound; this is
+      not a prerequisite for Stage 11. Done when: those internal handoffs are
+      typed, the phase responsibilities are explicit, and the existing invented
+      retry/failure/publication/current-input checks pass with unchanged behavior.
+- [ ] **P15-M2 — Typed fixture-seeding result and named helpers.** Both independent
+      final review seats identified the roughly 380-line `seed_case` in
+      `tests/integration/stage10_cases.py`, returning two or three tuple elements,
+      as nonblocking test maintenance. Source: completed plan 15, the same final
+      review range and `docs/verification/theme-vertical-slice.md`, completion
+      reconciliation. Size: plan. Revisit if: the next authorized Stage 10 fixture
+      maintenance change extends seeding. Replace the variable tuple with one
+      typed result containing optional material and named seeding helpers,
+      preserving spans, original links, IDs, behavior and covering assertions.
+      Deferred because current tests verify the public behavior; this is not a
+      Stage 11 prerequisite. Done when: all callers consume that consistent
+      result, each seeding responsibility is named and the existing invented
+      integration/coverage/fixture regressions retain their coverage and pass.
