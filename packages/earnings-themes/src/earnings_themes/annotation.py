@@ -3,7 +3,9 @@ Stage 6 spec, §Anchoring and validation and §Drafting and tools; GS4, GS5).
 
 - **Drafts.** A drafting session writes ``<name>.draft.toml``, which is kept
   unchanged, and the user edits ``<name>.working.toml`` beside it. Both name quotes
-  by their text, with context when the text repeats.
+  by their text, with context when the text repeats. A dev bundle's independent
+  record (GS19) takes the same form, without a drafting aid, and is checked, never
+  built.
 - **The build.** Every working quote is anchored, every item's origin derived by
   comparing the working copy with the draft, and the result validated. Any refusal
   writes nothing, and names its item by ID, never by text.
@@ -95,6 +97,22 @@ class GoldDraft(Part):
     hard_negatives: tuple[HardNegativeDraft, ...] = ()
 
 
+class IndependentRecord(Part):
+    """``data/runs/gold/independent/<event>.toml``: the user's own reading of a dev
+    bundle, written before its draft exists, in the draft's form without a drafting
+    aid (the Stage 6 spec, GS19). Never committed, and never edited once its
+    ledger row is."""
+
+    event_id: IdPart
+    annotator: NonBlank
+    no_theme: bool
+    release_identification: ReleaseIdentification
+    quotes: tuple[QuoteDraft, ...] = ()
+    claims: tuple[ClaimDraft, ...] = ()
+    assignments: tuple[AssignmentDraft, ...] = ()
+    hard_negatives: tuple[HardNegativeDraft, ...] = ()
+
+
 class FixtureDraft(Part):
     fixture_id: IdPart
     quotes: Annotated[tuple[QuoteDraft, ...], Some]
@@ -120,6 +138,10 @@ def load_gold_draft(path: Path) -> GoldDraft:
 
 def load_curated_draft(path: Path) -> CuratedDraft:
     return parse(tomlfile.read(path), CuratedDraft, path.name)
+
+
+def load_independent(path: Path) -> IndependentRecord:
+    return parse(tomlfile.read(path), IndependentRecord, path.name)
 
 
 class _Origins:
@@ -165,8 +187,8 @@ def _by_row(item: AssignmentDraft) -> Hashable:
 
 
 def _items(
-    drafted: GoldDraft | FixtureDraft,
-    working: GoldDraft | FixtureDraft,
+    drafted: GoldDraft | IndependentRecord | FixtureDraft,
+    working: GoldDraft | IndependentRecord | FixtureDraft,
     bundle: Bundle,
     origins: _Origins,
     prefix: str,
@@ -184,7 +206,7 @@ def _items(
         )
     made: dict[str, tuple] = {"quotes": tuple(quotes)}
     kinds = [("hard_negatives", HardNegative, _by_id)]
-    if isinstance(working, GoldDraft) and isinstance(drafted, GoldDraft):
+    if not isinstance(working, FixtureDraft) and not isinstance(drafted, FixtureDraft):
         kinds = [
             ("claims", GoldClaim, _by_id),
             ("assignments", GoldAssignment, _by_row),
@@ -253,6 +275,38 @@ def build_gold(
         require_signature=False,
     )
     return refusals or gold
+
+
+def without_quotes(record: IndependentRecord) -> IndependentRecord:
+    """``record`` with no quote: what the wording guard reads, since a quote is the
+    release's own text and every other string is the user's (GS3, F20)."""
+    return record.model_copy(update={"quotes": ()})
+
+
+def check_independent(
+    record: IndependentRecord, *, bundle: Bundle, codebook: Codebook
+) -> list[Refusal]:
+    """Every reason ``record`` does not hold over ``bundle``; empty when it does
+    (GS19). A draft's checks, with no origins, partition, or signature to wait for:
+    each quote anchored, the IDs, themes, ties, and ``no_theme``, and the wording
+    guard over every string but the quotes."""
+    if record.event_id != bundle.name:
+        return [Refusal("event_id", Problem.UNKNOWN_DOCUMENT)]
+    made, refusals = _items(record, record, bundle, _Origins(), "")
+    if refusals:
+        return refusals
+    if record.no_theme != no_theme_of(made["assignments"]):
+        refusals.append(Refusal("no_theme", Problem.NO_THEME_MISMATCH))
+    refusals += _ids(
+        made["quotes"],
+        made["claims"],
+        made["assignments"],
+        made["hard_negatives"],
+        codebook.theme_ids(),
+        "",
+    )
+    refusals += _pointers(made["quotes"], bundle, "")
+    return refusals + _wording(without_quotes(record), {bundle.name: bundle})
 
 
 def _ids(

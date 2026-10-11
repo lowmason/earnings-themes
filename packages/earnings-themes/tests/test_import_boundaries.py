@@ -88,6 +88,8 @@ DRAFTING = (
     "tomlfile.py",
 )
 """The modules the gold brief lets a drafting session read (GS13)."""
+INDEPENDENT = "earnings_themes.independent"
+"""The independent-pass ledger, which no drafting module may import (GS19)."""
 
 
 def modules_loaded_by(modules: list[str], *, cwd: Path | None = None) -> set[str]:
@@ -137,6 +139,17 @@ def forbidden_pipeline(names: set[str]) -> list[str]:
 
 def pipeline_imports(path: Path) -> list[str]:
     """Pipeline imports at every AST depth, including relative imports."""
+    return imports_under(path, PIPELINE_PREFIXES)
+
+
+def independent_imports(path: Path) -> list[str]:
+    """Imports of the independent-pass ledger, found the way the pipeline's are."""
+    return imports_under(path, (INDEPENDENT,))
+
+
+def imports_under(path: Path, prefixes: tuple[str, ...]) -> list[str]:
+    """Imports whose dotted name starts with one of ``prefixes``, at every AST depth,
+    including relative imports."""
     parts = list(path.with_suffix("").parts)
     if "earnings_themes" in parts:
         parts = parts[parts.index("earnings_themes") :]
@@ -155,7 +168,7 @@ def pipeline_imports(path: Path) -> list[str]:
             names.append(module)
         else:
             continue
-        found += [n for n in names if n.startswith(PIPELINE_PREFIXES)]
+        found += [n for n in names if n.startswith(prefixes)]
     return found
 
 
@@ -233,6 +246,94 @@ def test_pipeline_scan_detects_planted_application_import(tmp_path: Path) -> Non
 def test_drafting_closure_has_no_pipeline_modules() -> None:
     modules = [f"earnings_themes.{n.removesuffix('.py')}" for n in DRAFTING]
     assert forbidden_pipeline(modules_loaded_by(modules)) == []
+
+
+def test_the_drafting_modules_import_nothing_from_the_independent_ledger() -> None:
+    """GS19: the gold brief lets a drafting session read the six modules but not
+    ``independent.py``, so none of them imports it, at any AST depth."""
+    assert {name: independent_imports(SOURCE / name) for name in DRAFTING} == {
+        name: [] for name in DRAFTING
+    }
+
+
+def test_the_drafting_closure_does_not_load_the_independent_ledger() -> None:
+    """The fresh-process leg catches an indirect import, through ``records`` or
+    ``tomlfile``, that a scan of one file misses."""
+    modules = [f"earnings_themes.{n.removesuffix('.py')}" for n in DRAFTING]
+    assert INDEPENDENT not in modules_loaded_by(modules)
+
+
+def test_independent_scan_detects_planted_absolute_and_relative_imports(
+    tmp_path: Path,
+) -> None:
+    package = tmp_path / "earnings_themes"
+    package.mkdir()
+    absolute = package / "gold.py"
+    absolute.write_text(
+        "import earnings_themes.independent\n"
+        "from earnings_themes import independent\n"
+        "from earnings_themes.independent import ledger_problem\n",
+        encoding="utf-8",
+    )
+    assert independent_imports(absolute) == [
+        "earnings_themes.independent",
+        "earnings_themes.independent",
+        "earnings_themes.independent.ledger_problem",
+        "earnings_themes.independent",
+    ]
+    relative = package / "annotation.py"
+    relative.write_text(
+        "from .independent import ledger_problem\nfrom . import independent\n",
+        encoding="utf-8",
+    )
+    assert independent_imports(relative) == [
+        "earnings_themes.independent.ledger_problem",
+        "earnings_themes.independent",
+        "earnings_themes.independent",
+    ]
+
+
+def test_independent_scan_detects_a_planted_import_inside_a_function(
+    tmp_path: Path,
+) -> None:
+    package = tmp_path / "earnings_themes"
+    package.mkdir()
+    module = package / "records.py"
+    module.write_text(
+        "def later():\n"
+        "    from .independent import load_ledger\n"
+        "    import earnings_themes.independent\n",
+        encoding="utf-8",
+    )
+    assert independent_imports(module) == [
+        "earnings_themes.independent.load_ledger",
+        "earnings_themes.independent",
+        "earnings_themes.independent",
+    ]
+
+
+def test_independent_scan_ignores_the_other_modules(tmp_path: Path) -> None:
+    package = tmp_path / "earnings_themes"
+    package.mkdir()
+    module = package / "gold.py"
+    module.write_text(
+        "from .records import ThemesRecord\nfrom . import tomlfile\n",
+        encoding="utf-8",
+    )
+    assert independent_imports(module) == []
+
+
+def test_fresh_process_guard_detects_planted_transitive_independent(
+    tmp_path: Path,
+) -> None:
+    import shutil
+
+    package = tmp_path / "earnings_themes"
+    shutil.copytree(SOURCE, package, ignore=shutil.ignore_patterns("__pycache__"))
+    with (package / "tomlfile.py").open("a", encoding="utf-8") as stream:
+        stream.write("\nimport earnings_themes.independent\n")
+    modules = [f"earnings_themes.{n.removesuffix('.py')}" for n in DRAFTING]
+    assert INDEPENDENT in modules_loaded_by(modules, cwd=tmp_path)
 
 
 def test_fresh_process_guard_detects_planted_transitive_support(tmp_path: Path) -> None:

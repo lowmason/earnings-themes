@@ -2424,6 +2424,42 @@ in no partition (GS10), though it carries the pin, as every Stage 6 record does.
 | `drafting_aid` | `DraftingAid` | The drafting session; the record takes the kept draft's, never the working copy's (GS5) |
 | `documents` | tuple of `FixtureDraft` | At least one |
 
+### `IndependentRecord`
+
+`data/runs/gold/independent/<event>.toml`: the user's own reading of a dev bundle,
+written before its draft exists; never committed, and never edited once its ledger
+row is (GS19).
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part | The bundle's event |
+| `annotator` | string | The user's signature; never blank |
+| `no_theme` | bool | As `Gold` |
+| `release_identification` | `ReleaseIdentification` | As `Gold` |
+| `quotes` | tuple of `QuoteDraft` | Quotes, by text |
+| `claims` | tuple of `ClaimDraft` | Claims |
+| `assignments` | tuple of `AssignmentDraft` | Assignments |
+| `hard_negatives` | tuple of `HardNegativeDraft` | Hard-negative claims; optional |
+
+### `LedgerRow`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part | A dev bundle's event |
+| `sha256` | SHA-256 hex | Of the independent record's bytes, as `shasum -a 256` prints it |
+| `recorded_on` | date | When the pass was recorded |
+
+### `IndependentLedger`
+
+`evaluation/<corpus>/pilot-v<N>/independent-pass.toml`: committed, and holds no
+text. It gains one row, committed on its own, before each dev bundle's drafting
+session starts (GS19).
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Themes record schema version |
+| `rows` | tuple of `LedgerRow` | One per dev bundle |
+
 ## Stage 6 files
 
 - **Committed, written once.** `evaluation/<corpus>/pilot-v<N>/split-v<M>.json`,
@@ -2437,6 +2473,12 @@ in no partition (GS10), though it carries the pin, as every Stage 6 record does.
   document's text (GS13).
 - **File names.** A file named for an event takes the event ID with its colon as an
   underscore, `<event>`; the ID inside the file is unchanged.
+- **Dev's independent pass (GS19).** `data/runs/gold/independent/<event>.toml`,
+  local and never committed, is the user's own reading of a dev bundle.
+  `evaluation/<corpus>/pilot-v<N>/independent-pass.toml`, committed, holds each
+  record's SHA-256. Unlike the records above, it gains a row per dev bundle rather
+  than being written once. A dev bundle's draft is neither anchored nor shown until
+  its record matches its row.
 
 ## earnings-themes extraction records, schema version 1
 
