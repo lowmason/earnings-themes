@@ -10,7 +10,7 @@ extraction, support and coding. Stage 10 implements explicit replay composition,
 current analytical gates, coverage/prevalence and cited publication on permitted
 synthetic/invented fixtures. Stage 10 technical reviews, native/manual V5 and human
 completion gates are observed on 2026-10-08. Completion documentation awaits scoped
-review and branch integration remains pending. No pilot extraction or calibration is
+review; the branch merged on 2026-10-08 (PR #14). No pilot extraction or calibration is
 claimed. The binding specifications and live roadmap govern completion.
 Not all of it is binding.
 
@@ -32,7 +32,7 @@ Not all of it is binding.
 
 **Deliberately unresolved — do not silently pick one** (AGENTS.md §"Source basis and unresolved choices"): the production provider/model, the final theme taxonomy, and non-exactness quality thresholds. Record these in config or a decision record; do not invent agreement. The fourth such choice, an approved inference budget, is now recorded by `specs/evidence-linked-theme-extraction.md` R14.2: **$100, for the optional hosted-ceiling ablation only**, not prompt-optimizer compiles or any other billable call. The required path needs no billable inference: R14.1 limits it to open-weight, self-hosted models, which narrows the model choice without making it.
 
-## Current state: Stages 1–10 complete; integration pending
+## Current state: Stages 1–10 complete
 
 Stage 1 of the roadmap (release parser fidelity, `specs/release-parser-fidelity.md`) is done:
 

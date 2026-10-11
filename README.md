@@ -3,14 +3,14 @@
 Evidence-linked research infrastructure for company data and earnings themes.
 
 > [!IMPORTANT]
-> **Project status (2026-10-08): Stages 1–10 are implemented and complete; integration is pending.**
+> **Project status (2026-10-08): Stages 1–10 are implemented and complete, and merged (PR #14).**
 > The workspace implements acquisition, canonical evidence, extraction, support
 > assessment and coding libraries. Stage 10 adds an offline replay command,
 > coverage-aware analytical tables and cited reports, verified on permitted
 > synthetic/invented fixtures. No pilot document has been extracted and no research
 > theme dataset is published. Technical reviews, human-only completion gates and
 > V5 native/manual observations are recorded. The completion documentation delta
-> awaits scoped review; branch integration remains pending.
+> awaits scoped review.
 
 ## Stage 8 library status (2026-10-05)
 
