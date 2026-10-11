@@ -2424,6 +2424,23 @@ in no partition (GS10), though it carries the pin, as every Stage 6 record does.
 | `drafting_aid` | `DraftingAid` | The drafting session; the record takes the kept draft's, never the working copy's (GS5) |
 | `documents` | tuple of `FixtureDraft` | At least one |
 
+### `IndependentRecord`
+
+`data/runs/gold/independent/<event>.toml`: the user's own reading of a dev bundle,
+written before its draft exists; never committed, and never edited once its ledger
+row is (GS19).
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part | The bundle's event |
+| `annotator` | string | The user's signature; never blank |
+| `no_theme` | bool | As `Gold` |
+| `release_identification` | `ReleaseIdentification` | As `Gold` |
+| `quotes` | tuple of `QuoteDraft` | Quotes, by text |
+| `claims` | tuple of `ClaimDraft` | Claims |
+| `assignments` | tuple of `AssignmentDraft` | Assignments |
+| `hard_negatives` | tuple of `HardNegativeDraft` | Hard-negative claims; optional |
+
 ## Stage 6 files
 
 - **Committed, written once.** `evaluation/<corpus>/pilot-v<N>/split-v<M>.json`,

@@ -163,6 +163,7 @@ MODELS = [
     annotation.GoldDraft,
     annotation.FixtureDraft,
     annotation.CuratedDraft,
+    annotation.IndependentRecord,
     extraction.Parameters,
     extraction.AdapterIdentity,
     extraction.ExtractionPolicy,
