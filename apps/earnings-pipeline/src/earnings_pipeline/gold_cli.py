@@ -26,15 +26,19 @@ from typing import Annotated
 
 import tomllib
 import typer
+from earnings_core.hashing import sha256_hex
 from earnings_themes.anchoring import Bundle
 from earnings_themes.annotation import (
     build_curated,
     build_gold,
+    check_independent,
     load_curated_draft,
     load_gold_draft,
+    load_independent,
     signed,
     validate_curated,
     validate_gold,
+    without_quotes,
 )
 from earnings_themes.codebook import Codebook
 from earnings_themes.gold import (
@@ -79,6 +83,13 @@ CURATED = "hard-negatives"
 Events = Annotated[list[str] | None, typer.Argument(help="Event IDs.")]
 Curated = Annotated[
     bool, typer.Option("--hard-negatives", help="The curated hard negatives.")
+]
+Independent = Annotated[
+    bool,
+    typer.Option(
+        "--independent",
+        help="With --check: the user's independent record of a dev bundle (GS19).",
+    ),
 ]
 
 
@@ -133,6 +144,67 @@ def _drafts(layout: Layout, name: str, check: bool) -> tuple[Path, Path]:
                 " of it"
             )
     return drafted, working
+
+
+def _independent_path(layout: Layout, event_id: str) -> Path:
+    """The user's independent record of a dev bundle, local and never committed."""
+    return layout.gold_runs / "independent" / f"{file_stem(event_id)}.toml"
+
+
+def _check_independent(
+    layout: Layout,
+    pinned: Pinned,
+    codebook: Codebook,
+    doc_ids: dict[str, str],
+    texts: dict[str, str],
+    event_id: str,
+) -> None:
+    """GS19's check: anchor and check the user's independent record of a dev
+    bundle, print its SHA-256 for the ledger, and write nothing. It runs only
+    before the bundle's draft, working copy, anchored file, or view exists (D16-2)."""
+    split = pinned_split(layout, pinned)
+    _open(layout, split, event_id)
+    partition = split.partition_of(event_id)
+    if partition is not Partition.DEV:
+        fail(
+            f"Refused: {event_id} is a {partition} bundle; the independent pass is"
+            " for dev bundles (GS19)"
+        )
+    stem = file_stem(event_id)
+    later = (
+        layout.drafts / f"{stem}.draft.toml",
+        layout.drafts / f"{stem}.working.toml",
+        layout.gold_runs / "anchored" / f"{stem}.toml",
+        layout.gold_runs / "views" / f"{stem}.md",
+    )
+    if existing := [path for path in later if path.is_file()]:
+        fail(
+            f"Refused: {event_id}: {layout.shown(existing[0])} exists; the"
+            " independent pass comes before the draft (GS19)"
+        )
+    path = _independent_path(layout, event_id)
+    if not path.is_file():
+        fail(
+            f"Refused: {event_id}: {layout.shown(path)} is not here; the user"
+            " writes it before the draft (GS19)"
+        )
+    try:
+        record = load_independent(path)
+    except RecordError as error:
+        record_error(error)
+    bundle = load_bundle(layout, doc_ids, event_id)
+    if refusals := check_independent(record, bundle=bundle, codebook=codebook):
+        refuse(refusals)
+    if found := wording_refusals(without_quotes(record), texts):
+        refuse(found)
+    typer.echo(
+        f"{event_id} (dev, independent): {len(record.quotes)} quotes,"
+        f" {len(record.claims)} claims, {len(record.assignments)} assignments,"
+        f" {len(record.hard_negatives)} hard negatives; no_theme"
+        f" {str(record.no_theme).lower()}"
+    )
+    typer.echo(f"sha256 {sha256_hex(path.read_bytes())}  {layout.shown(path)}")
+    typer.echo(f"checked {event_id}: nothing written")
 
 
 def _counts(counts: DraftCounts) -> str:
@@ -245,9 +317,17 @@ def anchor_command(
     check: Annotated[
         bool, typer.Option("--check", help="Anchor and check; write nothing.")
     ] = False,
+    independent: Independent = False,
 ) -> None:
     """Anchor each working copy; commit the record once it is signed."""
     layout: Layout = context.obj
+    if independent and not check:
+        fail(
+            "Refused: --independent checks the user's record and writes nothing;"
+            " add --check"
+        )
+    if independent and (hard_negatives or not event_ids):
+        fail("Refused: --independent takes events, not --hard-negatives")
     if not event_ids and not hard_negatives:
         fail("Refused: name the events to anchor, or --hard-negatives")
     codebook = pinned_codebook(layout)
@@ -258,7 +338,10 @@ def anchor_command(
     if event_ids:
         doc_ids = documents(layout, pinned)
         for event_id in event_ids:
-            _anchor_event(layout, pinned, codebook, doc_ids, texts, event_id, check)
+            if independent:
+                _check_independent(layout, pinned, codebook, doc_ids, texts, event_id)
+            else:
+                _anchor_event(layout, pinned, codebook, doc_ids, texts, event_id, check)
 
 
 def _latest(layout: Layout, name: str, committed: Path) -> Path:
