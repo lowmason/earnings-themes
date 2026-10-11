@@ -8,7 +8,9 @@ Stage 5's replay test does; its documents are the synthetic layer's invented tex
 Curated hard negatives take their quotes from Stage 1's fixtures when a test runs.
 """
 
+import hashlib
 import shutil
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -46,7 +48,7 @@ from earnings_themes.gold import (
     load_gold,
     load_hard_negatives,
 )
-from earnings_themes.split import Partition, load_split
+from earnings_themes.split import Partition, SplitManifest, load_split
 from earnings_themes.synthetic import AID, codebook_draft, curated_draft
 from earnings_themes.wording import WIDTH, masked
 from typer.testing import CliRunner
@@ -68,6 +70,9 @@ UNPARSED = ("cik-0009990003:2025-06-30", "cik-0009990005:2025-03-28")
 EXCLUDED = "cik-0009990001:2025-08-31"
 SENTENCE = "today reported net sales of $1,000 million"
 SIGNED = "Lowell Mason (verified a Claude draft)"
+INDEPENDENT = "Lowell Mason (independent pass)"
+INDEPENDENT_DIR = Path("data") / "runs" / "gold" / "independent"
+COMES_FIRST = "the user's independent pass and its ledger row come first (GS19)"
 WINDOW = 20
 
 
@@ -209,6 +214,42 @@ def gold_draft(event_id: str = FIRST, annotator: str = "", **changes) -> dict:
     }
     draft.update(changes)
     return draft
+
+
+def as_dev(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Read FIRST as a dev bundle (D16-5). The synthetic split has no dev event:
+    each invented issuer's first event is in train, and its later ones are excluded
+    (GS6). Only the split's lookup is patched, so the build and the validator agree.
+    Call it after ``frozen``, whose codebook cites FIRST as a training example."""
+    lookup = SplitManifest.partition_of
+
+    def partition_of(self: SplitManifest, event_id: str) -> Partition:
+        return Partition.DEV if event_id == FIRST else lookup(self, event_id)
+
+    monkeypatch.setattr(SplitManifest, "partition_of", partition_of)
+
+
+def independent_record(**changes) -> dict:
+    """``gold_draft`` as the user's independent record: signed, with no aid."""
+    record = gold_draft(annotator=INDEPENDENT, **changes)
+    del record["drafting_aid"]
+    return record
+
+
+def write_independent(repo: Path, record: dict) -> Path:
+    path = repo / INDEPENDENT_DIR / f"{FIRST_FILE}.toml"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(tomlfile.dumps(record), encoding="utf-8")
+    return path
+
+
+def ledger_row(event_id: str, digest: str) -> dict:
+    return {"event_id": event_id, "sha256": digest, "recorded_on": date(2026, 10, 12)}
+
+
+def write_ledger(repo: Path, rows: list[dict]) -> None:
+    path = repo / EVALUATION / "independent-pass.toml"
+    path.write_text(tomlfile.dumps({"rows": rows}), encoding="utf-8")
 
 
 def fixtures(repo: Path) -> dict[str, Bundle]:
@@ -856,3 +897,309 @@ def test_no_text_is_written_for_an_excluded_event(repo) -> None:
     result = run(repo, "gold", "show", "--text", EXCLUDED)
     assert lines(result) == [f"Refused: {EXCLUDED} is excluded, so it has no gold"]
     assert not (repo / "data" / "runs" / "gold" / "texts").exists()
+
+
+def test_the_dev_patch_reads_first_as_dev(repo, monkeypatch) -> None:
+    """D16-5's patch works: FIRST's draft anchors as dev, with its record and
+    matching ledger row in place, so this passes with and without the guard."""
+    frozen(repo)
+    as_dev(monkeypatch)
+    path = write_independent(repo, independent_record())
+    write_ledger(
+        repo, [ledger_row(FIRST, hashlib.sha256(path.read_bytes()).hexdigest())]
+    )
+    write_drafts(repo, FIRST, gold_draft())
+    result = run(repo, "gold", "anchor", FIRST, "--check")
+    assert result.exit_code == 0, result.output
+    assert lines(result)[0].startswith(f"{FIRST} (dev): ")
+
+
+def test_an_independent_record_is_checked_and_its_hash_printed(
+    repo, monkeypatch
+) -> None:
+    """GS19's check: counts, the record's SHA-256 for the ledger, nothing written.
+    Its quote is a whole sentence of the release, which the wording guard skips
+    (D16-3), so the check is clean."""
+    frozen(repo)
+    as_dev(monkeypatch)
+    path = write_independent(repo, independent_record())
+    result = run(repo, "gold", "anchor", FIRST, "--independent", "--check")
+    assert result.exit_code == 0, result.output
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    assert lines(result) == [
+        (
+            f"{FIRST} (dev, independent): 1 quotes, 1 claims, 1 assignments, 0 hard"
+            " negatives; no_theme false"
+        ),
+        f"sha256 {digest}  {INDEPENDENT_DIR}/{FIRST_FILE}.toml",
+        f"checked {FIRST}: nothing written",
+    ]
+    assert not (repo / "data" / "runs" / "gold" / "anchored").exists()
+    assert not (repo / EVALUATION / "gold").exists()
+
+
+def test_a_bad_independent_record_is_refused_by_item(repo, monkeypatch) -> None:
+    frozen(repo)
+    as_dev(monkeypatch)
+    assignments = [{"claim_id": "c1", "theme_id": "supply", "support": "supports"}]
+    write_independent(repo, independent_record(assignments=assignments))
+    result = run(repo, "gold", "anchor", FIRST, "--independent", "--check")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        "refused: assignment c1/supply: unknown_theme",
+        "Refused: 1 problem(s); nothing written",
+    ]
+
+
+def test_an_independent_claim_that_copies_any_text_is_refused(
+    repo, monkeypatch
+) -> None:
+    """The record's claims are checked against every text the committed guard
+    reads, as a draft's are (GS3)."""
+    frozen(repo)
+    as_dev(monkeypatch)
+    other = first_fixture(repo)
+    copied = unique_window(guarded_texts(repo), other)
+    claims = [{"claim_id": "c1", "quote_ids": ["q1"], "claim": f"Ours: {copied}"}]
+    write_independent(repo, independent_record(claims=claims))
+    result = run(repo, "gold", "anchor", FIRST, "--independent", "--check")
+    assert result.exit_code == 1
+    assert [line for line in lines(result) if line.startswith("refused: ")] == [
+        f"refused: claims[0].claim ({other}): source_wording"
+    ]
+
+
+def test_the_independent_pass_is_for_dev_bundles_only(repo) -> None:
+    frozen(repo)
+    write_independent(repo, independent_record())
+    result = run(repo, "gold", "anchor", FIRST, "--independent", "--check")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        (
+            f"Refused: {FIRST} is a train bundle; the independent pass is for dev"
+            " bundles (GS19)"
+        )
+    ]
+
+
+def test_the_independent_pass_needs_check_and_events(repo) -> None:
+    assert lines(run(repo, "gold", "anchor", FIRST, "--independent")) == [
+        (
+            "Refused: --independent checks the user's record and writes nothing;"
+            " add --check"
+        )
+    ]
+    curated = run(
+        repo, "gold", "anchor", "--hard-negatives", "--independent", "--check"
+    )
+    assert lines(curated) == [
+        "Refused: --independent takes events, not --hard-negatives"
+    ]
+
+
+def test_a_missing_independent_record_is_named(repo, monkeypatch) -> None:
+    frozen(repo)
+    as_dev(monkeypatch)
+    result = run(repo, "gold", "anchor", FIRST, "--independent", "--check")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        (
+            f"Refused: {FIRST}: {INDEPENDENT_DIR}/{FIRST_FILE}.toml is not here; the"
+            " user writes it before the draft (GS19)"
+        )
+    ]
+
+
+def test_the_independent_pass_comes_before_the_draft(repo, monkeypatch) -> None:
+    """D16-2: once a draft exists, the record can no longer be shown to predate it."""
+    frozen(repo)
+    as_dev(monkeypatch)
+    write_independent(repo, independent_record())
+    write_drafts(repo, FIRST, gold_draft())
+    result = run(repo, "gold", "anchor", FIRST, "--independent", "--check")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        (
+            f"Refused: {FIRST}: data/runs/gold/drafts/{FIRST_FILE}.draft.toml exists;"
+            " the independent pass comes before the draft (GS19)"
+        )
+    ]
+
+
+def test_a_dev_draft_waits_for_its_matching_ledger_row(repo, monkeypatch) -> None:
+    """GS19's guard: neither the drafting session's check, nor the anchor, nor the
+    view touches a dev draft until the user's record matches its one ledger row."""
+    frozen(repo)
+    as_dev(monkeypatch)
+    write_drafts(repo, FIRST, gold_draft())
+    no_record = (
+        f"Refused: {FIRST} is a dev bundle with no independent record: {COMES_FIRST}"
+    )
+    for args in (("anchor", FIRST, "--check"), ("anchor", FIRST), ("show", FIRST)):
+        result = run(repo, "gold", *args)
+        assert result.exit_code == 1
+        assert lines(result) == [no_record]
+    path = write_independent(repo, independent_record())
+    no_row = (
+        f"Refused: {FIRST} is a dev bundle whose independent record has no ledger"
+        f" row: {COMES_FIRST}"
+    )
+    result = run(repo, "gold", "anchor", FIRST)
+    assert result.exit_code == 1
+    assert lines(result) == [no_row]
+    (repo / EVALUATION / "independent-pass.toml").write_text(
+        "rows = [\n", encoding="utf-8"
+    )
+    result = run(repo, "gold", "anchor", FIRST)
+    assert result.exit_code == 1
+    assert lines(result) == [
+        "problem: independent-pass.toml: not TOML at line 2, column 1",
+        "Refused: independent-pass.toml does not read as its record",
+    ]
+    write_ledger(repo, [ledger_row(FIRST, "0" * 64)])
+    result = run(repo, "gold", "anchor", FIRST)
+    assert result.exit_code == 1
+    assert lines(result) == [
+        (
+            f"Refused: {FIRST} has an independent record that does not match its"
+            " ledger row; the record is never edited (GS19)"
+        )
+    ]
+    assert not (repo / "data" / "runs" / "gold" / "anchored").exists()
+    assert not (repo / EVALUATION / "gold" / f"{FIRST_FILE}.toml").exists()
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    write_ledger(repo, [ledger_row(FIRST, digest)])
+    anchored = run(repo, "gold", "anchor", FIRST)
+    assert anchored.exit_code == 0, anchored.output
+    assert lines(anchored)[0].startswith(f"{FIRST} (dev): ")
+    shown = run(repo, "gold", "show", FIRST)
+    assert lines(shown) == [f"view  data/runs/gold/views/{FIRST_FILE}.md"]
+
+
+def test_a_lost_independent_record_is_reported_never_rewritten(
+    repo, monkeypatch
+) -> None:
+    """A ledger row whose record file is gone is told apart from a pass not yet
+    written: the row is the proof the record existed (GS19)."""
+    frozen(repo)
+    as_dev(monkeypatch)
+    path = write_independent(repo, independent_record())
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    write_ledger(repo, [ledger_row(FIRST, digest)])
+    path.unlink()
+    write_drafts(repo, FIRST, gold_draft())
+    lost = (
+        f"Refused: {FIRST} has a ledger row but its independent record is lost;"
+        " it is reported lost, never rewritten (GS19)"
+    )
+    for args in (("anchor", FIRST, "--check"), ("anchor", FIRST), ("show", FIRST)):
+        result = run(repo, "gold", *args)
+        assert result.exit_code == 1
+        assert lines(result) == [lost]
+    assert not path.exists()
+    assert not (repo / "data" / "runs" / "gold" / "anchored").exists()
+    assert not (repo / "data" / "runs" / "gold" / "views").exists()
+
+
+@pytest.mark.parametrize("record_here", [True, False])
+def test_the_independent_check_is_closed_once_the_event_has_a_ledger_row(
+    repo, monkeypatch, record_here
+) -> None:
+    """The check runs before the row is committed; a row for this event, with its
+    record present or gone, closes it (GS19)."""
+    frozen(repo)
+    as_dev(monkeypatch)
+    path = write_independent(repo, independent_record())
+    write_ledger(repo, [ledger_row(FIRST, "0" * 64)])
+    if not record_here:
+        path.unlink()
+    result = run(repo, "gold", "anchor", FIRST, "--independent", "--check")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        (
+            f"Refused: {FIRST}: the independent record already has a ledger row;"
+            " --independent --check runs before its row is committed (GS19)"
+        )
+    ]
+    assert not (repo / "data" / "runs" / "gold" / "anchored").exists()
+
+
+def test_another_event_s_ledger_row_does_not_close_the_independent_check(
+    repo, monkeypatch
+) -> None:
+    frozen(repo)
+    as_dev(monkeypatch)
+    path = write_independent(repo, independent_record())
+    write_ledger(repo, [ledger_row(EXCLUDED, "0" * 64)])
+    result = run(repo, "gold", "anchor", FIRST, "--independent", "--check")
+    assert result.exit_code == 0, result.output
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    assert lines(result) == [
+        (
+            f"{FIRST} (dev, independent): 1 quotes, 1 claims, 1 assignments, 0 hard"
+            " negatives; no_theme false"
+        ),
+        f"sha256 {digest}  {INDEPENDENT_DIR}/{FIRST_FILE}.toml",
+        f"checked {FIRST}: nothing written",
+    ]
+
+
+def test_a_malformed_ledger_is_named_by_the_independent_check(
+    repo, monkeypatch
+) -> None:
+    frozen(repo)
+    as_dev(monkeypatch)
+    write_independent(repo, independent_record())
+    (repo / EVALUATION / "independent-pass.toml").write_text(
+        "rows = [\n", encoding="utf-8"
+    )
+    result = run(repo, "gold", "anchor", FIRST, "--independent", "--check")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        "problem: independent-pass.toml: not TOML at line 2, column 1",
+        "Refused: independent-pass.toml does not read as its record",
+    ]
+
+
+def test_a_train_independent_check_reads_no_ledger(repo) -> None:
+    """The partition check comes first, so a train event never reads the ledger,
+    even one that does not read."""
+    frozen(repo)
+    write_independent(repo, independent_record())
+    (repo / EVALUATION / "independent-pass.toml").write_text(
+        "rows = [\n", encoding="utf-8"
+    )
+    result = run(repo, "gold", "anchor", FIRST, "--independent", "--check")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        (
+            f"Refused: {FIRST} is a train bundle; the independent pass is for dev"
+            " bundles (GS19)"
+        )
+    ]
+
+
+@pytest.mark.parametrize("ledger", [None, "rows = [\n"])
+def test_a_train_draft_reads_no_ledger_or_record(repo, ledger) -> None:
+    """Train is unchanged: with no ledger, or one that does not read, and no
+    record, a train draft anchors and shows as before."""
+    frozen(repo)
+    if ledger is not None:
+        (repo / EVALUATION / "independent-pass.toml").write_text(
+            ledger, encoding="utf-8"
+        )
+    write_drafts(repo, FIRST, gold_draft())
+    anchored = run(repo, "gold", "anchor", FIRST)
+    assert anchored.exit_code == 0, anchored.output
+    assert lines(anchored)[0].startswith(f"{FIRST} (train): ")
+    shown = run(repo, "gold", "show", FIRST)
+    assert lines(shown) == [f"view  data/runs/gold/views/{FIRST_FILE}.md"]
+
+
+def test_a_dev_bundle_s_text_is_written_before_its_pass(repo, monkeypatch) -> None:
+    """``gold show --text`` is not guarded: the user's pass needs the text."""
+    frozen(repo)
+    as_dev(monkeypatch)
+    result = run(repo, "gold", "show", "--text", FIRST)
+    assert result.exit_code == 0, result.output
+    assert lines(result) == ["wrote 1 text under data/runs/gold/texts"]

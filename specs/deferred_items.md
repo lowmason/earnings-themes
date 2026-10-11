@@ -1323,7 +1323,7 @@
 
 ## GS19 amendment (Stage 6 spec) — 2026-10-11
 
-- [ ] **GS19 — Independent-pass check and dev guard.** The user's independent pass
+- [x] **GS19 — Independent-pass check and dev guard.** The user's independent pass
       on each dev bundle (specs/completed/pilot-codebook-split-and-gold-set-protocol.md,
       §The independent pass) needs two changes in `gold anchor`/`gold show`
       (apps/earnings-pipeline, earnings_themes.annotation). (1) `gold anchor <event>
@@ -1338,4 +1338,76 @@
       implementing session never opens pilot text (GS13). Size: plan.
       Blocks: every dev bundle; pilot order's #2 and #4 are dev. Done when: both
       behaviors are tested, a train bundle anchors byte for byte as before, and the
-      three committed gold files re-anchor unchanged.
+      three committed gold files re-anchor unchanged. → done in plan 16
+      (specs/plans/completed/16-pilot-codebook-split-and-gold-set-protocol.md):
+      `gold anchor <event> --independent --check` and the dev guard on `gold anchor` and
+      `gold show`; at 4ba5f35 the root suite gave 4294 passed and the three train files
+      re-anchored `unchanged`.
+
+## 16-pilot-codebook-split-and-gold-set-protocol — 2026-10-11
+
+- [ ] **P16-1 — Root-suite command cannot collect the Stage 10 runner test.** The
+      documented `uv run --locked --all-packages pytest packages apps tests -m "not live
+      and not browser"` (CLAUDE.md Commands, AGENTS.md:206) aborts at collection with
+      `ModuleNotFoundError: No module named 'tools'` from
+      tests/contracts/test_stage10_check_runner.py:8. `tools/` has no `__init__.py`,
+      pyproject.toml's `[tool.pytest]` uses `--import-mode=importlib` with no `pythonpath`,
+      and `uv run pytest` does not put the repo root on `sys.path`; only
+      tools/stage10_checks.py (`run_checks`, `PYTHONPATH` at line 212) supplies it, and
+      every Stage 10 route goes through that runner. Found by the user's gate 1 for plan 16
+      (2026-10-11, 4ba5f35): the same command with `PYTHONPATH="$PWD"` collected 4323 and
+      gave 4294 passed, 1 skipped, 28 deselected, 1 warning in 836 s. It predates plan 16,
+      which touches none of tools/, pyproject.toml, uv.lock or that test. Deferred because
+      the fix changes repo-wide test configuration or the documented gate command and
+      deserves its own reviewed change; a background task was flagged for it. Options:
+      `pythonpath = ["."]` in `[tool.pytest]` (check tests/test_pytest_configuration.py and
+      the fresh-process boundary tests), a path shim in the runner test, or the
+      `PYTHONPATH` form in the documented command (AGENTS.md is cited by line: change a line
+      in place, never insert). Also replace README's "a successful full-root duration
+      remains unknown" with the observed 836 s for the plain command. Size: quick-fix.
+      Done when: the documented root command collects and runs without a hand-set
+      `PYTHONPATH` (or the documented command carries it) and the user has re-run it.
+- [ ] **P16-2 — Stage 11 reuse of the GS19 record check.** (a) `check_independent` in
+      packages/earnings-themes/src/earnings_themes/annotation.py skips the
+      codebook-approval check that `validate_gold` makes through `_codebook`; harmless while
+      codebook v0 is approved, but Stage 11 will reuse the function. (b) `gold anchor
+      <event> --independent --check` (apps/earnings-pipeline/src/earnings_pipeline/gold_cli.py,
+      `_check_independent`) now refuses once the event has a ledger row, so it cannot serve
+      Stage 11's "check each record against its ledger hash, then anchor both"
+      (specs/completed/pilot-codebook-split-and-gold-set-protocol.md, §What Stage 11 gets);
+      Stage 11 needs its own path built on `load_independent`, `check_independent` and
+      `ledger_problem`. Source: plan 16's final review (M2) and its scoped re-review.
+      Deferred because it is Stage 11's work. Size: design. Done when: Stage 11's plan
+      verifies each record against its ledger hash and anchors both readings, and
+      `check_independent` refuses a non-approved codebook, with a test.
+- [ ] **P16-3 — The Stage 6 wording test does not scan the ledger.** The `STAGE6` glob tuple
+      in tests/integration/test_stage6_wording.py lists `evaluation/*/pilot-v*/*.json` and
+      `evaluation/*/pilot-v*/gold/*.toml` but not `pilot-v*/*.toml`, so
+      evaluation/djia-2024q3-2026q2/pilot-v1/independent-pass.toml (plan 16) is never
+      scanned for committed text, and TOML comments in it are invisible to both
+      `load_ledger` and that test. The strict `LedgerRow` model (three fields, no free text)
+      keeps the risk low. Deferred because that test is the user's gate file (plan 16's
+      final review, M3). Size: quick-fix. Done when: the globs cover the ledger, or the user
+      records that the strict model suffices.
+- [ ] **P16-4 — GS19 review Minors (quick-fix bundle).** From plan 16's task and final
+      reviews, none blocking: (1) `ledger_problem` in
+      packages/earnings-themes/src/earnings_themes/independent.py tests
+      `ledger.rows if ledger else ()`, a truthiness test on a model; `ledger is not None`
+      says what it means. (2) apps/earnings-pipeline/tests/test_stage6_cli.py has no test for
+      a malformed independent record through `--independent --check` (the `RecordError`
+      path), nor for D16-2 refusing on a working copy, anchored file or view (only the draft
+      is tested). (3) The `anchor` command's docstring in gold_cli.py does not mention
+      `--independent`. (4) The `show` guard is tested only with nothing anchored; add a case
+      with an anchored dev record whose independent record no longer matches the ledger.
+      (5) `_guard`'s docstring should say it reads the ledger on disk, not the committed
+      ledger (committing the row first is procedure, GS19). (6) "--independent takes events,
+      not --hard-negatives" also prints when no event is named; the plan pinned the text and
+      its test, so changing it edits a pinned expectation. Size: quick-fix. Done when: each is
+      fixed or consciously dropped, with the CLI tests passing.
+- [ ] **P16-5 — Multi-event `gold anchor` and `gold show` write before a later refusal.** The
+      guard, like `_open` before it, runs per event inside the loop in
+      apps/earnings-pipeline/src/earnings_pipeline/gold_cli.py, so `gold anchor E_train
+      E_dev` writes E_train's files before refusing E_dev (the refused event itself writes
+      nothing). A pattern that predates GS19, noted by plan 16's task and final reviews.
+      Size: design. Revisit if: a multi-event run leaves a partial state that confuses a
+      gate, or a drafting-session workflow starts passing several events at once.

@@ -6,6 +6,7 @@ GS13; plan 9).
     uv run --locked earnings-pipeline gold anchor cik-0000051143:2024-12-31
     uv run --locked earnings-pipeline gold show cik-0000051143:2024-12-31
     uv run --locked earnings-pipeline gold validate
+    uv run --locked earnings-pipeline gold anchor <dev event> --independent --check
 
 A drafting session writes ``data/runs/gold/drafts/<name>.draft.toml``, which stays
 unchanged, and the user edits ``<name>.working.toml`` beside it; ``<name>`` is an
@@ -19,6 +20,11 @@ anything changes. ``show`` writes
 the local views and texts the user and the drafting sessions open. ``validate``
 rechecks committed records against their local documents. No command prints a
 document's text (GS13).
+A dev bundle's draft (GS19) is neither anchored nor shown until the user's
+independent record, ``data/runs/gold/independent/<name>.toml``, matches its row in
+the pilot's ``independent-pass.toml``. ``anchor --independent --check`` checks that
+record before its draft exists, prints its SHA-256 for the ledger, and writes
+nothing; it refuses once the event's ledger row exists.
 """
 
 from pathlib import Path
@@ -26,15 +32,19 @@ from typing import Annotated
 
 import tomllib
 import typer
+from earnings_core.hashing import sha256_hex
 from earnings_themes.anchoring import Bundle
 from earnings_themes.annotation import (
     build_curated,
     build_gold,
+    check_independent,
     load_curated_draft,
     load_gold_draft,
+    load_independent,
     signed,
     validate_curated,
     validate_gold,
+    without_quotes,
 )
 from earnings_themes.codebook import Codebook
 from earnings_themes.gold import (
@@ -44,6 +54,12 @@ from earnings_themes.gold import (
     gold_toml,
     load_gold,
     load_hard_negatives,
+)
+from earnings_themes.independent import (
+    LEDGER,
+    IndependentLedger,
+    ledger_problem,
+    load_ledger,
 )
 from earnings_themes.records import RecordError
 from earnings_themes.split import Partition, SplitManifest
@@ -79,6 +95,13 @@ CURATED = "hard-negatives"
 Events = Annotated[list[str] | None, typer.Argument(help="Event IDs.")]
 Curated = Annotated[
     bool, typer.Option("--hard-negatives", help="The curated hard negatives.")
+]
+Independent = Annotated[
+    bool,
+    typer.Option(
+        "--independent",
+        help="With --check: the user's independent record of a dev bundle (GS19).",
+    ),
 ]
 
 
@@ -135,6 +158,98 @@ def _drafts(layout: Layout, name: str, check: bool) -> tuple[Path, Path]:
     return drafted, working
 
 
+def _independent_path(layout: Layout, event_id: str) -> Path:
+    """The user's independent record of a dev bundle, local and never committed."""
+    return layout.gold_runs / "independent" / f"{file_stem(event_id)}.toml"
+
+
+def _read_ledger(pinned: Pinned) -> IndependentLedger | None:
+    """The pilot's independent-pass ledger, or ``None`` when none is committed. A
+    ledger that does not read is refused, naming its file and its problems only."""
+    path = pinned.evaluation / LEDGER
+    try:
+        return load_ledger(path) if path.is_file() else None
+    except RecordError as error:
+        record_error(error)
+
+
+def _guard(layout: Layout, pinned: Pinned, split: SplitManifest, event_id: str) -> None:
+    """GS19: a dev bundle's draft is neither anchored nor shown until the user's
+    independent record exists and matches its ledger row. Only a dev bundle reads
+    the ledger or the record, so train and test are unchanged."""
+    if split.partition_of(event_id) is not Partition.DEV:
+        return
+    ledger = _read_ledger(pinned)
+    record = _independent_path(layout, event_id)
+    found = record.read_bytes() if record.is_file() else None
+    if (reason := ledger_problem(ledger, event_id, found)) is not None:
+        fail(f"Refused: {event_id} {reason}")
+
+
+def _check_independent(
+    layout: Layout,
+    pinned: Pinned,
+    codebook: Codebook,
+    doc_ids: dict[str, str],
+    texts: dict[str, str],
+    event_id: str,
+) -> None:
+    """GS19's check: anchor and check the user's independent record of a dev
+    bundle, print its SHA-256 for the ledger, and write nothing. It runs only
+    before the bundle's draft, working copy, anchored file, or view exists (D16-2),
+    and before its ledger row is committed: once the ledger holds a row for the
+    event, it refuses, whether or not the record is still here."""
+    split = pinned_split(layout, pinned)
+    _open(layout, split, event_id)
+    partition = split.partition_of(event_id)
+    if partition is not Partition.DEV:
+        fail(
+            f"Refused: {event_id} is a {partition} bundle; the independent pass is"
+            " for dev bundles (GS19)"
+        )
+    stem = file_stem(event_id)
+    later = (
+        layout.drafts / f"{stem}.draft.toml",
+        layout.drafts / f"{stem}.working.toml",
+        layout.gold_runs / "anchored" / f"{stem}.toml",
+        layout.gold_runs / "views" / f"{stem}.md",
+    )
+    if existing := [path for path in later if path.is_file()]:
+        fail(
+            f"Refused: {event_id}: {layout.shown(existing[0])} exists; the"
+            " independent pass comes before the draft (GS19)"
+        )
+    ledger = _read_ledger(pinned)
+    if ledger is not None and any(row.event_id == event_id for row in ledger.rows):
+        fail(
+            f"Refused: {event_id}: the independent record already has a ledger row;"
+            " --independent --check runs before its row is committed (GS19)"
+        )
+    path = _independent_path(layout, event_id)
+    if not path.is_file():
+        fail(
+            f"Refused: {event_id}: {layout.shown(path)} is not here; the user"
+            " writes it before the draft (GS19)"
+        )
+    try:
+        record = load_independent(path)
+    except RecordError as error:
+        record_error(error)
+    bundle = load_bundle(layout, doc_ids, event_id)
+    if refusals := check_independent(record, bundle=bundle, codebook=codebook):
+        refuse(refusals)
+    if found := wording_refusals(without_quotes(record), texts):
+        refuse(found)
+    typer.echo(
+        f"{event_id} (dev, independent): {len(record.quotes)} quotes,"
+        f" {len(record.claims)} claims, {len(record.assignments)} assignments,"
+        f" {len(record.hard_negatives)} hard negatives; no_theme"
+        f" {str(record.no_theme).lower()}"
+    )
+    typer.echo(f"sha256 {sha256_hex(path.read_bytes())}  {layout.shown(path)}")
+    typer.echo(f"checked {event_id}: nothing written")
+
+
 def _counts(counts: DraftCounts) -> str:
     return (
         f"accepted {counts.accepted}, edited {counts.edited}, rejected"
@@ -177,6 +292,7 @@ def _anchor_event(
 ) -> None:
     split = pinned_split(layout, pinned)
     _open(layout, split, event_id)
+    _guard(layout, pinned, split, event_id)
     bundle = load_bundle(layout, doc_ids, event_id)
     drafted_path, working_path = _drafts(layout, event_id, check)
     try:
@@ -245,9 +361,17 @@ def anchor_command(
     check: Annotated[
         bool, typer.Option("--check", help="Anchor and check; write nothing.")
     ] = False,
+    independent: Independent = False,
 ) -> None:
     """Anchor each working copy; commit the record once it is signed."""
     layout: Layout = context.obj
+    if independent and not check:
+        fail(
+            "Refused: --independent checks the user's record and writes nothing;"
+            " add --check"
+        )
+    if independent and (hard_negatives or not event_ids):
+        fail("Refused: --independent takes events, not --hard-negatives")
     if not event_ids and not hard_negatives:
         fail("Refused: name the events to anchor, or --hard-negatives")
     codebook = pinned_codebook(layout)
@@ -258,7 +382,10 @@ def anchor_command(
     if event_ids:
         doc_ids = documents(layout, pinned)
         for event_id in event_ids:
-            _anchor_event(layout, pinned, codebook, doc_ids, texts, event_id, check)
+            if independent:
+                _check_independent(layout, pinned, codebook, doc_ids, texts, event_id)
+            else:
+                _anchor_event(layout, pinned, codebook, doc_ids, texts, event_id, check)
 
 
 def _latest(layout: Layout, name: str, committed: Path) -> Path:
@@ -345,6 +472,7 @@ def show_command(
         split = pinned_split(layout, pinned)
         for event_id in event_ids:
             _open(layout, split, event_id)
+            _guard(layout, pinned, split, event_id)
             committed = pinned.gold_dir / f"{file_stem(event_id)}.toml"
             path = _latest(layout, event_id, committed)
             try:
