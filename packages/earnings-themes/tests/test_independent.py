@@ -203,3 +203,21 @@ def test_the_ledger_reads_as_rows_of_hashes(tmp_path) -> None:
     )
     with pytest.raises(RecordError):
         load_ledger(path)
+
+
+def test_a_ledger_row_has_no_free_text_field(tmp_path) -> None:
+    """The ledger holds an event, a hash, and a day, and nothing else (GS3)."""
+    path = tmp_path / LEDGER
+    data = {
+        "rows": [
+            {
+                "event_id": DEV,
+                "sha256": sha256_hex(RECORD),
+                "recorded_on": date(2026, 10, 12),
+                "note": "x",
+            }
+        ]
+    }
+    path.write_text(tomlfile.dumps(data), encoding="utf-8")
+    with pytest.raises(RecordError):
+        load_ledger(path)

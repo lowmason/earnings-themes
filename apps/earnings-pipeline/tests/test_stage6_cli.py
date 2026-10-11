@@ -1044,21 +1044,29 @@ def test_a_dev_draft_waits_for_its_matching_ledger_row(repo, monkeypatch) -> Non
         f"Refused: {FIRST} is a dev bundle whose independent record has no ledger"
         f" row: {COMES_FIRST}"
     )
-    assert lines(run(repo, "gold", "anchor", FIRST)) == [no_row]
+    result = run(repo, "gold", "anchor", FIRST)
+    assert result.exit_code == 1
+    assert lines(result) == [no_row]
     (repo / EVALUATION / "independent-pass.toml").write_text(
         "rows = [\n", encoding="utf-8"
     )
-    assert lines(run(repo, "gold", "anchor", FIRST)) == [
+    result = run(repo, "gold", "anchor", FIRST)
+    assert result.exit_code == 1
+    assert lines(result) == [
         "problem: independent-pass.toml: not TOML at line 2, column 1",
         "Refused: independent-pass.toml does not read as its record",
     ]
     write_ledger(repo, [ledger_row(FIRST, "0" * 64)])
-    assert lines(run(repo, "gold", "anchor", FIRST)) == [
+    result = run(repo, "gold", "anchor", FIRST)
+    assert result.exit_code == 1
+    assert lines(result) == [
         (
             f"Refused: {FIRST} has an independent record that does not match its"
             " ledger row; the record is never edited (GS19)"
         )
     ]
+    assert not (repo / "data" / "runs" / "gold" / "anchored").exists()
+    assert not (repo / EVALUATION / "gold" / f"{FIRST_FILE}.toml").exists()
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     write_ledger(repo, [ledger_row(FIRST, digest)])
     anchored = run(repo, "gold", "anchor", FIRST)
