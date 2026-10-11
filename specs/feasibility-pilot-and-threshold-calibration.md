@@ -37,7 +37,8 @@ Locators:
 Designed 2026-10-11 in a brainstorming session on branch
 `stage-11-feasibility-pilot-design`, from `main` at `cff6313`. The session opened no
 pilot text, no kept draft, and nothing under `data/`. At that point 3 of the 28 train
-and dev bundles were signed, and no dev ledger row existed.
+and dev bundles were signed, and no dev ledger row existed. The user approved the spec on
+2026-10-11.
 
 ## Decisions
 
