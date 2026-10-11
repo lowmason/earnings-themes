@@ -11054,6 +11054,14 @@ Expected: nothing from `grep`.
 
 ### Task 19: Gate 5 — three signed train bundles (gate)
 
+> **Amended 2026-10-11 (Stage 6 spec, GS19).** For a **dev** bundle, the user's
+> independent pass runs between Steps 2 and 3, and its ledger row is committed
+> before the drafting session starts. No dev bundle is drafted before
+> `gold anchor --independent --check` and the spec's guard land, which refuses
+> to anchor or show a dev draft without a matching ledger row. In selection order, the next two
+> bundles, #2 and #4, are dev. See the spec's §The independent pass. Later bundles
+> run on `main`, not on the branch Step 3 names.
+
 S §Gates 5, §Order of work step 5, GS4, GS5, GS13, and P9-5, P9-7. Three train
 bundles, in the pilot's selection order: #1 `cik-0000051143:2024-12-31`, #3
 `cik-0000093410:2025-03-31`, and #5 `cik-0000310158:2025-06-30`. Each is drafted in

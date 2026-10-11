@@ -2,6 +2,10 @@
 
 **Status: COMPLETE (2026-10-03)** — Stage 6; implemented by plan 9; retired to specs/completed/.
 
+**Amended 2026-10-11** by GS19: each dev bundle gets the user's independent pass
+before its draft exists (§The independent pass). No dev bundle is drafted before the
+pass's check lands.
+
 > For agentic workers: REQUIRED NEXT SKILL: writing-plans. This is the stage spec
 > for Stage 6 of `specs/evidence-linked-theme-extraction-roadmap.md`. Plan it as one
 > plan whose last tasks are the gates (§Gates). Never plan a later stage with it.
@@ -45,8 +49,8 @@ and approved with it.
 | GS1 | One spec, one plan. The code comes first, and the plan's last tasks are the gates: the split and coverage freeze, codebook v0's approval, and three signed gold bundles (§Gates). No step sends an SEC request or calls a model from code. |
 | GS2 | **The pin.** Stage 6 binds to pilot v1 by content hash, `3839c800151cc646f11064efdce583f988e511265f8893c90e9a2f2549145926`, over events v1, `2348671b3ae8021d644df12ae2f539258670546970c918f8edb231ba1885c3b7`, and universe v1, whose operative hash is `c350923422d9bf2e65a0b5929f4c0d45370458c6a044c3de012a1dfeb116e573`. It loads the pilot with `load_pilot`, never `current_pilot`, against universe v1 by path, never the latest universe. The split, codebook v0's discovery corpus, and every gold file name the pin, and Stages 11 and 14 evaluate that pilot. A later events or pilot version is a new sample, for Stage 15 or a future validation set, and never replaces it. The rule is fixed here, before any annotation, so it stays outcome-blind (P-C7). F27 is therefore not a precondition for annotation. It, `release-id/2`, and the per-candidate citations stay deferred to the next events version, which re-seeds the pilot under the Stage 5 spec's invalidation rule (§Pilot selection) whenever it comes; settling F27 first would only move that re-seed earlier. |
 | GS3 | **The public repository.** Committed files hold IDs, offsets, labels, and hashes, never release text. A quote is committed as its `doc_id`, `[start, end)`, `element_id`, and the SHA-256 of its text and of its locator context. Claims, definitions, rules, and notes are the user's own words, and every committed free-text field passes F20's check (§Wording guard). A codebook example is a pointer, or is labeled synthetic (A §611). Quote text lives only in local drafts and views under `data/`. |
-| GS4 | **Gold authorship.** This amends D2 for Stage 6's gold, as F9 did for Stage 1's. A Claude session drafts each bundle's gold under a committed brief. The user verifies every item, reads the whole bundle for omissions, and signs. F9's mechanics carry over: the drafter leaves `annotator` blank, so a draft fails validation until the user signs; the signature reads "Lowell Mason (verified a Claude draft)"; and each original draft is kept, uncommitted. Drafting is outside the required path. It runs in an interactive session, and no model SDK, API key, or call enters the code (R14.1). The limitation, gold anchored to one model family's reading, is recorded. |
-| GS5 | **Origins and the omission pass.** Each gold item records its origin: `drafted_accepted`, `drafted_edited`, or `annotator_added`. It is derived by comparing the signed file with its kept draft, and each file counts the drafted items the user rejected. A bundle counts as annotated only after the omission pass. Stage 11 reports the edited, rejected, and added shares. |
+| GS4 | **Gold authorship.** This amends D2 for Stage 6's gold, as F9 did for Stage 1's. A Claude session drafts each bundle's gold under a committed brief. The user verifies every item, reads the whole bundle for omissions, and signs. F9's mechanics carry over: the drafter leaves `annotator` blank, so a draft fails validation until the user signs; the signature reads "Lowell Mason (verified a Claude draft)"; and each original draft is kept, uncommitted. Drafting is outside the required path. It runs in an interactive session, and no model SDK, API key, or call enters the code (R14.1). The limitation, gold anchored to one model family's reading, is recorded. For the 8 dev bundles, GS19 adds the user's independent pass before drafting, and their signature changes. |
+| GS5 | **Origins and the omission pass.** Each gold item records its origin: `drafted_accepted`, `drafted_edited`, or `annotator_added`. It is derived by comparing the signed file with its kept draft, and each file counts the drafted items the user rejected. A bundle counts as annotated only after the omission pass. Stage 11 reports the edited, rejected, and added shares. Under GS19, origins are still derived from the kept draft, never from the independent record. |
 | GS6 | **The split**, rule `issuer-time/1` (§The split). Three partitions by period-end quarter, four, two, and two: train 2024Q3–2025Q2, dev 2025Q3–2025Q4, test 2026Q1–2026Q2. An issuer's events belong to the partition of its earliest event, and a later event in another window is excluded. On pilot v1 that gives 20 train, 8 dev, 7 test, and 5 excluded. |
 | GS7 | The five excluded events stay unannotated, since no stage consumes gold outside a partition. They stay in every report, with their reason. |
 | GS8 | **The D4 report** (§The coverage report). It states pilot v1's zero unavailable, restricted, and failed documents as coverage gaps, never repaired by reselecting, and names Disney's override. Stage 6 adds nothing more for those classes. Abstaining on a missing document is a denominator property, which Stage 10's V10 tests with the synthetic acquisition. Stage 11 adds the no-theme count. |
@@ -60,6 +64,7 @@ and approved with it.
 | GS16 | *(design)* `sector_applicability` is `all` or a list of the codebook's own tags, mapped to no issuer. Industry classification stays out of the theme path (`CLAUDE.md`), and D1 leaves sector prevalence descriptive. |
 | GS17 | *(design)* **Units.** `earnings-themes` holds the split rule, the codebook, and the gold, and imports only `earnings-core`. `earnings-ingestion` holds the coverage report, over the state table it owns. The application loads the records and passes them on. `earnings-core` is unchanged, and no dependency is added. |
 | GS18 | **Test gold waits**, decided at the spec's review. The 7 test bundles are drafted and verified only after Stage 14 freezes its selected configuration, just before the single held-out run. Stage 11 uses the 28 train and dev bundles. No one reads test content while thresholds are set or configurations compared (A §749, R13.3). |
+| GS19 | **Dev's independent pass**, decided by the user on 2026-10-11, after Gate 5. It amends GS4 for the 8 dev bundles only. In all three of Gate 5's bundles, every drafted item was accepted as drafted, and no omission pass added one, so GS4 alone leaves unmeasured how far the gold depends on Claude's reading (R12.6). Before a dev bundle's drafting session starts, the user codes the bundle alone, in the gold brief's draft form, into a local record that is never edited again. The user then commits the record's SHA-256 to a ledger, before drafting starts. Drafts are never committed, so Git shows only that the record existed, unchanged, before the bundle's gold was committed. That it came before the draft rests on the protocol and on the draft's `drafted_on` date (§The independent pass). The drafting session, the working copy, and GS5's origins are unchanged. Train keeps GS4 as it stands, and test waits for Stage 14 (GS18). |
 
 ## Scope
 
@@ -301,6 +306,71 @@ canonical text is committed, so their checks run in the default suite.
   appears only in the view, which the user opens. Each refusal names its reason and
   writes nothing.
 
+## The independent pass
+
+Added by GS19 on 2026-10-11. It applies to each of the 8 dev bundles, and to no
+train or test bundle. Gate 5's three train bundles are unchanged.
+
+- **The record.** `data/runs/gold/independent/<file>.toml`, local and never committed
+  (GS3, GS14). It takes the gold brief's draft form and rules (`briefs/gold.md`,
+  §The draft's form and §Rules), with two differences: it has no `[drafting_aid]`
+  table, and its `annotator` reads "Lowell Mason (independent pass)". Hard negatives
+  are optional. The user writes it from the bundle's text,
+  `data/runs/gold/texts/<file>.md`, and codebook v0 alone. No Claude draft, working
+  copy, or view of that bundle exists yet, and no model session is consulted about
+  it.
+- **The check.** Before the record is hashed, `gold anchor <event> --independent
+  --check` anchors every quote and checks every item, as the brief's `--check` does
+  for a draft. It prints counts and each refusal by item and reason, and writes
+  nothing. The user fixes the record until it prints no refusal, so no item is lost
+  to a typo once the record is fixed.
+- **The guard.** For a dev bundle, `gold anchor` (with or without `--check`) and
+  `gold show` refuse a draft or working copy unless the ledger holds a row for the
+  event whose `sha256` matches the local record. The refusal names the event and its
+  reason only. So the drafting session's own check refuses, and no view of a dev
+  draft, and no dev gold, exists before the record is fixed. `gold show --text` is
+  not guarded, because the user's pass needs the text it writes.
+- **Code.** The check and the guard are the only code changes GS19 needs. They land
+  together, with their tests, before the first dev bundle's pass, and the session
+  that builds them never opens pilot text (GS13).
+- **The ledger.** `evaluation/djia-2024q3-2026q2/pilot-v1/independent-pass.toml`
+  holds one row per dev bundle: `event_id`, the record's `sha256` (by
+  `shasum -a 256` over the file's bytes), and `recorded_on`. It holds no text and no
+  free-text field. Each row is committed on its own, as
+  `chore(evaluation): independent pass for <event> (GS19)`, before that bundle's
+  drafting session starts. Drafts are never committed, so this commit proves only
+  that the record existed, unchanged, before the bundle's gold commit. Its coming
+  before the draft rests on this order and on the draft's `drafted_on` date.
+- **Immutability.** Once its row is committed, the record is never edited. A mistake
+  found later is corrected in the working copy, never in the record. A lost record
+  is reported lost, never rewritten after its draft has been seen; GS12's backup
+  covers it.
+- **The order,** for each dev bundle, with plan 9's Task 19:
+  1. Task 19, Steps 1 and 2: probe the state, and write the bundle's text. In
+     Step 1's table, a committed ledger row with no draft goes to Step 3.
+  2. The user writes the record, checks it until no refusal remains, and commits
+     its ledger row.
+  3. Task 19, Steps 3 to 7: the drafting session, the working copy copied from
+     Claude's draft, the anchor and the view, verification, the omission pass, the
+     signature, and the commit. The sessions run on `main` in the main checkout, not
+     on plan 9's deleted branch, which Step 3's hand-off text names. While
+     verifying, the user may add items from the record, and each counts as
+     `annotator_added` (GS5). The signature reads "Lowell Mason (independent pass,
+     then verified a Claude draft)". Step 7's commit message adds a line,
+     `Independent pass: <ledger commit SHA>.`, which ties the gold to its record.
+- **Blinding.** GS13 holds. The drafting session never reads
+  `data/runs/gold/independent/` or the ledger. The gold brief's §What you may read
+  already forbids both, so the brief does not change. The session that runs the
+  commands never opens the record, as it never opens pilot text.
+- **What Stage 11 gets.** Two readings of each dev bundle, each made before the
+  other was seen: the record, and Claude's kept draft. Stage 11 checks each record
+  against its ledger hash, then anchors both. It reports their agreement per event
+  (R12.7) with its own R13.1 metrics: release-identification agreement, theme F1,
+  and span overlap. It also reports how far each signed file moved from the record.
+  Eight events give descriptive figures only, and no gate (D1). Stage 11 decides
+  whether the anchored record's pointer form is committed, under GS3 and F20's
+  check.
+
 ## Wording guard
 
 A sibling of `test_corpus_quotes.py` applies F20's rule to every committed Stage 6
@@ -392,7 +462,7 @@ D2), verifying drafts from one model family (GS4).
 | 7 | Train gold may inform its prompts; dev and test gold never may (A §749) |
 | 8 | The curated hard negatives, for R8.1's misattribution fixtures |
 | 9 | The codebook contract and the frozen v0 |
-| 11 | The pin, the split, and the coverage report; the signed gold for the 28 train and dev events, once complete; the kept drafts, for GS5's shares; and the limitations. Its release-identification labels give precision over the annotated events. Who writes R8.4's labels is decided there. |
+| 11 | The pin, the split, and the coverage report; the signed gold for the 28 train and dev events, once complete; the kept drafts, for GS5's shares; and the limitations. Its release-identification labels give precision over the annotated events. Who writes R8.4's labels is decided there. For dev, GS19's independent records and their ledger, for the agreement between Claude's drafts and the user's own reading (§The independent pass). |
 | 12 | The training partition only (R12.3) |
 | 14 | Dev for the comparisons; the test gold, drafted and verified only after its configuration is frozen, then scored once (R13.3, GS18) |
 | 16 | The gold was drafted by a Claude model, so a Claude ceiling records that conflict |
@@ -410,7 +480,8 @@ On the plan's completion, append the stage stamp, with the plan's ID and path:
 ```
 
 This spec amends D2 for Stage 6's gold (GS4). The roadmap's D2 note records the
-amendment, in the commit that adds this spec.
+amendment, in the commit that adds this spec. GS19 amended GS4 for dev's gold on
+2026-10-11, after completion, and the roadmap's D2 note records that too.
 
 On completion, refresh the "Current state" section of `CLAUDE.md`. In the handoff,
 state which commands ran, that no model was called from code and no SEC request was

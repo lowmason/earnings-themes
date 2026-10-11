@@ -1025,7 +1025,11 @@
       evaluation/djia-2024q3-2026q2/pilot-v1/briefs/gold.md, then the user's
       verification, omission pass, and signature. Size: plan. Done when: all 28
       train and dev gold files under evaluation/djia-2024q3-2026q2/pilot-v1/gold/
-      are committed and `earnings-pipeline gold validate` passes.
+      are committed and `earnings-pipeline gold validate` passes. Amended
+      2026-10-11 (Stage 6 spec, GS19): each of the 8 dev bundles first gets the
+      user's independent pass, with its ledger row committed before drafting, and
+      waits for the `--independent --check` item below. Pilot order's #2 and #4
+      are dev. Train bundles proceed unchanged.
 - [x] Harden the gold before the next Task 19 bundle is anchored (plan 9's final
       review: M1, T8-M1, and M5, deferred by the user on 2026-10-03). (1) `_ids`
       in packages/earnings-themes/src/earnings_themes/annotation.py accepts a
@@ -1316,3 +1320,22 @@
       Stage 11 prerequisite. Done when: all callers consume that consistent
       result, each seeding responsibility is named and the existing invented
       integration/coverage/fixture regressions retain their coverage and pass.
+
+## GS19 amendment (Stage 6 spec) — 2026-10-11
+
+- [ ] **GS19 — Independent-pass check and dev guard.** The user's independent pass
+      on each dev bundle (specs/completed/pilot-codebook-split-and-gold-set-protocol.md,
+      §The independent pass) needs two changes in `gold anchor`/`gold show`
+      (apps/earnings-pipeline, earnings_themes.annotation). (1) `gold anchor <event>
+      --independent --check` anchors and checks
+      `data/runs/gold/independent/<file>.toml` in the gold brief's draft form, with
+      no `[drafting_aid]` and a non-blank `annotator`, and prints counts and
+      refusals by item and reason, writing nothing. (2) For a dev event, `gold
+      anchor` (with or without `--check`) and `gold show` refuse a draft or working
+      copy unless `evaluation/djia-2024q3-2026q2/pilot-v1/independent-pass.toml`
+      holds a row for the event whose `sha256` matches the local record. Train and
+      test behavior is unchanged. Tests use invented records only, and the
+      implementing session never opens pilot text (GS13). Size: plan.
+      Blocks: every dev bundle; pilot order's #2 and #4 are dev. Done when: both
+      behaviors are tested, a train bundle anchors byte for byte as before, and the
+      three committed gold files re-anchor unchanged.
