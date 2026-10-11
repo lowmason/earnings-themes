@@ -1346,7 +1346,7 @@
 
 ## 16-pilot-codebook-split-and-gold-set-protocol — 2026-10-11
 
-- [ ] **P16-1 — Root-suite command cannot collect the Stage 10 runner test.** The
+- [x] **P16-1 — Root-suite command cannot collect the Stage 10 runner test.** The
       documented `uv run --locked --all-packages pytest packages apps tests -m "not live
       and not browser"` (CLAUDE.md Commands, AGENTS.md:206) aborts at collection with
       `ModuleNotFoundError: No module named 'tools'` from
@@ -1366,7 +1366,15 @@
       in place, never insert). Also replace README's "a successful full-root duration
       remains unknown" with the observed 836 s for the plain command. Size: quick-fix.
       Done when: the documented root command collects and runs without a hand-set
-      `PYTHONPATH` (or the documented command carries it) and the user has re-run it.
+      `PYTHONPATH` (or the documented command carries it) and the user has re-run it. → done
+      in 5be419e: `pythonpath = ["."]` in `[tool.pytest]`, pinned by two tests in
+      tests/test_pytest_configuration.py (`python -I -m pytest` models the console script).
+      The user re-ran the plain documented command with no `PYTHONPATH` on 2026-10-11: 4243
+      passed, 9 skipped, 28 deselected in 819 s. Also found: 11 of the 13 test files that
+      import root-level names by dotted path (`tests.`, `apps.`, `packages.`, `tools.`)
+      could not be collected alone, and the same option fixes them. README's duration
+      sentence and CLAUDE.md's `[tool.pytest]` paragraph are updated; AGENTS.md:206 needed
+      no change.
 - [ ] **P16-2 — Stage 11 reuse of the GS19 record check.** (a) `check_independent` in
       packages/earnings-themes/src/earnings_themes/annotation.py skips the
       codebook-approval check that `validate_gold` makes through `_codebook`; harmless while

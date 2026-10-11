@@ -50,6 +50,14 @@ extend-exclude = ["*.md"]
 # test that reads no pilot text.
 addopts = ["--import-mode=importlib", "--tb=short", "-m", "not live and not browser"]
 testpaths = ["packages", "apps", "tests"]
+# pythonpath: put the repository root on sys.path. The `pytest` console script, which
+# `uv run pytest` starts, adds no working directory (`python -m pytest` does), and
+# importlib mode adds none. The Stage 10 tests import the root-level tools, apps,
+# packages and tests by dotted name; those resolve only when an earlier-collected module
+# has registered them, so a single-file run failed, and tools, which has no test files,
+# aborted the documented root command at collection. It edits sys.path in this process
+# only: child processes get no PYTHONPATH from it.
+pythonpath = ["."]
 # strict: unknown config keys, unregistered markers, non-strict xfail, and duplicate
 # parametrize IDs are errors.
 strict = true

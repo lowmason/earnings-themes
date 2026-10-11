@@ -176,7 +176,7 @@ default; and
 `addopts`: pytest's default traceback prints a failing frame's arguments, which in
 Stage 6's local legs may hold pilot text (GS13); pass `--tb=long` only on a named
 test that reads no pilot text. The frozen Stage 1 harness still needs
-`--import-mode=prepend`, which its own command passes.
+`--import-mode=prepend`, which its own command passes. `pythonpath = ["."]` (added after Stage 10) puts the repository root on `sys.path`: the `pytest` console script adds neither it nor the working directory and importlib mode never does, yet the Stage 10 tests import the root-level `tools`, `apps`, `packages` and `tests` by dotted name, which otherwise resolve only when an earlier-collected module registered them, so the documented command aborted at collection on `tools`.
 Environment: uv 0.12.15, Python 3.14.0 (uv-managed; Homebrew's `python3` is 3.14.7),
 `requires-python = ">=3.14"`. `.python-version` pins 3.14.0 exactly: the canonical
 fixtures record the Python version, so any other interpreter fails
