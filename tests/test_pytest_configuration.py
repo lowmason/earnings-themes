@@ -1,4 +1,5 @@
-"""The root pytest configuration: registered markers and collision-safe imports (A §193)."""
+"""The root pytest configuration: registered markers, collision-safe imports, and the
+repository root on the import path (A §193)."""
 
 import subprocess
 import sys
@@ -8,10 +9,25 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "pyproject.toml"
 
 
-def run_pytest(*args: str) -> subprocess.CompletedProcess[str]:
-    """Run pytest under the root configuration, without touching the repo's cache."""
+def run_pytest(
+    *args: str, interpreter_flags: tuple[str, ...] = ()
+) -> subprocess.CompletedProcess[str]:
+    """Run pytest under the root configuration, without touching the repo's cache.
+
+    ``python -m pytest`` puts the working directory on ``sys.path``, as the ``pytest``
+    console script does not; ``interpreter_flags=("-I",)`` takes it off again.
+    """
     return subprocess.run(
-        [sys.executable, "-m", "pytest", "-c", str(CONFIG), "-p", "no:cacheprovider"]
+        [
+            sys.executable,
+            *interpreter_flags,
+            "-m",
+            "pytest",
+            "-c",
+            str(CONFIG),
+            "-p",
+            "no:cacheprovider",
+        ]
         + list(args),
         cwd=ROOT,
         capture_output=True,
@@ -126,3 +142,53 @@ def test_same_named_test_modules_do_not_collide(tmp_path: Path) -> None:
     result = run_pytest(str(tmp_path), "-q")
     assert result.returncode == 0, result.stdout
     assert "2 passed" in result.stdout
+
+
+ROOT_PACKAGES = ("tools", "apps", "packages", "tests")
+
+
+def write_import_probe(directory: Path) -> None:
+    """A test file that asks where each root-level package name resolves."""
+    (directory / "test_names.py").write_text(
+        "import importlib.util\n"
+        "from pathlib import Path\n"
+        "\n"
+        "import pytest\n"
+        "\n"
+        f"ROOT = Path({str(ROOT)!r})\n"
+        "\n"
+        f"@pytest.mark.parametrize('name', {list(ROOT_PACKAGES)!r})\n"
+        "def test_resolves_to_the_repository(name):\n"
+        "    spec = importlib.util.find_spec(name)\n"
+        "    assert spec is not None\n"
+        "    assert (ROOT / name).resolve() in {\n"
+        "        Path(entry).resolve() for entry in spec.submodule_search_locations\n"
+        "    }\n",
+        encoding="utf-8",
+    )
+
+
+def test_the_console_script_can_import_the_root_level_packages(tmp_path: Path) -> None:
+    """The documented command runs the ``pytest`` console script, whose ``sys.path``
+    holds neither the working directory nor the repository root, and importlib mode adds
+    neither. The Stage 10 tests import ``tools``, ``apps``, ``packages`` and ``tests``
+    by dotted name. Those namespace packages resolve only with the root on the path, or
+    once an earlier-collected module has registered them, which a single-file run never
+    does and ``tools``, with no test files, never does at all. ``-I`` models the script."""
+    write_import_probe(tmp_path)
+    result = run_pytest(str(tmp_path), "-q", interpreter_flags=("-I",))
+    assert result.returncode == 0, result.stdout
+    assert f"{len(ROOT_PACKAGES)} passed" in result.stdout
+
+
+def test_the_import_probe_fails_when_the_root_is_not_on_the_path(
+    tmp_path: Path,
+) -> None:
+    """The probe can fail: with the option blanked, nothing else puts the root on the
+    path, so every name is unresolved."""
+    write_import_probe(tmp_path)
+    result = run_pytest(
+        str(tmp_path), "-q", "-o", "pythonpath=", interpreter_flags=("-I",)
+    )
+    assert result.returncode == 1, result.stdout
+    assert f"{len(ROOT_PACKAGES)} failed" in result.stdout

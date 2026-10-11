@@ -320,13 +320,19 @@ output guarding does not authorize protected readers. Agents never run full-root
 either Stage 6 wording node or browser/user-only modes. The controller obtains
 those human gates at the final reviewed HEAD. The earlier human root run returned
 `runner_timeout` at 300 seconds; its zero counters and empty IDs are placeholders,
-not successful test results. A successful full-root duration remains unknown. See the
+not successful test results. The only successful full-root durations observed are for
+the plain documented root command, not the runner, both on 2026-10-11: 836 seconds at
+`4ba5f35` with `PYTHONPATH` set (4294 passed, 1 skipped, 28 deselected, 1 warning), and
+819 seconds with no `PYTHONPATH` once `pythonpath` joined the pytest configuration (4243
+passed, 9 skipped, 28 deselected); the runner's `root-user` duration remains unknown. See the
 [verification record](docs/verification/theme-vertical-slice.md) for exact results
 and the separate [V5 protocol](docs/verification/stage10-browser.md).
 
-Pytest uses importlib handling, strict configuration and `live`/`browser` markers.
-Default tests make no network or billable calls. No type checker or CI configuration
-is configured. The Stage 1 harness retains its separate historical command above.
+Pytest uses importlib handling, strict configuration, `live`/`browser` markers and a
+`pythonpath` of the repository root, so the documented root command and a single test
+file both collect under the `pytest` console script. Default tests make no network or
+billable calls. No type checker or CI configuration is configured. The Stage 1 harness
+retains its separate historical command above.
 
 ### Offline replay extraction
 
