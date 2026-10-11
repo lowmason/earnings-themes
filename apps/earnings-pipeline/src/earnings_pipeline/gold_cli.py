@@ -6,6 +6,7 @@ GS13; plan 9).
     uv run --locked earnings-pipeline gold anchor cik-0000051143:2024-12-31
     uv run --locked earnings-pipeline gold show cik-0000051143:2024-12-31
     uv run --locked earnings-pipeline gold validate
+    uv run --locked earnings-pipeline gold anchor <dev event> --independent --check
 
 A drafting session writes ``data/runs/gold/drafts/<name>.draft.toml``, which stays
 unchanged, and the user edits ``<name>.working.toml`` beside it; ``<name>`` is an
@@ -19,6 +20,11 @@ anything changes. ``show`` writes
 the local views and texts the user and the drafting sessions open. ``validate``
 rechecks committed records against their local documents. No command prints a
 document's text (GS13).
+A dev bundle's draft (GS19) is neither anchored nor shown until the user's
+independent record, ``data/runs/gold/independent/<name>.toml``, matches its row in
+the pilot's ``independent-pass.toml``. ``anchor --independent --check`` checks that
+record before its draft exists, prints its SHA-256 for the ledger, and writes
+nothing.
 """
 
 from pathlib import Path
@@ -49,6 +55,7 @@ from earnings_themes.gold import (
     load_gold,
     load_hard_negatives,
 )
+from earnings_themes.independent import LEDGER, ledger_problem, load_ledger
 from earnings_themes.records import RecordError
 from earnings_themes.split import Partition, SplitManifest
 from earnings_themes.view import render_curated_view, render_text, render_view
@@ -151,6 +158,23 @@ def _independent_path(layout: Layout, event_id: str) -> Path:
     return layout.gold_runs / "independent" / f"{file_stem(event_id)}.toml"
 
 
+def _guard(layout: Layout, pinned: Pinned, split: SplitManifest, event_id: str) -> None:
+    """GS19: a dev bundle's draft is neither anchored nor shown until the user's
+    independent record exists and matches its ledger row. Only a dev bundle reads
+    the ledger or the record, so train and test are unchanged."""
+    if split.partition_of(event_id) is not Partition.DEV:
+        return
+    path = pinned.evaluation / LEDGER
+    try:
+        ledger = load_ledger(path) if path.is_file() else None
+    except RecordError as error:
+        record_error(error)
+    record = _independent_path(layout, event_id)
+    found = record.read_bytes() if record.is_file() else None
+    if (reason := ledger_problem(ledger, event_id, found)) is not None:
+        fail(f"Refused: {event_id} {reason}")
+
+
 def _check_independent(
     layout: Layout,
     pinned: Pinned,
@@ -249,6 +273,7 @@ def _anchor_event(
 ) -> None:
     split = pinned_split(layout, pinned)
     _open(layout, split, event_id)
+    _guard(layout, pinned, split, event_id)
     bundle = load_bundle(layout, doc_ids, event_id)
     drafted_path, working_path = _drafts(layout, event_id, check)
     try:
@@ -428,6 +453,7 @@ def show_command(
         split = pinned_split(layout, pinned)
         for event_id in event_ids:
             _open(layout, split, event_id)
+            _guard(layout, pinned, split, event_id)
             committed = pinned.gold_dir / f"{file_stem(event_id)}.toml"
             path = _latest(layout, event_id, committed)
             try:

@@ -1024,3 +1024,71 @@ def test_the_independent_pass_comes_before_the_draft(repo, monkeypatch) -> None:
             " the independent pass comes before the draft (GS19)"
         )
     ]
+
+
+def test_a_dev_draft_waits_for_its_matching_ledger_row(repo, monkeypatch) -> None:
+    """GS19's guard: neither the drafting session's check, nor the anchor, nor the
+    view touches a dev draft until the user's record matches its one ledger row."""
+    frozen(repo)
+    as_dev(monkeypatch)
+    write_drafts(repo, FIRST, gold_draft())
+    no_record = (
+        f"Refused: {FIRST} is a dev bundle with no independent record: {COMES_FIRST}"
+    )
+    for args in (("anchor", FIRST, "--check"), ("anchor", FIRST), ("show", FIRST)):
+        result = run(repo, "gold", *args)
+        assert result.exit_code == 1
+        assert lines(result) == [no_record]
+    path = write_independent(repo, independent_record())
+    no_row = (
+        f"Refused: {FIRST} is a dev bundle whose independent record has no ledger"
+        f" row: {COMES_FIRST}"
+    )
+    assert lines(run(repo, "gold", "anchor", FIRST)) == [no_row]
+    (repo / EVALUATION / "independent-pass.toml").write_text(
+        "rows = [\n", encoding="utf-8"
+    )
+    assert lines(run(repo, "gold", "anchor", FIRST)) == [
+        "problem: independent-pass.toml: not TOML at line 2, column 1",
+        "Refused: independent-pass.toml does not read as its record",
+    ]
+    write_ledger(repo, [ledger_row(FIRST, "0" * 64)])
+    assert lines(run(repo, "gold", "anchor", FIRST)) == [
+        (
+            f"Refused: {FIRST} has an independent record that does not match its"
+            " ledger row; the record is never edited (GS19)"
+        )
+    ]
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    write_ledger(repo, [ledger_row(FIRST, digest)])
+    anchored = run(repo, "gold", "anchor", FIRST)
+    assert anchored.exit_code == 0, anchored.output
+    assert lines(anchored)[0].startswith(f"{FIRST} (dev): ")
+    shown = run(repo, "gold", "show", FIRST)
+    assert lines(shown) == [f"view  data/runs/gold/views/{FIRST_FILE}.md"]
+
+
+@pytest.mark.parametrize("ledger", [None, "rows = [\n"])
+def test_a_train_draft_reads_no_ledger_or_record(repo, ledger) -> None:
+    """Train is unchanged: with no ledger, or one that does not read, and no
+    record, a train draft anchors and shows as before."""
+    frozen(repo)
+    if ledger is not None:
+        (repo / EVALUATION / "independent-pass.toml").write_text(
+            ledger, encoding="utf-8"
+        )
+    write_drafts(repo, FIRST, gold_draft())
+    anchored = run(repo, "gold", "anchor", FIRST)
+    assert anchored.exit_code == 0, anchored.output
+    assert lines(anchored)[0].startswith(f"{FIRST} (train): ")
+    shown = run(repo, "gold", "show", FIRST)
+    assert lines(shown) == [f"view  data/runs/gold/views/{FIRST_FILE}.md"]
+
+
+def test_a_dev_bundle_s_text_is_written_before_its_pass(repo, monkeypatch) -> None:
+    """``gold show --text`` is not guarded: the user's pass needs the text."""
+    frozen(repo)
+    as_dev(monkeypatch)
+    result = run(repo, "gold", "show", "--text", FIRST)
+    assert result.exit_code == 0, result.output
+    assert lines(result) == ["wrote 1 text under data/runs/gold/texts"]
