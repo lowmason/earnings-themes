@@ -133,7 +133,21 @@ def row(digest: str, event_id: str = DEV) -> LedgerRow:
         (
             IndependentLedger(rows=(row(sha256_hex(RECORD)),)),
             None,
+            (
+                "has a ledger row but its independent record is lost; it is reported"
+                " lost, never rewritten (GS19)"
+            ),
+        ),
+        (None, None, f"is a dev bundle with no independent record: {COMES_FIRST}"),
+        (
+            IndependentLedger(rows=(row(sha256_hex(RECORD), TRAIN),)),
+            None,
             f"is a dev bundle with no independent record: {COMES_FIRST}",
+        ),
+        (
+            IndependentLedger(rows=(row(sha256_hex(RECORD)), row("0" * 64))),
+            None,
+            "has more than one ledger row (GS19)",
         ),
         (
             None,

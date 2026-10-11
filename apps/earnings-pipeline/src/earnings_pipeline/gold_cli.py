@@ -24,7 +24,7 @@ A dev bundle's draft (GS19) is neither anchored nor shown until the user's
 independent record, ``data/runs/gold/independent/<name>.toml``, matches its row in
 the pilot's ``independent-pass.toml``. ``anchor --independent --check`` checks that
 record before its draft exists, prints its SHA-256 for the ledger, and writes
-nothing.
+nothing; it refuses once the event's ledger row exists.
 """
 
 from pathlib import Path
@@ -55,7 +55,12 @@ from earnings_themes.gold import (
     load_gold,
     load_hard_negatives,
 )
-from earnings_themes.independent import LEDGER, ledger_problem, load_ledger
+from earnings_themes.independent import (
+    LEDGER,
+    IndependentLedger,
+    ledger_problem,
+    load_ledger,
+)
 from earnings_themes.records import RecordError
 from earnings_themes.split import Partition, SplitManifest
 from earnings_themes.view import render_curated_view, render_text, render_view
@@ -158,17 +163,23 @@ def _independent_path(layout: Layout, event_id: str) -> Path:
     return layout.gold_runs / "independent" / f"{file_stem(event_id)}.toml"
 
 
+def _read_ledger(pinned: Pinned) -> IndependentLedger | None:
+    """The pilot's independent-pass ledger, or ``None`` when none is committed. A
+    ledger that does not read is refused, naming its file and its problems only."""
+    path = pinned.evaluation / LEDGER
+    try:
+        return load_ledger(path) if path.is_file() else None
+    except RecordError as error:
+        record_error(error)
+
+
 def _guard(layout: Layout, pinned: Pinned, split: SplitManifest, event_id: str) -> None:
     """GS19: a dev bundle's draft is neither anchored nor shown until the user's
     independent record exists and matches its ledger row. Only a dev bundle reads
     the ledger or the record, so train and test are unchanged."""
     if split.partition_of(event_id) is not Partition.DEV:
         return
-    path = pinned.evaluation / LEDGER
-    try:
-        ledger = load_ledger(path) if path.is_file() else None
-    except RecordError as error:
-        record_error(error)
+    ledger = _read_ledger(pinned)
     record = _independent_path(layout, event_id)
     found = record.read_bytes() if record.is_file() else None
     if (reason := ledger_problem(ledger, event_id, found)) is not None:
@@ -185,7 +196,9 @@ def _check_independent(
 ) -> None:
     """GS19's check: anchor and check the user's independent record of a dev
     bundle, print its SHA-256 for the ledger, and write nothing. It runs only
-    before the bundle's draft, working copy, anchored file, or view exists (D16-2)."""
+    before the bundle's draft, working copy, anchored file, or view exists (D16-2),
+    and before its ledger row is committed: once the ledger holds a row for the
+    event, it refuses, whether or not the record is still here."""
     split = pinned_split(layout, pinned)
     _open(layout, split, event_id)
     partition = split.partition_of(event_id)
@@ -205,6 +218,12 @@ def _check_independent(
         fail(
             f"Refused: {event_id}: {layout.shown(existing[0])} exists; the"
             " independent pass comes before the draft (GS19)"
+        )
+    ledger = _read_ledger(pinned)
+    if ledger is not None and any(row.event_id == event_id for row in ledger.rows):
+        fail(
+            f"Refused: {event_id}: the independent record already has a ledger row;"
+            " --independent --check runs before its row is committed (GS19)"
         )
     path = _independent_path(layout, event_id)
     if not path.is_file():

@@ -1068,6 +1068,109 @@ def test_a_dev_draft_waits_for_its_matching_ledger_row(repo, monkeypatch) -> Non
     assert lines(shown) == [f"view  data/runs/gold/views/{FIRST_FILE}.md"]
 
 
+def test_a_lost_independent_record_is_reported_never_rewritten(
+    repo, monkeypatch
+) -> None:
+    """A ledger row whose record file is gone is told apart from a pass not yet
+    written: the row is the proof the record existed (GS19)."""
+    frozen(repo)
+    as_dev(monkeypatch)
+    path = write_independent(repo, independent_record())
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    write_ledger(repo, [ledger_row(FIRST, digest)])
+    path.unlink()
+    write_drafts(repo, FIRST, gold_draft())
+    lost = (
+        f"Refused: {FIRST} has a ledger row but its independent record is lost;"
+        " it is reported lost, never rewritten (GS19)"
+    )
+    for args in (("anchor", FIRST, "--check"), ("anchor", FIRST), ("show", FIRST)):
+        result = run(repo, "gold", *args)
+        assert result.exit_code == 1
+        assert lines(result) == [lost]
+    assert not path.exists()
+    assert not (repo / "data" / "runs" / "gold" / "anchored").exists()
+    assert not (repo / "data" / "runs" / "gold" / "views").exists()
+
+
+@pytest.mark.parametrize("record_here", [True, False])
+def test_the_independent_check_is_closed_once_the_event_has_a_ledger_row(
+    repo, monkeypatch, record_here
+) -> None:
+    """The check runs before the row is committed; a row for this event, with its
+    record present or gone, closes it (GS19)."""
+    frozen(repo)
+    as_dev(monkeypatch)
+    path = write_independent(repo, independent_record())
+    write_ledger(repo, [ledger_row(FIRST, "0" * 64)])
+    if not record_here:
+        path.unlink()
+    result = run(repo, "gold", "anchor", FIRST, "--independent", "--check")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        (
+            f"Refused: {FIRST}: the independent record already has a ledger row;"
+            " --independent --check runs before its row is committed (GS19)"
+        )
+    ]
+    assert not (repo / "data" / "runs" / "gold" / "anchored").exists()
+
+
+def test_another_event_s_ledger_row_does_not_close_the_independent_check(
+    repo, monkeypatch
+) -> None:
+    frozen(repo)
+    as_dev(monkeypatch)
+    path = write_independent(repo, independent_record())
+    write_ledger(repo, [ledger_row(EXCLUDED, "0" * 64)])
+    result = run(repo, "gold", "anchor", FIRST, "--independent", "--check")
+    assert result.exit_code == 0, result.output
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    assert lines(result) == [
+        (
+            f"{FIRST} (dev, independent): 1 quotes, 1 claims, 1 assignments, 0 hard"
+            " negatives; no_theme false"
+        ),
+        f"sha256 {digest}  {INDEPENDENT_DIR}/{FIRST_FILE}.toml",
+        f"checked {FIRST}: nothing written",
+    ]
+
+
+def test_a_malformed_ledger_is_named_by_the_independent_check(
+    repo, monkeypatch
+) -> None:
+    frozen(repo)
+    as_dev(monkeypatch)
+    write_independent(repo, independent_record())
+    (repo / EVALUATION / "independent-pass.toml").write_text(
+        "rows = [\n", encoding="utf-8"
+    )
+    result = run(repo, "gold", "anchor", FIRST, "--independent", "--check")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        "problem: independent-pass.toml: not TOML at line 2, column 1",
+        "Refused: independent-pass.toml does not read as its record",
+    ]
+
+
+def test_a_train_independent_check_reads_no_ledger(repo) -> None:
+    """The partition check comes first, so a train event never reads the ledger,
+    even one that does not read."""
+    frozen(repo)
+    write_independent(repo, independent_record())
+    (repo / EVALUATION / "independent-pass.toml").write_text(
+        "rows = [\n", encoding="utf-8"
+    )
+    result = run(repo, "gold", "anchor", FIRST, "--independent", "--check")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        (
+            f"Refused: {FIRST} is a train bundle; the independent pass is for dev"
+            " bundles (GS19)"
+        )
+    ]
+
+
 @pytest.mark.parametrize("ledger", [None, "rows = [\n"])
 def test_a_train_draft_reads_no_ledger_or_record(repo, ledger) -> None:
     """Train is unchanged: with no ledger, or one that does not read, and no

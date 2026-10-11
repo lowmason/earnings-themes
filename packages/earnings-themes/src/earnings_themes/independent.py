@@ -51,14 +51,26 @@ def ledger_problem(
     """Why a dev bundle's draft may not be anchored or shown yet, or ``None``.
     ``record`` is the independent record's bytes, ``None`` when it is absent, and
     ``ledger`` is ``None`` when none is committed. The phrase follows the event ID
-    in a refusal, and names no text."""
-    if record is None:
-        return f"is a dev bundle with no independent record: {_FIRST}"
+    in a refusal, and names no text.
+
+    The event's ledger rows are read first, so a row whose record is gone is told
+    apart from a pass not yet written: with no row, a missing record means the pass
+    comes first, and a record without a row means the row comes first; two rows are
+    refused whether or not the record exists; one row and no record is a lost
+    record, reported and never rewritten; one row and a record that does not hash to
+    it is a changed record."""
     rows = [r for r in (ledger.rows if ledger else ()) if r.event_id == event_id]
     if not rows:
+        if record is None:
+            return f"is a dev bundle with no independent record: {_FIRST}"
         return f"is a dev bundle whose independent record has no ledger row: {_FIRST}"
     if len(rows) > 1:
         return "has more than one ledger row (GS19)"
+    if record is None:
+        return (
+            "has a ledger row but its independent record is lost; it is reported"
+            " lost, never rewritten (GS19)"
+        )
     if rows[0].sha256 != sha256_hex(record):
         return (
             "has an independent record that does not match its ledger row; the"
