@@ -3,13 +3,23 @@ user's record takes the draft's form without a drafting aid and is checked as a
 draft is; the wording guard reads its claims but never its quotes, which are the
 release's own words. Synthetic text only (GS13)."""
 
+from datetime import date
+
 import pytest
+from earnings_core.hashing import sha256_hex
 from earnings_themes import tomlfile
 from earnings_themes.annotation import (
     IndependentRecord,
     check_independent,
     load_independent,
     without_quotes,
+)
+from earnings_themes.independent import (
+    LEDGER,
+    IndependentLedger,
+    LedgerRow,
+    ledger_problem,
+    load_ledger,
 )
 from earnings_themes.problems import Refusal
 from earnings_themes.records import RecordError, parse
@@ -107,3 +117,75 @@ def test_the_wording_guard_reads_the_claims_never_the_quotes(bundle, codebook) -
     ]
     assert without_quotes(copied).quotes == ()
     assert without_quotes(copied).claims == copied.claims
+
+
+RECORD = b'event_id = "invented"\n'
+COMES_FIRST = "the user's independent pass and its ledger row come first (GS19)"
+
+
+def row(digest: str, event_id: str = DEV) -> LedgerRow:
+    return LedgerRow(event_id=event_id, sha256=digest, recorded_on=date(2026, 10, 12))
+
+
+@pytest.mark.parametrize(
+    ("ledger", "found", "reason"),
+    [
+        (
+            IndependentLedger(rows=(row(sha256_hex(RECORD)),)),
+            None,
+            f"is a dev bundle with no independent record: {COMES_FIRST}",
+        ),
+        (
+            None,
+            RECORD,
+            (
+                "is a dev bundle whose independent record has no ledger row:"
+                f" {COMES_FIRST}"
+            ),
+        ),
+        (
+            IndependentLedger(rows=(row(sha256_hex(RECORD), TRAIN),)),
+            RECORD,
+            (
+                "is a dev bundle whose independent record has no ledger row:"
+                f" {COMES_FIRST}"
+            ),
+        ),
+        (
+            IndependentLedger(rows=(row(sha256_hex(RECORD)), row("0" * 64))),
+            RECORD,
+            "has more than one ledger row (GS19)",
+        ),
+        (
+            IndependentLedger(rows=(row("0" * 64),)),
+            RECORD,
+            (
+                "has an independent record that does not match its ledger row; the"
+                " record is never edited (GS19)"
+            ),
+        ),
+        (IndependentLedger(rows=(row(sha256_hex(RECORD)),)), RECORD, None),
+    ],
+)
+def test_a_dev_draft_waits_for_a_record_that_matches_its_one_row(
+    ledger, found, reason
+) -> None:
+    assert ledger_problem(ledger, DEV, found) == reason
+
+
+def test_the_ledger_reads_as_rows_of_hashes(tmp_path) -> None:
+    path = tmp_path / LEDGER
+    digest = sha256_hex(RECORD)
+    data = {
+        "rows": [{"event_id": DEV, "sha256": digest, "recorded_on": date(2026, 10, 12)}]
+    }
+    path.write_text(tomlfile.dumps(data), encoding="utf-8")
+    assert load_ledger(path) == IndependentLedger(rows=(row(digest),))
+    path.write_text("rows = [\n", encoding="utf-8")
+    with pytest.raises(RecordError):
+        load_ledger(path)
+    path.write_text(
+        tomlfile.dumps({"rows": [{**data["rows"][0], "sha256": "X"}]}), encoding="utf-8"
+    )
+    with pytest.raises(RecordError):
+        load_ledger(path)

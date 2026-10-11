@@ -24,7 +24,7 @@ from earnings_ingestion.events import acceptance, coverage, states
 from earnings_ingestion.events import records as events
 from earnings_ingestion.fetch import records as fetch
 from earnings_pipeline import theme_config, theme_workflow
-from earnings_themes import annotation, codebook, gold, problems, split
+from earnings_themes import annotation, codebook, gold, independent, problems, split
 from earnings_themes import records as themes
 from earnings_themes.analysis import records as analysis
 from earnings_themes.analysis.problems import ANALYSIS_REASONS
@@ -164,6 +164,8 @@ MODELS = [
     annotation.FixtureDraft,
     annotation.CuratedDraft,
     annotation.IndependentRecord,
+    independent.LedgerRow,
+    independent.IndependentLedger,
     extraction.Parameters,
     extraction.AdapterIdentity,
     extraction.ExtractionPolicy,
