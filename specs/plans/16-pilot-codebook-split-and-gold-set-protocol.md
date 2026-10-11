@@ -1,5 +1,7 @@
 # Dev's Independent Pass: Check and Guard (GS19) Implementation Plan
 
+**Status: COMPLETE (2026-10-11)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the two code changes GS19 needs before any dev gold bundle is drafted: `gold anchor <event> --independent --check`, which checks the user's independent record of a dev bundle and prints its SHA-256, and a guard that stops `gold anchor` and `gold show` from touching a dev bundle's draft until that record matches its ledger row.
@@ -47,6 +49,7 @@ Neither the spec nor the backlog item fixes these.
 
 - **D16-1, the hash.** `--independent --check` prints the record's SHA-256 (`earnings_core.hashing.sha256_hex` over the file's bytes). It equals `shasum -a 256`'s output, so the user can copy it into the ledger.
 - **D16-2, order.** `--independent --check` refuses when the bundle's draft, working copy, anchored file or view already exists. GS19 says none exists when the record is written; this is the one point at which code can confirm that.
+  > Amended 2026-10-11 (final review, user decision): it also refuses once the ledger holds a row for the event. After the row is committed the check has no further use, because `_guard` re-checks the hash on every later anchor or show.
 - **D16-3, wording.** The record's quotes are the release's own words, so the wording guard reads the record without its quotes, through `without_quotes`. Every other string is the user's and is checked as a draft's is.
 - **D16-4, partition.** The library check takes no partition. The application refuses `--independent` for any event that is not dev.
 - **D16-5, a synthetic dev event in CLI tests.** The CLI tests' synthetic pilot has no dev event: each invented issuer's first event is in train and its later ones are excluded (GS6). The CLI tests therefore patch `SplitManifest.partition_of` to read `FIRST` as dev, *after* `frozen(repo)` has frozen codebook v0. The library tests use `earnings_themes.synthetic.DEV`, a real invented dev bundle.
@@ -102,7 +105,9 @@ Every later command runs from the worktree's root.
   - `check_independent(record: IndependentRecord, *, bundle: Bundle, codebook: Codebook) -> list[Refusal]`
   - `without_quotes(record: IndependentRecord) -> IndependentRecord`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+
+> Deviation: the plan's `record_data` helper called `gold_draft(DEV, annotator=INDEPENDENT, **changes)`, which raises `TypeError` when a test passes `annotator=` or `event_id=`; it now calls `gold_draft(DEV)` and then `data.update({"annotator": INDEPENDENT, **changes})`. No assertion, expected value or parametrization changed.
 
 Create `packages/earnings-themes/tests/test_independent.py`:
 
@@ -221,12 +226,12 @@ def test_the_wording_guard_reads_the_claims_never_the_quotes(
 
 The `codebook` fixture comes from `packages/earnings-themes/tests/conftest.py`. It is the synthetic codebook, approved, whose one theme is `demand`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_independent.py -q`
 Expected: collection fails with `ImportError: cannot import name 'IndependentRecord' from 'earnings_themes.annotation'`.
 
-- [ ] **Step 3: Implement the contract and check in `annotation.py`**
+- [x] **Step 3: Implement the contract and check in `annotation.py`**
 
 Add the model directly after `class GoldDraft`:
 
@@ -323,12 +328,12 @@ Update the module docstring's first bullet. Replace `- **Drafts.** A drafting se
   built.
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_independent.py packages/earnings-themes/tests/test_gold.py packages/earnings-themes/tests/test_import_boundaries.py -q`
 Expected: all pass. `test_gold.py` passing shows the `_items` change left drafts unchanged.
 
-- [ ] **Step 5: Document and register the model**
+- [x] **Step 5: Document and register the model**
 
 In `docs/data-dictionary.md`, insert this section after the `### \`CuratedDraft\`` table, directly before `## Stage 6 files`:
 
@@ -356,7 +361,7 @@ In `tests/contracts/test_data_dictionary.py`, add `annotation.IndependentRecord,
 Run: `uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py -q`
 Expected: all pass, including `test_every_field_is_documented[IndependentRecord]`.
 
-- [ ] **Step 6: Lint and commit**
+- [x] **Step 6: Lint and commit**
 
 ```bash
 uv run --locked ruff check . && uv run --locked ruff format --check .
@@ -383,7 +388,9 @@ git commit -m "feat(themes): check a dev bundle's independent record (GS19)"
   - `load_ledger(path: Path) -> IndependentLedger`
   - `ledger_problem(ledger: IndependentLedger | None, event_id: str, record: bytes | None) -> str | None`. It returns a phrase that follows the event ID in a refusal, or `None`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+
+> Deviation: Ruff's ISC004 flagged three expected-reason strings in the parametrize list (implicit concatenation); each is wrapped in parentheses. Values unchanged.
 
 Append to `packages/earnings-themes/tests/test_independent.py`. Merge the new imports into the module's import block, keeping Ruff's order:
 
@@ -463,12 +470,14 @@ def test_the_ledger_reads_as_rows_of_hashes(tmp_path) -> None:
 
 Ruff's formatter will rewrap the two long lines in the last test. That is expected.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_independent.py -q`
 Expected: collection fails with `ModuleNotFoundError: No module named 'earnings_themes.independent'`.
 
-- [ ] **Step 3: Implement `independent.py`**
+- [x] **Step 3: Implement `independent.py`**
+
+> Deviation (final review, user decision 2026-10-11): `ledger_problem` now looks up the event's rows before testing `record is None`. A row with no record returns "has a ledger row but its independent record is lost; it is reported lost, never rewritten (GS19)", and the first parametrize case's expected string changed to match; the old texts stay pinned by added cases.
 
 Create `packages/earnings-themes/src/earnings_themes/independent.py`:
 
@@ -542,12 +551,12 @@ def ledger_problem(
     return None
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_independent.py packages/earnings-themes/tests/test_import_boundaries.py -q`
 Expected: all pass. The boundary test imports every themes module, the new one included, and confirms it loads nothing forbidden.
 
-- [ ] **Step 5: Document and register the ledger**
+- [x] **Step 5: Document and register the ledger**
 
 In `docs/data-dictionary.md`, insert directly after the `IndependentRecord` section (still before `## Stage 6 files`):
 
@@ -590,7 +599,7 @@ In `tests/contracts/test_data_dictionary.py`:
 Run: `uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py -q`
 Expected: all pass.
 
-- [ ] **Step 6: Lint and commit**
+- [x] **Step 6: Lint and commit**
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/tests/test_independent.py
@@ -615,7 +624,9 @@ git commit -m "feat(themes): the independent-pass ledger and the dev guard's dec
   - the `--independent` option on `anchor`
   - in the tests: `as_dev(monkeypatch)`, `independent_record(**changes)`, `write_independent(repo, record)`, `ledger_row(event_id, digest)` and `write_ledger(repo, rows)`. Task 4 reuses them.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+
+> Deviation: ISC004 flagged four expected strings (wrapped in parentheses) and `ruff format` rewrapped two lines. Values unchanged.
 
 In `apps/earnings-pipeline/tests/test_stage6_cli.py`:
 
@@ -786,7 +797,7 @@ def test_the_independent_pass_comes_before_the_draft(repo, monkeypatch) -> None:
 
 `Path` prints with `/` separators on macOS and Linux, so `f"{INDEPENDENT_DIR}/…"` matches `layout.shown`'s output there. The suite does not run on Windows.
 
-- [ ] **Step 2: Run the tests to verify they fail as expected**
+- [x] **Step 2: Run the tests to verify they fail as expected**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_stage6_cli.py -q -k "dev_patch or independent"`
 
@@ -796,7 +807,9 @@ Expected:
 
 If the dev-patch test fails, stop. The patch target has not taken, which is a test-setup problem to fix before going on.
 
-- [ ] **Step 3: Implement the check in `gold_cli.py`**
+- [x] **Step 3: Implement the check in `gold_cli.py`**
+
+> Deviation (final review, user decision 2026-10-11): `_check_independent` also refuses once the ledger holds any row for the event, after the D16-2 check and before the record-is-missing check; it and `_guard` share one `_read_ledger` helper.
 
 Imports. Add `from earnings_core.hashing import sha256_hex` among the third-party imports, and extend the `earnings_themes.annotation` import list to:
 
@@ -930,12 +943,12 @@ def anchor_command(
                 _anchor_event(layout, pinned, codebook, doc_ids, texts, event_id, check)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_stage6_cli.py -q`
 Expected: all pass, including every existing test. The train path is untouched.
 
-- [ ] **Step 5: Lint and commit**
+- [x] **Step 5: Lint and commit**
 
 ```bash
 uv run --locked ruff format apps/earnings-pipeline/tests/test_stage6_cli.py
@@ -956,7 +969,9 @@ git commit -m "feat(pipeline): gold anchor --independent --check for dev bundles
 - Consumes: `LEDGER`, `load_ledger` and `ledger_problem` (Task 2); `_independent_path` and the test helpers (Task 3).
 - Produces: `_guard(layout: Layout, pinned: Pinned, split: SplitManifest, event_id: str) -> None`, called by `_anchor_event` and by `show_command`'s event branch, never by `gold show --text`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+
+> Deviation: ISC004 flagged one list element (parenthesized, split point moved) and `ruff format` reflowed three long lines. Values unchanged.
 
 Append to `apps/earnings-pipeline/tests/test_stage6_cli.py`:
 
@@ -1021,7 +1036,7 @@ def test_a_dev_bundle_s_text_is_written_before_its_pass(repo, monkeypatch) -> No
     assert lines(result) == ["wrote 1 text under data/runs/gold/texts"]
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_stage6_cli.py -q -k "ledger_row or reads_no_ledger or written_before"`
 
@@ -1029,7 +1044,7 @@ Expected:
 - `test_a_dev_draft_waits_for_its_matching_ledger_row` **FAILS**: the first `anchor --check` exits 0, because no guard exists yet.
 - `test_a_train_draft_reads_no_ledger_or_record` and `test_a_dev_bundle_s_text_is_written_before_its_pass` **PASS** already. They pin behavior the guard must keep.
 
-- [ ] **Step 3: Implement the guard in `gold_cli.py`**
+- [x] **Step 3: Implement the guard in `gold_cli.py`**
 
 Add the import:
 
@@ -1093,12 +1108,12 @@ record before its draft exists, prints its SHA-256 for the ledger, and writes
 nothing.
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_stage6_cli.py -q`
 Expected: all pass. That includes `test_the_dev_patch_reads_first_as_dev`, which writes its record and ledger first, and every pre-existing train test.
 
-- [ ] **Step 5: Lint and commit**
+- [x] **Step 5: Lint and commit**
 
 ```bash
 uv run --locked ruff format apps/earnings-pipeline/tests/test_stage6_cli.py
@@ -1115,7 +1130,9 @@ git commit -m "feat(pipeline): guard dev drafts behind the independent-pass ledg
 - Modify: `specs/deferred_items.md` (tick the GS19 item)
 - Modify: this plan (completion markup), then `git mv` it to `specs/plans/completed/`
 
-- [ ] **Step 1: Run every scoped check in the worktree**
+- [x] **Step 1: Run every scoped check in the worktree**
+
+> Deviation: after the final review, three commits (50c8ae9, d88b77e, 4ba5f35) added a test pinning the drafting modules away from `independent.py`, the two amendments above, and extra assertions (refusal exit codes, nothing written, no free-text ledger field). The scoped checks were re-run at 4ba5f35: 429 passed, Ruff clean.
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_independent.py packages/earnings-themes/tests/test_gold.py packages/earnings-themes/tests/test_import_boundaries.py apps/earnings-pipeline/tests/test_stage6_cli.py tests/contracts/test_data_dictionary.py -q
@@ -1125,7 +1142,9 @@ uv run --locked ruff format --check .
 
 Expected: every test passes, and Ruff prints no finding. Record the exact pass counts for the handoff.
 
-- [ ] **Step 2 (gate): Hand the user the checks only they run**
+- [x] **Step 2 (gate): Hand the user the checks only they run**
+
+> Deviation: gate 1 was run with `PYTHONPATH="$PWD"`, because the plain command aborts at collection (`ModuleNotFoundError: No module named 'tools'` from tests/contracts/test_stage10_check_runner.py), a defect that predates this plan (deferred as P16-1). Results at 4ba5f35: 4294 passed, 1 skipped, 28 deselected, 1 warning, 836 s. Gate 2 was met by the same run (tests/integration/test_stage6_wording.py: 6 passed, 0 skipped). Gate 3: three `unchanged:` lines, then three `valid: … (train), …, signed` lines.
 
 Put this to the user in chat, with `<sha>` set to `git rev-parse HEAD`, and wait for the results:
 
@@ -1139,7 +1158,7 @@ Put this to the user in chat, with `<sha>` set to `git rev-parse HEAD`, and wait
 
 If any check fails, stop and debug it with systematic-debugging before going on.
 
-- [ ] **Step 3: Run the Plan Completion Protocol**
+- [x] **Step 3: Run the Plan Completion Protocol**
 
 Follow writing-plans' Plan Completion Protocol:
 
@@ -1149,7 +1168,9 @@ Follow writing-plans' Plan Completion Protocol:
 - **Backlog triage:** run it as the protocol describes.
 - **Retire:** `git mv` this plan to `specs/plans/completed/` in one `chore(specs): retire plan 16` commit. The spec is already in `specs/completed/`, so do not move it.
 
-- [ ] **Step 4: Hand off what goes stale**
+- [x] **Step 4: Hand off what goes stale**
+
+> Note: the user approved updating `CLAUDE.md` line 80 (done on this branch). Plan 9's note in specs/deferred_items.md stays as dated history.
 
 Tell the user, without editing these files:
 - `CLAUDE.md` line 80 says the dev bundles "wait for its check and guard to land". Updating it needs the user's OK.
