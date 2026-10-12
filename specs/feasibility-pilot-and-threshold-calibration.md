@@ -56,19 +56,19 @@ sections and approved with them.
 | FP7 | **Prompts as shipped.** `pointer-1`, Stage 9's classifier prompt and Stage 8's judge prompt run unchanged. A prompt revision informed by train gold is a Stage 14 arm, measured against V6. |
 | FP8 | **Support labels.** The user writes them unaided, never seeing a score, a judge answer, or the extractor's identity. 70 targets are sampled from train (at most 5 per event) and 24 from dev (3 per event), never by score. The labels are committed as IDs and answers only (§Labels). Calibration needs at least 50 usable train labels (R8.4). |
 | FP9 | **Preregistration,** committed before any pilot output exists (§Preregistration). It fixes: the floor statistic (Cohen's κ, with Gwet's AC1 reported alongside), its unit (an event-clustered bootstrap 90% lower bound), and a numeric floor the user picks from RC §7's 0.3–0.6 range; the policy menu and its selection rule; the sampling plan; the bootstrap's seed and resample count; and V6's gate rule. |
-| FP10 | **A preregistered policy menu.** Three or four transparent candidates are fit on train labels, and the selection rule picks one. It is frozen before dev is run (§Calibration). |
+| FP10 | **A preregistered policy menu.** Transparent scorer-cutoff candidates are fit on train labels, and the selection rule picks one. It is frozen before dev is run (§Calibration). Stage 9 sends every target that is not `assessed` to review before any policy votes, and both families' consensus supports every `assessed` target, so a candidate that also reads the judges decides as scorer-only does. *(Amended by the user, plan 19, 2026-10-12.)* |
 | FP11 | **Fresh calls.** A `fresh` mode on each of the three cache classes, alongside `live` and `replay`, covering their four kinds of cached reply. It never reads the main cache, and writes to a directory scoped to the stability run. Its mode and run ID are recorded in run provenance. *(Amended by the user, plan 18, 2026-10-12.)* |
 | FP12 | **Stability.** k = 3 fresh runs over dev's 8 events, at the baseline's own settings. A near-perfect result at temperature 0 is labelled as runtime nondeterminism only, not robustness to sampling. A sampled-temperature arm is left to Stage 14. |
 | FP13 | **Comparison grain.** Themes are scored as event × theme presence. Evidence is scored in pointer units (ES12). Character Jaccard is reported as a secondary figure. |
-| FP14 | **Hierarchy credit.** Exact-theme F1 is gated. A level-one roll-up F1 is secondary. A sibling never earns credit. |
+| FP14 | **Hierarchy credit.** Exact-theme F1 is gated. A level-one roll-up F1 is secondary. A sibling never earns credit at the exact level. *(Amended by the user, plan 19, 2026-10-12.)* |
 | FP15 | **V6's gate rule.** Each gate is the dev baseline's 90% bootstrap lower bound. A configuration passes when its dev point estimate meets every gate. Two rules hold whatever the bound: gold-evidence recall must be strictly above zero, and an undefined metric (`None`) fails its gate. The judge floor is the preregistered number. |
 | FP16 | **The independent record stays local.** Its anchored form is never committed. Only per-event figures and the ledger hash are committed, so P16-3 never applies to a pointer file. |
 | FP17 | **Labels are committed,** as IDs, hashes and answers, with no free text, so calibration reproduces from committed files. |
-| FP18 | *(design)* **Package placement.** `earnings_themes.evaluation` is pure and imports only `earnings-core` and themes records. The commands extend the existing `pilot` group. Coverage v2 stays in ingestion's `build_coverage`, and the app supplies its `NoThemeCount` rows, so ingestion never reads gold. |
+| FP18 | *(design; amended by the user, plan 19, 2026-10-12)* **Package placement.** `earnings_themes.evaluation` is pure. It imports `earnings-core`, themes records and pure Stage 7–9 code (`extraction.units`, `support.metrics`, `support.context`, `coding.decide`), never ingestion, httpx, an NLI runtime or a concrete adapter, and no gold-drafting module imports it. The commands extend the existing `pilot` group. Coverage v2 stays in ingestion's `build_coverage`, and the app supplies its `NoThemeCount` rows, so ingestion never reads gold. |
 | FP19 | *(design)* **No pytest over pilot text.** The pilot runs through commands. So plan 12's failure-output guard, whose trigger is a live test over pilot text, is never triggered. A crashed run resumes from its cached replies, so plan 12's partial-`RunRecord` item is not triggered either. |
 | FP20 | *(design)* **Gold conventions for scoring** (§Metrics): a cell whose only evidence is `uncertain` is left out and counted; a `tie_group` is one either-of cell. |
 | FP21 | *(design)* **Two answers per label.** Each target gets the user's `claim_support` and `theme_fit` answers, the judge reply's two questions. The joint label is both holding. MiniCheck and DeBERTa only judge claim support (`score_requests` uses the claim alone as the hypothesis), so their AUC uses `claim_support`. The policy and the judge floor use the joint label. |
-| FP22 | *(design)* **Phase by phase, judges resident together.** Stage 8 runs a target's four trials back to back, alternating families. So `pilot pass` runs all extraction, then all classification, then support, and Gemma is unloaded before support. B1's memory check is both judges and MiniCheck resident at once, within 36 GB. That caps each judge at roughly 14B parameters at Q4, which the user accepted. A judge family that then fails the floor leaves the scorer-only candidate, itself a finding. A Stage 8 schedule batched by family, which would allow one larger judge at a time, was considered and declined. |
+| FP22 | *(design)* **Phase by phase, judges resident together.** Stage 8 runs a target's four trials back to back, alternating families. So `pilot pass` runs all extraction, then all classification, then support, and Gemma is unloaded before support. B1's memory check is both judges and MiniCheck resident at once, within 36 GB. That caps each judge at roughly 14B parameters at Q4, which the user accepted. A judge family that then fails the floor is reported, and recorded by V6, itself a finding *(amended by the user, plan 19, 2026-10-12)*. A Stage 8 schedule batched by family, which would allow one larger judge at a time, was considered and declined. |
 | FP23 | *(design; amended by the user, plan 18, 2026-10-12)* **Replay reuses the pass's stored extraction run and replays its caches.** Support cache keys bind the extraction run's record (`support/cache.py:107`), so a re-run extraction would miss every support entry. `pilot run` therefore never re-extracts: it reuses the pass's stored extraction run through the workflow's stored-run reuse. It does not reuse the pass's coding or support runs. A stored coding run carries its decisions, `reverify_coding_run` refuses one made under another policy (`policy_mismatch`), and the pass makes no decision. So `pilot run` replays classification and support from the pass's caches into new runs, and decides under the calibrated policy. Coding keys bind no run ID, and a support target's ID is a digest of the target and its input hash, so every key matches and nothing dispatches. Replay needs no model server running. |
 
 ## Scope
@@ -154,8 +154,10 @@ bundles.
 
 ### A3. `earnings_themes.evaluation`
 
-A pure package that imports only `earnings-core` and themes records, never ingestion or
-httpx. It holds:
+A pure package that imports `earnings-core`, themes records and pure Stage 7–9 code
+(`extraction.units`, `support.metrics`, `support.context`, `coding.decide`), never
+ingestion, httpx, an NLI runtime or a concrete adapter
+*(amended by the user, plan 19, 2026-10-12)*. It holds:
 - **alignment:** gold quotes, and run quotes, mapped to pointer units by character overlap, per document;
 - **the metrics** of §Metrics;
 - **the bootstrap:** event-clustered, with a seed and resample count taken from the preregistration, and percentile intervals;
@@ -255,8 +257,8 @@ run is never reused by `pilot run`. *(Amended by the user, plan 18, 2026-10-12.)
 before B3, in the manner of `expirements/parser-fidelity/layout1-preregistered.toml`.
 It holds no text. It fixes:
 - **the floor:** Cohen's κ between each judge family's binary verdict and the joint label, over every usable label. The verdict is 1 when the family's consensus supports (§Calibration) and 0 otherwise, so an uncertain consensus counts as not supporting and cannot shrink the population. The uncertain count is reported alongside. A family's 90% event-bootstrap lower bound must meet the user's number, picked from RC §7's 0.3–0.6 range. Gwet's AC1 is reported alongside, never gated;
-- **the floor's consequence:** a family below it is excluded from every candidate's rule;
-- **the menu:** each candidate's exact rule, its fitted cutoffs, and the cutoff grid;
+- **the floor's consequence:** reported, and recorded by V6. Stage 9 sends a flagged target to review before any policy votes, so the floor changes no pilot decision *(amended by the user, plan 19, 2026-10-12)*;
+- **the menu:** each candidate's exact rule and its cutoff grid; the fitted cutoffs go in `calibration-v1.json` *(amended by the user, plan 19, 2026-10-12)*;
 - **the selection rule:** the label-recall floor ρ, the objective, and the tie-break;
 - **the sampling plan:** the seed, the per-partition sizes and caps (FP8), the target pool, and the extension rule if fewer than 50 train joint labels are usable;
 - **the bootstrap:** its seed, resample count, and the 90% percentile interval; how a resample with an undefined metric is handled; and what a gate becomes when a dev interval is undefined, which is likely for macro F1 and dev precision;
@@ -279,17 +281,17 @@ It holds no text. It fixes:
 answer `supported` and `fits`. It is `opposes` when both answer `unsupported` or
 `does_not_fit`. Otherwise it is uncertain.
 
-**The menu.** Every candidate sends `refused` and `incomplete` targets to review, as
-Stage 9 does. Candidates vote only `accept` or `review`, and `reject` stays unused in
-the baseline. Each candidate uses at most two fitted cutoffs, over MiniCheck's joint
-score and the eligible families' consensus. The preregistration fixes the exact rules.
-Indicatively:
-- **scorer only:** accept when the joint score ≥ t;
-- **scorer with veto:** as above, unless an eligible family's consensus opposes;
-- **judges with a scorer floor:** accept when every eligible family's consensus supports, and the joint score ≥ t;
-- **both agree:** accept when the joint score ≥ t, and at least one eligible family's consensus supports with none opposing.
-
-Each candidate also says whether a `flagged` target may be accepted.
+**The menu** *(amended by the user, plan 19, 2026-10-12)*. Stage 9's gates run before
+any candidate votes: `refused`, `incomplete` and `flagged` targets go to review, and
+only an `assessed` target reaches the policy. Stage 8 marks a target `assessed` only
+when all four trials answer `supported` and `fits` with no objection, so both
+families' consensus supports every target a candidate can accept, and a rule that
+also reads the judges decides as the scorer alone does. Every candidate is therefore
+a scorer cutoff: accept, citing the eligible quotes, when MiniCheck's joint score ≥ t
+and the target has an eligible quote; otherwise review. `reject` stays unused in the
+baseline. The preregistration fixes each candidate's cutoff grid. Ties go to the lower
+cutoff: within a candidate, and between candidates that use as many signals. Label
+recall is capped by the share of positive labels whose targets came out `assessed`.
 
 **Fitting and selection.**
 - Each candidate's cutoff maximises train labelled precision (`accepted_claim_precision`, label task `joint_support`) subject to label recall ≥ ρ.
@@ -320,7 +322,7 @@ Each candidate also says whether a `flagged` target may be accepted.
 | --- | --- | --- |
 | Release-ID precision and recall | System: the kept attempt is `confirmed`. Gold: `release_identification.label`, with `ambiguous` left out and counted. | Gated (R13.1) |
 | Theme F1, exact | Micro F1 over event × theme cells. Macro F1 is the mean per-theme F1 over themes with gold or a prediction in the partition; the rest are counted. Predicted presence means an accepted assignment. | **Gated** |
-| Theme F1, rolled up | Both sides are mapped to their level-one ancestor (self or descendant), then scored the same way. Siblings earn nothing. | Secondary |
+| Theme F1, rolled up | Both sides are mapped to their level-one ancestor (self or descendant), then scored the same way, so two children of one level-one theme meet there. A sibling earns nothing at the exact level. *(Amended by the user, plan 19, 2026-10-12.)* | Secondary |
 | Span overlap | Per event × theme: unit precision, recall and F1 between the gold quotes' units and the accepted assignments' quote units. Character Jaccard is also reported. | **Gated** (unit F1) |
 | Retention (R12.8) | (i) verified ÷ proposed quotes; (ii) accepted ÷ assessed targets; (iii) gold-evidence recall, the share of gold-supporting units recovered by accepted assignments. | **Gated** on (iii) |
 | Support precision | `accepted_claim_precision` on the joint label (task `joint_support`): in-sample on train, held out on dev. | **Gated** (dev) |
@@ -350,7 +352,7 @@ views and working file; and the anchored independent records (FP16).
 | Situation | Handling |
 | --- | --- |
 | Fewer than 50 usable train joint labels | `calibrate` refuses (R8.4). The user labels the sample's remainder, or a preregistered extension draws more with the same seed. |
-| A family below the floor | Excluded from every candidate, as preregistered. |
+| A family below the floor | Reported, and recorded by V6; no pilot decision changes. *(Amended by the user, plan 19, 2026-10-12.)* |
 | No candidate meets ρ | `no_candidate`, as in §Calibration. |
 | A live pass or run crashes | Rerun it. Cached replies replay. |
 | A fresh run crashes | Discard it and rerun under a new stability run ID. Both IDs are recorded, and a partial fresh run never counts toward k. |
