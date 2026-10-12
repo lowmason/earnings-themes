@@ -6,6 +6,7 @@ from earnings_themes.coding.cache import CodingCache
 from earnings_themes.coding.classify import CodingAllowance, classify_claim
 from earnings_themes.coding.records import CodingCeilings, CodingError
 from earnings_themes.extraction.adapters import Message, ModelReply, Usage
+from earnings_themes.extraction.records import CacheMode
 
 
 def ceilings(**updates):
@@ -314,6 +315,32 @@ def test_changed_prompt_and_runtime_bindings_fail_before_dispatch(
             cache=CodingCache(tmp_path, "live"),
         )
     assert classifier.requests == []
+
+
+@pytest.mark.parametrize("mode", ["bogus", CacheMode.LIVE])
+def test_a_cache_mode_that_is_not_one_of_the_closed_strings_refuses_first(
+    coding_input, coding_policy, classifier_identity, tmp_path, mode
+):
+    """Called directly, with no run record to validate the mode first: an unknown
+    mode, and a ``CacheMode`` member in place of its value, are refused before any
+    token is counted or request sent."""
+    counted = []
+    classifier = ScriptedClassifier(
+        lambda request: pytest.fail("a refused mode dispatched"),
+        lambda request: counted.append(request) or 5,
+        classifier_identity,
+    )
+    cache = CodingCache(tmp_path, "live")
+    cache.mode = mode
+    with pytest.raises(CodingError, match="^malformed_record$"):
+        classify_claim(
+            coding_input,
+            classifier,
+            coding_policy,
+            CodingAllowance(ceilings(), run_id="invented-run"),
+            cache=cache,
+        )
+    assert (classifier.requests, counted) == ([], [])
 
 
 def test_hierarchy_conflict_retries_without_implicit_parent_assignment(

@@ -23,7 +23,11 @@ from pydantic import (
 
 from earnings_themes.anchoring import Bundle
 from earnings_themes.codebook import Codebook
-from earnings_themes.extraction.records import Parameters
+from earnings_themes.extraction.records import (
+    Parameters,
+    StabilityRunId,
+    cache_mode_problem,
+)
 from earnings_themes.extraction.store import StoredRun
 from earnings_themes.records import NonBlank, Part, Sha256Hex
 from earnings_themes.support.problems import REASONS, SupportError
@@ -401,6 +405,8 @@ class SupportRunRecord(SupportRecord):
     documents: tuple[tuple[NonBlank, Sha256Hex], ...]
     codebook: CodebookReference
     configuration_hash: Sha256Hex
+    cache_mode: Literal["live", "replay", "fresh"]
+    stability_run_id: StabilityRunId | None = None
     extractor_family: NonBlank
     scorer_identity: ScorerIdentity
     judge_identities: tuple[JudgeIdentity, JudgeIdentity]
@@ -447,6 +453,11 @@ class SupportRunRecord(SupportRecord):
             for reason, _ in self.counts_by_reason
         ):
             raise ValueError("invalid_reason")
+        problem = cache_mode_problem(
+            self.cache_mode, self.stability_run_id, self.requests + self.evaluations
+        )
+        if problem is not None:
+            raise ValueError(problem)
         return self
 
 

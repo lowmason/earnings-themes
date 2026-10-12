@@ -25,6 +25,7 @@ from earnings_core import VALIDATOR_VERSION, Rejection, RejectionReason, digest
 
 from earnings_themes.anchoring import Bundle, bundle_problems
 from earnings_themes.extraction.adapters import ModelAdapter
+from earnings_themes.extraction.cache import CachedAdapter
 from earnings_themes.extraction.extract import (
     Allowance,
     WindowJob,
@@ -188,7 +189,8 @@ def extract_run(
     """Every document in order, under the run's ceilings, with its run record. An
     error other than an ``AdapterError`` propagates and ends the run, and no run
     record is built; under a ``CachedAdapter``, the replies already stored stay, so
-    a rerun replays them."""
+    a rerun replays them. The run record names the cache's mode and stability run
+    ID, or ``None`` for an adapter that is not a ``CachedAdapter``."""
     doc_ids = [bundle.document.doc_id for bundle in bundles]
     if len(set(doc_ids)) != len(doc_ids):
         raise ValueError("a run holds each document once")
@@ -222,11 +224,14 @@ def extract_run(
         for r in (*d.rejections, *(r for w in d.windows for r in w.rejections))
     )
     quotes = sum(d.record.quotes for d in documents)
+    cached = adapter if isinstance(adapter, CachedAdapter) else None
     record = RunRecord(
         run_id=run_id,
         started_at=started_at,
         configuration=configuration,
         configuration_hash=digest(configuration),
+        cache_mode=None if cached is None else cached.mode,
+        stability_run_id=None if cached is None else cached.stability_run_id,
         documents={d.record.doc_id: d.record.canonical_hash for d in documents},
         units=sum(d.record.units for d in documents),
         windows=len(windows),

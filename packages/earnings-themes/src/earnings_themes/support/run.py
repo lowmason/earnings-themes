@@ -118,6 +118,8 @@ def assess_run(
                 documents=documents,
                 codebook=reference,
                 configuration_hash=digest(configuration),
+                cache_mode=cache.mode,
+                stability_run_id=cache.stability_run_id,
                 extractor_family=extractor_family,
                 scorer_identity=identity,
                 judge_identities=identities,

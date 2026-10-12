@@ -102,6 +102,7 @@ def stored_case(bundle, codebook, claim, spans):
         started_at=datetime(2026, 10, 5, tzinfo=UTC),
         configuration=config,
         configuration_hash=digest(config.model_dump(mode="json")),
+        cache_mode=None,
         documents={doc.doc_id: doc.canonical_hash},
         units=len(unit_ids),
         windows=1,

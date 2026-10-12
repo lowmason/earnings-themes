@@ -44,7 +44,12 @@ from earnings_themes.extraction.adapters import (
     ModelReply,
     Usage,
 )
-from earnings_themes.extraction.records import AdapterIdentity, ExtractionProblem
+from earnings_themes.extraction.records import (
+    LOCAL_STRUCTURED,
+    LOCAL_TIMEOUT_S,
+    AdapterIdentity,
+    ExtractionProblem,
+)
 from earnings_themes.records import NonBlank, Part, Sha256Hex, parse
 from earnings_themes.tomlfile import read
 
@@ -62,10 +67,10 @@ class LocalModelConfig(Part):
     weights_sha256: Sha256Hex
     runtime: NonBlank
     runtime_version: NonBlank
-    structured: bool = True
+    structured: bool = LOCAL_STRUCTURED
     """Whether the runtime honors a strict JSON-schema ``response_format``; a run over
     this model sets its ``Parameters.structured`` from it (ES19)."""
-    timeout_s: PositiveFloat = 300.0
+    timeout_s: PositiveFloat = LOCAL_TIMEOUT_S
 
 
 def load_local_config(path: Path) -> LocalModelConfig:

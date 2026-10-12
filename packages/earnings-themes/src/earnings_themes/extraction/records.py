@@ -31,6 +31,7 @@ from pydantic import (
     Field,
     NonNegativeInt,
     PositiveInt,
+    StringConstraints,
     model_validator,
 )
 
@@ -41,6 +42,41 @@ EXTRACTOR_VERSION = "pointer-traversal/1"
 """Names the unit rule, the planner, the labels, the reply contract, and the retry
 policy: change any of them, and this changes (the Stage 7 spec, §The cache key)."""
 BILLABLE_COST = "none, self-hosted"
+LOCAL_STRUCTURED = True
+"""A local model's ``structured`` unless its configuration says otherwise (ES19)."""
+LOCAL_TIMEOUT_S = 300.0
+"""A local model's seconds per request unless its configuration says otherwise."""
+STABILITY_RUN_PATTERN = r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}"
+"""A stability run's ID: one safe path component, never ``.`` or ``..`` (A1)."""
+StabilityRunId = Annotated[
+    str, StringConstraints(pattern=rf"^{STABILITY_RUN_PATTERN}$")
+]
+
+
+class CacheMode(StrEnum):
+    """How a reply cache uses its directory (the Stage 11 spec, A1, as plan 18
+    amends it). ``CachedAdapter``, ``CodingCache`` and ``SupportCache`` share it."""
+
+    REPLAY = "replay"
+    """A hit returns the stored reply; a miss is ``replay_miss`` and calls nothing."""
+    LIVE = "live"
+    """A hit returns the stored reply; a miss calls the model and stores its reply."""
+    FRESH = "fresh"
+    """``live`` over ``<directory>/fresh/<stability_run_id>/``, a new directory, which
+    must start empty (A8 refuses an existing ID): the main directory is never read."""
+
+
+def cache_mode_problem(
+    mode: str | None, stability_run_id: str | None, dispatched: int
+) -> str | None:
+    """Why a run record's cache mode, stability run ID and dispatches disagree, or
+    ``None``. A stability run ID goes with ``fresh`` alone, and ``replay`` dispatches
+    nothing. The extraction, coding and support run records each call it (D18-8)."""
+    if (stability_run_id is not None) != (mode == CacheMode.FRESH):
+        return "invalid_stability_run"
+    if mode == CacheMode.REPLAY and dispatched:
+        return "replay_dispatched"
+    return None
 
 
 class ExtractionProblem(StrEnum):
@@ -335,6 +371,11 @@ class RunRecord(ExtractionRecord):
     started_at: AwareDatetime
     configuration: RunConfiguration
     configuration_hash: Sha256Hex
+    cache_mode: CacheMode | None
+    """The cache the run went through; ``None`` when its adapter is not a
+    ``CachedAdapter`` (A1, D18-7)."""
+    stability_run_id: StabilityRunId | None = None
+    """The stability run whose directory ``fresh`` used, and only then."""
     documents: dict[NonBlank, Sha256Hex]
     """Each document's ``doc_id`` and canonical hash."""
     units: NonNegativeInt
@@ -366,4 +407,9 @@ class RunRecord(ExtractionRecord):
         expected = 1.0 if self.quotes else None
         if self.exactness_rate != expected:
             raise ValueError(f"exactness_rate is {expected} over {self.quotes} quotes")
+        problem = cache_mode_problem(
+            self.cache_mode, self.stability_run_id, self.requests
+        )
+        if problem is not None:
+            raise ValueError(problem)
         return self

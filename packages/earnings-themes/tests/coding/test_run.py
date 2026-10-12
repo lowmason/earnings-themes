@@ -1,6 +1,7 @@
 """Ordered fake proposal runs; no support inference or source discovery."""
 
 import importlib
+import json
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta, timezone
 
@@ -8,9 +9,14 @@ import pytest
 from earnings_core import digest
 from earnings_themes.coding.adapters import ScriptedClassifier
 from earnings_themes.coding.cache import CodingCache
-from earnings_themes.coding.records import CodingCeilings, CodingError
+from earnings_themes.coding.records import (
+    CodingCeilings,
+    CodingError,
+    ProposalRunRecord,
+)
 from earnings_themes.coding.run import propose_run, refused_input_hash
 from earnings_themes.extraction.adapters import ModelReply, Usage
+from pydantic import ValidationError
 
 from .cases import make_proposal_job
 
@@ -792,3 +798,54 @@ def test_final_publication_preflight_cannot_publish_stale_bindings(
         )
     assert classifier.changed
     assert len(classifier.requests) == 1
+
+
+def test_fresh_dispatches_every_request_and_replays_from_its_own_directory(
+    proposal_job,
+):
+    """A1 (plan 18): over a populated cache, fresh hits nothing and dispatches every
+    request, and a replay over its directory reproduces the proposals."""
+    reply = {"theme_ids": ["capacity"], "attributes": {}}
+    _, live_calls = proposal_job.run([reply])
+    fresh, fresh_calls = proposal_job.run(
+        [reply], "fresh", stability_run_id="stability-1"
+    )
+    record = fresh.record
+    assert (record.cache_mode, record.stability_run_id) == ("fresh", "stability-1")
+    assert record.cache_hits == 0
+    assert record.requests == fresh_calls == live_calls == 1
+    replay, replay_calls = proposal_job.run(
+        [],
+        "replay",
+        directory=proposal_job.root / "classifier-cache" / "fresh" / "stability-1",
+    )
+    assert (replay_calls, replay.record.cache_hits) == (0, 1)
+    assert replay.targets == fresh.targets
+
+
+@pytest.mark.parametrize(
+    "changes,reason",
+    [
+        ({"cache_mode": "fresh"}, "invalid_stability_run"),
+        ({"stability_run_id": "stability-1"}, "invalid_stability_run"),
+        ({"cache_mode": "replay"}, "replay_dispatched"),
+        (
+            {"cache_mode": "fresh", "stability_run_id": ".."},
+            r"stability_run_id\n.*should match pattern",
+        ),
+    ],
+)
+def test_a_proposal_run_s_cache_mode_and_stability_run_id_agree(
+    proposal_job, changes, reason
+):
+    """A1 (plan 18, D18-8): validated directly, since ``checked`` reports every
+    refusal as malformed_record. A stability run ID goes with fresh alone, a replay
+    dispatches nothing, and an unsafe ID fails its pattern."""
+    live, _ = proposal_job.run([EMPTY])
+    payload = live.record.model_dump(mode="json")
+    assert (payload["cache_mode"], payload["requests"]) == ("live", 1)
+    with pytest.raises(ValidationError, match=reason):
+        ProposalRunRecord.model_validate_json(json.dumps(payload | changes))
+    fresh = {"cache_mode": "fresh", "stability_run_id": "stability-1"}
+    record = ProposalRunRecord.model_validate_json(json.dumps(payload | fresh))
+    assert (record.cache_mode, record.stability_run_id) == ("fresh", "stability-1")

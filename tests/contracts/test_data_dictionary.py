@@ -23,7 +23,7 @@ from earnings_ingestion.cohort import register as cohort_register
 from earnings_ingestion.events import acceptance, coverage, states
 from earnings_ingestion.events import records as events
 from earnings_ingestion.fetch import records as fetch
-from earnings_pipeline import theme_config, theme_workflow
+from earnings_pipeline import model_runtime, theme_config, theme_workflow
 from earnings_themes import annotation, codebook, gold, independent, problems, split
 from earnings_themes import records as themes
 from earnings_themes.analysis import records as analysis
@@ -41,6 +41,7 @@ from earnings_themes.extraction.store import StoredRun
 from earnings_themes.support import judges, metrics, scorers
 from earnings_themes.support import records as support
 from earnings_themes.support.cache import SupportCacheEntry
+from earnings_themes.support.chat_tokens import ChatTokenizerConfig
 from earnings_themes.support.nli import LocalScorerConfig
 from earnings_themes.support.problems import SupportProblem
 from pydantic import BaseModel
@@ -216,6 +217,7 @@ MODELS = [
     support.SupportPolicy,
     support.SupportRunRecord,
     LocalScorerConfig,
+    ChatTokenizerConfig,
     coding.CodingPart,
     coding.CodingRecord,
     coding.CodingAttributes,
@@ -285,6 +287,7 @@ ENUMS = [
     extraction.ExtractionProblem,
     extraction.WindowOutcome,
     extraction.DocumentOutcome,
+    extraction.CacheMode,
     SupportProblem,
     support.SignalStatus,
     support.Presentation,
@@ -615,8 +618,14 @@ WORKFLOW_MODELS = [
     theme_workflow.WorkflowArtifact,
     theme_workflow.WorkflowFailure,
     theme_workflow.WorkflowReceipt,
+    model_runtime.RuntimeManifest,
+    model_runtime.ChatModelFile,
 ]
-WORKFLOW_DATACLASSES = [theme_workflow.WorkflowRuntime, theme_workflow.WorkflowResult]
+WORKFLOW_DATACLASSES = [
+    theme_workflow.WorkflowRuntime,
+    theme_workflow.WorkflowResult,
+    model_runtime.LiveRuntime,
+]
 
 
 @pytest.mark.parametrize("model", WORKFLOW_MODELS, ids=lambda model: model.__name__)

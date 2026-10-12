@@ -57,7 +57,7 @@ sections and approved with them.
 | FP8 | **Support labels.** The user writes them unaided, never seeing a score, a judge answer, or the extractor's identity. 70 targets are sampled from train (at most 5 per event) and 24 from dev (3 per event), never by score. The labels are committed as IDs and answers only (§Labels). Calibration needs at least 50 usable train labels (R8.4). |
 | FP9 | **Preregistration,** committed before any pilot output exists (§Preregistration). It fixes: the floor statistic (Cohen's κ, with Gwet's AC1 reported alongside), its unit (an event-clustered bootstrap 90% lower bound), and a numeric floor the user picks from RC §7's 0.3–0.6 range; the policy menu and its selection rule; the sampling plan; the bootstrap's seed and resample count; and V6's gate rule. |
 | FP10 | **A preregistered policy menu.** Three or four transparent candidates are fit on train labels, and the selection rule picks one. It is frozen before dev is run (§Calibration). |
-| FP11 | **Fresh calls.** A `fresh` mode on each of the three cache classes, alongside `live` and `replay`, covering their four kinds of cached reply. It always dispatches, never reads, and writes to a directory scoped to the stability run. Its mode and run ID are recorded in run provenance. |
+| FP11 | **Fresh calls.** A `fresh` mode on each of the three cache classes, alongside `live` and `replay`, covering their four kinds of cached reply. It never reads the main cache, and writes to a directory scoped to the stability run. Its mode and run ID are recorded in run provenance. *(Amended by the user, plan 18, 2026-10-12.)* |
 | FP12 | **Stability.** k = 3 fresh runs over dev's 8 events, at the baseline's own settings. A near-perfect result at temperature 0 is labelled as runtime nondeterminism only, not robustness to sampling. A sampled-temperature arm is left to Stage 14. |
 | FP13 | **Comparison grain.** Themes are scored as event × theme presence. Evidence is scored in pointer units (ES12). Character Jaccard is reported as a secondary figure. |
 | FP14 | **Hierarchy credit.** Exact-theme F1 is gated. A level-one roll-up F1 is secondary. A sibling never earns credit. |
@@ -69,7 +69,7 @@ sections and approved with them.
 | FP20 | *(design)* **Gold conventions for scoring** (§Metrics): a cell whose only evidence is `uncertain` is left out and counted; a `tie_group` is one either-of cell. |
 | FP21 | *(design)* **Two answers per label.** Each target gets the user's `claim_support` and `theme_fit` answers, the judge reply's two questions. The joint label is both holding. MiniCheck and DeBERTa only judge claim support (`score_requests` uses the claim alone as the hypothesis), so their AUC uses `claim_support`. The policy and the judge floor use the joint label. |
 | FP22 | *(design)* **Phase by phase, judges resident together.** Stage 8 runs a target's four trials back to back, alternating families. So `pilot pass` runs all extraction, then all classification, then support, and Gemma is unloaded before support. B1's memory check is both judges and MiniCheck resident at once, within 36 GB. That caps each judge at roughly 14B parameters at Q4, which the user accepted. A judge family that then fails the floor leaves the scorer-only candidate, itself a finding. A Stage 8 schedule batched by family, which would allow one larger judge at a time, was considered and declined. |
-| FP23 | *(design)* **Replay reuses the pass's stored runs.** Support cache keys bind the extraction run's record (`support/cache.py:107`), so a re-run extraction would miss every support entry. `pilot run` therefore never re-extracts. It reuses the pass's stored extraction, coding and support runs through the workflow's stored-run reuse, and dispatches nothing. Replay needs no model server running. |
+| FP23 | *(design; amended by the user, plan 18, 2026-10-12)* **Replay reuses the pass's stored extraction run and replays its caches.** Support cache keys bind the extraction run's record (`support/cache.py:107`), so a re-run extraction would miss every support entry. `pilot run` therefore never re-extracts: it reuses the pass's stored extraction run through the workflow's stored-run reuse. It does not reuse the pass's coding or support runs. A stored coding run carries its decisions, `reverify_coding_run` refuses one made under another policy (`policy_mismatch`), and the pass makes no decision. So `pilot run` replays classification and support from the pass's caches into new runs, and decides under the calibrated policy. Coding keys bind no run ID, and a support target's ID is a digest of the target and its input hash, so every key matches and nothing dispatches. Replay needs no model server running. |
 
 ## Scope
 
@@ -136,11 +136,11 @@ bundles.
 ### A1. Fresh-call mode
 
 - `fresh` joins `live` and `replay` on three classes: extraction's `CachedAdapter`, `CodingCache`, and `SupportCache` (its scorer and judge entries).
-- `fresh` always dispatches and never reads, even on a key that is already cached.
-- It writes each reply under `<cache>/fresh/<stability_run_id>/`. So it never collides with the main cache's bytes, and a stability run replays afterwards from its own directory (R14.6).
+- `fresh` never reads the main cache, even on a key that is already cached there. It is `live` over its own directory, `<cache>/fresh/<stability_run_id>/`, which starts empty. So every first request dispatches, and a request repeated within the run is served from that run's own reply, as in the live pass. *(Amended by the user, plan 18, 2026-10-12: two quotes with the same text in one target share a scorer key.)*
+- It writes each reply there. So it never collides with the main cache's bytes, and a stability run replays afterwards from its own directory (R14.6).
 - Keys are unchanged.
 - Every run record carries `cache_mode` and, under `fresh`, the stability run ID.
-- Tests: a fully populated cache gives zero hits under `fresh`; dispatches equal requests; a later `replay` over the fresh directory reproduces the run.
+- Tests: with a fully populated main cache and no request repeated within the run, `fresh` gives zero hits and dispatches every request; a later `replay` over the fresh directory reproduces the run. *(Amended by the user, plan 18, 2026-10-12.)*
 
 ### A2. Live runtime assembly
 
@@ -204,7 +204,7 @@ These extend the existing `pilot` group:
 | Command | Does |
 | --- | --- |
 | `pilot pass --partition train\|dev` | Composes Stages 7–9's libraries in `live` mode, phase by phase (FP22): extraction, classification, then both support runs. Writes local runs and no Stage 5 state. Makes no decision. |
-| `pilot run --partition train\|dev` | Runs `run_theme_workflow` under the calibrated policy, reusing the partition's stored pass runs (FP23). Refuses without a calibration artifact, or if any request would dispatch. |
+| `pilot run --partition train\|dev` | Runs `run_theme_workflow` under the calibrated policy, reusing the partition's stored pass extraction and replaying its coding and support caches (FP23). Refuses without a calibration artifact, or if any request would dispatch. *(Amended by the user, plan 18, 2026-10-12.)* |
 | `pilot run --partition dev --fresh <id>` | One stability run: the pass and the decisions under the frozen policy, with all four reply kinds `fresh`. Writes no Stage 5 state. |
 | `pilot labels sample\|view\|check --partition train\|dev` | §Labels. |
 | `pilot calibrate` | §Calibration. |
@@ -216,10 +216,11 @@ Every command refuses test and excluded events and prints only IDs, counts, reas
 and figures. A sentinel test per command plants marker text in invented inputs and
 shows that it never prints.
 
-The workflow's stored-run reuse (`theme_workflow.py`) now requires a stored coding run
-to have been recorded in `replay` mode. Plan A widens that to `live`, provided every
-other identity it checks still matches. A test shows reuse of a `live` pass dispatching
-nothing. A `fresh` run is never reused by `pilot run`.
+The workflow's stored-run reuse (`theme_workflow.py`) is unchanged: it reuses a stored
+coding run only when that run was recorded in `replay` mode. `pilot run` reuses the
+pass's stored extraction run only, and replays coding and support from the pass's
+caches (FP23). A test shows such a run over a `live` pass dispatching nothing. A `fresh`
+run is never reused by `pilot run`. *(Amended by the user, plan 18, 2026-10-12.)*
 
 ### A9. Wording guard and data dictionary
 
@@ -451,3 +452,5 @@ On each plan's completion, refresh the "Current state" section of `CLAUDE.md`, w
 user's approval.
 
 > Plan A, slice 1: COMPLETE (2026-10-11) — implemented by plan 17 (specs/plans/completed/17-feasibility-pilot-and-threshold-calibration-plan-a-slice-1.md): A6, A7, and A9's wording globs. Next: write plan A's remainder (A1–A5, A8, and A9's dictionary rows).
+
+> Plan A, slice 2: COMPLETE (2026-10-12) — implemented by plan 18 (specs/plans/completed/18-feasibility-pilot-and-threshold-calibration-plan-a-slice-2.md): A1, A2, and A9's dictionary rows for their records; FP11, FP23, A1 and A8 amended. Next: write plan A's remainder (A3–A5, then A8, each with A9's dictionary rows for its records).

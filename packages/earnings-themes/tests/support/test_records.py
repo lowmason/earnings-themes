@@ -97,6 +97,7 @@ def payloads():
         "documents": [["doc", H]],
         "codebook": book,
         "configuration_hash": H,
+        "cache_mode": "live",
         "extractor_family": "extractor",
         "scorer_identity": scorer,
         "judge_identities": [judge, dict(judge, family="family-b")],
@@ -418,3 +419,29 @@ def test_run_reason_counts_include_semantic_flags_without_ground_truth_labels():
     record = r.parse_support(payload, r.SupportRunRecord)
     assert record.counts_by_reason == (("negation", 1),)
     assert "accepted" not in type(record).model_fields
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"cache_mode": "fresh"},
+        {"stability_run_id": "stability-1"},
+        {"cache_mode": "replay"},
+        {"cache_mode": "replay", "requests": 0},
+        {"cache_mode": "fresh", "stability_run_id": ".."},
+    ],
+)
+def test_a_run_s_cache_mode_and_stability_run_id_agree(changes):
+    """A1 (plan 18, D18-8): a stability run ID goes with fresh alone, and a replay
+    dispatches no judge request and no scorer evaluation."""
+    assert_refused(dict(payloads()["SupportRunRecord"], **changes), r.SupportRunRecord)
+
+
+def test_a_fresh_run_names_its_stability_run():
+    payload = dict(
+        payloads()["SupportRunRecord"],
+        cache_mode="fresh",
+        stability_run_id="stability-1",
+    )
+    record = r.parse_support(payload, r.SupportRunRecord)
+    assert (record.cache_mode, record.stability_run_id) == ("fresh", "stability-1")

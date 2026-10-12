@@ -23,6 +23,7 @@ from earnings_core import (
 from pydantic import Field, model_validator
 
 from earnings_themes.extraction.adapters import ModelReply
+from earnings_themes.extraction.cache import cache_directory
 from earnings_themes.extraction.records import Claim, Quote, RunRecord
 from earnings_themes.records import Sha256Hex, record_json
 from earnings_themes.support.judges import JudgeRequest
@@ -172,13 +173,28 @@ class SupportCacheEntry(SupportRecord):
 
 
 class SupportCache:
-    """Caller-selected raw artifact directory; no dispatch or import-time I/O."""
+    """Caller-selected raw artifact directory, or under ``fresh`` its stability
+    run's own (A1); no dispatch or import-time I/O."""
 
-    def __init__(self, directory: Path, mode: Literal["live", "replay"]) -> None:
-        if mode not in ("live", "replay"):
-            raise SupportError("malformed_record")
-        self._directory = Path(directory)
-        self.mode = mode
+    def __init__(
+        self,
+        directory: Path,
+        mode: Literal["live", "replay", "fresh"],
+        *,
+        stability_run_id: str | None = None,
+    ) -> None:
+        try:
+            member, self._directory = cache_directory(
+                Path(directory), mode, stability_run_id
+            )
+        except ValueError:
+            raise SupportError("malformed_record") from None
+        self.mode = member.value
+        self._stability_run_id = stability_run_id
+
+    @property
+    def stability_run_id(self) -> str | None:
+        return self._stability_run_id
 
     @staticmethod
     def _binding(key: SupportCacheKey, kind: str):

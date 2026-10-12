@@ -7,6 +7,7 @@ import pytest
 from earnings_core import Rejection, RejectionReason, VerifiedSpan
 from earnings_themes.extraction.records import (
     AdapterIdentity,
+    CacheMode,
     Ceilings,
     ExtractionPolicy,
     ExtractionProblem,
@@ -150,6 +151,7 @@ def run_record(**changes) -> RunRecord:
         "started_at": datetime(2026, 10, 4, tzinfo=UTC),
         "configuration": configuration,
         "configuration_hash": HASH,
+        "cache_mode": None,
         "documents": {"doc": HASH},
         "units": 3,
         "windows": 1,
@@ -367,3 +369,30 @@ def test_zero_attempt_requires_an_exhausted_budget_stop(state):
     fields = window_fields() | {"attempts": 0, "requests": 0, "unreported": 0}
     with pytest.raises(ValidationError):
         WindowRecord.model_validate(fields | state)
+
+
+@pytest.mark.parametrize(
+    "changes,reason",
+    [
+        ({"cache_mode": CacheMode.FRESH}, "invalid_stability_run"),
+        (
+            {"cache_mode": CacheMode.LIVE, "stability_run_id": "stability-1"},
+            "invalid_stability_run",
+        ),
+        ({"stability_run_id": "stability-1"}, "invalid_stability_run"),
+        ({"cache_mode": CacheMode.REPLAY}, "replay_dispatched"),
+        (
+            {"cache_mode": CacheMode.FRESH, "stability_run_id": ".."},
+            r"stability_run_id\n.*should match pattern",
+        ),
+    ],
+)
+def test_a_run_s_cache_mode_and_stability_run_id_agree(changes, reason) -> None:
+    """A1 (plan 18, D18-8): a stability run ID goes with fresh alone, and replay
+    dispatches nothing. The base record has no cache and one request."""
+    fresh = run_record(cache_mode=CacheMode.FRESH, stability_run_id="stability-1")
+    assert fresh.stability_run_id == "stability-1"
+    replay = run_record(cache_mode=CacheMode.REPLAY, requests=0, unreported=0)
+    assert replay.cache_mode is CacheMode.REPLAY
+    with pytest.raises(ValidationError, match=reason):
+        run_record(**changes)

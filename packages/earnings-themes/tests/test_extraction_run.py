@@ -19,6 +19,7 @@ from earnings_core import (
 )
 from earnings_themes.anchoring import NARRATIVE, Bundle
 from earnings_themes.extraction.adapters import ScriptedAdapter, Usage
+from earnings_themes.extraction.cache import CachedAdapter, CacheMode
 from earnings_themes.extraction.extract import MAX_ATTEMPTS, Allowance
 from earnings_themes.extraction.prompt import REPLY_SCHEMA
 from earnings_themes.extraction.records import (
@@ -287,3 +288,57 @@ def test_the_run_record_names_its_configuration(synthetic, template, cite) -> No
         STARTED,
     )
     assert (record.billable_cost, record.exactness_rate) == ("none, self-hosted", 1.0)
+
+
+def test_a_fresh_run_dispatches_every_request_over_a_populated_cache(
+    fixtures, template, cite, tmp_path
+) -> None:
+    """A1: zero hits under fresh; dispatches equal requests; a later replay over the
+    fresh directory reproduces the run."""
+    bundles = list(fixtures.values())
+    live = run(
+        bundles,
+        CachedAdapter(
+            ScriptedAdapter(lambda request: cite(request, model="scripted")),
+            tmp_path,
+            "live",
+        ),
+        template,
+    )
+    adapter = ScriptedAdapter(lambda request: cite(request, model="scripted"))
+    fresh = run(
+        bundles,
+        CachedAdapter(adapter, tmp_path, "fresh", stability_run_id="stability-1"),
+        template,
+    )
+    assert (live.record.cache_mode, live.record.stability_run_id) == (
+        CacheMode.LIVE,
+        None,
+    )
+    assert (fresh.record.cache_mode, fresh.record.stability_run_id) == (
+        CacheMode.FRESH,
+        "stability-1",
+    )
+    assert (fresh.record.cache_hits, fresh.record.requests, len(adapter.requests)) == (
+        0,
+        37,
+        37,
+    )
+    silent = ScriptedAdapter(lambda _: pytest.fail("a replay dispatched"))
+    replay = run(
+        bundles,
+        CachedAdapter(silent, tmp_path / "fresh" / "stability-1", "replay"),
+        template,
+    )
+    assert (replay.record.requests, replay.record.cache_hits) == (0, 37)
+    assert (replay.record.cache_mode, replay.record.stability_run_id) == (
+        CacheMode.REPLAY,
+        None,
+    )
+    assert (replay.quotes, replay.claims) == (fresh.quotes, fresh.claims)
+
+
+def test_a_run_through_no_cache_records_no_mode(synthetic, template, cite) -> None:
+    adapter = ScriptedAdapter(lambda request: cite(request, model="scripted"))
+    record = run([synthetic.bundle], adapter, template).record
+    assert (record.cache_mode, record.stability_run_id) == (None, None)

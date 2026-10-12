@@ -29,6 +29,7 @@ from earnings_themes.coding.records import (
     checked,
 )
 from earnings_themes.extraction.adapters import Message, ModelReply, Usage
+from earnings_themes.extraction.records import CacheMode
 from earnings_themes.support.records import JudgeIdentity
 
 _RETRYABLE = frozenset(
@@ -406,7 +407,8 @@ def classify_claim(
         reverify_coding_input(input)
         if type(allowance) is not CodingAllowance or type(cache) is not CodingCache:
             raise CodingError("malformed_record")
-        if type(cache.mode) is not str or cache.mode not in ("live", "replay"):
+        # A member is a str subclass, refused by type; a str is matched by value.
+        if type(cache.mode) is not str or cache.mode not in CacheMode:
             raise CodingError("malformed_record")
         allowance._check_counters()
         identity = _classifier_identity(classifier)

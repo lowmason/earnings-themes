@@ -155,7 +155,15 @@ def make_proposal_job(sources, policy, identity, root):
     """Use only the public runner; callbacks and token counts are invented."""
     requests = []
 
-    def run(replies, cache_mode="live", *, ceilings=None, claim_order=None):
+    def run(
+        replies,
+        cache_mode="live",
+        *,
+        ceilings=None,
+        claim_order=None,
+        stability_run_id=None,
+        directory=None,
+    ):
         from earnings_themes.coding.adapters import ScriptedClassifier
         from earnings_themes.coding.cache import CodingCache
         from earnings_themes.coding.records import CodingCeilings
@@ -195,7 +203,11 @@ def make_proposal_job(sources, policy, identity, root):
                 tokens_per_document=100000,
                 tokens_per_run=200000,
             ),
-            cache=CodingCache(root / "classifier-cache", cache_mode),
+            cache=CodingCache(
+                directory or root / "classifier-cache",
+                cache_mode,
+                stability_run_id=stability_run_id,
+            ),
             started_at=datetime(2026, 10, 5, tzinfo=UTC),
             software={"fixture": "1", "lock_hash": digest("invented lock")},
         )

@@ -154,7 +154,7 @@ def test_an_identical_key_hits_and_calls_nothing(tmp_path: Path) -> None:
     calls: list = []
     first = CachedAdapter(echo(IDENTITY, calls), tmp_path, CacheMode.LIVE)
     stored = first.complete(request())
-    for mode in CacheMode:
+    for mode in (CacheMode.LIVE, CacheMode.REPLAY):
         hit = CachedAdapter(echo(IDENTITY, calls), tmp_path, mode).complete(request())
         assert hit == stored.model_copy(update={"cached": True})
     assert len(calls) == 1
@@ -252,3 +252,53 @@ def test_the_scripted_adapter_keeps_its_requests() -> None:
     adapter = ScriptedAdapter(lambda _: ModelReply(text="", model="scripted"))
     adapter.complete(request())
     assert adapter.requests == [request()]
+
+
+def test_fresh_needs_a_safe_stability_run_id_and_only_fresh_takes_one(
+    tmp_path: Path,
+) -> None:
+    calls: list = []
+    alone = "goes with the fresh mode alone"
+    unsafe = "not one safe path component"
+    for mode, stability_run_id, message in (
+        ("fresh", None, alone),
+        ("live", "stability-1", alone),
+        ("replay", "stability-1", alone),
+        ("fresh", "..", unsafe),
+        ("fresh", "a/b", unsafe),
+        ("fresh", "", unsafe),
+    ):
+        with pytest.raises(ValueError, match=message):
+            CachedAdapter(
+                echo(IDENTITY, calls), tmp_path, mode, stability_run_id=stability_run_id
+            )
+    assert (calls, list(tmp_path.iterdir())) == ([], [])
+
+
+def test_fresh_never_reads_the_main_cache_and_writes_its_own(tmp_path: Path) -> None:
+    """A1: a fully populated cache gives zero hits under fresh."""
+    calls: list = []
+    stored = CachedAdapter(echo(IDENTITY, calls), tmp_path, "live").complete(request())
+    fresh = CachedAdapter(
+        echo(IDENTITY, calls), tmp_path, "fresh", stability_run_id="stability-1"
+    )
+    assert (fresh.mode, fresh.stability_run_id) == (CacheMode.FRESH, "stability-1")
+    reply = fresh.complete(request())
+    assert (len(calls), reply.cached) == (2, False)
+    name = f"{digest(cache_key(request(), IDENTITY))}.json"
+    assert (tmp_path / "fresh" / "stability-1" / name).is_file()
+    again = CachedAdapter(echo(IDENTITY, calls), tmp_path, "live").complete(request())
+    assert (len(calls), again) == (2, stored.model_copy(update={"cached": True}))
+
+
+def test_fresh_serves_a_repeat_within_its_run_from_its_own_reply(
+    tmp_path: Path,
+) -> None:
+    """A1 as plan 18 amends it: fresh is live over its own new directory."""
+    calls: list = []
+    fresh = CachedAdapter(
+        echo(IDENTITY, calls), tmp_path, "fresh", stability_run_id="stability-1"
+    )
+    first = fresh.complete(request())
+    second = fresh.complete(request())
+    assert (len(calls), second) == (1, first.model_copy(update={"cached": True}))

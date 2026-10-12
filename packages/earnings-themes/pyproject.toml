@@ -55,6 +55,7 @@ jev-langchain = [
     "langchain-typesafe",            # import langchain_typesafe
 ]
 support-nli = [
+    "jinja2==3.1.6",                 # transformers' apply_chat_template (A2)
     "sentencepiece==0.2.2",
     "torch==2.14.1",
     "transformers==5.18.0",

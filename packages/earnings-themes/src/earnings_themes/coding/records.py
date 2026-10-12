@@ -17,7 +17,11 @@ from pydantic import (
 )
 
 from earnings_themes.extraction.adapters import Message
-from earnings_themes.extraction.records import Parameters
+from earnings_themes.extraction.records import (
+    Parameters,
+    StabilityRunId,
+    cache_mode_problem,
+)
 from earnings_themes.records import NonBlank, Part, Sha256Hex
 from earnings_themes.support.problems import REASONS as SUPPORT_REASONS
 from earnings_themes.support.records import (
@@ -323,7 +327,8 @@ class ProposalRunRecord(CodingRecord):
     classifier_identity: JudgeIdentity
     coding_policy: CodingPolicySnapshot
     ceilings: CodingCeilings
-    cache_mode: Literal["live", "replay"]
+    cache_mode: Literal["live", "replay", "fresh"]
+    stability_run_id: StabilityRunId | None = None
     configuration_hash: Sha256Hex
     requested_claim_order: tuple[tuple[NonBlank, NonBlank], ...]
     schema_hash: Sha256Hex
@@ -371,6 +376,11 @@ class ProposalRunRecord(CodingRecord):
                 raise ValueError("invalid_count")
         if any(reason not in REASONS for reason, _ in self.counts_by_reason):
             raise ValueError("invalid_reason")
+        problem = cache_mode_problem(
+            self.cache_mode, self.stability_run_id, self.requests
+        )
+        if problem is not None:
+            raise ValueError(problem)
         return self
 
 
