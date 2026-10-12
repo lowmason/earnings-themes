@@ -695,3 +695,38 @@ def test_raw_accounting_invalid_scalars_are_private_and_publish_nothing(
     assert caught.value.__context__ is None or caught.value.__suppress_context__
     assert not directory.exists()
     assert list(tmp_path.iterdir()) == []
+
+
+def test_fresh_reads_only_its_own_new_directory(
+    coding_request, classifier_identity, tmp_path
+):
+    """A1 (plan 18): fresh is live over <cache>/fresh/<id>/, which starts empty."""
+    model = classifier_identity.runtime.model_id
+    main = ModelReply(text='{"main": 1}', model=model)
+    CodingCache(tmp_path, "live").put(
+        coding_request, classifier_identity, main, input_tokens=5
+    )
+    fresh = CodingCache(tmp_path, "fresh", stability_run_id="stability-1")
+    assert (fresh.mode, fresh.stability_run_id) == ("fresh", "stability-1")
+    assert fresh.get(coding_request, classifier_identity) is None
+    again = ModelReply(text='{"again": 1}', model=model)
+    reference = fresh.put(coding_request, classifier_identity, again, input_tokens=5)
+    assert fresh.get(coding_request, classifier_identity).reply == again
+    assert (tmp_path / "fresh" / "stability-1" / reference).is_file()
+    replayed = CodingCache(tmp_path, "replay").get(coding_request, classifier_identity)
+    assert replayed.reply == main
+
+
+@pytest.mark.parametrize(
+    "mode,stability_run_id",
+    [
+        ("live", "stability-1"),
+        ("replay", "stability-1"),
+        ("fresh", ".."),
+        ("fresh", "a/b"),
+    ],
+)
+def test_a_stability_run_id_goes_with_fresh_alone(tmp_path, mode, stability_run_id):
+    with pytest.raises(CodingError, match="^malformed_record$"):
+        CodingCache(tmp_path / "unused", mode, stability_run_id=stability_run_id)
+    assert list(tmp_path.iterdir()) == []

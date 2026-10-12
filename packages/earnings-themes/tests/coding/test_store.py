@@ -837,3 +837,23 @@ def test_all_refused_run_still_requires_current_approved_book(
         write_coding_run(tmp_path / "coding", result, broken, case.support, None)
     assert not (tmp_path / "coding").exists()
     assert list(tmp_path.glob(".coding-*")) == []
+
+
+def test_a_fresh_coding_run_writes_and_reads_back(tmp_path, proposal_job):
+    """A1 (plan 18): a dispatched attempt is valid under fresh, as under live."""
+    proposals, _ = proposal_job.run(
+        [{"theme_ids": ["capacity"], "attributes": {}}],
+        "fresh",
+        stability_run_id="stability-1",
+    )
+    case = make_assessed_case(proposals, proposal_job.sources, tmp_path / "assessed")
+    policy = FixturePolicy(case.proposals, case.support)
+    result = make_coding_run(case, policy)
+    path = write_coding_run(
+        tmp_path / "coding", result, case.sources, case.support, policy
+    )
+    stored = read_coding_run(path)
+    assert (stored.record.cache_mode, stored.record.stability_run_id) == (
+        "fresh",
+        "stability-1",
+    )

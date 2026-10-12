@@ -406,7 +406,7 @@ def classify_claim(
         reverify_coding_input(input)
         if type(allowance) is not CodingAllowance or type(cache) is not CodingCache:
             raise CodingError("malformed_record")
-        if type(cache.mode) is not str or cache.mode not in ("live", "replay"):
+        if type(cache.mode) is not str or cache.mode not in ("live", "replay", "fresh"):
             raise CodingError("malformed_record")
         allowance._check_counters()
         identity = _classifier_identity(classifier)

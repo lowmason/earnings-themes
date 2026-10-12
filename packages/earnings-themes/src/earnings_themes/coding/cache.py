@@ -19,6 +19,7 @@ from earnings_themes.coding.records import (
     checked,
 )
 from earnings_themes.extraction.adapters import ModelReply
+from earnings_themes.extraction.cache import cache_directory
 from earnings_themes.records import Sha256Hex
 from earnings_themes.support.records import JudgeIdentity
 
@@ -76,13 +77,26 @@ class CodingCacheEntry(CodingRecord):
 
 
 class CodingCache:
-    """Caller-selected local directory; no dispatch, startup I/O or fresh bypass."""
+    """Caller-selected local directory, or under ``fresh`` its stability run's own
+    (A1); no dispatch or startup I/O."""
 
-    def __init__(self, directory: Path, mode: Literal["live", "replay"]) -> None:
-        if type(mode) is not str or mode not in ("live", "replay"):
+    def __init__(
+        self,
+        directory: Path,
+        mode: Literal["live", "replay", "fresh"],
+        *,
+        stability_run_id: str | None = None,
+    ) -> None:
+        if type(mode) is not str:
             raise CodingError("malformed_record")
-        self._directory = Path(directory)
-        self.mode = mode
+        try:
+            member, self._directory = cache_directory(
+                Path(directory), mode, stability_run_id
+            )
+        except ValueError:
+            raise CodingError("malformed_record") from None
+        self.mode = member.value
+        self.stability_run_id = stability_run_id
 
     def _read(self, reference: str) -> tuple[CodingCacheEntry, bytes] | None:
         if type(reference) is not str or not ARTIFACT_REFERENCE.fullmatch(reference):

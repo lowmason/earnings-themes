@@ -3700,6 +3700,11 @@ All coding parts are frozen, closed, strict Pydantic contracts. Integer literals
 attempts, offsets, ceilings and counts reject bools, floats and numeric strings.
 `CodingRecord` is the separate base for persisted coding schema 1 records.
 
+**Fresh mode (Stage 11, plan 18).** `ProposalRunRecord` and `CodingRunRecord` take
+`cache_mode` `fresh` and a `stability_run_id` (A1). The schema version stays `1`, and
+the stability run ID defaults to null, so coding keys and stored live or replay runs
+are unchanged (D18-4).
+
 `checked(value, model)` reparses JSON mode at untrusted boundaries. For a supplied
 Part, it first validates the Python-mode data, because JSON serialization can
 coerce an invalid copied boolean to an integer. Both dumps suppress serializer
@@ -4059,9 +4064,10 @@ coding schema 1 and a content-hash-only representation.
 | `reply_hash` | SHA-256 | Digest of the raw reply, fixed refusal reason and counted input tokens |
 | `refusal_reason` | transport_error, model_mismatch, tool_call_refused or null | Raw transport refusal only; unknown, semantic and acceptance reasons are refused |
 
-`CodingCache(directory: Path, mode: Literal["live", "replay"])` selects a local
-raw-artifact directory without startup I/O. Mode strings are exact; neither mode
-provides fresh-call bypass, and lookup performs no inference. The coding cache
+`CodingCache(directory: Path, mode: Literal["live", "replay", "fresh"], *,
+stability_run_id=None)` selects a local raw-artifact directory without startup I/O.
+Mode strings are exact; `fresh` is `live` over `<directory>/fresh/<stability_run_id>/`
+(A1, plan 18), and lookup performs no inference. The coding cache
 namespace is separate from extraction/support; callers choose its directory.
 `get(request, identity) -> CodingCacheEntry | None` reads only the complete key's
 `<64 lowercase hex>.json` file, returning None only when it is absent. It rechecks
@@ -4178,7 +4184,8 @@ manifest, acceptance policy, decisions or assignments exist at this boundary.
 | `classifier_identity` | JudgeIdentity | Explicit family/runtime/hosting/license and input/output limits |
 | `coding_policy` | CodingPolicySnapshot | Hash-only prompt/generation/version/retry policy |
 | `ceilings` | CodingCeilings | Explicit shared request/token ceilings |
-| `cache_mode` | live, replay | Explicit raw-cache operation mode; no fresh-call bypass |
+| `cache_mode` | live, replay, fresh | Explicit raw-cache operation mode; `fresh` is live over the stability run's own directory (A1) |
+| `stability_run_id` | safe ID or null | Stability run whose directory `fresh` used; set exactly when `cache_mode` is `fresh`; outside the configuration hash |
 | `configuration_hash` | SHA-256 | Exact configuration recipe described below |
 | `requested_claim_order` | tuple[(doc_id, claim_id), …] | Distinct caller-requested order, including refused/incomplete claims |
 | `schema_hash` | SHA-256 | Exact generated closed CodingReply schema |
@@ -4203,8 +4210,8 @@ codebook reference JSON, classifier_identity JSON, coding_policy snapshot JSON,
 ceilings JSON, requested_claim_order, schema_hash, coding_version,
 validator_version and the explicit cache_mode. Run time and run ID are operational
 metadata, outside this configuration digest; software/lock identity is retained
-separately. Cache mode may change the configuration hash between live and replay,
-while reconstructed proposals keep the same coding-run/input identity.
+separately. Cache mode may change the configuration hash between live, replay and
+fresh, while reconstructed proposals keep the same coding-run/input identity.
 
 `CodingAllowance(ceilings, *, run_id)` shares strict nonnegative claim/document/run
 request counts and document/run charged token totals. reserve checks request
@@ -4415,7 +4422,8 @@ String, list and named struct dtypes, including nullable and empty tables.
 | `classifier_identity` | JudgeIdentity | Original classifier family/runtime/hosting/license and limits |
 | `coding_policy` | CodingPolicySnapshot | Hash-only coding prompt/parameters/version/retry snapshot |
 | `ceilings` | CodingCeilings | Original explicit shared request/token ceilings |
-| `cache_mode` | live, replay | Original cache operation, including empty/refused runs |
+| `cache_mode` | live, replay, fresh | Original cache operation, including empty/refused runs |
+| `stability_run_id` | safe ID or null | Original stability run ID, set exactly under `fresh` |
 | `configuration_hash` | SHA-256 | Unchanged Task 5 coding configuration hash |
 | `requested_claim_order` | tuple[(doc_id, claim_id), …] | Original distinct requested order, including refused/incomplete claims |
 | `schema_hash` | SHA-256 | Exact closed generated CodingReply schema hash |

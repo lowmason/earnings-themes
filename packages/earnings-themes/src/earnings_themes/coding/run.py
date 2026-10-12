@@ -179,6 +179,7 @@ def propose_run(
                 coding_policy=snapshot,
                 ceilings=ceiling_value,
                 cache_mode=cache.mode,
+                stability_run_id=cache.stability_run_id,
                 configuration_hash=digest(configuration),
                 requested_claim_order=order,
                 schema_hash=schema_hash,

@@ -792,3 +792,26 @@ def test_final_publication_preflight_cannot_publish_stale_bindings(
         )
     assert classifier.changed
     assert len(classifier.requests) == 1
+
+
+def test_fresh_dispatches_every_request_and_replays_from_its_own_directory(
+    proposal_job,
+):
+    """A1 (plan 18): over a populated cache, fresh hits nothing and dispatches every
+    request, and a replay over its directory reproduces the proposals."""
+    reply = {"theme_ids": ["capacity"], "attributes": {}}
+    _, live_calls = proposal_job.run([reply])
+    fresh, fresh_calls = proposal_job.run(
+        [reply], "fresh", stability_run_id="stability-1"
+    )
+    record = fresh.record
+    assert (record.cache_mode, record.stability_run_id) == ("fresh", "stability-1")
+    assert record.cache_hits == 0
+    assert record.requests == fresh_calls == live_calls == 1
+    replay, replay_calls = proposal_job.run(
+        [],
+        "replay",
+        directory=proposal_job.root / "classifier-cache" / "fresh" / "stability-1",
+    )
+    assert (replay_calls, replay.record.cache_hits) == (0, 1)
+    assert replay.targets == fresh.targets
