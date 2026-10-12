@@ -19,6 +19,7 @@ from pathlib import Path
 from earnings_core.hashing import sha256_hex
 
 from earnings_themes import tomlfile
+from earnings_themes.problems import Problem
 from earnings_themes.records import IdPart, Part, Sha256Hex, ThemesRecord, parse
 
 LEDGER = "independent-pass.toml"
@@ -45,13 +46,33 @@ def load_ledger(path: Path) -> IndependentLedger:
     return parse(tomlfile.read(path), IndependentLedger, path.name)
 
 
-def ledger_problem(
+_PHRASES = {
+    Problem.NO_INDEPENDENT_RECORD: (
+        f"is a dev bundle with no independent record: {_FIRST}"
+    ),
+    Problem.NO_LEDGER_ROW: (
+        f"is a dev bundle whose independent record has no ledger row: {_FIRST}"
+    ),
+    Problem.REPEATED_LEDGER_ROW: "has more than one ledger row (GS19)",
+    Problem.RECORD_LOST: (
+        "has a ledger row but its independent record is lost; it is reported"
+        " lost, never rewritten (GS19)"
+    ),
+    Problem.RECORD_CHANGED: (
+        "has an independent record that does not match its ledger row; the"
+        " record is never edited (GS19)"
+    ),
+}
+"""The phrase ``ledger_problem`` prints for each of ``ledger_check``'s problems."""
+
+
+def ledger_check(
     ledger: IndependentLedger | None, event_id: str, record: bytes | None
-) -> str | None:
-    """Why a dev bundle's draft may not be anchored or shown yet, or ``None``.
-    ``record`` is the independent record's bytes, ``None`` when it is absent, and
-    ``ledger`` is ``None`` when none is committed. The phrase follows the event ID
-    in a refusal, and names no text.
+) -> Problem | None:
+    """Why a dev bundle's draft may not be anchored or shown yet, or ``None`` when
+    its record exists and matches its one ledger row. ``record`` is the independent
+    record's bytes, ``None`` when it is absent, and ``ledger`` is ``None`` when none
+    is committed.
 
     The event's ledger rows are read first, so a row whose record is gone is told
     apart from a pass not yet written: with no row, a missing record means the pass
@@ -59,21 +80,25 @@ def ledger_problem(
     refused whether or not the record exists; one row and no record is a lost
     record, reported and never rewritten; one row and a record that does not hash to
     it is a changed record."""
-    rows = [r for r in (ledger.rows if ledger else ()) if r.event_id == event_id]
+    rows = ledger.rows if ledger is not None else ()
+    rows = [r for r in rows if r.event_id == event_id]
     if not rows:
         if record is None:
-            return f"is a dev bundle with no independent record: {_FIRST}"
-        return f"is a dev bundle whose independent record has no ledger row: {_FIRST}"
+            return Problem.NO_INDEPENDENT_RECORD
+        return Problem.NO_LEDGER_ROW
     if len(rows) > 1:
-        return "has more than one ledger row (GS19)"
+        return Problem.REPEATED_LEDGER_ROW
     if record is None:
-        return (
-            "has a ledger row but its independent record is lost; it is reported"
-            " lost, never rewritten (GS19)"
-        )
+        return Problem.RECORD_LOST
     if rows[0].sha256 != sha256_hex(record):
-        return (
-            "has an independent record that does not match its ledger row; the"
-            " record is never edited (GS19)"
-        )
+        return Problem.RECORD_CHANGED
     return None
+
+
+def ledger_problem(
+    ledger: IndependentLedger | None, event_id: str, record: bytes | None
+) -> str | None:
+    """``ledger_check``'s problem as the phrase that follows the event ID in a
+    refusal, naming no text, or ``None``."""
+    problem = ledger_check(ledger, event_id, record)
+    return None if problem is None else _PHRASES[problem]

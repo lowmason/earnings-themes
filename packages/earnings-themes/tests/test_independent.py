@@ -14,10 +14,12 @@ from earnings_themes.annotation import (
     load_independent,
     without_quotes,
 )
+from earnings_themes.codebook import CodebookStatus
 from earnings_themes.independent import (
     LEDGER,
     IndependentLedger,
     LedgerRow,
+    ledger_check,
     ledger_problem,
     load_ledger,
 )
@@ -65,6 +67,19 @@ def test_a_record_for_another_event_is_refused(bundle, codebook) -> None:
     assert check_independent(other, bundle=bundle, codebook=codebook) == [
         Refusal("event_id", "unknown_document")
     ]
+
+
+def test_a_record_under_a_codebook_that_is_not_approved_is_refused(
+    bundle, codebook
+) -> None:
+    """P16-2(a): refused as ``validate_gold`` refuses it, and nothing else is
+    checked (the Stage 11 spec, A6(2))."""
+    unapproved = codebook.model_copy(
+        update={"status": CodebookStatus.DRAFT, "approval": None}
+    )
+    assert check_independent(
+        record(no_theme=True), bundle=bundle, codebook=unapproved
+    ) == [Refusal("codebook", "codebook_not_approved")]
 
 
 def _moved_quote() -> list[dict]:
@@ -221,3 +236,30 @@ def test_a_ledger_row_has_no_free_text_field(tmp_path) -> None:
     path.write_text(tomlfile.dumps(data), encoding="utf-8")
     with pytest.raises(RecordError):
         load_ledger(path)
+
+
+@pytest.mark.parametrize(
+    ("ledger", "found", "problem"),
+    [
+        (None, None, "no_independent_record"),
+        (IndependentLedger(), None, "no_independent_record"),
+        (None, RECORD, "no_ledger_row"),
+        (
+            IndependentLedger(rows=(row(sha256_hex(RECORD), TRAIN),)),
+            RECORD,
+            "no_ledger_row",
+        ),
+        (
+            IndependentLedger(rows=(row(sha256_hex(RECORD)), row("0" * 64))),
+            None,
+            "repeated_ledger_row",
+        ),
+        (IndependentLedger(rows=(row(sha256_hex(RECORD)),)), None, "record_lost"),
+        (IndependentLedger(rows=(row("0" * 64),)), RECORD, "record_changed"),
+        (IndependentLedger(rows=(row(sha256_hex(RECORD)),)), RECORD, None),
+    ],
+)
+def test_the_ledger_check_names_each_problem(ledger, found, problem) -> None:
+    """The guard's decision as a ``Problem``, which a refusal can carry; the phrases
+    ``ledger_problem`` prints are unchanged (the Stage 11 spec, A6(3))."""
+    assert ledger_check(ledger, DEV, found) == problem

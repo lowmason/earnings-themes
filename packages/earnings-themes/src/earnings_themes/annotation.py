@@ -330,9 +330,12 @@ def check_independent(
     """Every reason ``record`` does not hold over ``bundle``; empty when it does
     (GS19). A draft's checks, with no origins, partition, or signature to wait for:
     each quote anchored, the IDs, themes, ties, and ``no_theme``, and the wording
-    guard over every string but the quotes."""
+    guard over every string but the quotes. A codebook that is not approved is
+    refused first, as ``validate_gold`` refuses it (P16-2(a))."""
     if record.event_id != bundle.name:
         return [Refusal("event_id", Problem.UNKNOWN_DOCUMENT)]
+    if codebook.status is not CodebookStatus.APPROVED:
+        return [Refusal("codebook", Problem.CODEBOOK_NOT_APPROVED)]
     made, refusals = _items(record, record, bundle, _Origins(), "")
     if refusals:
         return refusals

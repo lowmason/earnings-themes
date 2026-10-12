@@ -11,7 +11,8 @@ from enum import StrEnum
 
 
 class Problem(StrEnum):
-    """Stage 6's own reasons; span checks give earnings-core's ``RejectionReason``."""
+    """Stage 6's own reasons, and Stage 11's for the gold; span checks give
+    earnings-core's ``RejectionReason``."""
 
     MALFORMED = "malformed"
     NOT_NARRATIVE = "not_narrative"
@@ -43,6 +44,11 @@ class Problem(StrEnum):
     CONTENT_HASH_MISMATCH = "content_hash_mismatch"
     NEGATIVE_KINDS = "negative_kinds"
     ADR_NOT_CITED = "adr_not_cited"
+    NO_INDEPENDENT_RECORD = "no_independent_record"
+    NO_LEDGER_ROW = "no_ledger_row"
+    REPEATED_LEDGER_ROW = "repeated_ledger_row"
+    RECORD_LOST = "record_lost"
+    RECORD_CHANGED = "record_changed"
 
 
 @dataclass(frozen=True, order=True)

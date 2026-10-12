@@ -1946,8 +1946,9 @@ document or a Stage 1 fixture.
 
 ### `Problem`
 
-Stage 6's own refusal reasons; a span check's reason is earnings-core's
-`RejectionReason`. A refusal names its item by ID or field path, never by text.
+Stage 6's own refusal reasons, and Stage 11's for the gold; a span check's reason is
+earnings-core's `RejectionReason`. A refusal names its item by ID or field path, never
+by text.
 
 | Value | Meaning |
 | --- | --- |
@@ -1981,6 +1982,11 @@ Stage 6's own refusal reasons; a span check's reason is earnings-core's
 | `content_hash_mismatch` | A record's `content_hash` is not its content's |
 | `negative_kinds` | The curated hard negatives lack a kind |
 | `adr_not_cited` | ADR 0003 does not cite the codebook's content hash |
+| `no_independent_record` | A dev bundle has neither an independent record nor a ledger row: the pass comes first (GS19) |
+| `no_ledger_row` | A dev bundle's independent record has no ledger row: the row comes first (GS19) |
+| `repeated_ledger_row` | The ledger holds more than one row for the event (GS19) |
+| `record_lost` | A ledger row's independent record is gone; it is reported lost, never rewritten (GS19) |
+| `record_changed` | An independent record does not hash to its ledger row; it is never edited (GS19) |
 
 ### `Pin`
 
