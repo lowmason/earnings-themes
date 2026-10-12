@@ -96,7 +96,11 @@ class CodingCache:
         except ValueError:
             raise CodingError("malformed_record") from None
         self.mode = member.value
-        self.stability_run_id = stability_run_id
+        self._stability_run_id = stability_run_id
+
+    @property
+    def stability_run_id(self) -> str | None:
+        return self._stability_run_id
 
     def _read(self, reference: str) -> tuple[CodingCacheEntry, bytes] | None:
         if type(reference) is not str or not ARTIFACT_REFERENCE.fullmatch(reference):

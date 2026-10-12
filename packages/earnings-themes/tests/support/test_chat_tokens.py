@@ -89,6 +89,19 @@ def test_refuses_a_tokenizer_without_a_chat_template(tmp_path):
         ChatTokenCounter(config(tmp_path), loader=loader(tokenizer, []))
 
 
+def test_a_loader_that_raises_is_model_mismatch_without_its_message(tmp_path):
+    """A runtime's own error may name a path on this machine: the refusal is the
+    closed reason alone, with the error suppressed."""
+
+    def load(path, **options):
+        raise OSError("/sentinel/secret/path")
+
+    with pytest.raises(SupportError, match="^model_mismatch$") as caught:
+        ChatTokenCounter(config(tmp_path), loader=load)
+    assert caught.value.__suppress_context__
+    assert "/sentinel" not in str(caught.value)
+
+
 def test_the_caller_must_supply_the_loader(tmp_path):
     """Themes holds no default loader: the application's builder passes one, after
     it checks the pinned runtime versions (the import-scan rule, GS17)."""

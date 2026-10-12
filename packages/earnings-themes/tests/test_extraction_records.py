@@ -371,19 +371,28 @@ def test_zero_attempt_requires_an_exhausted_budget_stop(state):
         WindowRecord.model_validate(fields | state)
 
 
-def test_a_run_s_cache_mode_and_stability_run_id_agree() -> None:
+@pytest.mark.parametrize(
+    "changes,reason",
+    [
+        ({"cache_mode": CacheMode.FRESH}, "invalid_stability_run"),
+        (
+            {"cache_mode": CacheMode.LIVE, "stability_run_id": "stability-1"},
+            "invalid_stability_run",
+        ),
+        ({"stability_run_id": "stability-1"}, "invalid_stability_run"),
+        ({"cache_mode": CacheMode.REPLAY}, "replay_dispatched"),
+        (
+            {"cache_mode": CacheMode.FRESH, "stability_run_id": ".."},
+            r"stability_run_id\n.*should match pattern",
+        ),
+    ],
+)
+def test_a_run_s_cache_mode_and_stability_run_id_agree(changes, reason) -> None:
     """A1 (plan 18, D18-8): a stability run ID goes with fresh alone, and replay
-    dispatches nothing."""
+    dispatches nothing. The base record has no cache and one request."""
     fresh = run_record(cache_mode=CacheMode.FRESH, stability_run_id="stability-1")
     assert fresh.stability_run_id == "stability-1"
     replay = run_record(cache_mode=CacheMode.REPLAY, requests=0, unreported=0)
     assert replay.cache_mode is CacheMode.REPLAY
-    for changes in (
-        {"cache_mode": CacheMode.FRESH},
-        {"cache_mode": CacheMode.LIVE, "stability_run_id": "stability-1"},
-        {"stability_run_id": "stability-1"},
-        {"cache_mode": CacheMode.REPLAY},
-        {"cache_mode": CacheMode.FRESH, "stability_run_id": ".."},
-    ):
-        with pytest.raises(ValidationError):
-            run_record(**changes)
+    with pytest.raises(ValidationError, match=reason):
+        run_record(**changes)

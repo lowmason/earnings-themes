@@ -511,7 +511,7 @@ def _check_accounting(stored: CodingRun) -> None:
                     > ceilings.tokens_per_document
                 )
             continue
-        _require(record.cache_mode in ("live", "fresh") and not row.cached)
+        _require(record.cache_mode != "replay" and not row.cached)
         _require(
             row.reserved_tokens
             == row.input_tokens + record.coding_policy.parameters.max_tokens

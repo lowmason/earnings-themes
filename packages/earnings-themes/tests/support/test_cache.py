@@ -605,6 +605,15 @@ def test_fresh_reads_only_its_own_new_directory(
     assert SupportCache(tmp_path, "replay").lookup(key, "scorer") == main
 
 
+def test_a_cache_s_stability_run_id_is_read_only(tmp_path):
+    """The directory is fixed from the ID at construction, and the run record reads
+    the ID: a later assignment would mislabel the record (A1)."""
+    cache = SupportCache(tmp_path, "fresh", stability_run_id="stability-1")
+    with pytest.raises(AttributeError):
+        cache.stability_run_id = "other"
+    assert cache.stability_run_id == "stability-1"
+
+
 @pytest.mark.parametrize(
     "mode,stability_run_id",
     [

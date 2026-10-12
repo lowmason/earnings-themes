@@ -190,7 +190,11 @@ class SupportCache:
         except ValueError:
             raise SupportError("malformed_record") from None
         self.mode = member.value
-        self.stability_run_id = stability_run_id
+        self._stability_run_id = stability_run_id
+
+    @property
+    def stability_run_id(self) -> str | None:
+        return self._stability_run_id
 
     @staticmethod
     def _binding(key: SupportCacheKey, kind: str):

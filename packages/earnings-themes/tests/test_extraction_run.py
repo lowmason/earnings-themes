@@ -331,6 +331,10 @@ def test_a_fresh_run_dispatches_every_request_over_a_populated_cache(
         template,
     )
     assert (replay.record.requests, replay.record.cache_hits) == (0, 37)
+    assert (replay.record.cache_mode, replay.record.stability_run_id) == (
+        CacheMode.REPLAY,
+        None,
+    )
     assert (replay.quotes, replay.claims) == (fresh.quotes, fresh.claims)
 
 

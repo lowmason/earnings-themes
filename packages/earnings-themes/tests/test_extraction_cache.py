@@ -258,15 +258,17 @@ def test_fresh_needs_a_safe_stability_run_id_and_only_fresh_takes_one(
     tmp_path: Path,
 ) -> None:
     calls: list = []
-    for mode, stability_run_id in (
-        ("fresh", None),
-        ("live", "stability-1"),
-        ("replay", "stability-1"),
-        ("fresh", ".."),
-        ("fresh", "a/b"),
-        ("fresh", ""),
+    alone = "goes with the fresh mode alone"
+    unsafe = "not one safe path component"
+    for mode, stability_run_id, message in (
+        ("fresh", None, alone),
+        ("live", "stability-1", alone),
+        ("replay", "stability-1", alone),
+        ("fresh", "..", unsafe),
+        ("fresh", "a/b", unsafe),
+        ("fresh", "", unsafe),
     ):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=message):
             CachedAdapter(
                 echo(IDENTITY, calls), tmp_path, mode, stability_run_id=stability_run_id
             )

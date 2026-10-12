@@ -839,6 +839,30 @@ def test_all_refused_run_still_requires_current_approved_book(
     assert list(tmp_path.glob(".coding-*")) == []
 
 
+@pytest.mark.parametrize(
+    "mode,refused", [("live", False), ("fresh", False), ("replay", True)]
+)
+def test_the_accounting_check_refuses_a_dispatched_row_under_replay_alone(
+    complete_coding_case, mode, refused
+):
+    """A defensive branch no public path reaches: a replay record that counts a
+    dispatch is refused first as replay_dispatched, and the totals tie the count to
+    the dispatched rows. ``model_copy`` skips validation, so the check is called on
+    the swapped mode directly."""
+    from earnings_themes.coding import store
+
+    result = complete_coding_case[0]
+    assert any(not row.cached and row.reserved_tokens > 0 for row in result.attempts)
+    swapped = replace(
+        result, record=result.record.model_copy(update={"cache_mode": mode})
+    )
+    if refused:
+        with pytest.raises(CodingError, match="^storage_corrupt$"):
+            store._check_accounting(swapped)
+    else:
+        store._check_accounting(swapped)
+
+
 def test_a_fresh_coding_run_writes_and_reads_back(tmp_path, proposal_job):
     """A1 (plan 18): a dispatched attempt is valid under fresh, as under live."""
     proposals, _ = proposal_job.run(
