@@ -514,3 +514,7 @@ def test_a_committed_file_is_counted_only_when_it_holds_for_its_event(
         Refusal("event_id", "unknown_document"),
         Refusal("partition", "wrong_partition"),
     ]
+    assert countable(gold, LATER) == [
+        Refusal("event_id", "unknown_document"),
+        Refusal("partition", "excluded_event"),
+    ]

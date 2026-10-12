@@ -329,7 +329,7 @@ def build_gold(
         codebook=codebook,
         require_signature=False,
     )
-    return repeats + refusals or gold
+    return (repeats + refusals) or gold
 
 
 def without_quotes(record: IndependentRecord) -> IndependentRecord:

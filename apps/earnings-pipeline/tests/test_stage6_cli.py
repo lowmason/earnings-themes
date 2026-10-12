@@ -1323,9 +1323,9 @@ def signed_training(repo: Path, no_theme: str) -> list[str]:
 
 
 def test_coverage_takes_versions_1_and_2_and_v2_needs_v1(repo) -> None:
-    assert lines(run(repo, "pilot", "coverage", "--version", "3")) == [
-        "Refused: coverage has versions 1 and 2"
-    ]
+    third = run(repo, "pilot", "coverage", "--version", "3")
+    assert third.exit_code == 1
+    assert lines(third) == ["Refused: coverage has versions 1 and 2"]
     early = run(repo, "pilot", "coverage", "--version", "2")
     assert early.exit_code == 1
     assert lines(early) == [

@@ -184,7 +184,7 @@ def coverage_command(context: typer.Context, version: Version = 1) -> None:
         run_ids = load_coverage(first).run_ids if first.is_file() else None
     except ValueError as error:
         fail(f"Refused: {error}")
-    no_theme = _no_theme(layout, pinned, run_ids) if version == 2 else []
+    no_theme = _no_theme(layout, pinned, run_ids or ()) if version == 2 else []
     try:
         report = build_coverage(
             pinned.pilot,
