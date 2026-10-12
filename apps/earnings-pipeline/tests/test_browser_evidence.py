@@ -2,6 +2,7 @@
 
 import importlib
 import importlib.util
+import shutil
 from dataclasses import replace
 from pathlib import Path
 
@@ -238,11 +239,19 @@ def test_v5_full_invented_bundle_remains_available_after_fixture_cleanup(
     spec = importlib.util.spec_from_file_location("stage10_invented_bundle", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+    # A temporary root, never the fixed one: a default test must not depend on
+    # what an earlier run, a session record or an OS purge left in /private/tmp.
+    root = tmp_path / "published"
     directory, rows, views = module.build_artifacts(
-        module.ROOT, tmp_path / "work", monkeypatch
+        root, tmp_path / "work", monkeypatch
     )
-    assert (module.ROOT / "index.html").is_file()
+    assert (root / "index.html").is_file()
     assert len(rows) == len(views) == 6
+    # The bundle stands alone once the fixtures' working copies are gone, and
+    # fresh fixtures republish it byte for byte onto the existing directory.
+    shutil.rmtree(tmp_path / "work")
+    republished, _, _ = module.build_artifacts(root, tmp_path / "rebuilt", monkeypatch)
+    assert republished == directory
     for row, view in zip(rows, views):
         assert row["native"] == row["fallback"] == "pending"
         renderer = Renderer()
@@ -250,6 +259,39 @@ def test_v5_full_invented_bundle_remains_available_after_fixture_cleanup(
         assert capture.status == "completed"
         assert row["native"] == row["fallback"] == "pending"
         assert (directory / row["fallback_file"]).read_bytes() == view.html
+
+
+def test_v5_stale_bundle_is_refused_with_its_remedy_and_never_repaired(
+    tmp_path, monkeypatch
+):
+    path = (
+        Path(__file__).resolve().parents[3]
+        / "tests/integration/test_stage10_browser.py"
+    )
+    spec = importlib.util.spec_from_file_location("stage10_stale_v5", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "CASES", (module.CASES[0],))
+    root = tmp_path / "published"
+    directory, _, _ = module.build_artifacts(root, tmp_path / "work", monkeypatch)
+    # An age-based purge of the temporary directory can remove a bundle's
+    # artifacts yet leave the directory, which a later session record keeps alive.
+    lost = directory / "expected.json"
+    lost.unlink()
+    record = directory / "session-20261008T172329569380Z" / "observations.json"
+    record.parent.mkdir()
+    record.write_bytes(b"Invented session record")
+    before = sorted(p.name for p in directory.iterdir())
+
+    with pytest.raises(FileNotFoundError, match="stale_v5_bundle") as raised:
+        module.build_artifacts(root, tmp_path / "retry-work", monkeypatch)
+
+    assert str(directory) in str(raised.value)
+    assert "expected.json" in str(raised.value)
+    assert not lost.exists()
+    assert record.read_bytes() == b"Invented session record"
+    assert sorted(p.name for p in directory.iterdir()) == before
+    assert not list(root.glob(".v5-*"))
 
 
 @pytest.mark.parametrize(

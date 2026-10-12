@@ -186,6 +186,14 @@ def build_artifacts(root, work, monkeypatch):
     artifacts["expected.json"] = inventory
     root.mkdir(parents=True, exist_ok=True)
     if directory.exists():
+        missing = sorted(name for name in artifacts if not (directory / name).is_file())
+        if missing:
+            shown = ", ".join(missing[:3]) + (", ..." if len(missing) > 3 else "")
+            raise FileNotFoundError(
+                f"stale_v5_bundle: {directory} lacks {len(missing)} of "
+                f"{len(artifacts)} expected artifacts ({shown}). It is never "
+                "repaired: move it aside (it may hold session records), then rerun."
+            )
         assert all(
             (directory / name).read_bytes() == data for name, data in artifacts.items()
         )
