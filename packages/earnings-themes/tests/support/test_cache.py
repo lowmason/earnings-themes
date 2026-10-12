@@ -585,3 +585,37 @@ def test_artifact_hash_is_confined_and_checks_entry(tmp_path):
     (tmp_path / reference).write_text("INVENTED_PRIVATE")
     with pytest.raises(SupportError, match="^cache_corrupt$"):
         cache.artifact_hash(reference)
+
+
+def test_fresh_reads_only_its_own_new_directory(
+    tmp_path, one_quote, scorer_identity, policy
+):
+    """A1 (plan 18): fresh is live over <cache>/fresh/<id>/, which starts empty."""
+    request = score_requests(one_quote)[0][1]
+    key = scorer_key(one_quote, request, scorer_identity, policy)
+    main = reply(request, scorer_identity)
+    SupportCache(tmp_path, "live").put(key, main)
+    fresh = SupportCache(tmp_path, "fresh", stability_run_id="stability-1")
+    assert (fresh.mode, fresh.stability_run_id) == ("fresh", "stability-1")
+    assert fresh.lookup(key, "scorer") is None
+    again = main.model_copy(update={"latency_ms": main.latency_ms + 1})
+    reference = fresh.put(key, again)
+    assert fresh.lookup(key, "scorer") == again
+    assert (tmp_path / "fresh" / "stability-1" / reference).is_file()
+    assert SupportCache(tmp_path, "replay").lookup(key, "scorer") == main
+
+
+@pytest.mark.parametrize(
+    "mode,stability_run_id",
+    [
+        ("fresh", None),
+        ("live", "stability-1"),
+        ("replay", "stability-1"),
+        ("fresh", ".."),
+        ("LIVE", None),
+    ],
+)
+def test_a_stability_run_id_goes_with_fresh_alone(tmp_path, mode, stability_run_id):
+    with pytest.raises(SupportError, match="^malformed_record$"):
+        SupportCache(tmp_path / "unused", mode, stability_run_id=stability_run_id)
+    assert list(tmp_path.iterdir()) == []

@@ -2911,6 +2911,13 @@ All models are frozen, closed, strict Pydantic contracts. Counts and offsets nev
 accept bools, floats or numeric strings. Tuple fields and tuple bindings are immutable;
 JSON-mode parsing revalidates model data instead of trusting prior construction.
 
+**Fresh mode (Stage 11, plan 18).** `SupportRunRecord` gained `cache_mode` and
+`stability_run_id` (A1). The schema version stays `1`, so the key function is
+unchanged. A support key binds the extraction run's whole record, which now also
+names its cache mode, so a key's value for a given run differs from before plan 18;
+no support cache predates it. A run record written before plan 18 has no
+`cache_mode`, and is refused as malformed; none was committed (D18-4).
+
 `parse_support(data, model)` converts validation failures to the fixed
 `SupportError("malformed_record")`, suppressing source-bearing exception chaining.
 Unknown refusal values become `unexpected_error`; core rejection reason values
@@ -3220,6 +3227,8 @@ One immutable support run manifest. Binding tuples are sorted with unique keys. 
 | `documents` | tuple[tuple[nonblank string, SHA-256], …] | Sorted immutable (document ID, canonical SHA-256) bindings |
 | `codebook` | CodebookReference | Frozen CodebookReference |
 | `configuration_hash` | SHA-256 | Complete support configuration content hash |
+| `cache_mode` | live, replay, fresh | Cache operation mode, also bound in the configuration hash; a `replay` run dispatched nothing |
+| `stability_run_id` | safe ID or null | Stability run whose directory `fresh` used; set exactly when `cache_mode` is `fresh` |
 | `extractor_family` | nonblank string | Caller-supplied source extractor lineage |
 | `scorer_identity` | ScorerIdentity | Configured ScorerIdentity |
 | `judge_identities` | tuple[JudgeIdentity, JudgeIdentity] | Ordered pair of JudgeIdentity records |
@@ -3464,7 +3473,9 @@ stores review outcomes, verdicts or quote-verification decisions.
 material. Its string/repr are ordinary safe digest text. Bare digest strings cannot
 recover expected typed bindings and are refused. Bound material is rehashed and
 checked on every boundary; no mutable registry is used. `SupportCache(directory,
-mode)` supports `live` and `replay`, typed `lookup(key, kind)` returning a raw reply
+mode, *, stability_run_id=None)` supports `live`, `replay` and `fresh` (`live` over
+`<directory>/fresh/<stability_run_id>/`; A1, plan 18), typed `lookup(key, kind)`
+returning a raw reply
 or `None`, `put(key, raw, *, refusal_reason=None)` returning a relative artifact reference,
 `refusal_reason(key)` returning integrity-checked judge refusal metadata, and
 `raw_ref(key)`. Neither mode dispatches itself; the coordinator treats replay
