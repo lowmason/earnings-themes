@@ -726,6 +726,23 @@ def test_a_bad_gold_draft_is_refused_by_item_and_writes_nothing(
     assert not (repo / "data" / "runs" / "gold" / "anchored").exists()
 
 
+def test_a_kept_draft_that_repeats_an_id_is_refused_by_id(repo) -> None:
+    """Plan 10's deferred item (the Stage 11 spec, A6(1)): the working copy dropped
+    the repeat, so only the kept draft holds it; it is refused by ID, and nothing is
+    written."""
+    frozen(repo)
+    drafted = gold_draft()
+    drafted["quotes"].append(dict(drafted["quotes"][0]))
+    write_drafts(repo, FIRST, drafted, gold_draft())
+    result = run(repo, "gold", "anchor", FIRST)
+    assert result.exit_code == 1
+    assert lines(result) == [
+        "refused: draft quote q1: duplicate_id",
+        "Refused: 1 problem(s); nothing written",
+    ]
+    assert not (repo / "data" / "runs" / "gold" / "anchored").exists()
+
+
 def test_gold_is_refused_for_an_excluded_or_unparsed_event(repo) -> None:
     frozen(repo)
     excluded = run(repo, "gold", "anchor", EXCLUDED)

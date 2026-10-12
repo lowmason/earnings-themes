@@ -183,6 +183,7 @@ def test_ids_themes_and_ties_are_checked(bundles, codebook, fixtures) -> None:
         {"claim_id": "c9", "theme_id": "unmatched", "support": "uncertain"},
     ]
     assert build(bundles, codebook, draft) == [
+        Refusal("draft claim c1", "duplicate_id"),
         Refusal("claim c1", "duplicate_id"),
         Refusal("claim c1", "unknown_quote"),
         Refusal("quote q4", "unreferenced"),
@@ -345,3 +346,66 @@ def test_a_theme_id_that_is_not_an_id_is_refused_by_its_field() -> None:
         parse(draft, GoldDraft, "draft")
     assert caught.value.problems[0].startswith("assignments.0.theme_id: ")
     assert "Demand" not in str(caught.value)
+
+
+def test_a_kept_draft_that_repeats_an_id_is_refused(bundles, codebook) -> None:
+    """Origins compare the kept draft's items by ID, so a repeat there would let its
+    last copy stand for both, and GS5's rejected count would miss one when the
+    working copy drops it. The kept draft is refused by ID, its subjects prefixed,
+    and nothing is built (plan 10's deferred item; the Stage 11 spec, A6(1))."""
+    drafted = gold_draft()
+    drafted["quotes"].append(dict(drafted["quotes"][0]))
+    drafted["claims"].append({**drafted["claims"][0], "claim": "Again."})
+    drafted["hard_negatives"].append({**drafted["hard_negatives"][0], "claim_id": "c2"})
+    drafted["assignments"].append(dict(drafted["assignments"][0]))
+    assert build(bundles, codebook, drafted, gold_draft()) == [
+        Refusal("draft quote q1", "duplicate_id"),
+        Refusal("draft claim c1", "duplicate_id"),
+        Refusal("draft claim c2", "duplicate_id"),
+        Refusal("draft assignment c1/demand", "duplicate_id"),
+    ]
+
+
+def test_a_repeat_is_refused_with_an_event_that_is_not_the_bundles(
+    bundles, codebook
+) -> None:
+    """The early returns carry the kept draft's repeats too, so the user sees every
+    reason at once (D17-2)."""
+    drafted = gold_draft(DEV)
+    drafted["quotes"].append(dict(drafted["quotes"][0]))
+    assert build({**bundles, DEV: bundles[TRAIN]}, codebook, drafted) == [
+        Refusal("draft quote q1", "duplicate_id"),
+        Refusal("event_id", "unknown_document"),
+    ]
+
+
+def test_a_repeat_is_refused_with_an_event_the_split_does_not_hold(
+    bundles, codebook
+) -> None:
+    """The same for a bundle whose event is in no partition of the split."""
+    unsplit = "cik-0009990009:2025-03-31"
+    drafted = gold_draft(unsplit)
+    drafted["quotes"].append(dict(drafted["quotes"][0]))
+    held = {**bundles, unsplit: build_synthetic(unsplit).bundle}
+    assert build(held, codebook, drafted) == [
+        Refusal("draft quote q1", "duplicate_id"),
+        Refusal("event_id", "unknown_document"),
+    ]
+
+
+def test_a_kept_curated_draft_that_repeats_a_fixture_or_an_id_is_refused(
+    fixtures, codebook
+) -> None:
+    """The curated set's kept draft keys its fixtures by fixture ID, and each
+    fixture's items by ID: a repeat of either is refused (A6(1))."""
+    good = curated(fixtures)
+    first = good.documents[0]
+    repeated = good.model_copy(update={"documents": (*good.documents, first)})
+    refusals = build_curated(
+        repeated, good, bundles=fixtures, pin=PIN, codebook=codebook
+    )
+    assert refusals == [Refusal(f"draft {first.fixture_id}", "duplicate_id")]
+    twice = first.model_copy(update={"quotes": (*first.quotes, first.quotes[0])})
+    inner = good.model_copy(update={"documents": (twice, *good.documents[1:])})
+    refusals = build_curated(inner, good, bundles=fixtures, pin=PIN, codebook=codebook)
+    assert refusals == [Refusal(f"draft {first.fixture_id} quote q1", "duplicate_id")]

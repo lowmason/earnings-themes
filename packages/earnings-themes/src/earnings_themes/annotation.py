@@ -7,7 +7,8 @@ Stage 6 spec, §Anchoring and validation and §Drafting and tools; GS4, GS5).
   record (GS19) takes the same form, without a drafting aid, and is checked, never
   built.
 - **The build.** Every working quote is anchored, every item's origin derived by
-  comparing the working copy with the draft, and the result validated. Any refusal
+  comparing the working copy with the draft, and the result validated. A kept draft
+  that repeats an ID is refused, since origins compare its items by ID. Any refusal
   writes nothing, and names its item by ID, never by text.
 - **The validator** rechecks a committed file against its local document: the pin,
   split, partition, and codebook, the signature, ``no_theme``, the IDs, every
@@ -186,6 +187,43 @@ def _by_row(item: AssignmentDraft) -> Hashable:
     return (item.claim_id, item.theme_id)
 
 
+def _duplicates(label: str, ids: Sequence[Hashable]) -> list[Refusal]:
+    """A refusal for each of ``ids`` that occurs more than once, in sorted order,
+    named ``label`` and the ID. An assignment row, a (claim, theme) pair, reads
+    ``claim/theme``."""
+    return [
+        Refusal(
+            f"{label}{'/'.join(i) if isinstance(i, tuple) else i}",
+            Problem.DUPLICATE_ID,
+        )
+        for i in sorted({i for i in ids if ids.count(i) > 1})
+    ]
+
+
+def _repeats(
+    draft: GoldDraft | IndependentRecord | FixtureDraft, prefix: str
+) -> list[Refusal]:
+    """Each quote ID, claim ID (claims and hard negatives together), and assignment
+    row that ``draft`` repeats. Origins compare a kept draft's items by ID, so a
+    repeat would let its last copy stand for both, and GS5's ``rejected`` would miss
+    one (plan 10's deferred item; the Stage 11 spec, A6(1))."""
+    claims = (*getattr(draft, "claims", ()), *draft.hard_negatives)
+    rows = [(a.claim_id, a.theme_id) for a in getattr(draft, "assignments", ())]
+    return [
+        *_duplicates(f"{prefix}quote ", [q.quote_id for q in draft.quotes]),
+        *_duplicates(f"{prefix}claim ", [c.claim_id for c in claims]),
+        *_duplicates(f"{prefix}assignment ", rows),
+    ]
+
+
+def _curated_repeats(drafted: CuratedDraft) -> list[Refusal]:
+    """Each fixture the kept curated draft repeats, and each ID a fixture repeats."""
+    refusals = _duplicates("draft ", [d.fixture_id for d in drafted.documents])
+    for document in drafted.documents:
+        refusals += _repeats(document, f"draft {document.fixture_id} ")
+    return list(dict.fromkeys(refusals))
+
+
 def _items(
     drafted: GoldDraft | IndependentRecord | FixtureDraft,
     working: GoldDraft | IndependentRecord | FixtureDraft,
@@ -239,17 +277,20 @@ def build_gold(
     split: SplitManifest,
     codebook: Codebook,
 ) -> Gold | list[Refusal]:
-    """The gold ``working`` defines over ``bundle``, or every reason it cannot be."""
+    """The gold ``working`` defines over ``bundle``, or every reason it cannot be.
+    A kept draft that repeats an ID is refused with the rest, its subjects prefixed
+    ``draft``."""
+    repeats = _repeats(drafted, "draft ")
     if {drafted.event_id, working.event_id} != {bundle.name}:
-        return [Refusal("event_id", Problem.UNKNOWN_DOCUMENT)]
+        return [*repeats, Refusal("event_id", Problem.UNKNOWN_DOCUMENT)]
     origins = _Origins()
     made, refusals = _items(drafted, working, bundle, origins, "")
     if refusals:
-        return refusals
+        return repeats + refusals
     try:
         partition = split.partition_of(bundle.name)
     except KeyError:
-        return [Refusal("event_id", Problem.UNKNOWN_DOCUMENT)]
+        return [*repeats, Refusal("event_id", Problem.UNKNOWN_DOCUMENT)]
     gold = Gold(
         event_id=bundle.name,
         document_id=f"{bundle.name}:release",
@@ -274,7 +315,7 @@ def build_gold(
         codebook=codebook,
         require_signature=False,
     )
-    return refusals or gold
+    return repeats + refusals or gold
 
 
 def without_quotes(record: IndependentRecord) -> IndependentRecord:
@@ -321,8 +362,7 @@ def _ids(
     quote_ids = [q.quote_id for q in quotes]
     claim_ids = [c.claim_id for c in (*claims, *negatives)]
     for name, ids in (("quote", quote_ids), ("claim", claim_ids)):
-        for repeated in sorted({i for i in ids if ids.count(i) > 1}):
-            refusals.append(Refusal(f"{prefix}{name} {repeated}", Problem.DUPLICATE_ID))
+        refusals += _duplicates(f"{prefix}{name} ", ids)
     for claim in (*claims, *negatives):
         for quote_id in claim.quote_ids:
             if quote_id not in quote_ids:
@@ -332,9 +372,9 @@ def _ids(
     for quote_id in dict.fromkeys(quote_ids):
         if quote_id not in cited:
             refusals.append(Refusal(f"{prefix}quote {quote_id}", Problem.UNREFERENCED))
-    rows = [(a.claim_id, a.theme_id) for a in assignments]
-    for row in sorted({r for r in rows if rows.count(r) > 1}):
-        refusals.append(Refusal(f"assignment {row[0]}/{row[1]}", Problem.DUPLICATE_ID))
+    refusals += _duplicates(
+        "assignment ", [(a.claim_id, a.theme_id) for a in assignments]
+    )
     plain = {c.claim_id for c in claims}
     for a in assignments:
         subject = f"assignment {a.claim_id}/{a.theme_id}"
@@ -463,8 +503,10 @@ def build_curated(
     pin: Pin,
     codebook: Codebook,
 ) -> HardNegativeSet | list[Refusal]:
-    """The curated hard negatives ``working`` defines over Stage 1's fixtures."""
+    """The curated hard negatives ``working`` defines over Stage 1's fixtures. A
+    kept draft that repeats a fixture or an ID is refused with the rest."""
     origins = _Origins()
+    repeats = _curated_repeats(drafted)
     before = {d.fixture_id: d for d in drafted.documents}
     documents, refusals = [], []
     for document in working.documents:
@@ -498,8 +540,8 @@ def build_curated(
     for fixture_id, gone in before.items():
         if fixture_id not in kept:
             origins.rejected += len(gone.quotes) + len(gone.hard_negatives)
-    if refusals:
-        return refusals
+    if repeats or refusals:
+        return repeats + refusals
     record = HardNegativeSet(
         pin=pin,
         annotator=working.annotator,
@@ -534,9 +576,7 @@ def validate_curated(
     kinds = {n.negative_kind for d in record.documents for n in d.hard_negatives}
     if kinds != set(NegativeKind):
         refusals.append(Refusal("hard_negatives", Problem.NEGATIVE_KINDS))
-    fixture_ids = [d.fixture_id for d in record.documents]
-    for repeated in sorted({i for i in fixture_ids if fixture_ids.count(i) > 1}):
-        refusals.append(Refusal(repeated, Problem.DUPLICATE_ID))
+    refusals += _duplicates("", [d.fixture_id for d in record.documents])
     items: list[BaseModel] = []
     for document in record.documents:
         prefix = f"{document.fixture_id} "
