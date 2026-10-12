@@ -10,6 +10,7 @@ from earnings_themes.annotation import (
     GoldDraft,
     build_curated,
     build_gold,
+    check_countable,
     recount,
     signed,
     validate_curated,
@@ -469,4 +470,47 @@ def test_a_committed_file_that_does_not_rebuild_is_reported_by_field(
     committed = gold_toml(gold).encode()
     assert rebuilt(committed, bundles, codebook, twice, working) == [
         Refusal("draft quote q1", "duplicate_id")
+    ]
+
+
+def test_a_committed_file_is_counted_only_when_it_holds_for_its_event(
+    bundles, codebook
+) -> None:
+    """Coverage v2 counts a committed file's no_theme only once its event, pin,
+    split, partition, codebook, signature, and no_theme hold, read without its
+    document (the Stage 11 spec, A7)."""
+    gold = build(bundles, codebook, gold_draft(annotator=SIGNED))
+    assert isinstance(gold, Gold)
+
+    def countable(record: Gold, event_id: str = TRAIN) -> list[Refusal]:
+        return check_countable(
+            record,
+            event_id=event_id,
+            pin=PIN,
+            split=synthetic_split(),
+            codebook=codebook,
+        )
+
+    assert countable(gold) == []
+    tampered = gold.model_copy(
+        update={
+            "pin": PIN.model_copy(update={"pilot_hash": "4" * 64}),
+            "split_hash": "5" * 64,
+            "partition": Partition.DEV,
+            "codebook": gold.codebook.model_copy(update={"codebook_version": 1}),
+            "annotator": "   ",
+            "no_theme": True,
+        }
+    )
+    assert countable(tampered) == [
+        Refusal("pin", "wrong_pin"),
+        Refusal("split_hash", "wrong_split"),
+        Refusal("partition", "wrong_partition"),
+        Refusal("codebook", "wrong_codebook"),
+        Refusal("annotator", "unsigned"),
+        Refusal("no_theme", "no_theme_mismatch"),
+    ]
+    assert countable(gold, DEV) == [
+        Refusal("event_id", "unknown_document"),
+        Refusal("partition", "wrong_partition"),
     ]

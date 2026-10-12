@@ -45,6 +45,7 @@ from earnings_themes.codebook import load_codebook
 from earnings_themes.gold import (
     ReleaseIdentification,
     ReleaseLabel,
+    gold_toml,
     load_gold,
     load_hard_negatives,
 )
@@ -1297,3 +1298,119 @@ def test_recount_needs_committed_gold_and_its_kept_drafts(repo) -> None:
             " here; GS5's counts rebuild from the kept draft and its working copy"
         )
     ]
+
+
+def signed_training(repo: Path, no_theme: str) -> list[str]:
+    """Signed gold, through gold anchor, for each training event with a parsed
+    document: each quotes SENTENCE, which every synthetic training release holds
+    once, and ``no_theme``'s one claim takes no theme."""
+    split = load_split(repo / EVALUATION / "split-v1.json")
+    events = [e for e in split.events_in(Partition.TRAIN) if e not in UNPARSED]
+    unmatched = [{"claim_id": "c1", "theme_id": "unmatched", "support": "uncertain"}]
+    for event_id in events:
+        changes = {}
+        if event_id == no_theme:
+            changes = {"no_theme": True, "assignments": unmatched}
+        write_drafts(
+            repo,
+            event_id,
+            gold_draft(event_id, **changes),
+            gold_draft(event_id, annotator=SIGNED, **changes),
+        )
+    result = run(repo, "gold", "anchor", *events)
+    assert result.exit_code == 0, result.output
+    return events
+
+
+def test_coverage_takes_versions_1_and_2_and_v2_needs_v1(repo) -> None:
+    assert lines(run(repo, "pilot", "coverage", "--version", "3")) == [
+        "Refused: coverage has versions 1 and 2"
+    ]
+    early = run(repo, "pilot", "coverage", "--version", "2")
+    assert early.exit_code == 1
+    assert lines(early) == [
+        (
+            f"Refused: {EVALUATION}/coverage-v1.json is not frozen; coverage v2 reads"
+            " its runs: run pilot coverage"
+        )
+    ]
+    assert not (repo / EVALUATION / "coverage-v2.json").exists()
+
+
+def test_coverage_v2_waits_for_every_train_and_dev_bundle_s_gold(repo) -> None:
+    """The Stage 11 spec's A7: version 2 is refused until every train and dev
+    bundle with a parsed document has signed gold, and each is named."""
+    frozen(repo)
+    assert run(repo, "pilot", "coverage").exit_code == 0
+    split = load_split(repo / EVALUATION / "split-v1.json")
+    events = [e for e in split.events_in(Partition.TRAIN) if e not in UNPARSED]
+    result = run(repo, "pilot", "coverage", "--version", "2")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        *(f"no signed gold  {event_id}" for event_id in events),
+        (
+            "Refused: 11 train and dev bundle(s) with a parsed document have no"
+            " signed gold; coverage v2 waits for every one (R12.4)"
+        ),
+    ]
+    assert not (repo / EVALUATION / "coverage-v2.json").exists()
+
+
+def test_coverage_v2_counts_no_theme_over_version_1_s_runs(repo) -> None:
+    """The Stage 11 spec's A7: version 2 freezes once, holds version 1's runs and
+    state counts, and adds train's and dev's rows; a later run changes nothing. The
+    synthetic split has no dev event (GS6), so dev's row is 0 of 0."""
+    frozen(repo)
+    assert run(repo, "pilot", "coverage").exit_code == 0
+    signed_training(repo, no_theme=FIRST)
+    result = run(repo, "pilot", "coverage", "--version", "2")
+    assert result.exit_code == 0, result.output
+    assert lines(result)[1:9] == [
+        "parsed  24",
+        "failed  1",
+        "unavailable  2",
+        "gap  restricted  (D4: never repaired by reselecting)",
+        "no_theme  train  1 of 11 bundles",
+        "no_theme  dev  0 of 0 bundles",
+        f"runs  {ACQUISITION_RUN}",
+        "froze coverage v2: 27 documents",
+    ]
+    first = load_coverage(repo / EVALUATION / "coverage-v1.json")
+    second = load_coverage(repo / EVALUATION / "coverage-v2.json")
+    assert (second.run_ids, second.states) == (first.run_ids, first.states)
+    kept = (repo / EVALUATION / "coverage-v2.json").read_bytes()
+    states = repo / EVENT_RUNS / "states"
+    parsed = next(t for t in read_runs(states) if t.to_state is DocumentState.PARSED)
+    later = parsed.model_copy(
+        update={
+            "run_id": "stage-7",
+            "sequence": 0,
+            "recorded_at": ACQUIRED_AT.replace(hour=14),
+            "from_state": DocumentState.PARSED,
+            "to_state": DocumentState.PARTIAL,
+            "attempts": (),
+        }
+    )
+    write_run(states, [later])
+    again = run(repo, "pilot", "coverage", "--version", "2")
+    assert again.exit_code == 0, again.output
+    assert lines(again)[-2] == "unchanged: coverage v2: 27 documents"
+    assert (repo / EVALUATION / "coverage-v2.json").read_bytes() == kept
+
+
+def test_coverage_v2_refuses_gold_it_may_not_count(repo) -> None:
+    frozen(repo)
+    assert run(repo, "pilot", "coverage").exit_code == 0
+    signed_training(repo, no_theme=FIRST)
+    path = repo / EVALUATION / "gold" / f"{FIRST_FILE}.toml"
+    record = load_gold(path)
+    other = record.pin.model_copy(update={"pilot_hash": "4" * 64})
+    tampered = gold_toml(record.model_copy(update={"pin": other}))
+    path.write_text(tampered, encoding="utf-8")
+    result = run(repo, "pilot", "coverage", "--version", "2")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        f"refused: {FIRST} pin: wrong_pin",
+        "Refused: 1 problem(s); nothing written",
+    ]
+    assert not (repo / EVALUATION / "coverage-v2.json").exists()

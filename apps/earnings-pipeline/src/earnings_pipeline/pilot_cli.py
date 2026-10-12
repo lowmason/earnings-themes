@@ -25,11 +25,17 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
-from earnings_ingestion.events.coverage import build_coverage, load_coverage
+from earnings_ingestion.events.coverage import (
+    NoThemeCount,
+    build_coverage,
+    load_coverage,
+    parsed_documents,
+)
 from earnings_ingestion.events.freeze import serialize
-from earnings_themes.annotation import load_gold_draft, recount
+from earnings_themes.annotation import check_countable, load_gold_draft, recount
 from earnings_themes.codebook import Codebook
 from earnings_themes.gold import load_gold
+from earnings_themes.problems import Refusal
 from earnings_themes.records import RecordError, record_json
 from earnings_themes.split import (
     SPLIT_POLICY,
@@ -52,6 +58,7 @@ from earnings_pipeline.stage6 import (
     load_pinned,
     options,
     record_error,
+    refuse,
     transitions,
     write_once,
 )
@@ -103,20 +110,93 @@ def split_command(context: typer.Context) -> None:
     typer.echo(f"{layout.shown(pinned.split_path)}  {manifest.content_hash}")
 
 
+Version = Annotated[
+    int,
+    typer.Option(
+        "--version", help="1, or 2 with train's and dev's no-theme counts (R12.4)."
+    ),
+]
+
+
+def _no_theme(
+    layout: Layout, pinned: Pinned, run_ids: tuple[str, ...]
+) -> list[NoThemeCount]:
+    """Train's and dev's no-theme rows over the bundles with a parsed document
+    under ``run_ids``. Each bundle needs committed gold whose pin, split, partition,
+    codebook, signature, and ``no_theme`` hold, read without its document (R12.4)."""
+    under = [t for t in transitions(layout) if t.run_id in run_ids]
+    parsed = parsed_documents(under, pinned.pin.pilot_hash)
+    split = pinned_split(layout, pinned)
+    codebook = pinned_codebook(layout)
+    rows: list[NoThemeCount] = []
+    unsigned: list[str] = []
+    refusals: list[Refusal] = []
+    for partition in (Partition.TRAIN, Partition.DEV):
+        events = [e for e in split.events_in(partition) if e in parsed]
+        flags = []
+        for event_id in events:
+            path = pinned.gold_dir / f"{file_stem(event_id)}.toml"
+            if not path.is_file():
+                unsigned.append(event_id)
+                continue
+            try:
+                gold = load_gold(path)
+            except RecordError as error:
+                record_error(error)
+            found = check_countable(
+                gold, event_id=event_id, pin=pinned.pin, split=split, codebook=codebook
+            )
+            refusals += [Refusal(f"{event_id} {r.subject}", r.reason) for r in found]
+            flags.append(gold.no_theme)
+        rows.append(
+            NoThemeCount(
+                partition=partition.value, bundles=len(events), no_theme=sum(flags)
+            )
+        )
+    for event_id in unsigned:
+        typer.echo(f"no signed gold  {event_id}", err=True)
+    if unsigned:
+        fail(
+            f"Refused: {len(unsigned)} train and dev bundle(s) with a parsed document"
+            " have no signed gold; coverage v2 waits for every one (R12.4)"
+        )
+    if refusals:
+        refuse(refusals)
+    return rows
+
+
 @pilot.command("coverage")
 @guarded
-def coverage_command(context: typer.Context) -> None:
-    """Count the pinned pilot's documents by state, and freeze coverage-v1.json."""
+def coverage_command(context: typer.Context, version: Version = 1) -> None:
+    """Count the pinned pilot's documents by state, and freeze coverage-v<N>.json;
+    version 2 adds train's and dev's no-theme counts over version 1's runs."""
     layout: Layout = context.obj
+    if version not in (1, 2):
+        fail("Refused: coverage has versions 1 and 2")
     pinned = load_pinned(layout)
-    path = pinned.coverage_path
+    first = pinned.coverage_file(1)
+    if version == 2 and not first.is_file():
+        fail(
+            f"Refused: {layout.shown(first)} is not frozen; coverage v2 reads its"
+            " runs: run pilot coverage"
+        )
     try:
-        run_ids = load_coverage(path).run_ids if path.exists() else None
+        run_ids = load_coverage(first).run_ids if first.is_file() else None
+    except ValueError as error:
+        fail(f"Refused: {error}")
+    no_theme = _no_theme(layout, pinned, run_ids) if version == 2 else []
+    try:
         report = build_coverage(
-            pinned.pilot, pinned.coverage_pin, transitions(layout), run_ids=run_ids
+            pinned.pilot,
+            pinned.coverage_pin,
+            transitions(layout),
+            run_ids=run_ids,
+            version=version,
+            no_theme=no_theme,
         )
     except ValueError as error:
         fail(f"Refused: {error}")
+    path = pinned.coverage_file(version)
     created = write_once(path, serialize(report), layout)
     _said(pinned, layout)
     for count in report.states:
@@ -128,6 +208,10 @@ def coverage_command(context: typer.Context) -> None:
         typer.echo(
             f"override  {override.override_id}  {override.document_id}"
             f"  {override.verdict}"
+        )
+    for row in report.no_theme:
+        typer.echo(
+            f"no_theme  {row.partition}  {row.no_theme} of {row.bundles} bundles"
         )
     typer.echo(f"runs  {', '.join(report.run_ids)}")
     verb = "froze" if created else "unchanged:"

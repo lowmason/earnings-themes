@@ -148,6 +148,30 @@ def test_the_committed_coverage_report_reproduces_from_its_runs() -> None:
     ]
 
 
+def test_a_committed_coverage_v2_rebuilds_unchanged_from_v1_s_runs() -> None:
+    """The Stage 11 spec's A7: coverage v2, frozen at plan B's B7, counts train's
+    and dev's no-theme bundles over coverage v1's runs; rebuilding it changes
+    nothing."""
+    committed = EVALUATION / "coverage-v2.json"
+    if not committed.is_file():
+        pytest.skip("coverage-v2.json is frozen at plan B's B7")
+    if not STATES.is_dir():
+        pytest.skip("data/runs/events/ is not here: each Stage 6 gate runs this test")
+    before = committed.read_bytes()
+    result = RUNNER.invoke(
+        cli.app, ["pilot", "--repo", str(REPO), "coverage", "--version", "2"]
+    )
+    assert result.exit_code == 0, result.output
+    assert "unchanged: coverage v2: 40 documents" in result.output.splitlines()
+    assert committed.read_bytes() == before
+    report = load_coverage(committed)
+    assert report.run_ids == load_coverage(EVALUATION / "coverage-v1.json").run_ids
+    assert [(row.partition, row.bundles) for row in report.no_theme] == [
+        ("train", 20),
+        ("dev", 8),
+    ]
+
+
 @pytest.mark.parametrize(
     ("group", "args", "needs"),
     [

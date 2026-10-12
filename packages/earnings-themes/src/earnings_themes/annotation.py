@@ -485,6 +485,38 @@ def _codebook(ref: CodebookRef, codebook: Codebook) -> list[Refusal]:
     return []
 
 
+def _standing(
+    gold: Gold,
+    *,
+    event_id: str,
+    pin: Pin,
+    split: SplitManifest,
+    codebook: Codebook,
+    require_signature: bool = True,
+) -> list[Refusal]:
+    """What a gold file's pin, split, partition for ``event_id``, codebook,
+    signature, and ``no_theme`` get wrong, read without its document."""
+    refusals = []
+    if gold.pin != pin:
+        refusals.append(Refusal("pin", Problem.WRONG_PIN))
+    if gold.split_hash != split.content_hash:
+        refusals.append(Refusal("split_hash", Problem.WRONG_SPLIT))
+    try:
+        partition = split.partition_of(event_id)
+    except KeyError:
+        partition = None
+    if partition is Partition.EXCLUDED:
+        refusals.append(Refusal("partition", Problem.EXCLUDED_EVENT))
+    elif gold.partition != partition:
+        refusals.append(Refusal("partition", Problem.WRONG_PARTITION))
+    refusals += _codebook(gold.codebook, codebook)
+    if require_signature and not signed(gold.annotator):
+        refusals.append(Refusal("annotator", Problem.UNSIGNED))
+    if gold.no_theme != no_theme_of(gold.assignments):
+        refusals.append(Refusal("no_theme", Problem.NO_THEME_MISMATCH))
+    return refusals
+
+
 def validate_gold(
     gold: Gold,
     *,
@@ -505,23 +537,14 @@ def validate_gold(
         refusals.append(
             Refusal("canonical_hash", RejectionReason.CANONICAL_HASH_MISMATCH)
         )
-    if gold.pin != pin:
-        refusals.append(Refusal("pin", Problem.WRONG_PIN))
-    if gold.split_hash != split.content_hash:
-        refusals.append(Refusal("split_hash", Problem.WRONG_SPLIT))
-    try:
-        partition = split.partition_of(gold.event_id)
-    except KeyError:
-        partition = None
-    if partition is Partition.EXCLUDED:
-        refusals.append(Refusal("partition", Problem.EXCLUDED_EVENT))
-    elif gold.partition != partition:
-        refusals.append(Refusal("partition", Problem.WRONG_PARTITION))
-    refusals += _codebook(gold.codebook, codebook)
-    if require_signature and not signed(gold.annotator):
-        refusals.append(Refusal("annotator", Problem.UNSIGNED))
-    if gold.no_theme != no_theme_of(gold.assignments):
-        refusals.append(Refusal("no_theme", Problem.NO_THEME_MISMATCH))
+    refusals += _standing(
+        gold,
+        event_id=gold.event_id,
+        pin=pin,
+        split=split,
+        codebook=codebook,
+        require_signature=require_signature,
+    )
     refusals += _ids(
         gold.quotes,
         gold.claims,
@@ -564,6 +587,27 @@ def recount(
         for field, count in made.counts.model_dump().items()
         if getattr(kept.counts, field) != count
     ] + [Refusal("record", Problem.NOT_REBUILT)]
+
+
+def check_countable(
+    gold: Gold,
+    *,
+    event_id: str,
+    pin: Pin,
+    split: SplitManifest,
+    codebook: Codebook,
+) -> list[Refusal]:
+    """Every reason a committed gold file's ``no_theme`` may not be counted for
+    ``event_id`` in coverage v2, read without its document: its event, pin, split,
+    partition, codebook, signature, and ``no_theme`` against its assignments; empty
+    when it may (the Stage 11 spec, A7; R12.4). ``gold validate`` checks the rest
+    against the document."""
+    refusals = []
+    if gold.event_id != event_id:
+        refusals.append(Refusal("event_id", Problem.UNKNOWN_DOCUMENT))
+    return refusals + _standing(
+        gold, event_id=event_id, pin=pin, split=split, codebook=codebook
+    )
 
 
 def build_curated(
