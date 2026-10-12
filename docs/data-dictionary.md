@@ -6453,3 +6453,29 @@ interval is the event-clustered percentile bootstrap.
 | `tp` | Hits |
 | `fp` | False positives |
 | `fn` | Misses |
+
+### `BootstrapPlan`
+
+| Field | Meaning |
+| --- | --- |
+| `seed` | `random.Random`'s seed |
+| `resamples` | Resample count |
+| `level` | The interval's level, such as 0.9 |
+| `max_undefined_share` | Above this share of undefined resamples, the interval is undefined |
+
+### `Interval`
+
+| Field | Meaning |
+| --- | --- |
+| `lower` | The lower percentile, or null when undefined |
+| `upper` | The upper percentile, or null when undefined |
+| `level` | The interval's level |
+| `resamples` | Resample count |
+| `undefined` | Resamples whose statistic was undefined, skipped |
+
+### `Estimate`
+
+| Field | Meaning |
+| --- | --- |
+| `point` | The statistic over every event once, or null when undefined |
+| `interval` | Its `Interval` |

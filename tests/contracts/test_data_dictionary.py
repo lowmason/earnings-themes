@@ -47,6 +47,7 @@ from earnings_themes.coding.run import ProposalRun
 from earnings_themes.coding.store import SCHEMAS
 from earnings_themes.evaluation import (
     align,
+    bootstrap,
     cells,
     scores,
 )
@@ -664,7 +665,11 @@ def test_workflow_closed_reasons_and_baseline_contract_documented():
     assert "schema-2 partial" in text and "schema-1 partial" in text
 
 
-EVALUATION_MODELS: list[type[BaseModel]] = []
+EVALUATION_MODELS = [
+    bootstrap.BootstrapPlan,
+    bootstrap.Interval,
+    bootstrap.Estimate,
+]
 EVALUATION_ENUMS = [
     evaluation_problems.EvaluationProblem,
 ]
@@ -673,6 +678,11 @@ EVALUATION_DATACLASSES = [
     cells.EventCells,
     scores.Tally,
 ]
+
+
+@pytest.mark.parametrize("model", EVALUATION_MODELS, ids=lambda m: m.__name__)
+def test_evaluation_fields_documented(model: type[BaseModel]) -> None:
+    assert documented(model.__name__) == set(model.model_fields)
 
 
 @pytest.mark.parametrize("enum", EVALUATION_ENUMS, ids=lambda e: e.__name__)
