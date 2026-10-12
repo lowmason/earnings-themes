@@ -9,8 +9,10 @@ Stage 11 spec, A2; plan 18).
 - **Order.** The panel is checked against Stage 8's family rules first, before any
   model file is hashed or loaded (``invalid_panel``; D18-11). Then every chat model's
   weights and tokenizer files are hashed against its file, and each scorer checks its
-  own files and installed runtime (``model_mismatch``). A file that does not read, or
-  a directory outside the models root, is ``malformed_record``.
+  own files and installed runtime (``model_mismatch``). A scorer's file with a wrong
+  pinned field (the revision, runtime versions, encoding version or label mapping) is
+  ``malformed_record``, through ``parse_support``, as is a file that does not read or
+  a directory outside the models root.
 - **No server call.** Building sends no request and counts no token: the token
   counters are local tokenizers, and each binding checks its transport's configured
   identity. So a runtime built for replay needs no model server. Every reply still
@@ -21,7 +23,8 @@ Stage 11 spec, A2; plan 18).
   tokenizer loader: ``AutoTokenizer.from_pretrained``, handed to each
   ``ChatTokenCounter`` after the pinned runtime versions check out. A caller may
   inject its own, as the tests do.
-- **Choice.** Nothing here chooses a model: ADR 0006 writes the files (B1).
+- **Choice.** Nothing here chooses a model: plan B's ADR 0006 is to write the files
+  (B1).
 """
 
 from __future__ import annotations

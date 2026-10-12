@@ -58,8 +58,8 @@ class CacheMode(StrEnum):
     LIVE = "live"
     """A hit returns the stored reply; a miss calls the model and stores its reply."""
     FRESH = "fresh"
-    """``live`` over ``<directory>/fresh/<stability_run_id>/``, which starts empty: the
-    main directory is never read."""
+    """``live`` over ``<directory>/fresh/<stability_run_id>/``, a new directory, which
+    must start empty (A8 refuses an existing ID): the main directory is never read."""
 
 
 def cache_mode_problem(

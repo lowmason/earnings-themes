@@ -9,9 +9,9 @@ and §The cache key).
 - **Three modes.** A hit returns the stored reply and calls nothing. In ``replay``, a
   miss is ``replay_miss`` and never a call. In ``live``, a miss calls the inner
   adapter and stores its reply atomically, under a directory the caller supplies.
-  ``fresh`` is ``live`` over ``<directory>/fresh/<stability_run_id>/``, which starts
-  empty, so it never reads the main directory (the Stage 11 spec, A1, as plan 18
-  amends it).
+  ``fresh`` is ``live`` over ``<directory>/fresh/<stability_run_id>/``, a new
+  directory, which must start empty (A8 refuses an existing ID). It never reads the
+  main directory (the Stage 11 spec, A1, as plan 18 amends it).
 - **What is stored.** Raw model output, never a verdict: verification always runs
   again over it, so a changed contract never trusts a cached result (A §681). A
   reply that carries tool calls or names another model is never stored, so a
@@ -98,7 +98,8 @@ def cache_directory(
 ) -> tuple[CacheMode, Path]:
     """``mode`` as its member, and the directory its replies are read from and
     written to: ``directory``, or under ``fresh``,
-    ``directory/fresh/<stability_run_id>``, which no other run shares. Raises
+    ``directory/fresh/<stability_run_id>``, a new directory, which must start empty
+    (A8 refuses an existing ID; nothing here checks it). Raises
     ``ValueError`` for an unknown mode, and unless a stability run ID, one safe path
     component, is given exactly when the mode is ``fresh``. ``CachedAdapter``,
     ``CodingCache`` and ``SupportCache`` each call it (A1)."""

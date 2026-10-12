@@ -2528,11 +2528,12 @@ document, so they stay local, and a refusal prints as its reason and IDs alone
 
 **Cache modes (Stage 11, plan 18).** `CacheMode` is `replay`, `live` or `fresh`, and
 extraction, coding and support share it. `fresh` is `live` over
-`<cache>/fresh/<stability_run_id>/`, which starts empty: it never reads the main
-cache, and a request repeated within the run is served from that run's own reply
-(A1). `RunRecord` gained `cache_mode` and `stability_run_id`. The schema version
-stays `1`, so no extraction cache key changes. A run record written before plan 18
-has no `cache_mode`, and is refused as malformed; none was committed (D18-4).
+`<cache>/fresh/<stability_run_id>/`, a new directory, which must start empty (A8
+refuses an existing ID): it never reads the main cache, and a request repeated within
+the run is served from that run's own reply (A1). `RunRecord` gained `cache_mode` and
+`stability_run_id`. The schema version stays `1`, so no extraction cache key changes. A run stored before plan 18 has no
+`cache_mode`: `RunRecord` refuses it, so `read_run` raises `storage_corrupt`; none was
+committed (D18-4).
 
 `write_run` (`earnings_themes.extraction.store`) stores a run in a new directory:
 `run.json`, the `RunRecord`, and one Parquet file per record kind, written through
@@ -2793,7 +2794,7 @@ One run: `run.json`.
 | `configuration` | `RunConfiguration` | What every request shared |
 | `configuration_hash` | 64 lowercase hex | SHA-256 of the configuration's canonical JSON |
 | `cache_mode` | `CacheMode` or null | The cache the run went through; null when its adapter is not a `CachedAdapter`; a `replay` run dispatched nothing |
-| `stability_run_id` | ID or null | The stability run whose directory `fresh` used; set exactly when `cache_mode` is `fresh` |
+| `stability_run_id` | safe ID or null | The stability run whose directory `fresh` used; set exactly when `cache_mode` is `fresh` |
 | `documents` | map of `doc_id` to 64 lowercase hex | Each document and its canonical hash |
 | `units` | int ≥ 0 | Units over every document |
 | `windows` | int ≥ 0 | Windows |
@@ -2884,7 +2885,7 @@ and dispatches.
 | --- | --- |
 | `replay` | A hit returns the stored reply; a miss is `replay_miss`, and nothing dispatches |
 | `live` | A hit returns the stored reply; a miss dispatches and stores the reply |
-| `fresh` | `live` over `<directory>/fresh/<stability_run_id>/`, which starts empty; the main directory is never read |
+| `fresh` | `live` over `<directory>/fresh/<stability_run_id>/`, a new directory, which must start empty (A8 refuses an existing ID); the main directory is never read |
 
 ### `LocalModelConfig`
 
@@ -2915,8 +2916,9 @@ JSON-mode parsing revalidates model data instead of trusting prior construction.
 `stability_run_id` (A1). The schema version stays `1`, so the key function is
 unchanged. A support key binds the extraction run's whole record, which now also
 names its cache mode, so a key's value for a given run differs from before plan 18;
-no support cache predates it. A run record written before plan 18 has no
-`cache_mode`, and is refused as malformed; none was committed (D18-4).
+no support cache predates it. A run stored before plan 18 has no `cache_mode`:
+`parse_support` refuses its record as `malformed_record`, so `read_support_run` raises
+`storage_corrupt`; none was committed (D18-4).
 
 `parse_support(data, model)` converts validation failures to the fixed
 `SupportError("malformed_record")`, suppressing source-bearing exception chaining.
@@ -3228,7 +3230,7 @@ One immutable support run manifest. Binding tuples are sorted with unique keys. 
 | `codebook` | CodebookReference | Frozen CodebookReference |
 | `configuration_hash` | SHA-256 | Complete support configuration content hash |
 | `cache_mode` | live, replay, fresh | Cache operation mode, also bound in the configuration hash; a `replay` run dispatched nothing |
-| `stability_run_id` | safe ID or null | Stability run whose directory `fresh` used; set exactly when `cache_mode` is `fresh` |
+| `stability_run_id` | safe ID or null | Stability run whose directory `fresh` used; set exactly when `cache_mode` is `fresh`; outside the configuration hash |
 | `extractor_family` | nonblank string | Caller-supplied source extractor lineage |
 | `scorer_identity` | ScorerIdentity | Configured ScorerIdentity |
 | `judge_identities` | tuple[JudgeIdentity, JudgeIdentity] | Ordered pair of JudgeIdentity records |
@@ -3478,8 +3480,8 @@ mode, *, stability_run_id=None)` supports `live`, `replay` and `fresh` (`live` o
 returning a raw reply
 or `None`, `put(key, raw, *, refusal_reason=None)` returning a relative artifact reference,
 `refusal_reason(key)` returning integrity-checked judge refusal metadata, and
-`raw_ref(key)`. Neither mode dispatches itself; the coordinator treats replay
-misses as `replay_miss` and live misses as dispatch candidates. Writes use a
+`raw_ref(key)`. No mode dispatches itself; the coordinator treats a replay miss as
+`replay_miss`, and a live or fresh miss as a dispatch candidate. Writes use a
 temporary sibling and atomic replacement; incompatible existing content and
 corruption refuse. Raw model failures stay explicit unavailable responses or local
 attempt artifacts. Scorer model/input mismatches refuse cache publication; judge
@@ -3489,8 +3491,8 @@ unusable even if its answer body otherwise validates. Metadata changes alter the
 integrity digest and cannot overwrite an existing entry. Earlier Stage 8 development
 cache envelopes without the combined integrity digest are invalidated as corrupt;
 no core, extraction, Stage 6, or support schema version changes. Evidence
-must be reverified outside the cache on every reuse. No bypass or concurrent-writer
-guarantee is provided.
+must be reverified outside the cache on every reuse. No concurrent-writer guarantee is
+provided; `fresh` writes to a directory of its own and never reads the main one.
 
 `Allowance(ceilings)` reserves one scorer evaluation per actual request and one
 judge request plus full input/allowed completion tokens per attempt. The caller
@@ -3716,8 +3718,8 @@ generation prompt, encoded without adding special tokens again. It makes no serv
 call; plan B's smoke compares its count with the server's reported prompt tokens.
 `earnings_themes.support.model_files` holds the checks it shares with
 the scorers and the live runtime: `verify_files(directory, files)`, which requires the
-directory to hold exactly the listed files, none a symlink, each matching its hash;
-and `files_hash(files)`, one file's SHA-256 or the sorted digest of several, which is
+directory to hold exactly the listed files, none a symlink or outside the directory,
+each matching its hash; and `files_hash(files)`, one file's SHA-256 or the sorted digest of several, which is
 also a judge's `transport_weights_hash`.
 
 | Field | Type | Meaning |
@@ -3736,9 +3738,11 @@ attempts, offsets, ceilings and counts reject bools, floats and numeric strings.
 `CodingRecord` is the separate base for persisted coding schema 1 records.
 
 **Fresh mode (Stage 11, plan 18).** `ProposalRunRecord` and `CodingRunRecord` take
-`cache_mode` `fresh` and a `stability_run_id` (A1). The schema version stays `1`, and
-the stability run ID defaults to null, so coding keys and stored live or replay runs
-are unchanged (D18-4).
+`cache_mode` `fresh` and a `stability_run_id` (A1). The schema version stays `1`, so
+coding cache keys are unchanged. A run stored before plan 18 still parses, because the
+stability run ID defaults to null, but `proposal_run_hash` digests the whole record
+dump, which now includes that field: its stored `proposal_hash` no longer reproduces,
+so `read_coding_run` raises `storage_corrupt`; none was committed (D18-4).
 
 `checked(value, model)` reparses JSON mode at untrusted boundaries. For a supplied
 Part, it first validates the Python-mode data, because JSON serialization can
@@ -4127,7 +4131,7 @@ classification boundary must independently compare current sources, policy and
 generated closed schema before dispatch/publication. Evidence still passes
 current deterministic gates at every consuming boundary. A cached response/count
 does not establish evidence quality, thematic support or acceptance. Stage 11
-owns production model selection, calibration and future fresh-call bypass.
+owns production model selection, calibration and fresh-call stability.
 
 ### `CodingPolicySnapshot`
 
@@ -4191,7 +4195,7 @@ actual counts describe the earlier operation and charge no new allowance.
 | `schema_hash` | SHA-256 | Exact generated closed CodingReply schema hash |
 | `input_hash` | SHA-256 | Complete current CodingInput digest |
 | `input_tokens` | strict int ≥ 0 | Counted full request including schema/template; retained on cache hits; zero on replay miss |
-| `reserved_tokens` | strict int ≥ 0 | Counted input plus configured maximum output for a fresh dispatch; zero on blocked/cache attempts |
+| `reserved_tokens` | strict int ≥ 0 | Counted input plus configured maximum output for a dispatch; zero on blocked/cache attempts |
 | `actual_prompt_tokens` | strict int ≥ 0 or null | Transport-reported prompt usage; unknown remains null |
 | `actual_completion_tokens` | strict int ≥ 0 or null | Transport-reported completion usage; unknown remains null |
 | `unreported` | bool | True for a dispatched/cached operation lacking actual usage |
@@ -4229,14 +4233,14 @@ manifest, acceptance policy, decisions or assignments exist at this boundary.
 | `software` | sorted tuple[(nonblank name, nonblank value), …] | Caller-supplied software identity with lowercase 64-hex lock_hash |
 | `counts_by_status` | sorted tuple[(classification status, strict int ≥ 0), …] | Requested classifications by final processing status |
 | `counts_by_reason` | sorted tuple[(closed fixed reason, strict int ≥ 0), …] | Final classification reasons; no invented no-theme reason on incomplete |
-| `requests` | strict int ≥ 0 | Fresh reservations including retries; excludes cache hits |
-| `prompt_tokens` | strict int ≥ 0 | Sum of known actual fresh prompt usage; unreported counts remain explicit |
-| `completion_tokens` | strict int ≥ 0 | Sum of known actual fresh completion usage |
-| `reserved_tokens` | strict int ≥ 0 | Sum of original fresh full input/output reservations |
+| `requests` | strict int ≥ 0 | Dispatched reservations including retries; excludes cache hits |
+| `prompt_tokens` | strict int ≥ 0 | Sum of known actual dispatched prompt usage; unreported counts remain explicit |
+| `completion_tokens` | strict int ≥ 0 | Sum of known actual dispatched completion usage |
+| `reserved_tokens` | strict int ≥ 0 | Sum of original dispatched full input/output reservations |
 | `charged_tokens` | strict int ≥ 0 | Reconciled actual usage plus intact reservations for unknown usage; overspend is not clamped |
-| `unreported` | strict int ≥ 0 | Fresh dispatched operations with unknown actual usage |
+| `unreported` | strict int ≥ 0 | Dispatched operations with unknown actual usage |
 | `cache_hits` | strict int ≥ 0 | Reused raw attempts, including cached transport refusals |
-| `latency_ms` | strict int ≥ 0 | Sum of fresh original transport latency |
+| `latency_ms` | strict int ≥ 0 | Sum of original dispatched transport latency |
 | `billable_cost` | none, self-hosted | Literal; no hosted inference in the required path |
 | `artifact_hashes` | sorted tuple[(raw/digest.json, SHA-256), …] | Validated external raw-cache artifact byte hashes; table hashes arrive at storage |
 
@@ -4467,14 +4471,14 @@ String, list and named struct dtypes, including nullable and empty tables.
 | `software` | sorted tuple[(name, value), …] | Original software identity including SHA-256 lock_hash |
 | `counts_by_status` | sorted tuple[(classification status, strict int ≥ 0), …] | Recomputed final classification counts |
 | `counts_by_reason` | sorted tuple[(closed fixed reason, strict int ≥ 0), …] | Recomputed final classification reason counts |
-| `requests` | strict int ≥ 0 | Fresh dispatch reservations, excluding cache hits |
-| `prompt_tokens` | strict int ≥ 0 | Known actual fresh prompt tokens |
-| `completion_tokens` | strict int ≥ 0 | Known actual fresh completion tokens |
-| `reserved_tokens` | strict int ≥ 0 | Original fresh input/output reservations |
+| `requests` | strict int ≥ 0 | Dispatched reservations, excluding cache hits |
+| `prompt_tokens` | strict int ≥ 0 | Known actual dispatched prompt tokens |
+| `completion_tokens` | strict int ≥ 0 | Known actual dispatched completion tokens |
+| `reserved_tokens` | strict int ≥ 0 | Original dispatched input/output reservations |
 | `charged_tokens` | strict int ≥ 0 | Actual known usage plus preserved unknown-usage reservations |
-| `unreported` | strict int ≥ 0 | Fresh operations whose actual usage remains unknown |
+| `unreported` | strict int ≥ 0 | Dispatched operations whose actual usage remains unknown |
 | `cache_hits` | strict int ≥ 0 | Reused raw attempts; historical usage creates no new charge |
-| `latency_ms` | strict int ≥ 0 | Original fresh transport latency total |
+| `latency_ms` | strict int ≥ 0 | Original dispatched transport latency total |
 | `billable_cost` | none, self-hosted | Literal required-path cost provenance |
 | `artifact_hashes` | sorted tuple[(confined filename, SHA-256), …] | Exact eight published table-byte hashes plus external raw/digest.json bindings |
 | `proposal_hash` | SHA-256 | Original ProposalRunRecord plus ordered five proposal row arrays |
@@ -6318,12 +6322,13 @@ calibration, transcript schemas and fresh-call stability remain later work.
 
 `earnings_pipeline.model_runtime.build_runtime(manifest, models_root, *, transport=None)`
 assembles the live runtime for scope `research` from committed model files (the Stage
-11 spec, A2). It chooses no model: ADR 0006 writes the files (B1). It checks the panel
-against Stage 8's family rules before any model file is hashed or loaded
-(`invalid_panel`). It then hashes every chat model's weights and tokenizer files, and
-each scorer checks its own files and installed runtime (`model_mismatch`). A file that
-does not read, or a directory outside the models root, is `malformed_record`. Building
-sends no request and counts no token, so a runtime built for replay needs no model
+11 spec, A2). It chooses no model: plan B's ADR 0006 is to write the files (B1). It
+checks the panel against Stage 8's family rules before any model file is hashed or
+loaded (`invalid_panel`). It then hashes every chat model's weights and tokenizer
+files, and each scorer checks its own files and installed runtime (`model_mismatch`).
+A scorer's file with a wrong pinned field (the revision, runtime versions, encoding
+version or label mapping) is `malformed_record`, through `parse_support`, as is a file
+that does not read or a directory outside the models root. Building sends no request and counts no token, so a runtime built for replay needs no model
 server. A scorer's file is a `LocalScorerConfig` whose `directory`, relative to the
 models root, stands in for its absolute `local_directory`, so no committed file holds a
 path on this machine. A chat model's `encoding_version` is `chat-tokens/1:` and its
@@ -6351,7 +6356,7 @@ installs the runtimes it needs.
 | --- | --- | --- |
 | `schema_version` | `1` | Application record schema version |
 | `family` | string | Model family, for Stage 8's panel rule |
-| `base_url` | string | The server's OpenAI-compatible root; loopback only (`LocalModelConfig`) |
+| `base_url` | string | The server's OpenAI-compatible root; loopback only, which `LocalAdapter` checks when it is built (`loopback_url`) |
 | `model_id` | string | The model the server names in each reply |
 | `runtime` | string | The serving runtime's name |
 | `runtime_version` | string | Its version |
