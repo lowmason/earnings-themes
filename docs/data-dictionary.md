@@ -6434,3 +6434,14 @@ interval is the event-clustered percentile bootstrap.
 | --- | --- |
 | `doc_id` | The document |
 | `spans` | Each pointer unit's element ID, start and end, in document order (ES12) |
+
+### `EventCells`
+
+| Field | Meaning |
+| --- | --- |
+| `present` | Themes present in the event, after tie groups resolve |
+| `excused` | A resolved tie group's other members: predicting one is not a false positive |
+| `uncertain` | Themes whose every gold row is `uncertain`: left out, counted |
+| `units` | Each present theme's gold-supporting units |
+| `spans` | Each present theme's gold-supporting spans |
+| `dangling` | References to quotes or claims the reading lacks |
