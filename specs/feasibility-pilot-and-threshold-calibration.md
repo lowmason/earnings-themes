@@ -449,3 +449,5 @@ loads no model.
 
 On each plan's completion, refresh the "Current state" section of `CLAUDE.md`, with the
 user's approval.
+
+> Plan A, slice 1: COMPLETE (2026-10-11) — implemented by plan 17 (specs/plans/completed/17-feasibility-pilot-and-threshold-calibration-plan-a-slice-1.md): A6, A7, and A9's wording globs. Next: write plan A's remainder (A1–A5, A8, and A9's dictionary rows).

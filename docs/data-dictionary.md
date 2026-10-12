@@ -1915,8 +1915,8 @@ GS2's pin: the pilot, its event manifest, and its universe, each by version and 
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `partition` | `"train"`, `"dev"`, or `"test"` | The partition counted |
-| `bundles` | int ≥ 0 | Its bundles with signed gold |
-| `no_theme` | int ≥ 0 | Those whose gold has `no_theme` true |
+| `bundles` | int ≥ 0 | Its bundles with a parsed document, each with signed gold |
+| `no_theme` | int ≥ 0 | Those whose gold has `no_theme` true; never more than `bundles` |
 
 ### `CoverageReport`
 
@@ -1932,7 +1932,7 @@ GS2's pin: the pilot, its event manifest, and its universe, each by version and 
 | `states` | tuple of `StateCount` | Every `DocumentState`, in order, summing to `documents` |
 | `gaps` | tuple of `CoverageGap` | Each failure class with no document |
 | `overrides` | tuple of `AppliedOverride` | Each override applied to a pilot document |
-| `no_theme` | tuple of `NoThemeCount` | Empty until Stage 11 adds train and dev, and Stage 14 test (R12.4, GS18) |
+| `no_theme` | tuple of `NoThemeCount` | Empty in version 1; from version 2, one row per partition counted, in train, dev, test order: Stage 11 adds train and dev, and Stage 14 test (R12.4, GS18) |
 | `content_hash` | 64 lowercase hex | SHA-256 of the canonical JSON of every other field |
 
 ## earnings-themes records, schema version 1
@@ -1946,8 +1946,9 @@ document or a Stage 1 fixture.
 
 ### `Problem`
 
-Stage 6's own refusal reasons; a span check's reason is earnings-core's
-`RejectionReason`. A refusal names its item by ID or field path, never by text.
+Stage 6's own refusal reasons, and Stage 11's for the gold; a span check's reason is
+earnings-core's `RejectionReason`. A refusal names its item by ID or field path, never
+by text.
 
 | Value | Meaning |
 | --- | --- |
@@ -1981,6 +1982,12 @@ Stage 6's own refusal reasons; a span check's reason is earnings-core's
 | `content_hash_mismatch` | A record's `content_hash` is not its content's |
 | `negative_kinds` | The curated hard negatives lack a kind |
 | `adr_not_cited` | ADR 0003 does not cite the codebook's content hash |
+| `no_independent_record` | A dev bundle has neither an independent record nor a ledger row: the pass comes first (GS19) |
+| `no_ledger_row` | A dev bundle's independent record has no ledger row: the row comes first (GS19) |
+| `repeated_ledger_row` | The ledger holds more than one row for the event (GS19) |
+| `record_lost` | A ledger row's independent record is gone; it is reported lost, never rewritten (GS19) |
+| `record_changed` | An independent record does not hash to its ledger row; it is never edited (GS19) |
+| `not_rebuilt` | A committed gold file is not what its kept draft and working copy build (the Stage 11 spec, A6(4)) |
 
 ### `Pin`
 
@@ -2459,6 +2466,33 @@ session starts (GS19).
 | --- | --- | --- |
 | `schema_version` | `1` | Themes record schema version |
 | `rows` | tuple of `LedgerRow` | One per dev bundle |
+
+### `Reading`
+
+One reading of a dev bundle, anchored in memory and never written (the Stage 11 spec,
+A6(3)): the user's independent record, its items `annotator_added`, or the kept draft,
+its items `drafted_accepted`.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `no_theme` | bool | As `Gold` |
+| `release_identification` | `ReleaseIdentification` | As `Gold` |
+| `quotes` | tuple of `GoldQuote` | Its quotes, anchored |
+| `claims` | tuple of `GoldClaim` | Its claims |
+| `assignments` | tuple of `GoldAssignment` | Its assignments |
+| `hard_negatives` | tuple of `HardNegative` | Its hard-negative claims |
+
+### `IndependentReadings`
+
+What `verify_independent` returns for a dev bundle whose independent record matches
+its one ledger row and checks clean. Stage 11's comparison figures are computed from
+it; nothing of it is written or committed (FP16).
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part | The dev bundle's event |
+| `record` | `Reading` | The user's independent record |
+| `draft` | `Reading` | The kept draft |
 
 ## Stage 6 files
 

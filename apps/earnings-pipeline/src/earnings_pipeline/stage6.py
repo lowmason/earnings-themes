@@ -97,9 +97,9 @@ class Pinned:
     def split_path(self) -> Path:
         return self.evaluation / "split-v1.json"
 
-    @property
-    def coverage_path(self) -> Path:
-        return self.evaluation / "coverage-v1.json"
+    def coverage_file(self, version: int) -> Path:
+        """``coverage-v<version>.json``: version 1 by plan 9, version 2 by Stage 11."""
+        return self.evaluation / f"coverage-v{version}.json"
 
     @property
     def gold_dir(self) -> Path:

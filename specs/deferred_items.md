@@ -1130,7 +1130,7 @@
       date (GS5). Codebook v0 is frozen and approved, so only a later version is
       affected. Size: quick-fix. Done when: `codebook freeze` takes the aid from
       codebook.draft.toml, with a test, before codebook v1 is frozen.
-- [ ] Refuse a kept draft that repeats an ID (plan 10's final review, T2-m1,
+- [x] Refuse a kept draft that repeats an ID (plan 10's final review, T2-m1,
       widened; deferred at plan 10's completion gate). In
       packages/earnings-themes/src/earnings_themes/annotation.py, `_Origins.compare`
       (:135) keys the kept draft's items by ID, and `build_curated` (:414) keys its
@@ -1141,7 +1141,11 @@
       repeat as `duplicate_id`, so only a draft that skipped that check is
       affected. Size: quick-fix. Done when: build_gold and build_curated refuse a
       kept draft with a repeated ID, with a test, before Stage 11 counts the
-      rejected shares.
+      rejected shares. → done in plan 17: `build_gold` and `build_curated` refuse a
+      repeated quote, claim, assignment row or fixture as `duplicate_id`, subjects
+      prefixed `draft `, collected with every other refusal. The user's gate 3
+      (2026-10-11, 3406ba4) ran `pilot recount` over the three signed train files: each
+      rebuilds from its kept draft, so none repeats an ID.
 
 ## 11-evidence-selection-and-verification-plan-a — 2026-10-04
 
@@ -1375,7 +1379,7 @@
       could not be collected alone, and the same option fixes them. README's duration
       sentence and CLAUDE.md's `[tool.pytest]` paragraph are updated; AGENTS.md:206 needed
       no change.
-- [ ] **P16-2 — Stage 11 reuse of the GS19 record check.** (a) `check_independent` in
+- [x] **P16-2 — Stage 11 reuse of the GS19 record check.** (a) `check_independent` in
       packages/earnings-themes/src/earnings_themes/annotation.py skips the
       codebook-approval check that `validate_gold` makes through `_codebook`; harmless while
       codebook v0 is approved, but Stage 11 will reuse the function. (b) `gold anchor
@@ -1387,8 +1391,11 @@
       `ledger_problem`. Source: plan 16's final review (M2) and its scoped re-review.
       Deferred because it is Stage 11's work. Size: design. Done when: Stage 11's plan
       verifies each record against its ledger hash and anchors both readings, and
-      `check_independent` refuses a non-approved codebook, with a test.
-- [ ] **P16-3 — The Stage 6 wording test does not scan the ledger.** The `STAGE6` glob tuple
+      `check_independent` refuses a non-approved codebook, with a test. → done in plan 17:
+      `check_independent` refuses an unapproved codebook; `verify_independent` checks the
+      ledger and anchors both readings (`IndependentReadings`). The comparison figures and
+      the `pilot independent` command (A3, A8) are plan A's remainder.
+- [x] **P16-3 — The Stage 6 wording test does not scan the ledger.** The `STAGE6` glob tuple
       in tests/integration/test_stage6_wording.py lists `evaluation/*/pilot-v*/*.json` and
       `evaluation/*/pilot-v*/gold/*.toml` but not `pilot-v*/*.toml`, so
       evaluation/djia-2024q3-2026q2/pilot-v1/independent-pass.toml (plan 16) is never
@@ -1396,7 +1403,11 @@
       `load_ledger` and that test. The strict `LedgerRow` model (three fields, no free text)
       keeps the risk low. Deferred because that test is the user's gate file (plan 16's
       final review, M3). Size: quick-fix. Done when: the globs cover the ledger, or the user
-      records that the strict model suffices.
+      records that the strict model suffices. → done in plan 17: `STAGE6` gains
+      `evaluation/*/pilot-v*/*.toml` and `evaluation/*/pilot-v*/labels/*.toml`, with a test
+      that each planned Stage 11 file is found. The user's gate 2 (2026-10-11, 3406ba4):
+      7 passed. TOML comments stay unscanned, as for every TOML file that test reads; the
+      module docstring says so.
 - [ ] **P16-4 — GS19 review Minors (quick-fix bundle).** From plan 16's task and final
       reviews, none blocking: (1) `ledger_problem` in
       packages/earnings-themes/src/earnings_themes/independent.py tests
@@ -1411,7 +1422,8 @@
       ledger (committing the row first is procedure, GS19). (6) "--independent takes events,
       not --hard-negatives" also prints when no event is named; the plan pinned the text and
       its test, so changing it edits a pinned expectation. Size: quick-fix. Done when: each is
-      fixed or consciously dropped, with the CLI tests passing.
+      fixed or consciously dropped, with the CLI tests passing. (1) fixed in plan 17:
+      `ledger_check` tests `ledger is not None`; items (2)–(6) remain.
 - [ ] **P16-5 — Multi-event `gold anchor` and `gold show` write before a later refusal.** The
       guard, like `_open` before it, runs per event inside the loop in
       apps/earnings-pipeline/src/earnings_pipeline/gold_cli.py, so `gold anchor E_train
@@ -1419,3 +1431,81 @@
       nothing). A pattern that predates GS19, noted by plan 16's task and final reviews.
       Size: design. Revisit if: a multi-event run leaves a partial state that confuses a
       gate, or a drafting-session workflow starts passing several events at once.
+
+## 17-feasibility-pilot-and-threshold-calibration-plan-a-slice-1 — 2026-10-11
+
+- [ ] **P17-1 — `pilot recount` copies `gold validate`'s file selection, stem check and
+      kept-draft paths.** In apps/earnings-pipeline/src/earnings_pipeline/pilot_cli.py,
+      `recount_command` (named events, then "is not committed", then the gold glob),
+      `_recount` (load the file, check its stem), the kept-draft and working-copy paths,
+      and the `Events` alias repeat apps/earnings-pipeline/src/earnings_pipeline/gold_cli.py
+      (`gold validate`, `_validate_event`, and the draft paths near `_open`) closely, not
+      verbatim. Plan 17's Task 4 brief mandated the shape; its task review logged it as
+      Minor. If the committed-gold path rules change, the two copies drift. Source: plan
+      17's Task 4 review and final review. Deferred because a clean fix moves shared
+      helpers (`committed_gold(layout, pinned, event_ids)`, `kept_drafts(layout, event_id)`)
+      into apps/earnings-pipeline/src/earnings_pipeline/stage6.py, the same move the plan's
+      Handoffs already schedule for `_independent_path` and `_read_ledger` when A8's
+      `pilot independent` arrives. Size: quick-fix. Done when: `stage6.py` holds the shared
+      helpers, `gold_cli.py` and `pilot_cli.py` use them, and the Stage 6 CLI tests pass
+      unchanged. Do it with A8.
+- [ ] **P17-2 — Test-coverage gaps in plan 17's commands (batch).** (1) `pilot recount`
+      (apps/earnings-pipeline/tests/test_stage6_cli.py): no test for the stem-mismatch
+      refusal, a missing working copy (only a missing kept draft is tested), an unreadable
+      draft or committed file (`record_error`), or that a refusal writes nothing (the
+      success path has the byte snapshot); `test_recount_reports_counts_that_do_not_rebuild_by_event_and_field`
+      does not assert `exit_code == 1` for its repeated case. (2) The known-answer test in
+      packages/earnings-themes/tests/test_gold.py pins `edited: 1`, not which item's
+      `origin` is `drafted_edited`. (3) `pilot coverage --version 2`: the `RecordError`
+      path in `_no_theme` (a committed gold file that does not parse) is untested.
+      (4) `build_gold`'s return on `_items` anchor refusals carrying the kept draft's
+      repeats is untested. (5) `CoverageReport`
+      (packages/earnings-ingestion/tests/test_events_coverage.py): no test feeds a
+      hand-built dev-before-train `no_theme` tuple to the validator, so its "misordered"
+      half is unexercised (`build_coverage` sorts first). Source: plan 17's task reviews
+      and final review. Size: plan. Done when: each is covered or consciously dropped; A8's
+      sentinel tests (the spec asks for one per command) may close (1) and (3).
+- [ ] **P17-3 — `build_curated` returns early on a repeat, skipping `validate_curated`.**
+      In packages/earnings-themes/src/earnings_themes/annotation.py, `build_curated`
+      returns `repeats + refusals` before it builds the record, so a kept curated draft
+      that repeats an ID and also fails another curated check takes two runs to show both,
+      against D17-2's "collected with every other refusal" (`build_gold` does collect).
+      Plan 17's Task 1 brief mandated the early return, and the set's drafts are already
+      committed. The record builds fine when only the kept draft repeats, so the fix is to
+      build it and return `repeats + validate_curated(...)`. Size: quick-fix. Done when:
+      both reasons print in one run, with a test.
+- [ ] **P17-4 — Plan 17 review Minors (quick-fix bundle).** None blocking: (1)
+      `pilot_cli.py`'s `coverage_command` passes `run_ids or ()` to `_no_theme`, so if the
+      `version == 2` guard were removed it would count nothing instead of failing; narrow
+      the type properly instead. (2) When some train or dev bundles have no gold, `pilot
+      coverage --version 2` stops at `fail` before `refuse`, so a problem with existing
+      gold shows only on the next run (D17-7 requires only the missing list). (3)
+      `transitions(layout)` is read twice in version 2. (4) `annotation.py`: `_duplicates`
+      branches on `isinstance(i, tuple)` to render an assignment row; `check_independent`'s
+      inline codebook-status test repeats `_codebook`'s (a shared `_approved(codebook)`
+      would stop them drifting); `ledger_check` rebinds `rows` from a tuple to a list;
+      `_PHRASES` in independent.py has no completeness guard (the parametrized
+      `ledger_problem` test covers all five today). (5) packages/earnings-themes/src/earnings_themes/codebook.py
+      (~:193) has the same sort-the-repeats pattern for theme IDs. (6)
+      packages/earnings-themes/tests/test_import_boundaries.py: the closure test's
+      docstring still names an indirect import "through `records` or `tomlfile`", and no
+      probe pins the crash a plant in `tomlfile.py` now causes (a circular import). (7) The
+      new wording test's name reads "stage_11_s". Source: plan 17's task and final reviews.
+      Size: quick-fix. Done when: each is fixed or consciously dropped, with the scoped
+      tests passing. Revisit if: one of those functions is touched again.
+- [ ] **P17-5 — Decisions for plan A's remainder (A3, A8).** (1) `pilot recount` runs over
+      committed gold and refuses no partition, and `pilot coverage --version 2` reads
+      train and dev by construction; the spec's sentence after A8's table says "Every
+      command refuses test and excluded events…". Settle whether it covers this slice's
+      `pilot` commands, alongside the sentinel tests the plan's Handoffs extend to
+      `recount` and `coverage --version 2`. (2) `anchor_reading` checks the kept draft only
+      for anchoring and repeats, never with `_ids` (dangling quote references, unknown
+      themes, a `no_theme` mismatch); A3's figures decide whether to validate it or
+      tolerate dangling references. (3) `verify_independent` raises `RecordError` for an
+      unreadable record instead of returning a refusal; `pilot independent` must catch it.
+      (4) `check_countable` (packages/earnings-themes/src/earnings_themes/annotation.py)
+      could compare `gold.doc_id` with the parsed `doc_id` that `_no_theme` already holds,
+      at no cost and still without reading a document; `gold validate` covers it today,
+      and the user's gate 3 shows the three signed files valid. Source: plan 17's final
+      review. Size: plan. Done when: the plan that implements A8 records a decision on
+      each, with tests for those it adopts.

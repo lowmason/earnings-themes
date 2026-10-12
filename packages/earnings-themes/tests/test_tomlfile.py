@@ -5,7 +5,7 @@ from datetime import date
 import pytest
 import tomllib
 from earnings_themes.records import IdPart, Part, Pin, RecordError, parse
-from earnings_themes.tomlfile import dumps, read
+from earnings_themes.tomlfile import dumps, loads, read
 
 AWKWARD = "".join(
     ['quote " and backslash \\ ', "tab\t", "newline\n", chr(0x7F), chr(0xE9)]
@@ -94,3 +94,25 @@ def test_a_missing_file_is_refused_by_name(tmp_path) -> None:
         "codebook.working.toml",
         ("not found",),
     )
+
+
+def test_bytes_read_as_the_file_holding_them_reads(tmp_path) -> None:
+    """``loads`` reads bytes as ``read`` reads a file holding them, line endings
+    included, so the bytes a ledger row hashes are the bytes parsed (GS19)."""
+    data = b"a = 1\rb = 2\r\nc = 3\n"
+    path = tmp_path / "record.toml"
+    path.write_bytes(data)
+    assert loads(data, "record.toml") == read(path) == {"a": 1, "b": 2, "c": 3}
+
+
+def test_bytes_that_are_not_toml_or_not_utf_8_are_refused_by_name_only() -> None:
+    with pytest.raises(RecordError) as refused:
+        loads(b"claim = 'Revenue rose sharply\n", "record")
+    assert (refused.value.name, refused.value.problems) == (
+        "record",
+        ("not TOML at line 2, column 1",),
+    )
+    assert "Revenue" not in str(refused.value)
+    with pytest.raises(RecordError) as undecoded:
+        loads(b"\xff", "record")
+    assert undecoded.value.problems == ("not UTF-8",)

@@ -10,6 +10,8 @@ from earnings_themes.annotation import (
     GoldDraft,
     build_curated,
     build_gold,
+    check_countable,
+    recount,
     signed,
     validate_curated,
     validate_gold,
@@ -183,6 +185,7 @@ def test_ids_themes_and_ties_are_checked(bundles, codebook, fixtures) -> None:
         {"claim_id": "c9", "theme_id": "unmatched", "support": "uncertain"},
     ]
     assert build(bundles, codebook, draft) == [
+        Refusal("draft claim c1", "duplicate_id"),
         Refusal("claim c1", "duplicate_id"),
         Refusal("claim c1", "unknown_quote"),
         Refusal("quote q4", "unreferenced"),
@@ -345,3 +348,173 @@ def test_a_theme_id_that_is_not_an_id_is_refused_by_its_field() -> None:
         parse(draft, GoldDraft, "draft")
     assert caught.value.problems[0].startswith("assignments.0.theme_id: ")
     assert "Demand" not in str(caught.value)
+
+
+def test_a_kept_draft_that_repeats_an_id_is_refused(bundles, codebook) -> None:
+    """Origins compare the kept draft's items by ID, so a repeat there would let its
+    last copy stand for both, and GS5's rejected count would miss one when the
+    working copy drops it. The kept draft is refused by ID, its subjects prefixed,
+    and nothing is built (plan 10's deferred item; the Stage 11 spec, A6(1))."""
+    drafted = gold_draft()
+    drafted["quotes"].append(dict(drafted["quotes"][0]))
+    drafted["claims"].append({**drafted["claims"][0], "claim": "Again."})
+    drafted["hard_negatives"].append({**drafted["hard_negatives"][0], "claim_id": "c2"})
+    drafted["assignments"].append(dict(drafted["assignments"][0]))
+    assert build(bundles, codebook, drafted, gold_draft()) == [
+        Refusal("draft quote q1", "duplicate_id"),
+        Refusal("draft claim c1", "duplicate_id"),
+        Refusal("draft claim c2", "duplicate_id"),
+        Refusal("draft assignment c1/demand", "duplicate_id"),
+    ]
+
+
+def test_a_repeat_is_refused_with_an_event_that_is_not_the_bundles(
+    bundles, codebook
+) -> None:
+    """The early returns carry the kept draft's repeats too, so the user sees every
+    reason at once (D17-2)."""
+    drafted = gold_draft(DEV)
+    drafted["quotes"].append(dict(drafted["quotes"][0]))
+    assert build({**bundles, DEV: bundles[TRAIN]}, codebook, drafted) == [
+        Refusal("draft quote q1", "duplicate_id"),
+        Refusal("event_id", "unknown_document"),
+    ]
+
+
+def test_a_repeat_is_refused_with_an_event_the_split_does_not_hold(
+    bundles, codebook
+) -> None:
+    """The same for a bundle whose event is in no partition of the split."""
+    unsplit = "cik-0009990009:2025-03-31"
+    drafted = gold_draft(unsplit)
+    drafted["quotes"].append(dict(drafted["quotes"][0]))
+    held = {**bundles, unsplit: build_synthetic(unsplit).bundle}
+    assert build(held, codebook, drafted) == [
+        Refusal("draft quote q1", "duplicate_id"),
+        Refusal("event_id", "unknown_document"),
+    ]
+
+
+def test_a_kept_curated_draft_that_repeats_a_fixture_or_an_id_is_refused(
+    fixtures, codebook
+) -> None:
+    """The curated set's kept draft keys its fixtures by fixture ID, and each
+    fixture's items by ID: a repeat of either is refused (A6(1))."""
+    good = curated(fixtures)
+    first = good.documents[0]
+    repeated = good.model_copy(update={"documents": (*good.documents, first)})
+    refusals = build_curated(
+        repeated, good, bundles=fixtures, pin=PIN, codebook=codebook
+    )
+    assert refusals == [Refusal(f"draft {first.fixture_id}", "duplicate_id")]
+    twice = first.model_copy(update={"quotes": (*first.quotes, first.quotes[0])})
+    inner = good.model_copy(update={"documents": (twice, *good.documents[1:])})
+    refusals = build_curated(inner, good, bundles=fixtures, pin=PIN, codebook=codebook)
+    assert refusals == [Refusal(f"draft {first.fixture_id} quote q1", "duplicate_id")]
+
+
+def rebuilt(committed: bytes, bundles, codebook, drafted: dict, working: dict):
+    """``recount`` of a committed file over its kept draft and working copy."""
+    return recount(
+        committed,
+        parse(drafted, GoldDraft, "draft"),
+        parse(working, GoldDraft, "working"),
+        bundle=bundles[drafted["event_id"]],
+        pin=PIN,
+        split=synthetic_split(),
+        codebook=codebook,
+    )
+
+
+def test_a_committed_file_that_rebuilds_has_nothing_to_report(
+    bundles, codebook
+) -> None:
+    """The Stage 11 spec's A6(4): a committed file is rebuilt from its kept draft
+    and working copy. A known answer for GS5's shares: a working copy that only
+    adds a quote's context counts that quote as edited, since origins compare the
+    draft's items, not their pointers."""
+    drafted = gold_draft()
+    working = gold_draft(annotator=SIGNED)
+    working["quotes"][0]["prefix"] = "region. "
+    gold = build(bundles, codebook, drafted, working)
+    assert isinstance(gold, Gold)
+    assert gold.counts.model_dump() == {
+        "accepted": 7,
+        "edited": 1,
+        "rejected": 0,
+        "added": 0,
+    }
+    assert rebuilt(gold_toml(gold).encode(), bundles, codebook, drafted, working) == []
+
+
+def test_a_committed_file_that_does_not_rebuild_is_reported_by_field(
+    bundles, codebook
+) -> None:
+    drafted = gold_draft()
+    working = gold_draft(annotator=SIGNED)
+    gold = build(bundles, codebook, drafted, working)
+    assert isinstance(gold, Gold)
+    counts = gold.counts.model_copy(update={"rejected": 1, "added": 2})
+    tampered = gold_toml(gold.model_copy(update={"counts": counts})).encode()
+    assert rebuilt(tampered, bundles, codebook, drafted, working) == [
+        Refusal("counts.rejected", "counts_mismatch"),
+        Refusal("counts.added", "counts_mismatch"),
+        Refusal("record", "not_rebuilt"),
+    ]
+    resigned = gold_toml(gold.model_copy(update={"annotator": "Someone else"}))
+    assert rebuilt(resigned.encode(), bundles, codebook, drafted, working) == [
+        Refusal("record", "not_rebuilt")
+    ]
+    twice = gold_draft()
+    twice["quotes"].append(dict(twice["quotes"][0]))
+    committed = gold_toml(gold).encode()
+    assert rebuilt(committed, bundles, codebook, twice, working) == [
+        Refusal("draft quote q1", "duplicate_id")
+    ]
+
+
+def test_a_committed_file_is_counted_only_when_it_holds_for_its_event(
+    bundles, codebook
+) -> None:
+    """Coverage v2 counts a committed file's no_theme only once its event, pin,
+    split, partition, codebook, signature, and no_theme hold, read without its
+    document (the Stage 11 spec, A7)."""
+    gold = build(bundles, codebook, gold_draft(annotator=SIGNED))
+    assert isinstance(gold, Gold)
+
+    def countable(record: Gold, event_id: str = TRAIN) -> list[Refusal]:
+        return check_countable(
+            record,
+            event_id=event_id,
+            pin=PIN,
+            split=synthetic_split(),
+            codebook=codebook,
+        )
+
+    assert countable(gold) == []
+    tampered = gold.model_copy(
+        update={
+            "pin": PIN.model_copy(update={"pilot_hash": "4" * 64}),
+            "split_hash": "5" * 64,
+            "partition": Partition.DEV,
+            "codebook": gold.codebook.model_copy(update={"codebook_version": 1}),
+            "annotator": "   ",
+            "no_theme": True,
+        }
+    )
+    assert countable(tampered) == [
+        Refusal("pin", "wrong_pin"),
+        Refusal("split_hash", "wrong_split"),
+        Refusal("partition", "wrong_partition"),
+        Refusal("codebook", "wrong_codebook"),
+        Refusal("annotator", "unsigned"),
+        Refusal("no_theme", "no_theme_mismatch"),
+    ]
+    assert countable(gold, DEV) == [
+        Refusal("event_id", "unknown_document"),
+        Refusal("partition", "wrong_partition"),
+    ]
+    assert countable(gold, LATER) == [
+        Refusal("event_id", "unknown_document"),
+        Refusal("partition", "excluded_event"),
+    ]

@@ -11,6 +11,7 @@ from earnings_ingestion.cohort.freeze import load_manifest
 from earnings_ingestion.events.coverage import (
     AppliedOverride,
     CoverageGap,
+    NoThemeCount,
     build_coverage,
     load_coverage,
     parsed_documents,
@@ -228,3 +229,37 @@ def test_parsed_documents_keep_their_doc_id_through_later_states(synthetic) -> N
         "0009990003-25-000005_crvd-ex992.htm@walker-1#"
     )
     assert parsed_documents(transitions, "0" * 64) == {}
+
+
+def test_coverage_v2_adds_no_theme_rows_over_the_same_runs(synthetic) -> None:
+    """The Stage 11 spec's A7: version 2 holds version 1's counts over version 1's
+    runs, plus the rows the application counts from the signed gold, listed train,
+    dev, test whatever order they arrive in, and it rebuilds byte for byte."""
+    pilot, pin, transitions = synthetic
+    first = build_coverage(pilot, pin, transitions)
+    rows = [
+        NoThemeCount(partition="dev", bundles=0, no_theme=0),
+        NoThemeCount(partition="train", bundles=11, no_theme=1),
+    ]
+    later = [*transitions, *_later_run(transitions)]
+    second = build_coverage(
+        pilot, pin, later, run_ids=first.run_ids, version=2, no_theme=rows
+    )
+    assert [row.partition for row in second.no_theme] == ["train", "dev"]
+    differ = {"coverage_version", "no_theme", "content_hash"}
+    assert second.model_dump(exclude=differ) == first.model_dump(exclude=differ)
+    again = build_coverage(
+        pilot, pin, later, run_ids=first.run_ids, version=2, no_theme=rows[::-1]
+    )
+    assert serialize(again) == serialize(second)
+
+
+def test_no_theme_rows_are_bounded_counted_once_and_absent_from_v1(synthetic) -> None:
+    pilot, pin, transitions = synthetic
+    with pytest.raises(ValueError, match="no more bundles have no theme than"):
+        NoThemeCount(partition="train", bundles=1, no_theme=2)
+    train = NoThemeCount(partition="train", bundles=2, no_theme=1)
+    with pytest.raises(ValueError, match="counts each partition once"):
+        build_coverage(pilot, pin, transitions, version=2, no_theme=[train, train])
+    with pytest.raises(ValueError, match="coverage v1 holds no no-theme count"):
+        build_coverage(pilot, pin, transitions, no_theme=[train])

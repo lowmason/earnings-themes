@@ -7,7 +7,8 @@ Stage 6 spec, §Anchoring and validation and §Drafting and tools; GS4, GS5).
   record (GS19) takes the same form, without a drafting aid, and is checked, never
   built.
 - **The build.** Every working quote is anchored, every item's origin derived by
-  comparing the working copy with the draft, and the result validated. Any refusal
+  comparing the working copy with the draft, and the result validated. A kept draft
+  that repeats an ID is refused, since origins compare its items by ID. Any refusal
   writes nothing, and names its item by ID, never by text.
 - **The validator** rechecks a committed file against its local document: the pin,
   split, partition, and codebook, the signature, ``no_theme``, the IDs, every
@@ -45,6 +46,7 @@ from earnings_themes.gold import (
     ReleaseIdentification,
     Some,
     Support,
+    gold_toml,
     no_theme_of,
 )
 from earnings_themes.problems import Problem, Refusal
@@ -127,6 +129,19 @@ class CuratedDraft(Part):
     documents: Annotated[tuple[FixtureDraft, ...], Some]
 
 
+class Reading(Part):
+    """One reading of a bundle, anchored in memory and never written: the user's
+    independent record, its items ``annotator_added``, or the kept draft, its items
+    ``drafted_accepted`` (GS19; the Stage 11 spec, A6(3))."""
+
+    no_theme: bool
+    release_identification: ReleaseIdentification
+    quotes: tuple[GoldQuote, ...] = ()
+    claims: tuple[GoldClaim, ...] = ()
+    assignments: tuple[GoldAssignment, ...] = ()
+    hard_negatives: tuple[HardNegative, ...] = ()
+
+
 def signed(annotator: str) -> bool:
     """P9-18: a file is signed when its ``annotator`` is not blank."""
     return bool(annotator.strip())
@@ -186,6 +201,43 @@ def _by_row(item: AssignmentDraft) -> Hashable:
     return (item.claim_id, item.theme_id)
 
 
+def _duplicates(label: str, ids: Sequence[Hashable]) -> list[Refusal]:
+    """A refusal for each of ``ids`` that occurs more than once, in sorted order,
+    named ``label`` and the ID. An assignment row, a (claim, theme) pair, reads
+    ``claim/theme``."""
+    return [
+        Refusal(
+            f"{label}{'/'.join(i) if isinstance(i, tuple) else i}",
+            Problem.DUPLICATE_ID,
+        )
+        for i in sorted({i for i in ids if ids.count(i) > 1})
+    ]
+
+
+def _repeats(
+    draft: GoldDraft | IndependentRecord | FixtureDraft, prefix: str
+) -> list[Refusal]:
+    """Each quote ID, claim ID (claims and hard negatives together), and assignment
+    row that ``draft`` repeats. Origins compare a kept draft's items by ID, so a
+    repeat would let its last copy stand for both, and GS5's ``rejected`` would miss
+    one (plan 10's deferred item; the Stage 11 spec, A6(1))."""
+    claims = (*getattr(draft, "claims", ()), *draft.hard_negatives)
+    rows = [(a.claim_id, a.theme_id) for a in getattr(draft, "assignments", ())]
+    return [
+        *_duplicates(f"{prefix}quote ", [q.quote_id for q in draft.quotes]),
+        *_duplicates(f"{prefix}claim ", [c.claim_id for c in claims]),
+        *_duplicates(f"{prefix}assignment ", rows),
+    ]
+
+
+def _curated_repeats(drafted: CuratedDraft) -> list[Refusal]:
+    """Each fixture the kept curated draft repeats, and each ID a fixture repeats."""
+    refusals = _duplicates("draft ", [d.fixture_id for d in drafted.documents])
+    for document in drafted.documents:
+        refusals += _repeats(document, f"draft {document.fixture_id} ")
+    return list(dict.fromkeys(refusals))
+
+
 def _items(
     drafted: GoldDraft | IndependentRecord | FixtureDraft,
     working: GoldDraft | IndependentRecord | FixtureDraft,
@@ -239,17 +291,20 @@ def build_gold(
     split: SplitManifest,
     codebook: Codebook,
 ) -> Gold | list[Refusal]:
-    """The gold ``working`` defines over ``bundle``, or every reason it cannot be."""
+    """The gold ``working`` defines over ``bundle``, or every reason it cannot be.
+    A kept draft that repeats an ID is refused with the rest, its subjects prefixed
+    ``draft``."""
+    repeats = _repeats(drafted, "draft ")
     if {drafted.event_id, working.event_id} != {bundle.name}:
-        return [Refusal("event_id", Problem.UNKNOWN_DOCUMENT)]
+        return [*repeats, Refusal("event_id", Problem.UNKNOWN_DOCUMENT)]
     origins = _Origins()
     made, refusals = _items(drafted, working, bundle, origins, "")
     if refusals:
-        return refusals
+        return repeats + refusals
     try:
         partition = split.partition_of(bundle.name)
     except KeyError:
-        return [Refusal("event_id", Problem.UNKNOWN_DOCUMENT)]
+        return [*repeats, Refusal("event_id", Problem.UNKNOWN_DOCUMENT)]
     gold = Gold(
         event_id=bundle.name,
         document_id=f"{bundle.name}:release",
@@ -274,7 +329,7 @@ def build_gold(
         codebook=codebook,
         require_signature=False,
     )
-    return refusals or gold
+    return (repeats + refusals) or gold
 
 
 def without_quotes(record: IndependentRecord) -> IndependentRecord:
@@ -289,9 +344,12 @@ def check_independent(
     """Every reason ``record`` does not hold over ``bundle``; empty when it does
     (GS19). A draft's checks, with no origins, partition, or signature to wait for:
     each quote anchored, the IDs, themes, ties, and ``no_theme``, and the wording
-    guard over every string but the quotes."""
+    guard over every string but the quotes. A codebook that is not approved is
+    refused first, as ``validate_gold`` refuses it (P16-2(a))."""
     if record.event_id != bundle.name:
         return [Refusal("event_id", Problem.UNKNOWN_DOCUMENT)]
+    if codebook.status is not CodebookStatus.APPROVED:
+        return [Refusal("codebook", Problem.CODEBOOK_NOT_APPROVED)]
     made, refusals = _items(record, record, bundle, _Origins(), "")
     if refusals:
         return refusals
@@ -309,6 +367,30 @@ def check_independent(
     return refusals + _wording(without_quotes(record), {bundle.name: bundle})
 
 
+_ITEMS = ("quotes", "claims", "assignments", "hard_negatives")
+
+
+def anchor_reading(
+    source: GoldDraft | IndependentRecord, bundle: Bundle, prefix: str
+) -> Reading | list[Refusal]:
+    """``source`` anchored over ``bundle`` in memory, or every reason it cannot be:
+    a kept draft's items as drafted, and an independent record's as the user's own.
+    A repeated ID is refused, since items are compared by ID. Nothing is written,
+    and a refusal names its item by ID (GS13)."""
+    drafted = source
+    if isinstance(source, IndependentRecord):
+        drafted = source.model_copy(update=dict.fromkeys(_ITEMS, ()))
+    made, refusals = _items(drafted, source, bundle, _Origins(), prefix)
+    refusals = _repeats(source, prefix) + refusals
+    if refusals:
+        return refusals
+    return Reading(
+        no_theme=source.no_theme,
+        release_identification=source.release_identification,
+        **made,
+    )
+
+
 def _ids(
     quotes: Sequence[GoldQuote],
     claims: Sequence[GoldClaim],
@@ -321,8 +403,7 @@ def _ids(
     quote_ids = [q.quote_id for q in quotes]
     claim_ids = [c.claim_id for c in (*claims, *negatives)]
     for name, ids in (("quote", quote_ids), ("claim", claim_ids)):
-        for repeated in sorted({i for i in ids if ids.count(i) > 1}):
-            refusals.append(Refusal(f"{prefix}{name} {repeated}", Problem.DUPLICATE_ID))
+        refusals += _duplicates(f"{prefix}{name} ", ids)
     for claim in (*claims, *negatives):
         for quote_id in claim.quote_ids:
             if quote_id not in quote_ids:
@@ -332,9 +413,9 @@ def _ids(
     for quote_id in dict.fromkeys(quote_ids):
         if quote_id not in cited:
             refusals.append(Refusal(f"{prefix}quote {quote_id}", Problem.UNREFERENCED))
-    rows = [(a.claim_id, a.theme_id) for a in assignments]
-    for row in sorted({r for r in rows if rows.count(r) > 1}):
-        refusals.append(Refusal(f"assignment {row[0]}/{row[1]}", Problem.DUPLICATE_ID))
+    refusals += _duplicates(
+        "assignment ", [(a.claim_id, a.theme_id) for a in assignments]
+    )
     plain = {c.claim_id for c in claims}
     for a in assignments:
         subject = f"assignment {a.claim_id}/{a.theme_id}"
@@ -404,6 +485,38 @@ def _codebook(ref: CodebookRef, codebook: Codebook) -> list[Refusal]:
     return []
 
 
+def _standing(
+    gold: Gold,
+    *,
+    event_id: str,
+    pin: Pin,
+    split: SplitManifest,
+    codebook: Codebook,
+    require_signature: bool = True,
+) -> list[Refusal]:
+    """What a gold file's pin, split, partition for ``event_id``, codebook,
+    signature, and ``no_theme`` get wrong, read without its document."""
+    refusals = []
+    if gold.pin != pin:
+        refusals.append(Refusal("pin", Problem.WRONG_PIN))
+    if gold.split_hash != split.content_hash:
+        refusals.append(Refusal("split_hash", Problem.WRONG_SPLIT))
+    try:
+        partition = split.partition_of(event_id)
+    except KeyError:
+        partition = None
+    if partition is Partition.EXCLUDED:
+        refusals.append(Refusal("partition", Problem.EXCLUDED_EVENT))
+    elif gold.partition != partition:
+        refusals.append(Refusal("partition", Problem.WRONG_PARTITION))
+    refusals += _codebook(gold.codebook, codebook)
+    if require_signature and not signed(gold.annotator):
+        refusals.append(Refusal("annotator", Problem.UNSIGNED))
+    if gold.no_theme != no_theme_of(gold.assignments):
+        refusals.append(Refusal("no_theme", Problem.NO_THEME_MISMATCH))
+    return refusals
+
+
 def validate_gold(
     gold: Gold,
     *,
@@ -424,23 +537,14 @@ def validate_gold(
         refusals.append(
             Refusal("canonical_hash", RejectionReason.CANONICAL_HASH_MISMATCH)
         )
-    if gold.pin != pin:
-        refusals.append(Refusal("pin", Problem.WRONG_PIN))
-    if gold.split_hash != split.content_hash:
-        refusals.append(Refusal("split_hash", Problem.WRONG_SPLIT))
-    try:
-        partition = split.partition_of(gold.event_id)
-    except KeyError:
-        partition = None
-    if partition is Partition.EXCLUDED:
-        refusals.append(Refusal("partition", Problem.EXCLUDED_EVENT))
-    elif gold.partition != partition:
-        refusals.append(Refusal("partition", Problem.WRONG_PARTITION))
-    refusals += _codebook(gold.codebook, codebook)
-    if require_signature and not signed(gold.annotator):
-        refusals.append(Refusal("annotator", Problem.UNSIGNED))
-    if gold.no_theme != no_theme_of(gold.assignments):
-        refusals.append(Refusal("no_theme", Problem.NO_THEME_MISMATCH))
+    refusals += _standing(
+        gold,
+        event_id=gold.event_id,
+        pin=pin,
+        split=split,
+        codebook=codebook,
+        require_signature=require_signature,
+    )
     refusals += _ids(
         gold.quotes,
         gold.claims,
@@ -455,6 +559,57 @@ def validate_gold(
     return refusals + _wording(gold, {bundle.name: bundle})
 
 
+def recount(
+    committed: bytes,
+    drafted: GoldDraft,
+    working: GoldDraft,
+    *,
+    bundle: Bundle,
+    pin: Pin,
+    split: SplitManifest,
+    codebook: Codebook,
+) -> list[Refusal]:
+    """Every reason a committed gold file is not what its kept draft and working copy
+    build, each GS5 count that differs named by its field; empty when the rebuild is
+    the committed bytes. GS5's shares are reported only once every file rebuilds
+    (the Stage 11 spec, A6(4)). A committed file that does not read raises
+    ``RecordError``."""
+    made = build_gold(
+        drafted, working, bundle=bundle, pin=pin, split=split, codebook=codebook
+    )
+    if isinstance(made, list):
+        return made
+    if gold_toml(made).encode() == committed:
+        return []
+    kept = parse(tomlfile.loads(committed, "gold"), Gold, "gold")
+    return [
+        Refusal(f"counts.{field}", Problem.COUNTS_MISMATCH)
+        for field, count in made.counts.model_dump().items()
+        if getattr(kept.counts, field) != count
+    ] + [Refusal("record", Problem.NOT_REBUILT)]
+
+
+def check_countable(
+    gold: Gold,
+    *,
+    event_id: str,
+    pin: Pin,
+    split: SplitManifest,
+    codebook: Codebook,
+) -> list[Refusal]:
+    """Every reason a committed gold file's ``no_theme`` may not be counted for
+    ``event_id`` in coverage v2, read without its document: its event, pin, split,
+    partition, codebook, signature, and ``no_theme`` against its assignments; empty
+    when it may (the Stage 11 spec, A7; R12.4). ``gold validate`` checks the rest
+    against the document."""
+    refusals = []
+    if gold.event_id != event_id:
+        refusals.append(Refusal("event_id", Problem.UNKNOWN_DOCUMENT))
+    return refusals + _standing(
+        gold, event_id=event_id, pin=pin, split=split, codebook=codebook
+    )
+
+
 def build_curated(
     drafted: CuratedDraft,
     working: CuratedDraft,
@@ -463,8 +618,10 @@ def build_curated(
     pin: Pin,
     codebook: Codebook,
 ) -> HardNegativeSet | list[Refusal]:
-    """The curated hard negatives ``working`` defines over Stage 1's fixtures."""
+    """The curated hard negatives ``working`` defines over Stage 1's fixtures. A
+    kept draft that repeats a fixture or an ID is refused with the rest."""
     origins = _Origins()
+    repeats = _curated_repeats(drafted)
     before = {d.fixture_id: d for d in drafted.documents}
     documents, refusals = [], []
     for document in working.documents:
@@ -498,8 +655,8 @@ def build_curated(
     for fixture_id, gone in before.items():
         if fixture_id not in kept:
             origins.rejected += len(gone.quotes) + len(gone.hard_negatives)
-    if refusals:
-        return refusals
+    if repeats or refusals:
+        return repeats + refusals
     record = HardNegativeSet(
         pin=pin,
         annotator=working.annotator,
@@ -534,9 +691,7 @@ def validate_curated(
     kinds = {n.negative_kind for d in record.documents for n in d.hard_negatives}
     if kinds != set(NegativeKind):
         refusals.append(Refusal("hard_negatives", Problem.NEGATIVE_KINDS))
-    fixture_ids = [d.fixture_id for d in record.documents]
-    for repeated in sorted({i for i in fixture_ids if fixture_ids.count(i) > 1}):
-        refusals.append(Refusal(repeated, Problem.DUPLICATE_ID))
+    refusals += _duplicates("", [d.fixture_id for d in record.documents])
     items: list[BaseModel] = []
     for document in record.documents:
         prefix = f"{document.fixture_id} "

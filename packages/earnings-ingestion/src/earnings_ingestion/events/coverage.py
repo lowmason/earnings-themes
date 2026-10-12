@@ -12,8 +12,10 @@ report; GS8; plan 9).
   ``completed``, never change it.
 - **No text.** It holds IDs, states, counts, and hashes. An attempt's ``detail`` and
   a transition's ``corpus_error`` are free text, and it copies neither.
-- **No theme.** ``no_theme`` stays empty until Stage 11 counts it over train and
-  dev, and Stage 14 over test (R12.4, GS18).
+- **No theme.** Version 1 holds none. From version 2, one row per partition
+  counted, in train, dev, test order: Stage 11 counts train and dev, and Stage 14
+  test (R12.4, GS18). The application counts them from the signed gold and passes
+  them in, since ingestion reads no gold (the Stage 11 spec, FP18).
 """
 
 from collections import Counter
@@ -52,6 +54,9 @@ FAILURE_CLASSES = (
     DocumentState.FAILED,
 )
 """R12.4's classes, which D4 reports as observed coverage."""
+
+PARTITIONS = ("train", "dev", "test")
+"""The partitions a no-theme row may name, in the order a report lists them."""
 
 
 class _Part(BaseModel):
@@ -106,6 +111,12 @@ class NoThemeCount(_Part):
     bundles: NonNegativeInt
     no_theme: NonNegativeInt
 
+    @model_validator(mode="after")
+    def _within(self) -> Self:
+        if self.no_theme > self.bundles:
+            raise ValueError("no more bundles have no theme than are counted")
+        return self
+
 
 class CoverageReport(IngestionRecord):
     """``coverage-v<N>.json``: the observed coverage of one pinned pilot."""
@@ -126,6 +137,13 @@ class CoverageReport(IngestionRecord):
             raise ValueError("states lists every DocumentState once, in order")
         if sum(count.count for count in self.states) != self.documents:
             raise ValueError("the state counts sum to the documents")
+        partitions = [count.partition for count in self.no_theme]
+        if partitions != sorted(set(partitions), key=PARTITIONS.index):
+            raise ValueError(
+                "no_theme counts each partition once, in train, dev, test order"
+            )
+        if self.coverage_version == 1 and self.no_theme:
+            raise ValueError("coverage v1 holds no no-theme count (R12.4)")
         return self
 
     def count(self, state: DocumentState) -> int:
@@ -190,9 +208,12 @@ def build_coverage(
     *,
     run_ids: Collection[str] | None = None,
     version: int = 1,
+    no_theme: Collection[NoThemeCount] = (),
 ) -> CoverageReport:
     """The coverage report over ``pilot``'s documents, from ``run_ids`` or, when
-    none is named, from every run recorded under the pilot."""
+    none is named, from every run recorded under the pilot. From version 2 it holds
+    ``no_theme``'s rows, which the application counts from the signed gold (R12.4),
+    in train, dev, test order."""
     pilot_hash = pilot.definition.content_hash
     if pin.pilot_hash != pilot_hash:
         raise ValueError("the pin names another pilot")
@@ -219,6 +240,7 @@ def build_coverage(
             CoverageGap(state=state) for state in FAILURE_CLASSES if not counts[state]
         ),
         overrides=_overrides(under, set(documents)),
+        no_theme=tuple(sorted(no_theme, key=lambda c: PARTITIONS.index(c.partition))),
         content_hash="0" * 64,
     )
     return draft.model_copy(update={"content_hash": coverage_hash(draft)})

@@ -6,6 +6,7 @@ in key order. A string is a TOML basic string, written as JSON writes one, which
 reads the same way, with DEL escaped as TOML requires.
 """
 
+import io
 import json
 import re
 from collections.abc import Mapping
@@ -70,14 +71,25 @@ def dumps(data: Mapping[str, object], header: str = "") -> str:
     return "\n".join([*comments, body]) + "\n"
 
 
+def loads(data: bytes, name: str) -> dict:
+    """``data`` as TOML, read as ``read`` reads a file holding it, so the bytes a
+    ledger row hashes are the bytes parsed (GS19); a refusal names ``name``, the line
+    and the column, never the text."""
+    try:
+        return tomllib.loads(
+            io.TextIOWrapper(io.BytesIO(data), encoding="utf-8").read()
+        )
+    except tomllib.TOMLDecodeError as error:
+        where = f"line {error.lineno}, column {error.colno}"
+        raise RecordError(name, (f"not TOML at {where}",)) from None
+    except UnicodeDecodeError:
+        raise RecordError(name, ("not UTF-8",)) from None
+
+
 def read(path: Path) -> dict:
     """``path`` as TOML; a refusal names the line and column, never the text."""
     try:
-        return tomllib.loads(path.read_text(encoding="utf-8"))
-    except tomllib.TOMLDecodeError as error:
-        where = f"line {error.lineno}, column {error.colno}"
-        raise RecordError(path.name, (f"not TOML at {where}",)) from None
-    except UnicodeDecodeError:
-        raise RecordError(path.name, ("not UTF-8",)) from None
+        data = path.read_bytes()
     except FileNotFoundError:
         raise RecordError(path.name, ("not found",)) from None
+    return loads(data, path.name)
