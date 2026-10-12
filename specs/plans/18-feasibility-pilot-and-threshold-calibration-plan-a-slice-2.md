@@ -189,7 +189,7 @@ In the table, replace:
 with:
 
 ```text
-| `pilot run --partition train\|dev` | Runs `run_theme_workflow` under the calibrated policy, reusing the partition's stored pass extraction and replaying its coding and support caches (FP23). Refuses without a calibration artifact, or if any request would dispatch. |
+| `pilot run --partition train\|dev` | Runs `run_theme_workflow` under the calibrated policy, reusing the partition's stored pass extraction and replaying its coding and support caches (FP23). Refuses without a calibration artifact, or if any request would dispatch. *(Amended by the user, plan 18, 2026-10-12.)* |
 ```
 
 Then replace the paragraph:
@@ -214,7 +214,7 @@ run is never reused by `pilot run`. *(Amended by the user, plan 18, 2026-10-12.)
 - [ ] **Step 4: Check the edits**
 
 Run: `grep -c "plan 18, 2026-10-12" specs/feasibility-pilot-and-threshold-calibration.md`
-Expected: `3`
+Expected: `4`
 
 Run: `grep -n "widens that to" specs/feasibility-pilot-and-threshold-calibration.md`
 Expected: no output, exit 1.
@@ -2581,7 +2581,7 @@ Verified at `36f12ec`, while this plan was written. Recheck each line number bef
   | A1: `fresh` joins `live` and `replay` on `CachedAdapter`, `CodingCache` and `SupportCache` (its scorer and judge entries) | Tasks 2, 3, 4 (one `CacheMode`, one `cache_directory`) |
   | A1: `fresh` never reads the main cache, as amended (D18-5) | Task 1 (amendment); Tasks 2–4 (zero-hit tests; within-run repeat test, Task 2) |
   | A1: writes under `<cache>/fresh/<stability_run_id>/`, and replays from there | Tasks 2–4 (replay-over-fresh tests) |
-  | A1: keys are unchanged | D18-4: no schema bump, and no key function edited |
+  | A1: keys are unchanged | Key functions unchanged (D18-4: no schema bump, and no key function edited). A support key's *value* now also binds the extraction record's `cache_mode`, through `source_run`; no support cache predates plan 18 (D18-4's sub-bullets) |
   | A1: every run record carries `cache_mode`, and under `fresh` the stability run ID | Tasks 2–4 (`cache_mode_problem`, D18-8) |
   | A1 tests: zero hits under `fresh`; dispatches equal requests; a later `replay` reproduces | Task 2 (`test_a_fresh_run_dispatches_every_request_over_a_populated_cache`), Task 3, Task 4 |
   | A2: a builder makes a `WorkflowRuntime` for `research` from `config/models/*.toml`: extractor, classifier, scorer, two judges | Task 6 (`build_runtime`, `RuntimeManifest`, `ChatModelFile`) |
