@@ -1915,8 +1915,8 @@ GS2's pin: the pilot, its event manifest, and its universe, each by version and 
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `partition` | `"train"`, `"dev"`, or `"test"` | The partition counted |
-| `bundles` | int ≥ 0 | Its bundles with signed gold |
-| `no_theme` | int ≥ 0 | Those whose gold has `no_theme` true |
+| `bundles` | int ≥ 0 | Its bundles with a parsed document, each with signed gold |
+| `no_theme` | int ≥ 0 | Those whose gold has `no_theme` true; never more than `bundles` |
 
 ### `CoverageReport`
 
@@ -1932,7 +1932,7 @@ GS2's pin: the pilot, its event manifest, and its universe, each by version and 
 | `states` | tuple of `StateCount` | Every `DocumentState`, in order, summing to `documents` |
 | `gaps` | tuple of `CoverageGap` | Each failure class with no document |
 | `overrides` | tuple of `AppliedOverride` | Each override applied to a pilot document |
-| `no_theme` | tuple of `NoThemeCount` | Empty until Stage 11 adds train and dev, and Stage 14 test (R12.4, GS18) |
+| `no_theme` | tuple of `NoThemeCount` | Empty in version 1; from version 2, one row per partition counted, in train, dev, test order: Stage 11 adds train and dev, and Stage 14 test (R12.4, GS18) |
 | `content_hash` | 64 lowercase hex | SHA-256 of the canonical JSON of every other field |
 
 ## earnings-themes records, schema version 1
