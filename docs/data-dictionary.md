@@ -6323,12 +6323,16 @@ calibration, transcript schemas and fresh-call stability remain later work.
 `earnings_pipeline.model_runtime.build_runtime(manifest, models_root, *, transport=None)`
 assembles the live runtime for scope `research` from committed model files (the Stage
 11 spec, A2). It chooses no model: plan B's ADR 0006 is to write the files (B1). It
-checks the panel against Stage 8's family rules before any model file is hashed or
-loaded (`invalid_panel`). It then hashes every chat model's weights and tokenizer
-files, and each scorer checks its own files and installed runtime (`model_mismatch`).
-A scorer's file with a wrong pinned field (the revision, runtime versions, encoding
-version or label mapping) is `malformed_record`, through `parse_support`, as is a file
-that does not read or a directory outside the models root. A relative `models_root` is
+reads the manifest and the chat models' files and checks the panel against Stage 8's
+family rules first (`invalid_panel`). It then reads and parses the scorers' files,
+confines every model directory to the models root and checks every base URL, before
+any model file is hashed or loaded: a file that does not read, a directory outside
+the models root, a scorer's file with a wrong pinned field (the revision, runtime
+versions, encoding version or label mapping, through `parse_support`) and a base URL
+that is not on this machine are each `malformed_record`. So a typo is found before
+multi-gigabyte weights are hashed. Last, it hashes every chat model's weights and
+tokenizer files and loads each tokenizer, and each scorer checks its kind, its own
+files and its installed runtime (`model_mismatch`). A relative `models_root` is
 taken relative to the working directory, without following symlinks, so a symlinked
 root is still refused as `malformed_record`. Building sends no request and counts no
 token, so a runtime built for replay needs no model server. A scorer's file is a `LocalScorerConfig` whose `directory`, relative to the

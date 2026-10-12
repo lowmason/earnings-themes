@@ -13,7 +13,7 @@ from types import ModuleType, SimpleNamespace
 import httpx
 import pytest
 import tomllib
-from earnings_pipeline.model_runtime import CHAT_ENCODING, build_runtime
+from earnings_pipeline.model_runtime import CHAT_ENCODING, ChatModelFile, build_runtime
 from earnings_pipeline.theme_config import WorkflowError
 from earnings_themes.extraction.adapters import (
     Message,
@@ -25,13 +25,14 @@ from earnings_themes.extraction.adapters import (
 from earnings_themes.extraction.cache import CachedAdapter
 from earnings_themes.extraction.records import Parameters
 from earnings_themes.support import nli
+from earnings_themes.support.judges import JudgeRequest, JudgeSubject
 from earnings_themes.support.model_files import files_hash
 from earnings_themes.support.nli import (
     ALTERNATIVE_REVISION,
     PRIMARY_REVISION,
     RUNTIME_VERSIONS,
 )
-from earnings_themes.support.records import FileHash
+from earnings_themes.support.records import FileHash, JudgeAnswer, Presentation
 from earnings_themes.tomlfile import dumps
 
 LICENSE = {
@@ -225,6 +226,26 @@ def request() -> ModelRequest:
     )
 
 
+def judge_request() -> JudgeRequest:
+    return JudgeRequest(
+        messages=(
+            Message(role="system", content="Invented support instructions."),
+            Message(role="user", content="Invented evidence."),
+        ),
+        reply_schema=JudgeAnswer.model_json_schema(),
+        parameters=Parameters(),
+        subject=JudgeSubject(
+            target_id="target",
+            input_hash="a" * 64,
+            codebook_hash="a" * 64,
+            presentation=Presentation.EVIDENCE_FIRST,
+            prompt_hash="b" * 64,
+            schema_hash="b" * 64,
+            validator_version="3",
+        ),
+    )
+
+
 def test_builds_every_role_from_its_file_and_calls_nothing(tmp_path: Path) -> None:
     manifest, models = layout(tmp_path)
     calls: list = []
@@ -330,6 +351,72 @@ def test_a_directory_outside_the_models_root_is_refused(
     write(path, {**tomllib.loads(path.read_text(encoding="utf-8")), field: value})
     with pytest.raises(WorkflowError, match="^malformed_record$"):
         build(manifest, models)
+
+
+@pytest.mark.parametrize(
+    "name,field,value",
+    [
+        ("judge-b.toml", "base_url", "http://example.test/v1"),
+        ("deberta.toml", "revision", "invented-wrong"),
+        ("judge-b.toml", "tokenizer_directory", "../elsewhere"),
+    ],
+)
+def test_every_file_is_parsed_and_every_endpoint_checked_before_any_hash(
+    tmp_path: Path, name, field, value
+) -> None:
+    """A typo in any file is found before multi-gigabyte weights are hashed: with a
+    chat model's weights also changed, hashing first would say model_mismatch."""
+    manifest, models = layout(tmp_path)
+    path = manifest.parent / name
+    write(path, {**tomllib.loads(path.read_text(encoding="utf-8")), field: value})
+    (models / "gemma" / "weights" / "model.gguf").write_bytes(b"changed weights")
+    calls: list = []
+    loaded: list = []
+    with pytest.raises(WorkflowError, match="^malformed_record$"):
+        build(manifest, models, calls=calls, loaded=loaded)
+    assert (calls, loaded) == ([], [])
+
+
+def test_swapped_scorers_are_refused_by_their_kind(tmp_path: Path) -> None:
+    """Each scorer file parses, but the primary role takes MiniCheck and the
+    alternative DeBERTa: the scorer's own kind check refuses the swap before it
+    loads anything."""
+    manifest, models = layout(tmp_path)
+    data = tomllib.loads(manifest.read_text(encoding="utf-8"))
+    write(
+        manifest,
+        {**data, "scorer": "deberta.toml", "alternative_scorer": "minicheck.toml"},
+    )
+    calls: list = []
+    loaded: list = []
+    with pytest.raises(WorkflowError, match="^model_mismatch$"):
+        build(manifest, models, calls=calls, loaded=loaded)
+    assert (calls, loaded) == ([], [])
+
+
+def test_a_tokenizer_loader_that_raises_is_model_mismatch_without_its_message(
+    tmp_path: Path,
+) -> None:
+    """A runtime's own error may name a path on this machine: the refusal is the
+    closed reason alone, with the error suppressed."""
+    manifest, models = layout(tmp_path)
+
+    def load(path, **options):
+        raise OSError("/sentinel/secret/path")
+
+    calls: list = []
+    loaded: list = []
+    with pytest.raises(WorkflowError, match="^model_mismatch$") as caught:
+        build_runtime(
+            manifest,
+            models,
+            transport=failing(calls),
+            _tokenizer_loader=load,
+            _scorer_runtime=scorer_runtime(loaded),
+        )
+    assert caught.value.__suppress_context__
+    assert "/sentinel" not in str(caught.value)
+    assert (calls, loaded) == ([], [])
 
 
 def identities(live) -> tuple:
@@ -453,21 +540,23 @@ def test_without_an_injected_tokenizer_loader_transformers_loads_each_tokenizer(
 ) -> None:
     """Once the pinned versions check out, each chat model's tokenizer loads through
     transformers' ``AutoTokenizer.from_pretrained``, from its own directory and
-    from local files only."""
+    from local files only, and a binding counts with its own model's tokenizer."""
     manifest, models = layout(tmp_path)
     monkeypatch.setattr(nli, "version", dict(RUNTIME_VERSIONS).__getitem__)
     seen: list = []
+    used: dict[str, list] = {}
 
     def from_pretrained(directory, **options):
-        seen.append((Path(directory).relative_to(models).as_posix(), options))
-        return ChatTokenizer([])
+        name = Path(directory).relative_to(models).as_posix()
+        seen.append((name, options))
+        return ChatTokenizer(used.setdefault(name, []))
 
     fake_transformers(
         monkeypatch,
         [],
         AutoTokenizer=SimpleNamespace(from_pretrained=from_pretrained),
     )
-    build_runtime(
+    live = build_runtime(
         manifest,
         models,
         transport=failing([]),
@@ -477,6 +566,14 @@ def test_without_an_injected_tokenizer_loader_transformers_loads_each_tokenizer(
         (f"{name}/tokenizer", {"local_files_only": True, "trust_remote_code": False})
         for name in sorted(CHAT)
     ]
+    # ChatTokenizer joins the messages' words: "Invented support instructions.
+    # Invented evidence." is five.
+    assert live.workflow.judges[0].count_tokens(judge_request()) == 5
+    assert used == {
+        "gemma/tokenizer": [],
+        "judge-a/tokenizer": ["render", "encode"],
+        "judge-b/tokenizer": [],
+    }
 
 
 def test_a_transformers_that_will_not_import_is_model_mismatch(
@@ -518,6 +615,17 @@ def test_a_runtime_built_for_replay_needs_no_server(tmp_path: Path) -> None:
     )
     assert replayed == stored.model_copy(update={"cached": True})
     assert calls == []
+
+
+@pytest.mark.parametrize("name", ["structured", "timeout_s"])
+def test_a_chat_model_file_shares_the_local_adapter_s_defaults(name) -> None:
+    """A chat model's file builds a ``LocalModelConfig``, so the two defaults are one."""
+    from earnings_themes.extraction.local import LocalModelConfig
+
+    assert (
+        ChatModelFile.model_fields[name].default
+        == LocalModelConfig.model_fields[name].default
+    )
 
 
 def test_importing_the_builder_loads_no_adapter_or_runtime() -> None:

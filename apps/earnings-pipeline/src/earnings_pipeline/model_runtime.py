@@ -6,13 +6,18 @@ Stage 11 spec, A2; plan 18).
   is a ``ChatModelFile``. A scorer's file is a ``LocalScorerConfig`` with a
   ``directory`` relative to the models root in place of its absolute
   ``local_directory``, so no committed file holds a path on this machine (D18-9).
-- **Order.** The panel is checked against Stage 8's family rules first, before any
-  model file is hashed or loaded (``invalid_panel``; D18-11). Then every chat model's
-  weights and tokenizer files are hashed against its file, and each scorer checks its
-  own files and installed runtime (``model_mismatch``). A scorer's file with a wrong
-  pinned field (the revision, runtime versions, encoding version or label mapping) is
-  ``malformed_record``, through ``parse_support``, as is a file that does not read or
-  a directory outside the models root.
+- **Order.** So that a typo is found before multi-gigabyte weights are hashed:
+  - The manifest and the chat models' files are read, and the panel is checked
+    against Stage 8's family rules first (``invalid_panel``; D18-11).
+  - Then the scorers' files are read and parsed, every model directory is confined
+    to the models root, and every base URL is checked, before any model file is
+    hashed or loaded. A file that does not read, a directory outside the models
+    root, a scorer's file with a wrong pinned field (the revision, runtime versions,
+    encoding version or label mapping, through ``parse_support``) and a base URL
+    that is not on this machine are each ``malformed_record``.
+  - Last, every chat model's weights and tokenizer files are hashed against its
+    file and its tokenizer loads, and each scorer checks its kind, its own files and
+    its installed runtime (``model_mismatch``).
 - **No server call.** Building sends no request and counts no token: the token
   counters are local tokenizers, and each binding checks its transport's configured
   identity. So a runtime built for replay needs no model server. Every reply still
@@ -38,6 +43,7 @@ from typing import TYPE_CHECKING, Any
 from earnings_themes.analysis.records import AnalysisPart
 from earnings_themes.coding.local import ClassifierBinding
 from earnings_themes.coding.records import CodingError
+from earnings_themes.extraction.records import LOCAL_STRUCTURED, LOCAL_TIMEOUT_S
 from earnings_themes.records import NonBlank, RecordError, parse
 from earnings_themes.support.chat_tokens import ChatTokenCounter, ChatTokenizerConfig
 from earnings_themes.support.judges import JudgeBinding, validate_panel
@@ -89,8 +95,8 @@ class ChatModelFile(AnalysisPart):
     model_id: NonBlank
     runtime: NonBlank
     runtime_version: NonBlank
-    structured: bool = True
-    timeout_s: PositiveFloat = 300.0
+    structured: bool = LOCAL_STRUCTURED
+    timeout_s: PositiveFloat = LOCAL_TIMEOUT_S
     revision: NonBlank
     device: NonBlank
     precision: NonBlank
@@ -158,19 +164,25 @@ def _build(manifest_path, models_root, transport, tokenizer_loader, scorer_runti
     identities = {name: _identity(model) for name, model in chat.items()}
     family = chat[manifest.extractor].family
     panel = validate_panel(family, tuple(identities[n] for n in manifest.judges))
-    loader = (
-        _pinned_tokenizer_loader() if tokenizer_loader is None else tokenizer_loader
-    )
-    counters = {}
-    for name, model in chat.items():
-        verify_files(confined_path(models_root, model.weights_directory), model.weights)
-        tokenizer = confined_path(models_root, model.tokenizer_directory)
-        counters[name] = ChatTokenCounter(
-            ChatTokenizerConfig(
-                local_directory=str(tokenizer), files=model.tokenizer_files
-            ),
-            loader=loader,
+
+    # Every file is read and parsed, every directory confined and every base URL
+    # checked before any model file is hashed or loaded (malformed_record), so a typo
+    # is found before multi-gigabyte weights are hashed.
+    weights = {
+        name: confined_path(models_root, model.weights_directory)
+        for name, model in chat.items()
+    }
+    tokenizers = {
+        name: ChatTokenizerConfig(
+            local_directory=str(confined_path(models_root, model.tokenizer_directory)),
+            files=model.tokenizer_files,
         )
+        for name, model in chat.items()
+    }
+    scorer_config = _scorer(root, manifest.scorer, models_root, nli.LocalScorerConfig)
+    alternative_config = _scorer(
+        root, manifest.alternative_scorer, models_root, nli.LocalScorerConfig
+    )
 
     def adapter(name: str) -> LocalAdapter:
         model = chat[name]
@@ -185,27 +197,41 @@ def _build(manifest_path, models_root, transport, tokenizer_loader, scorer_runti
         )
         return local.LocalAdapter(endpoint, transport=transport)
 
-    def scorer(name: str) -> LocalScorerConfig:
-        return _scorer(root, name, models_root, nli.LocalScorerConfig)
+    # One adapter per role: the extractor and the classifier may share a file, never
+    # an instance.
+    extractor = adapter(manifest.extractor)
+    classifier_transport = adapter(manifest.classifier)
+    judge_transports = tuple(adapter(name) for name in manifest.judges)
 
+    # Then the hashes and the tokenizers (model_mismatch).
+    loader = (
+        _pinned_tokenizer_loader() if tokenizer_loader is None else tokenizer_loader
+    )
+    counters = {}
+    for name, model in chat.items():
+        verify_files(weights[name], model.weights)
+        counters[name] = ChatTokenCounter(tokenizers[name], loader=loader)
+
+    # Last, the bindings, and each scorer checks its kind, hashes its own files and
+    # loads its runtime (model_mismatch).
     workflow = WorkflowRuntime(
-        extractor=adapter(manifest.extractor),
+        extractor=extractor,
         classifier=ClassifierBinding(
             identities[manifest.classifier],
-            adapter(manifest.classifier),
+            classifier_transport,
             counters[manifest.classifier],
         ),
-        scorer=nli.MiniCheckScorer(scorer(manifest.scorer), _runtime=scorer_runtime),
+        scorer=nli.MiniCheckScorer(scorer_config, _runtime=scorer_runtime),
         judges=tuple(
-            JudgeBinding(identity, adapter(name), counters[name])
-            for name, identity in zip(manifest.judges, panel, strict=True)
+            JudgeBinding(identity, judge, counters[name])
+            for name, identity, judge in zip(
+                manifest.judges, panel, judge_transports, strict=True
+            )
         ),
         assignment_policy=None,
         renderer=None,
     )
-    alternative = nli.DebertaScorer(
-        scorer(manifest.alternative_scorer), _runtime=scorer_runtime
-    )
+    alternative = nli.DebertaScorer(alternative_config, _runtime=scorer_runtime)
     return LiveRuntime(workflow, alternative, family)
 
 

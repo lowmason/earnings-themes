@@ -42,6 +42,10 @@ EXTRACTOR_VERSION = "pointer-traversal/1"
 """Names the unit rule, the planner, the labels, the reply contract, and the retry
 policy: change any of them, and this changes (the Stage 7 spec, §The cache key)."""
 BILLABLE_COST = "none, self-hosted"
+LOCAL_STRUCTURED = True
+"""A local model's ``structured`` unless its configuration says otherwise (ES19)."""
+LOCAL_TIMEOUT_S = 300.0
+"""A local model's seconds per request unless its configuration says otherwise."""
 STABILITY_RUN_PATTERN = r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}"
 """A stability run's ID: one safe path component, never ``.`` or ``..`` (A1)."""
 StabilityRunId = Annotated[
