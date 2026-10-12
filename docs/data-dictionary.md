@@ -2526,6 +2526,14 @@ a committed file. A rejection's `detail` and the reply's labels may quote a
 document, so they stay local, and a refusal prints as its reason and IDs alone
 (GS13).
 
+**Cache modes (Stage 11, plan 18).** `CacheMode` is `replay`, `live` or `fresh`, and
+extraction, coding and support share it. `fresh` is `live` over
+`<cache>/fresh/<stability_run_id>/`, which starts empty: it never reads the main
+cache, and a request repeated within the run is served from that run's own reply
+(A1). `RunRecord` gained `cache_mode` and `stability_run_id`. The schema version
+stays `1`, so no extraction cache key changes. A run record written before plan 18
+has no `cache_mode`, and is refused as malformed; none was committed (D18-4).
+
 `write_run` (`earnings_themes.extraction.store`) stores a run in a new directory:
 `run.json`, the `RunRecord`, and one Parquet file per record kind, written through
 Polars under an explicit schema: `documents.parquet` (`DocumentRecord`),
@@ -2784,6 +2792,8 @@ One run: `run.json`.
 | `started_at` | aware datetime | When the caller started it |
 | `configuration` | `RunConfiguration` | What every request shared |
 | `configuration_hash` | 64 lowercase hex | SHA-256 of the configuration's canonical JSON |
+| `cache_mode` | `CacheMode` or null | The cache the run went through; null when its adapter is not a `CachedAdapter`; a `replay` run dispatched nothing |
+| `stability_run_id` | ID or null | The stability run whose directory `fresh` used; set exactly when `cache_mode` is `fresh` |
 | `documents` | map of `doc_id` to 64 lowercase hex | Each document and its canonical hash |
 | `units` | int ≥ 0 | Units over every document |
 | `windows` | int ≥ 0 | Windows |
@@ -2853,7 +2863,7 @@ One field per R14.6 component; the cache file is named by its SHA-256.
 
 ### `CacheEntry`
 
-One cache file, `<SHA-256 of the key>.json`, written atomically in `live` mode under
+One cache file, `<SHA-256 of the key>.json`, written atomically in `live` or `fresh` mode under
 a directory the caller supplies.
 
 | Field | Type | Meaning |
@@ -2861,6 +2871,20 @@ a directory the caller supplies.
 | `schema_version` | `1` | Extraction record schema version |
 | `key` | `CacheKey` | Its key, which a hit must equal |
 | `reply` | `ModelReply` | The raw reply |
+
+### `CacheMode`
+
+How a `CachedAdapter`, a `CodingCache` or a `SupportCache` uses its directory
+(`earnings_themes.extraction.records`; A1). `cache_directory(directory, mode,
+stability_run_id)` (`earnings_themes.extraction.cache`) resolves the directory for
+all three, and `cache_mode_problem` checks each run record's mode, stability run ID
+and dispatches.
+
+| Value | Meaning |
+| --- | --- |
+| `replay` | A hit returns the stored reply; a miss is `replay_miss`, and nothing dispatches |
+| `live` | A hit returns the stored reply; a miss dispatches and stores the reply |
+| `fresh` | `live` over `<directory>/fresh/<stability_run_id>/`, which starts empty; the main directory is never read |
 
 ### `LocalModelConfig`
 

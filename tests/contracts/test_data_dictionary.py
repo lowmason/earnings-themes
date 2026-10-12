@@ -285,6 +285,7 @@ ENUMS = [
     extraction.ExtractionProblem,
     extraction.WindowOutcome,
     extraction.DocumentOutcome,
+    extraction.CacheMode,
     SupportProblem,
     support.SignalStatus,
     support.Presentation,
