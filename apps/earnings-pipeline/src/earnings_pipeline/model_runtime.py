@@ -16,9 +16,9 @@ Stage 11 spec, A2; plan 18).
   identity. So a runtime built for replay needs no model server. Every reply still
   names its model (``model_mismatch``), and plan B's smoke records the server's own
   build (D18-12).
-- **Tokenizers.** The themes package may not import transformers (its import-scan
-  rule keeps the heavy runtimes in the two scorer constructors), so this module owns
-  the default tokenizer loader: ``AutoTokenizer.from_pretrained``, handed to each
+- **Tokenizers.** The themes package confines its heavy runtime imports to the two
+  NLI scorer constructors (its import-scan rule), so this module owns the default
+  tokenizer loader: ``AutoTokenizer.from_pretrained``, handed to each
   ``ChatTokenCounter`` after the pinned runtime versions check out. A caller may
   inject its own, as the tests do.
 - **Choice.** Nothing here chooses a model: ADR 0006 writes the files (B1).
@@ -131,7 +131,9 @@ def build_runtime(
         raise
     except (SupportError, CodingError) as error:
         raise WorkflowError(str(error)) from None
-    except (RecordError, ValueError):
+    except (RecordError, ValueError, OSError):
+        # An OSError (a file that is a directory, or unreadable) carries a path on this
+        # machine; the refusal names only its closed reason.
         raise WorkflowError("malformed_record") from None
 
 
@@ -202,9 +204,9 @@ def _build(manifest_path, models_root, transport, tokenizer_loader, scorer_runti
 def _pinned_tokenizer_loader() -> Callable[..., Any]:
     """transformers' ``AutoTokenizer.from_pretrained``, once the installed runtime
     versions are the approved ones (``model_mismatch`` otherwise, before anything
-    loads). The application owns this default, since the themes package may not
-    import transformers; both imports stay inside, so importing this module loads
-    neither ``nli.py`` nor a model runtime."""
+    loads). The application owns this default, since the themes package confines
+    transformers imports to the two NLI scorer constructors; both imports stay
+    inside, so importing this module loads neither ``nli.py`` nor a model runtime."""
     from earnings_themes.support import nli
 
     nli._verify_runtime_versions()

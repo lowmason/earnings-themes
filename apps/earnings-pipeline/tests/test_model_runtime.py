@@ -358,6 +358,23 @@ def test_a_manifest_that_does_not_read_is_refused(tmp_path: Path, changes) -> No
         build(manifest, models)
 
 
+@pytest.mark.parametrize("role", ["extractor", "scorer"])
+def test_a_model_file_that_is_a_directory_is_refused_without_its_path(
+    tmp_path: Path, role
+) -> None:
+    """A refusal is a closed reason, never an operating-system error that carries a
+    path on this machine: a chat model's file and a scorer's file are read the same
+    way, so both are checked."""
+    manifest, models = layout(tmp_path)
+    (manifest.parent / "a-directory.toml").mkdir()
+    data = tomllib.loads(manifest.read_text(encoding="utf-8"))
+    write(manifest, {**data, role: "a-directory.toml"})
+    with pytest.raises(WorkflowError, match="^malformed_record$") as caught:
+        build(manifest, models)
+    assert caught.value.__suppress_context__
+    assert str(tmp_path) not in str(caught.value)
+
+
 def fake_transformers(monkeypatch: pytest.MonkeyPatch, touched: list, **names):
     """A stand-in ``transformers`` module that records each name looked up in it,
     so no real runtime is imported."""
@@ -376,9 +393,10 @@ def test_without_an_injected_tokenizer_loader_the_pinned_runtime_is_checked_firs
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """The application owns the default tokenizer loader, since the themes package
-    may not import transformers: the builder checks the pinned runtime versions
-    first, so an unapproved runtime is model_mismatch before transformers is
-    touched, a request is sent or anything loads."""
+    confines transformers imports to the two NLI scorer constructors: the builder
+    checks the pinned runtime versions first, so an unapproved runtime is
+    model_mismatch before transformers is touched, a request is sent or anything
+    loads."""
     manifest, models = layout(tmp_path)
     monkeypatch.setattr(nli, "version", lambda name: "unapproved")
     touched: list = []
@@ -424,6 +442,28 @@ def test_without_an_injected_tokenizer_loader_transformers_loads_each_tokenizer(
         (f"{name}/tokenizer", {"local_files_only": True, "trust_remote_code": False})
         for name in sorted(CHAT)
     ]
+
+
+def test_a_transformers_that_will_not_import_is_model_mismatch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The pinned versions check out but the runtime itself fails to import, as a
+    broken install does: the refusal is still a closed reason, with nothing sent and
+    nothing loaded, and not the ImportError."""
+    manifest, models = layout(tmp_path)
+    monkeypatch.setattr(nli, "version", dict(RUNTIME_VERSIONS).__getitem__)
+    monkeypatch.setitem(sys.modules, "transformers", None)
+    calls: list = []
+    loaded: list = []
+    with pytest.raises(WorkflowError, match="^model_mismatch$") as caught:
+        build_runtime(
+            manifest,
+            models,
+            transport=failing(calls),
+            _scorer_runtime=scorer_runtime(loaded),
+        )
+    assert caught.value.__suppress_context__
+    assert (calls, loaded) == ([], [])
 
 
 def test_a_runtime_built_for_replay_needs_no_server(tmp_path: Path) -> None:

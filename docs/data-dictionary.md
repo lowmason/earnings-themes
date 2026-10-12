@@ -6282,6 +6282,38 @@ Valid schema-1 partial/null missingness remains compatible; malformed schema-2
 partial/null/unknown/processing_failed missingness now refuses, with no silent
 migration. Schema-2 processing appends alongside immutable acquisition history.
 
+The analysis-as-published acquisition baseline and the receipt's independently
+verified current processing artifact have different identities. Coverage uses
+checked completion outcomes while retaining the baseline state run/schema.
+Same-workflow retry binds actual saved analysis bytes, independently recomputed
+completion outcomes/reasons, ownership, the immediate parsed predecessor and all
+current selected inputs. It appends an identical pending transition once or
+reuses matching recorded state. Different-workflow reuse requires the paired
+`stored_analysis` directory/manifest SHA, every stored extraction/support/coding
+selection and current history/policy/family/declaration gates; it returns
+`no_state_change` without manufacturing a state file. General terminal reopening,
+latest discovery, inferred predecessor provenance and concurrency/backfill safety
+are not provided by this sequential seam.
+
+Publication profiles remain distinct. Rights-denied text, fragment links, nested
+canonical artifacts and source snapshots are withheld rather than becoming lost
+extraction. Available reasons are null, `raw_snapshot_missing` or
+`snapshot_withheld`; required retainable missing raw bytes refuse complete cited
+publication, while explicit denied raw inclusion permits the labeled canonical
+fallback. Screenshots/capture artifacts remain local_only and are not report
+inputs. The report manifest records capture/browser-observation limitations and
+actual included byte hashes separately from immutable analysis `run.json`.
+Reports preserve expected release/transcript coverage, policy scope, all original
+links, audit outcomes and direct/parent/optional-family counting restrictions.
+Empty tables, unmatched/review/failed/partial cases supply no negative observation;
+only currently bound explicit processing adjudication can establish no-theme.
+
+The [fixture verification record](verification/theme-vertical-slice.md) records
+actual V8/V10 arithmetic, guarded commands and compatibility/procedure history.
+This documentation checkpoint does not discharge native V5, human-only tests,
+final reviews or Stage 10 completion. Production policy, pilot extraction,
+calibration, transcript schemas and fresh-call stability remain later work.
+
 ## Stage 11 live runtime (plan 18)
 
 `earnings_pipeline.model_runtime.build_runtime(manifest, models_root, *, transport=None)`
@@ -6298,8 +6330,9 @@ path on this machine. A chat model's `encoding_version` is `chat-tokens/1:` and 
 tokenizer files' `files_hash`, so its identity names the tokenizer that counts its
 requests. When no tokenizer loader is injected, the builder checks the pinned runtime
 versions and loads each tokenizer with transformers' `AutoTokenizer` (the application
-owns this, because the themes package may not import those runtimes). The application's
-`live-models` extra installs the runtimes it needs.
+owns this, because the themes package confines those runtime imports to the
+two NLI scorer constructors in `nli.py`). The application's `live-models` extra
+installs the runtimes it needs.
 
 ### `RuntimeManifest`
 
@@ -6342,35 +6375,3 @@ owns this, because the themes package may not import those runtimes). The applic
 | `workflow` | `WorkflowRuntime` | Extractor, classifier, scorer and judges; no assignment policy and no renderer |
 | `alternative_scorer` | `EntailmentScorer` | DeBERTa, for the second support run over the same judges |
 | `extractor_family` | string | The extractor's family, for Stage 8's panel rule |
-
-The analysis-as-published acquisition baseline and the receipt's independently
-verified current processing artifact have different identities. Coverage uses
-checked completion outcomes while retaining the baseline state run/schema.
-Same-workflow retry binds actual saved analysis bytes, independently recomputed
-completion outcomes/reasons, ownership, the immediate parsed predecessor and all
-current selected inputs. It appends an identical pending transition once or
-reuses matching recorded state. Different-workflow reuse requires the paired
-`stored_analysis` directory/manifest SHA, every stored extraction/support/coding
-selection and current history/policy/family/declaration gates; it returns
-`no_state_change` without manufacturing a state file. General terminal reopening,
-latest discovery, inferred predecessor provenance and concurrency/backfill safety
-are not provided by this sequential seam.
-
-Publication profiles remain distinct. Rights-denied text, fragment links, nested
-canonical artifacts and source snapshots are withheld rather than becoming lost
-extraction. Available reasons are null, `raw_snapshot_missing` or
-`snapshot_withheld`; required retainable missing raw bytes refuse complete cited
-publication, while explicit denied raw inclusion permits the labeled canonical
-fallback. Screenshots/capture artifacts remain local_only and are not report
-inputs. The report manifest records capture/browser-observation limitations and
-actual included byte hashes separately from immutable analysis `run.json`.
-Reports preserve expected release/transcript coverage, policy scope, all original
-links, audit outcomes and direct/parent/optional-family counting restrictions.
-Empty tables, unmatched/review/failed/partial cases supply no negative observation;
-only currently bound explicit processing adjudication can establish no-theme.
-
-The [fixture verification record](verification/theme-vertical-slice.md) records
-actual V8/V10 arithmetic, guarded commands and compatibility/procedure history.
-This documentation checkpoint does not discharge native V5, human-only tests,
-final reviews or Stage 10 completion. Production policy, pilot extraction,
-calibration, transcript schemas and fresh-call stability remain later work.
