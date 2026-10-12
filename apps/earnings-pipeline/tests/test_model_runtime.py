@@ -332,6 +332,41 @@ def test_a_directory_outside_the_models_root_is_refused(
         build(manifest, models)
 
 
+def identities(live) -> tuple:
+    """Every identity a built runtime names, in role order."""
+    runtime = live.workflow
+    return (
+        runtime.extractor.identity,
+        runtime.classifier.identity,
+        tuple(judge.identity for judge in runtime.judges),
+        runtime.scorer.identity,
+        live.alternative_scorer.identity,
+        live.extractor_family,
+    )
+
+
+def test_a_relative_models_root_is_taken_from_the_working_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The tokenizer and scorer configs require an absolute directory, so the builder
+    makes the root absolute once: a relative root builds the runtime the absolute one
+    does."""
+    manifest, models = layout(tmp_path)
+    expected = identities(build(manifest, models))
+    monkeypatch.chdir(tmp_path)
+    assert identities(build(manifest, Path("models"))) == expected
+
+
+def test_a_symlinked_models_root_is_refused(tmp_path: Path) -> None:
+    """Making the root absolute does not follow symlinks, so confined_path still sees
+    and refuses one."""
+    manifest, models = layout(tmp_path)
+    link = tmp_path / "link"
+    link.symlink_to(models, target_is_directory=True)
+    with pytest.raises(WorkflowError, match="^malformed_record$"):
+        build(manifest, link)
+
+
 def test_a_scorer_file_never_names_an_absolute_local_directory(tmp_path: Path) -> None:
     """D18-9: no committed file holds a path on this machine."""
     manifest, models = layout(tmp_path)

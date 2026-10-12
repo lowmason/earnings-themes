@@ -29,6 +29,7 @@ Stage 11 spec, A2; plan 18).
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -146,6 +147,10 @@ def _build(manifest_path, models_root, transport, tokenizer_loader, scorer_runti
     from earnings_themes.extraction import local
     from earnings_themes.support import nli
 
+    # The tokenizer and scorer configs require an absolute directory. A relative root
+    # is taken from the working directory; abspath, unlike resolve, follows no symlink,
+    # so confined_path still refuses a symlinked root.
+    models_root = Path(os.path.abspath(models_root))
     root = manifest_path.parent
     manifest = _read(root, manifest_path.name, RuntimeManifest)
     names = dict.fromkeys((manifest.extractor, manifest.classifier, *manifest.judges))

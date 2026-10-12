@@ -71,12 +71,15 @@ def test_counts_the_rendered_template_with_the_generation_prompt(tmp_path, no_ne
 @pytest.mark.parametrize("change", ["edit", "extra"])
 def test_refuses_files_that_do_not_match_their_hashes(tmp_path, change):
     checked = config(tmp_path)
+    options = []
     if change == "edit":
         (tmp_path / "tokenizer.json").write_bytes(b"changed")
     else:
         (tmp_path / "README.md").write_bytes(b"an unlisted file")
     with pytest.raises(SupportError, match="^model_mismatch$"):
-        ChatTokenCounter(checked, loader=loader(Tokenizer(), []))
+        ChatTokenCounter(checked, loader=loader(Tokenizer(), options))
+    # The files are checked before the loader reads any of them (verify, then load).
+    assert options == []
 
 
 def test_refuses_a_tokenizer_without_a_chat_template(tmp_path):

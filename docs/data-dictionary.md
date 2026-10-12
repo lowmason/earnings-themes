@@ -6328,8 +6328,10 @@ loaded (`invalid_panel`). It then hashes every chat model's weights and tokenize
 files, and each scorer checks its own files and installed runtime (`model_mismatch`).
 A scorer's file with a wrong pinned field (the revision, runtime versions, encoding
 version or label mapping) is `malformed_record`, through `parse_support`, as is a file
-that does not read or a directory outside the models root. Building sends no request and counts no token, so a runtime built for replay needs no model
-server. A scorer's file is a `LocalScorerConfig` whose `directory`, relative to the
+that does not read or a directory outside the models root. A relative `models_root` is
+taken relative to the working directory, without following symlinks, so a symlinked
+root is still refused as `malformed_record`. Building sends no request and counts no
+token, so a runtime built for replay needs no model server. A scorer's file is a `LocalScorerConfig` whose `directory`, relative to the
 models root, stands in for its absolute `local_directory`, so no committed file holds a
 path on this machine. A chat model's `encoding_version` is `chat-tokens/1:` and its
 tokenizer files' `files_hash`, so its identity names the tokenizer that counts its
