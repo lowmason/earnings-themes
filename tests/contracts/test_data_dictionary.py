@@ -41,6 +41,7 @@ from earnings_themes.extraction.store import StoredRun
 from earnings_themes.support import judges, metrics, scorers
 from earnings_themes.support import records as support
 from earnings_themes.support.cache import SupportCacheEntry
+from earnings_themes.support.chat_tokens import ChatTokenizerConfig
 from earnings_themes.support.nli import LocalScorerConfig
 from earnings_themes.support.problems import SupportProblem
 from pydantic import BaseModel
@@ -216,6 +217,7 @@ MODELS = [
     support.SupportPolicy,
     support.SupportRunRecord,
     LocalScorerConfig,
+    ChatTokenizerConfig,
     coding.CodingPart,
     coding.CodingRecord,
     coding.CodingAttributes,

@@ -4,12 +4,12 @@ import json
 from collections.abc import Callable
 from typing import Any, Literal, Protocol
 
-from earnings_core import digest
 from pydantic import Field
 
 from earnings_themes.extraction.adapters import AdapterError, Message, ModelReply
 from earnings_themes.extraction.records import AdapterIdentity, Parameters
 from earnings_themes.records import NonBlank, Sha256Hex
+from earnings_themes.support.model_files import files_hash
 from earnings_themes.support.problems import SupportError, unexpected_error
 from earnings_themes.support.records import (
     SUPPORT_VERSION,
@@ -103,22 +103,9 @@ class SupportTransportError(SupportError):
 
 
 def transport_weights_hash(identity: JudgeIdentity) -> str:
-    """Bind Stage 7's one weights hash to Stage 8's explicit file manifest.
-
-    One file uses that file's SHA-256. Multiple files use the canonical digest of
-    path/hash records sorted by relative path. An empty local manifest is refused.
-    """
-    files = identity.runtime.files
-    if not files:
-        raise SupportError("model_mismatch")
-    if len(files) == 1:
-        return files[0].sha256
-    return digest(
-        [
-            f.model_dump(mode="json")
-            for f in sorted(files, key=lambda f: f.relative_path)
-        ]
-    )
+    """Bind Stage 7's one weights hash to Stage 8's explicit file manifest: the
+    ``files_hash`` of the identity's runtime files."""
+    return files_hash(identity.runtime.files)
 
 
 class JudgeBinding:

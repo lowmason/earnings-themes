@@ -562,6 +562,7 @@ openai = [
     { name = "pydantic-ai-slim", extra = ["openai"] },
 ]
 support-nli = [
+    { name = "jinja2" },
     { name = "sentencepiece" },
     { name = "torch" },
     { name = "transformers" },
@@ -571,6 +572,7 @@ support-nli = [
 requires-dist = [
     { name = "earnings-core", editable = "packages/earnings-core" },
     { name = "httpx", marker = "extra == 'local-model'" },
+    { name = "jinja2", marker = "extra == 'support-nli'", specifier = "==3.1.6" },
     { name = "langchain-typesafe", marker = "extra == 'jev-langchain'" },
     { name = "numpy", marker = "extra == 'embeddings'" },
     { name = "polars" },

@@ -1,6 +1,5 @@
 """Explicit, local-only raw NLI adapters. Importing this module loads no runtime."""
 
-from hashlib import file_digest
 from importlib.metadata import version
 from math import isfinite
 from pathlib import Path
@@ -9,6 +8,7 @@ from typing import Any, Literal, Self
 
 from pydantic import Field, PositiveInt, model_validator
 
+from earnings_themes.support.model_files import verify_files
 from earnings_themes.support.problems import SupportError
 from earnings_themes.support.records import (
     FileHash,
@@ -69,21 +69,6 @@ class LocalScorerConfig(SafePart):
         return self
 
 
-def _verify_files(config: LocalScorerConfig) -> None:
-    root = Path(config.local_directory).resolve(strict=True)
-    expected = {f.relative_path: f.sha256 for f in config.files}
-    actual = {p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()}
-    if actual != set(expected):
-        raise SupportError("model_mismatch")
-    for name, checksum in expected.items():
-        path = root / name
-        if path.is_symlink() or not path.resolve(strict=True).is_relative_to(root):
-            raise SupportError("model_mismatch")
-        with path.open("rb") as stream:
-            if file_digest(stream, "sha256").hexdigest() != checksum:
-                raise SupportError("model_mismatch")
-
-
 def _prepare_config(
     config: LocalScorerConfig, kind: Literal["minicheck", "deberta"]
 ) -> LocalScorerConfig:
@@ -92,7 +77,7 @@ def _prepare_config(
         checked = _validated(config, LocalScorerConfig)
         if checked.kind != kind:
             raise SupportError("model_mismatch")
-        _verify_files(checked)
+        verify_files(checked.local_directory, checked.files)
         return checked
     except Exception:  # noqa: BLE001 - redact arbitrary configuration/file errors
         raise SupportError("model_mismatch") from None

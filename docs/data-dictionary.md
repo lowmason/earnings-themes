@@ -3701,6 +3701,30 @@ or fixed unavailable reasons. There is no class decision, generation, aggregatio
 cutoff, wrapper chunking or alternative fallback. Configuration/runtime setup errors
 have fixed `model_mismatch`; inference errors return fixed `scorer_failed`.
 
+### `ChatTokenizerConfig`
+
+A chat model's local tokenizer (`earnings_themes.support.chat_tokens`; A2, plan 18).
+`ChatTokenCounter(config, loader=...)` checks every file's hash, calls the caller's
+`loader` (`AutoTokenizer.from_pretrained`'s signature) with `local_files_only=True` and
+`trust_remote_code=False`, and refuses a tokenizer with no chat template
+(`model_mismatch`). The `loader` is required: the application's builder passes
+`AutoTokenizer.from_pretrained` after it checks the pinned runtime versions, so
+importing the module or constructing a counter loads no runtime in the themes package,
+whose import-scan rule keeps the heavy runtimes in the two scorer constructors of
+`nli.py`. It counts a request as the chat template rendered over its messages with the
+generation prompt, encoded without adding special tokens again. It makes no server
+call; plan B's smoke compares its count with the server's reported prompt tokens.
+`earnings_themes.support.model_files` holds the checks it shares with
+the scorers and the live runtime: `verify_files(directory, files)`, which requires the
+directory to hold exactly the listed files, none a symlink, each matching its hash;
+and `files_hash(files)`, one file's SHA-256 or the sorted digest of several, which is
+also a judge's `transport_weights_hash`.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `local_directory` | string | Absolute tokenizer directory, excluded from repr |
+| `files` | tuple[FileHash, …] | Every file in it; `tokenizer.json` and `tokenizer_config.json` required |
+
 ## earnings-themes coding records, schema version 1
 
 The Stage 9 deductive contracts (`earnings_themes.coding.records`) have coding
