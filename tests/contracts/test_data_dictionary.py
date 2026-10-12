@@ -48,6 +48,7 @@ from earnings_themes.coding.store import SCHEMAS
 from earnings_themes.evaluation import (
     align,
     cells,
+    scores,
 )
 from earnings_themes.evaluation import problems as evaluation_problems
 from earnings_themes.extraction import adapters, cache, local
@@ -670,6 +671,7 @@ EVALUATION_ENUMS = [
 EVALUATION_DATACLASSES = [
     align.UnitIndex,
     cells.EventCells,
+    scores.Tally,
 ]
 
 

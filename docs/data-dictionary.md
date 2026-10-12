@@ -6445,3 +6445,11 @@ interval is the event-clustered percentile bootstrap.
 | `units` | Each present theme's gold-supporting units |
 | `spans` | Each present theme's gold-supporting spans |
 | `dangling` | References to quotes or claims the reading lacks |
+
+### `Tally`
+
+| Field | Meaning |
+| --- | --- |
+| `tp` | Hits |
+| `fp` | False positives |
+| `fn` | Misses |
