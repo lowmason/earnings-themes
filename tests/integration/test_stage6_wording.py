@@ -3,12 +3,14 @@
 committed Stage 6 file, dates masked, occurs in the canonical text of a pilot
 document or of a Stage 1 fixture.
 
-- **The files.** Under ``evaluation/``: the split, the coverage report, the gold,
-  and the briefs; codebook v0, ADR 0003, and the verification record; and the
-  curated hard negatives: whichever are committed yet. Also Stage 7's prompts,
-  under ``prompts/`` (the Stage 7 spec, §Wording guard). A Markdown file is read a
-  paragraph at a time, its lines joined, so a phrase copied across a wrapped line is
-  still caught.
+- **The files.** Under ``evaluation/``: the split, the coverage reports, the gold,
+  and the briefs; the independent-pass ledger (P16-3), and the records Stage 11
+  commits beside it, its labels among them (the Stage 11 spec, A9); codebook v0, ADR
+  0003, and the verification record; and the curated hard negatives: whichever are
+  committed yet. Also Stage 7's prompts, under ``prompts/`` (the Stage 7 spec,
+  §Wording guard). A Markdown file is read a paragraph at a time, its lines joined,
+  so a phrase copied across a wrapped line is still caught. A TOML file is read
+  through ``tomllib``, so its comments are not scanned.
 - **What a failure prints.** Each finding is a pair: the file with its field or
   paragraph, and the event or fixture. Never the window or the string, since either
   may quote a release (GS13).
@@ -36,6 +38,8 @@ EVENT_RUNS = REPO / "data" / "runs" / "events"
 FIXTURES = REPO / "tests" / "fixtures" / "canonical"
 STAGE6 = (
     "evaluation/*/pilot-v*/*.json",
+    "evaluation/*/pilot-v*/*.toml",
+    "evaluation/*/pilot-v*/labels/*.toml",
     "evaluation/*/pilot-v*/gold/*.toml",
     "evaluation/*/pilot-v*/briefs/*.md",
     "codebooks/*/codebook-v*.toml",
@@ -53,6 +57,17 @@ PROMPTS = (
     "prompts/support/judge-1.md",
     "prompts/coding/deductive-1.md",
 )
+STAGE11 = (
+    "evaluation/djia-2024q3-2026q2/pilot-v1/independent-pass.toml",
+    "evaluation/djia-2024q3-2026q2/pilot-v1/preregistration-v1.toml",
+    "evaluation/djia-2024q3-2026q2/pilot-v1/labels/support-labels-v1.toml",
+    "evaluation/djia-2024q3-2026q2/pilot-v1/calibration-v1.json",
+    "evaluation/djia-2024q3-2026q2/pilot-v1/coverage-v2.json",
+    "evaluation/djia-2024q3-2026q2/pilot-v1/report-v1.json",
+    "evaluation/djia-2024q3-2026q2/pilot-v1/gates-v1.toml",
+)
+"""The ledger (plan 16) and the records Stage 11 commits (the Stage 11 spec,
+§Artifacts)."""
 
 
 def committed() -> list[Path]:
@@ -92,6 +107,23 @@ def test_the_briefs_are_among_the_files_checked() -> None:
 def test_the_prompts_are_among_the_files_checked() -> None:
     names = {path.relative_to(REPO).as_posix() for path in committed()}
     assert set(PROMPTS) <= names
+
+
+def test_the_ledger_and_stage_11_s_records_are_among_the_files_checked(
+    tmp_path: Path,
+) -> None:
+    """The ledger (P16-3) and each record Stage 11 commits beside the gold are
+    scanned once committed (the Stage 11 spec, A9). Most are not written yet, so
+    each is made empty under ``tmp_path``, and ``STAGE6``'s patterns find it."""
+    for name in STAGE11:
+        (tmp_path / name).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / name).touch()
+    found = {
+        path.relative_to(tmp_path).as_posix()
+        for pattern in STAGE6
+        for path in tmp_path.glob(pattern)
+    }
+    assert set(STAGE11) <= found
 
 
 def test_no_stage_6_file_quotes_a_stage_1_fixture() -> None:
