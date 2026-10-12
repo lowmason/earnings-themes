@@ -1,5 +1,7 @@
 # Stage 11 Plan A, Slice 2: Fresh-Call Mode and the Live Runtime Implementation Plan
 
+**Status: COMPLETE (2026-10-12)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Give extraction, coding and support a `fresh` cache mode, recorded on every run record (A1). Build the live `research` runtime from committed model files, with local token counters (A2). Use no pilot text and load no model.
@@ -64,8 +66,13 @@ Instead, it appends a slice stamp to the spec's Rollout and retires only itself 
   - The CLI's `--help` must load neither `nli.py` nor the local adapter (`test_ordinary_cli_help_loads_no_concrete_runtime`). So `model_runtime.py` imports both inside its builder, for when A8 wires it into the CLI.
   - `packages/earnings-themes/tests/test_import_boundaries.py` must pass unchanged.
   - A task that adds an import between themes modules runs `test_import_boundaries.py` and `tests/contracts/test_import_scan.py`. An import cycle there forced an unlisted edit in plan 17 (its Task 3 deviation).
+
+> Deviation (user ruling D-A, 2026-10-12): the plan's `chat_tokens.py` imported `nli.py` and transformers, which `tests/contracts/test_import_scan.py::test_nli_heavy_imports_only_in_constructors` forbids, so the loader moved to the application. `ChatTokenCounter` takes a required keyword `loader=`, `chat_tokens.py` imports nothing from `nli.py`, and `model_runtime._pinned_tokenizer_loader` owns the default: it runs `nli._verify_runtime_versions()`, then imports `AutoTokenizer`, both inside the function. This supersedes `_loader=` in GS13 and the `chat_tokens.py` sub-bullet above. The scan was left unchanged.
+
 - **Data dictionary.** Every new or changed field, value and model goes into `docs/data-dictionary.md` in the same task (AGENTS.md §191). Every new model or enum is registered in `MODELS`, `ENUMS`, `WORKFLOW_MODELS` or `WORKFLOW_DATACLASSES` of `tests/contracts/test_data_dictionary.py`.
 - **Schema versions stay 1 (D18-4).** Extraction, coding and support records keep `schema_version` 1, so every cache key is unchanged (A1). A run record without `cache_mode` is refused as malformed. None is committed.
+
+> Deviation (user ruling D-B, 2026-10-12): "refused as malformed" holds at parse for an extraction run. A stored pre-plan-18 coding run parses, since `stability_run_id` defaults to null, but its `proposal_hash` no longer reproduces, so `read_coding_run` raises `storage_corrupt`. A stored support run gets `storage_corrupt` from `read_support_run`. The dictionary says which reason each kind of run gets. None is committed.
 - **The lockfile.** Only Tasks 5 and 6 run `uv lock`. Afterwards `uv lock --check` must print `Resolved 153 packages`, the count at `36f12ec`. No new package is added.
 - **Ruff.** Default line length, 88. Run `uv run --locked ruff format <changed files>` before each commit. `uv run --locked ruff check .` and `uv run --locked ruff format --check .` must be clean. ISC004 rejects adjacent string literals inside a list, tuple or set; parenthesise such a pair.
 - **Commits.**
@@ -80,6 +87,8 @@ Instead, it appends a slice stamp to the spec's Rollout and retires only itself 
   - `uv run --locked ruff check .`, `uv run --locked ruff format --check .`, and `uv lock --check`
 
   The baseline for the first three commands, over this plan's modules at `36f12ec`, was 2035 passed, 1 skipped and 2 deselected, in 143 s.
+
+> Deviation: that baseline does not reproduce. Task 2's reviewer collected 1984 tests over the three commands at `36f12ec`, and the third command names `test_model_runtime.py`, which does not exist until Task 6. Task 7, Step 1 records the real counts.
 
 ## Decisions
 
@@ -150,7 +159,7 @@ Planner defaults, for the user's review (accepted at the plan review, D18-13):
 
 The spec's status line and every other line stay as they are. The user approved each change's substance on 2026-10-12 (D18-3, D18-5). They approve this exact wording at the plan review.
 
-- [ ] **Step 1: Replace FP23's row**
+- [x] **Step 1: Replace FP23's row**
 
 Replace this line:
 
@@ -164,7 +173,7 @@ with:
 | FP23 | *(design; amended by the user, plan 18, 2026-10-12)* **Replay reuses the pass's stored extraction run and replays its caches.** Support cache keys bind the extraction run's record (`support/cache.py:107`), so a re-run extraction would miss every support entry. `pilot run` therefore never re-extracts: it reuses the pass's stored extraction run through the workflow's stored-run reuse. It does not reuse the pass's coding or support runs. A stored coding run carries its decisions, `reverify_coding_run` refuses one made under another policy (`policy_mismatch`), and the pass makes no decision. So `pilot run` replays classification and support from the pass's caches into new runs, and decides under the calibrated policy. Coding keys bind no run ID, and a support target's ID is a digest of the target and its input hash, so every key matches and nothing dispatches. Replay needs no model server running. |
 ```
 
-- [ ] **Step 2: Replace A1's first bullet**
+- [x] **Step 2: Replace A1's first bullet**
 
 Replace these two lines:
 
@@ -180,7 +189,7 @@ with:
 - It writes each reply there. So it never collides with the main cache's bytes, and a stability run replays afterwards from its own directory (R14.6).
 ```
 
-- [ ] **Step 3: Replace A8's `pilot run` row and its last paragraph**
+- [x] **Step 3: Replace A8's `pilot run` row and its last paragraph**
 
 In the table, replace:
 
@@ -213,7 +222,7 @@ caches (FP23). A test shows such a run over a `live` pass dispatching nothing. A
 run is never reused by `pilot run`. *(Amended by the user, plan 18, 2026-10-12.)*
 ```
 
-- [ ] **Step 4: Check the edits**
+- [x] **Step 4: Check the edits**
 
 Run: `grep -c "plan 18, 2026-10-12" specs/feasibility-pilot-and-threshold-calibration.md`
 Expected: `4`
@@ -224,7 +233,7 @@ Expected: no output, exit 1.
 Run: `git diff --stat`
 Expected: one file changed. The roadmap, CLAUDE.md and the spec's first 41 lines are untouched.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git log -3 --oneline
@@ -260,7 +269,7 @@ git commit -m "docs(specs): amend FP23, A1 and A8 for Stage 11 plan A's slice 2"
   - `CachedAdapter(inner, directory, mode, *, stability_run_id: str | None = None)`, with properties `mode -> CacheMode` and `stability_run_id -> str | None`.
 - `earnings_themes.extraction.cache.CacheMode` stays importable, since `cache.py` imports it.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `packages/earnings-themes/tests/test_extraction_cache.py`, `test_an_identical_key_hits_and_calls_nothing` loops over every `CacheMode`, and `fresh` needs a stability run ID. Narrow its loop to the two modes it means:
 
@@ -397,7 +406,7 @@ def test_a_run_s_cache_mode_and_stability_run_id_agree() -> None:
 
 In `packages/earnings-themes/tests/support/cases.py`, add `cache_mode=None,` to the hand-built `RunRecord(...)` (`:100`), after `configuration_hash=...`.
 
-- [ ] **Step 2: Run them, and watch them fail**
+- [x] **Step 2: Run them, and watch them fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_cache.py packages/earnings-themes/tests/test_extraction_run.py packages/earnings-themes/tests/test_extraction_records.py -q`
 Expected: FAIL.
@@ -405,7 +414,7 @@ Expected: FAIL.
 - `test_extraction_cache.py`'s new tests fail with `TypeError: ... unexpected keyword argument 'stability_run_id'`.
 - `test_extraction_run.py`'s new tests fail with the same `TypeError`, and with `AttributeError: 'RunRecord' object has no attribute 'cache_mode'`.
 
-- [ ] **Step 3: Add the mode, the ID type and the shared check to `extraction/records.py`**
+- [x] **Step 3: Add the mode, the ID type and the shared check to `extraction/records.py`**
 
 Add `StringConstraints` to the `pydantic` import list (`:28-34`). After `BILLABLE_COST = "none, self-hosted"` (`:41`), add:
 
@@ -463,7 +472,7 @@ In `RunRecord._consistent`, just before `return self`, add:
             raise ValueError(problem)
 ```
 
-- [ ] **Step 4: Resolve the directory once, in `extraction/cache.py`**
+- [x] **Step 4: Resolve the directory once, in `extraction/cache.py`**
 
 Replace the module docstring's "Two modes" bullet:
 
@@ -544,7 +553,7 @@ class CachedAdapter:
 
 `complete` is unchanged. Under `fresh`, its directory is the fresh one, so a repeat within the run hits there.
 
-- [ ] **Step 5: Record the mode in `extract_run`**
+- [x] **Step 5: Record the mode in `extract_run`**
 
 In `extraction/run.py`, add `from earnings_themes.extraction.cache import CachedAdapter` after the `earnings_themes.extraction.adapters` import. In `extract_run`, before `record = RunRecord(`, add:
 
@@ -561,12 +570,12 @@ and in `RunRecord(...)`, after `configuration_hash=digest(configuration),`, add:
 
 Add one sentence to `extract_run`'s docstring: `The run record names the cache's mode and stability run ID, or None for an adapter that is not a CachedAdapter.`
 
-- [ ] **Step 6: Run the tests, and watch them pass**
+- [x] **Step 6: Run the tests, and watch them pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_cache.py packages/earnings-themes/tests/test_extraction_run.py packages/earnings-themes/tests/test_extraction_records.py packages/earnings-themes/tests/test_extraction_store.py packages/earnings-themes/tests/test_import_boundaries.py -q`
 Expected: PASS.
 
-- [ ] **Step 7: Document it**
+- [x] **Step 7: Document it**
 
 In `docs/data-dictionary.md`:
 
@@ -615,12 +624,12 @@ In `tests/contracts/test_data_dictionary.py`, add `extraction.CacheMode,` to `EN
 Run: `uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py -q`
 Expected: PASS.
 
-- [ ] **Step 8: Run the wider scoped checks**
+- [x] **Step 8: Run the wider scoped checks**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/coding packages/earnings-themes/tests/support packages/earnings-themes/tests/analysis -q`
 Expected: PASS. The coding and support runs now carry an extraction record with `cache_mode`, and nothing pins its hash.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git log -3 --oneline
@@ -658,7 +667,7 @@ Three existing tests reject `fresh`, and all three keep passing: a `fresh` mode 
 
 Leave them unchanged.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `packages/earnings-themes/tests/coding/cases.py`, give `make_proposal_job`'s inner `run` two keyword arguments. Replace:
 
@@ -783,14 +792,16 @@ def test_a_fresh_coding_run_writes_and_reads_back(tmp_path, proposal_job):
     )
 ```
 
-- [ ] **Step 2: Run them, and watch them fail**
+- [x] **Step 2: Run them, and watch them fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/coding -q`
 Expected: FAIL.
 - The `test_cache.py` tests fail with `TypeError: ... unexpected keyword argument 'stability_run_id'`.
 - The `test_run.py` and `test_store.py` tests fail with the same `TypeError`, raised in `make_proposal_job`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
+
+> Deviation (fix wave 2, user ruling, 2026-10-12): `CodingCache.stability_run_id` is a read-only property, as on `CachedAdapter`, so the record cannot name a directory other than the one chosen at construction. `mode` stays a plain attribute, since the run's guards test its mutation. `classify.py`'s mode check uses `CacheMode` in place of a literal tuple. `store.py`'s accounting check reads `cache_mode != "replay"`.
 
 In `coding/cache.py`, add `from earnings_themes.extraction.cache import cache_directory` after the `earnings_themes.extraction.adapters` import. Replace `CodingCache`'s docstring and `__init__` with:
 
@@ -873,12 +884,14 @@ with:
         _require(record.cache_mode in ("live", "fresh") and not row.cached)
 ```
 
-- [ ] **Step 4: Run the tests, and watch them pass**
+- [x] **Step 4: Run the tests, and watch them pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/coding packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_coding_contracts.py -q`
 Expected: PASS.
 
-- [ ] **Step 5: Document it**
+- [x] **Step 5: Document it**
+
+> Deviation: one extra doc edit. A sentence that said `cache_mode` differs "between live and replay" now says "between live, replay and fresh", because `cache_mode` is a configuration-hash field. Item 1's "coding keys and stored live or replay runs are unchanged (D18-4)" was false for stored runs. The final review's fix wave reworded it (user ruling D-B, 2026-10-12): coding keys are unchanged, but a coding run stored before plan 18 is refused as `storage_corrupt`, since its `proposal_hash` no longer reproduces, and none is committed. The same wave swept every "Stage 11 owns … future fresh-call bypass" sentence: fresh-call *stability* stays Stage 11's.
 
 In `docs/data-dictionary.md`:
 
@@ -925,7 +938,7 @@ In `docs/data-dictionary.md`:
 Run: `uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py -q`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log -3 --oneline
@@ -953,7 +966,7 @@ git commit -m "feat(themes): fresh cache mode for coding, recorded on the run (A
   - `SupportCache(directory: Path, mode: Literal["live", "replay", "fresh"], *, stability_run_id: str | None = None)`, with attributes `mode: str` and `stability_run_id: str | None`;
   - `SupportRunRecord.cache_mode: Literal["live", "replay", "fresh"]` and `SupportRunRecord.stability_run_id: StabilityRunId | None = None`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `packages/earnings-themes/tests/support/test_records.py`, add `"cache_mode": "live",` to the `run` payload after `"configuration_hash": H,`. Its counts dispatched, so it is a live run. Then append:
 
@@ -1113,14 +1126,16 @@ def test_a_second_scorer_reuses_the_judges_replies_in_live_mode(
 
 (The planning session ran this second test against `36f12ec` in a throwaway file, and it passed.)
 
-- [ ] **Step 2: Run them, and watch them fail**
+- [x] **Step 2: Run them, and watch them fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/support -q`
 Expected: FAIL, except `test_a_second_scorer_reuses_the_judges_replies_in_live_mode`, which passes.
 - The `test_cache.py` tests and the fresh `test_run.py` test fail with `TypeError: ... unexpected keyword argument 'stability_run_id'`.
 - `test_records.py` fails: `cache_mode` is an unknown field, so `test_records_round_trip_and_print_only_hash[SupportRunRecord]` refuses the payload. The new parametrized cases also refuse the payload for the same reason, so they pass; `test_a_fresh_run_names_its_stability_run` fails.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
+
+> Deviation (fix wave 2, user ruling, 2026-10-12): `SupportCache.stability_run_id` is a read-only property too, for the same reason as `CodingCache`'s.
 
 In `support/cache.py`, add `from earnings_themes.extraction.cache import cache_directory` after the `earnings_themes.extraction.adapters` import. Replace `SupportCache`'s docstring and `__init__` with:
 
@@ -1182,12 +1197,14 @@ In `support/run.py`, in `SupportRunRecord.model_construct(...)`, after `configur
 
 The configuration dictionary already binds `"cache_mode": cache.mode` (`:107`), and is unchanged. So the workflow's replay check at `theme_workflow.py:1020` still holds for a replay run.
 
-- [ ] **Step 4: Run the tests, and watch them pass**
+- [x] **Step 4: Run the tests, and watch them pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/support packages/earnings-themes/tests/coding packages/earnings-themes/tests/analysis packages/earnings-themes/tests/test_import_boundaries.py -q`
 Expected: PASS.
 
-- [ ] **Step 5: Document it**
+- [x] **Step 5: Document it**
+
+> Deviation (final review's fix wave, 2026-10-12): the support compatibility sentence now says a stored pre-plan-18 support run gets `storage_corrupt` from `read_support_run`, not "refused as malformed". The `stability_run_id` row adds "outside the configuration hash", as the coding row says. The `SupportCache` paragraph now names three modes, with a `fresh` miss also dispatching, and no longer says it provides no bypass.
 
 In `docs/data-dictionary.md`:
 
@@ -1226,7 +1243,7 @@ In `docs/data-dictionary.md`:
 Run: `uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py tests/integration/test_coding_frozen_v0.py tests/integration/test_support_fixtures.py tests/integration/test_theme_frozen_v0.py tests/integration/test_theme_vertical_slice.py apps/earnings-pipeline/tests/test_theme_workflow.py apps/earnings-pipeline/tests/test_extract_cli.py -q`
 Expected: PASS. The Stage 10 workflow runs every stage in `replay`, and each record now says so.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git log -3 --oneline
@@ -1262,7 +1279,9 @@ git commit -m "feat(themes): fresh cache mode for support; pin the second run's 
 
 Why a new module: no ordinary themes module may load `support/nli.py` (`test_ordinary_imports_do_not_load_nli_adapter`, `test_import_boundaries.py:401`). So the file check moves out of `nli.py` into a module that `nli.py`, `chat_tokens.py` and the application all import. `files_hash` joins it, so the judge binding and the builder share one weights hash.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+
+> Deviation (user ruling D-A, 2026-10-12): the counter tests pass `loader=` (required), not `_loader=`. `test_without_an_injected_loader_the_pinned_runtime_is_checked_first` moved to Task 6 as `test_without_an_injected_tokenizer_loader_the_pinned_runtime_is_checked_first`, since the builder now owns the default loader. `test_the_caller_must_supply_the_loader` was added. In the final review's fix wave, the hash-mismatch test now keeps its `options` list and asserts `options == []`, which pins hash-before-load. Fix wave 2 added `test_a_loader_that_raises_is_model_mismatch_without_its_message`.
 
 Create `packages/earnings-themes/tests/support/test_model_files.py`:
 
@@ -1444,12 +1463,12 @@ def test_a_config_names_an_absolute_directory_and_both_tokenizer_files(tmp_path)
         config(one, files={"tokenizer.json": b"{}"})
 ```
 
-- [ ] **Step 2: Run them, and watch them fail**
+- [x] **Step 2: Run them, and watch them fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/support/test_model_files.py packages/earnings-themes/tests/support/test_chat_tokens.py -q`
 Expected: FAIL at collection, with `No module named 'earnings_themes.support.model_files'` and `No module named 'earnings_themes.support.chat_tokens'`.
 
-- [ ] **Step 3: Move the two shared helpers into `support/model_files.py`**
+- [x] **Step 3: Move the two shared helpers into `support/model_files.py`**
 
 Create `packages/earnings-themes/src/earnings_themes/support/model_files.py`:
 
@@ -1529,7 +1548,9 @@ def transport_weights_hash(identity: JudgeIdentity) -> str:
     return files_hash(identity.runtime.files)
 ```
 
-- [ ] **Step 4: Write the counter**
+- [x] **Step 4: Write the counter**
+
+> Deviation (user ruling D-A, 2026-10-12): the signature is `ChatTokenCounter(config, *, loader)`, with `loader` required. `chat_tokens.py` imports neither `nli.py` nor transformers; Task 6's `_pinned_tokenizer_loader` supplies the default. The module docstring says so. The uv.lock diff was exactly the two jinja2 lines (153 packages).
 
 Create `packages/earnings-themes/src/earnings_themes/support/chat_tokens.py`:
 
@@ -1627,7 +1648,7 @@ class ChatTokenCounter:
     __str__ = __repr__
 ```
 
-- [ ] **Step 5: Declare jinja2, which `apply_chat_template` needs**
+- [x] **Step 5: Declare jinja2, which `apply_chat_template` needs**
 
 In `packages/earnings-themes/pyproject.toml`, replace the `support-nli` extra with:
 
@@ -1643,14 +1664,16 @@ support-nli = [
 Run: `uv lock`, then `uv lock --check`
 Expected: `Resolved 153 packages`. `git diff --stat uv.lock` shows one file, and `git diff uv.lock` changes only `earnings-themes`'s entry: one `jinja2` line under its `support-nli` extra, and one in its `requires-dist`.
 
-- [ ] **Step 6: Run the tests, and watch them pass**
+- [x] **Step 6: Run the tests, and watch them pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/support packages/earnings-themes/tests/coding packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py -q`
 Expected: PASS. That includes:
 - `test_importing_earnings_themes_loads_nothing_forbidden` and `test_ordinary_imports_do_not_load_nli_adapter`: `chat_tokens.py` and `model_files.py` load neither transformers nor `nli.py`;
 - `test_nli.py`, unchanged, over the moved file check.
 
-- [ ] **Step 7: Document it**
+- [x] **Step 7: Document it**
+
+> Deviation: the `ChatTokenizerConfig` section describes the required `loader` (D-A). The final review's fix wave added "or outside the directory" to `verify_files`'s refusals.
 
 In `docs/data-dictionary.md`, immediately before `## earnings-themes coding records, schema version 1`, which follows `LocalScorerConfig`'s closing paragraph (ending `inference errors return fixed \`scorer_failed\`.`), insert:
 
@@ -1681,7 +1704,7 @@ In `tests/contracts/test_data_dictionary.py`, add `from earnings_themes.support.
 Run: `uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py -q`
 Expected: PASS.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git log -3 --oneline
@@ -1713,7 +1736,21 @@ git commit -m "feat(themes): local chat token counter and shared model-file chec
   - `@dataclass(frozen=True) class LiveRuntime`: `workflow: WorkflowRuntime`, `alternative_scorer: EntailmentScorer`, `extractor_family: str`;
   - `build_runtime(manifest: Path, models_root: Path, *, transport=None, _tokenizer_loader=None, _scorer_runtime=None) -> LiveRuntime`. It raises `WorkflowError` with reason `invalid_panel`, `model_mismatch` or `malformed_record`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+
+> Deviation: tests added beyond the plan:
+> - Task 5's default-loader test, moved here (D-A).
+> - `test_without_an_injected_tokenizer_loader_transformers_loads_each_tokenizer`, a happy path through the default loader.
+> - `test_a_transformers_that_will_not_import_is_model_mismatch`.
+> - `test_a_model_file_that_is_a_directory_is_refused_without_its_path`.
+>
+> Ruff moved `import tomllib` (isort), and `min(...)` replaces `sorted(...)[0]` (FURB192). The final review's fix wave added `test_a_relative_models_root_is_taken_from_the_working_directory` and `test_a_symlinked_models_root_is_refused`. Fix wave 2 (user ruling, 2026-10-12) added:
+> - `test_every_file_is_parsed_and_every_endpoint_checked_before_any_hash`, covering a non-loopback `base_url`, a wrong pinned scorer field and a tokenizer directory outside the root;
+> - `test_swapped_scorers_are_refused_by_their_kind`;
+> - `test_a_tokenizer_loader_that_raises_is_model_mismatch_without_its_message`;
+> - `test_a_chat_model_file_shares_the_local_adapter_s_defaults`.
+>
+> Fix wave 2 also made the default-loader happy path count one request through a judge binding.
 
 Create `apps/earnings-pipeline/tests/test_model_runtime.py`:
 
@@ -2114,12 +2151,21 @@ def test_importing_the_builder_loads_no_adapter_or_runtime() -> None:
     }.isdisjoint(loaded)
 ```
 
-- [ ] **Step 2: Run them, and watch them fail**
+- [x] **Step 2: Run them, and watch them fail**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_model_runtime.py -q`
 Expected: FAIL at collection with `No module named 'earnings_pipeline.model_runtime'`.
 
-- [ ] **Step 3: Write the builder**
+- [x] **Step 3: Write the builder**
+
+> Deviation: the builder departs from the plan's code in several places.
+> - `_pinned_tokenizer_loader` is the default loader (D-A). The transformers import sits in a try/except, so a broken install is `model_mismatch` with its context suppressed.
+> - `from __future__ import annotations` was added (Ruff TC004).
+> - `OSError` joins the `malformed_record` clause, so a model file that is a directory or unreadable yields no path on this machine, per the Refusals constraint.
+> - The final review's fix wave makes a relative `models_root` absolute with `os.path.abspath`. That is new behaviour, since the plan did not specify relative roots, and a symlinked root is still refused.
+> - Fix wave 2 (user ruling, 2026-10-12):
+>   - **Parse before hashing.** After the panel, `_build` reads and parses every file, confines every directory and checks every base URL, all before any model file is hashed or loaded. No refusal reason changes.
+>   - **Shared defaults.** `ChatModelFile` takes `structured` and `timeout_s` defaults from `LOCAL_STRUCTURED` and `LOCAL_TIMEOUT_S` in `extraction/records.py`, which `LocalModelConfig` also uses.
 
 Create `apps/earnings-pipeline/src/earnings_pipeline/model_runtime.py`:
 
@@ -2359,7 +2405,7 @@ def _scorer(
 
 Python 3.14 evaluates annotations lazily, so the names imported under `TYPE_CHECKING` (`httpx`, `LocalAdapter`, `LocalScorerConfig`) are never looked up at run time. Importing this module loads neither the local adapter nor `nli.py`, nor any model runtime; `test_importing_the_builder_loads_no_adapter_or_runtime` holds it to that.
 
-- [ ] **Step 4: Declare the application's live extra**
+- [x] **Step 4: Declare the application's live extra**
 
 In `apps/earnings-pipeline/pyproject.toml`, after the `orchestration` extra, add:
 
@@ -2374,12 +2420,20 @@ live-models = [
 Run: `uv lock`, then `uv lock --check`
 Expected: `Resolved 153 packages`. `git diff uv.lock` changes only `earnings-pipeline`'s entry: its optional `live-models` dependency, and its `requires-dist`.
 
-- [ ] **Step 5: Run the tests, and watch them pass**
+- [x] **Step 5: Run the tests, and watch them pass**
 
 Run: `uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_model_runtime.py apps/earnings-pipeline/tests/test_theme_workflow.py apps/earnings-pipeline/tests/test_theme_config.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py -q`
 Expected: PASS.
 
-- [ ] **Step 6: Document it**
+- [x] **Step 6: Document it**
+
+> Deviation: the section was first inserted inside Stage 10's section and moved to the end of the file in fix round 1. The final review's fix wave (2026-10-12) corrected four plan-text overclaims:
+> - "ADR 0006 writes the files" became "is to write".
+> - The scorer refusals were split into `model_mismatch` for files and runtime, and `malformed_record` for a wrong pinned field.
+> - The `base_url` loopback check is now attributed to `LocalAdapter` (`loopback_url`).
+> - A sentence was added on relative `models_root`.
+>
+> Fix wave 2 rewrote the order paragraph to its three phases.
 
 Append to the end of `docs/data-dictionary.md`:
 
@@ -2457,7 +2511,7 @@ WORKFLOW_DATACLASSES = [
 Run: `uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py -q`
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git log -3 --oneline
@@ -2476,7 +2530,42 @@ git commit -m "feat(pipeline): build the live research runtime from model files 
 - Modify: `specs/deferred_items.md` (only if execution defers anything)
 - Modify: this plan (completion markup), then `git mv` it to `specs/plans/completed/`
 
-- [ ] **Step 1: Run every scoped check in the worktree**
+- [x] **Step 1: Run every scoped check in the worktree**
+
+> Note: SDD's final whole-branch review ran at `f4dccf9`, with an Opus code-reviewer and Codex. Codex reviewed `f4dccf9` and reported two P2s: the legacy coding run's `proposal_hash`, settled by D-B, and a relative `models_root`, fixed in F8. Its fix wave added two commits:
+> - `5c6585d`, docs, spec and plan text:
+>   - D-B rewords the compatibility sentences.
+>   - D-C replaces FP11's "always dispatches, never reads" with the user's sentence.
+>   - D-D and the review add seven Handoffs bullets.
+>   - It sweeps stale "fresh-call bypass" sentences and corrects the plan-text overclaims.
+> - `1739b1f`:
+>   - F7 pins hash-before-load.
+>   - F8 accepts a relative `models_root`.
+>
+> At the completion protocol's resolve-before-defer gate, the user chose to fix the review's leftovers rather than defer them (2026-10-12). That produced fix wave 2 and one spec commit:
+> - `e374c27`, themes:
+>   - read-only `stability_run_id` on `CodingCache` and `SupportCache`;
+>   - the cache modes named once;
+>   - `match=` on the closed-reason refusal tests;
+>   - a coding record-level `invalid_stability_run`/`replay_dispatched` test;
+>   - the replay run's `CacheMode.REPLAY` assertion;
+>   - a raising-loader test.
+> - `47ee7cb`, app: parse before hash, the shared chat defaults, and builder coverage.
+> - `351ac94`: A1's Tests bullet tightened and FP11 marked amended, both in the user's approved wording.
+>
+> A scoped Opus re-review found every finding addressed, with no Critical or Important issue.
+>
+> At `351ac94`:
+>
+> | Check | Result |
+> | --- | --- |
+> | Command 1 | 200 passed |
+> | Command 2 | 1783 passed, 1 skipped, 2 deselected |
+> | Command 3 | 87 passed |
+> | Command 4 | 391 passed |
+> | Ruff | clean |
+> | `uv lock --check` | `Resolved 153 packages` |
+> | Protected-path diff | empty |
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_extraction_cache.py packages/earnings-themes/tests/test_extraction_run.py packages/earnings-themes/tests/test_extraction_records.py packages/earnings-themes/tests/test_extraction_store.py packages/earnings-themes/tests/test_import_boundaries.py -q
@@ -2496,7 +2585,11 @@ Expected:
 
 Record the exact pass counts for the handoff.
 
-- [ ] **Step 2 (gate): Hand the user the checks only they run**
+- [x] **Step 2 (gate): Hand the user the checks only they run**
+
+> Gate results (2026-10-12):
+> - **First run, at `1739b1f`.** The root suite gave 1 failed, 4404 passed, 2 skipped, 28 deselected and 1 warning, in 862.61 s. The wording test gave 7 passed. The failure was `test_v5_full_invented_bundle_remains_available_after_fixture_cleanup`: a `FileNotFoundError` under the fixed `/private/tmp/earnings-stage10-v5/v1`, whose artifact files an age-based purge of `/private/tmp` had removed. The cause was not this plan. With the user's OK, the stale directory was renamed aside, and the test then passed. A separate session's PR #21 (`de8c9ee`, merged to `main` as `f9afb91`) has since taken that test off `/private/tmp` state.
+> - **Final run, at `351ac94`, after fix wave 2.** The root suite gave 4428 passed, 2 skipped, 28 deselected and 1 warning, in 835.49 s. The wording test gave 7 passed in 0.85 s, with 0 skipped.
 
 Put this to the user in chat, with `<sha>` set to `git rev-parse HEAD`, and wait for the results:
 
@@ -2514,7 +2607,9 @@ Put this to the user in chat, with `<sha>` set to `git rev-parse HEAD`, and wait
 
 If any check fails, stop, and debug it with systematic-debugging before going on. Debug from the test name and reason the user reports, never from pilot text.
 
-- [ ] **Step 3: Run the Plan Completion Protocol**
+- [x] **Step 3: Run the Plan Completion Protocol**
+
+> Deviation (user rulings, 2026-10-12): the gate turned the final review's leftovers into fix wave 2 rather than deferring them. It deferred two doc-precision notes, P18-1 and P18-2 (`specs/deferred_items.md`, section `18-feasibility-pilot-and-threshold-calibration-plan-a-slice-2`), and closed none of the earlier items. The V5 test's fixed-path fragility was going to be a third item, but `main` fixed it first (PR #21), so it is not deferred. The cosmetic Minors were dropped. Three Handoffs bullets were corrected against the code at the tip: the `_extraction` range, the support-key bullet's lead, and the `models_root` bullet's lead.
 
 Follow writing-plans' Plan Completion Protocol:
 - **Resolve-before-defer:** ask the user about anything left open, in one batch (AskUserQuestion, default option first).
@@ -2534,7 +2629,7 @@ Follow writing-plans' Plan Completion Protocol:
 
   **Do not move the spec**, an exception to the protocol's spec-retire rule: plans for A's remainder and B still implement it.
 
-- [ ] **Step 4: Hand off what goes stale**
+- [x] **Step 4: Hand off what goes stale**
 
 Tell the user, without editing these files:
 - `CLAUDE.md`'s "Current state" names Stages 1–10. Stage 11's two slices could be noted there, but per the spec's Rollout and the user's rule, only with the user's approval.
@@ -2567,9 +2662,9 @@ Verified at `36f12ec`, while this plan was written. Recheck each line number bef
 - **`CodingCache` refuses a `CacheMode` member; the other two accept one.** `CodingCache` refuses it as `malformed_record` (`type(mode) is not str`, pre-existing), while `CachedAdapter` and `SupportCache` accept it, since `cache_directory` coerces it. A8 passes `.value` to all three.
 - **A8's existing-ID refusal must test the filesystem.** Check `exists()` on `fresh/<id>/` under each of the three cache roots; never compare ID strings. `STABILITY_RUN_PATTERN` allows uppercase, and on darwin's default case-insensitive APFS `Run-1` and `run-1` share one `fresh/<id>/`. (Or restrict the pattern to lowercase.) Task 2 does not enforce that `fresh/<id>/` starts empty: a reused ID reads that run's earlier replies.
 - **Keep `CachedAdapter` outermost.** `extract_run` records the cache mode only when the adapter *is* a `CachedAdapter` (`isinstance`, `extraction/run.py:227`). Any wrapper around it records `cache_mode=None` and no stability run ID (D18-7). A8 keeps `CachedAdapter` outermost.
-- **Nothing enforces "a `fresh` run is never reused by `pilot run`" yet.** `_extraction` (`theme_workflow.py:~667-692`) never checks a stored extraction run's `cache_mode`. That is right for this slice, but amended A8's "a `fresh` run is never reused by `pilot run`" has no enforcement point here: A8's `pilot run` config assembly owns it.
-- **A support run over a `fresh` extraction run never hits the main support cache.** The support key binds the extraction record, including its `stability_run_id` (`support/cache.py:108`), so it shares no key with a support run over a `live` or `replay` extraction run. A fresh pass therefore runs all three caches fresh.
-- **`build_runtime` takes `models_root` as given.** `confined_path` (`theme_config.py:205-223`) refuses a symlinked models root, and any symlinked ancestor except the root's own parent directory (for example `/tmp` on macOS for a root below `/tmp/x`, or weights on another volume reached by a symlink). A8's CLI passes a real directory or documents this. A relative root is taken relative to the working directory, and `build_runtime` makes it absolute without following symlinks.
+- **Nothing enforces "a `fresh` run is never reused by `pilot run`" yet.** `_extraction` (`theme_workflow.py:~667-707`) never checks a stored extraction run's `cache_mode`. That is right for this slice, but amended A8's "a `fresh` run is never reused by `pilot run`" has no enforcement point here: A8's `pilot run` config assembly owns it.
+- **A support run over a `fresh` extraction run shares no key with one over a `live` or `replay` extraction run.** The support key binds the extraction record, including its `stability_run_id` (`support/cache.py:108`), so it never hits an entry written over a `live` or `replay` extraction run. A fresh pass therefore runs all three caches fresh.
+- **`build_runtime` makes `models_root` absolute, following no symlink.** `confined_path` (`theme_config.py:205-223`) refuses a symlinked models root, and any symlinked ancestor except the root's own parent directory (for example `/tmp` on macOS for a root below `/tmp/x`, or weights on another volume reached by a symlink). A8's CLI passes a real directory or documents this. A relative root is taken relative to the working directory, and `build_runtime` makes it absolute without following symlinks.
 - **A4 and A5** read `SupportRunRecord.cache_mode` and `stability_run_id`. The labels bind `target_input_hash`, and a target's ID (`support/resolve.py:366`) does not change between the pass's support run and `pilot run`'s replayed one.
 - **Plan B's B1:**
   - The smoke should compare `ChatTokenCounter`'s count with the server's reported `prompt_tokens` on every call, since a GGUF's embedded chat template can differ from its repository's (Task 5).

@@ -1509,3 +1509,34 @@
       and the user's gate 3 shows the three signed files valid. Source: plan 17's final
       review. Size: plan. Done when: the plan that implements A8 records a decision on
       each, with tests for those it adopts.
+
+## 18-feasibility-pilot-and-threshold-calibration-plan-a-slice-2 — 2026-10-12
+
+- [ ] **P18-1 — Say which hashes now cover a support run's cache mode.** Plan 18 added
+      `cache_mode` and `stability_run_id` to `SupportRunRecord`, so every digest of that
+      record's dump now covers both fields:
+      - `support_run_hash` and `_support_content_hash`
+        (packages/earnings-themes/src/earnings_themes/coding/decide.py:96 and :101);
+      - their consumers: decide.py:339-340, coding/assignments.py:106, coding/store.py:758,
+        and analysis/consume.py:375 and :385;
+      - the `run.json` byte hash
+        (apps/earnings-pipeline/src/earnings_pipeline/theme_workflow.py:1027).
+      The code is right, but no sentence in docs/data-dictionary.md says this. Deferred at
+      plan 18's resolve-before-defer gate (the user's ruling, 2026-10-12): it is a
+      doc-precision note, not a defect. Source: plan 18's Task 4 review. Size: quick-fix.
+      Done when: docs/data-dictionary.md's support-record section names the digests that
+      cover the two fields, with tests/contracts/test_data_dictionary.py passing.
+- [ ] **P18-2 — The scorer file's pinned-field list is not exhaustive.**
+      - Where the list appears: the "Stage 11 live runtime" section of
+        docs/data-dictionary.md, and the module docstring of
+        apps/earnings-pipeline/src/earnings_pipeline/model_runtime.py.
+      - What it names: the pinned fields whose mismatch makes a scorer file
+        `malformed_record`, namely the revision, runtime versions, encoding version and
+        label mapping.
+      - What it omits: `LocalScorerConfig._pinned`
+        (packages/earnings-themes/src/earnings_themes/support/nli.py:48-69) also refuses a
+        missing or repeated file name, and a MiniCheck `input_limit` above 512.
+      Deferred at plan 18's resolve-before-defer gate (the user's ruling, 2026-10-12) as a
+      doc-precision note. Source: plan 18's fix-wave re-review. Size: quick-fix. Done
+      when: both places name every condition `_pinned` refuses, or say the list is by
+      example.
