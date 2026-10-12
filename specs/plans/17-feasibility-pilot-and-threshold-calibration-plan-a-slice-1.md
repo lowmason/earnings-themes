@@ -761,8 +761,9 @@ def drafted(**changes) -> GoldDraft:
 
 def verify(bundle, codebook, data: bytes, **changes):
     """``verify_independent`` over the synthetic dev bundle, with the kept draft and
-    a ledger whose one row holds ``data``'s hash; ``changes`` replace any of them,
-    and may name another ``event_id``."""
+    a ledger whose one row holds ``data``'s hash; ``changes`` replace the ledger,
+    the record or the draft, and may name another ``event_id``. Another codebook is
+    passed positionally: ``codebook`` is a parameter here."""
     arguments = {
         "ledger": IndependentLedger(rows=(row(sha256_hex(data)),)),
         "record": data,
@@ -845,7 +846,7 @@ def test_the_record_is_checked_before_either_reading(bundle, codebook) -> None:
     unapproved = codebook.model_copy(
         update={"status": CodebookStatus.DRAFT, "approval": None}
     )
-    assert verify(bundle, codebook, DATA, codebook=unapproved) == [
+    assert verify(bundle, unapproved, DATA) == [
         Refusal("codebook", "codebook_not_approved")
     ]
 
@@ -1400,6 +1401,23 @@ from earnings_pipeline.stage6 import (
     record_error,
     transitions,
     write_once,
+)
+```
+
+Change the group's help, from:
+
+```python
+pilot = typer.Typer(
+    no_args_is_help=True, help="Stage 6's split and coverage report, over the pin."
+)
+```
+
+to:
+
+```python
+pilot = typer.Typer(
+    no_args_is_help=True,
+    help="Stage 6's split and coverage report, and Stage 11's recount, over the pin.",
 )
 ```
 
@@ -2390,6 +2408,7 @@ Verified at `c1e7ac7`, while this plan was written. Recheck each line number bef
 - **`pilot independent` (A8) composes `verify_independent`** with `gold_cli.py`'s `_independent_path` and `_read_ledger`. Move those two to `stage6.py` when this second caller arrives. It runs for dev events only, and prints A3's figures computed from `IndependentReadings`. The anchored readings stay in memory, or local under `data/runs/pilot/` (FP16).
 - **Plan B's B7** freezes coverage v2 with `pilot coverage --version 2`, and runs `pilot recount` before GS5's shares are reported (§Failure handling).
 - **A9's dictionary rows** for the remainder's records (labels, preregistration, calibration, report, gates) go with the tasks that add them. Task 7's globs already scan their paths.
+- **A8's sentinel tests should cover this slice's commands too.** The spec asks for a sentinel test per command, which plants marker text in invented inputs and shows it never prints. That should include `pilot recount` and `pilot coverage --version 2`. This slice's CLI tests use `quiet()`, which guards canonical text only, not the strings in a draft, a working copy, or a gold file's claims.
 - **Size.** The remainder is likely two or more plans: A1 and A2, the runtime; A3–A5, evaluation, labels and calibration; and A8, the commands.
 
 ---
