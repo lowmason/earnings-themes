@@ -97,7 +97,9 @@ Taken by the user:
 - **D18-5** (user, planning, 2026-10-12): `fresh` is `live` over its own new directory, `<cache>/fresh/<stability_run_id>/`. It never reads the main cache. A request repeated within the run is served from that run's reply, as in the live pass: two quotes with the same text in one target share a scorer key. Applied in: Task 1 (spec amendment: A1's bullet); Tasks 2–4.
 - **D18-6** (user, planning, 2026-10-12): `jinja2==3.1.6`, already locked, joins themes' `support-nli` extra, since `apply_chat_template` needs it. The application gains a `live-models` extra pulling `earnings-themes[local-model,support-nli]`. Applied in: Tasks 5 and 6.
 
-Planner defaults, for the user's review:
+- **D18-13** (user, plan review, 2026-10-12): Task 1's spec wording approved as written; planner defaults D18-7 to D18-12 accepted; the support-key consequence under D18-4 accepted as documented, with no A1 clarification. Applied in: Task 1; Tasks 2–6.
+
+Planner defaults, for the user's review (accepted at the plan review, D18-13):
 - **D18-7:** extraction's `RunRecord.cache_mode` is `None` when the run's adapter is not a `CachedAdapter`, as in most tests. Coding and support always run through their cache, so theirs is never null. Applied in: Task 2.
 - **D18-8:** one check, `cache_mode_problem`, makes each run record refuse two things. A stability run ID must be present exactly under `fresh` (`invalid_stability_run`). A `replay` run must have dispatched nothing (`replay_dispatched`). Applied in: Tasks 2–4.
 - **D18-9:** committed model files name directories relative to a models root that `build_runtime` takes as an argument. A scorer's file is a `LocalScorerConfig` with `directory` in place of `local_directory`, built at run time through `parse_support`, so no field list is copied. A8 picks how the root is supplied. Applied in: Task 6.
