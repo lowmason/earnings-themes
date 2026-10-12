@@ -505,6 +505,9 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+live-models = [
+    { name = "earnings-themes", extra = ["local-model", "support-nli"] },
+]
 orchestration = [
     { name = "langgraph" },
 ]
@@ -515,6 +518,7 @@ requires-dist = [
     { name = "earnings-core", editable = "packages/earnings-core" },
     { name = "earnings-ingestion", editable = "packages/earnings-ingestion" },
     { name = "earnings-themes", editable = "packages/earnings-themes" },
+    { name = "earnings-themes", extras = ["local-model", "support-nli"], marker = "extra == 'live-models'", editable = "packages/earnings-themes" },
     { name = "langgraph", marker = "extra == 'orchestration'" },
     { name = "polars" },
     { name = "pyarrow" },
@@ -522,7 +526,7 @@ requires-dist = [
     { name = "rich" },
     { name = "typer" },
 ]
-provides-extras = ["orchestration"]
+provides-extras = ["orchestration", "live-models"]
 
 [[package]]
 name = "earnings-themes"

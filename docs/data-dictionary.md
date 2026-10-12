@@ -6282,6 +6282,67 @@ Valid schema-1 partial/null missingness remains compatible; malformed schema-2
 partial/null/unknown/processing_failed missingness now refuses, with no silent
 migration. Schema-2 processing appends alongside immutable acquisition history.
 
+## Stage 11 live runtime (plan 18)
+
+`earnings_pipeline.model_runtime.build_runtime(manifest, models_root, *, transport=None)`
+assembles the live runtime for scope `research` from committed model files (the Stage
+11 spec, A2). It chooses no model: ADR 0006 writes the files (B1). It checks the panel
+against Stage 8's family rules before any model file is hashed or loaded
+(`invalid_panel`). It then hashes every chat model's weights and tokenizer files, and
+each scorer checks its own files and installed runtime (`model_mismatch`). A file that
+does not read, or a directory outside the models root, is `malformed_record`. Building
+sends no request and counts no token, so a runtime built for replay needs no model
+server. A scorer's file is a `LocalScorerConfig` whose `directory`, relative to the
+models root, stands in for its absolute `local_directory`, so no committed file holds a
+path on this machine. A chat model's `encoding_version` is `chat-tokens/1:` and its
+tokenizer files' `files_hash`, so its identity names the tokenizer that counts its
+requests. When no tokenizer loader is injected, the builder checks the pinned runtime
+versions and loads each tokenizer with transformers' `AutoTokenizer` (the application
+owns this, because the themes package may not import those runtimes). The application's
+`live-models` extra installs the runtimes it needs.
+
+### `RuntimeManifest`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Application record schema version |
+| `extractor` | file name | The extractor's `ChatModelFile`, beside the manifest |
+| `classifier` | file name | The classifier's `ChatModelFile`; may be the extractor's |
+| `judges` | two file names | The two judges' `ChatModelFile`s, in panel order |
+| `scorer` | file name | The primary scorer's file, a `minicheck` `LocalScorerConfig` |
+| `alternative_scorer` | file name | The alternative scorer's file, a `deberta` `LocalScorerConfig`, for the second support run |
+
+### `ChatModelFile`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | `1` | Application record schema version |
+| `family` | string | Model family, for Stage 8's panel rule |
+| `base_url` | string | The server's OpenAI-compatible root; loopback only (`LocalModelConfig`) |
+| `model_id` | string | The model the server names in each reply |
+| `runtime` | string | The serving runtime's name |
+| `runtime_version` | string | Its version |
+| `structured` | bool | Whether the runtime honors a strict JSON-schema `response_format`; default true |
+| `timeout_s` | float > 0 | Seconds per request; default 300 |
+| `revision` | string | The weights' repository revision |
+| `device` | string | The device the server runs on |
+| `precision` | string | The weights' quantization or precision |
+| `input_limit` | int > 0 | Total context: full prompt plus reserved output |
+| `output_limit` | int > 0 | Bound on `max_tokens` |
+| `weights_directory` | relative path | Under the models root; holds exactly `weights` |
+| `weights` | tuple[FileHash, …] | Every weights file; their `files_hash` is the adapter's `weights_sha256` |
+| `tokenizer_directory` | relative path | Under the models root; holds exactly `tokenizer_files` |
+| `tokenizer_files` | tuple[FileHash, …] | Every tokenizer file (`ChatTokenizerConfig`) |
+| `weight_license` | WeightLicense | Verified weight terms |
+
+### `LiveRuntime`
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `workflow` | `WorkflowRuntime` | Extractor, classifier, scorer and judges; no assignment policy and no renderer |
+| `alternative_scorer` | `EntailmentScorer` | DeBERTa, for the second support run over the same judges |
+| `extractor_family` | string | The extractor's family, for Stage 8's panel rule |
+
 The analysis-as-published acquisition baseline and the receipt's independently
 verified current processing artifact have different identities. Coverage uses
 checked completion outcomes while retaining the baseline state run/schema.
