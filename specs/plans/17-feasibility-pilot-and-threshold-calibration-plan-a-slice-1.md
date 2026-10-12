@@ -1,5 +1,7 @@
 # Stage 11 Plan A, Slice 1: Gold-Side Fixes and Coverage v2 Implementation Plan
 
+**Status: COMPLETE (2026-10-11)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Close plan 10's kept-draft repeated-ID item, P16-2 and P16-3, and give the `pilot` group a counts-only GS5 recheck (`pilot recount`) and coverage v2 (`pilot coverage --version 2`): the Stage 11 spec's A6, A7, and the wording globs of A9, with no pilot text and no model.
@@ -143,7 +145,10 @@ Instead, it appends a slice stamp to the spec's Rollout and retires only itself 
 
 The planning session committed this plan on branch `stage-11-plan-a-gold-and-coverage`, cut from `main` at `c1e7ac7`, and returned the main checkout to `main`.
 
-- [ ] **Step 1: Ask the user where to execute.** The user decides whether to use a worktree when execution starts. Recommend one: a worktree has no `data/`, so GS13 holds by construction. With a worktree, follow using-git-worktrees for the existing branch, from the main checkout:
+- [x] **Step 1: Ask the user where to execute.** The user decides whether to use a worktree when execution starts. Recommend one: a worktree has no `data/`, so GS13 holds by construction. With a worktree, follow using-git-worktrees for the existing branch, from the main checkout:
+
+> Note: the user chose a worktree (2026-10-11), `.claude/worktrees/stage-11-plan-a-gold-and-coverage`. Baseline recorded: 443 scoped tests passed, Ruff clean.
+
 
 ```bash
 git worktree add .claude/worktrees/stage-11-plan-a-gold-and-coverage stage-11-plan-a-gold-and-coverage
@@ -155,7 +160,7 @@ Then work inside `.claude/worktrees/stage-11-plan-a-gold-and-coverage` and sync:
 uv sync --locked --all-packages --group dev
 ```
 
-- [ ] **Step 2: Record the baseline.** Run the scoped checks (Task 8, Step 1's commands). Expected: every test passes, and Ruff is clean. Record the pass counts.
+- [x] **Step 2: Record the baseline.** Run the scoped checks (Task 8, Step 1's commands). Expected: every test passes, and Ruff is clean. Record the pass counts.
 
 ---
 
@@ -170,7 +175,10 @@ uv sync --locked --all-packages --group dev
 - Consumes: `_Origins` (:147), `_items` (:189), `GoldDraft`, `FixtureDraft`, `CuratedDraft`, `Problem.DUPLICATE_ID`, `Refusal`.
 - Produces: `_repeats(draft: GoldDraft | IndependentRecord | FixtureDraft, prefix: str) -> list[Refusal]`, which Task 3's `anchor_reading` reuses. `build_gold` and `build_curated` keep their signatures.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+
+> Deviation: two tests added for D17-2's early returns, a kept draft that repeats an ID with a mismatched event, and with an event the split does not hold (user ruling, 2026-10-11).
+
 
 In `packages/earnings-themes/tests/test_gold.py`, `test_ids_themes_and_ties_are_checked` builds a draft that is also its working copy and repeats `c1`. Change its first assertion's list, at :185, from:
 
@@ -246,7 +254,7 @@ def test_a_kept_draft_that_repeats_an_id_is_refused_by_id(repo) -> None:
     assert not (repo / "data" / "runs" / "gold" / "anchored").exists()
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run:
 
@@ -267,7 +275,10 @@ uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_stage6_c
 
 Expected: 1 failed, with exit code 0 where 1 was expected.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
+
+> Deviation (user ruling, 2026-10-11): a private `_duplicates(label, ids)` holds the repeat detection and the `duplicate_id` refusal once; `_ids`, `_repeats`, `_curated_repeats` and `validate_curated`'s fixture block call it, so no loop is copied. `build_gold` computes the kept draft's repeats first and carries them on its event-ID and unknown-partition early returns (D17-2). `_repeats` sorts assignment rows as `(claim_id, theme_id)` tuples, as `_ids` does.
+
 
 In `packages/earnings-themes/src/earnings_themes/annotation.py`, replace the module docstring's second bullet:
 
@@ -399,7 +410,7 @@ Also change its docstring to:
     kept draft that repeats a fixture or an ID is refused with the rest."""
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/src/earnings_themes/annotation.py packages/earnings-themes/tests/test_gold.py apps/earnings-pipeline/tests/test_stage6_cli.py
@@ -409,7 +420,7 @@ uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_stage6_c
 
 Expected: every test passes.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git log -3 --oneline
@@ -435,7 +446,7 @@ git commit -m "fix(themes): refuse a kept draft that repeats an ID (A6(1))"
   - `ledger_check(ledger: IndependentLedger | None, event_id: str, record: bytes | None) -> Problem | None`, which Task 3's `verify_independent` uses;
   - `ledger_problem`, whose signature and phrases are unchanged.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `packages/earnings-themes/tests/test_independent.py`, add to the imports:
 
@@ -502,7 +513,7 @@ def test_the_ledger_check_names_each_problem(ledger, found, problem) -> None:
     assert ledger_check(ledger, DEV, found) == problem
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_independent.py -q
@@ -510,7 +521,7 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_indepe
 
 Expected: collection fails with `ImportError: cannot import name 'ledger_check'`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/earnings-themes/src/earnings_themes/problems.py`, change the class docstring to:
 
@@ -637,7 +648,7 @@ Then add, after the `adr_not_cited` row:
 | `record_changed` | An independent record does not hash to its ledger row; it is never edited (GS19) |
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/src/earnings_themes/problems.py packages/earnings-themes/src/earnings_themes/annotation.py packages/earnings-themes/src/earnings_themes/independent.py packages/earnings-themes/tests/test_independent.py
@@ -647,7 +658,7 @@ uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py ap
 
 Expected: every test passes. `test_a_dev_draft_waits_for_a_record_that_matches_its_one_row` passes unchanged: the phrases are the same.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git log -3 --oneline
@@ -679,7 +690,7 @@ git commit -m "feat(themes): refuse an unapproved codebook in check_independent;
 
   Plan A's remainder computes A3's figures from `IndependentReadings`. `tomlfile.loads` is also used by Task 4.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `packages/earnings-themes/tests/test_tomlfile.py`, change the import to:
 
@@ -876,7 +887,7 @@ def test_another_event_s_bundle_or_draft_is_refused(bundle, codebook) -> None:
 
 In `tests/contracts/test_data_dictionary.py`, add `annotation.Reading,` after `annotation.IndependentRecord,`, and `independent.IndependentReadings,` after `independent.IndependentLedger,` in `MODELS`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_tomlfile.py packages/earnings-themes/tests/test_independent.py tests/contracts/test_data_dictionary.py -q
@@ -884,7 +895,7 @@ uv run --locked --all-packages pytest packages/earnings-themes/tests/test_tomlfi
 
 Expected: each of the three modules fails at collection with an `ImportError` (`loads`), an `ImportError` (`IndependentReadings`), and an `AttributeError` (`annotation.Reading`).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/earnings-themes/src/earnings_themes/tomlfile.py`, add `import io` to the imports (after `import json`), and replace `read` (:73–83) with:
 
@@ -1079,7 +1090,10 @@ it; nothing of it is written or committed (FP16).
 | `draft` | `Reading` | The kept draft |
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
+
+> Deviation: `packages/earnings-themes/tests/test_import_boundaries.py`, which the plan does not list, now plants `test_fresh_process_guard_detects_planted_transitive_independent`'s import at the end of `gold.py` instead of `tomlfile.py`. `independent` now imports `annotation`, which imports `tomlfile`, so the old plant was a circular import that crashed the probe before it loaded anything. The task review found the edit necessary and the probe still sound.
+
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/src/earnings_themes/tomlfile.py packages/earnings-themes/src/earnings_themes/annotation.py packages/earnings-themes/src/earnings_themes/independent.py packages/earnings-themes/tests/test_tomlfile.py packages/earnings-themes/tests/test_independent.py tests/contracts/test_data_dictionary.py
@@ -1089,7 +1103,7 @@ uv run --locked --all-packages pytest tests/contracts/test_data_dictionary.py ap
 
 Expected: every test passes. In particular, `test_import_boundaries.py` passes: `annotation.py` still does not import `independent.py`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git log -3 --oneline
@@ -1116,7 +1130,10 @@ git commit -m "feat(themes): verify a dev record against its ledger and anchor b
   - `Problem.NOT_REBUILT`;
   - the CLI command `earnings-pipeline pilot recount [EVENTS]`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+
+> Deviation: Ruff ISC004 forced parentheses around an implicitly concatenated string pair in the last assertion of `test_recount_needs_committed_gold_and_its_kept_drafts`; the text is unchanged.
+
 
 In `packages/earnings-themes/tests/test_gold.py`, change the `earnings_themes.annotation` import to:
 
@@ -1274,7 +1291,7 @@ def test_recount_needs_committed_gold_and_its_kept_drafts(repo) -> None:
     ]
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_gold.py -q
@@ -1288,7 +1305,7 @@ uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_stage6_c
 
 Expected: 3 failed, each because Typer prints `No such command 'recount'` (exit code 2).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `problems.py`, add after `RECORD_CHANGED = "record_changed"`:
 
@@ -1520,7 +1537,7 @@ In `docs/data-dictionary.md` §`Problem`, add after the `record_changed` row:
 | `not_rebuilt` | A committed gold file is not what its kept draft and working copy build (the Stage 11 spec, A6(4)) |
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/src/earnings_themes/problems.py packages/earnings-themes/src/earnings_themes/annotation.py apps/earnings-pipeline/src/earnings_pipeline/pilot_cli.py packages/earnings-themes/tests/test_gold.py apps/earnings-pipeline/tests/test_stage6_cli.py
@@ -1530,7 +1547,7 @@ uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_stage6_c
 
 Expected: every test passes, including the existing coverage and split CLI tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git log -3 --oneline
@@ -1554,7 +1571,7 @@ git commit -m "feat(pipeline): pilot recount, the counts-only GS5 recheck (A6(4)
   - `build_coverage(pilot, pin, transitions, *, run_ids=None, version=1, no_theme: Collection[NoThemeCount] = ())`, which Task 6's CLI calls;
   - `NoThemeCount` and `CoverageReport`, now validated.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `packages/earnings-ingestion/tests/test_events_coverage.py`, change the coverage import to:
 
@@ -1607,7 +1624,7 @@ def test_no_theme_rows_are_bounded_counted_once_and_absent_from_v1(synthetic) ->
         build_coverage(pilot, pin, transitions, no_theme=[train])
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_events_coverage.py -q
@@ -1617,7 +1634,7 @@ Expected: 2 failed:
 - the first with `TypeError: build_coverage() got an unexpected keyword argument 'no_theme'`;
 - the second at `NoThemeCount(... no_theme=2)`, with `DID NOT RAISE`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/earnings-ingestion/src/earnings_ingestion/events/coverage.py`, replace the module docstring's last bullet:
 
@@ -1709,7 +1726,7 @@ and §`CoverageReport`'s `no_theme` row to:
 | `no_theme` | tuple of `NoThemeCount` | Empty in version 1; from version 2, one row per partition counted, in train, dev, test order: Stage 11 adds train and dev, and Stage 14 test (R12.4, GS18) |
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 uv run --locked ruff format packages/earnings-ingestion/src/earnings_ingestion/events/coverage.py packages/earnings-ingestion/tests/test_events_coverage.py
@@ -1719,7 +1736,7 @@ uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_stage6_c
 
 Expected: every test passes. The existing `test_coverage_counts_each_state_and_rereads_only_its_runs` still gives `froze coverage v1: 27 documents`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git log -3 --oneline
@@ -1746,7 +1763,10 @@ git commit -m "feat(ingestion): coverage v2's validated no-theme rows (A7)"
   - `Pinned.coverage_file(version: int) -> Path`;
   - the CLI option `pilot coverage --version {1,2}`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+
+> Deviation: the same ISC004 parentheses in `test_coverage_takes_versions_1_and_2_and_v2_needs_v1`. Confirmed: the synthetic training release holds `SENTENCE` once for all 11 train events (`signed_training` anchors every one).
+
 
 In `packages/earnings-themes/tests/test_gold.py`, add `check_countable` to the `earnings_themes.annotation` import list, after `build_gold`:
 
@@ -1958,7 +1978,7 @@ def test_a_committed_coverage_v2_rebuilds_unchanged_from_v1_s_runs() -> None:
     ]
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_gold.py -q
@@ -1972,7 +1992,10 @@ uv run --locked --all-packages pytest apps/earnings-pipeline/tests/test_stage6_c
 
 Expected: 4 failed, because Typer refuses `--version` as `No such option` (exit code 2).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
+
+> Deviation (ratified by the user at the completion gate, 2026-10-11): a private `_standing(...)` helper in `annotation.py`, called by `validate_gold` and `check_countable`, replaces a copy of `validate_gold`'s block (its refusal order is unchanged). So `check_countable` returns `excluded_event` for an excluded event where the plan's inline code returned `wrong_partition`; the CLI reads train and dev only and cannot reach the branch. A test pins it.
+
 
 In `annotation.py`, add after `recount`:
 
@@ -2170,7 +2193,10 @@ Then run this and confirm it prints nothing:
 grep -rn "coverage_path" packages apps tests
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
+
+> Note: `tests/integration/test_stage6_pilot_v1.py` was edited and Ruff-checked, and never run by the executor (the user's gate file). It skips until plan B's B7.
+
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/src/earnings_themes/annotation.py apps/earnings-pipeline/src/earnings_pipeline/stage6.py apps/earnings-pipeline/src/earnings_pipeline/pilot_cli.py packages/earnings-themes/tests/test_gold.py apps/earnings-pipeline/tests/test_stage6_cli.py tests/integration/test_stage6_pilot_v1.py
@@ -2183,7 +2209,7 @@ Expected:
 - every test passes, including `test_coverage_counts_each_state_and_rereads_only_its_runs` for version 1;
 - Ruff is clean on the integration file, which is not run.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git log -3 --oneline
@@ -2204,7 +2230,7 @@ git commit -m "feat(pipeline): pilot coverage --version 2 counts train's and dev
 - Consumes: `STAGE6`.
 - Produces: `STAGE11`, the planned Stage 11 paths, which plan A's remainder and plan B rely on being scanned.
 
-- [ ] **Step 1: Write the test, and the globs it needs**
+- [x] **Step 1: Write the test, and the globs it needs**
 
 There is no red step the executor can run: the file is the user's gate. The new test fails without the globs, because the ledger path matches none of `STAGE6`'s patterns today (P16-3), and the user's gate 2 shows it passing.
 
@@ -2285,7 +2311,7 @@ def test_the_ledger_and_stage_11_s_records_are_among_the_files_checked(
     assert set(STAGE11) <= found
 ```
 
-- [ ] **Step 2: Check it with Ruff only**
+- [x] **Step 2: Check it with Ruff only**
 
 ```bash
 uv run --locked ruff format tests/integration/test_stage6_wording.py
@@ -2294,7 +2320,7 @@ uv run --locked ruff check tests/integration/test_stage6_wording.py
 
 Expected: Ruff is clean. Do not run pytest on this file.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git log -3 --oneline
@@ -2311,7 +2337,10 @@ git commit -m "test(stage6): scan the ledger and Stage 11's records in the wordi
 - Modify: `specs/deferred_items.md` (ticks and a note)
 - Modify: this plan (completion markup), then `git mv` it to `specs/plans/completed/`
 
-- [ ] **Step 1: Run every scoped check in the worktree**
+- [x] **Step 1: Run every scoped check in the worktree**
+
+> Note: the final whole-branch review (an Opus code-reviewer; Codex found no defect) added commit `3406ba4`: it pins `check_countable`'s `excluded_event` result, asserts the `--version 3` exit code, asserts `DRAFTING[0] == "gold.py"` in the moved import probe, passes `run_ids or ()` to `_no_theme`, and parenthesises `(repeats + refusals) or gold`. At `3406ba4`: 482 scoped tests passed (443 at the baseline), Ruff clean, and the protected-path diff (which also covered `tests/fixtures/gold`) was empty.
+
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/test_gold.py packages/earnings-themes/tests/test_independent.py packages/earnings-themes/tests/test_tomlfile.py packages/earnings-themes/tests/test_import_boundaries.py packages/earnings-ingestion/tests/test_events_coverage.py apps/earnings-pipeline/tests/test_stage6_cli.py tests/contracts/test_data_dictionary.py -q
@@ -2326,7 +2355,10 @@ Expected:
 
 Record the exact pass counts for the handoff.
 
-- [ ] **Step 2 (gate): Hand the user the checks only they run**
+- [x] **Step 2 (gate): Hand the user the checks only they run**
+
+> Gate results (2026-10-11, `3406ba4`): (1) root suite: 4336 passed, 2 skipped, 28 deselected, 1 warning in 832.21 s (baseline 4296 / 1 / 28 / 1). (2) wording test: 7 passed in 1.19 s. (3) `gold validate`: three files valid and signed; `pilot recount`: each rebuilds from its kept draft (accepted 173, 171 and 282; edited, rejected and added 0). (4) `pilot coverage`: unchanged, v1 40 documents; `--version 2`: refused on 25 bundles (17 train, 8 dev), and `coverage-v2.json` was not written.
+
 
 Put this to the user in chat, with `<sha>` set to `git rev-parse HEAD`, and wait for the results:
 
@@ -2354,7 +2386,7 @@ Put this to the user in chat, with `<sha>` set to `git rev-parse HEAD`, and wait
 
 If any check fails, stop, and debug it with systematic-debugging before going on. Debug from the test name and reason the user reports, never from pilot text.
 
-- [ ] **Step 3: Run the Plan Completion Protocol**
+- [x] **Step 3: Run the Plan Completion Protocol**
 
 Follow writing-plans' Plan Completion Protocol:
 - **Resolve-before-defer:** ask the user about anything left open, in one batch (AskUserQuestion, default option first).
@@ -2379,7 +2411,7 @@ Follow writing-plans' Plan Completion Protocol:
 
   **Do not move the spec**, an exception to the protocol's spec-retire rule (D17-11): plans for A's remainder and B still implement it.
 
-- [ ] **Step 4: Hand off what goes stale**
+- [x] **Step 4: Hand off what goes stale**
 
 Tell the user, without editing these files:
 - `CLAUDE.md`'s "Current state" names Stages 1–10. Stage 11's first slice could be noted there, but per the spec's Rollout and the user's rule, only with the user's approval.
@@ -2410,6 +2442,8 @@ Verified at `c1e7ac7`, while this plan was written. Recheck each line number bef
 - **A9's dictionary rows** for the remainder's records (labels, preregistration, calibration, report, gates) go with the tasks that add them. Task 7's globs already scan their paths.
 - **A8's sentinel tests should cover this slice's commands too.** The spec asks for a sentinel test per command, which plants marker text in invented inputs and shows it never prints. That should include `pilot recount` and `pilot coverage --version 2`. This slice's CLI tests use `quiet()`, which guards canonical text only, not the strings in a draft, a working copy, or a gold file's claims.
 - **Size.** The remainder is likely two or more plans: A1 and A2, the runtime; A3–A5, evaluation, labels and calibration; and A8, the commands.
+- **As built, where it differs from the text above (added at completion).** `annotation.py` also holds `_duplicates(label, ids)` (the one repeat helper) and `_standing(...)` (the shared pin, split, partition, codebook, signature and `no_theme` block that `validate_gold` and `check_countable` call); `check_countable` returns `excluded_event`, not `wrong_partition`, for an excluded event. `test_import_boundaries.py`'s transitive-import probe plants in `gold.py` now. The suite baseline is 4336 passed, 2 skipped, 28 deselected, 1 warning in 832 s at `3406ba4`.
+- **Deferred into the remainder.** `specs/deferred_items.md`, section `17-feasibility-pilot-and-threshold-calibration-plan-a-slice-1`: P17-5 holds A3's and A8's decisions (partition checks on `recount` and `coverage --version 2`; whether `anchor_reading` validates the kept draft; `verify_independent` raising `RecordError`; a `doc_id` check in `check_countable`); P17-1 is the `stage6.py` consolidation to do with A8; P17-2 holds the test gaps A8's sentinel tests may close.
 
 ---
 
