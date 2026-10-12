@@ -2466,6 +2466,33 @@ session starts (GS19).
 | `schema_version` | `1` | Themes record schema version |
 | `rows` | tuple of `LedgerRow` | One per dev bundle |
 
+### `Reading`
+
+One reading of a dev bundle, anchored in memory and never written (the Stage 11 spec,
+A6(3)): the user's independent record, its items `annotator_added`, or the kept draft,
+its items `drafted_accepted`.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `no_theme` | bool | As `Gold` |
+| `release_identification` | `ReleaseIdentification` | As `Gold` |
+| `quotes` | tuple of `GoldQuote` | Its quotes, anchored |
+| `claims` | tuple of `GoldClaim` | Its claims |
+| `assignments` | tuple of `GoldAssignment` | Its assignments |
+| `hard_negatives` | tuple of `HardNegative` | Its hard-negative claims |
+
+### `IndependentReadings`
+
+What `verify_independent` returns for a dev bundle whose independent record matches
+its one ledger row and checks clean. Stage 11's comparison figures are computed from
+it; nothing of it is written or committed (FP16).
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `event_id` | ID part | The dev bundle's event |
+| `record` | `Reading` | The user's independent record |
+| `draft` | `Reading` | The kept draft |
+
 ## Stage 6 files
 
 - **Committed, written once.** `evaluation/<corpus>/pilot-v<N>/split-v<M>.json`,

@@ -330,7 +330,10 @@ def test_fresh_process_guard_detects_planted_transitive_independent(
 
     package = tmp_path / "earnings_themes"
     shutil.copytree(SOURCE, package, ignore=shutil.ignore_patterns("__pycache__"))
-    with (package / "tomlfile.py").open("a", encoding="utf-8") as stream:
+    # ``independent`` imports ``annotation``, which imports ``tomlfile``: a plant
+    # there is a circular import that fails before it loads anything. ``gold`` is
+    # imported first and the plant is its last line, so the import completes.
+    with (package / "gold.py").open("a", encoding="utf-8") as stream:
         stream.write("\nimport earnings_themes.independent\n")
     modules = [f"earnings_themes.{n.removesuffix('.py')}" for n in DRAFTING]
     assert INDEPENDENT in modules_loaded_by(modules, cwd=tmp_path)

@@ -128,6 +128,19 @@ class CuratedDraft(Part):
     documents: Annotated[tuple[FixtureDraft, ...], Some]
 
 
+class Reading(Part):
+    """One reading of a bundle, anchored in memory and never written: the user's
+    independent record, its items ``annotator_added``, or the kept draft, its items
+    ``drafted_accepted`` (GS19; the Stage 11 spec, A6(3))."""
+
+    no_theme: bool
+    release_identification: ReleaseIdentification
+    quotes: tuple[GoldQuote, ...] = ()
+    claims: tuple[GoldClaim, ...] = ()
+    assignments: tuple[GoldAssignment, ...] = ()
+    hard_negatives: tuple[HardNegative, ...] = ()
+
+
 def signed(annotator: str) -> bool:
     """P9-18: a file is signed when its ``annotator`` is not blank."""
     return bool(annotator.strip())
@@ -351,6 +364,30 @@ def check_independent(
     )
     refusals += _pointers(made["quotes"], bundle, "")
     return refusals + _wording(without_quotes(record), {bundle.name: bundle})
+
+
+_ITEMS = ("quotes", "claims", "assignments", "hard_negatives")
+
+
+def anchor_reading(
+    source: GoldDraft | IndependentRecord, bundle: Bundle, prefix: str
+) -> Reading | list[Refusal]:
+    """``source`` anchored over ``bundle`` in memory, or every reason it cannot be:
+    a kept draft's items as drafted, and an independent record's as the user's own.
+    A repeated ID is refused, since items are compared by ID. Nothing is written,
+    and a refusal names its item by ID (GS13)."""
+    drafted = source
+    if isinstance(source, IndependentRecord):
+        drafted = source.model_copy(update=dict.fromkeys(_ITEMS, ()))
+    made, refusals = _items(drafted, source, bundle, _Origins(), prefix)
+    refusals = _repeats(source, prefix) + refusals
+    if refusals:
+        return refusals
+    return Reading(
+        no_theme=source.no_theme,
+        release_identification=source.release_identification,
+        **made,
+    )
 
 
 def _ids(
