@@ -452,3 +452,5 @@ On each plan's completion, refresh the "Current state" section of `CLAUDE.md`, w
 user's approval.
 
 > Plan A, slice 1: COMPLETE (2026-10-11) — implemented by plan 17 (specs/plans/completed/17-feasibility-pilot-and-threshold-calibration-plan-a-slice-1.md): A6, A7, and A9's wording globs. Next: write plan A's remainder (A1–A5, A8, and A9's dictionary rows).
+
+> Plan A, slice 2: COMPLETE (2026-10-12) — implemented by plan 18 (specs/plans/completed/18-feasibility-pilot-and-threshold-calibration-plan-a-slice-2.md): A1, A2, and A9's dictionary rows for their records; FP11, FP23, A1 and A8 amended. Next: write plan A's remainder (A3–A5, then A8, each with A9's dictionary rows for its records).
