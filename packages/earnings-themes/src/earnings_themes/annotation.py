@@ -46,6 +46,7 @@ from earnings_themes.gold import (
     ReleaseIdentification,
     Some,
     Support,
+    gold_toml,
     no_theme_of,
 )
 from earnings_themes.problems import Problem, Refusal
@@ -533,6 +534,36 @@ def validate_gold(
     items = [*gold.quotes, *gold.claims, *gold.assignments, *gold.hard_negatives]
     refusals += _counts(gold.counts, items)
     return refusals + _wording(gold, {bundle.name: bundle})
+
+
+def recount(
+    committed: bytes,
+    drafted: GoldDraft,
+    working: GoldDraft,
+    *,
+    bundle: Bundle,
+    pin: Pin,
+    split: SplitManifest,
+    codebook: Codebook,
+) -> list[Refusal]:
+    """Every reason a committed gold file is not what its kept draft and working copy
+    build, each GS5 count that differs named by its field; empty when the rebuild is
+    the committed bytes. GS5's shares are reported only once every file rebuilds
+    (the Stage 11 spec, A6(4)). A committed file that does not read raises
+    ``RecordError``."""
+    made = build_gold(
+        drafted, working, bundle=bundle, pin=pin, split=split, codebook=codebook
+    )
+    if isinstance(made, list):
+        return made
+    if gold_toml(made).encode() == committed:
+        return []
+    kept = parse(tomlfile.loads(committed, "gold"), Gold, "gold")
+    return [
+        Refusal(f"counts.{field}", Problem.COUNTS_MISMATCH)
+        for field, count in made.counts.model_dump().items()
+        if getattr(kept.counts, field) != count
+    ] + [Refusal("record", Problem.NOT_REBUILT)]
 
 
 def build_curated(

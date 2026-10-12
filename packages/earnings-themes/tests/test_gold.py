@@ -10,6 +10,7 @@ from earnings_themes.annotation import (
     GoldDraft,
     build_curated,
     build_gold,
+    recount,
     signed,
     validate_curated,
     validate_gold,
@@ -409,3 +410,63 @@ def test_a_kept_curated_draft_that_repeats_a_fixture_or_an_id_is_refused(
     inner = good.model_copy(update={"documents": (twice, *good.documents[1:])})
     refusals = build_curated(inner, good, bundles=fixtures, pin=PIN, codebook=codebook)
     assert refusals == [Refusal(f"draft {first.fixture_id} quote q1", "duplicate_id")]
+
+
+def rebuilt(committed: bytes, bundles, codebook, drafted: dict, working: dict):
+    """``recount`` of a committed file over its kept draft and working copy."""
+    return recount(
+        committed,
+        parse(drafted, GoldDraft, "draft"),
+        parse(working, GoldDraft, "working"),
+        bundle=bundles[drafted["event_id"]],
+        pin=PIN,
+        split=synthetic_split(),
+        codebook=codebook,
+    )
+
+
+def test_a_committed_file_that_rebuilds_has_nothing_to_report(
+    bundles, codebook
+) -> None:
+    """The Stage 11 spec's A6(4): a committed file is rebuilt from its kept draft
+    and working copy. A known answer for GS5's shares: a working copy that only
+    adds a quote's context counts that quote as edited, since origins compare the
+    draft's items, not their pointers."""
+    drafted = gold_draft()
+    working = gold_draft(annotator=SIGNED)
+    working["quotes"][0]["prefix"] = "region. "
+    gold = build(bundles, codebook, drafted, working)
+    assert isinstance(gold, Gold)
+    assert gold.counts.model_dump() == {
+        "accepted": 7,
+        "edited": 1,
+        "rejected": 0,
+        "added": 0,
+    }
+    assert rebuilt(gold_toml(gold).encode(), bundles, codebook, drafted, working) == []
+
+
+def test_a_committed_file_that_does_not_rebuild_is_reported_by_field(
+    bundles, codebook
+) -> None:
+    drafted = gold_draft()
+    working = gold_draft(annotator=SIGNED)
+    gold = build(bundles, codebook, drafted, working)
+    assert isinstance(gold, Gold)
+    counts = gold.counts.model_copy(update={"rejected": 1, "added": 2})
+    tampered = gold_toml(gold.model_copy(update={"counts": counts})).encode()
+    assert rebuilt(tampered, bundles, codebook, drafted, working) == [
+        Refusal("counts.rejected", "counts_mismatch"),
+        Refusal("counts.added", "counts_mismatch"),
+        Refusal("record", "not_rebuilt"),
+    ]
+    resigned = gold_toml(gold.model_copy(update={"annotator": "Someone else"}))
+    assert rebuilt(resigned.encode(), bundles, codebook, drafted, working) == [
+        Refusal("record", "not_rebuilt")
+    ]
+    twice = gold_draft()
+    twice["quotes"].append(dict(twice["quotes"][0]))
+    committed = gold_toml(gold).encode()
+    assert rebuilt(committed, bundles, codebook, twice, working) == [
+        Refusal("draft quote q1", "duplicate_id")
+    ]

@@ -1987,6 +1987,7 @@ by text.
 | `repeated_ledger_row` | The ledger holds more than one row for the event (GS19) |
 | `record_lost` | A ledger row's independent record is gone; it is reported lost, never rewritten (GS19) |
 | `record_changed` | An independent record does not hash to its ledger row; it is never edited (GS19) |
+| `not_rebuilt` | A committed gold file is not what its kept draft and working copy build (the Stage 11 spec, A6(4)) |
 
 ### `Pin`
 

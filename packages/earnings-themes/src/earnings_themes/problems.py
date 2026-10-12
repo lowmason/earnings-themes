@@ -49,6 +49,7 @@ class Problem(StrEnum):
     REPEATED_LEDGER_ROW = "repeated_ledger_row"
     RECORD_LOST = "record_lost"
     RECORD_CHANGED = "record_changed"
+    NOT_REBUILT = "not_rebuilt"
 
 
 @dataclass(frozen=True, order=True)

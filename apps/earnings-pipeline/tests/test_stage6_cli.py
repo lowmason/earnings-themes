@@ -1220,3 +1220,80 @@ def test_a_dev_bundle_s_text_is_written_before_its_pass(repo, monkeypatch) -> No
     result = run(repo, "gold", "show", "--text", FIRST)
     assert result.exit_code == 0, result.output
     assert lines(result) == ["wrote 1 text under data/runs/gold/texts"]
+
+
+def snapshot(repo: Path) -> dict[str, bytes]:
+    """Every file under the evaluation directory and data/runs/gold/."""
+    roots = (repo / EVALUATION, repo / "data" / "runs" / "gold")
+    return {
+        path.relative_to(repo).as_posix(): path.read_bytes()
+        for root in roots
+        for path in sorted(root.rglob("*"))
+        if path.is_file()
+    }
+
+
+def test_recount_rebuilds_each_committed_file_and_writes_nothing(repo) -> None:
+    """The Stage 11 spec's A6(4): each committed file's counts come again from its
+    kept draft and working copy; only IDs and counts are printed."""
+    frozen(repo)
+    write_drafts(repo, FIRST, gold_draft(), gold_draft(annotator=SIGNED))
+    assert run(repo, "gold", "anchor", FIRST).exit_code == 0
+    before = snapshot(repo)
+    result = run(repo, "pilot", "recount")
+    assert result.exit_code == 0, result.output
+    assert lines(result) == [
+        f"recounted {FIRST} (train): accepted 3, edited 0, rejected 0, added 0",
+        "recounted 1 file(s): each rebuilds from its kept draft",
+    ]
+    assert lines(run(repo, "pilot", "recount", FIRST)) == lines(result)
+    assert snapshot(repo) == before
+
+
+def test_recount_reports_counts_that_do_not_rebuild_by_event_and_field(repo) -> None:
+    frozen(repo)
+    write_drafts(repo, FIRST, gold_draft(), gold_draft(annotator=SIGNED))
+    assert run(repo, "gold", "anchor", FIRST).exit_code == 0
+    edited = gold_draft(
+        annotator=SIGNED,
+        claims=[{"claim_id": "c1", "quote_ids": ["q1"], "claim": "Sales grew."}],
+    )
+    write_drafts(repo, FIRST, gold_draft(), edited)
+    result = run(repo, "pilot", "recount")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        f"refused: {FIRST} counts.accepted: counts_mismatch",
+        f"refused: {FIRST} counts.edited: counts_mismatch",
+        f"refused: {FIRST} record: not_rebuilt",
+        "Refused: 3 problem(s); GS5's shares wait until each is resolved",
+    ]
+    twice = gold_draft()
+    twice["quotes"].append(dict(twice["quotes"][0]))
+    write_drafts(repo, FIRST, twice, gold_draft(annotator=SIGNED))
+    repeated = run(repo, "pilot", "recount")
+    assert lines(repeated) == [
+        f"refused: {FIRST} draft quote q1: duplicate_id",
+        "Refused: 1 problem(s); GS5's shares wait until each is resolved",
+    ]
+
+
+def test_recount_needs_committed_gold_and_its_kept_drafts(repo) -> None:
+    frozen(repo)
+    nothing = run(repo, "pilot", "recount")
+    assert nothing.exit_code == 1
+    assert lines(nothing) == [f"Refused: no gold is committed under {EVALUATION}/gold"]
+    second = f"{EVALUATION}/gold/{SECOND.replace(':', '_')}.toml"
+    assert lines(run(repo, "pilot", "recount", SECOND)) == [
+        f"Refused: {second} is not committed"
+    ]
+    write_drafts(repo, FIRST, gold_draft(), gold_draft(annotator=SIGNED))
+    assert run(repo, "gold", "anchor", FIRST).exit_code == 0
+    (repo / DRAFTS / f"{FIRST_FILE}.draft.toml").unlink()
+    missing = run(repo, "pilot", "recount")
+    assert missing.exit_code == 1
+    assert lines(missing) == [
+        (
+            f"Refused: {FIRST}: {DRAFTS.as_posix()}/{FIRST_FILE}.draft.toml is not"
+            " here; GS5's counts rebuild from the kept draft and its working copy"
+        )
+    ]
