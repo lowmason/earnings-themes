@@ -66,6 +66,7 @@ PIPELINE_PREFIXES = (
     "earnings_themes.support",
     "earnings_themes.coding",
     "earnings_themes.analysis",
+    "earnings_themes.evaluation",
     "earnings_pipeline",
 )
 NLI_RUNTIME = {
@@ -454,3 +455,27 @@ def test_ordinary_cli_help_loads_no_concrete_runtime():
         "earnings_themes.support.nli",
         "earnings_ingestion.browser.selenium_capture",
     }.isdisjoint(names)
+
+
+def test_public_evaluation_import_loads_no_optional_adapter():
+    """D19-4: evaluation imports pure Stage 7-9 code, never ingestion, httpx, an
+    NLI runtime, or a concrete adapter."""
+    modules = [m for m in MODULES if m.startswith("earnings_themes.evaluation")]
+    loaded = modules_loaded_by(modules)
+    assert top_level(loaded) & (FORBIDDEN | NLI_RUNTIME) == set()
+    assert {
+        LOCAL,
+        "earnings_themes.support.nli",
+        "earnings_themes.coding.local",
+    }.isdisjoint(loaded)
+
+
+def test_pipeline_scan_detects_planted_evaluation_import(tmp_path):
+    package = tmp_path / "earnings_themes"
+    package.mkdir()
+    path = package / "gold.py"
+    path.write_text("def later():\n    from .evaluation import labels\n")
+    assert pipeline_imports(path) == [
+        "earnings_themes.evaluation.labels",
+        "earnings_themes.evaluation",
+    ]

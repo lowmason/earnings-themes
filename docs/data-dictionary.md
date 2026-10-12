@@ -6386,3 +6386,51 @@ installs the runtimes it needs.
 | `workflow` | `WorkflowRuntime` | Extractor, classifier, scorer and judges; no assignment policy and no renderer |
 | `alternative_scorer` | `EntailmentScorer` | DeBERTa, for the second support run over the same judges |
 | `extractor_family` | string | The extractor's family, for Stage 8's panel rule |
+
+## Stage 11 evaluation (plan 19)
+
+`earnings_themes.evaluation` scores the pilot, samples and checks the user's support
+labels, and calibrates the assignment policy (the Stage 11 spec, A3–A5). It reads no
+file and prints nothing; the application gathers its inputs (A8). It imports pure
+Stage 7–9 code (`extraction.units`, `support.metrics`, `support.context`,
+`coding.decide`), never ingestion, httpx, an NLI runtime or the local adapter, and
+no gold-drafting module imports it (D19-4). A refusal is an `EvaluationError`, or a
+`Refusal` row, naming an ID and an `EvaluationProblem`, never text.
+
+Scoring conventions (FP20, D19-3, D19-6, D19-7, D19-8, D19-9): a span maps to every
+pointer unit it shares a character with. A theme is present in an event when a gold
+assignment pairs it with a claim under `supports`. A tie group resolves to a member
+the run predicted, else one already present, else its lowest theme ID, and its
+other members are excused. A theme whose every row is `uncertain` is left out and
+counted. A reference to a quote or claim the reading lacks is counted as dangling.
+The roll-up maps both sides to level-one roots. Gold-evidence recall counts the
+gold-supporting units any accepted assignment holds. GS5's edited and rejected
+shares are over drafted items, and the added share over signed items. Every
+interval is the event-clustered percentile bootstrap.
+
+### `EvaluationProblem`
+
+| Value | Meaning |
+| --- | --- |
+| `malformed_record` | A record or input that does not have the expected shape |
+| `parent_cycle` | A codebook whose parents loop |
+| `wrong_partition` | A record or label of another partition, or a partition never reported |
+| `unknown_event` | A target or label whose event is not among the inputs |
+| `unknown_target` | A label or sample ID the support run does not hold |
+| `duplicate_target` | A target ID given twice |
+| `target_hash_mismatch` | A label whose input hash is not the support run's |
+| `not_sampled` | A label for a target outside the sample |
+| `not_labelled` | A sampled target with no label |
+| `labels_changed` | Committed labels that a working file would change |
+| `preregistration_mismatch` | A record bound to another preregistration, or one that no longer hashes to itself |
+| `content_hash_mismatch` | A frozen record that does not hash to its `content_hash` |
+| `too_few_labels` | Fewer usable train joint labels than preregistered (R8.4) |
+| `no_candidate` | A calibration artifact with no selection, which binds no policy |
+| `unknown_metric` | A metric the report does not hold |
+
+### `UnitIndex`
+
+| Field | Meaning |
+| --- | --- |
+| `doc_id` | The document |
+| `spans` | Each pointer unit's element ID, start and end, in document order (ES12) |

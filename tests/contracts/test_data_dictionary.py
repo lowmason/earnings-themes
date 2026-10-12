@@ -8,8 +8,10 @@ AGENTS.md §191: document public interfaces and update the data dictionary in th
 same change. A contract that gains, loses, or renames a field fails here.
 """
 
+import importlib
+import pkgutil
 import re
-from dataclasses import fields
+from dataclasses import fields, is_dataclass
 from enum import StrEnum
 from pathlib import Path
 
@@ -24,7 +26,15 @@ from earnings_ingestion.events import acceptance, coverage, states
 from earnings_ingestion.events import records as events
 from earnings_ingestion.fetch import records as fetch
 from earnings_pipeline import model_runtime, theme_config, theme_workflow
-from earnings_themes import annotation, codebook, gold, independent, problems, split
+from earnings_themes import (
+    annotation,
+    codebook,
+    evaluation,
+    gold,
+    independent,
+    problems,
+    split,
+)
 from earnings_themes import records as themes
 from earnings_themes.analysis import records as analysis
 from earnings_themes.analysis.problems import ANALYSIS_REASONS
@@ -35,6 +45,10 @@ from earnings_themes.coding.decide import DecisionInput, DecisionSet
 from earnings_themes.coding.input import CodingInput
 from earnings_themes.coding.run import ProposalRun
 from earnings_themes.coding.store import SCHEMAS
+from earnings_themes.evaluation import (
+    align,
+)
+from earnings_themes.evaluation import problems as evaluation_problems
 from earnings_themes.extraction import adapters, cache, local
 from earnings_themes.extraction import records as extraction
 from earnings_themes.extraction.store import StoredRun
@@ -646,3 +660,39 @@ def test_workflow_closed_reasons_and_baseline_contract_documented():
     assert "immediate immutable parsed predecessor" in text
     assert "stored_analysis" in text and "capture_nondurable" in text
     assert "schema-2 partial" in text and "schema-1 partial" in text
+
+
+EVALUATION_MODELS: list[type[BaseModel]] = []
+EVALUATION_ENUMS = [
+    evaluation_problems.EvaluationProblem,
+]
+EVALUATION_DATACLASSES = [
+    align.UnitIndex,
+]
+
+
+@pytest.mark.parametrize("enum", EVALUATION_ENUMS, ids=lambda e: e.__name__)
+def test_evaluation_values_documented(enum: type[StrEnum]) -> None:
+    assert documented(enum.__name__) == {member.value for member in enum}
+
+
+@pytest.mark.parametrize("record", EVALUATION_DATACLASSES, ids=lambda r: r.__name__)
+def test_evaluation_dataclass_fields_documented(record: type) -> None:
+    assert documented(record.__name__) == {field.name for field in fields(record)}
+
+
+def test_evaluation_registry_covers_every_defined_record_enum_and_dataclass() -> None:
+    """A new evaluation record, enum or dataclass fails here until registered."""
+    defined = {
+        value
+        for info in pkgutil.iter_modules(evaluation.__path__)
+        for value in vars(
+            importlib.import_module(f"{evaluation.__name__}.{info.name}")
+        ).values()
+        if isinstance(value, type)
+        and value.__module__.startswith(f"{evaluation.__name__}.")
+        and not value.__name__.startswith("_")
+    }
+    assert {v for v in defined if issubclass(v, BaseModel)} == set(EVALUATION_MODELS)
+    assert {v for v in defined if issubclass(v, StrEnum)} == set(EVALUATION_ENUMS)
+    assert {v for v in defined if is_dataclass(v)} == set(EVALUATION_DATACLASSES)
