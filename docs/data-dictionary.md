@@ -6467,17 +6467,19 @@ event-clustered percentile bootstrap.
 
 ### `EvidenceCell`
 
-One cell of gold evidence for unit and character scoring (FP20). A tie group is
-one cell whichever member the theme cells resolve it to: its units are covered by
-any member's accepted evidence, which counts toward recall and is never a false
-positive. For precision, each gold slot (a cell's unit or character) earns one
-credit. A scored theme's accepted item is a hit when it lies in some cell the theme
-belongs to, once however many cells hold it, and a false positive otherwise. An
-excused member's accepted item is a hit, and accepted, only when it fills a slot of
-one of its group's cells that no scored theme of that cell, nor a member with a
-lower ID, also accepts: a redundant member adds nothing, and when only excused
-members accept an item, the lowest ID among them takes the credit. The rest of an
-excused member's evidence is not scored.
+One cell of gold evidence for unit and character scoring (FP20). A tie group is one
+cell whichever member the theme cells resolve it to: its units are covered by any
+member's accepted evidence, which counts toward recall and is never a false
+positive. For precision, an accepted (theme, item) pair, an item being a unit or a
+character, is accepted and a hit when the item lies in the gold of any cell the
+theme belongs to, counted once per theme however many cells hold it and however many
+other themes accept it. A scored theme's accepted items outside its cells are
+accepted but not hits; an excused member's are not scored; an uncertain-only theme
+belongs to no cell and adds nothing. Known effect: asserting several members of a
+tie group, or a tie member that is also present through its own claim, over the same
+gold item credits each of them as a hit, so the gated figures can rise when a run
+adds a correct alternative; a maximum matching of accepted (theme, item) pairs to
+gold items is the stricter alternative, recorded as a handoff for plan B.
 
 | Field | Meaning |
 | --- | --- |
@@ -6489,22 +6491,21 @@ excused member's evidence is not scored.
 
 One event's evidence counts, in pointer units (`unit_tally`) or characters
 (`char_counts`), taken from each side so that an accepted item covering two gold
-cells is one hit, and each gold slot earns one credit: an excused member's item
-counts only where no scored theme, nor a lower-ID member, of its cell accepts it
-(`EvidenceCell`). Precision is `accepted_hits / accepted`, recall `gold_hits /
-gold`, and F1 their harmonic mean, `2 * accepted_hits * gold_hits /
-(accepted_hits * gold + gold_hits * accepted)`: 0 when nothing hits, null when
-neither side holds an item. Character Jaccard is `accepted_hits` over the union
-`accepted + gold - gold_hits`, taken over (theme or cell, item) pairs: the accepted
-(theme, item) pairs and the gold (cell, item) slots that no theme of their cell
-accepts. A gold item that another theme accepts is counted on both sides, as the
-single tally's `tp + fp + fn` counts it. Without tie groups the two hit counts are equal, and every figure is the
-single-tally one.
+cells is one hit; which accepted items count, and the known effect of redundant
+correct alternatives, are set out under `EvidenceCell`. Precision is `accepted_hits
+/ accepted`, recall `gold_hits / gold`, and F1 their harmonic mean, `2 *
+accepted_hits * gold_hits / (accepted_hits * gold + gold_hits * accepted)`: 0 when
+nothing hits, null when neither side holds an item. Character Jaccard is
+`accepted_hits` over the union `accepted + gold - gold_hits`, taken over (theme or
+cell, item) pairs: the accepted (theme, item) pairs and the gold (cell, item) pairs
+that no theme of their cell accepts. A gold item that another theme accepts is
+counted on both sides, as the single tally's `tp + fp + fn` counts it. Without tie
+groups the two hit counts are equal, and every figure is the single-tally one.
 
 | Field | Meaning |
 | --- | --- |
-| `accepted_hits` | Scored themes' accepted items lying in a cell their theme belongs to, each once, and the gold slots an excused member alone credits (see `EvidenceCell`) |
-| `accepted` | Scored themes' accepted items, each once, and the gold slots an excused member alone credits; its other items are not scored |
+| `accepted_hits` | Accepted (theme, item) pairs whose item lies in a cell the theme belongs to, each once per theme, however many other themes accept the item |
+| `accepted` | Scored themes' accepted items, each once per theme, and an excused member's items inside its group's cells; its other items are not scored |
 | `gold_hits` | Gold cells' items that some theme of the cell accepts |
 | `gold` | Gold cells' items, per cell |
 
@@ -6552,10 +6553,10 @@ single-tally one.
 | `theme_f1_macro` | Mean per-theme F1 over themes with gold or a prediction (gated) |
 | `theme_f1_rollup_micro` | Micro F1 after both sides map to level-one roots (secondary) |
 | `theme_f1_rollup_macro` | Macro F1 after the same mapping (secondary) |
-| `span_unit_precision` | Accepted (theme, unit) pairs lying in a gold cell of their theme, each once, over the accepted pairs: scored themes' pairs, and an excused member's pairs that fill a slot of its group's cells no scored member nor lower-ID member also accepts, which are hits; its others are not scored (`EvidenceTally`, `EvidenceCell`); counts `accepted_hits`, `accepted`, `gold_hits`, `gold` |
-| `span_unit_recall` | Gold cells' units that a theme of the cell accepts, per cell |
-| `span_unit_f1` | The harmonic mean of the two (gated) |
-| `span_char_jaccard` | Accepted characters that hit, over accepted (theme, character) pairs plus gold (cell, character) slots no theme of their cell accepts; an excused member's characters inside its group's cells that no scored member nor lower-ID member also covers are hits, and its others are not scored; counts `shared`, `union` (secondary) |
+| `span_unit_precision` | Accepted (theme, unit) pairs lying in a gold cell of their theme, each once, however many other themes accept the unit, over scored themes' accepted pairs and an excused member's pairs inside its group's cells; its others are not scored. Several correct alternatives over one gold unit each count as a hit (`EvidenceCell`); counts `accepted_hits`, `accepted`, `gold_hits`, `gold` |
+| `span_unit_recall` | Gold cells' units that a theme of the cell accepts, per cell: any member of a tie group covers its cell |
+| `span_unit_f1` | The harmonic mean of the two (gated); it can rise when a run adds a correct alternative over a gold unit already covered (`EvidenceCell`) |
+| `span_char_jaccard` | Accepted characters that hit, over accepted (theme, character) pairs plus gold (cell, character) pairs no theme of their cell accepts; an excused member's characters inside its group's cells are hits, and its others are not scored; several correct alternatives over one gold character each count as a hit (`EvidenceCell`); counts `shared`, `union` (secondary) |
 | `retention_quotes` | Verified over proposed quotes (R12.8 (i)) |
 | `retention_targets` | Accepted over assessed targets (R12.8 (ii)) |
 | `gold_evidence_recall` | Gold-supporting units any accepted assignment holds (R12.8 (iii), gated, strictly above zero) |
