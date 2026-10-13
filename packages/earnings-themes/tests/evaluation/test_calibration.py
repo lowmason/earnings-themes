@@ -35,7 +35,7 @@ from earnings_themes.extraction.records import Parameters
 from earnings_themes.split import Partition
 from earnings_themes.support.records import SupportPolicy, support_configuration
 
-from .cases import decision_view, example, gold
+from .cases import decision_view, example, gold, trial
 from .test_preregistration import fields
 from .test_report import BOOK
 
@@ -434,8 +434,10 @@ def test_an_uncertain_family_consensus_is_counted() -> None:
 
 def test_the_report_and_the_artifact_agree_on_each_family() -> None:
     """The report's family figures over train's labels are the artifact's
-    ``FamilyAgreement``: the same point, the same interval (both resample e00-e11,
-    the events holding a joint label, never e12) and the same uncertain count, as
+    ``FamilyAgreement``: the same families (f0 and f1; f2 judges only e12's
+    targets, which have no joint label, so neither reports it), the same point, the
+    same interval (both resample e00-e11, the events holding a joint label, never
+    e12) and the same uncertain count, as
     ``test_an_uncertain_family_consensus_is_counted`` derives them."""
     views, label_set, events = judged()
     artifact = calibrate(
@@ -460,6 +462,20 @@ def test_the_report_and_the_artifact_agree_on_each_family() -> None:
         )
         for event_id in sorted(set(events.values()))
     )
+
+    def trials(label):
+        """A third family, f2, judges only the targets without a joint label."""
+        own = views[label.target_id].trials
+        if joint_label(label) is not None:
+            return own
+        return (
+            *own,
+            *(
+                trial(label.target_id, "f2", p, *YES)
+                for p in ("evidence_first", "claim_theme_first")
+            ),
+        )
+
     labelled = tuple(
         LabelledTarget(
             label.target_id,
@@ -468,13 +484,18 @@ def test_the_report_and_the_artifact_agree_on_each_family() -> None:
             joint_label(label),
             False,
             {},
-            views[label.target_id].trials,
+            trials(label),
         )
         for label in label_set.labels
     )
     report = partition_report(
         observed, labelled, BOOK, PREREG.bootstrap, partition=Partition.TRAIN
     )
+    calibrated = {f.family for f in artifact.families}
+    for metric in (Metric.JUDGE_KAPPA, Metric.JUDGE_AC1):
+        qualifiers = {f.qualifier for f in report.figures if f.metric is metric}
+        assert {q for q in qualifiers if ":" not in q} == calibrated
+        assert {q.split(":")[0] for q in qualifiers} == calibrated
     for family in artifact.families:
         for metric, expected in (
             (Metric.JUDGE_KAPPA, family.kappa),

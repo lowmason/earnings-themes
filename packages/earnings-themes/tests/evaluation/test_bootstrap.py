@@ -5,7 +5,12 @@ import math
 import random
 
 import pytest
-from earnings_themes.evaluation.bootstrap import BootstrapPlan, Interval, estimate
+from earnings_themes.evaluation.bootstrap import (
+    BootstrapPlan,
+    Estimate,
+    Interval,
+    estimate,
+)
 from pydantic import ValidationError
 
 PLAN = BootstrapPlan(seed=7, resamples=200, level=0.9, max_undefined_share=0.1)
@@ -82,6 +87,15 @@ def test_an_interval_holds_finite_numbers(field, value) -> None:
         Interval(**{**bounds, field: value}, resamples=10, undefined=0)
     assert Interval(**bounds, resamples=10, undefined=0).lower == 0.1
     assert Interval(lower=None, upper=None, level=0.9, resamples=10, undefined=10)
+
+
+@pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf])
+def test_an_estimate_holds_a_finite_point(value) -> None:
+    interval = Interval(lower=0.1, upper=0.2, level=0.9, resamples=10, undefined=0)
+    with pytest.raises(ValidationError, match="point"):
+        Estimate(point=value, interval=interval)
+    assert Estimate(point=-0.5, interval=interval).point == -0.5
+    assert Estimate(point=None, interval=interval).point is None
 
 
 def test_upper_bound_interpolates_the_upper_percentile() -> None:

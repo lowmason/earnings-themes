@@ -394,7 +394,8 @@ def _label_figures(
             ),
             qualifier=view,
         )
-    trials = [trial for t in labelled for trial in t.trials]
+    # Judged as calibration judges: the families of joint-labelled targets only.
+    trials = [x for t in labelled if t.joint_label is not None for x in t.trials]
     for family in families(trials):
         _agreement(
             figures,

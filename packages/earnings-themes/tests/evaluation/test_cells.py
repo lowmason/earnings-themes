@@ -5,8 +5,14 @@ from types import SimpleNamespace
 from typing import get_protocol_members
 
 import pytest
+from earnings_themes import evaluation
 from earnings_themes.evaluation.align import unit_index
-from earnings_themes.evaluation.cells import GoldReading, event_cells, level_one
+from earnings_themes.evaluation.cells import (
+    EvidenceCell,
+    GoldReading,
+    event_cells,
+    level_one,
+)
 from earnings_themes.evaluation.problems import EvaluationError
 from earnings_themes.gold import ReleaseLabel, Support
 
@@ -110,6 +116,13 @@ def test_a_gold_reading_offers_what_compare_readings_reads() -> None:
     _, base = example()
     for value in (base, gold("e1", base)):
         assert value.release_identification.label is ReleaseLabel.RELEASE
+
+
+def test_the_package_exports_both_cell_records() -> None:
+    """``EventCells.evidence`` holds ``EvidenceCell``s, so both are public."""
+    assert {"EventCells", "EvidenceCell"} <= set(evaluation.__all__)
+    assert evaluation.EvidenceCell is EvidenceCell
+    assert len(evaluation.__all__) == len(set(evaluation.__all__)) == 46
 
 
 def test_level_one_maps_each_theme_to_its_root() -> None:

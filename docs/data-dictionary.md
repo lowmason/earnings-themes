@@ -6415,15 +6415,16 @@ no gold-drafting module imports it (D19-4). A refusal is an `EvaluationError`, o
 Scoring conventions (FP20, D19-3, D19-6, D19-7, D19-8, D19-9): a span maps to every
 pointer unit it shares a character with. A theme is present in an event when a gold
 assignment pairs it with a claim under `supports`. A tie group resolves to a member
-the run predicted, else one already present, else its lowest theme ID, and its
-other members are excused; for unit and character scoring the group stays one
-evidence cell, which any member's evidence covers. A theme whose every row is
-`uncertain` is left out and
-counted. A claim's reference to a quote, or any assignment's reference to a claim,
-that the reading lacks is counted as dangling, one per reference. The roll-up maps both sides to level-one roots. Gold-evidence recall counts the
-gold-supporting units any accepted assignment holds. GS5's edited and rejected
-shares are over drafted items, and the added share over signed items. Every
-interval is the event-clustered percentile bootstrap.
+the run predicted, else one already present, else its lowest theme ID, and its other
+members are excused; for unit and character scoring the group stays one evidence
+cell, which any member's evidence covers, and an accepted unit or character is one
+hit however many cells hold it. A theme whose every row is `uncertain` is left out
+and counted. A claim's reference to a quote, or any assignment's reference to a
+claim, that the reading lacks is counted as dangling, one per reference. The roll-up
+maps both sides to level-one roots. Gold-evidence recall counts the gold-supporting
+units any accepted assignment holds. GS5's edited and rejected shares are over
+drafted items, and the added share over signed items. Every interval is the
+event-clustered percentile bootstrap.
 
 ### `EvaluationProblem`
 

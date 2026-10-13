@@ -48,7 +48,7 @@ class Interval(Part):
 class Estimate(Part):
     """A point estimate over every event, and its interval."""
 
-    point: float | None
+    point: Real | None
     interval: Interval
 
 

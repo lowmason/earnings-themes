@@ -18,7 +18,12 @@ from earnings_themes.evaluation.calibration import (
     calibrate,
     frozen_configuration,
 )
-from earnings_themes.evaluation.cells import EventCells, event_cells, level_one
+from earnings_themes.evaluation.cells import (
+    EventCells,
+    EvidenceCell,
+    event_cells,
+    level_one,
+)
 from earnings_themes.evaluation.gates import (
     derive_gates,
     evaluate_gates,
@@ -69,6 +74,7 @@ __all__ = [
     "EvaluationProblem",
     "EventCells",
     "EventObservation",
+    "EvidenceCell",
     "GateVerdict",
     "Gates",
     "Interval",
