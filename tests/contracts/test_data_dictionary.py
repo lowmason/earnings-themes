@@ -852,3 +852,19 @@ def test_evaluation_registry_covers_every_defined_record_enum_and_dataclass() ->
     assert {v for v in defined if issubclass(v, BaseModel)} == set(EVALUATION_MODELS)
     assert {v for v in defined if issubclass(v, StrEnum)} == set(EVALUATION_ENUMS)
     assert {v for v in defined if is_dataclass(v)} == set(EVALUATION_DATACLASSES)
+
+
+def test_pilot_label_interfaces_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    for name in (
+        "checked_pass",
+        "local_path",
+        "sample",
+        "working_path",
+        "committed_labels",
+        "write_view",
+        "check_working",
+    ):
+        assert f"pilot_labels.{name}" in text
+    assert "real unsure answers" in text
+    assert "append-only label promotion" in text

@@ -7131,3 +7131,26 @@ returning these inputs to calibration, assignment or reporting.
 | `proposal` | ProposalRun | Reconstructed verified classifier proposals |
 | `primary` | StoredSupportRun | Reverified primary MiniCheck support results |
 | `alternative` | StoredSupportRun | Reverified alternative DeBERTa support results |
+
+
+### Pilot label application interfaces
+
+`earnings_pipeline.pilot_labels.checked_pass(intake, loaded, *, fresh=False)`
+checks partition, event inventory, alternative scorer identity and live mode.
+`pilot_labels.local_path(intake, path)` confines a local path beneath
+`data/runs/pilot`; `pilot_labels.working_path(intake)` selects the partition's
+working TOML file. `pilot_labels.sample(intake, loaded, extensions)` reverifies
+support before building the deterministic preregistered sample.
+`pilot_labels.committed_labels(intake)` requires the existing label base to match
+HEAD and its preregistration. A missing local base is accepted only when the
+HEAD tree confirms no label entry; a locally deleted committed base or failed
+Git metadata check refuses with `not_committed` before publication.
+
+`pilot_labels.write_view(intake, loaded, extensions, labelled_on)` writes an
+ignored local Markdown context view without scores, judge answers, flags or
+extractor identity and a `SupportLabelSet` TOML template with real unsure answers
+and a user-supplied date. `pilot_labels.check_working(intake, loaded, extensions)`
+checks the entire working file before append-only label promotion, preserves
+existing committed rows and extension metadata, requires growth for a train
+extension and atomically replaces the checked committed TOML. Unknown targets
+are reported through the field path `labels.target_id`, without input wording.
