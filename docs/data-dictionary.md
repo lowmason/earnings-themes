@@ -6675,3 +6675,11 @@ interval is the event-clustered percentile bootstrap.
 | `preregistration_hash` | The preregistration whose sample it labels |
 | `train_extensions` | Preregistered extensions drawn for train |
 | `labels` | Each `SupportLabel`, one per target |
+
+### `PoolTarget`
+
+| Field | Meaning |
+| --- | --- |
+| `target_id` | An `assessed` or `flagged` target |
+| `event_id` | Its event |
+| `theme_id` | Its proposed theme |

@@ -51,6 +51,7 @@ from earnings_themes.evaluation import (
     cells,
     labels,
     report,
+    sampling,
     scores,
 )
 from earnings_themes.evaluation import problems as evaluation_problems
@@ -698,6 +699,7 @@ EVALUATION_DATACLASSES = [
     report.Accepted,
     report.EventObservation,
     report.LabelledTarget,
+    sampling.PoolTarget,
 ]
 
 
