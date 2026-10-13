@@ -176,11 +176,15 @@ def test_a_tie_groups_evidence_is_covered_by_any_predicted_member() -> None:
 
     Evidence cells: capacity's own {P0}, and g1's {P1}, which capacity or pricing
     covers. Gold side: capacity covers P0 and pricing covers P1, 2 of 2. Accepted
-    side: capacity, the one scored theme, accepts P0, in its own cell, 1 of 1;
-    pricing is excused, so unscored, never a false positive. Precision 1, recall 1,
-    unit F1 1. Characters: accepted 20 of P0, all hits; gold 20 + 16, all covered:
-    union 20 + 36 - 36 = 20, Jaccard 1. (Before the tie cells: capacity's gold {P0,
-    P1} against {P0}: tp 1, fn 1, unit F1 2/3; characters (20, 36).)"""
+    side: capacity, scored, accepts P0, in its own cell: 1 accepted, 1 hit. Pricing
+    is excused: its P1 lies in g1, a cell it belongs to, so it counts as 1 accepted
+    and 1 hit, never a false positive. 2 of 2: precision 1, recall 1, unit F1 1.
+    Characters: capacity's 20 of P0 and pricing's 16 of P1 accepted, all hits; gold
+    20 + 16, all covered: union 36 + 36 - 36 = 36, Jaccard 36 / 36 = 1. (Round 2
+    left the excused pricing out of the accepted side, (1, 1, 2, 2) and (20, 20, 36,
+    36): the figures agree, but the counts now hold the group's evidence that the
+    run did accept. Before the tie cells: capacity's gold {P0, P1} against {P0}: tp
+    1, fn 1, unit F1 2/3; characters (20, 36).)"""
     source = bundle()
     p0, p1, _, _ = unit_ids(source)
     gold = tie_reading(
@@ -192,24 +196,50 @@ def test_a_tie_groups_evidence_is_covered_by_any_predicted_member() -> None:
     cells = event_cells(gold, unit_index(source), units)
     assert theme_tallies(cells, units) == {"capacity": Tally(tp=1)}
     counts = unit_tally(cells, units)
-    assert counts == EvidenceTally(accepted_hits=1, accepted=1, gold_hits=2, gold=2)
+    assert counts == EvidenceTally(accepted_hits=2, accepted=2, gold_hits=2, gold=2)
     assert (counts.precision(), counts.recall(), counts.f1()) == (1.0, 1.0, 1.0)
     spans = {"capacity": ((0, 20),), "pricing": ((21, 37),)}
     chars = char_counts(cells, spans)
-    assert chars == EvidenceTally(accepted_hits=20, accepted=20, gold_hits=36, gold=36)
-    assert chars.jaccard() == 1.0
+    assert chars == EvidenceTally(accepted_hits=36, accepted=36, gold_hits=36, gold=36)
+    assert (chars.union(), chars.jaccard()) == (36, 1.0)
 
 
-def test_the_unchosen_member_covers_the_groups_evidence_for_recall_only() -> None:
+def test_an_excused_members_evidence_outside_its_group_is_ignored() -> None:
+    """The scenario above, with pricing also accepting P3, which no gold cell holds.
+    Pricing is excused, so only its evidence inside g1's units counts: P1, 1
+    accepted and 1 hit; its P3 is neither accepted nor a false positive. Units: (2,
+    2, 2, 2), F1 1, as above. Characters: pricing's [57, 73) lies outside g1's
+    [21, 37), so it adds nothing: (36, 36, 36, 36), union 36, Jaccard 1."""
+    source = bundle()
+    p0, p1, _, p3 = unit_ids(source)
+    gold = tie_reading(
+        row("c0", "capacity"),
+        row("c1", "capacity", tie_group="g1"),
+        row("c1", "pricing", tie_group="g1"),
+    )
+    units = {"capacity": frozenset({p0}), "pricing": frozenset({p1, p3})}
+    cells = event_cells(gold, unit_index(source), units)
+    assert cells.excused == {"pricing"}
+    counts = unit_tally(cells, units)
+    assert counts == EvidenceTally(accepted_hits=2, accepted=2, gold_hits=2, gold=2)
+    assert counts.f1() == 1.0
+    spans = {"capacity": ((0, 20),), "pricing": ((21, 37), (57, 73))}
+    chars = char_counts(cells, spans)
+    assert chars == EvidenceTally(accepted_hits=36, accepted=36, gold_hits=36, gold=36)
+    assert (chars.union(), chars.jaccard()) == (36, 1.0)
+
+
+def test_the_unchosen_member_carrying_the_groups_evidence_is_a_hit() -> None:
     """Gold: tie group g1 over capacity and pricing, by c1 (P1). The run accepts
     capacity over P3 and pricing over P1. D19-6 resolves g1 to capacity, the lower
     predicted member, so pricing, which carries g1's evidence, is excused. Gold
     side: g1's cell {P1} is covered by pricing, 1 of 1: recall 1. Accepted side:
-    capacity, the one scored theme, accepts P3, in no cell it belongs to: precision
-    0 / 1 = 0; the excused pricing is neither a hit nor a false positive there. F1 =
-    2 * 0 * 1 / (0 * 1 + 1 * 1) = 0. Characters: accepted 16 of P3, no hit; gold 16,
-    covered: union 16 + 16 - 16 = 16, Jaccard 0 / 16 = 0. (In 7cde927's single
-    tally: tp 1, fp 1, F1 2/3, characters (16, 32).)"""
+    capacity, scored, accepts P3, in no cell it belongs to: 1 accepted, no hit. The
+    excused pricing's P1 lies in g1, its group's cell: 1 accepted, 1 hit. Precision
+    1 / 2, F1 = 2 * 1 * 1 / (1 * 1 + 1 * 2) = 2/3, as 7cde927's single tally gave
+    (tp 1, fp 1). Characters: capacity's 16 of P3, no hit, and pricing's 16 of P1,
+    all hits: accepted 32, 16 hits; gold 16, covered: union 32 + 16 - 16 = 32, the
+    disjoint accepted P3 and P1 and no missed gold; Jaccard 16 / 32 = 1/2."""
     source = bundle()
     _, p1, _, p3 = unit_ids(source)
     gold = tie_reading(
@@ -219,12 +249,13 @@ def test_the_unchosen_member_covers_the_groups_evidence_for_recall_only() -> Non
     cells = event_cells(gold, unit_index(source), units)
     assert cells.present == {"capacity"} and cells.excused == {"pricing"}
     counts = unit_tally(cells, units)
-    assert counts == EvidenceTally(accepted_hits=0, accepted=1, gold_hits=1, gold=1)
-    assert (counts.precision(), counts.recall(), counts.f1()) == (0.0, 1.0, 0.0)
+    assert counts == EvidenceTally(accepted_hits=1, accepted=2, gold_hits=1, gold=1)
+    assert (counts.precision(), counts.recall()) == (1 / 2, 1.0)
+    assert counts.f1() == pytest.approx(2 / 3)
     spans = {"capacity": ((57, 73),), "pricing": ((21, 37),)}
     chars = char_counts(cells, spans)
-    assert chars == EvidenceTally(accepted_hits=0, accepted=16, gold_hits=16, gold=16)
-    assert chars.jaccard() == 0.0
+    assert chars == EvidenceTally(accepted_hits=16, accepted=32, gold_hits=16, gold=16)
+    assert (chars.union(), chars.jaccard()) == (32, 1 / 2)
 
 
 def test_a_member_with_the_wrong_evidence_is_still_a_miss() -> None:

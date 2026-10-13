@@ -6470,10 +6470,11 @@ event-clustered percentile bootstrap.
 One cell of gold evidence for unit and character scoring (FP20). A tie group is
 one cell whichever member the theme cells resolve it to: its units are covered by
 any member's accepted evidence, which counts toward recall and is never a false
-positive. Precision reads only scored themes: a scored theme's accepted unit or
-character is a hit when it lies in some cell the theme belongs to, once however
-many cells hold it, and a false positive otherwise; an excused member's accepted
-evidence is not scored there.
+positive. For precision, a theme's accepted unit or character is a hit when it lies
+in some cell the theme belongs to, once however many cells hold it. A scored
+theme's other accepted items are false positives; an excused member's accepted
+evidence inside its group's cells is a hit, and the rest of its evidence is not
+scored.
 
 | Field | Meaning |
 | --- | --- |
@@ -6495,8 +6496,8 @@ single-tally one.
 
 | Field | Meaning |
 | --- | --- |
-| `accepted_hits` | Scored themes' accepted items lying in a cell the theme belongs to, each once |
-| `accepted` | Scored themes' accepted items, each once |
+| `accepted_hits` | Accepted items lying in a cell their theme belongs to, each once, an excused member's included |
+| `accepted` | Scored themes' accepted items, each once, and an excused member's items inside its group's cells; its others are not scored |
 | `gold_hits` | Gold cells' items that some theme of the cell accepts |
 | `gold` | Gold cells' items, per cell |
 
@@ -6544,10 +6545,10 @@ single-tally one.
 | `theme_f1_macro` | Mean per-theme F1 over themes with gold or a prediction (gated) |
 | `theme_f1_rollup_micro` | Micro F1 after both sides map to level-one roots (secondary) |
 | `theme_f1_rollup_macro` | Macro F1 after the same mapping (secondary) |
-| `span_unit_precision` | Scored themes' accepted (theme, unit) pairs lying in a gold cell of their theme, each once (`EvidenceTally`); counts `accepted_hits`, `accepted`, `gold_hits`, `gold` |
+| `span_unit_precision` | Accepted (theme, unit) pairs lying in a gold cell of their theme, each once, over the accepted pairs: scored themes' pairs and an excused member's pairs inside its group's cells, which are hits; its others are not scored (`EvidenceTally`); counts `accepted_hits`, `accepted`, `gold_hits`, `gold` |
 | `span_unit_recall` | Gold cells' units that a theme of the cell accepts, per cell |
 | `span_unit_f1` | The harmonic mean of the two (gated) |
-| `span_char_jaccard` | Accepted characters that hit, over accepted characters plus gold characters no theme accepts; counts `shared`, `union` (secondary) |
+| `span_char_jaccard` | Accepted characters that hit, over accepted characters plus gold characters no theme accepts; an excused member's characters inside its group's cells are hits, and its others are not scored; counts `shared`, `union` (secondary) |
 | `retention_quotes` | Verified over proposed quotes (R12.8 (i)) |
 | `retention_targets` | Accepted over assessed targets (R12.8 (ii)) |
 | `gold_evidence_recall` | Gold-supporting units any accepted assignment holds (R12.8 (iii), gated, strictly above zero) |

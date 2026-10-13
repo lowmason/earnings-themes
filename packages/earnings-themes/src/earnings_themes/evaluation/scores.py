@@ -51,9 +51,10 @@ def f1(tally: Tally) -> float | None:
 @dataclass(frozen=True)
 class EvidenceTally:
     """One event's evidence, in units or characters (FP13, FP20), counted from each
-    side, so that one accepted item covering two gold cells is one hit: a scored
-    theme's accepted items, and those lying in a cell the theme belongs to; the gold
-    cells' items, and those some theme of their cell accepts."""
+    side, so that one accepted item covering two gold cells is one hit: each theme's
+    accepted items lying in a cell it belongs to, which are hits, and a scored
+    theme's others (an excused member's others are not scored); the gold cells'
+    items, and those some theme of their cell accepts."""
 
     accepted_hits: int = 0
     accepted: int = 0
@@ -144,20 +145,19 @@ def unit_tally(
 ) -> EvidenceTally:
     """One event's evidence units (FP13, FP20). Gold side: each evidence cell's
     units, and those any of its themes' accepted evidence covers, so a tie group's
-    evidence is covered whichever member carries it. Accepted side: each scored
-    theme's accepted units, each counted once, and those lying in some cell the
-    theme belongs to; an excused or uncertain-only theme's evidence is not scored."""
+    evidence is covered whichever member carries it. Accepted side: each theme's
+    accepted units lying in some cell it belongs to, each counted once, are hits; a
+    scored theme's other accepted units are accepted, and an excused member's are
+    not scored. An uncertain-only theme belongs to no cell, so adds nothing."""
     gold_hits = gold = accepted_hits = accepted = 0
     for cell in cells.evidence:
         got = frozenset().union(*(accepted_units.get(t, ()) for t in cell.themes))
         gold_hits, gold = gold_hits + len(cell.units & got), gold + len(cell.units)
     for theme, got in sorted(accepted_units.items()):
-        if cells.scored(theme):
-            own = frozenset().union(
-                *(c.units for c in cells.evidence if theme in c.themes)
-            )
-            accepted_hits += len(got & own)
-            accepted += len(got)
+        own = frozenset().union(*(c.units for c in cells.evidence if theme in c.themes))
+        hits = len(got & own)
+        accepted_hits += hits
+        accepted += len(got) if cells.scored(theme) else hits
     return EvidenceTally(accepted_hits, accepted, gold_hits, gold)
 
 
@@ -165,20 +165,19 @@ def char_counts(
     cells: EventCells, accepted_spans: Mapping[str, tuple[Span, ...]]
 ) -> EvidenceTally:
     """One event's evidence characters, counted as ``unit_tally`` counts units: each
-    cell's gold characters and those its themes' accepted spans cover; each scored
-    theme's accepted characters, each counted once, and those within its cells.
-    Character Jaccard is its ``jaccard``."""
+    cell's gold characters and those its themes' accepted spans cover; each theme's
+    accepted characters within its cells, each counted once, as hits, and a scored
+    theme's other accepted characters. Character Jaccard is its ``jaccard``."""
     gold_hits = gold = accepted_hits = accepted = 0
     for cell in cells.evidence:
         got = [s for t in sorted(cell.themes) for s in accepted_spans.get(t, ())]
         both, _ = char_overlap(cell.spans, got)
         gold_hits, gold = gold_hits + both, gold + covered(cell.spans)
     for theme, got in sorted(accepted_spans.items()):
-        if cells.scored(theme):
-            own = [s for c in cells.evidence if theme in c.themes for s in c.spans]
-            both, _ = char_overlap(got, own)
-            accepted_hits += both
-            accepted += covered(got)
+        own = [s for c in cells.evidence if theme in c.themes for s in c.spans]
+        hits, _ = char_overlap(got, own)
+        accepted_hits += hits
+        accepted += covered(got) if cells.scored(theme) else hits
     return EvidenceTally(accepted_hits, accepted, gold_hits, gold)
 
 
