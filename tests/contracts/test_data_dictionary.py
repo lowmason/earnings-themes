@@ -646,6 +646,7 @@ WORKFLOW_MODELS = [
     model_runtime.ChatModelFile,
 ]
 WORKFLOW_DATACLASSES = [
+    theme_workflow.WorkflowInputs,
     theme_workflow.WorkflowRuntime,
     theme_workflow.WorkflowResult,
     model_runtime.LiveRuntime,
@@ -708,6 +709,14 @@ def test_stage11_application_metric_vocabulary_documented():
     assert "| `minicheck` | `minicheck_joint` |" in text
     assert "| `deberta` | `deberta_joint` |" in text
     assert "accepted, edited, rejected, added, numerator and denominator" in text
+
+
+def test_workflow_prebound_configuration_interface_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert (
+        "workflow_configuration_hashes(config: WorkflowConfig, sources: SupportSources,"
+        in text
+    )
 
 
 EVALUATION_MODELS = [

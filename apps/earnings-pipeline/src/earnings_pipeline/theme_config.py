@@ -270,18 +270,24 @@ def validate_paths(config: WorkflowConfig, *, repo: Path) -> None:
     config._repo = repo.resolve()
 
 
-def load_workflow_config(path: Path, *, repo: Path) -> WorkflowConfig:
+def parse_workflow_config(path: Path, *, repo: Path) -> WorkflowConfig:
     """Read this JSON only, confine every selection before any source loading."""
     try:
         config = WorkflowConfig.model_validate_json(path.read_bytes())
         validate_paths(config, repo=repo)
-        if config.policy_reference is not None:
-            raise WorkflowError("policy_unavailable")
         return config
     except WorkflowError:
         raise
     except Exception:  # noqa: BLE001 - metadata-only boundary; never expose parser details.
         raise WorkflowError("malformed_record") from None
+
+
+def load_workflow_config(path: Path, *, repo: Path) -> WorkflowConfig:
+    """The extract CLI still refuses an externally supplied assignment policy."""
+    config = parse_workflow_config(path, repo=repo)
+    if config.policy_reference is not None:
+        raise WorkflowError("policy_unavailable")
+    return config
 
 
 def read_selected(config: WorkflowConfig, selected: FileSelection) -> bytes:

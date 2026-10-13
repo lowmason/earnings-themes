@@ -6376,7 +6376,7 @@ installs the runtimes it needs.
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `schema_version` | `1` | Application record schema version |
-| `family` | string | Model family, for Stage 8's panel rule |
+| `family` | IdPart | ID-safe model family for Stage 8's panel rule; ASCII letters, digits and `. _ : -` only |
 | `base_url` | string | The server's OpenAI-compatible root; loopback only, which `LocalAdapter` checks when it is built (`loopback_url`) |
 | `model_id` | string | The model the server names in each reply |
 | `runtime` | string | The serving runtime's name |
@@ -7001,3 +7001,28 @@ The report uses short scorer qualifiers and score-map keys. Calibration's raw
 | --- | --- | --- |
 | `minicheck` | `minicheck_joint` | Primary MiniCheck joint score |
 | `deberta` | `deberta_joint` | Alternative DeBERTa joint score, reported only |
+
+### `WorkflowInputs`
+
+A transient `earnings_pipeline.theme_workflow` dataclass containing the verified
+source inputs shared by the ordinary workflow and the pilot phase runner.
+`load_workflow_inputs(config, runtime)` derives acquisition provenance from the
+immutable acquisition predecessors. It appends no processing transition.
+`workflow_configuration_hashes(config: WorkflowConfig, sources: SupportSources,
+*, cache_mode="replay") -> tuple[str, str]` returns coding then support hashes,
+using the shared configuration definitions before a policy is bound or voted.
+`validate_workflow_policy(config: WorkflowConfig, policy: AssignmentPolicy | None)
+-> None` validates the configured policy reference for metadata loading and
+ordinary pilot runs, refusing with `policy_unavailable` or `policy_mismatch`.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `expected` | tuple of ExpectedEvent | Explicit expected event selection |
+| `bundles` | tuple of Bundle | Canonical documents with original structure and masks |
+| `metadata` | tuple of DocumentMetadata | Checked source and document metadata |
+| `canonical` | tuple of CanonicalSnapshot | Immutable canonical artifact bindings |
+| `raw` | tuple of RawSnapshot | Immutable raw artifact bindings |
+| `codebook` | Codebook | The frozen approved codebook |
+| `template` | PromptTemplate | The pinned extraction prompt template |
+| `acquisition` | tuple of AcquisitionStatus | Checked projections of immutable acquisition predecessors |
+| `provenance_hash` | SHA-256 string | Digest binding the selected universe, acquisition, metadata and canonical snapshots |
