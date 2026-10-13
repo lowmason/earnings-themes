@@ -17,6 +17,7 @@ from pathlib import Path
 
 import earnings_core as core
 import earnings_ingestion.canonical as ingestion
+import earnings_pipeline as pipeline
 import pytest
 from earnings_ingestion import browser, layout
 from earnings_ingestion.cohort import config as cohort_config
@@ -29,6 +30,7 @@ from earnings_pipeline import (
     model_runtime,
     pilot_inputs,
     pilot_records,
+    pilot_reporting,
     pilot_workflow,
     theme_config,
     theme_workflow,
@@ -735,9 +737,9 @@ PILOT_MODELS = {
 PILOT_DATACLASSES = {
     "PilotIntake": pilot_inputs.PilotIntake,
     "LoadedPass": pilot_workflow.LoadedPass,
+    "LoadedRun": pilot_reporting.LoadedRun,
 }
 PILOT_ENUMS = {}
-PILOT_MODULES = [pilot_records, pilot_inputs, pilot_workflow]
 
 
 @pytest.mark.parametrize(("name", "model"), PILOT_MODELS.items(), ids=PILOT_MODELS)
@@ -760,10 +762,13 @@ def test_pilot_application_enum_values_documented(name, enum):
 def test_pilot_application_registry_is_complete():
     defined = {
         value
-        for module in PILOT_MODULES
-        for value in vars(module).values()
+        for info in pkgutil.iter_modules(pipeline.__path__)
+        if info.name.startswith("pilot_")
+        for value in vars(
+            importlib.import_module(f"{pipeline.__name__}.{info.name}")
+        ).values()
         if isinstance(value, type)
-        and value.__module__ == module.__name__
+        and value.__module__ == f"{pipeline.__name__}.{info.name}"
         and not value.__name__.startswith("_")
     }
     assert {v for v in defined if issubclass(v, BaseModel)} == set(

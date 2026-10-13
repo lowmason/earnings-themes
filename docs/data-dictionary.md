@@ -7176,3 +7176,19 @@ before binding the calibrated policy.
 `pilot_calibration.evaluation_path(intake, name)` confines output paths to the pinned
 evaluation directory before immutable writes. These interfaces reuse existing
 contracts and introduce no new structural type or schema version.
+
+### `LoadedRun`
+
+A transient `earnings_pipeline.pilot_reporting` dataclass. `load_run` verifies the
+sealed run checkpoint, committed calibration artifact, pass selection, frozen
+configuration, cache mode and stability identity, then reverifies coding against
+the consumed support run and bound policy. Reporting renders these checked inputs
+into the existing `PilotReport`; this dataclass adds no report fields or sidecar.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `record` | pilot_records.RunRecord | Verified local frozen-policy run checkpoint |
+| `passed` | LoadedPass | Verified extraction, proposals and both support runs |
+| `primary` | StoredSupportRun | Consumed primary support results, reloaded for an ordinary replay or retained for a fresh run |
+| `coding` | CodingRun | Reverified frozen-policy coding decisions and assignments |
+| `policy` | AssignmentPolicy or null | Verified bound policy, or null for the verified no-candidate calibration outcome |
