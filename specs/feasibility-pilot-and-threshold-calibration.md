@@ -295,7 +295,7 @@ recall is capped by the share of positive labels whose targets came out `assesse
 
 **Fitting and selection.**
 - Each candidate's cutoff maximises train labelled precision (`accepted_claim_precision`, label task `joint_support`) subject to label recall ≥ ρ.
-- The selection rule picks the candidate with the highest such precision. A tie goes to the candidate using fewer signals.
+- The selection rule picks the candidate with the highest such precision. A tie goes to the candidate using fewer signals, then to the lower cutoff; every candidate uses one signal, so the lower cutoff decides.
 - If no candidate meets ρ, the artifact records `no_candidate`. No policy is bound, every target stays in review, and the report and V6 record say that no configuration passes. That is a feasibility finding, not an error.
 
 **The artifact,** `calibration-v1.json`, holds no text. It holds:
@@ -456,3 +456,5 @@ user's approval.
 > Plan A, slice 1: COMPLETE (2026-10-11) — implemented by plan 17 (specs/plans/completed/17-feasibility-pilot-and-threshold-calibration-plan-a-slice-1.md): A6, A7, and A9's wording globs. Next: write plan A's remainder (A1–A5, A8, and A9's dictionary rows).
 
 > Plan A, slice 2: COMPLETE (2026-10-12) — implemented by plan 18 (specs/plans/completed/18-feasibility-pilot-and-threshold-calibration-plan-a-slice-2.md): A1, A2, and A9's dictionary rows for their records; FP11, FP23, A1 and A8 amended. Next: write plan A's remainder (A3–A5, then A8, each with A9's dictionary rows for its records).
+
+> Plan A, slice 3: COMPLETE (2026-10-13) — implemented by plan 19 (specs/plans/completed/19-feasibility-pilot-and-threshold-calibration-plan-a-slice-3.md): A3, A4, A5, and A9's dictionary rows for their records; FP10, FP14, FP18, FP22, A3, §Preregistration, §Calibration, §Failure handling and §Metrics amended. Next: write plan A's last slice (A8, with A9's dictionary rows for its records).
