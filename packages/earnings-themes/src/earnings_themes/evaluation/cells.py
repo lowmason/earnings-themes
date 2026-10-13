@@ -105,6 +105,11 @@ def level_one(codebook: Codebook) -> dict[str, str]:
     return roots
 
 
+def quote_spans(reading: GoldReading) -> dict[str, Span]:
+    """The shared quote-ID to canonical span map for cells and hard negatives."""
+    return {quote.quote_id: (quote.start, quote.end) for quote in reading.quotes}
+
+
 def event_cells(
     reading: GoldReading,
     index: UnitIndex,
@@ -118,11 +123,13 @@ def event_cells(
         return theme_id if theme_map is None else theme_map.get(theme_id, theme_id)
 
     predicted = frozenset(predicted)
-    quotes = {q.quote_id: (q.start, q.end) for q in reading.quotes}
+    quotes = quote_spans(reading)
     claims = {c.claim_id: c.quote_ids for c in reading.claims}
-    dangling = sum(q not in quotes for ids in claims.values() for q in ids) + sum(
-        a.claim_id not in claims for a in reading.assignments
-    )
+    dangling = sum(
+        q not in quotes
+        for claim in (*reading.claims, *reading.hard_negatives)
+        for q in claim.quote_ids
+    ) + sum(a.claim_id not in claims for a in reading.assignments)
     rows = [
         (a.claim_id, mapped(a.theme_id), a.support, a.tie_group)
         for a in reading.assignments

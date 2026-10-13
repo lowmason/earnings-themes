@@ -16,7 +16,7 @@ from earnings_themes.evaluation.align import (
     covered,
     units_over,
 )
-from earnings_themes.evaluation.cells import EventCells, GoldReading
+from earnings_themes.evaluation.cells import EventCells, GoldReading, quote_spans
 from earnings_themes.gold import DraftCounts, NegativeKind, ReleaseLabel
 
 
@@ -204,7 +204,7 @@ def hard_negative_counts(
     """Per negative kind (R12.5): the hard negatives that name a theme, and those
     falsely accepted, by an accepted assignment to that theme whose evidence units
     overlap the negative's."""
-    quotes = {q.quote_id: (q.start, q.end) for q in reading.quotes}
+    quotes = quote_spans(reading)
     out: dict[NegativeKind, tuple[int, int]] = {}
     for negative in reading.hard_negatives:
         if negative.theme_id is None:
@@ -229,14 +229,22 @@ def release_tally(confirmed: bool, label: ReleaseLabel) -> Tally | None:
     )
 
 
+def gs5_counts(counts: Iterable[DraftCounts]) -> dict[str, int]:
+    """The shared summed source counts behind each GS5 share."""
+    rows = tuple(counts)
+    return {
+        name: sum(getattr(row, name) for row in rows)
+        for name in ("accepted", "edited", "rejected", "added")
+    }
+
+
 def gs5_shares(counts: Iterable[DraftCounts]) -> dict[str, float | None]:
     """GS5's shares over summed counts: edited and rejected over drafted items,
     added over signed items (D19-9)."""
-    rows = list(counts)
-    accepted = sum(c.accepted for c in rows)
-    edited = sum(c.edited for c in rows)
-    rejected = sum(c.rejected for c in rows)
-    added = sum(c.added for c in rows)
+    totals = gs5_counts(counts)
+    accepted, edited, rejected, added = (
+        totals[name] for name in ("accepted", "edited", "rejected", "added")
+    )
     drafted = accepted + edited + rejected
     return {
         "edited": ratio(edited, drafted),

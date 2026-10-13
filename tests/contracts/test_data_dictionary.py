@@ -332,7 +332,8 @@ def documented(name: str) -> set[str]:
     """The first-column code spans of the table under the heading for ``name``."""
     text = DICTIONARY.read_text(encoding="utf-8")
     heading = f"### `{name}`\n"
-    assert heading in text, f"docs/data-dictionary.md has no section for {name}"
+    if heading not in text:
+        pytest.fail(f"missing_dictionary_heading:{name}", pytrace=False)
     section = text.split(heading, 1)[1].split("\n#", 1)[0]
     return set(re.findall(r"^\| `([^`]+)` \|", section, flags=re.MULTILINE))
 
@@ -699,6 +700,14 @@ def test_current_document_and_label_rendering_boundaries_documented():
     text = DICTIONARY.read_text(encoding="utf-8")
     assert "check_countable(..., doc_id=parsed_document_id)" in text
     assert "field path `evidence.doc_id`" in text
+
+
+def test_stage11_application_metric_vocabulary_documented():
+    assert documented("Scorer-view vocabulary") == {"minicheck", "deberta"}
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert "| `minicheck` | `minicheck_joint` |" in text
+    assert "| `deberta` | `deberta_joint` |" in text
+    assert "accepted, edited, rejected, added, numerator and denominator" in text
 
 
 EVALUATION_MODELS = [

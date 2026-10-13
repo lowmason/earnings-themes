@@ -6419,7 +6419,7 @@ the run predicted, else one already present, else its lowest theme ID, and its o
 members are excused; for unit and character scoring the group stays one evidence
 cell, which any member's evidence covers, and an accepted unit or character is one
 hit however many cells hold it. A theme whose every row is `uncertain` is left out
-and counted. A claim's reference to a quote, or any assignment's reference to a
+and counted. A claim or hard negative's reference to a quote, or any assignment's reference to a
 claim, that the reading lacks is counted as dangling, one per reference. The roll-up
 maps both sides to level-one roots. Gold-evidence recall counts the gold-supporting
 units any accepted assignment holds. GS5's edited and rejected shares are over
@@ -6463,7 +6463,7 @@ event-clustered percentile bootstrap.
 | `units` | Each present theme's gold-supporting units |
 | `spans` | Each present theme's gold-supporting spans |
 | `evidence` | The `EvidenceCell`s unit and character scoring read: each present theme's own untied evidence, then each tie group's |
-| `dangling` | References the reading cannot resolve, one each: a claim's quote the reading lacks, and any assignment's claim it lacks, whatever its support, theme or tie (D19-7) |
+| `dangling` | References the reading cannot resolve, one each: a claim or hard negative's quote the reading lacks, and any assignment's claim it lacks, whatever its support, theme or tie; tolerated and counted (D19-7) |
 
 ### `EvidenceCell`
 
@@ -6587,7 +6587,7 @@ groups the two hit counts are equal, and every figure is the single-tally one.
 | `qualifier` | A family, `family:presentation`, a scorer view, or a negative kind; null when the metric is reported once |
 | `point` | The point estimate, or null when undefined |
 | `interval` | Its `Interval`; null exactly when the metric is not estimated |
-| `counts` | Named counts behind the figure, sorted by name |
+| `counts` | Named counts behind the figure, sorted by name; GS5 figures retain accepted, edited, rejected, added, numerator and denominator |
 | `reason` | Why the metric is not estimated; null otherwise |
 
 ### `PartitionReport`
@@ -6606,7 +6606,7 @@ groups the two hit counts are equal, and every figure is the single-tally one.
 | `release_agrees` | Whether the two release-identification labels agree |
 | `theme_f1` | Exact theme F1 of one reading against the other |
 | `unit_f1` | Unit F1 of their evidence |
-| `dangling` | Dangling references in either reading |
+| `dangling` | Sum of both readings' dangling quote and claim references, including hard-negative quote references; tolerated, never refused |
 
 ### `IndependentFigures`
 
@@ -6703,7 +6703,7 @@ groups the two hit counts are equal, and every figure is the single-tally one.
 | `claim_label` | The user's claim label, or null when unsure |
 | `joint_label` | The joint label, or null |
 | `accepted` | Whether the run accepted it |
-| `scores` | Each scorer view's joint score |
+| `scores` | Named joint scores keyed `minicheck` and `deberta`; see the scorer-view vocabulary below |
 | `trials` | Its four judge trials |
 
 ### `ClaimAnswer`
@@ -6977,3 +6977,27 @@ the current parsed document ID without loading text; mismatches return `doc_id:
 wrong_document`. `label_views` remains a pure renderer, and its application caller
 must reverify support before rendering. A missing evidence document closes as
 `malformed_record`, with field path `evidence.doc_id`.
+
+### Report counts and stability identities
+
+`stability_figures(runs, codebook, plan, *, run_ids)` requires one unique nonblank
+ID per run and unique events within each run. Different event sets refuse with
+the offending run ID; repeated events name the run and event. `quote_spans`
+provides the shared canonical quote map used by event cells and hard-negative
+scoring; negative dangling references remain tolerated and counted. `gs5_counts`
+is the shared sum behind GS5 shares and their figure counts. Edited and rejected
+shares use accepted + edited + rejected as denominator; added shares use accepted
++ edited + added.
+
+Stability figures remain in dev's `PartitionReport.figures`.
+
+### `Scorer-view vocabulary`
+
+The report uses short scorer qualifiers and score-map keys. Calibration's raw
+`MetricReport.view` names retain the joint scope. Both score against the
+`claim_support` label; support precision separately uses `joint_support`.
+
+| Report qualifier / score-map key | MetricReport.view | Meaning |
+| --- | --- | --- |
+| `minicheck` | `minicheck_joint` | Primary MiniCheck joint score |
+| `deberta` | `deberta_joint` | Alternative DeBERTa joint score, reported only |

@@ -46,6 +46,7 @@ from earnings_themes.evaluation.scores import (
     char_counts,
     evidence_recall_counts,
     f1,
+    gs5_counts,
     gs5_shares,
     hard_negative_counts,
     macro_f1,
@@ -320,12 +321,23 @@ def _event_figures(
         _counts(rare_themes=len(rare)),
     )
     counts = {e: x.observation.gold.counts for e, x in events.items()}
+    totals = gs5_counts(counts.values())
     for metric, key in (
         (Metric.GS5_EDITED_SHARE, "edited"),
         (Metric.GS5_REJECTED_SHARE, "rejected"),
         (Metric.GS5_ADDED_SHARE, "added"),
     ):
-        figures.add(metric, counts, lambda drawn, k=key: gs5_shares(drawn)[k])
+        denominator = (
+            totals["accepted"]
+            + totals["edited"]
+            + totals["added" if key == "added" else "rejected"]
+        )
+        figures.add(
+            metric,
+            counts,
+            lambda drawn, k=key: gs5_shares(drawn)[k],
+            _counts(**totals, numerator=totals[key], denominator=denominator),
+        )
     no_theme = {e: x.observation.gold.no_theme for e, x in events.items()}
     figures.add(
         Metric.NO_THEME_SHARE,
@@ -498,16 +510,32 @@ def stability_figures(
     runs: Sequence[Sequence[EventObservation]],
     codebook: Codebook,
     plan: BootstrapPlan,
+    *,
+    run_ids: Sequence[str],
 ) -> tuple[Figure, ...]:
     """FP12's k fresh runs over one partition's events (R12.10): Fleiss' κ over
     event × theme presence, for every codebook theme, and the mean pairwise Jaccard
     of the runs' accepted evidence units and of their accepted (theme, unit)
     pairs."""
+    if (
+        isinstance(run_ids, str | bytes)
+        or len(run_ids) != len(runs)
+        or any(type(run_id) is not str or not run_id.strip() for run_id in run_ids)
+    ):
+        raise EvaluationError(EvaluationProblem.MALFORMED_RECORD, "run_ids")
+    if (duplicate := first_duplicate(run_ids)) is not None:
+        raise EvaluationError(EvaluationProblem.MALFORMED_RECORD, duplicate)
     if len(runs) < 2:
         raise EvaluationError(EvaluationProblem.MALFORMED_RECORD, "runs")
+    for run_id, run in zip(run_ids, runs, strict=True):
+        if (duplicate := first_duplicate(o.event_id for o in run)) is not None:
+            raise EvaluationError(
+                EvaluationProblem.MALFORMED_RECORD, f"{run_id}:{duplicate}"
+            )
     events = sorted(o.event_id for o in runs[0])
-    if any(sorted(o.event_id for o in run) != events for run in runs):
-        raise EvaluationError(EvaluationProblem.MALFORMED_RECORD, "runs")
+    for run_id, run in zip(run_ids, runs, strict=True):
+        if sorted(o.event_id for o in run) != events:
+            raise EvaluationError(EvaluationProblem.MALFORMED_RECORD, run_id)
     themes = sorted(t.theme_id for t in codebook.themes)
     per_event: dict[str, tuple[tuple[frozenset, frozenset, frozenset], ...]] = {}
     for event_id in events:
