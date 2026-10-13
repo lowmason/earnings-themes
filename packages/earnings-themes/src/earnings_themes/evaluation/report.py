@@ -106,6 +106,7 @@ class LabelledTarget:
 class _Event:
     observation: EventObservation
     cells: EventCells
+    rolled_cells: EventCells
     tallies: dict[str, Tally]
     rolled: dict[str, Tally]
     units: Tally
@@ -128,13 +129,14 @@ def _event(observation: EventObservation, roots: Mapping[str, str]) -> _Event:
     gold = observation.gold
     cells = event_cells(gold, observation.index, predicted)
     up = {roots.get(t, t) for t in predicted}
-    rolled = event_cells(gold, observation.index, up, theme_map=roots)
+    rolled_cells = event_cells(gold, observation.index, up, theme_map=roots)
     negatives = hard_negative_counts(gold, observation.index, units)
     return _Event(
         observation=observation,
         cells=cells,
+        rolled_cells=rolled_cells,
         tallies=theme_tallies(cells, predicted),
-        rolled=theme_tallies(rolled, up),
+        rolled=theme_tallies(rolled_cells, up),
         units=unit_tally(cells, units),
         chars=char_counts(cells, spans),
         evidence=evidence_recall_counts(cells, units),
@@ -143,6 +145,15 @@ def _event(observation: EventObservation, roots: Mapping[str, str]) -> _Event:
         ),
         negatives={kind.value: counts for kind, counts in negatives.items()},
     )
+
+
+def _first_duplicate(ids: Iterable[str]) -> str | None:
+    seen: set[str] = set()
+    for item in ids:
+        if item in seen:
+            return item
+        seen.add(item)
+    return None
 
 
 def _counts(**counts: int) -> tuple[tuple[str, int], ...]:
@@ -184,7 +195,7 @@ class _Figures:
 
 
 def _event_figures(
-    figures: _Figures, events: Mapping[str, _Event], themes: int
+    figures: _Figures, events: Mapping[str, _Event], themes: int, root_count: int
 ) -> None:
     def tallies(name: str) -> dict[str, Iterable[Tally]]:
         return {e: getattr(x, name).values() for e, x in events.items()}
@@ -205,11 +216,17 @@ def _event_figures(
             lambda drawn, m=measure: m(total(t for t in drawn if t is not None)),
             _tally_counts(shown, ambiguous=ambiguous),
         )
-    left = sum(len(x.cells.uncertain) for x in events.values())
-    for micro, macro, name in (
-        (Metric.THEME_F1_MICRO, Metric.THEME_F1_MACRO, "tallies"),
-        (Metric.THEME_F1_ROLLUP_MICRO, Metric.THEME_F1_ROLLUP_MACRO, "rolled"),
+    for micro, macro, name, cells, universe in (
+        (Metric.THEME_F1_MICRO, Metric.THEME_F1_MACRO, "tallies", "cells", themes),
+        (
+            Metric.THEME_F1_ROLLUP_MICRO,
+            Metric.THEME_F1_ROLLUP_MACRO,
+            "rolled",
+            "rolled_cells",
+            root_count,
+        ),
     ):
+        left = sum(len(getattr(x, cells).uncertain) for x in events.values())
         figures.add(
             micro,
             tallies(name),
@@ -221,7 +238,7 @@ def _event_figures(
             macro,
             {e: getattr(x, name) for e, x in events.items()},
             lambda drawn: macro_f1(per_theme(drawn)),
-            _counts(themes_scored=scored, themes_left_out=themes - scored),
+            _counts(themes_scored=scored, themes_left_out=universe - scored),
         )
     units = {e: x.units for e, x in events.items()}
     unit_total = total(units.values())
@@ -438,24 +455,26 @@ def partition_report(
     if partition not in (Partition.TRAIN, Partition.DEV):
         raise EvaluationError(EvaluationProblem.WRONG_PARTITION, partition.value)
     ids = [o.event_id for o in observations]
-    if len(ids) != len(set(ids)):
-        raise EvaluationError(EvaluationProblem.MALFORMED_RECORD, "events")
+    if (duplicate := _first_duplicate(ids)) is not None:
+        raise EvaluationError(EvaluationProblem.MALFORMED_RECORD, duplicate)
     for observation in observations:
-        if observation.gold.partition is not partition or (
-            observation.gold.event_id != observation.event_id
-        ):
+        if observation.gold.event_id != observation.event_id:
+            raise EvaluationError(
+                EvaluationProblem.MALFORMED_RECORD, observation.event_id
+            )
+        if observation.gold.partition is not partition:
             raise EvaluationError(
                 EvaluationProblem.WRONG_PARTITION, observation.event_id
             )
     for target in labelled:
         if target.event_id not in ids:
             raise EvaluationError(EvaluationProblem.UNKNOWN_EVENT, target.target_id)
-    if len({t.target_id for t in labelled}) != len(labelled):
-        raise EvaluationError(EvaluationProblem.DUPLICATE_TARGET, "labels")
+    if (duplicate := _first_duplicate(t.target_id for t in labelled)) is not None:
+        raise EvaluationError(EvaluationProblem.DUPLICATE_TARGET, duplicate)
     roots = level_one(codebook)
     events = {o.event_id: _event(o, roots) for o in observations}
     figures = _Figures(plan)
-    _event_figures(figures, events, len(codebook.themes))
+    _event_figures(figures, events, len(codebook.themes), len(set(roots.values())))
     _label_figures(figures, labelled, sorted(ids))
     for metric in (Metric.SECTOR_PREVALENCE, Metric.SOURCE_SELECTION_BIAS):
         figures.out.append(

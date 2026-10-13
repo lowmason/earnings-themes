@@ -1,12 +1,13 @@
 """A partition's figures, with hand-computed known answers (the Stage 11 spec,
 §Metrics; R12.5, R12.7, R12.8, R12.10, R13.1)."""
 
+from dataclasses import replace
 from types import SimpleNamespace
 
 import pytest
 from earnings_themes.evaluation.align import unit_index
 from earnings_themes.evaluation.bootstrap import BootstrapPlan
-from earnings_themes.evaluation.problems import EvaluationError
+from earnings_themes.evaluation.problems import EvaluationError, EvaluationProblem
 from earnings_themes.evaluation.records import Metric
 from earnings_themes.evaluation.report import (
     NOT_ESTIMATED,
@@ -17,10 +18,20 @@ from earnings_themes.evaluation.report import (
     partition_report,
     stability_figures,
 )
-from earnings_themes.gold import ReleaseLabel
+from earnings_themes.gold import DraftCounts, ReleaseLabel, Support
 from earnings_themes.split import Partition
 
-from .cases import claim, example, gold, panel, quote, reading, row, unit_ids
+from .cases import (
+    bundle,
+    claim,
+    example,
+    gold,
+    panel,
+    quote,
+    reading,
+    row,
+    unit_ids,
+)
 
 PLAN = BootstrapPlan(seed=11, resamples=50, level=0.9, max_undefined_share=0.5)
 BOOK = SimpleNamespace(
@@ -147,6 +158,8 @@ def report():
         (Metric.JUDGE_KAPPA, "f0", 0.4),
         (Metric.JUDGE_KAPPA, "f1", 1.0),
         (Metric.JUDGE_KAPPA, "f0:evidence_first", 0.4),
+        (Metric.JUDGE_AC1, "f0", 1 / 3),
+        (Metric.JUDGE_AC1, "f0:evidence_first", 1 / 3),
     ],
 )
 def test_known_answers(report, metric, qualifier, point) -> None:
@@ -165,6 +178,19 @@ def test_counts_keep_what_was_left_out(report) -> None:
     assert support == {"labelled": 3, "accepted": 2, "accepted_unlabelled": 0}
 
 
+def test_support_precision_interval_skips_draws_without_an_accepted_label(
+    report,
+) -> None:
+    """``random.Random(11)`` draws two of the sorted events (e1, e2) per resample,
+    50 times: 18 draw only e1, 12 only e2, and 20 both. e2 holds no accepted labelled
+    target, so a draw of only e2 is undefined. e1's accepted targets are labelled 1
+    and 0, so every other draw is 1/2, and the interval is [1/2, 1/2]."""
+    interval = report.figure(Metric.SUPPORT_PRECISION).interval
+    assert interval.undefined == 12
+    assert interval.lower == pytest.approx(0.5)
+    assert interval.upper == pytest.approx(0.5)
+
+
 def test_dev_is_held_out_and_two_metrics_are_not_estimated(report) -> None:
     assert report.partition is Partition.DEV and not report.in_sample
     assert report.events == ("e1", "e2")
@@ -179,6 +205,161 @@ def test_the_report_is_deterministic(report) -> None:
         observations(), labelled(), BOOK, PLAN, partition=Partition.DEV
     )
     assert again == report
+
+
+TREE = SimpleNamespace(
+    themes=tuple(
+        SimpleNamespace(theme_id=t, parent_id=p)
+        for t, p in (
+            ("capacity", None),
+            ("debt", None),
+            ("workforce", None),
+            ("labor", "workforce"),
+            ("hiring", "workforce"),
+            ("sales", None),
+            ("pricing", "sales"),
+            ("demand", "sales"),
+        )
+    )
+)
+
+
+@pytest.fixture(scope="module")
+def tree():
+    """One event over a codebook of 8 themes and 4 roots (capacity, debt, workforce
+    and sales; labor and hiring sit under workforce, pricing and demand under sales).
+
+    Gold: capacity and labor are supported; hiring, pricing and demand are only
+    uncertain; debt is decided against. The run accepts capacity, hiring, demand and
+    debt.
+
+    Exact level. Present: capacity, labor. Uncertain-only: hiring, pricing, demand
+    (3). Scored cells: capacity is a hit, labor a miss, debt a false positive;
+    hiring and demand are uncertain-only, so they score nothing. Micro: tp 1, fp 1,
+    fn 1, so F1 = 2 / (2 + 1 + 1) = 1/2. Macro over three themes: (1 + 0 + 0) / 3 =
+    1/3, with 8 - 3 = 5 themes left out.
+
+    Roll-up. Present: capacity, workforce. Pricing and demand are two uncertain
+    siblings under sales, so they count once, and hiring is uncertain beside a
+    present sibling, so it counts for nothing: uncertain-only is {sales} (1).
+    Hiring rolls up to workforce, a hit. Scored cells: capacity and workforce are
+    hits, debt a false positive; sales is uncertain-only, so it scores nothing.
+    Micro: tp 2, fp 1, fn 0, so F1 = 4 / (4 + 1 + 0) = 4/5. Macro over three roots:
+    (1 + 0 + 1) / 3 = 2/3, with 4 - 3 = 1 root left out.
+    """
+    source = bundle()
+    p0, p1, p2, p3 = unit_ids(source)
+    base = reading(
+        quotes=(
+            quote("q1", 0, 20, p0),
+            quote("q2", 21, 37, p1),
+            quote("q3", 38, 56, p2),
+            quote("q4", 57, 73, p3),
+        ),
+        claims=(
+            claim("c1", "q1"),
+            claim("c2", "q2"),
+            claim("c3", "q3"),
+            claim("c4", "q4"),
+        ),
+        assignments=(
+            row("c1", "capacity"),
+            row("c2", "labor"),
+            row("c2", "hiring", Support.UNCERTAIN),
+            row("c3", "pricing", Support.UNCERTAIN),
+            row("c3", "demand", Support.UNCERTAIN),
+            row("c4", "debt", Support.DOES_NOT_SUPPORT),
+        ),
+    )
+    observed = EventObservation(
+        event_id="e1",
+        gold=gold("e1", base),
+        index=unit_index(source),
+        accepted=(
+            Accepted("capacity", ((0, 20),)),
+            Accepted("hiring", ((21, 37),)),
+            Accepted("demand", ((38, 56),)),
+            Accepted("debt", ((57, 73),)),
+        ),
+        release_confirmed=True,
+        quotes=(4, 4),
+        targets=(4, 4),
+    )
+    return partition_report((observed,), (), TREE, PLAN, partition=Partition.DEV)
+
+
+def test_the_exact_level_counts_every_theme_and_uncertain_cell(tree) -> None:
+    micro = tree.figure(Metric.THEME_F1_MICRO)
+    assert micro.point == pytest.approx(1 / 2)
+    assert dict(micro.counts) == {"tp": 1, "fp": 1, "fn": 1, "uncertain_left_out": 3}
+    macro = tree.figure(Metric.THEME_F1_MACRO)
+    assert macro.point == pytest.approx(1 / 3)
+    assert dict(macro.counts) == {"themes_scored": 3, "themes_left_out": 5}
+
+
+def test_the_rollup_micro_counts_its_own_uncertain_cells(tree) -> None:
+    micro = tree.figure(Metric.THEME_F1_ROLLUP_MICRO)
+    assert micro.point == pytest.approx(4 / 5)
+    assert dict(micro.counts) == {"tp": 2, "fp": 1, "fn": 0, "uncertain_left_out": 1}
+
+
+def test_the_rollup_macro_counts_its_own_roots(tree) -> None:
+    macro = tree.figure(Metric.THEME_F1_ROLLUP_MACRO)
+    assert macro.point == pytest.approx(2 / 3)
+    assert dict(macro.counts) == {"themes_scored": 3, "themes_left_out": 1}
+
+
+def test_gs5_shares_sum_the_draft_counts_of_every_event() -> None:
+    """e1 drafts accepted 3, edited 1 and rejected 2, and adds 1; e2 drafts accepted
+    2, edited 1 and rejected 1, and adds 3. Summed: accepted 5, edited 2, rejected 3,
+    added 4. Drafted items: 5 + 2 + 3 = 10; signed items: 5 + 2 + 4 = 11. Edited 2/10,
+    rejected 3/10, added 4/11."""
+    counts = (
+        DraftCounts(accepted=3, edited=1, rejected=2, added=1),
+        DraftCounts(accepted=2, edited=1, rejected=1, added=3),
+    )
+    changed = tuple(
+        replace(o, gold=o.gold.model_copy(update={"counts": c}))
+        for o, c in zip(observations(), counts, strict=True)
+    )
+    shares = partition_report(changed, (), BOOK, PLAN, partition=Partition.DEV)
+    assert shares.figure(Metric.GS5_EDITED_SHARE).point == pytest.approx(2 / 10)
+    assert shares.figure(Metric.GS5_REJECTED_SHARE).point == pytest.approx(3 / 10)
+    assert shares.figure(Metric.GS5_ADDED_SHARE).point == pytest.approx(4 / 11)
+
+
+def test_a_duplicated_event_is_refused_by_its_id() -> None:
+    first, second = observations()
+    with pytest.raises(EvaluationError) as refused:
+        partition_report(
+            (first, second, second), (), BOOK, PLAN, partition=Partition.DEV
+        )
+    assert refused.value.problem is EvaluationProblem.MALFORMED_RECORD
+    assert refused.value.subject == "e2"
+
+
+def test_a_duplicated_target_is_refused_by_its_id() -> None:
+    targets = labelled()
+    with pytest.raises(EvaluationError) as refused:
+        partition_report(
+            observations(),
+            (*targets, targets[2]),
+            BOOK,
+            PLAN,
+            partition=Partition.DEV,
+        )
+    assert refused.value.problem is EvaluationProblem.DUPLICATE_TARGET
+    assert refused.value.subject == "t3"
+
+
+def test_an_observation_over_another_events_gold_is_malformed() -> None:
+    first, second = observations()
+    with pytest.raises(EvaluationError) as refused:
+        partition_report(
+            (replace(first, gold=second.gold),), (), BOOK, PLAN, partition=Partition.DEV
+        )
+    assert refused.value.problem is EvaluationProblem.MALFORMED_RECORD
+    assert refused.value.subject == "e1"
 
 
 def test_wrong_partitions_and_unknown_events_are_refused() -> None:
@@ -224,5 +405,9 @@ def test_stability_over_identical_and_empty_runs() -> None:
     apart = {f.metric: f.point for f in stability_figures((runs, empty), BOOK, PLAN)}
     assert apart[Metric.STABILITY_FLEISS_KAPPA] == pytest.approx(-0.2)
     assert apart[Metric.STABILITY_UNIT_JACCARD] == 0.0
+    # Every resample holds an event with accepted pairs in the first run (e1: four,
+    # e2: one) and none in the empty run, so the intersection is 0 over a non-empty
+    # union, and the mean over the one pair of runs is 0.
+    assert apart[Metric.STABILITY_ASSIGNMENT_JACCARD] == 0.0
     with pytest.raises(EvaluationError, match="malformed_record"):
         stability_figures((runs,), BOOK, PLAN)
