@@ -45,8 +45,11 @@ from earnings_ingestion.events.states import StateTransition
 from earnings_ingestion.fetch.store import write_new
 from earnings_themes.anchoring import Bundle
 from earnings_themes.codebook import CODEBOOK_ID, CODEBOOK_VERSION
+from earnings_themes.gold import Gold, load_gold
+from earnings_themes.independent import LEDGER, IndependentLedger, load_ledger
 from earnings_themes.problems import Problem, Refusal
 from earnings_themes.records import Pin, RecordError
+from earnings_themes.split import Partition
 from earnings_themes.wording import labelled_strings, shared
 from pydantic import BaseModel
 
@@ -62,6 +65,10 @@ CODEBOOK_FILE = Path("codebooks") / CODEBOOK_ID / f"codebook-v{CODEBOOK_VERSION}
 FIXTURE_MANIFEST = Path("tests") / "fixtures" / "releases" / "manifest.toml"
 CANONICAL_FIXTURES = Path("tests") / "fixtures" / "canonical"
 HARD_NEGATIVES = Path("tests") / "fixtures" / "gold" / "hard-negatives.toml"
+Events = Annotated[
+    list[str] | None,
+    typer.Argument(help="Event IDs; every committed gold file when none is named."),
+]
 
 
 @dataclass(frozen=True)
@@ -111,6 +118,70 @@ def file_stem(event_id: str) -> str:
     Git on Windows cannot check out a path with a colon (P9-3). The ID inside each
     file is unchanged."""
     return event_id.replace(":", "_")
+
+
+def kept_drafts(layout: Layout, event_id: str) -> tuple[Path, Path]:
+    """The kept draft and its working copy, under the event's portable file stem."""
+    stem = file_stem(event_id)
+    return (
+        layout.drafts / f"{stem}.draft.toml",
+        layout.drafts / f"{stem}.working.toml",
+    )
+
+
+def independent_path(layout: Layout, event_id: str) -> Path:
+    """The user's independent record of a dev bundle, local and never committed."""
+    return layout.gold_runs / "independent" / f"{file_stem(event_id)}.toml"
+
+
+def read_ledger(pinned: Pinned) -> IndependentLedger | None:
+    """The independent-pass ledger, or None if absent; malformed records refuse."""
+    path = pinned.evaluation / LEDGER
+    try:
+        return load_ledger(path) if path.is_file() else None
+    except RecordError as error:
+        record_error(error)
+
+
+def committed_gold(
+    layout: Layout,
+    pinned: Pinned,
+    event_ids: list[str] | None,
+    *,
+    require_nonempty: bool = False,
+) -> list[tuple[Path, Gold]]:
+    """Selected committed files, parsed and checked against their event stems.
+
+    Validation permits no committed files; recount requires at least one. Both
+    refuse missing named files, unreadable records and mismatched file stems.
+    """
+    if event_ids:
+        paths = [pinned.gold_dir / f"{file_stem(e)}.toml" for e in event_ids]
+        if missing := [path for path in paths if not path.is_file()]:
+            fail(f"Refused: {layout.shown(missing[0])} is not committed")
+    else:
+        paths = sorted(pinned.gold_dir.glob("*.toml"))
+    if require_nonempty and not paths:
+        fail(f"Refused: no gold is committed under {layout.shown(pinned.gold_dir)}")
+    selected = []
+    for path in paths:
+        try:
+            record = load_gold(path)
+        except RecordError as error:
+            record_error(error)
+        if path.stem != file_stem(record.event_id):
+            fail(f"Refused: {layout.shown(path)} holds the gold of {record.event_id}")
+        selected.append((path, record))
+    return selected
+
+
+def require_train_dev(event_id: str, partition: Partition) -> None:
+    """Stage 11 commands refuse held-back events before reading their text."""
+    if partition not in (Partition.TRAIN, Partition.DEV):
+        fail(
+            f"Refused: {event_id} is a {partition} bundle; pilot evaluation takes"
+            " train and dev only"
+        )
 
 
 def fail(message: str) -> NoReturn:

@@ -55,12 +55,7 @@ from earnings_themes.gold import (
     load_gold,
     load_hard_negatives,
 )
-from earnings_themes.independent import (
-    LEDGER,
-    IndependentLedger,
-    ledger_problem,
-    load_ledger,
-)
+from earnings_themes.independent import ledger_problem
 from earnings_themes.records import RecordError
 from earnings_themes.split import Partition, SplitManifest
 from earnings_themes.view import render_curated_view, render_text, render_view
@@ -70,16 +65,21 @@ from earnings_pipeline.stage6 import (
     CODEBOOK_FILE,
     FIXTURE_MANIFEST,
     HARD_NEGATIVES,
+    Events,
     Layout,
     Pinned,
+    committed_gold,
     documents,
     fail,
     file_stem,
     guarded,
+    independent_path,
+    kept_drafts,
     load_bundle,
     load_fixture,
     load_pinned,
     options,
+    read_ledger,
     record_error,
     refuse,
     replace,
@@ -92,7 +92,6 @@ gold = typer.Typer(no_args_is_help=True, help="Stage 6's gold set.")
 gold.callback()(options)
 CURATED = "hard-negatives"
 
-Events = Annotated[list[str] | None, typer.Argument(help="Event IDs.")]
 Curated = Annotated[
     bool, typer.Option("--hard-negatives", help="The curated hard negatives.")
 ]
@@ -143,8 +142,7 @@ def _open(layout: Layout, split: SplitManifest, event_id: str) -> None:
 def _drafts(layout: Layout, name: str, check: bool) -> tuple[Path, Path]:
     """The kept draft and the working copy. ``--check`` without a working copy
     checks the draft alone, as a drafting session checks its own."""
-    drafted = layout.drafts / f"{file_stem(name)}.draft.toml"
-    working = layout.drafts / f"{file_stem(name)}.working.toml"
+    drafted, working = kept_drafts(layout, name)
     if check and drafted.is_file() and not working.is_file():
         typer.echo(f"checking the draft alone: {name} has no working copy yet")
         working = drafted
@@ -158,29 +156,14 @@ def _drafts(layout: Layout, name: str, check: bool) -> tuple[Path, Path]:
     return drafted, working
 
 
-def _independent_path(layout: Layout, event_id: str) -> Path:
-    """The user's independent record of a dev bundle, local and never committed."""
-    return layout.gold_runs / "independent" / f"{file_stem(event_id)}.toml"
-
-
-def _read_ledger(pinned: Pinned) -> IndependentLedger | None:
-    """The pilot's independent-pass ledger, or ``None`` when none is committed. A
-    ledger that does not read is refused, naming its file and its problems only."""
-    path = pinned.evaluation / LEDGER
-    try:
-        return load_ledger(path) if path.is_file() else None
-    except RecordError as error:
-        record_error(error)
-
-
 def _guard(layout: Layout, pinned: Pinned, split: SplitManifest, event_id: str) -> None:
     """GS19: a dev bundle's draft is neither anchored nor shown until the user's
     independent record exists and matches its ledger row. Only a dev bundle reads
     the ledger or the record, so train and test are unchanged."""
     if split.partition_of(event_id) is not Partition.DEV:
         return
-    ledger = _read_ledger(pinned)
-    record = _independent_path(layout, event_id)
+    ledger = read_ledger(pinned)
+    record = independent_path(layout, event_id)
     found = record.read_bytes() if record.is_file() else None
     if (reason := ledger_problem(ledger, event_id, found)) is not None:
         fail(f"Refused: {event_id} {reason}")
@@ -219,13 +202,13 @@ def _check_independent(
             f"Refused: {event_id}: {layout.shown(existing[0])} exists; the"
             " independent pass comes before the draft (GS19)"
         )
-    ledger = _read_ledger(pinned)
+    ledger = read_ledger(pinned)
     if ledger is not None and any(row.event_id == event_id for row in ledger.rows):
         fail(
             f"Refused: {event_id}: the independent record already has a ledger row;"
             " --independent --check runs before its row is committed (GS19)"
         )
-    path = _independent_path(layout, event_id)
+    path = independent_path(layout, event_id)
     if not path.is_file():
         fail(
             f"Refused: {event_id}: {layout.shown(path)} is not here; the user"
@@ -491,14 +474,8 @@ def _validate_event(
     codebook: Codebook,
     doc_ids: dict[str, str],
     texts: dict[str, str],
-    path: Path,
+    record: Gold,
 ) -> int:
-    try:
-        record: Gold = load_gold(path)
-    except RecordError as error:
-        record_error(error)
-    if path.stem != file_stem(record.event_id):
-        fail(f"Refused: {layout.shown(path)} holds the gold of {record.event_id}")
     split = pinned_split(layout, pinned)
     bundle = load_bundle(layout, doc_ids, record.event_id)
     refusals = validate_gold(
@@ -554,18 +531,14 @@ def validate_command(
     if hard_negatives:
         problems += _validate_curated(layout, pinned, codebook)
     if event_ids or not hard_negatives:
-        if event_ids:
-            paths = [pinned.gold_dir / f"{file_stem(e)}.toml" for e in event_ids]
-            missing = [p for p in paths if not p.is_file()]
-            if missing:
-                fail(f"Refused: {layout.shown(missing[0])} is not committed")
-        else:
-            paths = sorted(pinned.gold_dir.glob("*.toml"))
-            if not paths:
-                typer.echo(f"no gold committed under {layout.shown(pinned.gold_dir)}")
-        doc_ids = documents(layout, pinned) if paths else {}
-        texts = wording_texts(layout, pinned) if paths else {}
-        for path in paths:
-            problems += _validate_event(layout, pinned, codebook, doc_ids, texts, path)
+        records = committed_gold(layout, pinned, event_ids)
+        if not records:
+            typer.echo(f"no gold committed under {layout.shown(pinned.gold_dir)}")
+        doc_ids = documents(layout, pinned) if records else {}
+        texts = wording_texts(layout, pinned) if records else {}
+        for _, record in records:
+            problems += _validate_event(
+                layout, pinned, codebook, doc_ids, texts, record
+            )
     if problems:
         fail(f"Refused: {problems} problem(s)")

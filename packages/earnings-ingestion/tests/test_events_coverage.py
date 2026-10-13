@@ -11,6 +11,7 @@ from earnings_ingestion.cohort.freeze import load_manifest
 from earnings_ingestion.events.coverage import (
     AppliedOverride,
     CoverageGap,
+    CoverageReport,
     NoThemeCount,
     build_coverage,
     load_coverage,
@@ -263,3 +264,18 @@ def test_no_theme_rows_are_bounded_counted_once_and_absent_from_v1(synthetic) ->
         build_coverage(pilot, pin, transitions, version=2, no_theme=[train, train])
     with pytest.raises(ValueError, match="coverage v1 holds no no-theme count"):
         build_coverage(pilot, pin, transitions, no_theme=[train])
+
+
+def test_coverage_record_refuses_dev_before_train_without_builder_sorting(
+    synthetic,
+) -> None:
+    """P17-2(5): exercise the record's ordering gate, not the builder's sort."""
+    pilot, pin, transitions = synthetic
+    report = build_coverage(pilot, pin, transitions, version=2)
+    rows = (
+        NoThemeCount(partition="dev", bundles=1, no_theme=0),
+        NoThemeCount(partition="train", bundles=2, no_theme=1),
+    )
+    fields = {**report.model_dump(), "no_theme": rows}
+    with pytest.raises(ValueError, match="in train, dev, test order"):
+        CoverageReport.model_validate(fields)
