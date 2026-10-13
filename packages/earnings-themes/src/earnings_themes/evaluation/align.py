@@ -61,6 +61,38 @@ def covered(spans: Iterable[Span]) -> int:
     return sum(end - start for start, end in merged(spans))
 
 
+def intersection(a: Iterable[Span], b: Iterable[Span]) -> tuple[Span, ...]:
+    """The characters both ``a`` and ``b`` cover, as sorted, disjoint spans."""
+    a, b = merged(a), merged(b)
+    out: list[Span] = []
+    i = j = 0
+    while i < len(a) and j < len(b):
+        start, end = max(a[i][0], b[j][0]), min(a[i][1], b[j][1])
+        if start < end:
+            out.append((start, end))
+        if a[i][1] < b[j][1]:
+            i += 1
+        else:
+            j += 1
+    return tuple(out)
+
+
+def difference(a: Iterable[Span], b: Iterable[Span]) -> tuple[Span, ...]:
+    """The characters ``a`` covers and ``b`` does not, as sorted, disjoint spans."""
+    holes = merged(b)
+    out: list[Span] = []
+    for start, end in merged(a):
+        for hole_start, hole_end in holes:
+            if hole_end <= start or hole_start >= end:
+                continue
+            if start < hole_start:
+                out.append((start, hole_start))
+            start = hole_end
+        if start < end:
+            out.append((start, end))
+    return tuple(out)
+
+
 def char_overlap(a: Iterable[Span], b: Iterable[Span]) -> tuple[int, int]:
     """The characters ``a`` and ``b`` share, and the characters either covers."""
     a, b = tuple(a), tuple(b)

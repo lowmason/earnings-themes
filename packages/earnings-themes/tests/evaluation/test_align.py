@@ -4,6 +4,8 @@ counts (the Stage 11 spec, A3; FP13)."""
 from earnings_themes.evaluation.align import (
     char_overlap,
     covered,
+    difference,
+    intersection,
     merged,
     unit_index,
     units_over,
@@ -41,3 +43,31 @@ def test_spans_merge_and_count_each_character_once() -> None:
     assert char_overlap([(0, 5), (57, 73)], [(0, 20)]) == (5, 36)
     assert char_overlap([(30, 45)], [(21, 37)]) == (7, 24)
     assert char_overlap([], []) == (0, 0)
+
+
+def test_the_characters_both_cover_as_disjoint_spans() -> None:
+    """[0, 9) and [12, 14) (merged from four) against [3, 13) share [3, 9) and
+    [12, 13); adjacent spans share nothing; either side empty shares nothing."""
+    assert intersection([(5, 9), (0, 3), (2, 6), (12, 14)], [(3, 13)]) == (
+        (3, 9),
+        (12, 13),
+    )
+    assert intersection([(0, 20), (57, 73)], [(21, 37), (60, 65), (70, 80)]) == (
+        (60, 65),
+        (70, 73),
+    )
+    assert intersection([(0, 5)], [(5, 9)]) == ()
+    assert intersection([(0, 5)], []) == intersection([], [(0, 5)]) == ()
+
+
+def test_the_characters_one_covers_and_the_other_does_not() -> None:
+    """[0, 20) less a hole at its start [0, 3), in its middle [8, 10) and at its
+    end [18, 25): [3, 8) and [10, 18). Adjacent holes [8, 10) and [10, 12) leave
+    [0, 8) and [12, 20). A hole covering everything leaves nothing; no hole leaves
+    the merged spans; several spans each lose their own part."""
+    assert difference([(0, 20)], [(0, 3), (8, 10), (18, 25)]) == ((3, 8), (10, 18))
+    assert difference([(0, 20)], [(10, 12), (8, 10)]) == ((0, 8), (12, 20))
+    assert difference([(21, 37)], [(0, 73)]) == ()
+    assert difference([(5, 9), (0, 6)], []) == ((0, 9),)
+    assert difference([(0, 20), (57, 73)], [(15, 60)]) == ((0, 15), (60, 73))
+    assert difference([], [(0, 5)]) == ()

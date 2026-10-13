@@ -258,6 +258,148 @@ def test_the_unchosen_member_carrying_the_groups_evidence_is_a_hit() -> None:
     assert (chars.union(), chars.jaccard()) == (32, 1 / 2)
 
 
+def test_a_redundant_excused_member_adds_no_credit() -> None:
+    """One credit per gold slot. Gold: tie group g1 over capacity and pricing, by c1
+    (P1). Run 1 accepts capacity over P1 and P3, and pricing over P1; run 2 accepts
+    capacity alone over P1 and P3. Both resolve g1 to capacity (the lower predicted
+    member, or the only one), so pricing is excused. Gold: g1's {P1}, covered: 1 of
+    1. Accepted: capacity, scored, P1 in g1 (a hit) and P3 (none): 2 accepted, 1
+    hit. In run 1, pricing's P1 is g1's slot, which capacity, a scored member,
+    already accepts: no credit. Both runs: (1, 2, 1, 1), precision 1/2, recall 1,
+    F1 = 2 * 1 * 1 / (1 * 1 + 1 * 2) = 2/3. Characters: capacity's [21, 37) and
+    [57, 73), 32, of which 16 in g1; pricing's [21, 37) is covered by capacity's:
+    (16, 32, 16, 16), union 32 + 16 - 16 = 32, Jaccard 1/2. (Round 3 gave run 1
+    (2, 3, 1, 1), F1 4/5, and (32, 48, 16, 16).)"""
+    source = bundle()
+    _, p1, _, p3 = unit_ids(source)
+    gold = tie_reading(
+        row("c1", "capacity", tie_group="g1"), row("c1", "pricing", tie_group="g1")
+    )
+    index = unit_index(source)
+    alone = {"capacity": frozenset({p1, p3})}
+    redundant = {**alone, "pricing": frozenset({p1})}
+    spans = {"capacity": ((21, 37), (57, 73))}
+    tallies = []
+    for units, chars in (
+        (alone, spans),
+        (redundant, {**spans, "pricing": ((21, 37),)}),
+    ):
+        cells = event_cells(gold, index, units)
+        assert cells.present == {"capacity"}
+        tallies.append((unit_tally(cells, units), char_counts(cells, chars)))
+    assert tallies[0] == tallies[1]
+    counts, chars = tallies[1]
+    assert counts == EvidenceTally(accepted_hits=1, accepted=2, gold_hits=1, gold=1)
+    assert counts.f1() == pytest.approx(2 / 3)
+    assert chars == EvidenceTally(accepted_hits=16, accepted=32, gold_hits=16, gold=16)
+    assert (chars.union(), chars.jaccard()) == (32, 1 / 2)
+
+
+def test_two_excused_members_accepting_one_item_earn_one_credit() -> None:
+    """Gold: tie group g1 over capacity, demand and pricing, by c1 (P1).
+
+    Run 1 predicts demand and pricing only, both over P1: g1 resolves to demand, the
+    lowest predicted member, which is scored and accepts P1, a hit; pricing is
+    excused, and its P1 is demand's slot: (1, 1, 1, 1), characters (16, 16, 16, 16).
+
+    Two excused members accepting one item need the chosen member predicted
+    elsewhere. Run 2 accepts capacity over P3, and demand and pricing over P1: g1
+    resolves to capacity, which is scored, and excuses demand and pricing. Gold:
+    g1's {P1}, covered: 1 of 1. Accepted: capacity's P3, no hit (1 accepted, 0
+    hits). P1 is accepted by demand and pricing and by no scored member, so it is
+    credited once, to the lower ID, demand (1, 1); pricing adds nothing. (1, 2, 1,
+    1): precision 1/2, F1 2/3. Characters: capacity's 16, no hit; demand's [21, 37),
+    16 hits; pricing's are demand's: (16, 32, 16, 16), union 32. (Round 3 gave run
+    2 (2, 3, 1, 1) and (32, 48, 16, 16).)"""
+    source = bundle()
+    _, p1, _, p3 = unit_ids(source)
+    gold = tie_reading(
+        row("c1", "capacity", tie_group="g1"),
+        row("c1", "demand", tie_group="g1"),
+        row("c1", "pricing", tie_group="g1"),
+    )
+    index = unit_index(source)
+    pair = {"demand": frozenset({p1}), "pricing": frozenset({p1})}
+    pair_spans = {"demand": ((21, 37),), "pricing": ((21, 37),)}
+    cells = event_cells(gold, index, pair)
+    assert cells.present == {"demand"} and cells.excused == {"capacity", "pricing"}
+    assert unit_tally(cells, pair) == EvidenceTally(1, 1, 1, 1)
+    assert char_counts(cells, pair_spans) == EvidenceTally(16, 16, 16, 16)
+    units = {**pair, "capacity": frozenset({p3})}
+    cells = event_cells(gold, index, units)
+    assert cells.present == {"capacity"} and cells.excused == {"demand", "pricing"}
+    counts = unit_tally(cells, units)
+    assert counts == EvidenceTally(accepted_hits=1, accepted=2, gold_hits=1, gold=1)
+    assert counts.f1() == pytest.approx(2 / 3)
+    chars = char_counts(cells, {**pair_spans, "capacity": ((57, 73),)})
+    assert chars == EvidenceTally(accepted_hits=16, accepted=32, gold_hits=16, gold=16)
+    assert chars.union() == 32
+
+
+def test_a_scored_member_takes_the_credit_from_excused_ones() -> None:
+    """Gold: tie group g1 over capacity, demand and pricing, by c1 (P1). The run
+    accepts all three over P1: g1 resolves to capacity, the lowest predicted member,
+    which is scored and accepts P1, a hit. Demand and pricing are excused, and P1,
+    their only item, is capacity's credit. (1, 1, 1, 1), F1 1; characters (16, 16,
+    16, 16), union 16. (Round 3 gave (3, 3, 1, 1) and (48, 48, 16, 16).)"""
+    source = bundle()
+    p1 = unit_ids(source)[1]
+    gold = tie_reading(
+        row("c1", "capacity", tie_group="g1"),
+        row("c1", "demand", tie_group="g1"),
+        row("c1", "pricing", tie_group="g1"),
+    )
+    units = {theme: frozenset({p1}) for theme in ("capacity", "demand", "pricing")}
+    cells = event_cells(gold, unit_index(source), units)
+    assert cells.present == {"capacity"} and cells.excused == {"demand", "pricing"}
+    counts = unit_tally(cells, units)
+    assert counts == EvidenceTally(accepted_hits=1, accepted=1, gold_hits=1, gold=1)
+    assert counts.f1() == 1.0
+    chars = char_counts(cells, {theme: ((21, 37),) for theme in units})
+    assert chars == EvidenceTally(accepted_hits=16, accepted=16, gold_hits=16, gold=16)
+    assert chars.union() == 16
+
+
+def test_an_excused_members_item_in_two_of_its_cells_is_one_credit() -> None:
+    """Gold: tie group g1 over capacity and pricing by c1, and g2 over demand and
+    pricing by c4, which quotes q1 too: both groups' evidence is P1. The run accepts
+    capacity and demand over P3, and pricing over P1. g1 resolves to capacity and g2
+    to demand, the lower predicted members, so pricing is excused from both. Gold:
+    g1's {P1} and g2's {P1}, each covered by pricing: 2 of 2. Accepted: capacity's
+    and demand's P3, no hits (2 accepted, 0 hits); pricing's P1 is the slot of g1
+    and of g2, which no other member accepts, credited once (1, 1). (1, 3, 2, 2):
+    precision 1/3, recall 1, F1 = 2 * 1 * 2 / (1 * 2 + 2 * 3) = 1/2. Characters:
+    16 + 16 accepted, no hits, and pricing's [21, 37), 16 hits, once; gold 16 + 16,
+    all covered: (16, 48, 32, 32), union 48 + 32 - 32 = 48, Jaccard 1/3."""
+    source = bundle()
+    _, p1, _, p3 = unit_ids(source)
+    base = tie_reading(
+        row("c1", "capacity", tie_group="g1"),
+        row("c1", "pricing", tie_group="g1"),
+        row("c4", "demand", tie_group="g2"),
+        row("c4", "pricing", tie_group="g2"),
+    )
+    gold = base.model_copy(update={"claims": (*base.claims, claim("c4", "q1"))})
+    units = {
+        "capacity": frozenset({p3}),
+        "demand": frozenset({p3}),
+        "pricing": frozenset({p1}),
+    }
+    cells = event_cells(gold, unit_index(source), units)
+    assert cells.present == {"capacity", "demand"} and cells.excused == {"pricing"}
+    counts = unit_tally(cells, units)
+    assert counts == EvidenceTally(accepted_hits=1, accepted=3, gold_hits=2, gold=2)
+    assert counts.f1() == 1 / 2
+    spans = {
+        "capacity": ((57, 73),),
+        "demand": ((57, 73),),
+        "pricing": ((21, 37),),
+    }
+    chars = char_counts(cells, spans)
+    assert chars == EvidenceTally(accepted_hits=16, accepted=48, gold_hits=32, gold=32)
+    assert (chars.union(), chars.jaccard()) == (48, 1 / 3)
+
+
 def test_a_member_with_the_wrong_evidence_is_still_a_miss() -> None:
     """Gold: tie group g1 over capacity and pricing, by c1 (P1). A run accepting
     only pricing, over P3: D19-6 resolves g1 to pricing. g1's cell {P1} is not
