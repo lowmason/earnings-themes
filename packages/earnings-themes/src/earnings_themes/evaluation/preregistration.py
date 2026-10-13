@@ -11,6 +11,7 @@ it, so a later edit is caught (FP9).
   no decision (D19-1).
 - **The menu** holds scorer-cutoff candidates over MiniCheck's joint score, each with
   its cutoff grid (D19-1).
+- **The bootstrap** draws the 90% interval the spec reports throughout.
 - **The gates** are exactly the metrics §Metrics marks gated. Each is higher-is-better,
   as ``derive_gates`` and ``evaluate_gates`` assume (a gate is a lower bound), so a
   reported, descriptive or not-estimated metric can never be gated (D1).
@@ -43,6 +44,9 @@ REQUIRED_GATES = frozenset(
     }
 )
 """The metrics §Metrics gates, and the only ones the gate rule may list."""
+LEVEL = 0.9
+"""Every interval's level: the spec's 90% percentile interval, which V6's gates
+file names."""
 HEADER = (
     "Stage 11's preregistration (FP9), committed before any pilot output exists."
     " Numbers, rules and hashes only. Its content_hash covers every other field."
@@ -149,6 +153,16 @@ class Preregistration(ThemesRecord):
         if twice := _repeated(candidate.candidate_id for candidate in menu):
             raise ValueError(f"candidate IDs must be unique: {twice} repeated")
         return menu
+
+    @field_validator("bootstrap")
+    @classmethod
+    def _ninety_percent(cls, bootstrap: BootstrapPlan) -> BootstrapPlan:
+        if bootstrap.level != LEVEL:
+            raise ValueError(
+                f"bootstrap.level must be {LEVEL}, the spec's 90% interval,"
+                f" not {bootstrap.level}"
+            )
+        return bootstrap
 
 
 def freeze_preregistration(fields: Mapping[str, object]) -> Preregistration:

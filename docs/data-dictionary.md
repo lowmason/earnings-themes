@@ -6779,7 +6779,7 @@ it belongs to is a false positive.
 | `menu` | Each `Candidate` |
 | `selection` | The `SelectionRule` |
 | `sampling` | The `SamplingPlan` |
-| `bootstrap` | The `BootstrapPlan` |
+| `bootstrap` | The `BootstrapPlan`; its `level` must be 0.9, the spec's 90% interval |
 | `gates` | The `GateRule` |
 | `content_hash` | Digest of every other field |
 

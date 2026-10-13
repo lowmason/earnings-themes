@@ -111,6 +111,18 @@ def test_out_of_range_numbers_are_refused(section, change) -> None:
         freeze_preregistration({**data, section: {**data[section], **change}})
 
 
+def test_the_bootstrap_level_is_the_specs_ninety_percent() -> None:
+    """The spec reports the 90% percentile interval throughout, and V6's gates file
+    says so, so a preregistration at another level is refused, naming the field and
+    the value."""
+    data = fields()
+    with pytest.raises(RecordError, match=r"bootstrap\.level must be 0\.9.*0\.95"):
+        freeze_preregistration(
+            {**data, "bootstrap": {**data["bootstrap"], "level": 0.95}}
+        )
+    assert freeze_preregistration(data).bootstrap.level == 0.9
+
+
 def test_an_unsorted_grid_is_refused() -> None:
     menu = [{**fields()["menu"][0], "grid": [0.5, 0.0]}]
     with pytest.raises(RecordError, match="sorted and unique"):

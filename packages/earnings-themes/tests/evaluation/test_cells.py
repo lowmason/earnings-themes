@@ -2,14 +2,15 @@
 §Metrics; R12.6)."""
 
 from types import SimpleNamespace
+from typing import get_protocol_members
 
 import pytest
 from earnings_themes.evaluation.align import unit_index
-from earnings_themes.evaluation.cells import event_cells, level_one
+from earnings_themes.evaluation.cells import GoldReading, event_cells, level_one
 from earnings_themes.evaluation.problems import EvaluationError
-from earnings_themes.gold import Support
+from earnings_themes.gold import ReleaseLabel, Support
 
-from .cases import claim, example, quote, reading, row, unit_ids
+from .cases import claim, example, gold, quote, reading, row, unit_ids
 
 
 def test_present_excused_uncertain_and_evidence_with_the_tie_predicted() -> None:
@@ -94,6 +95,21 @@ def test_every_assignment_citing_a_missing_claim_is_dangling() -> None:
     assert cells.uncertain == {"labor"}
     assert cells.units == {"capacity": {p0}, "demand": frozenset()}
     assert cells.spans == {"capacity": ((0, 5),), "demand": ()}
+
+
+def test_a_gold_reading_offers_what_compare_readings_reads() -> None:
+    """``compare_readings`` reads each reading's release identification, so the
+    protocol names it, and signed gold and an anchored reading both hold one."""
+    assert get_protocol_members(GoldReading) == {
+        "quotes",
+        "claims",
+        "assignments",
+        "hard_negatives",
+        "release_identification",
+    }
+    _, base = example()
+    for value in (base, gold("e1", base)):
+        assert value.release_identification.label is ReleaseLabel.RELEASE
 
 
 def test_level_one_maps_each_theme_to_its_root() -> None:

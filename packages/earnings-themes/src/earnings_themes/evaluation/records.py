@@ -13,11 +13,11 @@ Stage 11 spec, §Metrics and §Artifacts; FP15; R12.2, R12.7).
 """
 
 from enum import StrEnum
-from typing import Annotated, Literal, Self
+from typing import Literal, Self
 
-from pydantic import Field, NonNegativeInt, PositiveInt, model_validator
+from pydantic import NonNegativeInt, PositiveInt, model_validator
 
-from earnings_themes.evaluation.bootstrap import Interval
+from earnings_themes.evaluation.bootstrap import Interval, Real
 from earnings_themes.records import (
     IdPart,
     NonBlank,
@@ -47,9 +47,6 @@ __all__ = [
     "content_hash",
     "sealed",
 ]
-
-Real = Annotated[float, Field(allow_inf_nan=False)]
-"""A finite number; a statistic such as κ may be negative."""
 
 
 class Metric(StrEnum):

@@ -34,6 +34,7 @@ from earnings_themes.gold import (
     GoldClaim,
     GoldQuote,
     HardNegative,
+    ReleaseIdentification,
     Support,
 )
 
@@ -52,6 +53,9 @@ class GoldReading(Protocol):
 
     @property
     def hard_negatives(self) -> tuple[HardNegative, ...]: ...
+
+    @property
+    def release_identification(self) -> ReleaseIdentification: ...
 
 
 @dataclass(frozen=True)

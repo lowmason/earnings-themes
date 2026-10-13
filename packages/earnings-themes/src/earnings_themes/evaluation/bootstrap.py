@@ -16,10 +16,14 @@ figure reproduces (R14.6).
 import math
 import random
 from collections.abc import Callable, Mapping, Sequence
+from typing import Annotated
 
 from pydantic import Field, NonNegativeInt, PositiveInt
 
 from earnings_themes.records import Part
+
+Real = Annotated[float, Field(allow_inf_nan=False)]
+"""A finite number; a statistic such as κ may be negative."""
 
 
 class BootstrapPlan(Part):
@@ -34,9 +38,9 @@ class BootstrapPlan(Part):
 class Interval(Part):
     """A percentile interval, or ``None`` bounds with the reason in its counts."""
 
-    lower: float | None
-    upper: float | None
-    level: float
+    lower: Real | None
+    upper: Real | None
+    level: Real
     resamples: PositiveInt
     undefined: NonNegativeInt
 

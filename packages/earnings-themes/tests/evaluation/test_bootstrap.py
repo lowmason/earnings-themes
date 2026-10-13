@@ -1,10 +1,12 @@
 """The event-clustered bootstrap: deterministic under its seed, events drawn whole,
 and undefined resamples counted (the Stage 11 spec, A3; R12.7)."""
 
+import math
 import random
 
 import pytest
-from earnings_themes.evaluation.bootstrap import BootstrapPlan, estimate
+from earnings_themes.evaluation.bootstrap import BootstrapPlan, Interval, estimate
+from pydantic import ValidationError
 
 PLAN = BootstrapPlan(seed=7, resamples=200, level=0.9, max_undefined_share=0.1)
 
@@ -70,6 +72,16 @@ def test_no_events_is_undefined() -> None:
     assert result.point is None
     assert result.interval.lower is None
     assert result.interval.undefined == PLAN.resamples
+
+
+@pytest.mark.parametrize("field", ["lower", "upper", "level"])
+@pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf])
+def test_an_interval_holds_finite_numbers(field, value) -> None:
+    bounds = {"lower": 0.1, "upper": 0.2, "level": 0.9}
+    with pytest.raises(ValidationError, match=field):
+        Interval(**{**bounds, field: value}, resamples=10, undefined=0)
+    assert Interval(**bounds, resamples=10, undefined=0).lower == 0.1
+    assert Interval(lower=None, upper=None, level=0.9, resamples=10, undefined=10)
 
 
 def test_upper_bound_interpolates_the_upper_percentile() -> None:

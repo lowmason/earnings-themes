@@ -4,7 +4,7 @@ the claim, its quotes in context and the theme, and nothing a model said."""
 from importlib import import_module
 
 import pytest
-from earnings_themes.evaluation.label_view import label_views
+from earnings_themes.evaluation.label_view import INSTRUCTIONS, label_views
 from earnings_themes.evaluation.problems import EvaluationError
 from earnings_themes.evaluation.sampling import PoolTarget, label_pool
 from earnings_themes.support import reverify_support_run
@@ -36,26 +36,46 @@ def test_the_view_shows_the_claim_quote_and_theme(assessed_case) -> None:
     assert "- Orders without equipment changes." in view
 
 
-def test_the_view_holds_no_score_answer_flag_or_model_identity(flagged_case) -> None:
-    case = flagged_case
-    reverify_support_run(case.support, case.sources)
-    assert case.support.outcomes[0].status == "flagged"
-    target = case.support.targets[0]
-    view = label_views(case.support, case.sources, (target.target_id,))
-    for planted in (
-        "0.123456789",
-        "0.12345",
-        "Invented fixture assessment",
-        "uncertain",
-        "quote_uncertain",
-        "invented-support",
-        "invented-family",
-        "invented-extractor",
-        "scripted",
-        case.support.record.run_id,
-        case.sources.stored_run.record.run_id,
-    ):
-        assert planted not in view, planted
+def test_the_view_holds_no_score_answer_flag_or_model_identity(
+    assessed_case, flagged_case
+) -> None:
+    """Both cases' judges answer ``supported`` and ``fits`` with joint score 0.25;
+    the assessed case's scorer scores 0.25, the flagged case's 0.123456789. The
+    instructions name the answer words, so a leaked verdict or review status is
+    looked for in what follows them."""
+    for case, status in ((assessed_case, "assessed"), (flagged_case, "flagged")):
+        reverify_support_run(case.support, case.sources)
+        assert case.support.outcomes[0].status == status
+        target = case.support.targets[0]
+        view = label_views(case.support, case.sources, (target.target_id,))
+        for planted in (
+            "0.123456789",
+            "0.12345",
+            "0.25",
+            "Invented fixture assessment",
+            "uncertain",
+            "quote_uncertain",
+            "assessed",
+            "flagged",
+            "invented-support",
+            "invented-family",
+            "invented-extractor",
+            "scripted",
+            case.support.record.run_id,
+            case.sources.stored_run.record.run_id,
+        ):
+            assert planted not in view, planted
+        assert view.count(INSTRUCTIONS) == 1
+        body = view.split(INSTRUCTIONS, 1)[1]
+        for answer in (
+            "supported",
+            "fits",
+            "does_not_fit",
+            "supporting",
+            "assessed",
+            "flagged",
+        ):
+            assert answer not in body, answer
 
 
 def test_an_unknown_target_is_refused(assessed_case) -> None:
