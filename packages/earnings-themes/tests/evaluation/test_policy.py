@@ -61,8 +61,10 @@ def test_no_candidate_or_a_changed_artifact_binds_no_policy(assessed_case) -> No
     none = sealed(
         base.model_copy(update={"outcome": "no_candidate", "selection": None})
     )
-    with pytest.raises(EvaluationError, match="no_candidate"):
+    with pytest.raises(EvaluationError, match="no_candidate") as refused:
         bind(assessed_case, none)
+    assert refused.value.subject == "selection"
     changed = base.model_copy(update={"usable_labels": 59})
-    with pytest.raises(EvaluationError, match="content_hash_mismatch"):
+    with pytest.raises(EvaluationError, match="content_hash_mismatch") as refused:
         bind(assessed_case, changed)
+    assert refused.value.subject == "content_hash"

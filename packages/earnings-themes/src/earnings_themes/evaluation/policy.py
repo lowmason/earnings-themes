@@ -32,11 +32,11 @@ class CalibratedPolicy:
     ) -> None:
         if content_hash(artifact) != artifact.content_hash:
             raise EvaluationError(
-                EvaluationProblem.CONTENT_HASH_MISMATCH, "calibration"
+                EvaluationProblem.CONTENT_HASH_MISMATCH, "content_hash"
             )
         selection = artifact.selection
         if selection is None:
-            raise EvaluationError(EvaluationProblem.NO_CANDIDATE, "calibration")
+            raise EvaluationError(EvaluationProblem.NO_CANDIDATE, "selection")
         self._rule = ScorerCutoff(selection.cutoff)
         self._reference = PolicyReference(
             policy_id=f"calibrated-{selection.candidate_id}",
