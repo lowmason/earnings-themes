@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pytest
 from earnings_themes.evaluation.align import unit_index
 from earnings_themes.evaluation.bootstrap import BootstrapPlan
+from earnings_themes.evaluation.cells import event_cells
 from earnings_themes.evaluation.problems import EvaluationError, EvaluationProblem
 from earnings_themes.evaluation.records import Metric
 from earnings_themes.evaluation.report import (
@@ -18,6 +19,7 @@ from earnings_themes.evaluation.report import (
     partition_report,
     stability_figures,
 )
+from earnings_themes.evaluation.scores import char_counts
 from earnings_themes.gold import DraftCounts, ReleaseLabel, Support
 from earnings_themes.split import Partition
 
@@ -432,6 +434,70 @@ def test_two_readings_compared() -> None:
     assert agreement.theme_f1 == pytest.approx(2 / 3)
     assert agreement.unit_f1 == pytest.approx(0.5)
     assert agreement.dangling == 0
+
+
+def overlapping_ties():
+    """Pricing supported untied by c0 (P0); tie group g1 over demand and pricing by
+    c1 (P1); tie group g2 over demand and labor by c2 (P2)."""
+    source = bundle()
+    p0, p1, p2, _ = unit_ids(source)
+    return source, reading(
+        quotes=(
+            quote("q0", 0, 20, p0),
+            quote("q1", 21, 37, p1),
+            quote("q2", 38, 56, p2),
+        ),
+        claims=(claim("c0", "q0"), claim("c1", "q1"), claim("c2", "q2")),
+        assignments=(
+            row("c0", "pricing"),
+            row("c1", "demand", tie_group="g1"),
+            row("c1", "pricing", tie_group="g1"),
+            row("c2", "demand", tie_group="g2"),
+            row("c2", "labor", tie_group="g2"),
+        ),
+    )
+
+
+def shared_quote_ties():
+    """Tie group g1 over capacity and demand by c1, and g2 over demand and pricing by
+    c2, both quoting q1 (P0)."""
+    source = bundle()
+    p0 = unit_ids(source)[0]
+    return source, reading(
+        quotes=(quote("q1", 0, 20, p0),),
+        claims=(claim("c1", "q1"), claim("c2", "q1")),
+        assignments=(
+            row("c1", "capacity", tie_group="g1"),
+            row("c1", "demand", tie_group="g1"),
+            row("c2", "demand", tie_group="g2"),
+            row("c2", "pricing", tie_group="g2"),
+        ),
+    )
+
+
+@pytest.mark.parametrize("case", [example, overlapping_ties, shared_quote_ties])
+def test_a_reading_compared_with_itself_agrees_fully(case) -> None:
+    """A reading scored against itself, its present themes and their evidence taken
+    as a run's, agrees fully on units and characters, whatever its tie groups.
+
+    ``overlapping_ties`` is the case that failed before. As the run, the reading
+    resolves with nothing predicted: g1 to pricing (present untied), g2 to demand
+    (lowest ID), so it predicts pricing over P0 and P1, and demand over P2. As the
+    reference, g1 resolves to demand, the lower predicted member. The evidence cells
+    are pricing's own {P0}, g1's {P1} (demand or pricing) and g2's {P2} (demand or
+    labor): pricing covers P0 and P1, demand covers P2, tp 3, and every predicted
+    unit lies in a cell its theme belongs to, fp 0: unit F1 1, characters (54, 54).
+    (Before: pricing's gold {P0} against {P0, P1} and demand's {P1, P2} against
+    {P2}: tp 2, fp 1, fn 1, unit F1 2/3.)"""
+    source, gold = case()
+    index = unit_index(source)
+    agreement = compare_readings(gold, gold, index)
+    assert agreement.theme_f1 == 1.0
+    assert agreement.unit_f1 == 1.0
+    theirs = event_cells(gold, index)
+    mine = event_cells(gold, index, theirs.present)
+    shared, union = char_counts(mine, theirs.spans)
+    assert shared == union > 0
 
 
 def test_stability_over_identical_and_empty_runs() -> None:

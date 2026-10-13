@@ -6414,7 +6414,9 @@ Scoring conventions (FP20, D19-3, D19-6, D19-7, D19-8, D19-9): a span maps to ev
 pointer unit it shares a character with. A theme is present in an event when a gold
 assignment pairs it with a claim under `supports`. A tie group resolves to a member
 the run predicted, else one already present, else its lowest theme ID, and its
-other members are excused. A theme whose every row is `uncertain` is left out and
+other members are excused; for unit and character scoring the group stays one
+evidence cell, which any member's evidence covers. A theme whose every row is
+`uncertain` is left out and
 counted. A claim's reference to a quote, or any assignment's reference to a claim,
 that the reading lacks is counted as dangling, one per reference. The roll-up maps both sides to level-one roots. Gold-evidence recall counts the
 gold-supporting units any accepted assignment holds. GS5's edited and rejected
@@ -6457,7 +6459,22 @@ interval is the event-clustered percentile bootstrap.
 | `uncertain` | Themes whose every gold row is `uncertain`: left out, counted |
 | `units` | Each present theme's gold-supporting units |
 | `spans` | Each present theme's gold-supporting spans |
+| `evidence` | The `EvidenceCell`s unit and character scoring read: each present theme's own untied evidence, then each tie group's |
 | `dangling` | References the reading cannot resolve, one each: a claim's quote the reading lacks, and any assignment's claim it lacks, whatever its support, theme or tie (D19-7) |
+
+### `EvidenceCell`
+
+One cell of gold evidence for unit and character scoring (FP20). A tie group is
+one cell whichever member the theme cells resolve it to: its units are covered by
+any member's accepted evidence, and a member's accepted evidence over them is a
+hit, never a false positive. A scored theme's accepted evidence outside every cell
+it belongs to is a false positive.
+
+| Field | Meaning |
+| --- | --- |
+| `themes` | The present theme, for its own untied evidence; or every member of the tie group |
+| `units` | The cell's gold-supporting units |
+| `spans` | The cell's gold-supporting spans |
 
 ### `Tally`
 

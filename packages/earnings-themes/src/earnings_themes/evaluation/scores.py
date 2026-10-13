@@ -9,7 +9,13 @@ empty denominator is ``None``, never zero (A §Non-negotiables: never coerce nul
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 
-from earnings_themes.evaluation.align import Span, UnitIndex, char_overlap, units_over
+from earnings_themes.evaluation.align import (
+    Span,
+    UnitIndex,
+    char_overlap,
+    covered,
+    units_over,
+)
 from earnings_themes.evaluation.cells import EventCells, GoldReading
 from earnings_themes.gold import DraftCounts, NegativeKind, ReleaseLabel
 
@@ -90,15 +96,21 @@ def rare_themes(events: Iterable[EventCells], most: int = 2) -> frozenset[str]:
 def unit_tally(
     cells: EventCells, accepted_units: Mapping[str, frozenset[str]]
 ) -> Tally:
-    """One event's evidence units over its present and predicted cells: units in
-    both, units only accepted, and gold units missed (FP13)."""
+    """One event's evidence units (FP13, FP20): hits are each evidence cell's gold
+    units that any of its themes' accepted evidence covers, and misses the rest;
+    false positives are a scored theme's accepted units outside every cell it
+    belongs to. So a tie group's evidence counts once, whichever member carries it,
+    and an excused member's other evidence is not scored."""
     tally = Tally()
-    for theme in sorted(cells.present | accepted_units.keys()):
-        if not cells.scored(theme):
-            continue
-        gold = cells.units.get(theme, frozenset())
-        got = accepted_units.get(theme, frozenset())
-        tally += Tally(len(gold & got), len(got - gold), len(gold - got))
+    for cell in cells.evidence:
+        got = frozenset().union(*(accepted_units.get(t, ()) for t in cell.themes))
+        tally += Tally(tp=len(cell.units & got), fn=len(cell.units - got))
+    for theme, got in sorted(accepted_units.items()):
+        if cells.scored(theme):
+            own = frozenset().union(
+                *(c.units for c in cells.evidence if theme in c.themes)
+            )
+            tally += Tally(fp=len(got - own))
     return tally
 
 
@@ -106,15 +118,19 @@ def char_counts(
     cells: EventCells, accepted_spans: Mapping[str, tuple[Span, ...]]
 ) -> tuple[int, int]:
     """One event's shared and union characters over the same cells as
-    ``unit_tally``, for character Jaccard."""
+    ``unit_tally``, for character Jaccard: the gold characters covered, and those
+    plus the gold characters missed and the scored accepted characters outside
+    their themes' cells."""
     shared = union = 0
-    for theme in sorted(cells.present | accepted_spans.keys()):
-        if not cells.scored(theme):
-            continue
-        both, either = char_overlap(
-            cells.spans.get(theme, ()), accepted_spans.get(theme, ())
-        )
-        shared, union = shared + both, union + either
+    for cell in cells.evidence:
+        got = [s for t in sorted(cell.themes) for s in accepted_spans.get(t, ())]
+        both, _ = char_overlap(cell.spans, got)
+        shared, union = shared + both, union + covered(cell.spans)
+    for theme, got in sorted(accepted_spans.items()):
+        if cells.scored(theme):
+            own = [s for c in cells.evidence if theme in c.themes for s in c.spans]
+            both, _ = char_overlap(got, own)
+            union += covered(got) - both
     return shared, union
 
 

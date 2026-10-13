@@ -708,6 +708,7 @@ EVALUATION_ENUMS = [
 ]
 EVALUATION_DATACLASSES = [
     align.UnitIndex,
+    cells.EvidenceCell,
     cells.EventCells,
     scores.Tally,
     report.Accepted,
