@@ -7116,3 +7116,18 @@ The derived `local` property is a path accessor, not a serialized field.
 | `config` | WorkflowConfig | Current partition's verified workflow selection |
 | `partition` | Partition | Requested `train` or `dev` partition |
 | `gold` | tuple of Gold | Checked committed gold for the current selection |
+
+### `LoadedPass`
+
+A transient `earnings_pipeline.pilot_workflow` dataclass. `load_pass` checks the
+sealed checkpoint, its selected files and stored runs, source provenance,
+proposal-to-support bindings for both scorers, and frozen configuration before
+returning these inputs to calibration, assignment or reporting.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `record` | PassRecord | Verified local pass checkpoint |
+| `sources` | SupportSources | Original extraction, canonical, raw and codebook bindings |
+| `proposal` | ProposalRun | Reconstructed verified classifier proposals |
+| `primary` | StoredSupportRun | Reverified primary MiniCheck support results |
+| `alternative` | StoredSupportRun | Reverified alternative DeBERTa support results |

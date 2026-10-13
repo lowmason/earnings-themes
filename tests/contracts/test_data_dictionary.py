@@ -29,6 +29,7 @@ from earnings_pipeline import (
     model_runtime,
     pilot_inputs,
     pilot_records,
+    pilot_workflow,
     theme_config,
     theme_workflow,
 )
@@ -733,9 +734,10 @@ PILOT_MODELS = {
 }
 PILOT_DATACLASSES = {
     "PilotIntake": pilot_inputs.PilotIntake,
+    "LoadedPass": pilot_workflow.LoadedPass,
 }
 PILOT_ENUMS = {}
-PILOT_MODULES = [pilot_records, pilot_inputs]
+PILOT_MODULES = [pilot_records, pilot_inputs, pilot_workflow]
 
 
 @pytest.mark.parametrize(("name", "model"), PILOT_MODELS.items(), ids=PILOT_MODELS)
