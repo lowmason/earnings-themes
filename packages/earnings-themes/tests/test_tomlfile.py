@@ -116,3 +116,18 @@ def test_bytes_that_are_not_toml_or_not_utf_8_are_refused_by_name_only() -> None
     with pytest.raises(RecordError) as undecoded:
         loads(b"\xff", "record")
     assert undecoded.value.problems == ("not UTF-8",)
+
+
+def test_floats_round_trip_and_a_non_finite_float_is_refused() -> None:
+    """Stage 11's preregistration and gates hold floats (plan 19)."""
+    data = {
+        "floor": 0.4,
+        "small": 1e-07,
+        "big": 1e16,
+        "whole": 5.0,
+        "grid": [0.0, 0.25],
+    }
+    assert tomllib.loads(dumps(data)) == data
+    for bad in (float("nan"), float("inf")):
+        with pytest.raises(ValueError, match="infinite or NaN"):
+            dumps({"x": bad})
