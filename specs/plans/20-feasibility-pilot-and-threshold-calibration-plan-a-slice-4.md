@@ -1,3 +1,5 @@
+**Status: COMPLETE (2026-10-13)** — executed via subagent-driven-development; nothing deferred
+
 # Stage 11 Plan A, Slice 4: Pilot Commands Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development. Execute in a fresh GPT-6.1 Medium session and a fresh worktree. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -143,7 +145,7 @@ A `diff` block is a complete unified patch relative to the preceding task. Blank
 
 Produces public coding.coding_configuration(*, source_run_id:str, source_run_hash:str, documents:tuple[tuple[str,str],...], codebook:CodebookReference, classifier_identity:JudgeIdentity, coding_policy:CodingPolicySnapshot, ceilings:CodingCeilings, requested_claim_order:tuple[tuple[str,str],...], schema_hash:str, cache_mode:Literal["live","replay","fresh"], coding_version:str=CODING_VERSION, validator_version:str=VALIDATOR_VERSION)->dict[str,object]; coding.source_bindings(sources:SupportSources)->SourceBindings; coding.validate_proposal_support(proposals:ProposalRun,support:StoredSupportRun,sources:SupportSources)->None. SourceBindings fields are source_run_id, source_run_hash, documents and codebook. Application prebinding and calibration consume these; decide_assignments and propose_run call their shared implementations.
 
-- [ ] **Step 1: Write the exact test changes**
+- [x] **Step 1: Write the exact test changes**
 
 ```diff
 --- a/packages/earnings-themes/tests/coding/test_shared.py
@@ -270,7 +272,7 @@ The same task adds its dictionary contract test:
      bootstrap.Interval,
 ```
 
-- [ ] **Step 2: Run the scoped red check**
+- [x] **Step 2: Run the scoped red check**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest packages/earnings-themes/tests/coding/test_shared.py --tb=short -q
@@ -278,7 +280,7 @@ uv run --locked --offline --no-sync --all-packages pytest packages/earnings-them
 
 Expected: collection fails with ImportError for coding_configuration.
 
-- [ ] **Step 3: Apply the exact library changes**
+- [x] **Step 3: Apply the exact library changes**
 
 ```diff
 --- a/packages/earnings-themes/src/earnings_themes/coding/records.py
@@ -610,7 +612,7 @@ Apply the matching dictionary rows in this implementation step:
 +The application applies it to both support runs before calibration or reporting.
 ```
 
-- [ ] **Step 4: Run the scoped green check and changed-file Ruff**
+- [x] **Step 4: Run the scoped green check and changed-file Ruff**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest packages/earnings-themes/tests/coding/test_shared.py --tb=short -q
@@ -631,7 +633,7 @@ uv run --locked --offline --no-sync ruff format --check tests/contracts/test_dat
 
 Before the rows exist, the newly added dictionary checks fail for the missing table/contract. After code and rows are applied, they pass. Stage `docs/data-dictionary.md` and `tests/contracts/test_data_dictionary.py` in this task's commit along with its listed code files.
 
-- [ ] **Step 5: Commit this task during the later authorized execution**
+- [x] **Step 5: Commit this task during the later authorized execution**
 
 ```bash
 git log -3 --oneline
@@ -665,7 +667,7 @@ git commit -m "feat(pilot): share coding configuration and proposal/support sour
 
 Produces records.HashedRecord structural Protocol, records.hash_matches(record:HashedRecord)->bool; sealed and checked are bounded by HashedRecord. derive_gates(report:PilotReport,*,rule:GateRule,judge_floor:float,preregistration_hash:str,version:int=1)->Gates replaces its prior gated/undefined_gate arguments. Application passes rule=preregistration.gates. PilotReport requires exactly one train and one dev partition, either order. Candidate and CandidateFit signals are Literal[1]. merge_labels keeps its signature and returns a validated reconstructed record.
 
-- [ ] **Step 1: Write the exact test changes**
+- [x] **Step 1: Write the exact test changes**
 
 ```diff
 --- a/packages/earnings-themes/tests/evaluation/test_boundary_tidy.py
@@ -1001,7 +1003,7 @@ The same task adds its dictionary contract test:
      bootstrap.Interval,
 ```
 
-- [ ] **Step 2: Run the scoped red check**
+- [x] **Step 2: Run the scoped red check**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest packages/earnings-themes/tests/evaluation/test_boundary_tidy.py --tb=short -q
@@ -1009,7 +1011,7 @@ uv run --locked --offline --no-sync --all-packages pytest packages/earnings-them
 
 Expected: the new typed rule and validators are absent, so the intended boundary cases fail. Characterizations may pass. Record actual failure/pass counts.
 
-- [ ] **Step 3: Apply the exact library changes**
+- [x] **Step 3: Apply the exact library changes**
 
 ```diff
 --- a/packages/earnings-themes/src/earnings_themes/records.py
@@ -1354,7 +1356,7 @@ Apply the matching dictionary rows in this implementation step:
 +`partition`.
 ```
 
-- [ ] **Step 4: Run the scoped green check and changed-file Ruff**
+- [x] **Step 4: Run the scoped green check and changed-file Ruff**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest packages/earnings-themes/tests/evaluation/test_boundary_tidy.py --tb=short -q
@@ -1375,7 +1377,7 @@ uv run --locked --offline --no-sync ruff format --check tests/contracts/test_dat
 
 Before the rows exist, the newly added dictionary checks fail for the missing table/contract. After code and rows are applied, they pass. Stage `docs/data-dictionary.md` and `tests/contracts/test_data_dictionary.py` in this task's commit along with its listed code files.
 
-- [ ] **Step 5: Commit this task during the later authorized execution**
+- [x] **Step 5: Commit this task during the later authorized execution**
 
 ```bash
 git log -3 --oneline
@@ -1403,7 +1405,7 @@ git commit -m "feat(pilot): validate evaluation boundaries and share the content
 
 Produces check_countable(gold:Gold,*,event_id:str,pin:Pin,split:SplitManifest,codebook:Codebook,doc_id:str|None=None)->list[Refusal]. Stage6/A8 coverage callers supply doc_id=parsed_documents[event_id]. Root evaluation exports joint_score, sealed, claim_label, joint_label, Figure, ReadingAgreement, IndependentFigures, EvidenceTally and configuration_hash. label_views keeps its signature; callers must reverify_support_run first.
 
-- [ ] **Step 1: Write the exact test changes**
+- [x] **Step 1: Write the exact test changes**
 
 ```diff
 --- a/packages/earnings-themes/tests/evaluation/test_public_api.py
@@ -1532,7 +1534,7 @@ The same task adds its dictionary contract test:
      bootstrap.Interval,
 ```
 
-- [ ] **Step 2: Run the scoped red check**
+- [x] **Step 2: Run the scoped red check**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest packages/earnings-themes/tests/evaluation/test_public_api.py packages/earnings-themes/tests/test_gold.py::test_countable_binds_the_current_parsed_document_id packages/earnings-themes/tests/test_gold.py::test_working_quote_anchor_refusal_keeps_the_drafted_duplicate_refusal packages/earnings-themes/tests/test_gold.py::test_origins_come_from_comparing_the_working_copy_with_the_draft --tb=short -q
@@ -1540,7 +1542,7 @@ uv run --locked --offline --no-sync --all-packages pytest packages/earnings-them
 
 Expected: exports are missing, the missing evidence document yields StopIteration, and the doc_id keyword is absent; the existing gold-characterization checks already pass. Record actual failure/pass counts.
 
-- [ ] **Step 3: Apply the exact library changes**
+- [x] **Step 3: Apply the exact library changes**
 
 ```diff
 --- a/packages/earnings-themes/src/earnings_themes/annotation.py
@@ -1688,7 +1690,7 @@ Apply the matching dictionary rows in this implementation step:
 +`malformed_record`, with field path `evidence.doc_id`.
 ```
 
-- [ ] **Step 4: Run the scoped green check and changed-file Ruff**
+- [x] **Step 4: Run the scoped green check and changed-file Ruff**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest packages/earnings-themes/tests/evaluation/test_public_api.py packages/earnings-themes/tests/test_gold.py::test_countable_binds_the_current_parsed_document_id packages/earnings-themes/tests/test_gold.py::test_working_quote_anchor_refusal_keeps_the_drafted_duplicate_refusal packages/earnings-themes/tests/test_gold.py::test_origins_come_from_comparing_the_working_copy_with_the_draft --tb=short -q
@@ -1709,7 +1711,7 @@ uv run --locked --offline --no-sync ruff format --check tests/contracts/test_dat
 
 Before the rows exist, the newly added dictionary checks fail for the missing table/contract. After code and rows are applied, they pass. Stage `docs/data-dictionary.md` and `tests/contracts/test_data_dictionary.py` in this task's commit along with its listed code files.
 
-- [ ] **Step 5: Commit this task during the later authorized execution**
+- [x] **Step 5: Commit this task during the later authorized execution**
 
 ```bash
 git log -3 --oneline
@@ -1742,7 +1744,9 @@ uv run --locked --offline --no-sync --all-packages pytest packages/earnings-them
 
 Produces stability_figures(runs:Sequence[Sequence[EventObservation]],codebook:Codebook,plan:BootstrapPlan,*,run_ids:Sequence[str])->tuple[Figure,...]. Application supplies the verified fresh run IDs, and appends returned figures to dev PartitionReport.figures. Shared cells.quote_spans and scores.gs5_counts serve existing consumers. No hard_negative_counts return-shape change and no tie-evidence algorithm change.
 
-- [ ] **Step 1: Write the exact test changes**
+- [x] **Step 1: Write the exact test changes**
+
+> Deviation: Owner approved scalar assertions that keep failure output free of record wording; RED output thereafter was captured and surfaced only as names, closed reasons and counts.
 
 ```diff
 --- a/packages/earnings-themes/tests/evaluation/test_report_tidy.py
@@ -1902,7 +1906,7 @@ The same task adds its dictionary contract test:
      bootstrap.Interval,
 ```
 
-- [ ] **Step 2: Run the scoped red check**
+- [x] **Step 2: Run the scoped red check**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest packages/earnings-themes/tests/evaluation/test_report_tidy.py --tb=short -q
@@ -1910,7 +1914,9 @@ uv run --locked --offline --no-sync --all-packages pytest packages/earnings-them
 
 Expected: counts, the run_ids keyword and the negative dangling-reference counter are absent. Record actual failures.
 
-- [ ] **Step 3: Apply the exact library changes**
+- [x] **Step 3: Apply the exact library changes**
+
+> Deviation: Owner approved a closed missing-heading dictionary refusal instead of printing the dictionary excerpt.
 
 ```diff
 --- a/packages/earnings-themes/src/earnings_themes/evaluation/cells.py
@@ -2145,7 +2151,7 @@ Apply the matching dictionary rows in this implementation step:
 +| `deberta` | `deberta_joint` | Alternative DeBERTa joint score, reported only |
 ```
 
-- [ ] **Step 4: Run the scoped green check and changed-file Ruff**
+- [x] **Step 4: Run the scoped green check and changed-file Ruff**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest packages/earnings-themes/tests/evaluation/test_report_tidy.py --tb=short -q
@@ -2166,7 +2172,7 @@ uv run --locked --offline --no-sync ruff format --check tests/contracts/test_dat
 
 Before the rows exist, the newly added dictionary checks fail for the missing table/contract. After code and rows are applied, they pass. Stage `docs/data-dictionary.md` and `tests/contracts/test_data_dictionary.py` in this task's commit along with its listed code files.
 
-- [ ] **Step 5: Commit this task during the later authorized execution**
+- [x] **Step 5: Commit this task during the later authorized execution**
 
 ```bash
 git log -3 --oneline
@@ -2200,7 +2206,7 @@ require_train_dev(event_id: str, partition: Partition) -> None
 
 The list return enables whole-selection partition preflight before bundle loading. This is owner-approved D20-10 (P20-B). Gold anchor retains its existing `--check` fallback to the kept draft when a working copy is absent. Both gold and pilot commands call the same helpers; existing Stage 6 output contracts remain in the user gate.
 
-- [ ] **Step 1: Add the exact tests**
+- [x] **Step 1: Add the exact tests**
 
 ```diff
 diff --git a/apps/earnings-pipeline/tests/test_stage6_cli.py b/apps/earnings-pipeline/tests/test_stage6_cli.py
@@ -2584,7 +2590,7 @@ index 3812704..62dac8d 100644
 +        CoverageReport.model_validate(fields)
 ```
 
-- [ ] **Step 2: Observe red, and the already-correct coverage regression**
+- [x] **Step 2: Observe red, and the already-correct coverage regression**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline/tests/test_stage6_cli.py -k plan20 --tb=short -q
@@ -2593,7 +2599,7 @@ uv run --locked --offline --no-sync --all-packages pytest packages/earnings-inge
 
 The first fails for the missing shared selector, test/excluded gates occurring after attempted bundle loading, and coverage accepting an incorrect parsed document ID. The remaining refusal and no-write cases already pass. The second characterizes the existing validator and already passes: a hand-built dev-before-train tuple is rejected even though the builder normally sorts it. Do not run the entire Stage 6 CLI file as an agent; its legacy source fixtures are outside this plan's current invented-only scope.
 
-- [ ] **Step 3: Apply the shared-helper and command changes**
+- [x] **Step 3: Apply the shared-helper and command changes**
 
 ```diff
 diff --git a/apps/earnings-pipeline/src/earnings_pipeline/gold_cli.py b/apps/earnings-pipeline/src/earnings_pipeline/gold_cli.py
@@ -2968,7 +2974,7 @@ index 4529875..e90c14a 100644
      raise typer.Exit(1)
 ```
 
-- [ ] **Step 4: Verify green and Ruff**
+- [x] **Step 4: Verify green and Ruff**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline/tests/test_stage6_cli.py -k plan20 --tb=short -q
@@ -2979,7 +2985,7 @@ uv run --locked --offline --no-sync ruff format --check apps/earnings-pipeline/s
 
 Expected: all selected invented/synthetic cases pass and Ruff is clean. Report the actual counts.
 
-- [ ] **Step 5: Review and commit the task**
+- [x] **Step 5: Review and commit the task**
 
 ```bash
 git log -3 --oneline
@@ -3015,7 +3021,7 @@ finalize_coding(proposal: ProposalRun, support: StoredSupportRun, sources: Suppo
 
 `WorkflowInputs` is a frozen dataclass with expected events, invented/source bundles, document metadata, canonical snapshots, raw snapshots, codebook, prompt template, acquisition projections and provenance hash. Metadata parsing is shared, while the existing extraction-only configuration loader still refuses an assignment policy. A pass/fresh runner reads acquisition predecessors without writing processing transitions. The workflow keeps its terminal/self-or-descendant rule.
 
-- [ ] **Step 1: Write the exact seam tests**
+- [x] **Step 1: Write the exact seam tests**
 
 ```diff
 --- /dev/null
@@ -3187,7 +3193,7 @@ The same task adds its dictionary contract test:
  EVALUATION_MODELS = [
 ```
 
-- [ ] **Step 2: Observe the intended red failures**
+- [x] **Step 2: Observe the intended red failures**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline/tests/test_pilot_seams.py --tb=short -q
@@ -3195,7 +3201,9 @@ uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline
 
 Expected: unsafe family does not raise yet, and imports of the two new shared input helpers fail. No runtime builder or native component is invoked.
 
-- [ ] **Step 3: Apply the shared extraction and typing changes**
+- [x] **Step 3: Apply the shared extraction and typing changes**
+
+> Deviation: Updated the required IdPart dictionary row; the two reviewed loader/hash docstrings were corrected with Task 7.
 
 ```diff
 --- a/apps/earnings-pipeline/src/earnings_pipeline/theme_config.py
@@ -3564,7 +3572,7 @@ Apply the matching dictionary rows in this implementation step:
 +| `provenance_hash` | SHA-256 string | Digest binding the selected universe, acquisition, metadata and canonical snapshots |
 ```
 
-- [ ] **Step 4: Verify green, existing invented workflow consumers and Ruff**
+- [x] **Step 4: Verify green, existing invented workflow consumers and Ruff**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline/tests/test_pilot_seams.py apps/earnings-pipeline/tests/test_theme_workflow.py --tb=short -q
@@ -3585,7 +3593,7 @@ uv run --locked --offline --no-sync ruff format --check tests/contracts/test_dat
 
 Before the rows exist, the newly added dictionary checks fail for the missing table/contract. After code and rows are applied, they pass. Stage `docs/data-dictionary.md` and `tests/contracts/test_data_dictionary.py` in this task's commit along with its listed code files.
 
-- [ ] **Step 5: Review and commit the task**
+- [x] **Step 5: Review and commit the task**
 
 ```bash
 git log -3 --oneline
@@ -3623,7 +3631,9 @@ open_pilot(layout: Layout, settings_path: Path, partition: Partition) -> PilotIn
 
 `PilotIntake` holds layout, pinned records, split, codebook, preregistration, settings, selected workflow config, partition and signed gold. Its `local` property confines `data/runs/pilot`. `ProposalSnapshot` stays local because classifier output can contain model wording; checkpoint summaries and committed analytical artifacts carry metadata only. `require_committed` compares exact bytes with `git show HEAD:<confined-relative-path>`, captures output and redacts any error. It opens no source text.
 
-- [ ] **Step 1: Write the exact record and intake tests**
+- [x] **Step 1: Write the exact record and intake tests**
+
+> Deviation: Owner approved focused unreadable-record cases and stronger realistic reduced-split and calibration-hash-corruption tests.
 
 ```diff
 --- /dev/null
@@ -3900,7 +3910,7 @@ The same task adds its dictionary contract test:
      bootstrap.Interval,
 ```
 
-- [ ] **Step 2: Observe red**
+- [x] **Step 2: Observe red**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline/tests/test_pilot_records.py apps/earnings-pipeline/tests/test_pilot_intake.py --tb=short -q
@@ -3908,7 +3918,9 @@ uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline
 
 Expected: all new application imports are absent. The cases pin safe record errors, family/mode/partition boundaries, visibility before source reads, a self-sealed reduced split, and missing/changed committed metadata.
 
-- [ ] **Step 3: Apply the records, checked readers and intake**
+- [x] **Step 3: Apply the records, checked readers and intake**
+
+> Deviation: Owner approved require_committed OSError conversion to closed RecordError refusals and the two Task 6 docstring corrections; reviews closed.
 
 ```diff
 --- /dev/null
@@ -4468,7 +4480,7 @@ Apply the matching dictionary rows in this implementation step:
 +| `gold` | tuple of Gold | Checked committed gold for the current selection |
 ```
 
-- [ ] **Step 4: Verify green and Ruff**
+- [x] **Step 4: Verify green and Ruff**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline/tests/test_pilot_records.py apps/earnings-pipeline/tests/test_pilot_intake.py --tb=short -q
@@ -4489,7 +4501,7 @@ uv run --locked --offline --no-sync ruff format --check tests/contracts/test_dat
 
 Before the rows exist, the newly added dictionary checks fail for the missing table/contract. After code and rows are applied, they pass. Stage `docs/data-dictionary.md` and `tests/contracts/test_data_dictionary.py` in this task's commit along with its listed code files.
 
-- [ ] **Step 5: Review and commit the task**
+- [x] **Step 5: Review and commit the task**
 
 ```bash
 git log -3 --oneline
@@ -4521,7 +4533,7 @@ make_run(config: WorkflowConfig, loaded: LoadedPass, artifact: CalibrationArtifa
 
 The phase runner persists local extraction, a decision-free proposal snapshot and both support runs. It invokes `support_ready` after classification and before support (D20-9, approving P20-A). Ordinary replay verifies every primary request through replay-only adapters before invoking the workflow. Fresh decisions use the already-fresh pass in memory and append no Stage 5 transition. Pass reload rebinds source, prompt/configuration, target inventory, modes and recomputed completeness; a seal alone cannot turn a partial pass into a complete one. Task 9's intake-aware `checked_pass` additionally binds the configured alternative scorer and partition/event inventory at every consuming command.
 
-- [ ] **Step 1: Write the exact phase and replay tests**
+- [x] **Step 1: Write the exact phase and replay tests**
 
 ```diff
 --- /dev/null
@@ -4985,7 +4997,7 @@ The same task adds its dictionary contract test:
  @pytest.mark.parametrize(("name", "model"), PILOT_MODELS.items(), ids=PILOT_MODELS)
 ```
 
-- [ ] **Step 2: Observe red**
+- [x] **Step 2: Observe red**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline/tests/test_pilot_workflow.py --tb=short -q
@@ -4994,7 +5006,9 @@ uv run --locked --offline --no-sync --all-packages pytest tests/contracts/test_d
 
 Expected: the new phase-runner module/contract is missing. The scripted cases cover the acknowledgment boundary, no-state writes, live-pass zero-dispatch replay, fresh isolation and crash IDs, policy tampering, missing/corrupt replay entries, symlink preflight, resumed configuration changes and partial-status spoofing. No native model is loaded.
 
-- [ ] **Step 3: Apply the phase runner**
+- [x] **Step 3: Apply the phase runner**
+
+> Deviation: Owner approved coding/stability run-ID comparisons on reload, with resealed-record regressions, to enforce configured IDs.
 
 ```diff
 --- /dev/null
@@ -5613,7 +5627,7 @@ Apply the matching dictionary rows in this implementation step:
 +| `alternative` | StoredSupportRun | Reverified alternative DeBERTa support results |
 ```
 
-- [ ] **Step 4: Verify green and Ruff**
+- [x] **Step 4: Verify green and Ruff**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline/tests/test_pilot_workflow.py tests/contracts/test_data_dictionary.py --tb=short -q
@@ -5623,7 +5637,7 @@ uv run --locked --offline --no-sync ruff format --check apps/earnings-pipeline/s
 
 Expected: selected cases pass and Ruff is clean. Report actual counts.
 
-- [ ] **Step 5: Review and commit the task**
+- [x] **Step 5: Review and commit the task**
 
 ```bash
 git log -3 --oneline
@@ -5653,7 +5667,7 @@ check_working(intake: PilotIntake, loaded: LoadedPass, extensions: int) -> Path
 
 The view is local Markdown and the working file is local TOML. Promotion validates the entire working file and preserves existing committed rows and extension metadata. Unknown label targets are refused using a field path.
 
-- [ ] **Step 1: Add the failing tests**
+- [x] **Step 1: Add the failing tests**
 
 ```diff
 --- /dev/null
@@ -5802,7 +5816,7 @@ The view is local Markdown and the working file is local TOML. Promotion validat
 +        module.check_working(intake, loaded, 0)
 ```
 
-- [ ] **Step 2: Confirm red**
+- [x] **Step 2: Confirm red**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline/tests/test_pilot_labels.py --tb=short -q
@@ -5810,7 +5824,9 @@ uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline
 
 Expected: the new module is missing; the new task tests fail before implementation. Record the actual output.
 
-- [ ] **Step 3: Add the exact implementation**
+- [x] **Step 3: Add the exact implementation**
+
+> Deviation: Implemented the omitted dictionary supplement and closed missing committed label-base/Git failure refusals under owner-authorized spec-compliance corrections.
 
 ```diff
 --- /dev/null
@@ -6007,7 +6023,7 @@ Expected: the new module is missing; the new task tests fail before implementati
 +    return target
 ```
 
-- [ ] **Step 4: Confirm green and formatting**
+- [x] **Step 4: Confirm green and formatting**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline/tests/test_pilot_labels.py --tb=short -q
@@ -6018,7 +6034,7 @@ git diff --check
 
 Expected: all named tests pass and Ruff is clean. Save the actual task evidence; then request the task review before committing its reviewed implementation and dictionary changes.
 
-- [ ] **Step 5: Review and commit this task**
+- [x] **Step 5: Review and commit this task**
 
 Close the task review before committing.
 
@@ -6045,7 +6061,7 @@ evaluation_path(intake: PilotIntake, name: str) -> Path
 
 Calibration hashes the exact parsed label bytes. Later validation finds those original bytes in reachable HEAD history, refuses changed train labels or extension metadata, and permits a dev append. Output targets are confined before immutable writes.
 
-- [ ] **Step 1: Add the failing tests**
+- [x] **Step 1: Add the failing tests**
 
 ```diff
 --- /dev/null
@@ -6183,7 +6199,7 @@ Calibration hashes the exact parsed label bytes. Later validation finds those or
 +        module.validate_calibration_labels(intake, artifact)
 ```
 
-- [ ] **Step 2: Confirm red**
+- [x] **Step 2: Confirm red**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline/tests/test_pilot_calibration.py --tb=short -q
@@ -6191,7 +6207,9 @@ uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline
 
 Expected: the new module is missing; the new task tests fail before implementation. Record the actual output.
 
-- [ ] **Step 3: Add the exact implementation**
+- [x] **Step 3: Add the exact implementation**
+
+> Deviation: Implemented the omitted dictionary supplement, closed Git-launch labels_changed refusal, and corrected content_hash versus workflow configuration_hash documentation.
 
 ```diff
 --- /dev/null
@@ -6331,7 +6349,7 @@ Expected: the new module is missing; the new task tests fail before implementati
 +    return confined_path(intake.config.repo, root + "/" + name, root)
 ```
 
-- [ ] **Step 4: Confirm green and formatting**
+- [x] **Step 4: Confirm green and formatting**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline/tests/test_pilot_calibration.py --tb=short -q
@@ -6342,7 +6360,7 @@ git diff --check
 
 Expected: all named tests pass and Ruff is clean. Save the actual task evidence; then request the task review before committing its reviewed implementation and dictionary changes.
 
-- [ ] **Step 5: Review and commit this task**
+- [x] **Step 5: Review and commit this task**
 
 Close the task review before committing.
 
@@ -6375,7 +6393,7 @@ coverage_gate(intake: PilotIntake) -> None
 
 `LoadedRun` is a frozen dataclass. Its dictionary row and the complete public pilot-record registry land here. Retention counts quote-reference occurrences per event; stability figures are appended to dev's existing `PartitionReport.figures`. Gate verdicts remain an ordered list.
 
-- [ ] **Step 1: Add the failing tests**
+- [x] **Step 1: Add the failing tests**
 
 ```diff
 --- /dev/null
@@ -6616,7 +6634,7 @@ The same task adds its dictionary contract test:
      assert {v for v in defined if issubclass(v, BaseModel)} == set(
 ```
 
-- [ ] **Step 2: Confirm red**
+- [x] **Step 2: Confirm red**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline/tests/test_pilot_reporting.py --tb=short -q
@@ -6625,7 +6643,9 @@ uv run --locked --offline --no-sync --all-packages pytest tests/contracts/test_d
 
 Expected: the new module is absent; capture the actual task failures.
 
-- [ ] **Step 3: Apply the exact implementation**
+- [x] **Step 3: Apply the exact implementation**
+
+> Deviation: Owner selected accepted/assessed retention (ii), replacing the supplied accepted/all denominator; invented mixed outcomes changed (1, 5) to (1, 2). Stability mutation coverage also closed the review Minor.
 
 ```diff
 --- /dev/null
@@ -7154,7 +7174,7 @@ Apply the matching dictionary rows in this implementation step:
 +| `policy` | AssignmentPolicy or null | Verified bound policy, or null for the verified no-candidate calibration outcome |
 ```
 
-- [ ] **Step 4: Confirm green and review**
+- [x] **Step 4: Confirm green and review**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline/tests/test_pilot_reporting.py --tb=short -q
@@ -7166,7 +7186,7 @@ uv run --locked --offline --no-sync --all-packages pytest tests/contracts/test_d
 
 Expected: every named test passes, Ruff is clean, and the diff has no whitespace errors. Record the actual output, request task review, and commit only after the review checkpoint closes.
 
-- [ ] **Step 5: Review and commit this task**
+- [x] **Step 5: Review and commit this task**
 
 Close the task review before committing.
 
@@ -7198,7 +7218,9 @@ register(pilot: typer.Typer) -> None
 
 Every command requires `--settings`. `pass` requires `--models-root`; `labels view` requires `--labelled-on YYYY-MM-DD`. Pass/run/labels/calibrate default to train, independent to dev; report gathers both partitions and gates reads dev. A fresh run requires dev, an ID and `--models-root`. Labels accept `--extensions` (default 0); report accepts repeated `--fresh` IDs and `--version` (default 1); gates accepts `--report-version` and `--version` (both default 1). Models are never built for ordinary replay. The support checkpoint is owner-approved D20-9 (P20-A).
 
-- [ ] **Step 1: Add the failing tests**
+- [x] **Step 1: Add the failing tests**
+
+> Deviation: The reviewed fix expanded the runtime-construction guard across all eleven CLI help paths; the correction passed scoped checks and re-review.
 
 ```diff
 --- /dev/null
@@ -7341,7 +7363,7 @@ Every command requires `--settings`. `pass` requires `--models-root`; `labels vi
 +    assert "pinned_metadata" in result.output
 ```
 
-- [ ] **Step 2: Confirm red**
+- [x] **Step 2: Confirm red**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline/tests/test_pilot_commands.py --tb=short -q
@@ -7349,7 +7371,7 @@ uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline
 
 Expected: the new module is absent; capture the actual task failures.
 
-- [ ] **Step 3: Apply the exact implementation**
+- [x] **Step 3: Apply the exact implementation**
 
 ```diff
 --- /dev/null
@@ -7793,7 +7815,7 @@ Expected: the new module is absent; capture the actual task failures.
 +register_a8(pilot)
 ```
 
-- [ ] **Step 4: Confirm green and review**
+- [x] **Step 4: Confirm green and review**
 
 ```bash
 uv run --locked --offline --no-sync --all-packages pytest apps/earnings-pipeline/tests/test_pilot_commands.py --tb=short -q
@@ -7804,7 +7826,7 @@ git diff --check
 
 Expected: every named test passes, Ruff is clean, and the diff has no whitespace errors. Record the actual output, request task review, and commit only after the review checkpoint closes.
 
-- [ ] **Step 5: Review and commit this task**
+- [x] **Step 5: Review and commit this task**
 
 Close the task review before committing.
 
@@ -7824,7 +7846,7 @@ git commit -m "feat(pilot): register counts-only A8 commands"
 
 **Interfaces:** Consumes the reviewed implementation SHA, actual scoped test counts, and the user's main-checkout gate results. Produces the Plan A completion stamp, a retired plan, deferred-item dispositions and the execution-to-plan-B handoff. No pilot command runs as part of this task.
 
-- [ ] **Step 1: Run the scoped agent checks**
+- [x] **Step 1: Run the scoped agent checks**
 
 Run these separately, from the execution worktree. They are explicitly allowed invented/synthetic/static checks. Do not broaden `-k plan20`, combine it with `coverage`, or run the entire Stage 6 CLI file.
 
@@ -7843,11 +7865,15 @@ git diff --name-only main...HEAD -- evaluation config data CLAUDE.md AGENTS.md s
 
 Expected: tests pass with their actual counts; Ruff and diff checks are clean; the locked workspace remains 153 packages; the final command has no output before any separately approved Current state edit. Do not run `uv lock` to make this pass. No type-checker command is configured at the baseline. Review any changed public interfaces and the dictionary contracts together.
 
-- [ ] **Step 2: Finish task reviews and the final whole-branch review**
+- [x] **Step 2: Finish task reviews and the final whole-branch review**
+
+> Deviation: All task and final reviews closed; dictionary settings-pin precision was corrected and re-reviewed. The independent Codex CLI second opinion was skipped under the controller-is-Codex recipe.
 
 Use subagent-driven-development's two-stage task reviews, then requesting-code-review's final whole-branch review. Give reviewers the spec, this plan, the base and tip SHAs, and the same no-data/no-model/no-root-suite constraints. Resolve findings before proceeding. Run new relevant checks when fixes land and report actual counts. Do not treat planning's prototype review as the execution branch's final review.
 
-- [ ] **Step 3: Predict selection and hand the user literal SHA-pinned gate commands**
+- [x] **Step 3: Predict selection and hand the user literal SHA-pinned gate commands**
+
+> Deviation: Owner gates exposed two legacy test expectations; reviewed test-only fixes aligned approved coding exports and the closed pinned_metadata refusal, then the owner reran the root gate at d56d57c.
 
 ```bash
 git rev-parse HEAD
@@ -7876,7 +7902,9 @@ PY
 
 Send the generated commands to the user and state they run in the **main checkout**, alongside the collection prediction and actual agent counts. The historical user run at `eccb77c` was 4719 passed / 2 skipped / 28 deselected. Wait for the user's root-suite and wording-gate results. Agents never execute either gate, the pilot integration file, live/browser or user-only modes. If a gate fails, use systematic-debugging from the reported test name and reason only; do not ask for or inspect pilot text. After a code fix, hand over its new SHA and await the relevant gates again.
 
-- [ ] **Step 4: Resolve leftovers and request the protected Current state edit**
+- [x] **Step 4: Resolve leftovers and request the protected Current state edit**
+
+> Deviation: Owner approved the exact Current state diff on 2026-10-13; its single old-heading guard passed. Resolve-before-defer closed all findings with nothing newly deferred.
 
 Run writing-plans' resolve-before-defer gate. Batch owner questions about any skipped steps or unresolved review findings. Answers that unblock implementation must be acted on, followed by the relevant reviews/checks/gates, before completion markup. Defer only items with the skill's required paths, reason, size and closure condition. Existing P18-1/P18-2, P19-2/P19-3/P19-4 and the unrelated P17 bundles remain open.
 
@@ -7922,7 +7950,7 @@ PY
 
 The text describes execution's actual verification. If execution violated its scope, correct that claim before proposing the diff; planning's separate prototype audit does not turn into an implementation claim.
 
-- [ ] **Step 5: Mark up completion, tick the closed backlog items and stamp only Plan A**
+- [x] **Step 5: Mark up completion, tick the closed backlog items and stamp only Plan A**
 
 After the partition of done/deferred work and all owner questions are final, tick this plan's completed steps and add one-line `> Deviation:` or `> Skipped:` notes at the steps that changed. Add the completion status using the actual date and whether the resolved gate deferred anything. Use one of the two exact forms below. Do not pre-tick steps during implementation; maintain the execution ledger until this point.
 
@@ -8062,9 +8090,11 @@ B8's already-approved `docs/verification/pilot-v1-feasibility.md` must cite the 
 
 ## Handoffs to later stages
 
-This plan ships machinery only. The spec's Handoffs table governs what Stages 12, 14, 15 and 16 receive after plan B. The as-built application APIs, strict readers, shared hash helpers, local checkpoint paths, fresh IDs and failure semantics above are plan B's inputs. Stage 11 remains open, so no later roadmap entry is rewritten here. At execution completion, add traps, deviations and deferred items actually found in the execution ledger to this section; do not claim real pilot figures exist.
+This plan ships machinery only. The spec's Handoffs table governs what Stages 12, 14, 15 and 16 receive after plan B. The as-built application APIs, strict readers, shared hash helpers, local checkpoint paths, fresh IDs and failure semantics above are plan B's inputs. Stage 11 remains open, so no later roadmap entry is rewritten here. Execution traps and deviations are recorded in the Plan B consuming handoff below. No real pilot figures were produced.
 
 ## Planning verification — 2026-10-13
+
+Historical planning evidence follows; it describes the prototype before execution and is distinct from the execution verification below.
 
 This is a verified implementation plan, not an executed implementation. Main remains clean at `5015862`. The only change on `plan-20-stage11-a8` is this plan. The owner approved it and its plan-only commit on 2026-10-13; no prototype code is included. Prototype code was kept uncommitted in isolated scratch worktrees. Tasks 1–12 were replayed in order from clean main, with the test changes before the implementation changes. The final document contains the corrected patches, including the EOF-context correction found at Task 12. Repository Ruff check and format check were clean after each task.
 
@@ -8093,6 +8123,29 @@ Root **collection only** produced `4862/4890 tests collected (28 deselected)` on
 
 ## Execution Handoff
 
+Historical planning-to-execution handoff follows; execution has now completed as recorded below.
+
 The owner approved the plan and its plan-only commit on 2026-10-13. D20-9/D20-10 record the review decisions, and their task references are updated. Self-review was repeated for these metadata changes; the verified code blocks are unchanged. Do not implement this plan in the planning session.
 
 After approval and the plan-only commit on `plan-20-stage11-a8`, open a **fresh GPT-6.1 Medium session**, load **subagent-driven-development**, and create a **fresh worktree** using using-git-worktrees from the commit containing the approved plan. Execute the saved plan and the spec in task order, with a fresh worker per task and both review stages. No execution-choice question remains: the owner selected this process. Drop the planning conversation; this document contains the interfaces, exact code, tests, constraints and completion protocol needed by the new session.
+
+
+## Execution verification — 2026-10-13
+
+Reviewed implementation SHA: `d56d57c13a20e6ebfa1b9e20d1b1c70945f123ce` (base `7cb56b678822ad6b14716bde826ff31b815ea96d`). Tasks 1–12 completed in order with task reviews and recorded RED/GREEN evidence; all final review findings closed. The resolve-before-defer gate found no skipped implementation or new deferred item. Existing deferred bundles remain open except P17-1, P17-2, P17-5 and P19-1, whose implementation/disposition closure is recorded above. The owner separately approved the exact protected Current state diff.
+
+Agent scoped verification at `e64d95501494dfa570faed4ef1ec412a47a21122`: evaluation/library/import/dictionary **714 passed, 1 skipped**; application seams, commands and workflow **138 passed**; Stage 6 `-k plan20` **22 passed, 59 deselected**; synthetic coverage **11 passed**; selected gold tests **3 passed** (total **888 passed, 1 skipped**). Subsequent dictionary review correction: **383 passed, 1 skipped**. Final legacy-test fix: named RED **2 failed**, named GREEN **2 passed**, contracts/commands **63 passed**, Stage 6 plan20 **22 passed, 59 deselected**. Repository Ruff check/format check and diff checks were clean; **491 files** were formatted and the locked workspace remained **153 packages**. No type checker is configured. An independent Codex CLI second opinion was skipped under the controller-is-Codex recipe; this is not additional review evidence.
+
+Collection only at the reviewed SHA selected **4896/4924 tests, 28 deselected**. The owner executed the main-checkout root gate at that SHA: **4893 passed, 3 skipped, 28 deselected, 1 warning** in **919.87 seconds** (Torch/Python 3.14 warning). The owner's wording gate at `b26010394cedc81ee987a312bd995f8620c16026` gave **7 passed**; the subsequent commit changed only two unrelated legacy tests, so that wording result remains applicable. Agents did not execute either user gate.
+
+Execution opened no pilot text or existing gold/pilot run data, loaded no model/tokenizer/scorer/NLI runtime, and made no network call. Verification uses invented/synthetic/static inputs and does not establish native smoke, resident memory fit, external-server unloading, real pilot quality or feasibility. Retention (ii), safe failures, reload identity checks, label-base refusals and dictionary supplements intentionally diverge from the supplied patches as annotated; embedded patch bodies retain their approved planning text. Task 13's retirement and final handoff checkboxes remain pending for the controller until those actions occur.
+
+## Plan B consuming handoff
+
+Plan B starts after plan A merges and consumes the focused `earnings_pipeline.pilot_*` modules, `pilot_commands.py`, shared coding/support configuration helpers, checked committed-byte readers and evaluation APIs shipped by plans 17–20; the spec's Plan B, Preregistration, Metrics, Artifacts and Rollout sections remain authoritative. This is a consuming handoff, not a plan or authorization to run B.
+
+- **B1:** Choose models, downloads, licenses and numeric ceilings; verify native smoke and resident memory. Synthetic model identities and ceilings are not baseline choices. Runtime assembly cannot stop an external Gemma server. Pass/fresh require the counts-only operator acknowledgment after classification and before support; B1 must account for resident Python scorers/tokenizers and both judges/MiniCheck.
+- **B2:** The user chooses metadata-only local preregistration fields and uses Task 13 step 7's literal `freeze_preregistration`/`preregistration_toml` mechanism, then commits preregistration alone before B3. No actual floor, grid, model, ceiling, seed or resample count was chosen here.
+- **B3 and replay/fresh consumers:** Enforce all **28 signed/committed train/dev bundles and 8 dev ledger rows** before source loading. Test/excluded partitions refuse before text. Resealed reduced splits and wrong configured coding/stability IDs refuse; no missing committed label base or Git failure can silently start an extension. Ordinary replay reuses extraction only and refuses cache misses; fresh IDs and caches remain separate, and partial runs never count toward k = 3. Retention (ii) uses assessed targets only; retention (i) uses quote-reference occurrences and retries, with GS5 count reconciliation.
+- **B8 and later-stage outputs:** `docs/verification/pilot-v1-feasibility.md` must cite the exact SHA-256 of the committed `independent-pass.toml` used in comparisons, alongside existing per-event figures. No new sidecar or PilotReport field is needed. Stability lives in dev figures; gate results stay a list. No configuration comparison precedes V6. The spec's Handoffs table governs later stages after B completes; Stage 11 remains unticked and the shared spec remains live.
+- **Existing backlog:** `specs/deferred_items.md` P18-1/P18-2, P19-2/P19-3/P19-4 and unrelated P17 bundles remain open for their stated closure conditions/triggers. Tie-group maximum matching and the label-bootstrap population remain pilot/Plan B questions. P15-M1's broad workflow decomposition remains open after the typed seam extraction. No new item was deferred by this execution.

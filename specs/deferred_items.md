@@ -1434,8 +1434,8 @@
 
 ## 17-feasibility-pilot-and-threshold-calibration-plan-a-slice-1 — 2026-10-11
 
-- [ ] **P17-1 — `pilot recount` copies `gold validate`'s file selection, stem check and
-      kept-draft paths.** In apps/earnings-pipeline/src/earnings_pipeline/pilot_cli.py,
+- [x] **P17-1 — `pilot recount` copies `gold validate`'s file selection, stem check and
+      kept-draft paths.** → done in plan 20 In apps/earnings-pipeline/src/earnings_pipeline/pilot_cli.py,
       `recount_command` (named events, then "is not committed", then the gold glob),
       `_recount` (load the file, check its stem), the kept-draft and working-copy paths,
       and the `Events` alias repeat apps/earnings-pipeline/src/earnings_pipeline/gold_cli.py
@@ -1449,7 +1449,7 @@
       `pilot independent` arrives. Size: quick-fix. Done when: `stage6.py` holds the shared
       helpers, `gold_cli.py` and `pilot_cli.py` use them, and the Stage 6 CLI tests pass
       unchanged. Do it with A8.
-- [ ] **P17-2 — Test-coverage gaps in plan 17's commands (batch).** (1) `pilot recount`
+- [x] **P17-2 — Test-coverage gaps in plan 17's commands (batch).** → done in plan 20 (1) `pilot recount`
       (apps/earnings-pipeline/tests/test_stage6_cli.py): no test for the stem-mismatch
       refusal, a missing working copy (only a missing kept draft is tested), an unreadable
       draft or committed file (`record_error`), or that a refusal writes nothing (the
@@ -1493,7 +1493,7 @@
       new wording test's name reads "stage_11_s". Source: plan 17's task and final reviews.
       Size: quick-fix. Done when: each is fixed or consciously dropped, with the scoped
       tests passing. Revisit if: one of those functions is touched again.
-- [ ] **P17-5 — Decisions for plan A's remainder (A3, A8).** (1) `pilot recount` runs over
+- [x] **P17-5 — Decisions for plan A's remainder (A3, A8).** → done in plan 20 (1) `pilot recount` runs over
       committed gold and refuses no partition, and `pilot coverage --version 2` reads
       train and dev by construction; the spec's sentence after A8's table says "Every
       command refuses test and excluded events…". Settle whether it covers this slice's
@@ -1543,7 +1543,7 @@
 
 ## 19-feasibility-pilot-and-threshold-calibration-plan-a-slice-3 — 2026-10-13
 
-- [ ] **P19-1 — Tidy `earnings_themes.evaluation`'s API before slice 4 consumes it.**
+- [x] **P19-1 — Tidy `earnings_themes.evaluation`'s API before slice 4 consumes it.** → done in plan 20
       None is a defect today; each is a contract roughness the per-task and final
       reviews logged and the user deferred at plan 19's resolve-before-defer gate
       (2026-10-13). Files are under packages/earnings-themes/src/earnings_themes/:
