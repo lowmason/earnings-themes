@@ -6913,3 +6913,38 @@ codebook and both configuration hashes. It refuses `content_hash_mismatch`, subj
 `no_candidate`, subject `selection`, for one without a selection. `evaluate`
 applies the selected `ScorerCutoff`: accept with the eligible quotes when the joint
 score reaches the cutoff and an eligible quote exists, otherwise review.
+
+## Stage 11 shared and application boundaries (plan 20, A8/A9)
+
+These APIs reuse the existing coding, support and evaluation gates. They keep
+persisted field names and schema versions.
+
+### `SourceBindings`
+
+A nonpersisted `TypedDict` returned by
+`source_bindings(sources: SupportSources) -> SourceBindings` after validating the
+source manifest and codebook. It is used before dispatch, after dispatch and when
+the application prebinds the coding configuration.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `source_run_id` | string | The extraction run's identity |
+| `source_run_hash` | SHA-256 | Digest of the extraction manifest and complete source provenance hash |
+| `documents` | tuple of (string, SHA-256) | Document IDs and canonical hashes, sorted by document ID |
+| `codebook` | CodebookReference | Frozen codebook identity, version and content hash |
+
+### Shared coding gates
+
+
+`coding_configuration(*, source_run_id, source_run_hash, documents, codebook,
+classifier_identity, coding_policy, ceilings, requested_claim_order, schema_hash,
+cache_mode, coding_version, validator_version)` returns the same twelve-key
+configuration material that `ProposalRunRecord.configuration_hash` binds. Coding
+production and proposal reconstruction both call this definition.
+
+`validate_proposal_support(proposals: ProposalRun, support: StoredSupportRun,
+sources: SupportSources) -> None` reuses the gate before `decide_assignments`:
+reverify the support run, recompute proposed inputs, bind the extraction source run
+ID/hash, documents and codebook, and require support targets to be among the
+proposals. The existing support gate establishes unique outcomes in target order.
+The application applies it to both support runs before calibration or reporting.

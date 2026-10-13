@@ -43,7 +43,7 @@ from earnings_themes.coding import records as coding
 from earnings_themes.coding.cache import CodingCacheEntry
 from earnings_themes.coding.decide import DecisionInput, DecisionSet
 from earnings_themes.coding.input import CodingInput
-from earnings_themes.coding.run import ProposalRun
+from earnings_themes.coding.run import ProposalRun, SourceBindings
 from earnings_themes.coding.store import SCHEMAS
 from earnings_themes.evaluation import (
     align,
@@ -669,6 +669,20 @@ def test_workflow_closed_reasons_and_baseline_contract_documented():
     assert "immediate immutable parsed predecessor" in text
     assert "stored_analysis" in text and "capture_nondurable" in text
     assert "schema-2 partial" in text and "schema-1 partial" in text
+
+
+def test_source_bindings_and_shared_coding_gates_documented():
+    assert documented("SourceBindings") == set(SourceBindings.__annotations__)
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert "source_bindings(sources: SupportSources) -> SourceBindings" in text
+    assert (
+        "validate_proposal_support(proposals: ProposalRun, support: StoredSupportRun,"
+        in text
+    )
+    assert (
+        "coding_configuration(*, source_run_id, source_run_hash, documents, codebook,"
+        in text
+    )
 
 
 EVALUATION_MODELS = [

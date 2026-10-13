@@ -23,6 +23,7 @@ from earnings_themes.coding.records import (
     ProposalRecord,
     ProposalRunRecord,
     checked,
+    coding_configuration,
 )
 from earnings_themes.coding.run import ProposalRun
 from earnings_themes.support import reverify_support_run
@@ -138,25 +139,20 @@ def _proposal_inputs(
         raise CodingError("input_changed")
     if record.documents != tuple(sorted(sources.stored_run.record.documents.items())):
         raise CodingError("input_changed")
-    configuration = {
-        name: getattr(record, name).model_dump(mode="json")
-        if hasattr(getattr(record, name), "model_dump")
-        else getattr(record, name)
-        for name in (
-            "source_run_id",
-            "source_run_hash",
-            "documents",
-            "codebook",
-            "classifier_identity",
-            "coding_policy",
-            "ceilings",
-            "requested_claim_order",
-            "schema_hash",
-            "coding_version",
-            "validator_version",
-            "cache_mode",
-        )
-    }
+    configuration = coding_configuration(
+        source_run_id=record.source_run_id,
+        source_run_hash=record.source_run_hash,
+        documents=record.documents,
+        codebook=record.codebook,
+        classifier_identity=record.classifier_identity,
+        coding_policy=record.coding_policy,
+        ceilings=record.ceilings,
+        requested_claim_order=record.requested_claim_order,
+        schema_hash=record.schema_hash,
+        coding_version=record.coding_version,
+        validator_version=record.validator_version,
+        cache_mode=record.cache_mode,
+    )
     if (
         digest(configuration) != record.configuration_hash
         or record.validator_version != VALIDATOR_VERSION
@@ -353,6 +349,42 @@ def decision_vote(
     return "review", "policy_review", ()
 
 
+def _proposal_support_inputs(
+    proposals: ProposalRun, support: StoredSupportRun, sources: SupportSources
+) -> tuple[tuple[ReviewOutcome, ...], dict[str, TargetRecord], dict[str, TargetRecord]]:
+    """The shared reverified gate before calibration or assignment consumption."""
+    outcomes = reverify_support_run(support, sources)
+    current = _proposal_inputs(proposals, sources)
+    if (
+        support.record.source_run_hash != proposals.record.source_run_hash
+        or support.record.source_run_id != proposals.record.source_run_id
+        or support.record.codebook != proposals.record.codebook
+        or support.record.documents != proposals.record.documents
+    ):
+        raise CodingError("input_changed")
+    stored = {
+        digest(row.target.model_dump(mode="json")): row for row in support.targets
+    }
+    if not set(stored) <= set(current):
+        raise CodingError("invalid_references")
+    return outcomes, current, stored
+
+
+def validate_proposal_support(
+    proposals: ProposalRun, support: StoredSupportRun, sources: SupportSources
+) -> None:
+    """Refuse a proposal/support pair unless both bind the complete current source."""
+    try:
+        proposal_run_hash(proposals)
+        _proposal_support_inputs(proposals, support, sources)
+    except CodingError:
+        raise
+    except SupportError as error:
+        raise CodingError(str(error)) from None
+    except Exception:  # noqa: BLE001 - boundary failures never print source data
+        raise CodingError("unexpected_error") from None
+
+
 def decide_assignments(
     proposals: ProposalRun,
     support: StoredSupportRun,
@@ -362,20 +394,9 @@ def decide_assignments(
     """One decision per proposal, after current evidence and frozen-policy checks."""
     try:
         proposal_hash = proposal_run_hash(proposals)
-        outcomes = reverify_support_run(support, sources)
-        current = _proposal_inputs(proposals, sources)
-        if (
-            support.record.source_run_hash != proposals.record.source_run_hash
-            or support.record.source_run_id != proposals.record.source_run_id
-            or support.record.codebook != proposals.record.codebook
-            or support.record.documents != proposals.record.documents
-        ):
-            raise CodingError("input_changed")
-        stored = {
-            digest(row.target.model_dump(mode="json")): row for row in support.targets
-        }
-        if not set(stored) <= set(current):
-            raise CodingError("invalid_references")
+        outcomes, current, stored = _proposal_support_inputs(
+            proposals, support, sources
+        )
         support_hash = support_run_hash(support)
         support_content_hash = _support_content_hash(support)
         reference = _policy_reference(policy, proposals, support)
