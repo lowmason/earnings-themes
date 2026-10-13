@@ -6608,3 +6608,34 @@ interval is the event-clustered percentile bootstrap.
 | --- | --- |
 | `passed` | Whether every result passes |
 | `results` | Each `GateResult` |
+
+### `Accepted`
+
+| Field | Meaning |
+| --- | --- |
+| `theme_id` | An accepted assignment's theme |
+| `spans` | Its evidence spans in the event's document |
+
+### `EventObservation`
+
+| Field | Meaning |
+| --- | --- |
+| `event_id` | The event |
+| `gold` | Its signed gold |
+| `index` | Its document's `UnitIndex` |
+| `accepted` | The run's accepted assignments |
+| `release_confirmed` | Whether its kept attempt is `confirmed` (R13.1) |
+| `quotes` | Verified and proposed quotes (R12.8 (i)) |
+| `targets` | Accepted and assessed targets (R12.8 (ii)) |
+
+### `LabelledTarget`
+
+| Field | Meaning |
+| --- | --- |
+| `target_id` | The support target |
+| `event_id` | Its event |
+| `claim_label` | The user's claim label, or null when unsure |
+| `joint_label` | The joint label, or null |
+| `accepted` | Whether the run accepted it |
+| `scores` | Each scorer view's joint score |
+| `trials` | Its four judge trials |

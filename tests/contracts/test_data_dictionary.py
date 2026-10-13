@@ -49,6 +49,7 @@ from earnings_themes.evaluation import (
     align,
     bootstrap,
     cells,
+    report,
     scores,
 )
 from earnings_themes.evaluation import problems as evaluation_problems
@@ -689,6 +690,9 @@ EVALUATION_DATACLASSES = [
     align.UnitIndex,
     cells.EventCells,
     scores.Tally,
+    report.Accepted,
+    report.EventObservation,
+    report.LabelledTarget,
 ]
 
 
