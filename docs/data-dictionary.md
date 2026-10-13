@@ -6639,3 +6639,39 @@ interval is the event-clustered percentile bootstrap.
 | `accepted` | Whether the run accepted it |
 | `scores` | Each scorer view's joint score |
 | `trials` | Its four judge trials |
+
+### `ClaimAnswer`
+
+| Value | Meaning |
+| --- | --- |
+| `supported` | The evidence supports the claim |
+| `unsupported` | It does not |
+| `unsure` | The user cannot tell; left out |
+
+### `FitAnswer`
+
+| Value | Meaning |
+| --- | --- |
+| `fits` | The claim fits the theme |
+| `does_not_fit` | It does not |
+| `unsure` | The user cannot tell; left out |
+
+### `SupportLabel`
+
+| Field | Meaning |
+| --- | --- |
+| `target_id` | The support target |
+| `target_input_hash` | Its `TargetRecord.input_hash` in the support run |
+| `partition` | `train` or `dev` |
+| `claim_support` | The `ClaimAnswer` |
+| `theme_fit` | The `FitAnswer` |
+| `labelled_on` | The date the user labelled it |
+
+### `SupportLabelSet`
+
+| Field | Meaning |
+| --- | --- |
+| `schema_version` | `1` |
+| `preregistration_hash` | The preregistration whose sample it labels |
+| `train_extensions` | Preregistered extensions drawn for train |
+| `labels` | Each `SupportLabel`, one per target |

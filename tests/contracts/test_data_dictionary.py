@@ -49,6 +49,7 @@ from earnings_themes.evaluation import (
     align,
     bootstrap,
     cells,
+    labels,
     report,
     scores,
 )
@@ -681,10 +682,14 @@ EVALUATION_MODELS = [
     evaluation_records.Gates,
     evaluation_records.GateResult,
     evaluation_records.GateVerdict,
+    labels.SupportLabel,
+    labels.SupportLabelSet,
 ]
 EVALUATION_ENUMS = [
     evaluation_problems.EvaluationProblem,
     evaluation_records.Metric,
+    labels.ClaimAnswer,
+    labels.FitAnswer,
 ]
 EVALUATION_DATACLASSES = [
     align.UnitIndex,
