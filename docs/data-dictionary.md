@@ -3623,6 +3623,13 @@ decisions are omitted, never inferred. No score join is requested, so score
 counts are zero. These functions establish semantics, not observed quality;
 Stage 11 owns view selection, calibration, pooling, and thresholds.
 
+`accepted_claim_recall(population, labels, decisions, *, task)` (plan 19) is the
+share of labels marked supported whose target an external decision accepted. Its
+denominator is the human-labeled positive targets, reported as `joined_count`; no
+such target yields `no_labeled_positive`. A target with no decision is counted as
+not accepted, as Stage 9 never accepts a target it did not decide. Stage 11's
+calibration reads it beside precision, as label recall.
+
 ### `HumanLabel`
 
 | Field | Meaning |
@@ -3653,15 +3660,15 @@ Stage 11 owns view selection, calibration, pooling, and thresholds.
 | Field | Meaning |
 | --- | --- |
 | `value` | Finite metric in `[0,1]`, or `None` when undefined. |
-| `reason` | `None` for a defined value; otherwise `no_scored_labels`, `one_class`, or `no_labeled_accepted`. |
+| `reason` | `None` for a defined value; otherwise `no_scored_labels`, `one_class`, `no_labeled_accepted`, or `no_labeled_positive`. |
 | `task` | Explicit selected label task. |
-| `view` | Selected score view for AUC, or `external_acceptance` for precision. |
+| `view` | Selected score view for AUC, or `external_acceptance` for precision and recall. |
 | `population_count` | Number of unique supplied population IDs. |
 | `labeled_count` | Number of human labels supplied in the population. |
-| `scored_count` | Number of nonmissing selected-view scores; zero for precision. |
-| `joined_count` | Labeled scored targets for AUC; labeled accepted targets for precision. |
+| `scored_count` | Number of nonmissing selected-view scores; zero for precision and recall. |
+| `joined_count` | Labeled scored targets for AUC; labeled accepted targets for precision; labeled supported targets for recall. |
 | `accepted_count` | Number of external true decisions, including unlabeled cases; zero for AUC. |
-| `missing_score_count` | Population count minus scored count for AUC, including absent and `None` scores; zero for precision. |
+| `missing_score_count` | Population count minus scored count for AUC, including absent and `None` scores; zero for precision and recall. |
 | `missing_label_count` | Population count minus labeled count, independently of scores/decisions. |
 | `accepted_without_label_count` | External true decisions lacking a human label; zero for AUC. |
 
@@ -4319,10 +4326,18 @@ eligible set includes a quote only when all four complete independent trials
 label it `supporting`. This is an eligibility restriction, never sufficient
 acceptance; contextual companions remain raw provenance.
 
+`decision_input(support, target, outcome) -> DecisionInput` builds one stored
+target's view from its reverified outcome, and `decision_inputs(support, sources)
+-> dict[str, DecisionInput]` reverifies the run and builds every target's view,
+keyed by target ID, exactly as `decide_assignments` builds them (plan 19). Stage
+11's calibration reads these, so a cutoff fitted on train decides as Stage 9 will.
+
 `AssignmentPolicy.reference: PolicyReference` and
 `evaluate(view: DecisionInput) -> PolicyVote` form a pure deterministic external
-policy seam. No accepting implementation is shipped in the package. Tests supply
-an explicit fixture-only policy. Calibrated references require an artifact hash,
+policy seam. Stage 9 ships no accepting implementation. The package's only one is
+Stage 11's `earnings_themes.evaluation.policy.CalibratedPolicy` (see "Calibrated
+policy" under Stage 11 evaluation). Stage 9's tests supply an explicit fixture-only
+policy. Calibrated references require an artifact hash,
 but this declaration is not independent evidence of calibration or approval;
 Stage 11 must produce and approve that artifact and its production configuration.
 Stage 9 loads no labels, sets no cutoff, pools no score and approves no model.
@@ -6386,3 +6401,515 @@ installs the runtimes it needs.
 | `workflow` | `WorkflowRuntime` | Extractor, classifier, scorer and judges; no assignment policy and no renderer |
 | `alternative_scorer` | `EntailmentScorer` | DeBERTa, for the second support run over the same judges |
 | `extractor_family` | string | The extractor's family, for Stage 8's panel rule |
+
+## Stage 11 evaluation (plan 19)
+
+`earnings_themes.evaluation` scores the pilot, samples and checks the user's support
+labels, and calibrates the assignment policy (the Stage 11 spec, A3–A5). It reads no
+file and prints nothing; the application gathers its inputs (A8). It imports pure
+Stage 7–9 code (`extraction.units`, `support.metrics`, `support.context`,
+`coding.decide`), never ingestion, httpx, an NLI runtime or the local adapter, and
+no gold-drafting module imports it (D19-4). A refusal is an `EvaluationError`, or a
+`Refusal` row, naming an ID and an `EvaluationProblem`, never text.
+
+Scoring conventions (FP20, D19-3, D19-6, D19-7, D19-8, D19-9): a span maps to every
+pointer unit it shares a character with. A theme is present in an event when a gold
+assignment pairs it with a claim under `supports`. A tie group resolves to a member
+the run predicted, else one already present, else its lowest theme ID, and its other
+members are excused; for unit and character scoring the group stays one evidence
+cell, which any member's evidence covers, and an accepted unit or character is one
+hit however many cells hold it. A theme whose every row is `uncertain` is left out
+and counted. A claim's reference to a quote, or any assignment's reference to a
+claim, that the reading lacks is counted as dangling, one per reference. The roll-up
+maps both sides to level-one roots. Gold-evidence recall counts the gold-supporting
+units any accepted assignment holds. GS5's edited and rejected shares are over
+drafted items, and the added share over signed items. Every interval is the
+event-clustered percentile bootstrap.
+
+### `EvaluationProblem`
+
+| Value | Meaning |
+| --- | --- |
+| `malformed_record` | A record or input that does not have the expected shape |
+| `parent_cycle` | A codebook whose parents loop |
+| `wrong_partition` | A record or label of another partition, or a partition never reported |
+| `unknown_event` | A target or label whose event is not among the inputs |
+| `unknown_target` | A label or sample ID the support run does not hold |
+| `duplicate_target` | A target ID given twice |
+| `target_hash_mismatch` | A label whose input hash is not the support run's |
+| `not_sampled` | A label for a target outside the sample |
+| `not_labelled` | A sampled target with no label |
+| `labels_changed` | Committed labels that a working file would change |
+| `preregistration_mismatch` | A record bound to another preregistration, or one that no longer hashes to itself |
+| `content_hash_mismatch` | A frozen record that does not hash to its `content_hash` |
+| `too_few_labels` | Fewer usable train joint labels than preregistered (R8.4) |
+| `no_candidate` | A calibration artifact with no selection, which binds no policy |
+| `unknown_metric` | A metric the report does not hold |
+
+### `UnitIndex`
+
+| Field | Meaning |
+| --- | --- |
+| `doc_id` | The document |
+| `spans` | Each pointer unit's element ID, start and end, in document order (ES12) |
+
+### `EventCells`
+
+| Field | Meaning |
+| --- | --- |
+| `present` | Themes present in the event, after tie groups resolve |
+| `excused` | A resolved tie group's other members: predicting one is not a false positive |
+| `uncertain` | Themes whose every gold row is `uncertain`: left out, counted |
+| `units` | Each present theme's gold-supporting units |
+| `spans` | Each present theme's gold-supporting spans |
+| `evidence` | The `EvidenceCell`s unit and character scoring read: each present theme's own untied evidence, then each tie group's |
+| `dangling` | References the reading cannot resolve, one each: a claim's quote the reading lacks, and any assignment's claim it lacks, whatever its support, theme or tie (D19-7) |
+
+### `EvidenceCell`
+
+One cell of gold evidence for unit and character scoring (FP20). A tie group is one
+cell whichever member the theme cells resolve it to: its items are covered by any
+member's accepted evidence, which counts toward recall and is never a false
+positive. For precision, an accepted (theme, item) pair, an item being a unit or a
+character, is accepted and a hit when the item lies in the gold of any cell the
+theme belongs to, counted once per theme however many cells hold it and however many
+other themes accept it. A scored theme's accepted items outside its cells are
+accepted but not hits; an excused member's are not scored; an uncertain-only theme
+belongs to no cell and adds nothing. Known effects: asserting several members of a
+tie group, or a tie member that is also present through its own claim, over the same
+gold item credits each of them as a hit, so the gated `span_unit_f1` can rise when a
+run adds a correct alternative; and which members are excused follows the theme
+cells' lowest-ID rule (D19-6), so a wrong item carried by an excused member is not a
+false positive while the same item carried by the chosen member is. A maximum
+matching of accepted (theme, item) pairs to gold (cell, item) pairs is a stricter
+alternative with trade-offs of its own, recorded as a handoff for plan B.
+
+| Field | Meaning |
+| --- | --- |
+| `themes` | The present theme, for its own untied evidence; or every member of the tie group |
+| `units` | The cell's gold-supporting units |
+| `spans` | The cell's gold-supporting spans |
+
+### `EvidenceTally`
+
+One event's evidence counts, in pointer units (`unit_tally`) or characters
+(`char_counts`), taken from each side so that an accepted (theme, item) pair
+covering two gold cells is one hit; which accepted items count, and the known effect of redundant
+correct alternatives, are set out under `EvidenceCell`. Precision is `accepted_hits
+/ accepted`, recall `gold_hits / gold`, and F1 their harmonic mean, `2 *
+accepted_hits * gold_hits / (accepted_hits * gold + gold_hits * accepted)`: 0 when
+nothing hits, null when neither side holds an item. Character Jaccard is
+`accepted_hits` over the union `accepted + gold - gold_hits`, taken over (theme or
+cell, item) pairs: the accepted (theme, item) pairs and the gold (cell, item) pairs
+that no theme of their cell accepts. A gold item that another theme accepts is
+counted on both sides, as the single tally's `tp + fp + fn` counts it. Without tie
+groups the two hit counts are equal, and every figure is the single-tally one.
+
+| Field | Meaning |
+| --- | --- |
+| `accepted_hits` | Accepted (theme, item) pairs whose item lies in a cell the theme belongs to, each once per theme, however many other themes accept the item |
+| `accepted` | Scored themes' accepted items, each once per theme, and an excused member's items inside its groups' cells; its other items are not scored |
+| `gold_hits` | Gold cells' items that some theme of the cell accepts |
+| `gold` | Gold cells' items, per cell |
+
+### `Tally`
+
+| Field | Meaning |
+| --- | --- |
+| `tp` | Hits |
+| `fp` | False positives |
+| `fn` | Misses |
+
+### `BootstrapPlan`
+
+| Field | Meaning |
+| --- | --- |
+| `seed` | `random.Random`'s seed |
+| `resamples` | Resample count |
+| `level` | The interval's level, such as 0.9 |
+| `max_undefined_share` | Above this share of undefined resamples, the interval is undefined |
+
+### `Interval`
+
+| Field | Meaning |
+| --- | --- |
+| `lower` | The lower percentile, or null when undefined |
+| `upper` | The upper percentile, or null when undefined |
+| `level` | The interval's level |
+| `resamples` | Resample count |
+| `undefined` | Resamples whose statistic was undefined, skipped |
+
+### `Estimate`
+
+| Field | Meaning |
+| --- | --- |
+| `point` | The statistic over every event once, or null when undefined |
+| `interval` | Its `Interval` |
+
+### `Metric`
+
+| Value | Meaning |
+| --- | --- |
+| `release_precision` | Confirmed releases that gold labels `release` (R13.1); `ambiguous` left out |
+| `release_recall` | Gold releases the system confirmed |
+| `theme_f1_micro` | Micro F1 over event × theme cells, exact (gated) |
+| `theme_f1_macro` | Mean per-theme F1 over themes with gold or a prediction (gated) |
+| `theme_f1_rollup_micro` | Micro F1 after both sides map to level-one roots (secondary) |
+| `theme_f1_rollup_macro` | Macro F1 after the same mapping (secondary) |
+| `span_unit_precision` | Accepted (theme, unit) pairs lying in a gold cell of their theme, each once, however many other themes accept the unit, over scored themes' accepted pairs and an excused member's pairs inside its groups' cells; its others are not scored. Several correct alternatives over one gold unit each count as a hit (`EvidenceCell`); counts `accepted_hits`, `accepted`, `gold_hits`, `gold` |
+| `span_unit_recall` | Gold cells' units that a theme of the cell accepts, per cell: any member of a tie group covers its cell |
+| `span_unit_f1` | The harmonic mean of the two (gated); it can rise when a run adds a correct alternative over a gold unit already covered (`EvidenceCell`) |
+| `span_char_jaccard` | Accepted characters that hit, over accepted (theme, character) pairs plus gold (cell, character) pairs no theme of their cell accepts; an excused member's characters inside its groups' cells are hits, and its others are not scored; several correct alternatives over one gold character each count as a hit (`EvidenceCell`); counts `shared`, `union` (secondary) |
+| `retention_quotes` | Verified over proposed quotes (R12.8 (i)) |
+| `retention_targets` | Accepted over assessed targets (R12.8 (ii)) |
+| `gold_evidence_recall` | Gold-supporting units any accepted assignment holds (R12.8 (iii), gated, strictly above zero) |
+| `support_precision` | Joint labels of accepted targets (gated on dev) |
+| `scorer_auc` | AUC-ROC of a scorer view against the claim label (R8.6); qualifier: the view |
+| `judge_kappa` | Cohen's κ against the joint label, over the events holding one, as calibration's `FamilyAgreement`; counts `labels` and `uncertain` (a family's uncertain consensus, or a trial's uncertain answer); qualifier: a family, or `family:presentation` |
+| `judge_ac1` | Gwet's AC1, beside κ |
+| `hard_negative_false_acceptance` | Hard negatives falsely accepted (R12.5); qualifier: none, or a negative kind |
+| `rare_theme_recall` | Recall over themes present in at most two events (descriptive, D1) |
+| `gs5_edited_share` | Edited over drafted items (GS5) |
+| `gs5_rejected_share` | Rejected over drafted items |
+| `gs5_added_share` | Added over signed items |
+| `no_theme_share` | Signed bundles with `no_theme` (R12.4) |
+| `stability_fleiss_kappa` | Fleiss' κ over event × theme presence across fresh runs (R12.10) |
+| `stability_unit_jaccard` | Mean pairwise Jaccard of the runs' accepted evidence units |
+| `stability_assignment_jaccard` | Mean pairwise Jaccard of the runs' accepted (theme, unit) pairs |
+| `sector_prevalence` | Not estimated (R12.2, D1) |
+| `source_selection_bias` | Not estimated (R12.2, D1) |
+
+### `Figure`
+
+| Field | Meaning |
+| --- | --- |
+| `metric` | The `Metric` |
+| `qualifier` | A family, `family:presentation`, a scorer view, or a negative kind; null when the metric is reported once |
+| `point` | The point estimate, or null when undefined |
+| `interval` | Its `Interval`; null exactly when the metric is not estimated |
+| `counts` | Named counts behind the figure, sorted by name |
+| `reason` | Why the metric is not estimated; null otherwise |
+
+### `PartitionReport`
+
+| Field | Meaning |
+| --- | --- |
+| `partition` | `train` or `dev` |
+| `in_sample` | True exactly for train (FP4) |
+| `events` | The partition's events, sorted |
+| `figures` | One `Figure` per metric and qualifier |
+
+### `ReadingAgreement`
+
+| Field | Meaning |
+| --- | --- |
+| `release_agrees` | Whether the two release-identification labels agree |
+| `theme_f1` | Exact theme F1 of one reading against the other |
+| `unit_f1` | Unit F1 of their evidence |
+| `dangling` | Dangling references in either reading |
+
+### `IndependentFigures`
+
+| Field | Meaning |
+| --- | --- |
+| `event_id` | The dev event |
+| `record_vs_draft` | The kept draft against the user's independent record |
+| `signed_vs_record` | The user's record against the signed file |
+
+### `PilotReport`
+
+| Field | Meaning |
+| --- | --- |
+| `schema_version` | `1` |
+| `report_version` | The report's version |
+| `label` | `feasibility-only` (R12.2) |
+| `preregistration_hash` | The preregistration it follows |
+| `calibration_hash` | The calibration artifact whose policy it scores |
+| `partitions` | Train's and dev's `PartitionReport` |
+| `independent` | Each dev event's `IndependentFigures` |
+| `content_hash` | Digest of every other field |
+
+### `Gate`
+
+| Field | Meaning |
+| --- | --- |
+| `metric` | The gated metric |
+| `bound` | The dev baseline's lower bound, or its point estimate |
+| `basis` | `lower_bound` or `point_estimate` (FP15) |
+
+### `Ungated`
+
+| Field | Meaning |
+| --- | --- |
+| `metric` | A preregistered gated metric the baseline cannot gate |
+| `reason` | `undefined_interval`, `undefined_point` or `not_in_report` |
+
+### `Gates`
+
+| Field | Meaning |
+| --- | --- |
+| `schema_version` | `1` |
+| `gates_version` | The gates' version |
+| `rule` | `dev-lower-bound/1` (FP15) |
+| `preregistration_hash` | The preregistration it follows |
+| `report_hash` | The report whose dev partition set the gates |
+| `judge_floor` | The preregistered judge floor |
+| `gates` | Each `Gate` |
+| `ungated` | Each `Ungated` |
+| `content_hash` | Digest of every other field |
+
+### `GateResult`
+
+| Field | Meaning |
+| --- | --- |
+| `metric` | The metric |
+| `bound` | Its gate, or null for the gold-evidence rule |
+| `value` | The configuration's dev point estimate |
+| `passed` | Whether it passes |
+| `reason` | `met`, `below_bound`, `undefined` (no value), or `zero_gold_evidence_recall` (the gold-evidence rule's value is 0) |
+
+### `GateVerdict`
+
+| Field | Meaning |
+| --- | --- |
+| `passed` | Whether every result passes |
+| `results` | Each `GateResult` |
+
+### `Accepted`
+
+| Field | Meaning |
+| --- | --- |
+| `theme_id` | An accepted assignment's theme |
+| `spans` | Its evidence spans in the event's document |
+
+### `EventObservation`
+
+| Field | Meaning |
+| --- | --- |
+| `event_id` | The event |
+| `gold` | Its signed gold |
+| `index` | Its document's `UnitIndex` |
+| `accepted` | The run's accepted assignments |
+| `release_confirmed` | Whether its kept attempt is `confirmed` (R13.1) |
+| `quotes` | Verified and proposed quotes (R12.8 (i)) |
+| `targets` | Accepted and assessed targets (R12.8 (ii)) |
+
+### `LabelledTarget`
+
+| Field | Meaning |
+| --- | --- |
+| `target_id` | The support target |
+| `event_id` | Its event |
+| `claim_label` | The user's claim label, or null when unsure |
+| `joint_label` | The joint label, or null |
+| `accepted` | Whether the run accepted it |
+| `scores` | Each scorer view's joint score |
+| `trials` | Its four judge trials |
+
+### `ClaimAnswer`
+
+| Value | Meaning |
+| --- | --- |
+| `supported` | The evidence supports the claim |
+| `unsupported` | It does not |
+| `unsure` | The user cannot tell; left out |
+
+### `FitAnswer`
+
+| Value | Meaning |
+| --- | --- |
+| `fits` | The claim fits the theme |
+| `does_not_fit` | It does not |
+| `unsure` | The user cannot tell; left out |
+
+### `SupportLabel`
+
+| Field | Meaning |
+| --- | --- |
+| `target_id` | The support target |
+| `target_input_hash` | Its `TargetRecord.input_hash` in the support run |
+| `partition` | `train` or `dev` |
+| `claim_support` | The `ClaimAnswer` |
+| `theme_fit` | The `FitAnswer` |
+| `labelled_on` | The date the user labelled it |
+
+### `SupportLabelSet`
+
+| Field | Meaning |
+| --- | --- |
+| `schema_version` | `1` |
+| `preregistration_hash` | The preregistration whose sample it labels |
+| `train_extensions` | Preregistered extensions drawn for train |
+| `labels` | Each `SupportLabel`, one per target |
+
+### `PoolTarget`
+
+| Field | Meaning |
+| --- | --- |
+| `target_id` | An `assessed` or `flagged` target |
+| `event_id` | Its event |
+| `theme_id` | Its proposed theme |
+
+### `FloorRule`
+
+| Field | Meaning |
+| --- | --- |
+| `statistic` | `cohen_kappa` |
+| `reported` | `gwet_ac1`, beside it |
+| `population` | `family_verdict_vs_joint_label` |
+| `bound` | `event_bootstrap_lower` |
+| `floor` | The user's number, from 0.3 to 0.6 (RC §7) |
+| `consequence` | `reported_only` (D19-1) |
+
+### `Candidate`
+
+| Field | Meaning |
+| --- | --- |
+| `candidate_id` | The candidate |
+| `rule` | `scorer_cutoff` |
+| `signal` | `minicheck_joint` |
+| `signals` | How many signals it reads, for the tie-break |
+| `grid` | Its cutoffs, sorted |
+
+### `SelectionRule`
+
+| Field | Meaning |
+| --- | --- |
+| `recall_floor` | ρ: the label recall a cutoff must reach |
+| `objective` | `max_train_precision` |
+| `tie_break` | `fewer_signals_then_lower_cutoff` |
+
+### `SamplingPlan`
+
+| Field | Meaning |
+| --- | --- |
+| `seed` | The sampler's seed |
+| `pool` | `assessed_and_flagged` |
+| `train_size` | Train's sample size |
+| `train_cap` | Train's per-event cap |
+| `dev_size` | Dev's sample size |
+| `dev_cap` | Dev's per-event cap |
+| `minimum_usable` | Usable train joint labels calibration needs; at least 50 (R8.4) |
+| `extension_step` | Targets each extension adds to train's size |
+
+### `GateRule`
+
+| Field | Meaning |
+| --- | --- |
+| `rule` | `dev-lower-bound/1` (FP15) |
+| `gated` | Exactly the seven metrics §Metrics marks gated, each once: release-ID precision and recall, exact theme F1 (micro and macro), unit F1, gold-evidence recall and support precision. Each is higher-is-better, so no reported, descriptive or not-estimated metric can be gated |
+| `undefined_gate` | `not_gated` or `point_estimate`, for a dev interval that is undefined |
+
+### `Preregistration`
+
+| Field | Meaning |
+| --- | --- |
+| `schema_version` | `1` |
+| `preregistration_version` | Its version |
+| `pin` | The pilot pin (GS2) |
+| `split_hash` | The split |
+| `codebook` | The codebook |
+| `floor` | The `FloorRule` |
+| `menu` | Each `Candidate` |
+| `selection` | The `SelectionRule` |
+| `sampling` | The `SamplingPlan` |
+| `bootstrap` | The `BootstrapPlan`; its `level` must be 0.9, the spec's 90% interval |
+| `gates` | The `GateRule` |
+| `content_hash` | Digest of every other field |
+
+### `ScorerCutoff`
+
+| Field | Meaning |
+| --- | --- |
+| `cutoff` | Accept an assessed target with an eligible quote when its joint score reaches this |
+
+### `CutoffFigure`
+
+| Field | Meaning |
+| --- | --- |
+| `cutoff` | A grid cutoff |
+| `precision` | Train labelled precision at it against the joint label (not the claim label, as `ScorerAuc` is), or null |
+| `recall` | Train label recall at it against the joint label (not the claim label, as `ScorerAuc` is), or null |
+| `accepted` | Targets accepted at it |
+
+### `CandidateFit`
+
+| Field | Meaning |
+| --- | --- |
+| `candidate_id` | The candidate |
+| `signals` | Signals it reads |
+| `cutoff` | The fitted cutoff, or null when none meets ρ |
+| `precision` | Train labelled precision there against the joint label, or null |
+| `recall` | Train label recall there against the joint label, or null |
+| `grid` | Each `CutoffFigure` |
+
+### `FamilyAgreement`
+
+| Field | Meaning |
+| --- | --- |
+| `family` | The judge family |
+| `kappa` | Cohen's κ `Estimate` |
+| `ac1` | Gwet's AC1 `Estimate` |
+| `labels` | Usable joint labels |
+| `uncertain` | Targets whose family consensus is uncertain |
+| `meets_floor` | Whether κ's lower bound reaches the floor; reported only (D19-1) |
+
+### `ScorerAuc`
+
+| Field | Meaning |
+| --- | --- |
+| `scorer` | `minicheck` or `deberta` |
+| `report` | Its `MetricReport` against the claim label |
+
+### `Selection`
+
+| Field | Meaning |
+| --- | --- |
+| `candidate_id` | The selected candidate |
+| `rule` | `scorer_cutoff` |
+| `signal` | `minicheck_joint` |
+| `cutoff` | Its fitted cutoff |
+
+### `CalibrationArtifact`
+
+| Field | Meaning |
+| --- | --- |
+| `schema_version` | `1` |
+| `calibration_version` | Its version |
+| `preregistration_hash` | The preregistration |
+| `labels_hash` | SHA-256 of the committed label file |
+| `configuration_hash` | Digest of the frozen configuration and the selection |
+| `train_labels` | Train labels |
+| `usable_labels` | Of them, with a joint label |
+| `families` | Each `FamilyAgreement` |
+| `candidates` | Each `CandidateFit` |
+| `outcome` | `selected` or `no_candidate` |
+| `selection` | The `Selection`, or null |
+| `scorers` | Each `ScorerAuc` |
+| `content_hash` | Digest of every other field |
+
+### Calibrated policy
+
+`frozen_configuration(extraction, proposals, support, support_policy)` is what a
+calibrated policy is frozen with (D19-14): the extraction run's
+`RunConfiguration`; the coding run's codebook, classifier identity, coding policy,
+ceilings, schema hash, and coding and validator versions; and the support run's
+policy, ceilings, scorer, judge panel and extractor family, with its codebook and
+support and validator versions. It binds no run ID, start time, document, source
+run, claim order, cache mode or stability run, so a dev replay reproduces train's
+digest, and DeBERTa, which is reported only, is not bound. It refuses
+`malformed_record` with subject `support_policy` when that policy does not
+reproduce the support run's `configuration_hash`. The artifact's
+`configuration_hash` is the digest of that configuration and the selection's JSON,
+or null.
+
+`CalibratedPolicy(artifact, *, codebook, classifier_configuration_hash,
+support_configuration_hash)` is Stage 9's `AssignmentPolicy` from a calibration
+artifact. Its `PolicyReference` has `policy_id` `calibrated-<candidate_id>`,
+`policy_hash` the digest of the selection's JSON, `kind` `calibrated`, and
+`calibration_reference` the artifact's `content_hash`; the caller supplies the
+codebook and both configuration hashes. It refuses `content_hash_mismatch`, subject
+`content_hash`, for an artifact that does not hash to its `content_hash`, and
+`no_candidate`, subject `selection`, for one without a selection. `evaluate`
+applies the selected `ScorerCutoff`: accept with the eligible quotes when the joint
+score reaches the cutoff and an eligible quote exists, otherwise review.

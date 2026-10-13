@@ -44,7 +44,15 @@ class Acceptance(SafePart):
 
 class MetricReport(SafePart):
     value: Score | None
-    reason: Literal["no_scored_labels", "one_class", "no_labeled_accepted"] | None
+    reason: (
+        Literal[
+            "no_scored_labels",
+            "one_class",
+            "no_labeled_accepted",
+            "no_labeled_positive",
+        ]
+        | None
+    )
     task: LabelTask
     view: NonBlank = Field(repr=False)
     population_count: NonNegativeInt
@@ -173,6 +181,49 @@ def auc_roc(
     )
 
 
+def _acceptance_join(
+    population: Sequence[str],
+    labels: Sequence[HumanLabel],
+    decisions: Sequence[Acceptance],
+    task: LabelTask,
+) -> tuple[set[str], dict[str, HumanLabel], set[str]]:
+    """Validate and index one acceptance join: the population IDs, the human labels
+    by ID, and the IDs an external decision accepted."""
+    ids = _population(population, task, "external_acceptance")
+    human = _index(labels, HumanLabel, ids, task)
+    external = _index(decisions, Acceptance, ids, task)
+    accepted = {target_id for target_id, item in external.items() if item.accepted}
+    return ids, human, accepted
+
+
+def _acceptance_report(
+    ids: set[str],
+    human: dict[str, HumanLabel],
+    accepted: set[str],
+    *,
+    task: LabelTask,
+    value: float | None,
+    undefined_reason: Literal["no_labeled_accepted", "no_labeled_positive"],
+    joined_count: int,
+) -> MetricReport:
+    """The report both acceptance metrics share; they differ only in the joined
+    set, the value and the reason an undefined value carries."""
+    return MetricReport(
+        value=value,
+        reason=None if value is not None else undefined_reason,
+        task=task,
+        view="external_acceptance",
+        population_count=len(ids),
+        labeled_count=len(human),
+        scored_count=0,
+        joined_count=joined_count,
+        accepted_count=len(accepted),
+        missing_score_count=0,
+        missing_label_count=len(ids) - len(human),
+        accepted_without_label_count=len(accepted - human.keys()),
+    )
+
+
 def accepted_claim_precision(
     population: Sequence[str],
     labels: Sequence[HumanLabel],
@@ -181,23 +232,36 @@ def accepted_claim_precision(
     task: LabelTask,
 ) -> MetricReport:
     """Join external acceptance to labels; unlabeled accepted cases stay visible."""
-    ids = _population(population, task, "external_acceptance")
-    human = _index(labels, HumanLabel, ids, task)
-    external = _index(decisions, Acceptance, ids, task)
-    accepted = {target_id for target_id, item in external.items() if item.accepted}
+    ids, human, accepted = _acceptance_join(population, labels, decisions, task)
     joined = accepted & human.keys()
-    value = precision_value([human[i].supported for i in joined])
-    return MetricReport(
-        value=value,
-        reason=None if value is not None else "no_labeled_accepted",
+    return _acceptance_report(
+        ids,
+        human,
+        accepted,
         task=task,
-        view="external_acceptance",
-        population_count=len(ids),
-        labeled_count=len(human),
-        scored_count=0,
+        value=precision_value([human[i].supported for i in joined]),
+        undefined_reason="no_labeled_accepted",
         joined_count=len(joined),
-        accepted_count=len(accepted),
-        missing_score_count=0,
-        missing_label_count=len(ids) - len(human),
-        accepted_without_label_count=len(accepted - human.keys()),
+    )
+
+
+def accepted_claim_recall(
+    population: Sequence[str],
+    labels: Sequence[HumanLabel],
+    decisions: Sequence[Acceptance],
+    *,
+    task: LabelTask,
+) -> MetricReport:
+    """The share of supported labels that external decisions accepted (Stage 11's
+    label recall, plan 19); a target with no decision is not accepted."""
+    ids, human, accepted = _acceptance_join(population, labels, decisions, task)
+    positive = {target_id for target_id, item in human.items() if item.supported == 1}
+    return _acceptance_report(
+        ids,
+        human,
+        accepted,
+        task=task,
+        value=len(positive & accepted) / len(positive) if positive else None,
+        undefined_reason="no_labeled_positive",
+        joined_count=len(positive),
     )

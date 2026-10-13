@@ -1540,3 +1540,120 @@
       doc-precision note. Source: plan 18's fix-wave re-review. Size: quick-fix. Done
       when: both places name every condition `_pinned` refuses, or say the list is by
       example.
+
+## 19-feasibility-pilot-and-threshold-calibration-plan-a-slice-3 — 2026-10-13
+
+- [ ] **P19-1 — Tidy `earnings_themes.evaluation`'s API before slice 4 consumes it.**
+      None is a defect today; each is a contract roughness the per-task and final
+      reviews logged and the user deferred at plan 19's resolve-before-defer gate
+      (2026-10-13). Files are under packages/earnings-themes/src/earnings_themes/:
+      - `evaluation/problems.py`: `EvaluationProblem.UNKNOWN_METRIC` is never raised.
+      - Three ways to refuse a hash mismatch (`records.checked`, the calibration
+        artifact's own check in `evaluation/calibration.py`, and `CalibratedPolicy`'s
+        `content_hash_mismatch`), and two public `checked` helpers: the one in
+        `records.py` and a re-implementation in `calibration.py` with a different error
+        type. `sealed` and `checked` bound `BaseModel`, which does not guarantee a
+        `content_hash` field.
+      - `evaluation/preregistration.py`: `Candidate.signals` is `PositiveInt` though the
+        menu is single-signal.
+      - `evaluation/gates.py`: `derive_gates` takes any `Sequence[Metric]` for `gated`
+        instead of a `GateRule`; `WRONG_PARTITION` names the expected partition in
+        `derive_gates` and the given one elsewhere.
+      - `evaluation/records.py`: `PilotReport.partitions` has no unique, train-and-dev
+        validator.
+      - `evaluation/report.py`: the GS5 figures carry no counts; the qualifier
+        vocabulary (`minicheck`, `deberta`) differs from `MetricReport.view`
+        (`minicheck_joint`, `deberta_joint`); `stability_figures` names no run in its
+        run-set refusal and does not reject duplicate event IDs within a run.
+      - `evaluation/scores.py` and `cells.py`: `hard_negative_counts` drops a hard
+        negative's dangling quote IDs silently (D19-7, P17-5(2)); the quote-to-span map
+        is built in both modules.
+      - Four parent-chain walks (`codebook._structure`,
+        `support/resolve.check_theme_graph`, `analysis/prevalence._views`,
+        `evaluation/cells.level_one`): one shared helper in `codebook.py` (D18-1).
+      - `evaluation/labels.py`, `sampling.py` and `label_view.py`: `merge_labels` uses
+        `model_copy`, which skips `_one_label_per_target` (unreachable with real IDs; it
+        fails on reload); `sample_targets` accepts `size < 0` and `cap = 0`;
+        `label_view._quote` raises a bare `StopIteration` on an unknown evidence
+        document (unreachable after `reverify_support_run`).
+      - `tomlfile.py` (beside `evaluation/`, not in it): the non-finite-float
+        `ValueError` names no key.
+      - `evaluation/calibration.py`: the private `_Trial` lacks
+        `AssignmentPolicy.reference`; `evaluation/policy.py` tests `selection is None`
+        where `artifact.outcome` would say the same.
+      - `support/metrics.py`: a positive label with no decision counts as not accepted,
+        but no `MetricReport` counter shows how many.
+      - The package's `__init__` exports omit `joint_score`, `sealed`, `claim_label`,
+        `joint_label`, `Figure`, `ReadingAgreement`, `IndependentFigures`,
+        `EvidenceTally` and `configuration_hash` (plan 19's Handoffs H13).
+      Source: plan 19's task reviews and final review. Size: plan. Done when: the plan
+      that implements A8 has adopted or rejected each, with tests for those it changes.
+- [ ] **P19-2 — Close the evaluation package's thin-test and coverage gaps.**
+      Test-only; deferred at plan 19's gate (2026-10-13). Files are under
+      packages/earnings-themes/tests/evaluation/ unless noted:
+      - `cases.py` builds the same `RuntimeIdentity` literal in `trial` and
+        `decision_view`; `EvaluationError` has no direct test; the module docstring of
+        tests/contracts/test_data_dictionary.py does not mention the evaluation section.
+      - `test_cells.py`/`test_scores.py`: no direct test of `EventCells.scored` or the
+        `theme_map` roll-up path; thin edge cases (a negative with `theme_id` `None`, a
+        negative with a dangling quote, `evidence_recall_counts` with no gold,
+        `macro_f1` dropping an undefined F1).
+      - `test_report.py`: untested branches (`PartitionReport` sorted and unique events,
+        `trial_verdict` with an answer of `None`, `consensus` with `len(own) != 2`); the
+        D19-10 unlabelled-event filter; no figure crosses `max_undefined_share`;
+        `GS5` test sets `DraftCounts` through `model_copy`; `Gate`, `Ungated`, `Gates`,
+        `GateResult`, `GateVerdict`, `ReadingAgreement` and `IndependentFigures` are
+        covered only by the dictionary registry test.
+      - `test_gates.py`: the `not_in_report` and `undefined_point` branches, the
+        `below_bound` reason, a round trip of `[[ungated]]`, and the positivity rule as
+        the sole failure. Lower-bound gates can be vacuous (both F1 gates have lower
+        bound 0.0 in the fixture), so R12.8 holds only through the positivity row and
+        support precision; the pilot's real bounds decide whether that matters.
+      - `test_sampling.py`: uneven lane depth, fewer than the cap, a single theme or
+        event; the prefix test uses one size pair; the signature test pins names only.
+      - `test_label_view.py`: a quote at a block start renders two spaces, `Exclude when:`
+        has no blank line after its list, a target with no evidence renders silently, and
+        the refused-outcome test reuses `events` from the loop.
+      - packages/earnings-themes/tests/coding/test_decide.py: the `decision_inputs` refusal mapping
+        (`SupportError` to `CodingError`) is untested, and the decide test compares the
+        decided status, not the view contents, so D19-5 is pinned indirectly.
+      - `test_preregistration.py`: the `match=` patterns do not pin the slot of a
+        refusal; two tests share a setup; the secondary pydantic error text; a duplicate
+        id with an unsorted grid reports only the grid error.
+      - `test_calibration.py`: the identity test's docstring says it varies every
+        run-identity field but never varies the extraction record's `cache_mode` and
+        `stability_run_id`; its records come from `model_copy`, which does not validate.
+      - Names that claim more than they pin: `test_the_hash_is_stable_across_json_key_order`
+        (`PilotReport` has no dict field) and a `test_bootstrap.py` docstring that says
+        the oracle is recomputed from `random.Random(8)` alone.
+      Source: plan 19's task reviews. Size: plan. Done when: the tests land, or each is
+      judged redundant against what the plan that implements A8 adds.
+- [ ] **P19-3 — Decide whether tie-group evidence needs a maximum matching.**
+      `scores.unit_tally` and `char_counts` score evidence by accepted `(theme, item)`
+      pairs against gold `(cell, item)` pairs, where a tie group is one either-of cell
+      (FP20). Redundant correct alternatives, whether excused or scored, each count as a
+      hit, so the gated `span_unit_f1` can rise when a run asserts an extra correct
+      alternative; and which member is excused follows D19-6's lowest-ID rule, so a
+      wrong item carried by an excused member is not a false positive while the same item
+      carried by the chosen member is. Plan 19 tried a per-cell 'one credit per slot' rule
+      and reverted it: it depended on theme IDs and could lower a score when a correct
+      item was added (commits `c7aa473` and `90a7f33`). The stricter alternative is a
+      maximum matching of accepted pairs to gold `(cell, item)` pairs, scored themes
+      first, per atomic segment for characters, with unmatched in-slot pairs neutral; it
+      has trade-offs of its own (it can give up monotonicity if excused in-cell pairs stay
+      accepted). The effect is documented in docs/data-dictionary.md under `EvidenceCell`
+      and in plan 19's Handoffs (H16). Source: plan 19's final review. Size: design.
+      Revisit if: the pilot's signed gold contains tie groups with overlapping evidence,
+      or a dev gate's `span_unit_f1` bound turns on them.
+- [ ] **P19-4 — `SUPPORT_PRECISION` and `SCORER_AUC` resample every event that holds any
+      labelled target.** `evaluation/report.py` (`_label_figures`) puts each event with
+      at least one `LabelledTarget` into the bootstrap population, including an event
+      with no usable label of the relevant kind (no accepted target for precision, no
+      positive or negative for AUC). D19-10 says 'the events that hold labels', which
+      the code meets, so plan 19's final reviewer ruled it as is; the judge-agreement
+      figures were changed to use joint-labelled events only. Restricting the others
+      would move a gated dev lower bound (the existing pin
+      `test_support_precision_interval_skips_draws_without_an_accepted_label` shows an
+      event with a joint label and no accepted target giving 12 undefined resamples).
+      Source: plan 19's final review. Size: quick-fix. Revisit if: a dev gate's
+      `SUPPORT_PRECISION` lower bound depends on events without a usable label.

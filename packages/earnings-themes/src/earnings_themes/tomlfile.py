@@ -2,12 +2,15 @@
 
 No TOML writer is locked, and GS17 adds no dependency, so ``dumps`` writes the one
 shape these records need: scalars, arrays of scalars, tables, and arrays of tables,
-in key order. A string is a TOML basic string, written as JSON writes one, which TOML
-reads the same way, with DEL escaped as TOML requires.
+in key order. A float is written as Python's ``repr``, which TOML reads back
+exactly; Stage 11's preregistration and gates hold floats. A string is a TOML basic
+string, written as JSON writes one, which TOML reads the same way, with DEL escaped
+as TOML requires.
 """
 
 import io
 import json
+import math
 import re
 from collections.abc import Mapping
 from datetime import date
@@ -29,6 +32,10 @@ def _value(value: object) -> str:
         return "true" if value else "false"
     if isinstance(value, int):
         return str(value)
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise ValueError("TOML holds no infinite or NaN float here")
+        return repr(value)
     if isinstance(value, date):
         return value.isoformat()
     if isinstance(value, str):

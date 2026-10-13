@@ -4,7 +4,9 @@
   contracts are. A top-level record carries ``schema_version``.
 - **Hashing.** A frozen record's content hash is the SHA-256 of its canonical JSON:
   sorted keys, no whitespace, UTF-8. ``canonical_json`` and ``digest`` are
-  earnings-core's, the one definition earnings-ingestion uses too (ES7).
+  earnings-core's, the one definition earnings-ingestion uses too (ES7). A record
+  that carries a ``content_hash`` is sealed by ``sealed`` and rechecked by
+  ``checked``, over the digest of every other field (``content_hash``).
 - **Errors.** A pydantic error's message quotes its input, which may be a release's
   text. ``RecordError`` keeps each problem's field path and message only, never the
   input, so no command prints pilot text (GS13).
@@ -14,7 +16,7 @@ import json
 from pathlib import Path
 from typing import Annotated, Literal
 
-from earnings_core import canonical_json
+from earnings_core import canonical_json, digest
 from earnings_core.documents import IdPart
 from earnings_core.hashing import Sha256Hex
 from pydantic import (
@@ -99,6 +101,23 @@ def read_json(path: Path) -> object:
         raise RecordError(path.name, (f"not JSON at line {error.lineno}",)) from None
 
 
+def content_hash(record: BaseModel) -> str:
+    """The digest of every field but ``content_hash``."""
+    return digest(record.model_dump(mode="json", exclude={"content_hash"}))
+
+
+def sealed[M: BaseModel](record: M) -> M:
+    """``record`` with its ``content_hash`` filled in."""
+    return record.model_copy(update={"content_hash": content_hash(record)})
+
+
+def checked[M: BaseModel](record: M, name: str) -> M:
+    """``record``, refused unless it hashes to its ``content_hash``."""
+    if content_hash(record) != record.content_hash:
+        raise RecordError(name, ("does not hash to its content_hash",))
+    return record
+
+
 def parse[M: BaseModel](data: object, model: type[M], name: str) -> M:
     """``data`` read as ``model``; a refusal is a ``RecordError`` named ``name``."""
     try:
@@ -116,8 +135,11 @@ __all__ = [
     "RecordError",
     "Sha256Hex",
     "ThemesRecord",
+    "checked",
+    "content_hash",
     "describe",
     "parse",
     "read_json",
     "record_json",
+    "sealed",
 ]

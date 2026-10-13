@@ -533,3 +533,22 @@ def test_later_policy_reference_exception_is_redacted(assessed_case, fixture_pol
 
     with pytest.raises(CodingError, match="^unexpected_error$"):
         assessed_case.decide(BrokenLaterReference())
+
+
+def test_decision_inputs_are_the_views_decide_assignments_votes_on(
+    assessed_case, contextual_case, fixture_policy
+) -> None:
+    from earnings_themes.coding.decide import decision_inputs, decision_vote
+
+    target = assessed_case.support.targets[0]
+    view = decision_inputs(assessed_case.support, assessed_case.sources)[
+        target.target_id
+    ]
+    assert view.outcome.status == "assessed"
+    assert view.eligible_quote_ids == tuple(
+        sorted(e.quote_id for e in assessed_case.support.evidence)
+    )
+    decided = assessed_case.decide(fixture_policy).decisions[0]
+    assert decision_vote(view, fixture_policy)[0] == decided.status == "accepted"
+    contextual = decision_inputs(contextual_case.support, contextual_case.sources)
+    assert contextual[target.target_id].eligible_quote_ids == ()

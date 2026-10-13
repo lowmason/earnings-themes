@@ -7,6 +7,7 @@ from earnings_themes.support.metrics import (
     HumanLabel,
     MetricReport,
     accepted_claim_precision,
+    accepted_claim_recall,
     auc_roc,
 )
 from pydantic import ValidationError
@@ -266,3 +267,50 @@ def test_metric_report_safe_rendering():
     result = auc_roc([], [], [], task=TASK, view="secret-view")
     assert "secret" not in str(result)
     assert "secret" not in repr(result)
+
+
+def test_accepted_claim_recall_is_the_share_of_supported_labels_accepted() -> None:
+    labels = [label("a", 1), label("b", 1), label("c", 0), label("d", 1)]
+    decisions = [
+        Acceptance(target_id=target, task=TASK, accepted=accepted)
+        for target, accepted in (("a", True), ("b", False), ("c", True), ("e", True))
+    ]
+    report = accepted_claim_recall(
+        ["a", "b", "c", "d", "e"], labels, decisions, task=TASK
+    )
+    assert report.value == pytest.approx(1 / 3)
+    assert (
+        report.joined_count,
+        report.accepted_count,
+        report.accepted_without_label_count,
+        report.missing_label_count,
+    ) == (3, 3, 1, 1)
+    none = accepted_claim_recall(["c"], labels[2:3], decisions[2:3], task=TASK)
+    assert (none.value, none.reason) == (None, "no_labeled_positive")
+
+
+def test_accepted_claim_recall_is_zero_when_no_positive_is_accepted() -> None:
+    """Hand arithmetic over population a, b, c.
+
+    Labels: a=1, b=1, c=0, so the labeled positives are {a, b}. Decisions: a is
+    rejected, c is accepted, and b has no decision, which counts as not accepted.
+    The accepted set is {c}; positives accepted = {a, b} & {c} = {}, so recall is
+    0 / 2 = 0.0, a defined value (reason None), unlike the undefined
+    no_labeled_positive case. Counts: population 3, labeled 3, joined 2 (the
+    positives), accepted 1, accepted without label 0, missing label 0, and both
+    score counts 0.
+    """
+    labels = [label("a", 1), label("b", 1), label("c", 0)]
+    decisions = [decision("a", False), decision("c", True)]
+    report = accepted_claim_recall(["a", "b", "c"], labels, decisions, task=TASK)
+    assert (report.value, report.reason) == (0.0, None)
+    assert (
+        report.population_count,
+        report.labeled_count,
+        report.joined_count,
+        report.accepted_count,
+        report.accepted_without_label_count,
+        report.missing_label_count,
+        report.scored_count,
+        report.missing_score_count,
+    ) == (3, 3, 2, 1, 0, 0, 0, 0)

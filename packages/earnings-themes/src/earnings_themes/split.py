@@ -23,18 +23,19 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Literal, Self
 
-from earnings_core import digest
 from pydantic import PositiveInt, StringConstraints, model_validator
 
 from earnings_themes.records import (
     IdPart,
     Part,
     Pin,
-    RecordError,
     Sha256Hex,
     ThemesRecord,
+    checked,
+    content_hash,
     parse,
     read_json,
+    sealed,
 )
 
 SPLIT_POLICY = "issuer-time/1"
@@ -144,7 +145,7 @@ def window_of(day: date) -> Partition:
 
 def split_hash(manifest: SplitManifest) -> str:
     """The content hash: every field but ``content_hash`` itself."""
-    return digest(manifest.model_dump(mode="json", exclude={"content_hash"}))
+    return content_hash(manifest)
 
 
 def split_events(
@@ -186,12 +187,10 @@ def split_events(
         rows=tuple(rows),
         content_hash="0" * 64,
     )
-    return draft.model_copy(update={"content_hash": split_hash(draft)})
+    return sealed(draft)
 
 
 def load_split(path: Path) -> SplitManifest:
     """A frozen split, refused unless it hashes to its ``content_hash``."""
     manifest = parse(read_json(path), SplitManifest, path.name)
-    if split_hash(manifest) != manifest.content_hash:
-        raise RecordError(path.name, ("does not hash to its content_hash",))
-    return manifest
+    return checked(manifest, path.name)

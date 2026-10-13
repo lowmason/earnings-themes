@@ -25,6 +25,7 @@ from earnings_themes.support.records import (
     SupportSources,
     Target,
     UsageRecord,
+    support_configuration,
 )
 from earnings_themes.support.resolve import _source_hash, _validated, resolve_target
 from earnings_themes.support.scorers import EntailmentScorer
@@ -98,14 +99,9 @@ def assess_run(
         if any(type(k) is not str or type(v) is not str for k, v in software.items()):
             raise SupportError("malformed_record")
         documents = tuple(sorted(sources.stored_run.record.documents.items()))
-        configuration = {
-            "policy": policy.model_dump(mode="json"),
-            "ceilings": ceilings.model_dump(mode="json"),
-            "scorer": identity.model_dump(mode="json"),
-            "judges": [j.model_dump(mode="json") for j in identities],
-            "extractor_family": extractor_family,
-            "cache_mode": cache.mode,
-        }
+        configuration = support_configuration(
+            policy, ceilings, identity, identities, extractor_family, cache.mode
+        )
         # Construct the strict manifest before resolving any target or dispatching.
         record = _validated(
             SupportRunRecord.model_construct(
