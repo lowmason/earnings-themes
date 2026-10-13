@@ -15,7 +15,7 @@ nothing and prints nothing.
 """
 
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from itertools import combinations
 from typing import Literal
 
@@ -41,6 +41,7 @@ from earnings_themes.evaluation.records import (
     ReadingAgreement,
 )
 from earnings_themes.evaluation.scores import (
+    EvidenceTally,
     Tally,
     char_counts,
     evidence_recall_counts,
@@ -118,8 +119,8 @@ class _Event:
     rolled_cells: EventCells
     tallies: dict[str, Tally]
     rolled: dict[str, Tally]
-    units: Tally
-    chars: tuple[int, int]
+    units: EvidenceTally
+    chars: EvidenceTally
     evidence: tuple[int, int]
     release: Tally | None
     negatives: dict[str, tuple[int, int]]
@@ -249,27 +250,25 @@ def _event_figures(
             _counts(themes_scored=scored, themes_left_out=universe - scored),
         )
     units = {e: x.units for e, x in events.items()}
-    unit_total = total(units.values())
+    unit_total = sum(units.values(), EvidenceTally())
     for metric, measure in (
-        (Metric.SPAN_UNIT_PRECISION, precision),
-        (Metric.SPAN_UNIT_RECALL, recall),
-        (Metric.SPAN_UNIT_F1, f1),
+        (Metric.SPAN_UNIT_PRECISION, EvidenceTally.precision),
+        (Metric.SPAN_UNIT_RECALL, EvidenceTally.recall),
+        (Metric.SPAN_UNIT_F1, EvidenceTally.f1),
     ):
         figures.add(
             metric,
             units,
-            lambda drawn, m=measure: m(total(drawn)),
-            _tally_counts(unit_total),
+            lambda drawn, m=measure: m(sum(drawn, EvidenceTally())),
+            _counts(**asdict(unit_total)),
         )
     chars = {e: x.chars for e, x in events.items()}
+    char_total = sum(chars.values(), EvidenceTally())
     figures.add(
         Metric.SPAN_CHAR_JACCARD,
         chars,
-        _summed,
-        _counts(
-            shared=sum(a for a, _ in chars.values()),
-            union=sum(b for _, b in chars.values()),
-        ),
+        lambda drawn: sum(drawn, EvidenceTally()).jaccard(),
+        _counts(shared=char_total.accepted_hits, union=char_total.union()),
     )
     for metric, pick in (
         (Metric.RETENTION_QUOTES, lambda x: x.observation.quotes),
@@ -489,7 +488,7 @@ def compare_readings(
         release_agrees=reference.release_identification.label
         == other.release_identification.label,
         theme_f1=f1(total(theme_tallies(mine, theirs.present).values())),
-        unit_f1=f1(unit_tally(mine, theirs.units)),
+        unit_f1=unit_tally(mine, theirs.units).f1(),
         dangling=mine.dangling + theirs.dangling,
     )
 

@@ -19,7 +19,7 @@ from earnings_themes.evaluation.report import (
     partition_report,
     stability_figures,
 )
-from earnings_themes.evaluation.scores import char_counts
+from earnings_themes.evaluation.scores import char_counts, unit_tally
 from earnings_themes.gold import DraftCounts, ReleaseLabel, Support
 from earnings_themes.split import Partition
 
@@ -178,6 +178,25 @@ def test_counts_keep_what_was_left_out(report) -> None:
     assert macro == {"themes_scored": 3, "themes_left_out": 3}
     support = dict(report.figure(Metric.SUPPORT_PRECISION).counts)
     assert support == {"labelled": 3, "accepted": 2, "accepted_unlabelled": 0}
+
+
+def test_the_span_figures_count_each_side(report) -> None:
+    """e1: g1 resolves to the predicted pricing; cells capacity {P0} and g1 {P1,
+    P2}. Accepted: capacity {P0, P3} (1 hit), pricing {P1} (1 hit), debt {P3},
+    decided against, so scored (0 hits): 2 of 4. Gold: P0 and P1 covered, P2 not: 2
+    of 3. e2 has no gold cell; its accepted capacity {P0} is scored: 0 of 1. Summed:
+    precision 2/5, recall 2/3, F1 = 2 * 2 * 2 / (2 * 3 + 2 * 5) = 1/2. Characters:
+    e1 accepts 36 + 16 + 16 = 68 with 5 + 7 = 12 hits, its gold 5 + 15 = 20 with 12
+    covered, union 68 + 20 - 12 = 76; e2 accepts 20, union 20: 12 / 96."""
+    units = {"accepted": 5, "accepted_hits": 2, "gold": 3, "gold_hits": 2}
+    for metric in (
+        Metric.SPAN_UNIT_PRECISION,
+        Metric.SPAN_UNIT_RECALL,
+        Metric.SPAN_UNIT_F1,
+    ):
+        assert dict(report.figure(metric).counts) == units
+    jaccard = report.figure(Metric.SPAN_CHAR_JACCARD)
+    assert dict(jaccard.counts) == {"shared": 12, "union": 96}
 
 
 def test_judge_agreement_counts_uncertain_verdicts_over_joint_labelled_events() -> None:
@@ -475,20 +494,43 @@ def shared_quote_ties():
     )
 
 
-@pytest.mark.parametrize("case", [example, overlapping_ties, shared_quote_ties])
+def untied_and_tied_share_a_unit():
+    """Capacity supported untied by c0, quoting [0, 5); tie group g1 over capacity
+    and pricing by c1, quoting [10, 15): both quotes lie in P0 (N1)."""
+    source = bundle()
+    p0 = unit_ids(source)[0]
+    return source, reading(
+        quotes=(quote("q0", 0, 5, p0), quote("q1", 10, 15, p0)),
+        claims=(claim("c0", "q0"), claim("c1", "q1")),
+        assignments=(
+            row("c0", "capacity"),
+            row("c1", "capacity", tie_group="g1"),
+            row("c1", "pricing", tie_group="g1"),
+        ),
+    )
+
+
+@pytest.mark.parametrize(
+    "case",
+    [example, overlapping_ties, shared_quote_ties, untied_and_tied_share_a_unit],
+)
 def test_a_reading_compared_with_itself_agrees_fully(case) -> None:
     """A reading scored against itself, its present themes and their evidence taken
     as a run's, agrees fully on units and characters, whatever its tie groups.
 
-    ``overlapping_ties`` is the case that failed before. As the run, the reading
-    resolves with nothing predicted: g1 to pricing (present untied), g2 to demand
-    (lowest ID), so it predicts pricing over P0 and P1, and demand over P2. As the
-    reference, g1 resolves to demand, the lower predicted member. The evidence cells
-    are pricing's own {P0}, g1's {P1} (demand or pricing) and g2's {P2} (demand or
-    labor): pricing covers P0 and P1, demand covers P2, tp 3, and every predicted
-    unit lies in a cell its theme belongs to, fp 0: unit F1 1, characters (54, 54).
-    (Before: pricing's gold {P0} against {P0, P1} and demand's {P1, P2} against
-    {P2}: tp 2, fp 1, fn 1, unit F1 2/3.)"""
+    ``overlapping_ties``: as the run, the reading resolves with nothing predicted:
+    g1 to pricing (present untied), g2 to demand (lowest ID), so it predicts pricing
+    over P0 and P1, and demand over P2. As the reference, g1 resolves to demand, the
+    lower predicted member. The evidence cells are pricing's own {P0}, g1's {P1}
+    (demand or pricing) and g2's {P2} (demand or labor): all 3 gold units covered;
+    pricing's P0 and P1 lie in its cells and demand's P2 in g2: 3 of 3 accepted.
+    Unit precision, recall and F1 1; characters 54 accepted, all hits, 54 gold, all
+    covered, Jaccard 54 / 54. (Before the tie cells: tp 2, fp 1, fn 1, unit F1 2/3.)
+
+    ``untied_and_tied_share_a_unit`` (N1): the run predicts capacity over P0, with
+    spans [0, 5) and [10, 15). Gold cells capacity {P0} and g1 {P0}, both covered:
+    2 of 2; accepted (capacity, P0), in its cells, once: 1 of 1. Characters: 10
+    accepted, all hits; 5 + 5 gold, all covered: Jaccard 10 / 10."""
     source, gold = case()
     index = unit_index(source)
     agreement = compare_readings(gold, gold, index)
@@ -496,8 +538,10 @@ def test_a_reading_compared_with_itself_agrees_fully(case) -> None:
     assert agreement.unit_f1 == 1.0
     theirs = event_cells(gold, index)
     mine = event_cells(gold, index, theirs.present)
-    shared, union = char_counts(mine, theirs.spans)
-    assert shared == union > 0
+    units = unit_tally(mine, theirs.units)
+    assert (units.precision(), units.recall(), units.f1()) == (1.0, 1.0, 1.0)
+    chars = char_counts(mine, theirs.spans)
+    assert chars.jaccard() == 1.0
 
 
 def test_stability_over_identical_and_empty_runs() -> None:

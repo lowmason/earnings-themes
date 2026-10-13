@@ -48,6 +48,52 @@ def f1(tally: Tally) -> float | None:
     return ratio(2 * tally.tp, 2 * tally.tp + tally.fp + tally.fn)
 
 
+@dataclass(frozen=True)
+class EvidenceTally:
+    """One event's evidence, in units or characters (FP13, FP20), counted from each
+    side, so that one accepted item covering two gold cells is one hit: a scored
+    theme's accepted items, and those lying in a cell the theme belongs to; the gold
+    cells' items, and those some theme of their cell accepts."""
+
+    accepted_hits: int = 0
+    accepted: int = 0
+    gold_hits: int = 0
+    gold: int = 0
+
+    def __add__(self, other: "EvidenceTally") -> "EvidenceTally":
+        return EvidenceTally(
+            self.accepted_hits + other.accepted_hits,
+            self.accepted + other.accepted,
+            self.gold_hits + other.gold_hits,
+            self.gold + other.gold,
+        )
+
+    def precision(self) -> float | None:
+        return ratio(self.accepted_hits, self.accepted)
+
+    def recall(self) -> float | None:
+        return ratio(self.gold_hits, self.gold)
+
+    def f1(self) -> float | None:
+        """The harmonic mean of precision and recall, 2PR / (P + R), in integers;
+        0 when either side holds items but nothing hits, and ``None`` when neither
+        side holds any. Without tie groups both hit counts are ``Tally``'s ``tp``,
+        and this is its F1."""
+        if not self.accepted and not self.gold:
+            return None
+        both = 2 * self.accepted_hits * self.gold_hits
+        either = self.accepted_hits * self.gold + self.gold_hits * self.accepted
+        return ratio(both, either) or 0.0
+
+    def union(self) -> int:
+        """The accepted items and the gold items no theme accepts: disjoint."""
+        return self.accepted + self.gold - self.gold_hits
+
+    def jaccard(self) -> float | None:
+        """Accepted hits over ``union``. Without tie groups, shared over union."""
+        return ratio(self.accepted_hits, self.union())
+
+
 def total(tallies: Iterable[Tally]) -> Tally:
     return sum(tallies, Tally())
 
@@ -95,43 +141,45 @@ def rare_themes(events: Iterable[EventCells], most: int = 2) -> frozenset[str]:
 
 def unit_tally(
     cells: EventCells, accepted_units: Mapping[str, frozenset[str]]
-) -> Tally:
-    """One event's evidence units (FP13, FP20): hits are each evidence cell's gold
-    units that any of its themes' accepted evidence covers, and misses the rest;
-    false positives are a scored theme's accepted units outside every cell it
-    belongs to. So a tie group's evidence counts once, whichever member carries it,
-    and an excused member's other evidence is not scored."""
-    tally = Tally()
+) -> EvidenceTally:
+    """One event's evidence units (FP13, FP20). Gold side: each evidence cell's
+    units, and those any of its themes' accepted evidence covers, so a tie group's
+    evidence is covered whichever member carries it. Accepted side: each scored
+    theme's accepted units, each counted once, and those lying in some cell the
+    theme belongs to; an excused or uncertain-only theme's evidence is not scored."""
+    gold_hits = gold = accepted_hits = accepted = 0
     for cell in cells.evidence:
         got = frozenset().union(*(accepted_units.get(t, ()) for t in cell.themes))
-        tally += Tally(tp=len(cell.units & got), fn=len(cell.units - got))
+        gold_hits, gold = gold_hits + len(cell.units & got), gold + len(cell.units)
     for theme, got in sorted(accepted_units.items()):
         if cells.scored(theme):
             own = frozenset().union(
                 *(c.units for c in cells.evidence if theme in c.themes)
             )
-            tally += Tally(fp=len(got - own))
-    return tally
+            accepted_hits += len(got & own)
+            accepted += len(got)
+    return EvidenceTally(accepted_hits, accepted, gold_hits, gold)
 
 
 def char_counts(
     cells: EventCells, accepted_spans: Mapping[str, tuple[Span, ...]]
-) -> tuple[int, int]:
-    """One event's shared and union characters over the same cells as
-    ``unit_tally``, for character Jaccard: the gold characters covered, and those
-    plus the gold characters missed and the scored accepted characters outside
-    their themes' cells."""
-    shared = union = 0
+) -> EvidenceTally:
+    """One event's evidence characters, counted as ``unit_tally`` counts units: each
+    cell's gold characters and those its themes' accepted spans cover; each scored
+    theme's accepted characters, each counted once, and those within its cells.
+    Character Jaccard is its ``jaccard``."""
+    gold_hits = gold = accepted_hits = accepted = 0
     for cell in cells.evidence:
         got = [s for t in sorted(cell.themes) for s in accepted_spans.get(t, ())]
         both, _ = char_overlap(cell.spans, got)
-        shared, union = shared + both, union + covered(cell.spans)
+        gold_hits, gold = gold_hits + both, gold + covered(cell.spans)
     for theme, got in sorted(accepted_spans.items()):
         if cells.scored(theme):
             own = [s for c in cells.evidence if theme in c.themes for s in c.spans]
             both, _ = char_overlap(got, own)
-            union += covered(got) - both
-    return shared, union
+            accepted_hits += both
+            accepted += covered(got)
+    return EvidenceTally(accepted_hits, accepted, gold_hits, gold)
 
 
 def evidence_recall_counts(

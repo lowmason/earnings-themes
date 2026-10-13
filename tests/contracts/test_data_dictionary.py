@@ -710,6 +710,7 @@ EVALUATION_DATACLASSES = [
     align.UnitIndex,
     cells.EvidenceCell,
     cells.EventCells,
+    scores.EvidenceTally,
     scores.Tally,
     report.Accepted,
     report.EventObservation,
