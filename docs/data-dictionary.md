@@ -4334,8 +4334,10 @@ keyed by target ID, exactly as `decide_assignments` builds them (plan 19). Stage
 
 `AssignmentPolicy.reference: PolicyReference` and
 `evaluate(view: DecisionInput) -> PolicyVote` form a pure deterministic external
-policy seam. No accepting implementation is shipped in the package. Tests supply
-an explicit fixture-only policy. Calibrated references require an artifact hash,
+policy seam. Stage 9 ships no accepting implementation. The package's only one is
+Stage 11's `earnings_themes.evaluation.policy.CalibratedPolicy` (see "Calibrated
+policy" under Stage 11 evaluation). Stage 9's tests supply an explicit fixture-only
+policy. Calibrated references require an artifact hash,
 but this declaration is not independent evidence of calibration or approval;
 Stage 11 must produce and approve that artifact and its production configuration.
 Stage 9 loads no labels, sets no cutoff, pools no score and approves no model.
@@ -6851,3 +6853,29 @@ it belongs to is a false positive.
 | `selection` | The `Selection`, or null |
 | `scorers` | Each `ScorerAuc` |
 | `content_hash` | Digest of every other field |
+
+### Calibrated policy
+
+`frozen_configuration(extraction, proposals, support, support_policy)` is what a
+calibrated policy is frozen with (D19-14): the extraction run's
+`RunConfiguration`; the coding run's codebook, classifier identity, coding policy,
+ceilings, schema hash, and coding and validator versions; and the support run's
+policy, ceilings, scorer, judge panel and extractor family, with its codebook and
+support and validator versions. It binds no run ID, start time, document, source
+run, claim order, cache mode or stability run, so a dev replay reproduces train's
+digest, and DeBERTa, which is reported only, is not bound. It refuses
+`malformed_record` with subject `support_policy` when that policy does not
+reproduce the support run's `configuration_hash`. The artifact's
+`configuration_hash` is the digest of that configuration and the selection's JSON,
+or null.
+
+`CalibratedPolicy(artifact, *, codebook, classifier_configuration_hash,
+support_configuration_hash)` is Stage 9's `AssignmentPolicy` from a calibration
+artifact. Its `PolicyReference` has `policy_id` `calibrated-<candidate_id>`,
+`policy_hash` the digest of the selection's JSON, `kind` `calibrated`, and
+`calibration_reference` the artifact's `content_hash`; the caller supplies the
+codebook and both configuration hashes. It refuses `content_hash_mismatch`, subject
+`content_hash`, for an artifact that does not hash to its `content_hash`, and
+`no_candidate`, subject `selection`, for one without a selection. `evaluate`
+applies the selected `ScorerCutoff`: accept with the eligible quotes when the joint
+score reaches the cutoff and an eligible quote exists, otherwise review.

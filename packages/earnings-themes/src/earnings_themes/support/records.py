@@ -408,8 +408,10 @@ def support_configuration(
 ) -> dict[str, object]:
     """What Stage 8 digests into a run's ``configuration_hash``: the policy, the
     ceilings, the scorer, the judge panel, the extractor family and the cache mode.
-    The one definition, for the run that records the hash and for whatever rebuilds
-    it from the manifest (Stage 11's calibration)."""
+    The shared definition, for the run that records the hash and for whatever
+    rebuilds it from the manifest (Stage 11's calibration). The application's
+    replay check in ``theme_workflow`` still builds the same keys inline, until
+    Stage 11's slice 4 extracts it onto this."""
     return {
         "policy": policy.model_dump(mode="json"),
         "ceilings": ceilings.model_dump(mode="json"),
