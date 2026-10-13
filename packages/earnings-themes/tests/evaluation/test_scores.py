@@ -167,9 +167,9 @@ def test_evidence_under_the_wrong_theme_is_no_hit() -> None:
     not present, is scored and belongs to no cell. Units: debt's P0 is accepted, no
     hit (1, 0); neither cell's theme accepts anything: gold 2, covered 0. (0, 1, 0,
     2), F1 0; union 1 + 2 - 0 = 3, as the old Tally(fp=1, fn=2) totals 3, P0 counted
-    once as debt's and once as capacity's gold item. Characters: debt's 5 accepted, none a
-    hit; gold 5 + 16 = 21, none covered: (0, 5, 0, 21), union 5 + 21 - 0 = 26,
-    Jaccard 0 / 26 = 0, as the old (shared 0, union 5 + 5 + 16 = 26)."""
+    once as debt's and once as capacity's gold item. Characters: debt's 5 accepted,
+    none a hit; gold 5 + 16 = 21, none covered: (0, 5, 0, 21), union 5 + 21 - 0 =
+    26, Jaccard 0 / 26 = 0, as the old (shared 0, union 5 + 5 + 16 = 26)."""
     source = bundle()
     p0 = unit_ids(source)[0]
     units = {"debt": frozenset({p0})}
@@ -298,8 +298,9 @@ def test_redundant_correct_alternatives_each_count_as_hits() -> None:
     """The rule's known effect: an accepted (theme, item) pair lying in a cell its
     theme belongs to is a hit however many other themes of the cell accept the item,
     so a run that also asserts a correct alternative scores higher. A maximum
-    matching of accepted pairs to gold items is the stricter alternative, recorded
-    as a handoff for plan B.
+    matching of accepted (theme, item) pairs to gold (cell, item) pairs is a
+    stricter alternative with trade-offs of its own, recorded as a handoff for
+    plan B.
 
     An excused alternative. Gold: tie group g1 over capacity and pricing, by c1
     (P1). Capacity alone over P1 and P3: g1 resolves to capacity, scored: 2
@@ -434,8 +435,14 @@ def test_adding_a_correct_item_never_lowers_a_figure() -> None:
     assert chars_after.jaccard() == 3 / 4 >= chars_before.jaccard()
 
 
-def test_the_tally_does_not_depend_on_theme_ids() -> None:
-    """Gold: tie group g1 over capacity, demand and pricing by c1, and g3 over
+def test_overlapping_groups_score_alike_whichever_excused_member_they_share() -> None:
+    """Not independent of every theme ID: D19-6 still chooses the lowest predicted
+    member, which is scored, so a wrong item carried by an excused member is not a
+    false positive and the same item carried by the chosen member is. What it pins
+    is that the credit for the excused members' evidence does not depend on which of
+    them sits in the second group.
+
+    Gold: tie group g1 over capacity, demand and pricing by c1, and g3 over
     capacity and pricing by c4, which quotes q1 too: both groups' evidence is P1.
     The run accepts capacity over P3, and demand and pricing over P1. g1 and g3
     resolve to capacity, the lowest predicted member, which is scored; demand and

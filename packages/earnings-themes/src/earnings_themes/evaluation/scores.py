@@ -89,7 +89,7 @@ class EvidenceTally:
 
     def union(self) -> int:
         """The union over (theme or cell, item) pairs: the accepted (theme, item)
-        pairs, and the gold (cell, item) slots that no theme of their cell accepts.
+        pairs, and the gold (cell, item) pairs that no theme of their cell accepts.
         A gold item can also be another theme's accepted item, and is then counted
         on both sides, as the single tally's ``tp + fp + fn`` counts it."""
         return self.accepted + self.gold - self.gold_hits
