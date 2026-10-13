@@ -5,7 +5,14 @@ import json
 from datetime import date
 
 import pytest
-from earnings_themes.records import Pin, RecordError, record_json
+from earnings_themes.records import (
+    Pin,
+    RecordError,
+    checked,
+    content_hash,
+    record_json,
+    sealed,
+)
 from earnings_themes.split import (
     SPLIT_POLICY,
     WINDOWS,
@@ -123,6 +130,16 @@ def test_the_manifest_records_the_rule_the_windows_and_the_pin() -> None:
     assert manifest.windows == WINDOWS
     assert manifest.pin == PIN
     assert manifest.content_hash == split_hash(manifest)
+
+
+def test_the_split_is_sealed_and_checked_by_the_shared_content_hash() -> None:
+    manifest = split_events([event("0000000001", "2024-09-30")], PIN)
+    blank = manifest.model_copy(update={"content_hash": "0" * 64})
+    assert split_hash(manifest) == content_hash(manifest) == manifest.content_hash
+    assert sealed(blank) == manifest
+    assert checked(manifest, "split-v1.json") is manifest
+    with pytest.raises(RecordError, match="split-v1.json: does not hash to its"):
+        checked(blank, "split-v1.json")
 
 
 def test_the_order_of_the_input_changes_nothing() -> None:

@@ -1,6 +1,8 @@
 """The report and gate records: what they refuse, and their content hashes (the
 Stage 11 spec, §Artifacts; FP4, FP15; R12.2)."""
 
+import json
+
 import pytest
 from earnings_themes.evaluation.bootstrap import Interval
 from earnings_themes.evaluation.records import (
@@ -12,7 +14,7 @@ from earnings_themes.evaluation.records import (
     content_hash,
     sealed,
 )
-from earnings_themes.records import RecordError
+from earnings_themes.records import RecordError, parse, record_json
 from earnings_themes.split import Partition
 from pydantic import ValidationError
 
@@ -87,3 +89,76 @@ def test_a_sealed_record_is_checked_by_its_content_hash() -> None:
     assert checked(record, "report-v1.json") is record
     with pytest.raises(RecordError, match="content_hash"):
         checked(record.model_copy(update={"report_version": 2}), "report-v1.json")
+
+
+def sealed_report() -> PilotReport:
+    """An invented report whose dev figure nests an interval and counts."""
+    dev = PartitionReport(
+        partition=Partition.DEV,
+        in_sample=False,
+        events=("e1", "e2"),
+        figures=(figure(counts=(("fn", 1), ("tp", 2))),),
+    )
+    return sealed(
+        PilotReport(
+            report_version=1,
+            preregistration_hash="1" * 64,
+            calibration_hash="2" * 64,
+            partitions=(dev,),
+            content_hash="0" * 64,
+        )
+    )
+
+
+def reversed_keys(value):
+    """``value`` with every object's keys in reverse order, recursively."""
+    if isinstance(value, dict):
+        return {key: reversed_keys(value[key]) for key in reversed(value)}
+    if isinstance(value, list):
+        return [reversed_keys(item) for item in value]
+    return value
+
+
+def figure_in(data: dict) -> dict:
+    return data["partitions"][0]["figures"][0]
+
+
+@pytest.mark.parametrize(
+    "alter",
+    [
+        lambda data: figure_in(data)["interval"].update(upper=0.95),
+        lambda data: figure_in(data).update(point=0.6),
+        lambda data: figure_in(data).update(counts=[["fn", 1], ["tp", 3]]),
+        lambda data: data["partitions"][0].update(events=["e1", "e3"]),
+    ],
+    ids=["interval", "point", "counts", "events"],
+)
+def test_a_nested_alteration_after_sealing_is_refused(alter) -> None:
+    record = sealed_report()
+    data = json.loads(record_json(record))
+    assert checked(parse(data, PilotReport, "report-v1.json"), "report-v1.json")
+    alter(data)
+    altered = parse(data, PilotReport, "report-v1.json")
+    assert altered.content_hash == record.content_hash
+    with pytest.raises(RecordError, match="content_hash"):
+        checked(altered, "report-v1.json")
+
+
+def test_the_hash_is_stable_across_json_key_order() -> None:
+    record = sealed_report()
+    data = record.model_dump(mode="json")
+    flipped = reversed_keys(data)
+    assert list(flipped) != list(data)
+    assert list(figure_in(flipped)) != list(figure_in(data))
+    reread = PilotReport.model_validate_json(json.dumps(flipped))
+    assert reread == record
+    assert content_hash(reread) == record.content_hash
+    assert checked(reread, "report-v1.json") is reread
+
+
+def test_the_stored_content_hash_does_not_feed_its_own_digest() -> None:
+    record = sealed_report()
+    for stored in ("0" * 64, "f" * 64):
+        other = record.model_copy(update={"content_hash": stored})
+        assert other.content_hash != record.content_hash
+        assert content_hash(other) == record.content_hash

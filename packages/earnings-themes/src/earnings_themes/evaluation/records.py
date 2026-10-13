@@ -4,8 +4,10 @@ Stage 11 spec, §Metrics and §Artifacts; FP15; R12.2, R12.7).
 - **Ids, numbers and hashes only** (GS3). A figure names its metric and, where one
   metric is reported several times, a qualifier: a judge family, a family and
   presentation as ``family:presentation``, a scorer view, or a negative kind.
-- **Frozen.** Each top-level record carries ``content_hash``: the digest of every
-  other field (``sealed``), rechecked when read (``checked``).
+- **Frozen.** Each top-level record carries ``content_hash``, the digest of every
+  other field. ``sealed`` fills it in and ``checked`` rechecks it when the record is
+  read; with ``content_hash`` itself they are ``earnings_themes.records``', re-exported
+  here.
 - **Feasibility only.** Every figure is labelled feasibility-only (R12.2), and train
   is marked in-sample (FP4).
 """
@@ -13,19 +15,38 @@ Stage 11 spec, §Metrics and §Artifacts; FP15; R12.2, R12.7).
 from enum import StrEnum
 from typing import Annotated, Literal, Self
 
-from earnings_core import digest
-from pydantic import BaseModel, Field, NonNegativeInt, PositiveInt, model_validator
+from pydantic import Field, NonNegativeInt, PositiveInt, model_validator
 
 from earnings_themes.evaluation.bootstrap import Interval
 from earnings_themes.records import (
     IdPart,
     NonBlank,
     Part,
-    RecordError,
     Sha256Hex,
     ThemesRecord,
+    checked,
+    content_hash,
+    sealed,
 )
 from earnings_themes.split import Partition
+
+__all__ = [
+    "Figure",
+    "Gate",
+    "GateResult",
+    "GateVerdict",
+    "Gates",
+    "IndependentFigures",
+    "Metric",
+    "PartitionReport",
+    "PilotReport",
+    "ReadingAgreement",
+    "Real",
+    "Ungated",
+    "checked",
+    "content_hash",
+    "sealed",
+]
 
 Real = Annotated[float, Field(allow_inf_nan=False)]
 """A finite number; a statistic such as κ may be negative."""
@@ -189,20 +210,3 @@ class GateVerdict(Part):
 
     passed: bool
     results: tuple[GateResult, ...]
-
-
-def content_hash(record: BaseModel) -> str:
-    """The digest of every field but ``content_hash``."""
-    return digest(record.model_dump(mode="json", exclude={"content_hash"}))
-
-
-def sealed[M: BaseModel](record: M) -> M:
-    """``record`` with its ``content_hash`` filled in."""
-    return record.model_copy(update={"content_hash": content_hash(record)})
-
-
-def checked[M: BaseModel](record: M, name: str) -> M:
-    """``record``, refused unless it hashes to its ``content_hash``."""
-    if content_hash(record) != record.content_hash:
-        raise RecordError(name, ("does not hash to its content_hash",))
-    return record
