@@ -52,6 +52,7 @@ from earnings_themes.evaluation import (
     scores,
 )
 from earnings_themes.evaluation import problems as evaluation_problems
+from earnings_themes.evaluation import records as evaluation_records
 from earnings_themes.extraction import adapters, cache, local
 from earnings_themes.extraction import records as extraction
 from earnings_themes.extraction.store import StoredRun
@@ -669,9 +670,20 @@ EVALUATION_MODELS = [
     bootstrap.BootstrapPlan,
     bootstrap.Interval,
     bootstrap.Estimate,
+    evaluation_records.Figure,
+    evaluation_records.PartitionReport,
+    evaluation_records.ReadingAgreement,
+    evaluation_records.IndependentFigures,
+    evaluation_records.PilotReport,
+    evaluation_records.Gate,
+    evaluation_records.Ungated,
+    evaluation_records.Gates,
+    evaluation_records.GateResult,
+    evaluation_records.GateVerdict,
 ]
 EVALUATION_ENUMS = [
     evaluation_problems.EvaluationProblem,
+    evaluation_records.Metric,
 ]
 EVALUATION_DATACLASSES = [
     align.UnitIndex,

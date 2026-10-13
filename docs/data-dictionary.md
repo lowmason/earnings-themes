@@ -6479,3 +6479,132 @@ interval is the event-clustered percentile bootstrap.
 | --- | --- |
 | `point` | The statistic over every event once, or null when undefined |
 | `interval` | Its `Interval` |
+
+### `Metric`
+
+| Value | Meaning |
+| --- | --- |
+| `release_precision` | Confirmed releases that gold labels `release` (R13.1); `ambiguous` left out |
+| `release_recall` | Gold releases the system confirmed |
+| `theme_f1_micro` | Micro F1 over event × theme cells, exact (gated) |
+| `theme_f1_macro` | Mean per-theme F1 over themes with gold or a prediction (gated) |
+| `theme_f1_rollup_micro` | Micro F1 after both sides map to level-one roots (secondary) |
+| `theme_f1_rollup_macro` | Macro F1 after the same mapping (secondary) |
+| `span_unit_precision` | Accepted evidence units that are gold units, per cell |
+| `span_unit_recall` | Gold units the accepted evidence holds, per cell |
+| `span_unit_f1` | Their F1 (gated) |
+| `span_char_jaccard` | Shared over union characters, per cell (secondary) |
+| `retention_quotes` | Verified over proposed quotes (R12.8 (i)) |
+| `retention_targets` | Accepted over assessed targets (R12.8 (ii)) |
+| `gold_evidence_recall` | Gold-supporting units any accepted assignment holds (R12.8 (iii), gated, strictly above zero) |
+| `support_precision` | Joint labels of accepted targets (gated on dev) |
+| `scorer_auc` | AUC-ROC of a scorer view against the claim label (R8.6); qualifier: the view |
+| `judge_kappa` | Cohen's κ against the joint label; qualifier: a family, or `family:presentation` |
+| `judge_ac1` | Gwet's AC1, beside κ |
+| `hard_negative_false_acceptance` | Hard negatives falsely accepted (R12.5); qualifier: none, or a negative kind |
+| `rare_theme_recall` | Recall over themes present in at most two events (descriptive, D1) |
+| `gs5_edited_share` | Edited over drafted items (GS5) |
+| `gs5_rejected_share` | Rejected over drafted items |
+| `gs5_added_share` | Added over signed items |
+| `no_theme_share` | Signed bundles with `no_theme` (R12.4) |
+| `stability_fleiss_kappa` | Fleiss' κ over event × theme presence across fresh runs (R12.10) |
+| `stability_unit_jaccard` | Mean pairwise Jaccard of the runs' accepted evidence units |
+| `stability_assignment_jaccard` | Mean pairwise Jaccard of the runs' accepted (theme, unit) pairs |
+| `sector_prevalence` | Not estimated (R12.2, D1) |
+| `source_selection_bias` | Not estimated (R12.2, D1) |
+
+### `Figure`
+
+| Field | Meaning |
+| --- | --- |
+| `metric` | The `Metric` |
+| `qualifier` | A family, `family:presentation`, a scorer view, or a negative kind; null when the metric is reported once |
+| `point` | The point estimate, or null when undefined |
+| `interval` | Its `Interval`; null exactly when the metric is not estimated |
+| `counts` | Named counts behind the figure, sorted by name |
+| `reason` | Why the metric is not estimated; null otherwise |
+
+### `PartitionReport`
+
+| Field | Meaning |
+| --- | --- |
+| `partition` | `train` or `dev` |
+| `in_sample` | True exactly for train (FP4) |
+| `events` | The partition's events, sorted |
+| `figures` | One `Figure` per metric and qualifier |
+
+### `ReadingAgreement`
+
+| Field | Meaning |
+| --- | --- |
+| `release_agrees` | Whether the two release-identification labels agree |
+| `theme_f1` | Exact theme F1 of one reading against the other |
+| `unit_f1` | Unit F1 of their evidence |
+| `dangling` | Dangling references in either reading |
+
+### `IndependentFigures`
+
+| Field | Meaning |
+| --- | --- |
+| `event_id` | The dev event |
+| `record_vs_draft` | The kept draft against the user's independent record |
+| `signed_vs_record` | The user's record against the signed file |
+
+### `PilotReport`
+
+| Field | Meaning |
+| --- | --- |
+| `schema_version` | `1` |
+| `report_version` | The report's version |
+| `label` | `feasibility-only` (R12.2) |
+| `preregistration_hash` | The preregistration it follows |
+| `calibration_hash` | The calibration artifact whose policy it scores |
+| `partitions` | Train's and dev's `PartitionReport` |
+| `independent` | Each dev event's `IndependentFigures` |
+| `content_hash` | Digest of every other field |
+
+### `Gate`
+
+| Field | Meaning |
+| --- | --- |
+| `metric` | The gated metric |
+| `bound` | The dev baseline's lower bound, or its point estimate |
+| `basis` | `lower_bound` or `point_estimate` (FP15) |
+
+### `Ungated`
+
+| Field | Meaning |
+| --- | --- |
+| `metric` | A preregistered gated metric the baseline cannot gate |
+| `reason` | `undefined_interval`, `undefined_point` or `not_in_report` |
+
+### `Gates`
+
+| Field | Meaning |
+| --- | --- |
+| `schema_version` | `1` |
+| `gates_version` | The gates' version |
+| `rule` | `dev-lower-bound/1` (FP15) |
+| `preregistration_hash` | The preregistration it follows |
+| `report_hash` | The report whose dev partition set the gates |
+| `judge_floor` | The preregistered judge floor |
+| `gates` | Each `Gate` |
+| `ungated` | Each `Ungated` |
+| `content_hash` | Digest of every other field |
+
+### `GateResult`
+
+| Field | Meaning |
+| --- | --- |
+| `metric` | The metric |
+| `bound` | Its gate, or null for the gold-evidence rule |
+| `value` | The configuration's dev point estimate |
+| `passed` | Whether it passes |
+| `reason` | `met`, `below_bound`, `undefined` or `zero_gold_evidence_recall` |
+
+### `GateVerdict`
+
+| Field | Meaning |
+| --- | --- |
+| `passed` | Whether every result passes |
+| `results` | Each `GateResult` |
