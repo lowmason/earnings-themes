@@ -1,5 +1,14 @@
 # Stage 11 Plan A, Slice 3: Evaluation, Support Labels and Calibration Implementation Plan
 
+**Status: COMPLETE (2026-10-13)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
+> **Execution record.** This is plan A's third slice only: Stage 11 is not ticked, `Plan A: COMPLETE` is not appended and the spec is not retired. Slice 4 (A8) is next; see §Handoffs.
+>
+> - **Counts at `eccb77c`.** Scoped checks: evaluation, tomlfile, import boundaries and `test_import_scan` 297 passed; coding and support 1519 passed, 1 skipped, 2 deselected; contracts, integration and workflow 605 passed, 1 deselected; Ruff clean; `uv lock --check` resolved 153 packages. The user's gates in the main checkout: the root suite 4719 passed, 2 skipped, 28 deselected, 1 warning in 889.65 s; the Stage 6 wording test 7 passed. The plan's 161 / 1517 / 603 and '170 tests' were stale (command 1 was already 161 after Task 9).
+> - **Plan text now stale.** Task 13's `NEVER_GATED` and superset validator (lines ~5683, 5894, 5969) and the `GateRule.gated` dictionary row (~6064); Global Constraints' 'a schema failure raises Pydantic's `ValidationError`' (`freeze_preregistration` and `load_preregistration` raise `RecordError`); Task 4 and Task 7's `unit_tally` / `char_counts` return types (now `EvidenceTally`); `report._first_duplicate` (now `problems.first_duplicate`); the 45 exports (now 46).
+> - **Review chain.** Every task passed a task review (opus for Tasks 5, 12 and 14, sonnet or opus otherwise) with at most one fix round. The final whole-branch review (an Opus code-reviewer, 'with fixes', and Codex, three P2 findings) was fixed in five rounds, each re-reviewed by both seats; `Codex reviewed 90a7f33`.
+> - **Spec.** Task 1's ten amendments landed in `2ec4df9`. Line 298 ('A tie goes to the candidate using fewer signals') was corrected in the slice-stamp commit, because the amended menu made every candidate single-signal.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build `earnings_themes.evaluation`, with A9's dictionary rows for its records. It holds:
@@ -189,7 +198,7 @@ Planner defaults (accepted at the plan review, D19-18):
 
 The spec's status line and every other line stay as they are. The user decided each change's substance on 2026-10-12 (D19-1, D19-3, D19-4), and approved this exact wording at the plan review (D19-18). Each edit replaces text that occurs exactly once in the spec.
 
-- [ ] **Step 1: Replace FP10's row**
+- [x] **Step 1: Replace FP10's row**
 
 Replace:
 
@@ -203,7 +212,7 @@ with:
 | FP10 | **A preregistered policy menu.** Transparent scorer-cutoff candidates are fit on train labels, and the selection rule picks one. It is frozen before dev is run (§Calibration). Stage 9 sends every target that is not `assessed` to review before any policy votes, and both families' consensus supports every `assessed` target, so a candidate that also reads the judges decides as scorer-only does. *(Amended by the user, plan 19, 2026-10-12.)* |
 ```
 
-- [ ] **Step 2: Replace FP14's row**
+- [x] **Step 2: Replace FP14's row**
 
 Replace:
 
@@ -217,7 +226,7 @@ with:
 | FP14 | **Hierarchy credit.** Exact-theme F1 is gated. A level-one roll-up F1 is secondary. A sibling never earns credit at the exact level. *(Amended by the user, plan 19, 2026-10-12.)* |
 ```
 
-- [ ] **Step 3: Replace FP18's row**
+- [x] **Step 3: Replace FP18's row**
 
 Replace:
 
@@ -231,7 +240,7 @@ with:
 | FP18 | *(design; amended by the user, plan 19, 2026-10-12)* **Package placement.** `earnings_themes.evaluation` is pure. It imports `earnings-core`, themes records and pure Stage 7–9 code (`extraction.units`, `support.metrics`, `support.context`, `coding.decide`), never ingestion, httpx, an NLI runtime or a concrete adapter, and no gold-drafting module imports it. The commands extend the existing `pilot` group. Coverage v2 stays in ingestion's `build_coverage`, and the app supplies its `NoThemeCount` rows, so ingestion never reads gold. |
 ```
 
-- [ ] **Step 4: Replace FP22's sentence on a family below the floor**
+- [x] **Step 4: Replace FP22's sentence on a family below the floor**
 
 Replace:
 
@@ -245,7 +254,7 @@ with:
 A judge family that then fails the floor is reported, and recorded by V6, itself a finding *(amended by the user, plan 19, 2026-10-12)*.
 ```
 
-- [ ] **Step 5: Replace A3's opening**
+- [x] **Step 5: Replace A3's opening**
 
 Replace:
 
@@ -263,7 +272,7 @@ ingestion, httpx, an NLI runtime or a concrete adapter
 *(amended by the user, plan 19, 2026-10-12)*. It holds:
 ```
 
-- [ ] **Step 6: Replace §Preregistration's floor consequence**
+- [x] **Step 6: Replace §Preregistration's floor consequence**
 
 Replace:
 
@@ -277,7 +286,7 @@ with:
 - **the floor's consequence:** reported, and recorded by V6. Stage 9 sends a flagged target to review before any policy votes, so the floor changes no pilot decision *(amended by the user, plan 19, 2026-10-12)*;
 ```
 
-- [ ] **Step 7: Replace §Preregistration's menu bullet**
+- [x] **Step 7: Replace §Preregistration's menu bullet**
 
 Replace:
 
@@ -291,7 +300,7 @@ with:
 - **the menu:** each candidate's exact rule and its cutoff grid; the fitted cutoffs go in `calibration-v1.json` *(amended by the user, plan 19, 2026-10-12)*;
 ```
 
-- [ ] **Step 8: Replace §Calibration's menu**
+- [x] **Step 8: Replace §Calibration's menu**
 
 Replace:
 
@@ -325,7 +334,7 @@ cutoff: within a candidate, and between candidates that use as many signals. Lab
 recall is capped by the share of positive labels whose targets came out `assessed`.
 ```
 
-- [ ] **Step 9: Replace §Failure handling's floor row**
+- [x] **Step 9: Replace §Failure handling's floor row**
 
 Replace:
 
@@ -339,7 +348,7 @@ with:
 | A family below the floor | Reported, and recorded by V6; no pilot decision changes. *(Amended by the user, plan 19, 2026-10-12.)* |
 ```
 
-- [ ] **Step 10: Replace §Metrics' roll-up row**
+- [x] **Step 10: Replace §Metrics' roll-up row**
 
 Replace:
 
@@ -353,7 +362,7 @@ with:
 | Theme F1, rolled up | Both sides are mapped to their level-one ancestor (self or descendant), then scored the same way, so two children of one level-one theme meet there. A sibling earns nothing at the exact level. *(Amended by the user, plan 19, 2026-10-12.)* | Secondary |
 ```
 
-- [ ] **Step 11: Check that nothing else changed**
+- [x] **Step 11: Check that nothing else changed**
 
 ```bash
 git diff --stat -- specs/feasibility-pilot-and-threshold-calibration.md
@@ -362,7 +371,7 @@ grep -c 'plan 19, 2026-10-12' specs/feasibility-pilot-and-threshold-calibration.
 
 Expected: one file changed, and `10` tagged edits.
 
-- [ ] **Step 12: Commit**
+- [x] **Step 12: Commit**
 
 ```bash
 git log -3 --oneline
@@ -420,7 +429,7 @@ The package starts as its docstring alone, because Ruff's isort needs `evaluatio
 
 `tests/evaluation/cases.py` holds the invented readings, trials and decision views that later tasks' tests use. Its Stage 8 and 9 imports sit inside functions, so it imports cleanly now. The import boundary (D19-4) and the dictionary registry land here, so every later module is held to both from its first commit.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-themes/tests/evaluation/__init__.py`, empty.
 
@@ -963,13 +972,13 @@ def test_evaluation_registry_covers_every_defined_record_enum_and_dataclass() ->
     assert {v for v in defined if is_dataclass(v)} == set(EVALUATION_DATACLASSES)
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_align.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: FAIL (`2 errors`), with `ImportError: cannot import name 'evaluation' from 'earnings_themes'`; `ModuleNotFoundError: No module named 'earnings_themes.evaluation'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-themes/src/earnings_themes/evaluation/__init__.py`:
 
@@ -1151,13 +1160,13 @@ interval is the event-clustered percentile bootstrap.
 | `spans` | Each pointer unit's element ID, start and end, in document order (ES12) |
 ```
 
-- [ ] **Step 4: Run the tests to see them pass**
+- [x] **Step 4: Run the tests to see them pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_align.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: PASS, `379 passed`.
 
-- [ ] **Step 5: Format, lint and commit**
+- [x] **Step 5: Format, lint and commit**
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/tests/evaluation/__init__.py packages/earnings-themes/tests/evaluation/cases.py packages/earnings-themes/tests/evaluation/test_align.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_data_dictionary.py packages/earnings-themes/src/earnings_themes/evaluation/__init__.py packages/earnings-themes/src/earnings_themes/evaluation/problems.py packages/earnings-themes/src/earnings_themes/evaluation/align.py
@@ -1197,7 +1206,7 @@ git commit -m "feat(themes): evaluation package, refusals and pointer-unit align
 
 `level_one` gives each theme's level-one root for the roll-up (D19-3), and refuses a parent cycle.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-themes/tests/evaluation/test_cells.py`:
 
@@ -1298,13 +1307,14 @@ In `tests/contracts/test_data_dictionary.py`, append to `EVALUATION_DATACLASSES`
     cells.EventCells,
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_cells.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: FAIL (`2 errors`), with `ImportError: cannot import name 'cells' from 'earnings_themes.evaluation'`; `ModuleNotFoundError: No module named 'earnings_themes.evaluation.cells'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
+> Deviation (final review, 2026-10-13): `cells.event_cells` counts one `dangling` per claim-to-missing-quote reference and per assignment row citing a missing claim, whatever its support, theme or tie (D19-7), not only claims supporting a present theme; it also returns `EventCells.evidence`, one new `EvidenceCell(themes, units, spans)` per untied present theme and per tie group, so unit and character scoring treat a tie group as one either-of cell (FP20); `GoldReading` gains `release_identification`.
 
 Create `packages/earnings-themes/src/earnings_themes/evaluation/cells.py`:
 
@@ -1467,13 +1477,13 @@ Append to the end of `docs/data-dictionary.md`, after one blank line:
 | `dangling` | References to quotes or claims the reading lacks |
 ```
 
-- [ ] **Step 4: Run the tests to see them pass**
+- [x] **Step 4: Run the tests to see them pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_cells.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: PASS, `382 passed`.
 
-- [ ] **Step 5: Format, lint and commit**
+- [x] **Step 5: Format, lint and commit**
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/tests/evaluation/test_cells.py tests/contracts/test_data_dictionary.py packages/earnings-themes/src/earnings_themes/evaluation/cells.py
@@ -1529,7 +1539,7 @@ git commit -m "feat(themes): gold event-by-theme cells with tie groups and level
 
 Every known answer is hand-computed over `cases.example()`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-themes/tests/evaluation/test_scores.py`:
 
@@ -1697,13 +1707,14 @@ In `tests/contracts/test_data_dictionary.py`, append to `EVALUATION_DATACLASSES`
     scores.Tally,
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_scores.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: FAIL (`2 errors`), with `ImportError: cannot import name 'scores' from 'earnings_themes.evaluation'`; `ModuleNotFoundError: No module named 'earnings_themes.evaluation.scores'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
+> Deviation (final review): `unit_tally` and `char_counts` return a new frozen `EvidenceTally(accepted_hits, accepted, gold_hits, gold)` instead of `Tally` and a `(shared, union)` pair, so one accepted item is one hit however many cells hold it; precision, recall, F1 and Jaccard come from it. `Tally` stays for theme and release tallies. No-tie readings score as the plan's code did.
 
 Create `packages/earnings-themes/src/earnings_themes/evaluation/scores.py`:
 
@@ -1899,13 +1910,13 @@ Append to the end of `docs/data-dictionary.md`, after one blank line:
 | `fn` | Misses |
 ```
 
-- [ ] **Step 4: Run the tests to see them pass**
+- [x] **Step 4: Run the tests to see them pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_scores.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: PASS, `389 passed`.
 
-- [ ] **Step 5: Format, lint and commit**
+- [x] **Step 5: Format, lint and commit**
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/tests/evaluation/test_scores.py tests/contracts/test_data_dictionary.py packages/earnings-themes/src/earnings_themes/evaluation/scores.py
@@ -1947,7 +1958,7 @@ git commit -m "feat(themes): evaluation tallies and count figures (A3)"
 
 `bootstrap.estimate` resamples events with replacement under the preregistered seed. It skips and counts an undefined resample (D19-10), and reports the percentile interval, or no bounds when too many resamples are undefined. The dictionary's model test starts here, with the first evaluation models.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-themes/tests/evaluation/test_agreement.py`:
 
@@ -2107,13 +2118,14 @@ def test_evaluation_fields_documented(model: type[BaseModel]) -> None:
 @pytest.mark.parametrize("enum", EVALUATION_ENUMS
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_agreement.py packages/earnings-themes/tests/evaluation/test_bootstrap.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: FAIL (`3 errors`), with `ImportError: cannot import name 'bootstrap' from 'earnings_themes.evaluation'`; `ModuleNotFoundError: No module named 'earnings_themes.evaluation.agreement'`; `ModuleNotFoundError: No module named 'earnings_themes.evaluation.bootstrap'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
+> Deviation (Task 5 fix round, user decision 2026-10-12): agreement refusals name `pairs[i]` / `ratings[i]`; a wrong-length pair is an `EvaluationError`; the percentile boundary uses `undefined / resamples > share`, with three more bootstrap assertions. Final review: `agreement.judge_agreement` is the one pooled kappa/AC1 estimate that `report._agreement` and `calibration._family` both call; `Interval.lower/upper/level` and `Estimate.point` are finite `Real` (the type now lives in `bootstrap.py`).
 
 Create `packages/earnings-themes/src/earnings_themes/evaluation/agreement.py`:
 
@@ -2315,13 +2327,13 @@ Append to the end of `docs/data-dictionary.md`, after one blank line:
 | `interval` | Its `Interval` |
 ```
 
-- [ ] **Step 4: Run the tests to see them pass**
+- [x] **Step 4: Run the tests to see them pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_agreement.py packages/earnings-themes/tests/evaluation/test_bootstrap.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: PASS, `392 passed`.
 
-- [ ] **Step 5: Format, lint and commit**
+- [x] **Step 5: Format, lint and commit**
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/tests/evaluation/test_agreement.py packages/earnings-themes/tests/evaluation/test_bootstrap.py tests/contracts/test_data_dictionary.py packages/earnings-themes/src/earnings_themes/evaluation/agreement.py packages/earnings-themes/src/earnings_themes/evaluation/bootstrap.py
@@ -2382,7 +2394,7 @@ git commit -m "feat(themes): agreement statistics and the event-clustered bootst
 
 Each committed record is sealed by its own `content_hash` (D19-13).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-themes/tests/evaluation/test_verdicts.py`:
 
@@ -2566,13 +2578,14 @@ In `tests/contracts/test_data_dictionary.py`, append to `EVALUATION_ENUMS`:
     evaluation_records.Metric,
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_verdicts.py packages/earnings-themes/tests/evaluation/test_records.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: FAIL (`3 errors`), with `ImportError: cannot import name 'records' from 'earnings_themes.evaluation'`; `ModuleNotFoundError: No module named 'earnings_themes.evaluation.records'`; `ModuleNotFoundError: No module named 'earnings_themes.evaluation.verdicts'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
+> Deviation (Task 6 fix round, user decision 2026-10-12): `content_hash`, `sealed` and `checked` are defined once in `earnings_themes/records.py`, `split.py` calls them (`split_hash` is a thin wrapper) and `evaluation.records` re-exports them (D18-1); three hash-property tests added. Final review: `verdicts.family_judgement` returns the family verdict and its `uncertain` flag together.
 
 Create `packages/earnings-themes/src/earnings_themes/evaluation/verdicts.py`:
 
@@ -2982,13 +2995,13 @@ Append to the end of `docs/data-dictionary.md`, after one blank line:
 | `results` | Each `GateResult` |
 ```
 
-- [ ] **Step 4: Run the tests to see them pass**
+- [x] **Step 4: Run the tests to see them pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_verdicts.py packages/earnings-themes/tests/evaluation/test_records.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: PASS, `404 passed`.
 
-- [ ] **Step 5: Format, lint and commit**
+- [x] **Step 5: Format, lint and commit**
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/tests/evaluation/test_verdicts.py packages/earnings-themes/tests/evaluation/test_records.py tests/contracts/test_data_dictionary.py packages/earnings-themes/src/earnings_themes/evaluation/verdicts.py packages/earnings-themes/src/earnings_themes/evaluation/records.py
@@ -3041,7 +3054,7 @@ git commit -m "feat(themes): judge verdicts, and the pilot report and gate recor
 
 `compare_readings` gives the dev independent pass's per-event figures (GS19), and `stability_figures` gives FP12's k-run figures.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-themes/tests/evaluation/test_report.py`:
 
@@ -3286,13 +3299,14 @@ In `tests/contracts/test_data_dictionary.py`, append to `EVALUATION_DATACLASSES`
     report.LabelledTarget,
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_report.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: FAIL (`2 errors`), with `ImportError: cannot import name 'report' from 'earnings_themes.evaluation'`; `ModuleNotFoundError: No module named 'earnings_themes.evaluation.report'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
+> Deviation (Task 7 fix round and final review): roll-up figures keep their rolled `EventCells` and use `len(set(roots.values()))`; duplicate events and targets name the repeated ID (`problems.first_duplicate`, shared with `sampling`); a gold/observation event mismatch is `malformed_record`; `_label_figures` lists judge families from joint-labelled targets only; the SPAN_UNIT_* figure counts are `accepted_hits`, `accepted`, `gold_hits`, `gold` and SPAN_CHAR_JACCARD's are `shared`, `union`; `ReadingAgreement.unit_f1` follows the new `EvidenceTally` F1.
 
 Create `packages/earnings-themes/src/earnings_themes/evaluation/report.py`:
 
@@ -3874,13 +3888,13 @@ Append to the end of `docs/data-dictionary.md`, after one blank line:
 | `trials` | Its four judge trials |
 ```
 
-- [ ] **Step 4: Run the tests to see them pass**
+- [x] **Step 4: Run the tests to see them pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_report.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: PASS, `424 passed`.
 
-- [ ] **Step 5: Format, lint and commit**
+- [x] **Step 5: Format, lint and commit**
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/tests/evaluation/test_report.py tests/contracts/test_data_dictionary.py packages/earnings-themes/src/earnings_themes/evaluation/report.py
@@ -3920,7 +3934,7 @@ git commit -m "feat(themes): the pilot report's figures for a partition (A3)"
 
 `evaluate_gates` checks a dev report against the gates. Whatever the gates, gold-evidence recall must be above zero, and an undefined metric fails. So a reject-everything configuration fails (R12.8), and a test shows it. The gates file is TOML, so `tomlfile` learns to write finite floats (D19-16).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-themes/tests/evaluation/test_gates.py`:
 
@@ -4096,13 +4110,14 @@ def test_floats_round_trip_and_a_non_finite_float_is_refused() -> None:
             dumps({"x": bad})
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_gates.py packages/earnings-themes/tests/test_tomlfile.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: FAIL (`1 error`), with `ModuleNotFoundError: No module named 'earnings_themes.evaluation.gates'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
+> Deviation (final review): `derive_gates`' mismatch refusal names `preregistration_hash`, and the gold-evidence positivity row's reason is `undefined` when the value is null, `zero_gold_evidence_recall` only for 0.0.
 
 Create `packages/earnings-themes/src/earnings_themes/evaluation/gates.py`:
 
@@ -4299,13 +4314,13 @@ with:
     if isinstance(value, str):
 ```
 
-- [ ] **Step 4: Run the tests to see them pass**
+- [x] **Step 4: Run the tests to see them pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_gates.py packages/earnings-themes/tests/test_tomlfile.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: PASS, `410 passed`.
 
-- [ ] **Step 5: Format, lint and commit**
+- [x] **Step 5: Format, lint and commit**
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/tests/evaluation/test_gates.py packages/earnings-themes/tests/test_tomlfile.py packages/earnings-themes/src/earnings_themes/evaluation/gates.py packages/earnings-themes/src/earnings_themes/tomlfile.py
@@ -4351,7 +4366,7 @@ git commit -m "feat(themes): V6's gates and their evaluator; floats in tomlfile 
 
 `check_labels` is A4's `labels check`. It refuses a working file's labels that do not match the sample, the support run's input hashes, or the preregistration. `merge_labels` lets committed labels change only through a preregistered train extension.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-themes/tests/evaluation/test_labels.py`:
 
@@ -4553,13 +4568,14 @@ In `tests/contracts/test_data_dictionary.py`, append to `EVALUATION_ENUMS`:
     labels.FitAnswer,
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_labels.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: FAIL (`2 errors`), with `ImportError: cannot import name 'labels' from 'earnings_themes.evaluation'`; `ModuleNotFoundError: No module named 'earnings_themes.evaluation.labels'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
+> Deviation (final review): `merge_labels`' `labels_changed` names the sorted IDs of the committed labels the working partition drops or changes (the added IDs when it only adds), not the partition.
 
 Create `packages/earnings-themes/src/earnings_themes/evaluation/labels.py`:
 
@@ -4809,13 +4825,13 @@ Append to the end of `docs/data-dictionary.md`, after one blank line:
 | `labels` | Each `SupportLabel`, one per target |
 ```
 
-- [ ] **Step 4: Run the tests to see them pass**
+- [x] **Step 4: Run the tests to see them pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_labels.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: PASS, `413 passed`.
 
-- [ ] **Step 5: Format, lint and commit**
+- [x] **Step 5: Format, lint and commit**
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/tests/evaluation/test_labels.py tests/contracts/test_data_dictionary.py packages/earnings-themes/src/earnings_themes/evaluation/labels.py
@@ -4849,7 +4865,7 @@ git commit -m "feat(themes): support labels and labels check (A4)"
 
 `label_pool` keeps the support run's `assessed` and `flagged` targets (A4). `sample_targets` takes only target, event and theme IDs, so it cannot sample by a score, an answer or an outcome, and a signature test pins that. Its seeded round-robin (D19-12) has a known answer, and a larger size extends the same sample.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-themes/tests/evaluation/test_sampling.py`:
 
@@ -4940,13 +4956,14 @@ In `tests/contracts/test_data_dictionary.py`, append to `EVALUATION_DATACLASSES`
     sampling.PoolTarget,
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_sampling.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: FAIL (`2 errors`), with `ImportError: cannot import name 'sampling' from 'earnings_themes.evaluation'`; `ModuleNotFoundError: No module named 'earnings_themes.evaluation.sampling'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
+> Deviation (final review): `sample_targets`' `duplicate_target` names the repeated target ID, through the shared `problems.first_duplicate`.
 
 Create `packages/earnings-themes/src/earnings_themes/evaluation/sampling.py`:
 
@@ -5047,13 +5064,13 @@ Append to the end of `docs/data-dictionary.md`, after one blank line:
 | `theme_id` | Its proposed theme |
 ```
 
-- [ ] **Step 4: Run the tests to see them pass**
+- [x] **Step 4: Run the tests to see them pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_sampling.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: PASS, `407 passed`.
 
-- [ ] **Step 5: Format, lint and commit**
+- [x] **Step 5: Format, lint and commit**
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/tests/evaluation/test_sampling.py tests/contracts/test_data_dictionary.py packages/earnings-themes/src/earnings_themes/evaluation/sampling.py
@@ -5085,7 +5102,8 @@ git commit -m "feat(themes): the deterministic label sampler (A4)"
 
 `label_views` renders the markdown the user labels from. For each sampled target it shows the claim, the quotes marked in their context through Stage 8's `context_elements`, and the theme's definition and rules (D19-17). A sentinel test plants a score, a judge answer, a flag and the extractor's identity in a flagged case, and shows that none reaches the view. `tests/evaluation/conftest.py` reuses Stage 9's invented assessed case.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
+> Deviation (final review): the label view's blinding sentinel is rewritten to read the text after `INSTRUCTIONS`, plant the review-status words and the judge's score, and fail when a verdict or status is rendered.
 
 Create `packages/earnings-themes/tests/evaluation/conftest.py`:
 
@@ -5188,13 +5206,13 @@ def test_the_pool_is_assessed_and_flagged_targets_with_their_events(
         label_pool(flagged_case.support.targets, flagged_case.support.outcomes, {})
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_label_view.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: FAIL (`1 error`), with `ModuleNotFoundError: No module named 'earnings_themes.evaluation.label_view'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/earnings-themes/src/earnings_themes/evaluation/label_view.py`:
 
@@ -5277,13 +5295,13 @@ def label_views(
     return "\n".join(out) + "\n"
 ```
 
-- [ ] **Step 4: Run the tests to see them pass**
+- [x] **Step 4: Run the tests to see them pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_label_view.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: PASS, `404 passed`.
 
-- [ ] **Step 5: Format, lint and commit**
+- [x] **Step 5: Format, lint and commit**
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/tests/evaluation/conftest.py packages/earnings-themes/tests/evaluation/test_label_view.py packages/earnings-themes/src/earnings_themes/evaluation/label_view.py
@@ -5317,7 +5335,7 @@ Two seams that calibration needs, extracted rather than copied (D18-1):
 - `decision_inputs` reverifies a support run and builds every target's view, so calibration votes on exactly what Stage 9 votes on (D19-5).
 - `accepted_claim_recall` is label recall, beside Stage 8's `accepted_claim_precision`, with a new `no_labeled_positive` reason. No record stores a `MetricReport` before this plan; Task 14's `CalibrationArtifact` is the first.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to the end of `packages/earnings-themes/tests/coding/test_decide.py`, after two blank lines:
 
@@ -5387,13 +5405,14 @@ def test_accepted_claim_recall_is_the_share_of_supported_labels_accepted() -> No
     assert (none.value, none.reason) == (None, "no_labeled_positive")
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/coding/test_decide.py packages/earnings-themes/tests/support/test_metrics.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: FAIL (`1 error`), with `ImportError: cannot import name 'accepted_claim_recall' from 'earnings_themes.support.metrics'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
+> Deviation (Task 12 fix round, user decision 2026-10-12): `accepted_claim_recall` and `accepted_claim_precision` share a private `_acceptance_join` and `_acceptance_report` in `support/metrics.py` (D18-1); four `MetricReport` dictionary rows name recall; a defined-0.0 recall test is added.
 
 In `packages/earnings-themes/src/earnings_themes/coding/decide.py`, replace:
 
@@ -5644,13 +5663,13 @@ keyed by target ID, exactly as `decide_assignments` builds them (plan 19). Stage
 policy seam. No accepting implementation is shipped in the package. Tests supply
 ```
 
-- [ ] **Step 4: Run the tests to see them pass**
+- [x] **Step 4: Run the tests to see them pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/coding/test_decide.py packages/earnings-themes/tests/support/test_metrics.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: PASS, `503 passed`.
 
-- [ ] **Step 5: Format, lint and commit**
+- [x] **Step 5: Format, lint and commit**
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/tests/coding/test_decide.py packages/earnings-themes/tests/support/test_metrics.py packages/earnings-themes/src/earnings_themes/coding/decide.py packages/earnings-themes/src/earnings_themes/support/metrics.py
@@ -5700,7 +5719,7 @@ git commit -m "feat(themes): decision_inputs and accepted_claim_recall for calib
 
 `freeze_preregistration` seals it. `load_preregistration` refuses a file that no longer hashes to itself (D19-13).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-themes/tests/evaluation/test_preregistration.py`:
 
@@ -5837,13 +5856,14 @@ In `tests/contracts/test_data_dictionary.py`, append to `EVALUATION_MODELS`:
     preregistration.Preregistration,
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_preregistration.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: FAIL (`2 errors`), with `ImportError: cannot import name 'preregistration' from 'earnings_themes.evaluation'`; `ModuleNotFoundError: No module named 'earnings_themes.evaluation.preregistration'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
+> Deviation (Task 13 fix round, user decision 2026-10-12): `GateRule` requires `gated` to equal `REQUIRED_GATES` exactly, so `NEVER_GATED` and the superset validator are gone; validator messages name the offending items; `_distinct_candidates` is a `field_validator("menu")`. Final review: `Preregistration.bootstrap.level` must be 0.9.
 
 Create `packages/earnings-themes/src/earnings_themes/evaluation/preregistration.py`:
 
@@ -6082,13 +6102,13 @@ Append to the end of `docs/data-dictionary.md`, after one blank line:
 | `content_hash` | Digest of every other field |
 ```
 
-- [ ] **Step 4: Run the tests to see them pass**
+- [x] **Step 4: Run the tests to see them pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_preregistration.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: PASS, `413 passed`.
 
-- [ ] **Step 5: Format, lint and commit**
+- [x] **Step 5: Format, lint and commit**
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/tests/evaluation/test_preregistration.py tests/contracts/test_data_dictionary.py packages/earnings-themes/src/earnings_themes/evaluation/preregistration.py
@@ -6145,7 +6165,7 @@ It then:
 
 The 60-target known answer is hand-computed in `population()`'s docstring.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-themes/tests/evaluation/test_calibration.py`:
 
@@ -6388,13 +6408,14 @@ In `tests/contracts/test_data_dictionary.py`, append to `EVALUATION_DATACLASSES`
     calibration.ScorerCutoff,
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_calibration.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: FAIL (`2 errors`), with `ImportError: cannot import name 'calibration' from 'earnings_themes.evaluation'`; `ModuleNotFoundError: No module named 'earnings_themes.evaluation.calibration'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
+> Deviation (Task 14 fix round, user decision 2026-10-12): `support_configuration(...)` is defined once in `support/records.py` and called by `support/run.py` and `calibration.frozen_configuration` (D18-1); `configuration_hash(configuration, selection)` is public in `calibration.py`; refusal subjects are `content_hash` and `labels`; dictionary rows say 'against the joint label'; test gaps closed. Final review: `_family` calls `agreement.judge_agreement`; the dictionary gains a `Calibrated policy` paragraph.
 
 Create `packages/earnings-themes/src/earnings_themes/evaluation/calibration.py`:
 
@@ -6872,13 +6893,13 @@ Append to the end of `docs/data-dictionary.md`, after one blank line:
 | `content_hash` | Digest of every other field |
 ```
 
-- [ ] **Step 4: Run the tests to see them pass**
+- [x] **Step 4: Run the tests to see them pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_calibration.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: PASS, `425 passed`.
 
-- [ ] **Step 5: Format, lint and commit**
+- [x] **Step 5: Format, lint and commit**
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/tests/evaluation/test_calibration.py tests/contracts/test_data_dictionary.py packages/earnings-themes/src/earnings_themes/evaluation/calibration.py
@@ -6912,7 +6933,7 @@ git commit -m "feat(themes): calibrate the scorer-cutoff menu on train labels (A
 
 `CalibratedPolicy` binds a selected artifact as Stage 9's `AssignmentPolicy`, with `PolicyReference(kind="calibrated", calibration_reference=<the artifact's hash>)`. It refuses a `no_candidate` artifact, or one whose content changed. A parity test shows that it decides as calibration simulated, and that a flagged target stays in review. The package's `__init__` gains its public exports.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/earnings-themes/tests/evaluation/test_policy.py`:
 
@@ -6987,13 +7008,14 @@ def test_no_candidate_or_a_changed_artifact_binds_no_policy(assessed_case) -> No
         bind(assessed_case, changed)
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_policy.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: FAIL (`1 error`), with `ModuleNotFoundError: No module named 'earnings_themes.evaluation.policy'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
+> Deviation (Task 15 fix round, user decision 2026-10-12): `CalibratedPolicy`'s refusals name `content_hash` (mismatch) and `selection` (no candidate). Final review: `EvidenceCell` is exported, so `__all__` holds 46 names, not the plan's 45.
 
 Create `packages/earnings-themes/src/earnings_themes/evaluation/policy.py`:
 
@@ -7183,13 +7205,13 @@ __all__ = [
 ]
 ```
 
-- [ ] **Step 4: Run the tests to see them pass**
+- [x] **Step 4: Run the tests to see them pass**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation/test_policy.py packages/earnings-themes/tests/test_import_boundaries.py tests/contracts/test_import_scan.py tests/contracts/test_data_dictionary.py -q`
 
 Expected: PASS, `417 passed`.
 
-- [ ] **Step 5: Format, lint and commit**
+- [x] **Step 5: Format, lint and commit**
 
 ```bash
 uv run --locked ruff format packages/earnings-themes/tests/evaluation/test_policy.py packages/earnings-themes/src/earnings_themes/evaluation/policy.py packages/earnings-themes/src/earnings_themes/evaluation/__init__.py
@@ -7209,7 +7231,7 @@ git commit -m "feat(themes): the calibrated assignment policy and evaluation exp
 - Modify: `specs/deferred_items.md` (only if execution defers anything)
 - Modify: this plan (completion markup), then `git mv` it to `specs/plans/completed/`
 
-- [ ] **Step 1: Run every scoped check in the worktree**
+- [x] **Step 1: Run every scoped check in the worktree**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/evaluation packages/earnings-themes/tests/test_tomlfile.py packages/earnings-themes/tests/test_import_boundaries.py -q
@@ -7228,7 +7250,7 @@ Expected:
 
 Record the exact pass counts for the handoff.
 
-- [ ] **Step 2 (gate): Hand the user the checks only they run**
+- [x] **Step 2 (gate): Hand the user the checks only they run**
 
 Put this to the user in chat, with `<sha>` set to `git rev-parse HEAD`, and wait for the results:
 
@@ -7246,7 +7268,8 @@ Put this to the user in chat, with `<sha>` set to `git rev-parse HEAD`, and wait
 
 If any check fails, stop, and debug it with systematic-debugging before going on. Debug from the test name and reason the user reports, never from pilot text.
 
-- [ ] **Step 3: Run the Plan Completion Protocol**
+- [x] **Step 3: Run the Plan Completion Protocol**
+> Deviation: the final whole-branch review (an Opus code-reviewer and Codex) raised findings that the user ordered fixed in five rounds after the review (bc9769e to eccb77c); each is recorded as a Deviation under its task above. Codex found defects in two ranges (`f5d5f15`, and the one-credit rule of `c7aa473`, which was reverted); its last review, `90a7f33`, found nothing.
 
 Follow writing-plans' Plan Completion Protocol:
 - **Resolve-before-defer:** ask the user about anything left open, in one batch (AskUserQuestion, default option first).
@@ -7266,7 +7289,7 @@ Follow writing-plans' Plan Completion Protocol:
 
   **Do not move the spec.** This is an exception to the protocol's spec-retire rule: the plans for A8 and plan B still implement it.
 
-- [ ] **Step 4: Hand off what goes stale**
+- [x] **Step 4: Hand off what goes stale**
 
 Tell the user these, without editing the files:
 - `CLAUDE.md`'s "Current state" names Stages 1–10. Stage 11's slices could be noted there, but per the spec's Rollout and the user's rule, only with the user's approval.
@@ -7322,6 +7345,23 @@ Verified at `7948d94` while this plan was written. Recheck each line number befo
 - **B2 needs a tool to write the preregistration.** No `pilot preregister` command exists. `freeze_preregistration(fields)` and `preregistration_toml` do the work. The user decides between an A8 command and a plan B procedure.
 - **Deferred into slice 4, unchanged:** P17-1 and P17-2 go with A8, as do P17-5's items (1), (3) and (4). D19-7 decides item (2), which slice 4 records when it closes P17-5 (`specs/deferred_items.md`, section `17-feasibility-pilot-and-threshold-calibration-plan-a-slice-1`). P18-1 and P18-2 stay as plan 18 left them.
 - **Slice 4's dictionary rows** cover A8's command records and any new working-file record.
+- **Added at completion** (per-task reviews and the final review; none is closed by plan 19):
+  - **H1.** `pilot labels view` must call `reverify_support_run` before `label_views`, write only under `data/runs/pilot/labels/views/` and never print; `label_views` does not reverify (GS13, GS3). `check_labels` must run before `merge_labels`; the order is not enforced in code.
+  - **H2.** `calibrate` never relates `labels_hash` to the labels: verify `sha256(labels_toml(labels)) == labels_hash`, or hash the bytes that were parsed.
+  - **H3.** `frozen_configuration` does not check `extraction.run_id == support.source_run_id` nor that proposals and support agree (`coding/decide.py:367-378`): `pilot calibrate` must apply that gate, extracted from `decide_assignments`, never copied. `decision_inputs` does not check it either.
+  - **H4.** `pilot run` must call the public `calibration.configuration_hash` and compare it with `artifact.configuration_hash`; `CalibratedPolicy` accepts any hashes it is given.
+  - **H5.** Branch on `.problem is EvaluationProblem.NO_CANDIDATE`: catching every `EvaluationError` would let a tampered artifact (`content_hash_mismatch`) run with every target in review.
+  - **H6.** A8 owns the calibration-artifact reader (the `RecordError` path for a committed `calibration-v<N>.json`); slice 3 has none.
+  - **H7.** `apps/earnings-pipeline/src/earnings_pipeline/theme_workflow.py` (~:1009-1022) still builds `support_configuration`'s six keys inline; when A8 extracts the workflow's hash computations it should call `support.records.support_configuration`. Touching `theme_workflow.py` also fires deferred item P15 M1's 'Revisit if'.
+  - **H8.** `merge_labels` lets `train_extensions` rise with no new labels; the caller must tie the counter to growth.
+  - **H9.** `label_pool` is last-wins and skips a target with no outcome: confirm `reverify_support_run` guarantees one outcome per target.
+  - **H10.** `GateVerdict` can hold two `GOLD_EVIDENCE_RECALL` results (the gate row with a bound, the positivity row with `bound=None`); never key results by metric.
+  - **H11.** `stability_figures` has no home in `PilotReport`: append them to dev's `PartitionReport.figures` (the unique `(metric, qualifier)` validator allows it) or add a field before any report is committed.
+  - **H12.** Judge family names must be `IdPart`-safe: constrain `ChatModelFile.family` at config intake (B1), or refuse early in `partition_report`; a non-`IdPart` family would crash a `Figure.qualifier`.
+  - **H13.** The export list omits `joint_score`, `sealed`, `claim_label`, `joint_label`, `Figure`, `ReadingAgreement`, `IndependentFigures`, `EvidenceTally` and `configuration_hash`: import them from their submodules, or decide at A8.
+  - **H14.** Pin the scorer-view vocabulary in the dictionary: report qualifiers `minicheck` and `deberta` against `MetricReport.view` values `minicheck_joint` and `deberta_joint`.
+  - **H15.** `scores.hard_negative_counts` still drops a hard negative's dangling quote IDs silently (D19-7, P17-5(2)); A8's report should surface them if a kept draft can hold any.
+  - **H16 (for plan B).** Tie-group evidence is scored by accepted `(theme, item)` pairs. Redundant correct alternatives, whether excused or scored, each count as hits, so the gated `span_unit_f1` can rise when a run adds a correct alternative, and which member is excused follows D19-6's lowest-ID rule. A maximum matching of accepted pairs to gold `(cell, item)` pairs (scored first, per atomic segment for characters, unmatched in-slot pairs neutral) is the stricter alternative with trade-offs of its own: it can give up monotonicity if excused in-cell pairs stay accepted. Decide from the pilot's gold if overlapping tie groups matter (`specs/deferred_items.md`, section `19-…`). The data dictionary's `EvidenceCell` paragraph says this is recorded here.
 
 ---
 
