@@ -115,3 +115,73 @@ def test_an_unsorted_grid_is_refused() -> None:
     menu = [{**fields()["menu"][0], "grid": [0.5, 0.0]}]
     with pytest.raises(RecordError, match="sorted and unique"):
         freeze_preregistration(fields(menu=menu))
+
+
+def gate_rule(gated, undefined_gate="not_gated") -> dict:
+    """A gate rule with ``gated`` as given."""
+    return {
+        "rule": "dev-lower-bound/1",
+        "gated": gated,
+        "undefined_gate": undefined_gate,
+    }
+
+
+def test_an_unsorted_grid_names_its_candidate() -> None:
+    menu = [{**fields()["menu"][0], "grid": [0.5, 0.0]}]
+    with pytest.raises(RecordError, match="scorer-only.*sorted and unique"):
+        freeze_preregistration(fields(menu=menu))
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [
+        "hard_negative_false_acceptance",
+        "gs5_edited_share",
+        "gs5_rejected_share",
+        "gs5_added_share",
+        "judge_ac1",
+        "scorer_auc",
+    ],
+)
+def test_a_reported_metric_cannot_be_gated(extra) -> None:
+    gated = sorted({*(m.value for m in REQUIRED_GATES), extra})
+    with pytest.raises(RecordError, match=f"gated metrics.*{extra}"):
+        freeze_preregistration(fields(gates=gate_rule(gated)))
+
+
+@pytest.mark.parametrize("missing", sorted(m.value for m in REQUIRED_GATES))
+def test_a_required_gate_cannot_be_dropped(missing) -> None:
+    gated = sorted(m.value for m in REQUIRED_GATES if m.value != missing)
+    with pytest.raises(RecordError, match=f"gated metrics.*{missing}"):
+        freeze_preregistration(fields(gates=gate_rule(gated)))
+
+
+def test_a_metric_is_gated_once() -> None:
+    gated = [*sorted(m.value for m in REQUIRED_GATES), "release_precision"]
+    with pytest.raises(RecordError, match="gated once.*release_precision"):
+        freeze_preregistration(fields(gates=gate_rule(gated)))
+
+
+def test_an_unknown_undefined_gate_is_refused() -> None:
+    gated = sorted(m.value for m in REQUIRED_GATES)
+    with pytest.raises(RecordError, match="gates.undefined_gate"):
+        freeze_preregistration(fields(gates=gate_rule(gated, "never")))
+
+
+def test_point_estimate_round_trips(tmp_path) -> None:
+    gated = sorted(m.value for m in REQUIRED_GATES)
+    record = freeze_preregistration(fields(gates=gate_rule(gated, "point_estimate")))
+    path = tmp_path / "preregistration-v1.toml"
+    path.write_text(preregistration_toml(record), encoding="utf-8")
+    loaded = load_preregistration(path)
+    assert loaded == record
+    assert loaded.content_hash == record.content_hash
+    assert loaded.gates.undefined_gate == "point_estimate"
+    assert record.content_hash != freeze_preregistration(fields()).content_hash
+
+
+def test_a_duplicate_candidate_is_refused_and_named() -> None:
+    first = fields()["menu"][0]
+    menu = [first, {**first, "grid": [0.1]}]
+    with pytest.raises(RecordError, match="menu: .*unique.*scorer-only"):
+        freeze_preregistration(fields(menu=menu))

@@ -6744,7 +6744,7 @@ interval is the event-clustered percentile bootstrap.
 | Field | Meaning |
 | --- | --- |
 | `rule` | `dev-lower-bound/1` (FP15) |
-| `gated` | The gated metrics: every one §Metrics gates, and none it marks descriptive or not estimated |
+| `gated` | Exactly the seven metrics §Metrics marks gated, each once: release-ID precision and recall, exact theme F1 (micro and macro), unit F1, gold-evidence recall and support precision. Each is higher-is-better, so no reported, descriptive or not-estimated metric can be gated |
 | `undefined_gate` | `not_gated` or `point_estimate`, for a dev interval that is undefined |
 
 ### `Preregistration`

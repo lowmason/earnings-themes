@@ -11,15 +11,17 @@ it, so a later edit is caught (FP9).
   no decision (D19-1).
 - **The menu** holds scorer-cutoff candidates over MiniCheck's joint score, each with
   its cutoff grid (D19-1).
-- **The gates** must include every metric §Metrics gates, and may never include one
-  it marks descriptive or not estimated (D1).
+- **The gates** are exactly the metrics §Metrics marks gated. Each is higher-is-better,
+  as ``derive_gates`` and ``evaluate_gates`` assume (a gate is a lower bound), so a
+  reported, descriptive or not-estimated metric can never be gated (D1).
 """
 
-from collections.abc import Mapping
+from collections import Counter
+from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Annotated, Literal, Self
 
-from pydantic import Field, PositiveInt, model_validator
+from pydantic import Field, PositiveInt, field_validator, model_validator
 
 from earnings_themes import tomlfile
 from earnings_themes.evaluation.bootstrap import BootstrapPlan
@@ -40,19 +42,16 @@ REQUIRED_GATES = frozenset(
         Metric.SUPPORT_PRECISION,
     }
 )
-"""The metrics §Metrics gates."""
-NEVER_GATED = frozenset(
-    {
-        Metric.RARE_THEME_RECALL,
-        Metric.SECTOR_PREVALENCE,
-        Metric.SOURCE_SELECTION_BIAS,
-    }
-)
-"""Descriptive only, or not estimated (D1)."""
+"""The metrics §Metrics gates, and the only ones the gate rule may list."""
 HEADER = (
     "Stage 11's preregistration (FP9), committed before any pilot output exists."
     " Numbers, rules and hashes only. Its content_hash covers every other field."
 )
+
+
+def _repeated(values: Iterable[str]) -> str:
+    """The values that occur more than once, sorted and comma-joined."""
+    return ", ".join(sorted(v for v, count in Counter(values).items() if count > 1))
 
 
 class FloorRule(Part):
@@ -79,7 +78,9 @@ class Candidate(Part):
     @model_validator(mode="after")
     def _sorted_grid(self) -> Self:
         if list(self.grid) != sorted(set(self.grid)):
-            raise ValueError("the grid must be sorted and unique")
+            raise ValueError(
+                f"candidate {self.candidate_id}: the grid must be sorted and unique"
+            )
         return self
 
 
@@ -113,11 +114,17 @@ class GateRule(Part):
 
     @model_validator(mode="after")
     def _the_spec_gates(self) -> Self:
+        if twice := _repeated(self.gated):
+            raise ValueError(f"a metric is gated once: {twice} repeated")
         gated = set(self.gated)
-        if len(gated) != len(self.gated):
-            raise ValueError("a metric is gated once")
-        if not REQUIRED_GATES <= gated or gated & NEVER_GATED:
-            raise ValueError("the gates must be §Metrics' gated metrics")
+        missing = ", ".join(sorted(REQUIRED_GATES - gated))
+        extra = ", ".join(sorted(gated - REQUIRED_GATES))
+        if missing or extra:
+            raise ValueError(
+                "the gates must be exactly §Metrics' gated metrics"
+                f" (missing: {missing or 'none'};"
+                f" not gated by the spec: {extra or 'none'})"
+            )
         return self
 
 
@@ -136,12 +143,12 @@ class Preregistration(ThemesRecord):
     gates: GateRule
     content_hash: Sha256Hex
 
-    @model_validator(mode="after")
-    def _distinct_candidates(self) -> Self:
-        ids = [candidate.candidate_id for candidate in self.menu]
-        if len(ids) != len(set(ids)):
-            raise ValueError("candidate IDs must be unique")
-        return self
+    @field_validator("menu")
+    @classmethod
+    def _distinct_candidates(cls, menu: tuple[Candidate, ...]) -> tuple[Candidate, ...]:
+        if twice := _repeated(candidate.candidate_id for candidate in menu):
+            raise ValueError(f"candidate IDs must be unique: {twice} repeated")
+        return menu
 
 
 def freeze_preregistration(fields: Mapping[str, object]) -> Preregistration:
