@@ -7031,7 +7031,8 @@ ordinary pilot runs, refusing with `policy_unavailable` or `policy_mismatch`.
 
 A strict local `earnings_pipeline.pilot_records` configuration. File selections
 are confined to the repository, and the alternative scorer must have kind
-`deberta`. The settings file and each selected file retain separate hash pins.
+`deberta`. Each selected train/dev configuration and runtime manifest has its own
+SHA-256 pin.
 
 | Field | Type | Meaning |
 | --- | --- | --- |
