@@ -14,7 +14,7 @@
 
 import json
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal, Protocol, Self
 
 from earnings_core import canonical_json, digest
 from earnings_core.documents import IdPart
@@ -66,6 +66,17 @@ class RecordError(ValueError):
         self.problems = problems
 
 
+class HashedRecord(Protocol):
+    """The structural contract for immutable records carrying a content hash."""
+
+    @property
+    def content_hash(self) -> str: ...
+
+    def model_dump(self, **kwargs: Any) -> dict[str, Any]: ...
+
+    def model_copy(self, *, update: dict[str, Any]) -> Self: ...
+
+
 def record_json(record: BaseModel) -> bytes:
     """Indented JSON with sorted keys, as the corpus records are written."""
     text = json.dumps(
@@ -101,19 +112,24 @@ def read_json(path: Path) -> object:
         raise RecordError(path.name, (f"not JSON at line {error.lineno}",)) from None
 
 
-def content_hash(record: BaseModel) -> str:
+def content_hash(record: HashedRecord) -> str:
     """The digest of every field but ``content_hash``."""
     return digest(record.model_dump(mode="json", exclude={"content_hash"}))
 
 
-def sealed[M: BaseModel](record: M) -> M:
+def sealed[M: HashedRecord](record: M) -> M:
     """``record`` with its ``content_hash`` filled in."""
     return record.model_copy(update={"content_hash": content_hash(record)})
 
 
-def checked[M: BaseModel](record: M, name: str) -> M:
+def hash_matches(record: HashedRecord) -> bool:
+    """Whether the shared content digest matches the recorded content hash."""
+    return content_hash(record) == record.content_hash
+
+
+def checked[M: HashedRecord](record: M, name: str) -> M:
     """``record``, refused unless it hashes to its ``content_hash``."""
-    if content_hash(record) != record.content_hash:
+    if not hash_matches(record):
         raise RecordError(name, ("does not hash to its content_hash",))
     return record
 
@@ -128,6 +144,7 @@ def parse[M: BaseModel](data: object, model: type[M], name: str) -> M:
 
 __all__ = [
     "THEMES_SCHEMA_VERSION",
+    "HashedRecord",
     "IdPart",
     "NonBlank",
     "Part",
@@ -138,6 +155,7 @@ __all__ = [
     "checked",
     "content_hash",
     "describe",
+    "hash_matches",
     "parse",
     "read_json",
     "record_json",

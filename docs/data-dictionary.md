@@ -6625,7 +6625,7 @@ groups the two hit counts are equal, and every figure is the single-tally one.
 | `label` | `feasibility-only` (R12.2) |
 | `preregistration_hash` | The preregistration it follows |
 | `calibration_hash` | The calibration artifact whose policy it scores |
-| `partitions` | Train's and dev's `PartitionReport` |
+| `partitions` | Exactly one train and one dev `PartitionReport`, in either order; duplicate or missing partitions refuse |
 | `independent` | Each dev event's `IndependentFigures` |
 | `content_hash` | Digest of every other field |
 
@@ -6768,7 +6768,7 @@ groups the two hit counts are equal, and every figure is the single-tally one.
 | `candidate_id` | The candidate |
 | `rule` | `scorer_cutoff` |
 | `signal` | `minicheck_joint` |
-| `signals` | How many signals it reads, for the tie-break |
+| `signals` | Exactly `1`: the MiniCheck joint signal; the tie-break field is retained |
 | `grid` | Its cutoffs, sorted |
 
 ### `SelectionRule`
@@ -6837,7 +6837,7 @@ groups the two hit counts are equal, and every figure is the single-tally one.
 | Field | Meaning |
 | --- | --- |
 | `candidate_id` | The candidate |
-| `signals` | Signals it reads |
+| `signals` | Exactly `1`, matching the single-signal `Candidate` |
 | `cutoff` | The fitted cutoff, or null when none meets ρ |
 | `precision` | Train labelled precision there against the joint label, or null |
 | `recall` | Train label recall there against the joint label, or null |
@@ -6948,3 +6948,24 @@ reverify the support run, recompute proposed inputs, bind the extraction source 
 ID/hash, documents and codebook, and require support targets to be among the
 proposals. The existing support gate establishes unique outcomes in target order.
 The application applies it to both support runs before calibration or reporting.
+
+### `HashedRecord`
+
+A nonpersisted structural `Protocol` bounding `sealed` and `checked`; its existing
+record implementations keep their fields and serialized schema. The shared
+comparison is `hash_matches(record: HashedRecord) -> bool`. `checked` maps a failed
+comparison to `RecordError`; calibration maps it to `preregistration_mismatch`,
+and the calibrated policy maps it to `content_hash_mismatch`.
+
+| Member | Meaning |
+| --- | --- |
+| `content_hash` | The stored digest of every other serialized field |
+| `model_dump` | JSON-compatible serialization used by the shared content digest |
+| `model_copy` | Immutable reconstruction used to fill the content hash |
+
+### Preregistered gate boundary
+
+`derive_gates(report, *, rule: GateRule, judge_floor, preregistration_hash,
+version=1)` takes and rechecks the preregistered rule; an arbitrary metric list or
+undefined-gate string cannot replace it. Gate wrong-partition errors name
+`partition`.

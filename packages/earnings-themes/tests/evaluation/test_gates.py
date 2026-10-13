@@ -10,6 +10,7 @@ from earnings_themes.evaluation.gates import (
     gates_toml,
     load_gates,
 )
+from earnings_themes.evaluation.preregistration import REQUIRED_GATES, GateRule
 from earnings_themes.evaluation.problems import EvaluationError, EvaluationProblem
 from earnings_themes.evaluation.records import Metric, PilotReport, sealed
 from earnings_themes.evaluation.report import EventObservation, partition_report
@@ -19,12 +20,13 @@ from earnings_themes.split import Partition
 from .test_report import BOOK, PLAN, labelled, observations
 
 HASH = "1" * 64
-GATED = (
-    Metric.THEME_F1_MICRO,
-    Metric.SPAN_UNIT_F1,
-    Metric.GOLD_EVIDENCE_RECALL,
-    Metric.SUPPORT_PRECISION,
-)
+GATED = tuple(sorted(REQUIRED_GATES))
+
+
+def rule(undefined_gate="not_gated"):
+    return GateRule(
+        rule="dev-lower-bound/1", gated=GATED, undefined_gate=undefined_gate
+    )
 
 
 def pilot(dev) -> PilotReport:
@@ -33,7 +35,12 @@ def pilot(dev) -> PilotReport:
             report_version=1,
             preregistration_hash=HASH,
             calibration_hash=HASH,
-            partitions=(dev,),
+            partitions=(
+                dev.model_copy(
+                    update={"partition": Partition.TRAIN, "in_sample": True}
+                ),
+                dev,
+            ),
             content_hash="0" * 64,
         )
     )
@@ -49,8 +56,7 @@ def baseline():
 def gates_of(baseline, **options):
     return derive_gates(
         pilot(baseline),
-        gated=GATED,
-        undefined_gate=options.get("undefined_gate", "not_gated"),
+        rule=rule(options.get("undefined_gate", "not_gated")),
         judge_floor=0.4,
         preregistration_hash=HASH,
     )
@@ -133,17 +139,15 @@ def test_gates_need_the_dev_partition_and_its_preregistration(baseline) -> None:
     )
     with pytest.raises(EvaluationError, match="wrong_partition"):
         derive_gates(
-            pilot(train),
-            gated=GATED,
-            undefined_gate="not_gated",
+            pilot(baseline).model_copy(update={"partitions": (train,)}),
+            rule=rule(),
             judge_floor=0.4,
             preregistration_hash=HASH,
         )
     with pytest.raises(EvaluationError) as refused:
         derive_gates(
             pilot(baseline),
-            gated=GATED,
-            undefined_gate="not_gated",
+            rule=rule(),
             judge_floor=0.4,
             preregistration_hash="2" * 64,
         )

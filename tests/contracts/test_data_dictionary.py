@@ -685,6 +685,16 @@ def test_source_bindings_and_shared_coding_gates_documented():
     )
 
 
+def test_hashed_record_and_gate_boundary_documented():
+    assert documented("HashedRecord") == {"content_hash", "model_dump", "model_copy"}
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert "hash_matches(record: HashedRecord) -> bool" in text
+    assert (
+        "derive_gates(report, *, rule: GateRule, judge_floor, preregistration_hash,"
+        in text
+    )
+
+
 EVALUATION_MODELS = [
     bootstrap.BootstrapPlan,
     bootstrap.Interval,

@@ -182,7 +182,14 @@ def merge_labels(
     labels, the added ones."""
     new = working.of(partition)
     if committed is None:
-        return working.model_copy(update={"labels": new})
+        return parse(
+            {
+                **working.model_dump(mode="json"),
+                "labels": [l.model_dump(mode="json") for l in new],
+            },
+            SupportLabelSet,
+            "labels",
+        )
     if committed.preregistration_hash != working.preregistration_hash:
         raise EvaluationError(EvaluationProblem.PREREGISTRATION_MISMATCH, "labels")
     old = committed.of(partition)
@@ -204,6 +211,12 @@ def merge_labels(
     kept = tuple(
         label for label in committed.labels if label.partition is not partition
     )
-    return committed.model_copy(
-        update={"labels": (*kept, *new), "train_extensions": extensions}
+    return parse(
+        {
+            **committed.model_dump(mode="json"),
+            "labels": [label.model_dump(mode="json") for label in (*kept, *new)],
+            "train_extensions": extensions,
+        },
+        SupportLabelSet,
+        "labels",
     )

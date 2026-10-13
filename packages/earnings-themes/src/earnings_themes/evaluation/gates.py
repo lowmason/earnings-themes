@@ -9,11 +9,10 @@
   everything fails (R12.8).
 """
 
-from collections.abc import Sequence
 from pathlib import Path
-from typing import Literal
 
 from earnings_themes import tomlfile
+from earnings_themes.evaluation.preregistration import GateRule
 from earnings_themes.evaluation.problems import EvaluationError, EvaluationProblem
 from earnings_themes.evaluation.records import (
     Gate,
@@ -27,7 +26,7 @@ from earnings_themes.evaluation.records import (
     checked,
     sealed,
 )
-from earnings_themes.records import parse
+from earnings_themes.records import RecordError, parse
 from earnings_themes.split import Partition
 
 HEADER = (
@@ -39,23 +38,26 @@ HEADER = (
 def derive_gates(
     report: PilotReport,
     *,
-    gated: Sequence[Metric],
-    undefined_gate: Literal["not_gated", "point_estimate"],
+    rule: GateRule,
     judge_floor: float,
     preregistration_hash: str,
     version: int = 1,
 ) -> Gates:
     """V6's gates from ``report``'s dev partition (FP15)."""
+    try:
+        rule = parse(rule.model_dump(mode="json"), GateRule, "rule")
+    except (RecordError, AttributeError):
+        raise EvaluationError(EvaluationProblem.MALFORMED_RECORD, "rule") from None
     dev = report.partition(Partition.DEV)
     if dev is None:
-        raise EvaluationError(EvaluationProblem.WRONG_PARTITION, "dev")
+        raise EvaluationError(EvaluationProblem.WRONG_PARTITION, "partition")
     if report.preregistration_hash != preregistration_hash:
         raise EvaluationError(
             EvaluationProblem.PREREGISTRATION_MISMATCH, "preregistration_hash"
         )
     gates: list[Gate] = []
     ungated: list[Ungated] = []
-    for metric in sorted(set(gated)):
+    for metric in sorted(rule.gated):
         figure = dev.figure(metric)
         if figure is None:
             ungated.append(Ungated(metric=metric, reason="not_in_report"))
@@ -63,7 +65,7 @@ def derive_gates(
             gates.append(
                 Gate(metric=metric, bound=figure.interval.lower, basis="lower_bound")
             )
-        elif undefined_gate == "point_estimate" and figure.point is not None:
+        elif rule.undefined_gate == "point_estimate" and figure.point is not None:
             gates.append(
                 Gate(metric=metric, bound=figure.point, basis="point_estimate")
             )
@@ -86,7 +88,7 @@ def derive_gates(
 def evaluate_gates(gates: Gates, report: PartitionReport) -> GateVerdict:
     """Whether a configuration's dev figures pass every gate (FP15, R12.8)."""
     if report.partition is not Partition.DEV:
-        raise EvaluationError(EvaluationProblem.WRONG_PARTITION, report.partition.value)
+        raise EvaluationError(EvaluationProblem.WRONG_PARTITION, "partition")
     results = []
     for gate in gates.gates:
         figure = report.figure(gate.metric)

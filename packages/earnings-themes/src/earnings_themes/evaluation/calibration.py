@@ -39,10 +39,17 @@ from earnings_themes.evaluation.labels import (
 )
 from earnings_themes.evaluation.preregistration import Preregistration
 from earnings_themes.evaluation.problems import EvaluationError, EvaluationProblem
-from earnings_themes.evaluation.records import Real, content_hash, sealed
+from earnings_themes.evaluation.records import Real, sealed
 from earnings_themes.evaluation.verdicts import families, family_judgement
 from earnings_themes.extraction.records import RunRecord
-from earnings_themes.records import IdPart, NonBlank, Part, Sha256Hex, ThemesRecord
+from earnings_themes.records import (
+    IdPart,
+    NonBlank,
+    Part,
+    Sha256Hex,
+    ThemesRecord,
+    hash_matches,
+)
 from earnings_themes.split import Partition
 from earnings_themes.support.metrics import (
     Acceptance,
@@ -116,7 +123,7 @@ class CandidateFit(Part):
     """One candidate's fitted cutoff, or ``None`` when no cutoff meets ρ."""
 
     candidate_id: IdPart
-    signals: PositiveInt
+    signals: Literal[1]
     cutoff: Real | None
     precision: Real | None
     recall: Real | None
@@ -275,7 +282,7 @@ def calibrate(
     ``views`` are the MiniCheck support run's ``decision_inputs``; ``alternative``
     is DeBERTa's joint score by target; ``events`` maps each target to its event;
     ``configuration`` is ``frozen_configuration``'s."""
-    if content_hash(preregistration) != preregistration.content_hash:
+    if not hash_matches(preregistration):
         raise EvaluationError(
             EvaluationProblem.PREREGISTRATION_MISMATCH, "content_hash"
         )

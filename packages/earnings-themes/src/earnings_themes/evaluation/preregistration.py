@@ -76,7 +76,7 @@ class Candidate(Part):
     candidate_id: IdPart
     rule: Literal["scorer_cutoff"]
     signal: Literal["minicheck_joint"]
-    signals: PositiveInt
+    signals: Literal[1]
     grid: Annotated[tuple[Share, ...], Field(min_length=1)]
 
     @model_validator(mode="after")
