@@ -7154,3 +7154,25 @@ checks the entire working file before append-only label promotion, preserves
 existing committed rows and extension metadata, requires growth for a train
 extension and atomically replaces the checked committed TOML. Unknown targets
 are reported through the field path `labels.target_id`, without input wording.
+
+
+### Pilot calibration application interfaces
+
+`pilot_calibration.read_label_bytes(path)` returns the checked `SupportLabelSet`
+and exact parsed label bytes. `pilot_calibration.calibrate_pilot(intake, loaded)`
+requires train intake, the checked baseline pass and HEAD-committed labels before
+reading label bytes. It validates the sampled train labels and both proposal/support
+bindings before constructing frozen configuration and calibration decision views,
+hashes the original bytes, and publishes the immutable calibration artifact.
+
+`pilot_calibration.checked_calibration(intake)` requires a HEAD-committed calibration
+artifact, validates its `content_hash` through the shared reader, checks
+the preregistration binding, and calls
+`pilot_calibration.validate_calibration_labels(intake, artifact)`. The latter finds
+the original parsed bytes in reachable HEAD history, refuses changed train labels
+or extension metadata with `labels_changed`, and permits a dev append.
+Downstream workflow policy binding recomputes the public `configuration_hash`
+before binding the calibrated policy.
+`pilot_calibration.evaluation_path(intake, name)` confines output paths to the pinned
+evaluation directory before immutable writes. These interfaces reuse existing
+contracts and introduce no new structural type or schema version.

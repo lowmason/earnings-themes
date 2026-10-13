@@ -868,3 +868,18 @@ def test_pilot_label_interfaces_documented():
         assert f"pilot_labels.{name}" in text
     assert "real unsure answers" in text
     assert "append-only label promotion" in text
+
+
+def test_pilot_calibration_interfaces_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    for name in (
+        "read_label_bytes",
+        "calibrate_pilot",
+        "checked_calibration",
+        "validate_calibration_labels",
+        "evaluation_path",
+    ):
+        assert f"pilot_calibration.{name}" in text
+    assert "exact parsed label bytes" in text
+    assert "reachable HEAD history" in text
+    assert "permits a dev append" in text
