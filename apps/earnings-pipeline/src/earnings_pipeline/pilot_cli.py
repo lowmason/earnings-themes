@@ -86,7 +86,7 @@ def split_command(context: typer.Context) -> None:
     try:
         manifest = derive_split(layout, pinned)
     except ValueError as error:
-        fail(f"Refused: {error}")
+        fail(f"Refused: pilot_record: {type(error).__name__}")
     created = write_once(pinned.split_path, record_json(manifest), layout)
     _said(pinned, layout)
     for partition in Partition:
@@ -179,7 +179,7 @@ def coverage_command(context: typer.Context, version: Version = 1) -> None:
     try:
         run_ids = load_coverage(first).run_ids if first.is_file() else None
     except ValueError as error:
-        fail(f"Refused: {error}")
+        fail(f"Refused: pilot_record: {type(error).__name__}")
     no_theme = _no_theme(layout, pinned, run_ids or ()) if version == 2 else []
     try:
         report = build_coverage(
@@ -191,7 +191,7 @@ def coverage_command(context: typer.Context, version: Version = 1) -> None:
             no_theme=no_theme,
         )
     except ValueError as error:
-        fail(f"Refused: {error}")
+        fail(f"Refused: pilot_record: {type(error).__name__}")
     path = pinned.coverage_file(version)
     created = write_once(path, serialize(report), layout)
     _said(pinned, layout)
@@ -290,3 +290,8 @@ def recount_command(context: typer.Context, event_ids: Events = None) -> None:
             f"Refused: {problems} problem(s); GS5's shares wait until each is resolved"
         )
     typer.echo(f"recounted {len(records)} file(s): each rebuilds from its kept draft")
+
+
+from earnings_pipeline.pilot_commands import register as register_a8
+
+register_a8(pilot)

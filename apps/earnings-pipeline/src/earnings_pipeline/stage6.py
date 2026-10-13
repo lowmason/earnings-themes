@@ -262,7 +262,7 @@ def load_pinned(layout: Layout) -> Pinned:
         events = load_event_manifest(manifest_path(path.parent, version))
         coverage_pin = pilot_pin(pilot, events, universe)
     except (OSError, ValueError) as error:
-        fail(f"Refused: {error}")
+        fail(f"Refused: pinned_metadata: {type(error).__name__}")
     if pilot.definition.content_hash != layout.pilot_hash:
         fail(
             f"Refused: {layout.shown(path)} holds pilot"
@@ -283,7 +283,7 @@ def transitions(layout: Layout) -> list[StateTransition]:
     try:
         return read_runs(layout.repo / EVENT_RUNS / "states")
     except (OSError, ValueError) as error:
-        fail(f"Refused: {error}")
+        fail(f"Refused: state_metadata: {type(error).__name__}")
 
 
 def documents(layout: Layout, pinned: Pinned) -> dict[str, str]:
