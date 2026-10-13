@@ -50,6 +50,7 @@ from earnings_themes.evaluation import (
     bootstrap,
     cells,
     labels,
+    preregistration,
     report,
     sampling,
     scores,
@@ -685,6 +686,12 @@ EVALUATION_MODELS = [
     evaluation_records.GateVerdict,
     labels.SupportLabel,
     labels.SupportLabelSet,
+    preregistration.FloorRule,
+    preregistration.Candidate,
+    preregistration.SelectionRule,
+    preregistration.SamplingPlan,
+    preregistration.GateRule,
+    preregistration.Preregistration,
 ]
 EVALUATION_ENUMS = [
     evaluation_problems.EvaluationProblem,

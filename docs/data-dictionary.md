@@ -6696,3 +6696,70 @@ interval is the event-clustered percentile bootstrap.
 | `target_id` | An `assessed` or `flagged` target |
 | `event_id` | Its event |
 | `theme_id` | Its proposed theme |
+
+### `FloorRule`
+
+| Field | Meaning |
+| --- | --- |
+| `statistic` | `cohen_kappa` |
+| `reported` | `gwet_ac1`, beside it |
+| `population` | `family_verdict_vs_joint_label` |
+| `bound` | `event_bootstrap_lower` |
+| `floor` | The user's number, from 0.3 to 0.6 (RC §7) |
+| `consequence` | `reported_only` (D19-1) |
+
+### `Candidate`
+
+| Field | Meaning |
+| --- | --- |
+| `candidate_id` | The candidate |
+| `rule` | `scorer_cutoff` |
+| `signal` | `minicheck_joint` |
+| `signals` | How many signals it reads, for the tie-break |
+| `grid` | Its cutoffs, sorted |
+
+### `SelectionRule`
+
+| Field | Meaning |
+| --- | --- |
+| `recall_floor` | ρ: the label recall a cutoff must reach |
+| `objective` | `max_train_precision` |
+| `tie_break` | `fewer_signals_then_lower_cutoff` |
+
+### `SamplingPlan`
+
+| Field | Meaning |
+| --- | --- |
+| `seed` | The sampler's seed |
+| `pool` | `assessed_and_flagged` |
+| `train_size` | Train's sample size |
+| `train_cap` | Train's per-event cap |
+| `dev_size` | Dev's sample size |
+| `dev_cap` | Dev's per-event cap |
+| `minimum_usable` | Usable train joint labels calibration needs; at least 50 (R8.4) |
+| `extension_step` | Targets each extension adds to train's size |
+
+### `GateRule`
+
+| Field | Meaning |
+| --- | --- |
+| `rule` | `dev-lower-bound/1` (FP15) |
+| `gated` | The gated metrics: every one §Metrics gates, and none it marks descriptive or not estimated |
+| `undefined_gate` | `not_gated` or `point_estimate`, for a dev interval that is undefined |
+
+### `Preregistration`
+
+| Field | Meaning |
+| --- | --- |
+| `schema_version` | `1` |
+| `preregistration_version` | Its version |
+| `pin` | The pilot pin (GS2) |
+| `split_hash` | The split |
+| `codebook` | The codebook |
+| `floor` | The `FloorRule` |
+| `menu` | Each `Candidate` |
+| `selection` | The `SelectionRule` |
+| `sampling` | The `SamplingPlan` |
+| `bootstrap` | The `BootstrapPlan` |
+| `gates` | The `GateRule` |
+| `content_hash` | Digest of every other field |
