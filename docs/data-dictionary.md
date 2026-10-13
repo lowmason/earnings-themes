@@ -6415,8 +6415,8 @@ pointer unit it shares a character with. A theme is present in an event when a g
 assignment pairs it with a claim under `supports`. A tie group resolves to a member
 the run predicted, else one already present, else its lowest theme ID, and its
 other members are excused. A theme whose every row is `uncertain` is left out and
-counted. A reference to a quote or claim the reading lacks is counted as dangling.
-The roll-up maps both sides to level-one roots. Gold-evidence recall counts the
+counted. A claim's reference to a quote, or any assignment's reference to a claim,
+that the reading lacks is counted as dangling, one per reference. The roll-up maps both sides to level-one roots. Gold-evidence recall counts the
 gold-supporting units any accepted assignment holds. GS5's edited and rejected
 shares are over drafted items, and the added share over signed items. Every
 interval is the event-clustered percentile bootstrap.
@@ -6457,7 +6457,7 @@ interval is the event-clustered percentile bootstrap.
 | `uncertain` | Themes whose every gold row is `uncertain`: left out, counted |
 | `units` | Each present theme's gold-supporting units |
 | `spans` | Each present theme's gold-supporting spans |
-| `dangling` | References to quotes or claims the reading lacks |
+| `dangling` | References the reading cannot resolve, one each: a claim's quote the reading lacks, and any assignment's claim it lacks, whatever its support, theme or tie (D19-7) |
 
 ### `Tally`
 

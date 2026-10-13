@@ -7,6 +7,7 @@ import pytest
 from earnings_themes.evaluation.align import unit_index
 from earnings_themes.evaluation.cells import event_cells, level_one
 from earnings_themes.evaluation.problems import EvaluationError
+from earnings_themes.gold import Support
 
 from .cases import claim, example, quote, reading, row, unit_ids
 
@@ -59,6 +60,40 @@ def test_dangling_references_are_counted_and_add_nothing() -> None:
     cells = event_cells(gold, unit_index(source))
     assert cells.units == {"capacity": {p0}}
     assert cells.dangling == 2
+
+
+def test_every_assignment_citing_a_missing_claim_is_dangling() -> None:
+    """D19-7: one dangling reference per assignment whose claim the reading lacks,
+    whatever its support, theme or tie. The reading holds c1 only. Rows citing a
+    missing claim: c7 ``uncertain`` for labor (1), c8 ``does_not_support`` for debt
+    (1), c9 ``unmatched`` (1), and c6's tie group g1 over demand and pricing (2,
+    one per row, the excused pricing row included): 5, and no claim cites a missing
+    quote.
+
+    Scoring is as before: g1 resolves to demand (nothing predicted, no member
+    present untied, lowest ID), pricing is excused, labor is uncertain only, debt is
+    decided against, and demand's missing claim adds no evidence."""
+    source, _ = example()
+    p0 = unit_ids(source)[0]
+    gold = reading(
+        quotes=(quote("q1", 0, 5, p0),),
+        claims=(claim("c1", "q1"),),
+        assignments=(
+            row("c1", "capacity"),
+            row("c7", "labor", Support.UNCERTAIN),
+            row("c8", "debt", Support.DOES_NOT_SUPPORT),
+            row("c9", "unmatched"),
+            row("c6", "demand", tie_group="g1"),
+            row("c6", "pricing", tie_group="g1"),
+        ),
+    )
+    cells = event_cells(gold, unit_index(source))
+    assert cells.dangling == 5
+    assert cells.present == {"capacity", "demand"}
+    assert cells.excused == {"pricing"}
+    assert cells.uncertain == {"labor"}
+    assert cells.units == {"capacity": {p0}, "demand": frozenset()}
+    assert cells.spans == {"capacity": ((0, 5),), "demand": ()}
 
 
 def test_level_one_maps_each_theme_to_its_root() -> None:

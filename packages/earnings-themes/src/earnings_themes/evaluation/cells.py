@@ -10,9 +10,10 @@
 - **Uncertain only.** A theme whose every gold row is ``uncertain`` is left out of
   scoring and counted (FP20).
 - **Evidence.** A present theme's gold spans are the quotes of the claims that
-  support it, after the tie groups resolve. A reference to a quote or a claim that
-  the reading does not hold is counted as ``dangling`` and adds nothing, so a kept
-  draft is compared as drafted (P17-5(2), D19-7).
+  support it, after the tie groups resolve. A claim's reference to a quote, or any
+  assignment's reference to a claim, that the reading does not hold is counted as
+  ``dangling``, one per reference, and adds nothing, so a kept draft is compared as
+  drafted (P17-5(2), D19-7).
 - **Roll-up.** ``theme_map`` maps every theme before anything else; ``level_one``
   maps each theme to its root, on both sides (D19-3).
 """
@@ -98,7 +99,9 @@ def event_cells(
     predicted = frozenset(predicted)
     quotes = {q.quote_id: (q.start, q.end) for q in reading.quotes}
     claims = {c.claim_id: c.quote_ids for c in reading.claims}
-    dangling = sum(q not in quotes for ids in claims.values() for q in ids)
+    dangling = sum(q not in quotes for ids in claims.values() for q in ids) + sum(
+        a.claim_id not in claims for a in reading.assignments
+    )
     rows = [
         (a.claim_id, mapped(a.theme_id), a.support, a.tie_group)
         for a in reading.assignments
@@ -128,7 +131,6 @@ def event_cells(
     uncertain = {theme for _, theme, _, _ in rows} - decided - present - excused
     spans: dict[str, tuple[Span, ...]] = {}
     for theme_id, claim_ids in supporting.items():
-        dangling += sum(c not in claims for c in claim_ids)
         found = {quotes[q] for c in claim_ids for q in claims.get(c, ()) if q in quotes}
         spans[theme_id] = tuple(sorted(found))
     return EventCells(
