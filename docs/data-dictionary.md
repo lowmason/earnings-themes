@@ -3626,9 +3626,9 @@ Stage 11 owns view selection, calibration, pooling, and thresholds.
 `accepted_claim_recall(population, labels, decisions, *, task)` (plan 19) is the
 share of labels marked supported whose target an external decision accepted. Its
 denominator is the human-labeled positive targets, reported as `joined_count`; no
-such target yields `no_labeled_positive`. A target with no decision is not
-accepted, and nothing is inferred. Stage 11's calibration reads it beside
-precision, as label recall.
+such target yields `no_labeled_positive`. A target with no decision is counted as
+not accepted, as Stage 9 never accepts a target it did not decide. Stage 11's
+calibration reads it beside precision, as label recall.
 
 ### `HumanLabel`
 
@@ -3662,13 +3662,13 @@ precision, as label recall.
 | `value` | Finite metric in `[0,1]`, or `None` when undefined. |
 | `reason` | `None` for a defined value; otherwise `no_scored_labels`, `one_class`, `no_labeled_accepted`, or `no_labeled_positive`. |
 | `task` | Explicit selected label task. |
-| `view` | Selected score view for AUC, or `external_acceptance` for precision. |
+| `view` | Selected score view for AUC, or `external_acceptance` for precision and recall. |
 | `population_count` | Number of unique supplied population IDs. |
 | `labeled_count` | Number of human labels supplied in the population. |
-| `scored_count` | Number of nonmissing selected-view scores; zero for precision. |
-| `joined_count` | Labeled scored targets for AUC; labeled accepted targets for precision. |
+| `scored_count` | Number of nonmissing selected-view scores; zero for precision and recall. |
+| `joined_count` | Labeled scored targets for AUC; labeled accepted targets for precision; labeled supported targets for recall. |
 | `accepted_count` | Number of external true decisions, including unlabeled cases; zero for AUC. |
-| `missing_score_count` | Population count minus scored count for AUC, including absent and `None` scores; zero for precision. |
+| `missing_score_count` | Population count minus scored count for AUC, including absent and `None` scores; zero for precision and recall. |
 | `missing_label_count` | Population count minus labeled count, independently of scores/decisions. |
 | `accepted_without_label_count` | External true decisions lacking a human label; zero for AUC. |
 
