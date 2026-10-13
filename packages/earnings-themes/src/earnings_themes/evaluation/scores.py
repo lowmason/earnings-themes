@@ -91,7 +91,10 @@ class EvidenceTally:
         return ratio(both, either) or 0.0
 
     def union(self) -> int:
-        """The accepted items and the gold items no theme accepts: disjoint."""
+        """The union over (theme or cell, item) pairs: the accepted (theme, item)
+        pairs, and the gold (cell, item) slots that no theme of their cell accepts.
+        A gold item can also be another theme's accepted item, and is then counted
+        on both sides, as the single tally's ``tp + fp + fn`` counts it."""
         return self.accepted + self.gold - self.gold_hits
 
     def jaccard(self) -> float | None:

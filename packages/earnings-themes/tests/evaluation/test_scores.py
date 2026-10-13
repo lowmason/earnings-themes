@@ -101,6 +101,26 @@ def test_unit_and_character_overlap_over_present_and_predicted_cells() -> None:
     assert (chars.accepted_hits, chars.union()) == (12, 60)
 
 
+def untied_reading() -> Reading:
+    """Capacity by c1 (q1 = [0, 5) in P0), labor by c2 (q2 = P1), hiring only
+    uncertain for c2, and debt decided against for c3 (q3 = P3): no tie group."""
+    p0, p1, _, p3 = unit_ids(bundle())
+    return reading(
+        quotes=(
+            quote("q1", 0, 5, p0),
+            quote("q2", 21, 37, p1),
+            quote("q3", 57, 73, p3),
+        ),
+        claims=(claim("c1", "q1"), claim("c2", "q2"), claim("c3", "q3")),
+        assignments=(
+            row("c1", "capacity"),
+            row("c2", "labor"),
+            row("c2", "hiring", Support.UNCERTAIN),
+            row("c3", "debt", Support.DOES_NOT_SUPPORT),
+        ),
+    )
+
+
 def test_a_reading_without_tie_groups_scores_as_before() -> None:
     """No tie group: each present theme is its own evidence cell. Gold: capacity by
     c1 (q1 = [0, 5) in P0), labor by c2 (q2 = P1), hiring only uncertain for c2, debt
@@ -116,20 +136,7 @@ def test_a_reading_without_tie_groups_scores_as_before() -> None:
     21 - 5 = 68."""
     source = bundle()
     p0, p1, _, p3 = unit_ids(source)
-    gold = reading(
-        quotes=(
-            quote("q1", 0, 5, p0),
-            quote("q2", 21, 37, p1),
-            quote("q3", 57, 73, p3),
-        ),
-        claims=(claim("c1", "q1"), claim("c2", "q2"), claim("c3", "q3")),
-        assignments=(
-            row("c1", "capacity"),
-            row("c2", "labor"),
-            row("c2", "hiring", Support.UNCERTAIN),
-            row("c3", "debt", Support.DOES_NOT_SUPPORT),
-        ),
-    )
+    gold = untied_reading()
     units = {
         "capacity": frozenset({p0, p3}),
         "hiring": frozenset({p1}),
@@ -151,6 +158,29 @@ def test_a_reading_without_tie_groups_scores_as_before() -> None:
     assert chars == EvidenceTally(accepted_hits=5, accepted=52, gold_hits=5, gold=21)
     assert (chars.accepted_hits, chars.union()) == (5, 68)
     assert chars.jaccard() == 5 / 68
+
+
+def test_evidence_under_the_wrong_theme_is_no_hit() -> None:
+    """Scoring stays theme-specific. ``untied_reading``, and a run accepting only
+    debt, over [0, 5) in P0: capacity's gold characters, under another theme. Cells:
+    capacity's {P0} ([0, 5)) and labor's {P1} ([21, 37)); debt, decided against and
+    not present, is scored and belongs to no cell. Units: debt's P0 is accepted, no
+    hit (1, 0); neither cell's theme accepts anything: gold 2, covered 0. (0, 1, 0,
+    2), F1 0; union 1 + 2 - 0 = 3, as the old Tally(fp=1, fn=2) totals 3, P0 counted
+    once as debt's and once as capacity's slot. Characters: debt's 5 accepted, none a
+    hit; gold 5 + 16 = 21, none covered: (0, 5, 0, 21), union 5 + 21 - 0 = 26,
+    Jaccard 0 / 26 = 0, as the old (shared 0, union 5 + 5 + 16 = 26)."""
+    source = bundle()
+    p0 = unit_ids(source)[0]
+    units = {"debt": frozenset({p0})}
+    cells = event_cells(untied_reading(), unit_index(source), units)
+    assert cells.present == {"capacity", "labor"} and cells.scored("debt")
+    counts = unit_tally(cells, units)
+    assert counts == EvidenceTally(accepted_hits=0, accepted=1, gold_hits=0, gold=2)
+    assert (counts.f1(), counts.union()) == (0.0, 3)
+    chars = char_counts(cells, {"debt": ((0, 5),)})
+    assert chars == EvidenceTally(accepted_hits=0, accepted=5, gold_hits=0, gold=21)
+    assert (chars.accepted_hits, chars.union(), chars.jaccard()) == (0, 26, 0.0)
 
 
 def tie_reading(*assignments) -> Reading:
@@ -239,7 +269,8 @@ def test_the_unchosen_member_carrying_the_groups_evidence_is_a_hit() -> None:
     1 / 2, F1 = 2 * 1 * 1 / (1 * 1 + 1 * 2) = 2/3, as 7cde927's single tally gave
     (tp 1, fp 1). Characters: capacity's 16 of P3, no hit, and pricing's 16 of P1,
     all hits: accepted 32, 16 hits; gold 16, covered: union 32 + 16 - 16 = 32, the
-    disjoint accepted P3 and P1 and no missed gold; Jaccard 16 / 32 = 1/2."""
+    accepted (capacity, P3) and (pricing, P1) and no missed gold slot; Jaccard
+    16 / 32 = 1/2."""
     source = bundle()
     _, p1, _, p3 = unit_ids(source)
     gold = tie_reading(

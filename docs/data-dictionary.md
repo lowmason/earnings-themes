@@ -6495,8 +6495,10 @@ counts only where no scored theme, nor a lower-ID member, of its cell accepts it
 gold`, and F1 their harmonic mean, `2 * accepted_hits * gold_hits /
 (accepted_hits * gold + gold_hits * accepted)`: 0 when nothing hits, null when
 neither side holds an item. Character Jaccard is `accepted_hits` over the union
-`accepted + gold - gold_hits`, the accepted items and the gold items no theme
-accepts. Without tie groups the two hit counts are equal, and every figure is the
+`accepted + gold - gold_hits`, taken over (theme or cell, item) pairs: the accepted
+(theme, item) pairs and the gold (cell, item) slots that no theme of their cell
+accepts. A gold item that another theme accepts is counted on both sides, as the
+single tally's `tp + fp + fn` counts it. Without tie groups the two hit counts are equal, and every figure is the
 single-tally one.
 
 | Field | Meaning |
@@ -6553,7 +6555,7 @@ single-tally one.
 | `span_unit_precision` | Accepted (theme, unit) pairs lying in a gold cell of their theme, each once, over the accepted pairs: scored themes' pairs, and an excused member's pairs that fill a slot of its group's cells no scored member nor lower-ID member also accepts, which are hits; its others are not scored (`EvidenceTally`, `EvidenceCell`); counts `accepted_hits`, `accepted`, `gold_hits`, `gold` |
 | `span_unit_recall` | Gold cells' units that a theme of the cell accepts, per cell |
 | `span_unit_f1` | The harmonic mean of the two (gated) |
-| `span_char_jaccard` | Accepted characters that hit, over accepted characters plus gold characters no theme accepts; an excused member's characters inside its group's cells that no scored member nor lower-ID member also covers are hits, and its others are not scored; counts `shared`, `union` (secondary) |
+| `span_char_jaccard` | Accepted characters that hit, over accepted (theme, character) pairs plus gold (cell, character) slots no theme of their cell accepts; an excused member's characters inside its group's cells that no scored member nor lower-ID member also covers are hits, and its others are not scored; counts `shared`, `union` (secondary) |
 | `retention_quotes` | Verified over proposed quotes (R12.8 (i)) |
 | `retention_targets` | Accepted over assessed targets (R12.8 (ii)) |
 | `gold_evidence_recall` | Gold-supporting units any accepted assignment holds (R12.8 (iii), gated, strictly above zero) |
