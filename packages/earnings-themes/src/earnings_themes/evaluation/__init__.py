@@ -16,7 +16,9 @@ from earnings_themes.evaluation.bootstrap import (
 from earnings_themes.evaluation.calibration import (
     CalibrationArtifact,
     calibrate,
+    configuration_hash,
     frozen_configuration,
+    joint_score,
 )
 from earnings_themes.evaluation.cells import (
     EventCells,
@@ -35,6 +37,8 @@ from earnings_themes.evaluation.labels import (
     SupportLabel,
     SupportLabelSet,
     check_labels,
+    claim_label,
+    joint_label,
     labels_toml,
     load_labels,
     merge_labels,
@@ -48,11 +52,15 @@ from earnings_themes.evaluation.preregistration import (
 )
 from earnings_themes.evaluation.problems import EvaluationError, EvaluationProblem
 from earnings_themes.evaluation.records import (
+    Figure,
     Gates,
     GateVerdict,
+    IndependentFigures,
     Metric,
     PartitionReport,
     PilotReport,
+    ReadingAgreement,
+    sealed,
 )
 from earnings_themes.evaluation.report import (
     Accepted,
@@ -63,6 +71,7 @@ from earnings_themes.evaluation.report import (
     stability_figures,
 )
 from earnings_themes.evaluation.sampling import PoolTarget, label_pool, sample_targets
+from earnings_themes.evaluation.scores import EvidenceTally
 
 __all__ = [
     "Accepted",
@@ -75,8 +84,11 @@ __all__ = [
     "EventCells",
     "EventObservation",
     "EvidenceCell",
+    "EvidenceTally",
+    "Figure",
     "GateVerdict",
     "Gates",
+    "IndependentFigures",
     "Interval",
     "LabelledTarget",
     "Metric",
@@ -84,12 +96,15 @@ __all__ = [
     "PilotReport",
     "PoolTarget",
     "Preregistration",
+    "ReadingAgreement",
     "SupportLabel",
     "SupportLabelSet",
     "UnitIndex",
     "calibrate",
     "check_labels",
+    "claim_label",
     "compare_readings",
+    "configuration_hash",
     "derive_gates",
     "estimate",
     "evaluate_gates",
@@ -97,6 +112,8 @@ __all__ = [
     "freeze_preregistration",
     "frozen_configuration",
     "gates_toml",
+    "joint_label",
+    "joint_score",
     "label_pool",
     "label_views",
     "labels_toml",
@@ -108,6 +125,7 @@ __all__ = [
     "partition_report",
     "preregistration_toml",
     "sample_targets",
+    "sealed",
     "stability_figures",
     "unit_index",
     "units_over",

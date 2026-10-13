@@ -695,6 +695,12 @@ def test_hashed_record_and_gate_boundary_documented():
     )
 
 
+def test_current_document_and_label_rendering_boundaries_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert "check_countable(..., doc_id=parsed_document_id)" in text
+    assert "field path `evidence.doc_id`" in text
+
+
 EVALUATION_MODELS = [
     bootstrap.BootstrapPlan,
     bootstrap.Interval,

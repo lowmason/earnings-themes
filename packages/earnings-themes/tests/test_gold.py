@@ -116,7 +116,11 @@ def test_origins_come_from_comparing_the_working_copy_with_the_draft(
         "rejected": 1,
         "added": 3,
     }
-    assert gold.claims[1].origin is Origin.DRAFTED_EDITED
+    assert [(claim.claim_id, claim.origin) for claim in gold.claims] == [
+        ("c1", Origin.DRAFTED_ACCEPTED),
+        ("c2", Origin.DRAFTED_EDITED),
+        ("c3", Origin.ANNOTATOR_ADDED),
+    ]
     assert gold.quotes[3].origin is Origin.ANNOTATOR_ADDED
     assert gold.drafting_aid.model_dump() == AID
     assert check(gold, bundles, codebook) == []
@@ -158,6 +162,35 @@ def test_a_bad_draft_is_refused_by_item(bundles, codebook, change, refusal) -> N
     if "quotes" in change:
         draft.update(claims=[], assignments=[], hard_negatives=[], no_theme=True)
     assert build(bundles, codebook, draft) == [refusal]
+
+
+def test_working_quote_anchor_refusal_keeps_the_drafted_duplicate_refusal(
+    bundles, codebook
+) -> None:
+    drafted = gold_draft()
+    drafted["quotes"].append(dict(drafted["quotes"][0]))
+    working = gold_draft()
+    working["quotes"][0]["text"] = "Invented absent wording."
+    refusals = build(bundles, codebook, drafted, working)
+    assert refusals == [
+        Refusal("draft quote q1", "duplicate_id"),
+        Refusal("quote q1", "locator_not_found"),
+    ]
+
+
+def test_countable_binds_the_current_parsed_document_id(bundles, codebook) -> None:
+    gold = build(bundles, codebook, gold_draft(annotator=SIGNED))
+    assert isinstance(gold, Gold)
+    options = {
+        "event_id": TRAIN,
+        "pin": PIN,
+        "split": synthetic_split(),
+        "codebook": codebook,
+    }
+    assert check_countable(gold, doc_id=gold.doc_id, **options) == []
+    assert check_countable(gold, doc_id="other-document", **options) == [
+        Refusal("doc_id", "wrong_document")
+    ]
 
 
 def test_ids_themes_and_ties_are_checked(bundles, codebook, fixtures) -> None:

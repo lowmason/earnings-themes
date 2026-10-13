@@ -6969,3 +6969,11 @@ and the calibrated policy maps it to `content_hash_mismatch`.
 version=1)` takes and rechecks the preregistered rule; an arbitrary metric list or
 undefined-gate string cannot replace it. Gate wrong-partition errors name
 `partition`.
+
+### Gold and rendering consumer boundaries
+
+`check_countable(..., doc_id=parsed_document_id)` binds a gold file to
+the current parsed document ID without loading text; mismatches return `doc_id:
+wrong_document`. `label_views` remains a pure renderer, and its application caller
+must reverify support before rendering. A missing evidence document closes as
+`malformed_record`, with field path `evidence.doc_id`.

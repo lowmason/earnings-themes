@@ -122,7 +122,7 @@ def test_the_package_exports_both_cell_records() -> None:
     """``EventCells.evidence`` holds ``EvidenceCell``s, so both are public."""
     assert {"EventCells", "EvidenceCell"} <= set(evaluation.__all__)
     assert evaluation.EvidenceCell is EvidenceCell
-    assert len(evaluation.__all__) == len(set(evaluation.__all__)) == 46
+    assert len(evaluation.__all__) == len(set(evaluation.__all__)) == 55
 
 
 def test_level_one_maps_each_theme_to_its_root() -> None:
