@@ -70,7 +70,7 @@ def estimate[T](
         if value is not None:
             values.append(value)
     undefined = plan.resamples - len(values)
-    if not values or undefined > plan.max_undefined_share * plan.resamples:
+    if not values or undefined / plan.resamples > plan.max_undefined_share:
         lower = upper = None
     else:
         values.sort()

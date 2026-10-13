@@ -70,3 +70,53 @@ def test_no_events_is_undefined() -> None:
     assert result.point is None
     assert result.interval.lower is None
     assert result.interval.undefined == PLAN.resamples
+
+
+def test_upper_bound_interpolates_the_upper_percentile() -> None:
+    """Seed 8 over 0.0..9.0 has sorted resampled means x[189] = 6.1 and
+    x[190] = 6.2, so the 0.95 position 189.05 interpolates to 6.105. Kills an upper
+    bound taken at the wrong tail, and floor (6.1) or ceil (6.2) in place of
+    interpolation. (The oracle is recomputed from ``random.Random(8)`` alone.)"""
+    per_event = {f"e{i}": float(i) for i in range(10)}
+    result = estimate(per_event, mean, PLAN.model_copy(update={"seed": 8}))
+    assert result.interval.upper == pytest.approx(6.105)
+
+
+def undefined_for_the_first(count: int):
+    """A statistic defined for the point, then undefined for exactly ``count``
+    resamples, then defined again: the point is call one, resamples follow."""
+    calls = 0
+
+    def statistic(drawn) -> float | None:
+        nonlocal calls
+        calls += 1
+        return None if 1 < calls <= count + 1 else 1.0
+
+    return statistic
+
+
+def share_plan(share: float) -> BootstrapPlan:
+    return PLAN.model_copy(update={"resamples": 100, "max_undefined_share": share})
+
+
+@pytest.mark.parametrize("share, limit", [(0.5, 50), (0.57, 57)])
+def test_an_undefined_count_at_the_limit_keeps_the_interval(share, limit) -> None:
+    """Exactly ``share * resamples`` undefined is not "more than" the share. Kills
+    ``>=`` for ``>``, and, at 0.57 (0.57 * 100 is 56.99999999999999), a comparison
+    made in floating point on the product."""
+    result = estimate(
+        {"a": 1.0, "b": 2.0}, undefined_for_the_first(limit), share_plan(share)
+    )
+    assert result.interval.undefined == limit
+    assert result.interval.lower == 1.0 and result.interval.upper == 1.0
+
+
+@pytest.mark.parametrize("share, limit", [(0.5, 50), (0.57, 57)])
+def test_one_more_undefined_resample_than_the_limit_drops_the_interval(
+    share, limit
+) -> None:
+    result = estimate(
+        {"a": 1.0, "b": 2.0}, undefined_for_the_first(limit + 1), share_plan(share)
+    )
+    assert result.interval.undefined == limit + 1
+    assert result.interval.lower is None and result.interval.upper is None

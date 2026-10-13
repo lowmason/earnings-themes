@@ -19,8 +19,9 @@ def _shares(pairs: Sequence[tuple[int, int]]) -> tuple[float, float, float] | No
     """Observed agreement, and each rater's share of 1s; ``None`` with no items."""
     if not pairs:
         return None
-    if any(a not in (0, 1) or b not in (0, 1) for a, b in pairs):
-        raise EvaluationError(EvaluationProblem.MALFORMED_RECORD)
+    for index, pair in enumerate(pairs):
+        if len(pair) != 2 or any(answer not in (0, 1) for answer in pair):
+            raise EvaluationError(EvaluationProblem.MALFORMED_RECORD, f"pairs[{index}]")
     n = len(pairs)
     observed = sum(a == b for a, b in pairs) / n
     return observed, sum(a for a, _ in pairs) / n, sum(b for _, b in pairs) / n
@@ -53,8 +54,13 @@ def fleiss_kappa(ratings: Sequence[Sequence[int]]) -> float | None:
     if not ratings:
         return None
     raters = len(ratings[0])
-    if raters < 2 or any(len(row) != raters for row in ratings):
-        raise EvaluationError(EvaluationProblem.MALFORMED_RECORD)
+    if raters < 2:
+        raise EvaluationError(EvaluationProblem.MALFORMED_RECORD, "ratings[0]")
+    for index, row in enumerate(ratings):
+        if len(row) != raters:
+            raise EvaluationError(
+                EvaluationProblem.MALFORMED_RECORD, f"ratings[{index}]"
+            )
     categories = sorted({c for row in ratings for c in row})
     counts = [[list(row).count(c) for c in categories] for row in ratings]
     items = len(counts)

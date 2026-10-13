@@ -2,7 +2,7 @@
 
 import pytest
 from earnings_themes.evaluation.agreement import cohen_kappa, fleiss_kappa, gwet_ac1
-from earnings_themes.evaluation.problems import EvaluationError
+from earnings_themes.evaluation.problems import EvaluationError, EvaluationProblem
 
 PAIRS = [(1, 1)] * 20 + [(1, 0)] * 5 + [(0, 1)] * 10 + [(0, 0)] * 15
 """Observed 0.7; the first rater says 1 for 0.5, the second for 0.6."""
@@ -37,3 +37,35 @@ def test_malformed_ratings_are_refused() -> None:
         fleiss_kappa([[1], [0]])
     with pytest.raises(EvaluationError, match="malformed_record"):
         fleiss_kappa([[1, 0], [0, 1, 1]])
+
+
+@pytest.mark.parametrize("pair", [(2, 1), (1, -1), (1,), (1, 0, 1), ()])
+@pytest.mark.parametrize("statistic", [cohen_kappa, gwet_ac1], ids=lambda f: f.__name__)
+def test_a_malformed_pair_is_refused_by_its_field_path(statistic, pair) -> None:
+    with pytest.raises(EvaluationError) as refusal:
+        statistic([(1, 1), (0, 0), pair])
+    assert refusal.value.problem is EvaluationProblem.MALFORMED_RECORD
+    assert refusal.value.subject == "pairs[2]"
+    assert str(refusal.value) == "pairs[2]: malformed_record"
+
+
+def test_the_first_malformed_pair_is_the_one_named() -> None:
+    with pytest.raises(EvaluationError) as refusal:
+        cohen_kappa([(1, 1), (3, 0), (1,)])
+    assert refusal.value.subject == "pairs[1]"
+
+
+def test_fewer_than_two_raters_names_the_first_row() -> None:
+    with pytest.raises(EvaluationError) as refusal:
+        fleiss_kappa([[1], [0]])
+    assert refusal.value.problem is EvaluationProblem.MALFORMED_RECORD
+    assert refusal.value.subject == "ratings[0]"
+    assert str(refusal.value) == "ratings[0]: malformed_record"
+
+
+def test_a_row_of_another_length_names_that_row() -> None:
+    with pytest.raises(EvaluationError) as refusal:
+        fleiss_kappa([[1, 0], [0, 1], [0, 1, 1], [1, 1, 1, 1]])
+    assert refusal.value.problem is EvaluationProblem.MALFORMED_RECORD
+    assert refusal.value.subject == "ratings[2]"
+    assert str(refusal.value) == "ratings[2]: malformed_record"
