@@ -29,7 +29,11 @@ from earnings_themes.evaluation.cells import (
     event_cells,
     level_one,
 )
-from earnings_themes.evaluation.problems import EvaluationError, EvaluationProblem
+from earnings_themes.evaluation.problems import (
+    EvaluationError,
+    EvaluationProblem,
+    first_duplicate,
+)
 from earnings_themes.evaluation.records import (
     Figure,
     Metric,
@@ -150,15 +154,6 @@ def _event(observation: EventObservation, roots: Mapping[str, str]) -> _Event:
         ),
         negatives={kind.value: counts for kind, counts in negatives.items()},
     )
-
-
-def _first_duplicate(ids: Iterable[str]) -> str | None:
-    seen: set[str] = set()
-    for item in ids:
-        if item in seen:
-            return item
-        seen.add(item)
-    return None
 
 
 def _counts(**counts: int) -> tuple[tuple[str, int], ...]:
@@ -450,7 +445,7 @@ def partition_report(
     if partition not in (Partition.TRAIN, Partition.DEV):
         raise EvaluationError(EvaluationProblem.WRONG_PARTITION, partition.value)
     ids = [o.event_id for o in observations]
-    if (duplicate := _first_duplicate(ids)) is not None:
+    if (duplicate := first_duplicate(ids)) is not None:
         raise EvaluationError(EvaluationProblem.MALFORMED_RECORD, duplicate)
     for observation in observations:
         if observation.gold.event_id != observation.event_id:
@@ -464,7 +459,7 @@ def partition_report(
     for target in labelled:
         if target.event_id not in ids:
             raise EvaluationError(EvaluationProblem.UNKNOWN_EVENT, target.target_id)
-    if (duplicate := _first_duplicate(t.target_id for t in labelled)) is not None:
+    if (duplicate := first_duplicate(t.target_id for t in labelled)) is not None:
         raise EvaluationError(EvaluationProblem.DUPLICATE_TARGET, duplicate)
     roots = level_one(codebook)
     events = {o.event_id: _event(o, roots) for o in observations}

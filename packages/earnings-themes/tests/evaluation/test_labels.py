@@ -18,7 +18,7 @@ from earnings_themes.evaluation.labels import (
     merge_labels,
     usable,
 )
-from earnings_themes.evaluation.problems import EvaluationError
+from earnings_themes.evaluation.problems import EvaluationError, EvaluationProblem
 from earnings_themes.problems import Refusal
 from earnings_themes.records import RecordError
 from earnings_themes.split import Partition
@@ -177,3 +177,73 @@ def test_merging_adds_dev_and_extends_train_but_never_changes_labels() -> None:
     other = SupportLabelSet(preregistration_hash="e" * 64, labels=())
     with pytest.raises(EvaluationError, match="preregistration_mismatch"):
         merge_labels(both, other, Partition.DEV)
+
+
+def labels_of(*labels: SupportLabel, extensions: int = 0) -> SupportLabelSet:
+    return SupportLabelSet(
+        preregistration_hash=PREREG, train_extensions=extensions, labels=labels
+    )
+
+
+@pytest.mark.parametrize(
+    ("working", "partition", "subject"),
+    [
+        pytest.param(
+            labels_of(
+                label("t1", "unsupported", "fits"), label("t3", "unsure", "fits")
+            ),
+            Partition.TRAIN,
+            "t1",
+            id="changed",
+        ),
+        pytest.param(
+            labels_of(label("t3", "unsure", "unsure")),
+            Partition.TRAIN,
+            "t1, t3",
+            id="missing-and-changed",
+        ),
+        pytest.param(
+            labels_of(
+                label("t1", "unsupported", "fits"),
+                label("t3", "unsure", "fits"),
+                label("t4", "supported", "fits"),
+                extensions=1,
+            ),
+            Partition.TRAIN,
+            "t1",
+            id="extension-not-a-superset",
+        ),
+        pytest.param(
+            labels_of(
+                label("t1", "supported", "fits"),
+                label("t3", "unsure", "fits"),
+                label("t4", "supported", "fits"),
+            ),
+            Partition.TRAIN,
+            "t4",
+            id="superset-without-an-extension",
+        ),
+        pytest.param(
+            labels_of(
+                label("d1", "unsure", "fits", "dev"),
+                label("d2", "supported", "fits", "dev"),
+            ),
+            Partition.DEV,
+            "d2",
+            id="dev-added",
+        ),
+    ],
+)
+def test_changed_labels_are_named_by_id(working, partition, subject) -> None:
+    """Committed: train t1 (supported, fits) and t3 (unsure, fits), dev d1 (unsure,
+    fits). The subject is the IDs of the committed labels the working file drops or
+    changes; when it only adds labels outside a train extension, the added IDs."""
+    committed = labels_of(
+        label("t1", "supported", "fits"),
+        label("t3", "unsure", "fits"),
+        label("d1", "unsure", "fits", "dev"),
+    )
+    with pytest.raises(EvaluationError) as refused:
+        merge_labels(committed, working, partition)
+    assert refused.value.problem is EvaluationProblem.LABELS_CHANGED
+    assert refused.value.subject == subject

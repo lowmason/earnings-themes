@@ -19,7 +19,11 @@ from dataclasses import dataclass
 
 from earnings_core import digest
 
-from earnings_themes.evaluation.problems import EvaluationError, EvaluationProblem
+from earnings_themes.evaluation.problems import (
+    EvaluationError,
+    EvaluationProblem,
+    first_duplicate,
+)
 from earnings_themes.support.records import ReviewOutcome, ReviewStatus, TargetRecord
 
 POOL = (ReviewStatus.ASSESSED, ReviewStatus.FLAGGED)
@@ -60,8 +64,8 @@ def sample_targets(
     pool: Sequence[PoolTarget], *, seed: int, size: int, cap: int
 ) -> tuple[str, ...]:
     """The sampled target IDs, in draw order."""
-    if len({t.target_id for t in pool}) != len(pool):
-        raise EvaluationError(EvaluationProblem.DUPLICATE_TARGET, "pool")
+    if (duplicate := first_duplicate(t.target_id for t in pool)) is not None:
+        raise EvaluationError(EvaluationProblem.DUPLICATE_TARGET, duplicate)
     themes: dict[str, dict[str, list[str]]] = {}
     for target in pool:
         by_theme = themes.setdefault(target.event_id, {})

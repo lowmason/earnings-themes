@@ -6,7 +6,11 @@ from collections import Counter
 from dataclasses import fields
 
 import pytest
-from earnings_themes.evaluation.problems import EvaluationError
+from earnings_themes.evaluation.problems import (
+    EvaluationError,
+    EvaluationProblem,
+    first_duplicate,
+)
 from earnings_themes.evaluation.sampling import PoolTarget, sample_targets
 
 POOL = tuple(
@@ -71,6 +75,14 @@ def test_the_seed_decides_the_order_and_nothing_else_does() -> None:
     )
 
 
-def test_a_repeated_target_is_refused() -> None:
-    with pytest.raises(EvaluationError, match="duplicate_target"):
-        sample_targets((*POOL, POOL[0]), seed=19, size=3, cap=3)
+def test_a_repeated_target_is_refused_by_its_id() -> None:
+    with pytest.raises(EvaluationError) as refused:
+        sample_targets((*POOL, POOL[4]), seed=19, size=3, cap=3)
+    assert refused.value.problem is EvaluationProblem.DUPLICATE_TARGET
+    assert refused.value.subject == "e1-demand-1"
+
+
+def test_first_duplicate_names_the_first_repeated_id() -> None:
+    assert first_duplicate(["a", "b", "c", "b", "a"]) == "b"
+    assert first_duplicate(["a", "b"]) is None
+    assert first_duplicate([]) is None

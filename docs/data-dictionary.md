@@ -6630,7 +6630,7 @@ it belongs to is a false positive.
 | `bound` | Its gate, or null for the gold-evidence rule |
 | `value` | The configuration's dev point estimate |
 | `passed` | Whether it passes |
-| `reason` | `met`, `below_bound`, `undefined` or `zero_gold_evidence_recall` |
+| `reason` | `met`, `below_bound`, `undefined` (no value), or `zero_gold_evidence_recall` (the gold-evidence rule's value is 0) |
 
 ### `GateVerdict`
 

@@ -177,7 +177,9 @@ def merge_labels(
 ) -> SupportLabelSet:
     """``committed`` with ``working``'s ``partition`` labels added. A partition
     already committed changes only when train is extended (§Failure handling): its
-    committed labels kept as they are, and more extensions."""
+    committed labels kept as they are, and more extensions. A refusal names the
+    committed labels the working file drops or changes, by ID, or, when it only adds
+    labels, the added ones."""
     new = working.of(partition)
     if committed is None:
         return working.model_copy(update={"labels": new})
@@ -192,7 +194,11 @@ def merge_labels(
             and working.train_extensions > committed.train_extensions
         )
         if not extended:
-            raise EvaluationError(EvaluationProblem.LABELS_CHANGED, partition.value)
+            dropped = {label.target_id for label in set(old) - set(new)}
+            added = {label.target_id for label in set(new) - set(old)}
+            raise EvaluationError(
+                EvaluationProblem.LABELS_CHANGED, ", ".join(sorted(dropped or added))
+            )
     if partition is Partition.TRAIN:
         extensions = max(extensions, working.train_extensions)
     kept = tuple(

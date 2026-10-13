@@ -10,7 +10,7 @@ from earnings_themes.evaluation.gates import (
     gates_toml,
     load_gates,
 )
-from earnings_themes.evaluation.problems import EvaluationError
+from earnings_themes.evaluation.problems import EvaluationError, EvaluationProblem
 from earnings_themes.evaluation.records import Metric, PilotReport, sealed
 from earnings_themes.evaluation.report import EventObservation, partition_report
 from earnings_themes.records import RecordError
@@ -139,7 +139,7 @@ def test_gates_need_the_dev_partition_and_its_preregistration(baseline) -> None:
             judge_floor=0.4,
             preregistration_hash=HASH,
         )
-    with pytest.raises(EvaluationError, match="preregistration_mismatch"):
+    with pytest.raises(EvaluationError) as refused:
         derive_gates(
             pilot(baseline),
             gated=GATED,
@@ -147,5 +147,50 @@ def test_gates_need_the_dev_partition_and_its_preregistration(baseline) -> None:
             judge_floor=0.4,
             preregistration_hash="2" * 64,
         )
+    assert refused.value.problem is EvaluationProblem.PREREGISTRATION_MISMATCH
+    assert refused.value.subject == "preregistration_hash"
     with pytest.raises(EvaluationError, match="wrong_partition"):
         evaluate_gates(gates_of(baseline), train)
+
+
+def without_gold_evidence(report, point):
+    """``report`` with gold-evidence recall's point set to ``point``."""
+    figures = tuple(
+        f.model_copy(update={"point": point})
+        if f.metric is Metric.GOLD_EVIDENCE_RECALL
+        else f
+        for f in report.figures
+    )
+    return report.model_copy(update={"figures": figures})
+
+
+@pytest.mark.parametrize(
+    ("point", "reason"),
+    [(None, "undefined"), (0.0, "zero_gold_evidence_recall"), (0.5, "met")],
+)
+def test_the_gold_evidence_rule_names_why_it_fails(baseline, point, reason) -> None:
+    """R12.8's rule: recall strictly above zero passes; zero fails as
+    ``zero_gold_evidence_recall``, and an undefined recall fails as ``undefined``,
+    as every other gate's does."""
+    verdict = evaluate_gates(gates_of(baseline), without_gold_evidence(baseline, point))
+    rule = next(
+        r
+        for r in verdict.results
+        if r.metric is Metric.GOLD_EVIDENCE_RECALL and r.bound is None
+    )
+    assert (rule.value, rule.passed, rule.reason) == (point, point == 0.5, reason)
+
+
+def test_a_missing_gold_evidence_figure_is_undefined(baseline) -> None:
+    figures = tuple(
+        f for f in baseline.figures if f.metric is not Metric.GOLD_EVIDENCE_RECALL
+    )
+    verdict = evaluate_gates(
+        gates_of(baseline), baseline.model_copy(update={"figures": figures})
+    )
+    rule = next(
+        r
+        for r in verdict.results
+        if r.metric is Metric.GOLD_EVIDENCE_RECALL and r.bound is None
+    )
+    assert (rule.value, rule.passed, rule.reason) == (None, False, "undefined")

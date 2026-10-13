@@ -50,7 +50,9 @@ def derive_gates(
     if dev is None:
         raise EvaluationError(EvaluationProblem.WRONG_PARTITION, "dev")
     if report.preregistration_hash != preregistration_hash:
-        raise EvaluationError(EvaluationProblem.PREREGISTRATION_MISMATCH, "report")
+        raise EvaluationError(
+            EvaluationProblem.PREREGISTRATION_MISMATCH, "preregistration_hash"
+        )
     gates: list[Gate] = []
     ungated: list[Ungated] = []
     for metric in sorted(set(gated)):
@@ -106,14 +108,19 @@ def evaluate_gates(gates: Gates, report: PartitionReport) -> GateVerdict:
         )
     figure = report.figure(Metric.GOLD_EVIDENCE_RECALL)
     value = None if figure is None else figure.point
-    positive = value is not None and value > 0
+    if value is None:
+        positive, reason = False, "undefined"
+    elif value > 0:
+        positive, reason = True, "met"
+    else:
+        positive, reason = False, "zero_gold_evidence_recall"
     results.append(
         GateResult(
             metric=Metric.GOLD_EVIDENCE_RECALL,
             bound=None,
             value=value,
             passed=positive,
-            reason="met" if positive else "zero_gold_evidence_recall",
+            reason=reason,
         )
     )
     return GateVerdict(passed=all(r.passed for r in results), results=tuple(results))
