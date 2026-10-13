@@ -596,6 +596,7 @@ def check_countable(
     pin: Pin,
     split: SplitManifest,
     codebook: Codebook,
+    doc_id: str | None = None,
 ) -> list[Refusal]:
     """Every reason a committed gold file's ``no_theme`` may not be counted for
     ``event_id`` in coverage v2, read without its document: its event, pin, split,
@@ -605,6 +606,8 @@ def check_countable(
     refusals = []
     if gold.event_id != event_id:
         refusals.append(Refusal("event_id", Problem.UNKNOWN_DOCUMENT))
+    if doc_id is not None and gold.doc_id != doc_id:
+        refusals.append(Refusal("doc_id", RejectionReason.WRONG_DOCUMENT))
     return refusals + _standing(
         gold, event_id=event_id, pin=pin, split=split, codebook=codebook
     )

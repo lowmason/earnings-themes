@@ -32,7 +32,15 @@ Not all of it is binding.
 
 **Deliberately unresolved — do not silently pick one** (AGENTS.md §"Source basis and unresolved choices"): the production provider/model, the final theme taxonomy, and non-exactness quality thresholds. Record these in config or a decision record; do not invent agreement. The fourth such choice, an approved inference budget, is now recorded by `specs/evidence-linked-theme-extraction.md` R14.2: **$100, for the optional hosted-ceiling ablation only**, not prompt-optimizer compiles or any other billable call. The required path needs no billable inference: R14.1 limits it to open-weight, self-hosted models, which narrows the model choice without making it.
 
-## Current state: Stages 1–10 complete
+## Current state: Stages 1–10 complete; Stage 11 plan A complete
+
+Stage 11's plan A machinery is complete (plans 17–20): fresh caches and runtime
+assembly; pure evaluation, labels and calibration; and counts-only pilot commands.
+The implementation opened no pilot text and loaded no model. Plan B still owns the
+model choices, preregistration, pilot runs, committed figures and V6 record;
+Stage 11 remains unticked. B1 and B2 may start after plan A merges; B3 waits for all
+28 signed train/dev bundles and the 8 dev ledger rows. See
+`specs/feasibility-pilot-and-threshold-calibration.md` and plan 20's retired handoff.
 
 Stage 1 of the roadmap (release parser fidelity, `specs/release-parser-fidelity.md`) is done:
 

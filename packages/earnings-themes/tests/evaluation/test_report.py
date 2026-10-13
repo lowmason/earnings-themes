@@ -546,7 +546,7 @@ def test_a_reading_compared_with_itself_agrees_fully(case) -> None:
 
 def test_stability_over_identical_and_empty_runs() -> None:
     runs = observations()
-    same = stability_figures((runs, runs), BOOK, PLAN)
+    same = stability_figures((runs, runs), BOOK, PLAN, run_ids=("fresh1", "fresh2"))
     by_metric = {f.metric: f.point for f in same}
     assert by_metric == {
         Metric.STABILITY_FLEISS_KAPPA: pytest.approx(1.0),
@@ -559,7 +559,12 @@ def test_stability_over_identical_and_empty_runs() -> None:
         )
         for o in runs
     )
-    apart = {f.metric: f.point for f in stability_figures((runs, empty), BOOK, PLAN)}
+    apart = {
+        f.metric: f.point
+        for f in stability_figures(
+            (runs, empty), BOOK, PLAN, run_ids=("fresh1", "fresh2")
+        )
+    }
     assert apart[Metric.STABILITY_FLEISS_KAPPA] == pytest.approx(-0.2)
     assert apart[Metric.STABILITY_UNIT_JACCARD] == 0.0
     # Every resample holds an event with accepted pairs in the first run (e1: four,
@@ -567,4 +572,4 @@ def test_stability_over_identical_and_empty_runs() -> None:
     # union, and the mean over the one pair of runs is 0.
     assert apart[Metric.STABILITY_ASSIGNMENT_JACCARD] == 0.0
     with pytest.raises(EvaluationError, match="malformed_record"):
-        stability_figures((runs,), BOOK, PLAN)
+        stability_figures((runs,), BOOK, PLAN, run_ids=("fresh1",))

@@ -17,6 +17,7 @@ from pathlib import Path
 
 import earnings_core as core
 import earnings_ingestion.canonical as ingestion
+import earnings_pipeline as pipeline
 import pytest
 from earnings_ingestion import browser, layout
 from earnings_ingestion.cohort import config as cohort_config
@@ -25,7 +26,15 @@ from earnings_ingestion.cohort import register as cohort_register
 from earnings_ingestion.events import acceptance, coverage, states
 from earnings_ingestion.events import records as events
 from earnings_ingestion.fetch import records as fetch
-from earnings_pipeline import model_runtime, theme_config, theme_workflow
+from earnings_pipeline import (
+    model_runtime,
+    pilot_inputs,
+    pilot_records,
+    pilot_reporting,
+    pilot_workflow,
+    theme_config,
+    theme_workflow,
+)
 from earnings_themes import (
     annotation,
     codebook,
@@ -43,7 +52,7 @@ from earnings_themes.coding import records as coding
 from earnings_themes.coding.cache import CodingCacheEntry
 from earnings_themes.coding.decide import DecisionInput, DecisionSet
 from earnings_themes.coding.input import CodingInput
-from earnings_themes.coding.run import ProposalRun
+from earnings_themes.coding.run import ProposalRun, SourceBindings
 from earnings_themes.coding.store import SCHEMAS
 from earnings_themes.evaluation import (
     align,
@@ -332,7 +341,8 @@ def documented(name: str) -> set[str]:
     """The first-column code spans of the table under the heading for ``name``."""
     text = DICTIONARY.read_text(encoding="utf-8")
     heading = f"### `{name}`\n"
-    assert heading in text, f"docs/data-dictionary.md has no section for {name}"
+    if heading not in text:
+        pytest.fail(f"missing_dictionary_heading:{name}", pytrace=False)
     section = text.split(heading, 1)[1].split("\n#", 1)[0]
     return set(re.findall(r"^\| `([^`]+)` \|", section, flags=re.MULTILINE))
 
@@ -645,6 +655,7 @@ WORKFLOW_MODELS = [
     model_runtime.ChatModelFile,
 ]
 WORKFLOW_DATACLASSES = [
+    theme_workflow.WorkflowInputs,
     theme_workflow.WorkflowRuntime,
     theme_workflow.WorkflowResult,
     model_runtime.LiveRuntime,
@@ -669,6 +680,102 @@ def test_workflow_closed_reasons_and_baseline_contract_documented():
     assert "immediate immutable parsed predecessor" in text
     assert "stored_analysis" in text and "capture_nondurable" in text
     assert "schema-2 partial" in text and "schema-1 partial" in text
+
+
+def test_source_bindings_and_shared_coding_gates_documented():
+    assert documented("SourceBindings") == set(SourceBindings.__annotations__)
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert "source_bindings(sources: SupportSources) -> SourceBindings" in text
+    assert (
+        "validate_proposal_support(proposals: ProposalRun, support: StoredSupportRun,"
+        in text
+    )
+    assert (
+        "coding_configuration(*, source_run_id, source_run_hash, documents, codebook,"
+        in text
+    )
+
+
+def test_hashed_record_and_gate_boundary_documented():
+    assert documented("HashedRecord") == {"content_hash", "model_dump", "model_copy"}
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert "hash_matches(record: HashedRecord) -> bool" in text
+    assert (
+        "derive_gates(report, *, rule: GateRule, judge_floor, preregistration_hash,"
+        in text
+    )
+
+
+def test_current_document_and_label_rendering_boundaries_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert "check_countable(..., doc_id=parsed_document_id)" in text
+    assert "field path `evidence.doc_id`" in text
+
+
+def test_stage11_application_metric_vocabulary_documented():
+    assert documented("Scorer-view vocabulary") == {"minicheck", "deberta"}
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert "| `minicheck` | `minicheck_joint` |" in text
+    assert "| `deberta` | `deberta_joint` |" in text
+    assert "accepted, edited, rejected, added, numerator and denominator" in text
+
+
+def test_workflow_prebound_configuration_interface_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    assert (
+        "workflow_configuration_hashes(config: WorkflowConfig, sources: SupportSources,"
+        in text
+    )
+
+
+PILOT_MODELS = {
+    "PilotSettings": pilot_records.PilotSettings,
+    "ProposalSnapshot": pilot_records.ProposalSnapshot,
+    "PassRecord": pilot_records.PassRecord,
+    "pilot_records.RunRecord": pilot_records.RunRecord,
+}
+PILOT_DATACLASSES = {
+    "PilotIntake": pilot_inputs.PilotIntake,
+    "LoadedPass": pilot_workflow.LoadedPass,
+    "LoadedRun": pilot_reporting.LoadedRun,
+}
+PILOT_ENUMS = {}
+
+
+@pytest.mark.parametrize(("name", "model"), PILOT_MODELS.items(), ids=PILOT_MODELS)
+def test_pilot_application_fields_documented(name, model):
+    assert documented(name) == set(model.model_fields)
+
+
+@pytest.mark.parametrize(
+    ("name", "record"), PILOT_DATACLASSES.items(), ids=PILOT_DATACLASSES
+)
+def test_pilot_application_dataclass_fields_documented(name, record):
+    assert documented(name) == {field.name for field in fields(record)}
+
+
+@pytest.mark.parametrize(("name", "enum"), PILOT_ENUMS.items(), ids=PILOT_ENUMS)
+def test_pilot_application_enum_values_documented(name, enum):
+    assert documented(name) == {member.value for member in enum}
+
+
+def test_pilot_application_registry_is_complete():
+    defined = {
+        value
+        for info in pkgutil.iter_modules(pipeline.__path__)
+        if info.name.startswith("pilot_")
+        for value in vars(
+            importlib.import_module(f"{pipeline.__name__}.{info.name}")
+        ).values()
+        if isinstance(value, type)
+        and value.__module__ == f"{pipeline.__name__}.{info.name}"
+        and not value.__name__.startswith("_")
+    }
+    assert {v for v in defined if issubclass(v, BaseModel)} == set(
+        PILOT_MODELS.values()
+    )
+    assert {v for v in defined if issubclass(v, StrEnum)} == set(PILOT_ENUMS.values())
+    assert {v for v in defined if is_dataclass(v)} == set(PILOT_DATACLASSES.values())
 
 
 EVALUATION_MODELS = [
@@ -750,3 +857,34 @@ def test_evaluation_registry_covers_every_defined_record_enum_and_dataclass() ->
     assert {v for v in defined if issubclass(v, BaseModel)} == set(EVALUATION_MODELS)
     assert {v for v in defined if issubclass(v, StrEnum)} == set(EVALUATION_ENUMS)
     assert {v for v in defined if is_dataclass(v)} == set(EVALUATION_DATACLASSES)
+
+
+def test_pilot_label_interfaces_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    for name in (
+        "checked_pass",
+        "local_path",
+        "sample",
+        "working_path",
+        "committed_labels",
+        "write_view",
+        "check_working",
+    ):
+        assert f"pilot_labels.{name}" in text
+    assert "real unsure answers" in text
+    assert "append-only label promotion" in text
+
+
+def test_pilot_calibration_interfaces_documented():
+    text = DICTIONARY.read_text(encoding="utf-8")
+    for name in (
+        "read_label_bytes",
+        "calibrate_pilot",
+        "checked_calibration",
+        "validate_calibration_labels",
+        "evaluation_path",
+    ):
+        assert f"pilot_calibration.{name}" in text
+    assert "exact parsed label bytes" in text
+    assert "reachable HEAD history" in text
+    assert "permits a dev append" in text

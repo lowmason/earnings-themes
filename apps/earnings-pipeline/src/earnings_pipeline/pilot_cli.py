@@ -34,31 +34,33 @@ from earnings_ingestion.events.coverage import (
 from earnings_ingestion.events.freeze import serialize
 from earnings_themes.annotation import check_countable, load_gold_draft, recount
 from earnings_themes.codebook import Codebook
-from earnings_themes.gold import load_gold
+from earnings_themes.gold import Gold, load_gold
 from earnings_themes.problems import Refusal
 from earnings_themes.records import RecordError, record_json
 from earnings_themes.split import (
     SPLIT_POLICY,
     Partition,
-    SplitEvent,
     SplitManifest,
-    split_events,
 )
 
 from earnings_pipeline.codebook_cli import pinned_codebook, pinned_split
 from earnings_pipeline.stage6 import (
+    Events,
     Layout,
     Pinned,
+    committed_gold,
+    derive_split,
     documents,
     fail,
     file_stem,
-    fixture_event_ids,
     guarded,
+    kept_drafts,
     load_bundle,
     load_pinned,
     options,
     record_error,
     refuse,
+    require_train_dev,
     transitions,
     write_once,
 )
@@ -81,23 +83,10 @@ def split_command(context: typer.Context) -> None:
     """Split the pinned pilot by issuer-time/1, and freeze split-v1.json."""
     layout: Layout = context.obj
     pinned = load_pinned(layout)
-    rows = {row.event_id: row for row in pinned.events.rows}
-    events = [
-        SplitEvent(
-            event_id=row.event_id,
-            issuer_id=rows[row.event_id].issuer_id,
-            period_end=rows[row.event_id].period_end,
-        )
-        for row in pinned.pilot.rows
-    ]
     try:
-        manifest = split_events(
-            events,
-            pinned.pin,
-            fixture_event_ids=fixture_event_ids(layout, pinned.events),
-        )
+        manifest = derive_split(layout, pinned)
     except ValueError as error:
-        fail(f"Refused: {error}")
+        fail(f"Refused: pilot_record: {type(error).__name__}")
     created = write_once(pinned.split_path, record_json(manifest), layout)
     _said(pinned, layout)
     for partition in Partition:
@@ -143,8 +132,15 @@ def _no_theme(
                 gold = load_gold(path)
             except RecordError as error:
                 record_error(error)
+            require_train_dev(event_id, split.partition_of(event_id))
+            require_train_dev(event_id, gold.partition)
             found = check_countable(
-                gold, event_id=event_id, pin=pinned.pin, split=split, codebook=codebook
+                gold,
+                event_id=event_id,
+                pin=pinned.pin,
+                split=split,
+                codebook=codebook,
+                doc_id=parsed[event_id],
             )
             refusals += [Refusal(f"{event_id} {r.subject}", r.reason) for r in found]
             flags.append(gold.no_theme)
@@ -183,7 +179,7 @@ def coverage_command(context: typer.Context, version: Version = 1) -> None:
     try:
         run_ids = load_coverage(first).run_ids if first.is_file() else None
     except ValueError as error:
-        fail(f"Refused: {error}")
+        fail(f"Refused: pilot_record: {type(error).__name__}")
     no_theme = _no_theme(layout, pinned, run_ids or ()) if version == 2 else []
     try:
         report = build_coverage(
@@ -195,7 +191,7 @@ def coverage_command(context: typer.Context, version: Version = 1) -> None:
             no_theme=no_theme,
         )
     except ValueError as error:
-        fail(f"Refused: {error}")
+        fail(f"Refused: pilot_record: {type(error).__name__}")
     path = pinned.coverage_file(version)
     created = write_once(path, serialize(report), layout)
     _said(pinned, layout)
@@ -221,12 +217,6 @@ def coverage_command(context: typer.Context, version: Version = 1) -> None:
     typer.echo(f"{layout.shown(path)}  {report.content_hash}")
 
 
-Events = Annotated[
-    list[str] | None,
-    typer.Argument(help="Event IDs; every committed gold file when none is named."),
-]
-
-
 def _recount(
     layout: Layout,
     pinned: Pinned,
@@ -234,20 +224,12 @@ def _recount(
     codebook: Codebook,
     doc_ids: dict[str, str],
     path: Path,
+    record: Gold,
 ) -> int:
     """One committed gold file, rebuilt from its kept draft and working copy: its
     counts printed when it rebuilds, each refusal by event and field when not."""
-    try:
-        record = load_gold(path)
-    except RecordError as error:
-        record_error(error)
     event_id = record.event_id
-    if path.stem != file_stem(event_id):
-        fail(f"Refused: {layout.shown(path)} holds the gold of {event_id}")
-    kept = [
-        layout.drafts / f"{file_stem(event_id)}.{kind}.toml"
-        for kind in ("draft", "working")
-    ]
+    kept = kept_drafts(layout, event_id)
     for draft in kept:
         if not draft.is_file():
             fail(
@@ -289,20 +271,27 @@ def recount_command(context: typer.Context, event_ids: Events = None) -> None:
     codebook = pinned_codebook(layout)
     pinned = load_pinned(layout)
     split = pinned_split(layout, pinned)
-    if event_ids:
-        paths = [pinned.gold_dir / f"{file_stem(e)}.toml" for e in event_ids]
-        if missing := [p for p in paths if not p.is_file()]:
-            fail(f"Refused: {layout.shown(missing[0])} is not committed")
-    else:
-        paths = sorted(pinned.gold_dir.glob("*.toml"))
-        if not paths:
-            fail(f"Refused: no gold is committed under {layout.shown(pinned.gold_dir)}")
+    records = committed_gold(layout, pinned, event_ids, require_nonempty=True)
+    for _, record in records:
+        event_id = record.event_id
+        try:
+            partition = split.partition_of(event_id)
+        except KeyError:
+            fail(f"Refused: {event_id} is not in the split")
+        require_train_dev(event_id, partition)
+        require_train_dev(event_id, record.partition)
     doc_ids = documents(layout, pinned)
     problems = sum(
-        _recount(layout, pinned, split, codebook, doc_ids, path) for path in paths
+        _recount(layout, pinned, split, codebook, doc_ids, path, record)
+        for path, record in records
     )
     if problems:
         fail(
             f"Refused: {problems} problem(s); GS5's shares wait until each is resolved"
         )
-    typer.echo(f"recounted {len(paths)} file(s): each rebuilds from its kept draft")
+    typer.echo(f"recounted {len(records)} file(s): each rebuilds from its kept draft")
+
+
+from earnings_pipeline.pilot_commands import register as register_a8
+
+register_a8(pilot)

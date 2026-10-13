@@ -80,7 +80,14 @@ def test_a_sealed_record_is_checked_by_its_content_hash() -> None:
             report_version=1,
             preregistration_hash="1" * 64,
             calibration_hash="2" * 64,
-            partitions=(),
+            partitions=(
+                PartitionReport(
+                    partition=Partition.TRAIN, in_sample=True, events=(), figures=()
+                ),
+                PartitionReport(
+                    partition=Partition.DEV, in_sample=False, events=(), figures=()
+                ),
+            ),
             content_hash="0" * 64,
         )
     )
@@ -104,7 +111,12 @@ def sealed_report() -> PilotReport:
             report_version=1,
             preregistration_hash="1" * 64,
             calibration_hash="2" * 64,
-            partitions=(dev,),
+            partitions=(
+                dev,
+                dev.model_copy(
+                    update={"partition": Partition.TRAIN, "in_sample": True}
+                ),
+            ),
             content_hash="0" * 64,
         )
     )

@@ -44,7 +44,7 @@ from earnings_themes.analysis.records import AnalysisPart
 from earnings_themes.coding.local import ClassifierBinding
 from earnings_themes.coding.records import CodingError
 from earnings_themes.extraction.records import LOCAL_STRUCTURED, LOCAL_TIMEOUT_S
-from earnings_themes.records import NonBlank, RecordError, parse
+from earnings_themes.records import IdPart, NonBlank, RecordError, parse
 from earnings_themes.support.chat_tokens import ChatTokenCounter, ChatTokenizerConfig
 from earnings_themes.support.judges import JudgeBinding, validate_panel
 from earnings_themes.support.model_files import files_hash, verify_files
@@ -90,7 +90,7 @@ class ChatModelFile(AnalysisPart):
     identity, and its weights' and tokenizer's files, under directories relative to
     the models root."""
 
-    family: NonBlank
+    family: IdPart
     base_url: NonBlank
     model_id: NonBlank
     runtime: NonBlank

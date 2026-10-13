@@ -6,6 +6,7 @@ from earnings_themes.coding.decide import (
     DecisionInput,
     DecisionSet,
     decide_assignments,
+    validate_proposal_support,
 )
 from earnings_themes.coding.input import (
     CodingInput,
@@ -40,8 +41,9 @@ from earnings_themes.coding.records import (
     ProposalRecord,
     ProposalRunRecord,
     checked,
+    coding_configuration,
 )
-from earnings_themes.coding.run import ProposalRun, propose_run
+from earnings_themes.coding.run import ProposalRun, propose_run, source_bindings
 from earnings_themes.coding.store import (
     read_coding_run,
     reverify_coding_run,
@@ -84,6 +86,7 @@ __all__ = [
     "SupportSources",
     "assignment_frame",
     "checked",
+    "coding_configuration",
     "decide_assignments",
     "project_assignments",
     "propose_run",
@@ -91,5 +94,7 @@ __all__ = [
     "resolve_coding_input",
     "reverify_coding_input",
     "reverify_coding_run",
+    "source_bindings",
+    "validate_proposal_support",
     "write_coding_run",
 ]

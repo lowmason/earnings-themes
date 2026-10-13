@@ -34,7 +34,11 @@ def _flat(text: str) -> str:
 def _quote(
     text: str, sources: SupportSources, evidence: EvidenceReference
 ) -> list[str]:
-    bundle = next(b for b in sources.bundles if b.document.doc_id == evidence.doc_id)
+    bundle = next(
+        (b for b in sources.bundles if b.document.doc_id == evidence.doc_id), None
+    )
+    if bundle is None:
+        raise EvaluationError(EvaluationProblem.MALFORMED_RECORD, "evidence.doc_id")
     context = context_elements(bundle, evidence.element_id)
     block = context[-1].span
     start, end = evidence.start, evidence.end

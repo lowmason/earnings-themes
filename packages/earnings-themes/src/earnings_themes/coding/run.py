@@ -4,6 +4,7 @@ from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
+from typing import TypedDict
 
 from earnings_core import VALIDATOR_VERSION, digest
 
@@ -38,6 +39,7 @@ from earnings_themes.coding.records import (
     ProposalRecord,
     ProposalRunRecord,
     checked,
+    coding_configuration,
 )
 from earnings_themes.extraction.records import RunRecord
 from earnings_themes.extraction.store import StoredRun
@@ -58,7 +60,15 @@ class ProposalRun:
         return tuple(proposal.target for proposal in self.proposals)
 
 
-def _source_bindings(sources: SupportSources) -> dict:
+class SourceBindings(TypedDict):
+    source_run_id: str
+    source_run_hash: str
+    documents: tuple[tuple[str, str], ...]
+    codebook: CodebookReference
+
+
+def source_bindings(sources: SupportSources) -> SourceBindings:
+    """The validated source manifest and codebook shared by run prebinding."""
     if (
         type(sources) is not SupportSources
         or type(sources.stored_run) is not StoredRun
@@ -154,22 +164,17 @@ def propose_run(
         )
         identity = _classifier_identity(classifier)
         ceiling_value = checked(ceilings, CodingCeilings)
-        bindings = _source_bindings(sources)
+        bindings = source_bindings(sources)
         schema_hash = digest(CodingReply.model_json_schema())
-        configuration = {
-            **{
-                k: v.model_dump(mode="json") if hasattr(v, "model_dump") else v
-                for k, v in bindings.items()
-            },
-            "classifier_identity": identity.model_dump(mode="json"),
-            "coding_policy": snapshot.model_dump(mode="json"),
-            "ceilings": ceiling_value.model_dump(mode="json"),
-            "requested_claim_order": order,
-            "schema_hash": schema_hash,
-            "coding_version": CODING_VERSION,
-            "validator_version": VALIDATOR_VERSION,
-            "cache_mode": cache.mode,
-        }
+        configuration = coding_configuration(
+            **bindings,
+            classifier_identity=identity,
+            coding_policy=snapshot,
+            ceilings=ceiling_value,
+            requested_claim_order=order,
+            schema_hash=schema_hash,
+            cache_mode=cache.mode,
+        )
         record = checked(
             ProposalRunRecord.model_construct(
                 run_id=run_id,
@@ -279,7 +284,7 @@ def propose_run(
         if _current_identity(classifier) != identity:
             raise CodingError("model_mismatch")
         if (
-            _source_bindings(sources) != bindings
+            source_bindings(sources) != bindings
             or digest(_policy(policy).model_dump(mode="json")) != policy_hash
             or checked(ceilings, CodingCeilings) != ceiling_value
             or tuple(sorted(software.items())) != record.software

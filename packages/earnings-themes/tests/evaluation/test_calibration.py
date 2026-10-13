@@ -266,16 +266,10 @@ def test_an_unsure_label_is_not_usable() -> None:
     ("menu", "fitted", "chosen"),
     [
         pytest.param(
-            [("plenty", 3, [0.9]), ("frugal", 1, [0.0, 0.5])],
+            [("plenty", 1, [0.9]), ("frugal", 1, [0.0, 0.5])],
             {"plenty": 0.9, "frugal": 0.0},
             ("plenty", 0.9),
-            id="higher-precision-beats-fewer-signals",
-        ),
-        pytest.param(
-            [("pair", 2, [0.7]), ("solo", 1, [0.9])],
-            {"pair": 0.7, "solo": 0.9},
-            ("solo", 0.9),
-            id="tied-precision-fewer-signals-beats-lower-cutoff",
+            id="higher-precision-wins",
         ),
         pytest.param(
             [("high", 1, [0.9]), ("low", 1, [0.7])],
@@ -290,14 +284,14 @@ def test_an_unsure_label_is_not_usable() -> None:
             id="all-tied-lower-candidate-id",
         ),
         pytest.param(
-            [("never", 1, [1.0]), ("ok", 5, [0.9])],
+            [("never", 1, [1.0]), ("ok", 1, [0.9])],
             {"never": None, "ok": 0.9},
             ("ok", 0.9),
             id="a-candidate-without-a-cutoff-is-skipped",
         ),
     ],
 )
-def test_selection_orders_candidates_by_precision_signals_cutoff_and_id(
+def test_selection_orders_single_signal_candidates_by_precision_cutoff_and_id(
     menu, fitted, chosen
 ) -> None:
     """Over the 60 targets of ``population()``. Any cutoff above 0.6 up to 0.95
@@ -307,7 +301,7 @@ def test_selection_orders_candidates_by_precision_signals_cutoff_and_id(
     30/40 = 0.75, a tie that goes to the lower cutoff within a candidate. Cutoff 1.0
     accepts nothing (0.95 < 1.0): no labelled accepted target, so no precision, and
     recall 0/40 does not meet rho. Across candidates the key is (-precision, signals,
-    cutoff, candidate_id), each case below decided by one successive term."""
+    cutoff, candidate_id), every signals value is 1; the remaining terms decide each case below."""
     preregistration = menu_of(*menu)
     _, label_set, _, _ = population()
     artifact = run(preregistration, rebound(preregistration, label_set))

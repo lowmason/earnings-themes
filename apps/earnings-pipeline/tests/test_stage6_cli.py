@@ -31,7 +31,7 @@ from earnings_ingestion.events.state_table import read_runs, write_run
 from earnings_ingestion.events.states import DocumentState
 from earnings_ingestion.fetch.responses import UnexpectedResponse
 from earnings_ingestion.fetch.store import ArtifactStore
-from earnings_pipeline import cli, gold_cli
+from earnings_pipeline import cli, gold_cli, pilot_cli, stage6
 from earnings_pipeline.stage6 import (
     Layout,
     documents,
@@ -362,7 +362,12 @@ def test_another_pilot_hash_is_refused(repo) -> None:
     assert not (repo / EVALUATION).exists()
 
 
-def test_a_universe_that_is_not_the_pin_s_is_refused(repo) -> None:
+def test_a_universe_that_is_not_the_pin_s_is_refused(tmp_path: Path) -> None:
+    repo = tmp_path
+    for name in ("pilot-v1.json", "events-v1.json"):
+        path = repo / FIXTURE_DIR / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(REPO / FIXTURE_DIR / name, path)
     other = Path("config") / "universe" / "djia" / "manifests"
     other = other / "djia-2024q3-2026q2-v1.json"
     (repo / other).parent.mkdir(parents=True)
@@ -383,12 +388,7 @@ def test_a_universe_that_is_not_the_pin_s_is_refused(repo) -> None:
         ],
     )
     assert result.exit_code == 1
-    assert lines(result) == [
-        (
-            "Refused: the universe's operative hash is not the one the pilot and its"
-            " event manifest read"
-        )
-    ]
+    assert lines(result) == ["Refused: pinned_metadata: ValueError"]
 
 
 def test_coverage_counts_each_state_and_rereads_only_its_runs(repo) -> None:
@@ -1272,6 +1272,7 @@ def test_recount_reports_counts_that_do_not_rebuild_by_event_and_field(repo) -> 
     twice["quotes"].append(dict(twice["quotes"][0]))
     write_drafts(repo, FIRST, twice, gold_draft(annotator=SIGNED))
     repeated = run(repo, "pilot", "recount")
+    assert repeated.exit_code == 1
     assert lines(repeated) == [
         f"refused: {FIRST} draft quote q1: duplicate_id",
         "Refused: 1 problem(s); GS5's shares wait until each is resolved",
@@ -1335,6 +1336,323 @@ def test_coverage_takes_versions_1_and_2_and_v2_needs_v1(repo) -> None:
         )
     ]
     assert not (repo / EVALUATION / "coverage-v2.json").exists()
+
+
+PLAN20_MARKER = "INVENTED_PRIVATE_MARKER_FOR_STAGE11_LEGACY_COMMANDS"
+
+
+@pytest.fixture
+def plan20_repo(tmp_path: Path, acquired: Path) -> Path:
+    """Only invented acquisition inputs; no Stage 1 source text is copied/read."""
+    ignore = shutil.ignore_patterns("raw")
+    for directory in (COHORT_MANIFEST.parent, FIXTURE_DIR):
+        shutil.copytree(REPO / directory, tmp_path / directory, ignore=ignore)
+    (tmp_path / CANONICAL).mkdir(parents=True)
+    (tmp_path / RELEASES).parent.mkdir(parents=True)
+    (tmp_path / RELEASES).write_text("fixtures = []\n", encoding="utf-8")
+    shutil.copytree(acquired / "data", tmp_path / "data")
+    return tmp_path
+
+
+def plan20_run(repo: Path, *args: str):
+    result = run(repo, "pilot", *args)
+    assert PLAN20_MARKER not in result.output
+    return result
+
+
+def plan20_draft(event_id: str = FIRST, **changes) -> dict:
+    return gold_draft(
+        event_id,
+        claims=[{"claim_id": "c1", "quote_ids": ["q1"], "claim": PLAN20_MARKER}],
+        **changes,
+    )
+
+
+def plan20_sign(repo: Path, event_ids: tuple[str, ...] = (FIRST,)) -> None:
+    for event_id in event_ids:
+        write_drafts(
+            repo,
+            event_id,
+            plan20_draft(event_id),
+            plan20_draft(event_id, annotator=SIGNED),
+        )
+    result = run(repo, "gold", "anchor", *event_ids)
+    assert result.exit_code == 0, result.output
+    assert PLAN20_MARKER not in result.output
+
+
+def plan20_coverage(repo: Path) -> None:
+    assert plan20_run(repo, "coverage").exit_code == 0
+    split = load_split(repo / EVALUATION / "split-v1.json")
+    events = tuple(e for e in split.events_in(Partition.TRAIN) if e not in UNPARSED)
+    plan20_sign(repo, events)
+
+
+def test_plan20_shared_paths_and_committed_gold_selection(plan20_repo) -> None:
+    frozen(plan20_repo)
+    layout = Layout(
+        plan20_repo, COHORT_MANIFEST, FIXTURE_DIR / "pilot-v1.json", PILOT_HASH
+    )
+    pinned = load_pinned(layout)
+    assert stage6.committed_gold(layout, pinned, None) == []
+    plan20_sign(plan20_repo)
+    path = plan20_repo / EVALUATION / "gold" / f"{FIRST_FILE}.toml"
+    assert stage6.committed_gold(layout, pinned, None) == [(path, load_gold(path))]
+    assert stage6.committed_gold(layout, pinned, [FIRST]) == [(path, load_gold(path))]
+    assert stage6.kept_drafts(layout, FIRST) == (
+        plan20_repo / DRAFTS / f"{FIRST_FILE}.draft.toml",
+        plan20_repo / DRAFTS / f"{FIRST_FILE}.working.toml",
+    )
+    assert stage6.independent_path(layout, FIRST) == (
+        plan20_repo / INDEPENDENT_DIR / f"{FIRST_FILE}.toml"
+    )
+    assert stage6.read_ledger(pinned) is None
+    write_ledger(plan20_repo, [ledger_row(FIRST, "0" * 64)])
+    assert stage6.read_ledger(pinned).rows[0].event_id == FIRST
+
+
+def test_plan20_empty_selection_preserves_each_commands_contract(plan20_repo) -> None:
+    frozen(plan20_repo)
+    before = snapshot(plan20_repo)
+    valid = run(plan20_repo, "gold", "validate")
+    assert valid.exit_code == 0, valid.output
+    assert lines(valid) == [f"no gold committed under {EVALUATION}/gold"]
+    result = plan20_run(plan20_repo, "recount")
+    assert result.exit_code == 1
+    assert lines(result) == [f"Refused: no gold is committed under {EVALUATION}/gold"]
+    assert snapshot(plan20_repo) == before
+
+
+def test_plan20_recount_stem_mismatch_writes_nothing(plan20_repo) -> None:
+    frozen(plan20_repo)
+    plan20_sign(plan20_repo)
+    folder = plan20_repo / EVALUATION / "gold"
+    renamed = folder / f"{SECOND.replace(':', '_')}.toml"
+    (folder / f"{FIRST_FILE}.toml").rename(renamed)
+    before = snapshot(plan20_repo)
+    result = plan20_run(plan20_repo, "recount")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        f"Refused: {renamed.relative_to(plan20_repo).as_posix()} holds the gold of {FIRST}"
+    ]
+    assert snapshot(plan20_repo) == before
+
+
+def test_plan20_recount_missing_working_copy_writes_nothing(plan20_repo) -> None:
+    frozen(plan20_repo)
+    plan20_sign(plan20_repo)
+    (plan20_repo / DRAFTS / f"{FIRST_FILE}.working.toml").unlink()
+    before = snapshot(plan20_repo)
+    result = plan20_run(plan20_repo, "recount")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        (
+            f"Refused: {FIRST}: {DRAFTS.as_posix()}/{FIRST_FILE}.working.toml is not"
+            " here; GS5's counts rebuild from the kept draft and its working copy"
+        )
+    ]
+    assert snapshot(plan20_repo) == before
+
+
+@pytest.mark.parametrize("kind", ["gold", "draft", "working"])
+def test_plan20_recount_unreadable_record_names_fields_not_text(
+    plan20_repo, kind
+) -> None:
+    frozen(plan20_repo)
+    plan20_sign(plan20_repo)
+    path = (
+        plan20_repo / EVALUATION / "gold" / f"{FIRST_FILE}.toml"
+        if kind == "gold"
+        else plan20_repo / DRAFTS / f"{FIRST_FILE}.{kind}.toml"
+    )
+    path.write_text(f'quotes = ["{PLAN20_MARKER}",\n', encoding="utf-8")
+    before = snapshot(plan20_repo)
+    result = plan20_run(plan20_repo, "recount")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        f"problem: {path.name}: not TOML at line 2, column 1",
+        f"Refused: {path.name} does not read as its record",
+    ]
+    assert snapshot(plan20_repo) == before
+
+
+def test_plan20_recount_repeated_kept_id_refuses_and_writes_nothing(
+    plan20_repo,
+) -> None:
+    frozen(plan20_repo)
+    plan20_sign(plan20_repo)
+    twice = plan20_draft()
+    twice["quotes"].append(dict(twice["quotes"][0]))
+    write_drafts(plan20_repo, FIRST, twice, plan20_draft(annotator=SIGNED))
+    before = snapshot(plan20_repo)
+    result = plan20_run(plan20_repo, "recount")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        f"refused: {FIRST} draft quote q1: duplicate_id",
+        "Refused: 1 problem(s); GS5's shares wait until each is resolved",
+    ]
+    assert snapshot(plan20_repo) == before
+
+
+def test_plan20_recount_preflights_all_selected_partitions(
+    plan20_repo, monkeypatch
+) -> None:
+    frozen(plan20_repo)
+    layout = Layout(
+        plan20_repo, COHORT_MANIFEST, FIXTURE_DIR / "pilot-v1.json", PILOT_HASH
+    )
+    pinned = load_pinned(layout)
+    parsed = documents(layout, pinned)
+    split = load_split(pinned.split_path)
+    selected = tuple(e for e in split.events_in(Partition.TRAIN) if e in parsed)[:2]
+    plan20_sign(plan20_repo, selected)
+    held_back = selected[1]
+    path = pinned.gold_dir / f"{held_back.replace(':', '_')}.toml"
+    record = load_gold(path).model_copy(update={"partition": Partition.TEST})
+    path.write_text(gold_toml(record), encoding="utf-8")
+
+    def forbidden_bundle(*args, **kwargs):
+        raise AssertionError(PLAN20_MARKER)
+
+    monkeypatch.setattr(pilot_cli, "load_bundle", forbidden_bundle)
+    before = snapshot(plan20_repo)
+    result = plan20_run(plan20_repo, "recount")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        (
+            f"Refused: {held_back} is a test bundle; pilot evaluation takes train"
+            " and dev only"
+        )
+    ]
+    assert snapshot(plan20_repo) == before
+
+
+def test_plan20_legacy_success_paths_keep_markers_private(plan20_repo) -> None:
+    frozen(plan20_repo)
+    plan20_sign(plan20_repo)
+    before = snapshot(plan20_repo)
+    recounted = plan20_run(plan20_repo, "recount", FIRST)
+    assert recounted.exit_code == 0, recounted.output
+    assert lines(recounted) == [
+        f"recounted {FIRST} (train): accepted 3, edited 0, rejected 0, added 0",
+        "recounted 1 file(s): each rebuilds from its kept draft",
+    ]
+    assert snapshot(plan20_repo) == before
+    plan20_coverage(plan20_repo)
+    covered = plan20_run(plan20_repo, "coverage", "--version", "2")
+    assert covered.exit_code == 0, covered.output
+    before = snapshot(plan20_repo)
+    repeated = plan20_run(plan20_repo, "coverage", "--version", "2")
+    assert repeated.exit_code == 0, repeated.output
+    assert "unchanged: coverage v2" in repeated.output
+    assert snapshot(plan20_repo) == before
+
+
+@pytest.mark.parametrize("command", ["recount", "coverage"])
+@pytest.mark.parametrize("partition", [Partition.TEST, Partition.EXCLUDED])
+@pytest.mark.parametrize("changed", ["record", "split"])
+def test_plan20_legacy_commands_refuse_held_back_partitions_before_text(
+    plan20_repo, monkeypatch, command, partition, changed
+) -> None:
+    frozen(plan20_repo)
+    if command == "coverage":
+        plan20_coverage(plan20_repo)
+    else:
+        plan20_sign(plan20_repo)
+    if changed == "record":
+        path = plan20_repo / EVALUATION / "gold" / f"{FIRST_FILE}.toml"
+        record = load_gold(path).model_copy(update={"partition": partition})
+        path.write_text(gold_toml(record), encoding="utf-8")
+    else:
+        lookup = SplitManifest.partition_of
+
+        def partition_of(self, event_id):
+            return partition if event_id == FIRST else lookup(self, event_id)
+
+        monkeypatch.setattr(SplitManifest, "partition_of", partition_of)
+
+    def forbidden_bundle(*args, **kwargs):
+        raise AssertionError(PLAN20_MARKER)
+
+    monkeypatch.setattr(pilot_cli, "load_bundle", forbidden_bundle)
+    before = snapshot(plan20_repo)
+    args = ("--version", "2") if command == "coverage" else ()
+    result = plan20_run(plan20_repo, command, *args)
+    assert result.exit_code == 1
+    assert lines(result) == [
+        (
+            f"Refused: {FIRST} is a {partition} bundle; pilot evaluation takes train"
+            " and dev only"
+        )
+    ]
+    assert snapshot(plan20_repo) == before
+
+
+def test_plan20_coverage_unreadable_gold_names_record_not_text(plan20_repo) -> None:
+    frozen(plan20_repo)
+    plan20_coverage(plan20_repo)
+    path = plan20_repo / EVALUATION / "gold" / f"{FIRST_FILE}.toml"
+    path.write_text(f'quotes = ["{PLAN20_MARKER}",\n', encoding="utf-8")
+    before = snapshot(plan20_repo)
+    result = plan20_run(plan20_repo, "coverage", "--version", "2")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        f"problem: {path.name}: not TOML at line 2, column 1",
+        f"Refused: {path.name} does not read as its record",
+    ]
+    assert snapshot(plan20_repo) == before
+
+
+def test_plan20_coverage_checks_parsed_document_id_without_loading_text(
+    plan20_repo, monkeypatch
+) -> None:
+    frozen(plan20_repo)
+    plan20_coverage(plan20_repo)
+    path = plan20_repo / EVALUATION / "gold" / f"{FIRST_FILE}.toml"
+    record = load_gold(path).model_copy(update={"doc_id": "another-invented-doc"})
+    path.write_text(gold_toml(record), encoding="utf-8")
+
+    def forbidden_bundle(*args, **kwargs):
+        raise AssertionError(PLAN20_MARKER)
+
+    monkeypatch.setattr(pilot_cli, "load_bundle", forbidden_bundle)
+    before = snapshot(plan20_repo)
+    result = plan20_run(plan20_repo, "coverage", "--version", "2")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        f"refused: {FIRST} doc_id: wrong_document",
+        "Refused: 1 problem(s); nothing written",
+    ]
+    assert snapshot(plan20_repo) == before
+
+
+@pytest.mark.parametrize("command", ["recount", "coverage"])
+def test_plan20_legacy_commands_withhold_unforeseen_exception_text(
+    plan20_repo, monkeypatch, command
+) -> None:
+    frozen(plan20_repo)
+    if command == "coverage":
+        plan20_coverage(plan20_repo)
+    else:
+        plan20_sign(plan20_repo)
+
+    def broken(*args, **kwargs):
+        raise ValueError(PLAN20_MARKER)
+
+    monkeypatch.setattr(
+        pilot_cli, "check_countable" if command == "coverage" else "recount", broken
+    )
+    before = snapshot(plan20_repo)
+    args = ("--version", "2") if command == "coverage" else ()
+    result = plan20_run(plan20_repo, command, *args)
+    assert result.exit_code == 1
+    assert lines(result) == [
+        (
+            "Refused: an unforeseen ValueError; its message is withheld, since it"
+            " may quote a document (GS13)"
+        )
+    ]
+    assert snapshot(plan20_repo) == before
 
 
 def test_coverage_v2_waits_for_every_train_and_dev_bundle_s_gold(repo) -> None:

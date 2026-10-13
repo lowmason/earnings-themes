@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Literal, Self
 
-from earnings_core import digest
+from earnings_core import VALIDATOR_VERSION, digest
 from pydantic import (
     AwareDatetime,
     Field,
@@ -243,6 +243,38 @@ class CodingCeilings(CodingPart):
     requests_per_run: int = Field(ge=0)
     tokens_per_document: int = Field(ge=0)
     tokens_per_run: int = Field(ge=0)
+
+
+def coding_configuration(
+    *,
+    source_run_id: str,
+    source_run_hash: str,
+    documents: tuple[tuple[str, str], ...],
+    codebook: CodebookReference,
+    classifier_identity: JudgeIdentity,
+    coding_policy: CodingPolicySnapshot,
+    ceilings: CodingCeilings,
+    requested_claim_order: tuple[tuple[str, str], ...],
+    schema_hash: str,
+    cache_mode: Literal["live", "replay", "fresh"],
+    coding_version: str = CODING_VERSION,
+    validator_version: str = VALIDATOR_VERSION,
+) -> dict[str, object]:
+    """The complete configuration material shared by production and revalidation."""
+    return {
+        "source_run_id": source_run_id,
+        "source_run_hash": source_run_hash,
+        "documents": documents,
+        "codebook": codebook.model_dump(mode="json"),
+        "classifier_identity": classifier_identity.model_dump(mode="json"),
+        "coding_policy": coding_policy.model_dump(mode="json"),
+        "ceilings": ceilings.model_dump(mode="json"),
+        "requested_claim_order": requested_claim_order,
+        "schema_hash": schema_hash,
+        "coding_version": coding_version,
+        "validator_version": validator_version,
+        "cache_mode": cache_mode,
+    }
 
 
 class ClassificationRecord(CodingRecord):

@@ -160,6 +160,13 @@ class PilotReport(ThemesRecord):
     independent: tuple[IndependentFigures, ...] = ()
     content_hash: Sha256Hex
 
+    @model_validator(mode="after")
+    def _both_partitions_once(self) -> Self:
+        partitions = [report.partition for report in self.partitions]
+        if len(partitions) != 2 or set(partitions) != {Partition.TRAIN, Partition.DEV}:
+            raise ValueError("one train and one dev partition are required")
+        return self
+
     def partition(self, partition: Partition) -> PartitionReport | None:
         return next((p for p in self.partitions if p.partition is partition), None)
 

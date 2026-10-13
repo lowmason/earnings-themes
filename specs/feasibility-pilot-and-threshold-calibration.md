@@ -458,3 +458,5 @@ user's approval.
 > Plan A, slice 2: COMPLETE (2026-10-12) — implemented by plan 18 (specs/plans/completed/18-feasibility-pilot-and-threshold-calibration-plan-a-slice-2.md): A1, A2, and A9's dictionary rows for their records; FP11, FP23, A1 and A8 amended. Next: write plan A's remainder (A3–A5, then A8, each with A9's dictionary rows for its records).
 
 > Plan A, slice 3: COMPLETE (2026-10-13) — implemented by plan 19 (specs/plans/completed/19-feasibility-pilot-and-threshold-calibration-plan-a-slice-3.md): A3, A4, A5, and A9's dictionary rows for their records; FP10, FP14, FP18, FP22, A3, §Preregistration, §Calibration, §Failure handling and §Metrics amended. Next: write plan A's last slice (A8, with A9's dictionary rows for its records).
+
+> Plan A: COMPLETE (2026-10-13) — implemented by plan 20 (specs/plans/completed/20-feasibility-pilot-and-threshold-calibration-plan-a-slice-4.md). Next: B1 and B2; plan B's B3 waits for the visibility gate.

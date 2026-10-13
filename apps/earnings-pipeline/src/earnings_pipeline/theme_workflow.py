@@ -20,6 +20,7 @@ from earnings_ingestion.events.states import (
     PROCESSING_PREDECESSOR_FIELDS,
     DocumentState,
     ProcessingTransition,
+    StateTransition,
     check_histories,
     current_states,
     in_order,
@@ -46,18 +47,21 @@ from earnings_themes.analysis import (
 )
 from earnings_themes.analysis.records import TABLE_SCHEMAS
 from earnings_themes.anchoring import Bundle
-from earnings_themes.codebook import load_codebook
+from earnings_themes.codebook import Codebook, load_codebook
 from earnings_themes.coding.adapters import Classifier
 from earnings_themes.coding.assignments import project_assignments
 from earnings_themes.coding.cache import CodingCache
 from earnings_themes.coding.decide import AssignmentPolicy, decide_assignments
 from earnings_themes.coding.records import (
+    CodingPolicySnapshot,
+    CodingReply,
     CodingRun,
     CodingRunRecord,
     PolicyReference,
     PolicyVote,
+    coding_configuration,
 )
-from earnings_themes.coding.run import ProposalRun, propose_run
+from earnings_themes.coding.run import ProposalRun, propose_run, source_bindings
 from earnings_themes.coding.store import SCHEMAS as CODING_SCHEMAS
 from earnings_themes.coding.store import (
     read_coding_run,
@@ -66,7 +70,7 @@ from earnings_themes.coding.store import (
 )
 from earnings_themes.extraction.adapters import ModelAdapter
 from earnings_themes.extraction.cache import CachedAdapter
-from earnings_themes.extraction.prompt import parse_template
+from earnings_themes.extraction.prompt import PromptTemplate, parse_template
 from earnings_themes.extraction.run import extract_run
 from earnings_themes.extraction.store import SCHEMAS as EXTRACTION_SCHEMAS
 from earnings_themes.extraction.store import StoredRun, read_run, write_run
@@ -78,9 +82,10 @@ from earnings_themes.support import (
 )
 from earnings_themes.support.cache import SupportCache
 from earnings_themes.support.judges import Judge, validate_panel
-from earnings_themes.support.records import SupportSources
+from earnings_themes.support.records import SupportSources, support_configuration
 from earnings_themes.support.scorers import EntailmentScorer
 from earnings_themes.support.store import SCHEMAS as SUPPORT_SCHEMAS
+from earnings_themes.support.store import StoredSupportRun
 from pydantic import AwareDatetime, Field, model_validator
 
 from earnings_pipeline.evidence_views import make_evidence_view
@@ -380,6 +385,18 @@ def _publish_metadata(config, name, record):
     return _artifact(config, path)
 
 
+def validate_workflow_policy(
+    config: WorkflowConfig, policy: AssignmentPolicy | None
+) -> None:
+    if config.policy_reference is not None:
+        _require(
+            policy is not None and policy.reference == config.policy_reference,
+            "policy_unavailable",
+        )
+    elif config.assignment_policy is None:
+        _require(policy is None, "policy_mismatch")
+
+
 def _load_metadata(config, runtime):
     validate_paths(config, repo=config.repo)
     _require(
@@ -390,14 +407,7 @@ def _load_metadata(config, runtime):
         "model_mismatch",
     )
     validate_panel(config.extractor_family, config.judge_identities)
-    if config.policy_reference is not None:
-        _require(
-            runtime.assignment_policy is not None
-            and runtime.assignment_policy.reference == config.policy_reference,
-            "policy_unavailable",
-        )
-    elif config.assignment_policy is None:
-        _require(runtime.assignment_policy is None, "policy_mismatch")
+    validate_workflow_policy(config, runtime.assignment_policy)
     for selected in (
         config.universe,
         config.events,
@@ -516,6 +526,103 @@ def _load_metadata(config, runtime):
         book,
         template,
     )
+
+
+@dataclass(frozen=True, repr=False)
+class WorkflowInputs:
+    """Verified source inputs shared by the workflow and the pilot's phase runner."""
+
+    expected: tuple[ExpectedEvent, ...]
+    bundles: tuple[Bundle, ...]
+    metadata: tuple[DocumentMetadata, ...]
+    canonical: tuple[CanonicalSnapshot, ...]
+    raw: tuple[RawSnapshot, ...]
+    codebook: Codebook
+    template: PromptTemplate
+    acquisition: tuple[AcquisitionStatus, ...]
+    provenance_hash: str
+
+
+def workflow_provenance(
+    config: WorkflowConfig,
+    expected: tuple[ExpectedEvent, ...],
+    baseline: dict[str, StateTransition],
+    metadata: tuple[DocumentMetadata, ...],
+    canonical: tuple[CanonicalSnapshot, ...],
+) -> tuple[tuple[AcquisitionStatus, ...], str]:
+    acquisition = _projections(config, baseline, metadata)
+    provenance = analysis_provenance_hash(
+        selected_universe_hash=config.universe_hash,
+        expected=expected,
+        acquisition=acquisition,
+        metadata=metadata,
+        canonical_snapshots=canonical,
+    )
+    return acquisition, provenance
+
+
+def load_workflow_inputs(
+    config: WorkflowConfig, runtime: WorkflowRuntime
+) -> WorkflowInputs:
+    """Rebind immutable acquisition inputs from the checked state history.
+
+    Processing transitions are filtered before deriving acquisition predecessors.
+    Pilot passes and fresh runs use those predecessors even after a normal run
+    records its separate processing transition. They never append a transition.
+    The workflow's terminal/self-or-descendant rule remains in `_baseline` unchanged.
+    """
+    expected, bundles, metadata, canonical, raw, book, template = _load_metadata(
+        config, runtime
+    )
+    history = _checked_history(config, confined_path(config.repo, config.states_dir))
+    baseline, _ = _baseline(
+        config, [s for s in history if not isinstance(s, ProcessingTransition)], None
+    )
+    acquisition, provenance = workflow_provenance(
+        config, expected, baseline, metadata, canonical
+    )
+    return WorkflowInputs(
+        expected,
+        bundles,
+        metadata,
+        canonical,
+        raw,
+        book,
+        template,
+        acquisition,
+        provenance,
+    )
+
+
+def workflow_configuration_hashes(
+    config: WorkflowConfig,
+    sources: SupportSources,
+    *,
+    cache_mode: Literal["live", "replay", "fresh"] = "replay",
+) -> tuple[str, str]:
+    """The replay coding/support hashes, before any policy is bound or voted."""
+    coding = coding_configuration(
+        **source_bindings(sources),
+        classifier_identity=config.classifier_identity,
+        coding_policy=CodingPolicySnapshot(
+            **config.coding_policy.model_dump(exclude={"prompt_text"})
+        ),
+        ceilings=config.coding_ceilings,
+        requested_claim_order=tuple(
+            (c.doc_id, c.claim_id) for c in sources.stored_run.claims
+        ),
+        schema_hash=digest(CodingReply.model_json_schema()),
+        cache_mode=cache_mode,
+    )
+    support = support_configuration(
+        config.support_policy,
+        config.support_ceilings,
+        config.scorer_identity,
+        config.judge_identities,
+        config.extractor_family,
+        cache_mode,
+    )
+    return digest(coding), digest(support)
 
 
 def _baseline(config, history, existing_analysis):
@@ -686,6 +793,17 @@ def _extraction(config, runtime, bundles, template, started, directory):
         )
         write_run(directory, result, bundles)
         result = read_run(directory)
+    verify_extraction_configuration(config, result, bundles, template)
+    return result
+
+
+def verify_extraction_configuration(
+    config: WorkflowConfig,
+    result: StoredRun,
+    bundles: tuple[Bundle, ...],
+    template: PromptTemplate,
+) -> None:
+    """Bind stored extraction metadata without restricting its reusable cache mode."""
     record = result.record
     _require(
         record.run_id == config.extraction_run_id
@@ -703,10 +821,15 @@ def _extraction(config, runtime, bundles, template, started, directory):
         config.fixture_started_at is None
         or record.started_at == config.fixture_started_at
     )
-    return result
 
 
-def _coding(config, sources, support, proposal, policy):
+def finalize_coding(
+    proposal: ProposalRun,
+    support: StoredSupportRun,
+    sources: SupportSources,
+    policy: AssignmentPolicy | None,
+) -> CodingRun:
+    """Project Stage 9's decisions once, shared by workflow and fresh pilot runs."""
     decisions = decide_assignments(proposal, support, sources, policy)
     assignments, links = project_assignments(decisions, support)
     record = CodingRunRecord(
@@ -897,13 +1020,8 @@ def run_theme_workflow(
         with ProcessLock(states_dir / ".acquire.lock"):
             history = _checked_history(config, states_dir)
             baseline, terminals = _baseline(config, history, existing)
-            acquisition = _projections(config, baseline, metadata)
-            provenance = analysis_provenance_hash(
-                selected_universe_hash=config.universe_hash,
-                expected=expected,
-                acquisition=acquisition,
-                metadata=metadata,
-                canonical_snapshots=canonical,
+            acquisition, provenance = workflow_provenance(
+                config, expected, baseline, metadata, canonical
             )
             if not configuration_path.exists():
                 write_new(configuration_path, config_bytes)
@@ -1008,18 +1126,7 @@ def run_theme_workflow(
             )
             _require(
                 support.record.configuration_hash
-                == digest(
-                    {
-                        "policy": config.support_policy.model_dump(mode="json"),
-                        "ceilings": config.support_ceilings.model_dump(mode="json"),
-                        "scorer": config.scorer_identity.model_dump(mode="json"),
-                        "judges": [
-                            i.model_dump(mode="json") for i in config.judge_identities
-                        ],
-                        "extractor_family": config.extractor_family,
-                        "cache_mode": "replay",
-                    }
-                )
+                == workflow_configuration_hashes(config, sources)[1]
             )
             _require(tuple(t.target for t in support.targets) == proposal.targets)
             _require(support.record.started_at == started)
@@ -1035,7 +1142,7 @@ def run_theme_workflow(
             if config.assignment_policy:
                 _require(config.scope == "fixture", "policy_mismatch")
             if previous_coding is None:
-                coding = _coding(config, sources, support, proposal, policy)
+                coding = finalize_coding(proposal, support, sources, policy)
                 write_coding_run(coding_dir, coding, sources, support, policy)
             coding = read_coding_run(coding_dir)
             reverify_coding_run(coding, sources, support, policy)

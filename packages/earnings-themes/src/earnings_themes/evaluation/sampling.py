@@ -64,6 +64,10 @@ def sample_targets(
     pool: Sequence[PoolTarget], *, seed: int, size: int, cap: int
 ) -> tuple[str, ...]:
     """The sampled target IDs, in draw order."""
+    if type(size) is not int or size < 0:
+        raise EvaluationError(EvaluationProblem.MALFORMED_RECORD, "size")
+    if type(cap) is not int or cap <= 0:
+        raise EvaluationError(EvaluationProblem.MALFORMED_RECORD, "cap")
     if (duplicate := first_duplicate(t.target_id for t in pool)) is not None:
         raise EvaluationError(EvaluationProblem.DUPLICATE_TARGET, duplicate)
     themes: dict[str, dict[str, list[str]]] = {}

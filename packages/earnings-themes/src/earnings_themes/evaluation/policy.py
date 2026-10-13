@@ -15,7 +15,7 @@ from earnings_themes.coding.decide import DecisionInput
 from earnings_themes.coding.records import PolicyReference, PolicyVote
 from earnings_themes.evaluation.calibration import CalibrationArtifact, ScorerCutoff
 from earnings_themes.evaluation.problems import EvaluationError, EvaluationProblem
-from earnings_themes.evaluation.records import content_hash
+from earnings_themes.records import hash_matches
 from earnings_themes.support.records import CodebookReference
 
 
@@ -30,7 +30,7 @@ class CalibratedPolicy:
         classifier_configuration_hash: str,
         support_configuration_hash: str,
     ) -> None:
-        if content_hash(artifact) != artifact.content_hash:
+        if not hash_matches(artifact):
             raise EvaluationError(
                 EvaluationProblem.CONTENT_HASH_MISMATCH, "content_hash"
             )

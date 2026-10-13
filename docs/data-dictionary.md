@@ -6376,7 +6376,7 @@ installs the runtimes it needs.
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `schema_version` | `1` | Application record schema version |
-| `family` | string | Model family, for Stage 8's panel rule |
+| `family` | IdPart | ID-safe model family for Stage 8's panel rule; ASCII letters, digits and `. _ : -` only |
 | `base_url` | string | The server's OpenAI-compatible root; loopback only, which `LocalAdapter` checks when it is built (`loopback_url`) |
 | `model_id` | string | The model the server names in each reply |
 | `runtime` | string | The serving runtime's name |
@@ -6419,7 +6419,7 @@ the run predicted, else one already present, else its lowest theme ID, and its o
 members are excused; for unit and character scoring the group stays one evidence
 cell, which any member's evidence covers, and an accepted unit or character is one
 hit however many cells hold it. A theme whose every row is `uncertain` is left out
-and counted. A claim's reference to a quote, or any assignment's reference to a
+and counted. A claim or hard negative's reference to a quote, or any assignment's reference to a
 claim, that the reading lacks is counted as dangling, one per reference. The roll-up
 maps both sides to level-one roots. Gold-evidence recall counts the gold-supporting
 units any accepted assignment holds. GS5's edited and rejected shares are over
@@ -6463,7 +6463,7 @@ event-clustered percentile bootstrap.
 | `units` | Each present theme's gold-supporting units |
 | `spans` | Each present theme's gold-supporting spans |
 | `evidence` | The `EvidenceCell`s unit and character scoring read: each present theme's own untied evidence, then each tie group's |
-| `dangling` | References the reading cannot resolve, one each: a claim's quote the reading lacks, and any assignment's claim it lacks, whatever its support, theme or tie (D19-7) |
+| `dangling` | References the reading cannot resolve, one each: a claim or hard negative's quote the reading lacks, and any assignment's claim it lacks, whatever its support, theme or tie; tolerated and counted (D19-7) |
 
 ### `EvidenceCell`
 
@@ -6587,7 +6587,7 @@ groups the two hit counts are equal, and every figure is the single-tally one.
 | `qualifier` | A family, `family:presentation`, a scorer view, or a negative kind; null when the metric is reported once |
 | `point` | The point estimate, or null when undefined |
 | `interval` | Its `Interval`; null exactly when the metric is not estimated |
-| `counts` | Named counts behind the figure, sorted by name |
+| `counts` | Named counts behind the figure, sorted by name; GS5 figures retain accepted, edited, rejected, added, numerator and denominator |
 | `reason` | Why the metric is not estimated; null otherwise |
 
 ### `PartitionReport`
@@ -6606,7 +6606,7 @@ groups the two hit counts are equal, and every figure is the single-tally one.
 | `release_agrees` | Whether the two release-identification labels agree |
 | `theme_f1` | Exact theme F1 of one reading against the other |
 | `unit_f1` | Unit F1 of their evidence |
-| `dangling` | Dangling references in either reading |
+| `dangling` | Sum of both readings' dangling quote and claim references, including hard-negative quote references; tolerated, never refused |
 
 ### `IndependentFigures`
 
@@ -6625,7 +6625,7 @@ groups the two hit counts are equal, and every figure is the single-tally one.
 | `label` | `feasibility-only` (R12.2) |
 | `preregistration_hash` | The preregistration it follows |
 | `calibration_hash` | The calibration artifact whose policy it scores |
-| `partitions` | Train's and dev's `PartitionReport` |
+| `partitions` | Exactly one train and one dev `PartitionReport`, in either order; duplicate or missing partitions refuse |
 | `independent` | Each dev event's `IndependentFigures` |
 | `content_hash` | Digest of every other field |
 
@@ -6703,7 +6703,7 @@ groups the two hit counts are equal, and every figure is the single-tally one.
 | `claim_label` | The user's claim label, or null when unsure |
 | `joint_label` | The joint label, or null |
 | `accepted` | Whether the run accepted it |
-| `scores` | Each scorer view's joint score |
+| `scores` | Named joint scores keyed `minicheck` and `deberta`; see the scorer-view vocabulary below |
 | `trials` | Its four judge trials |
 
 ### `ClaimAnswer`
@@ -6768,7 +6768,7 @@ groups the two hit counts are equal, and every figure is the single-tally one.
 | `candidate_id` | The candidate |
 | `rule` | `scorer_cutoff` |
 | `signal` | `minicheck_joint` |
-| `signals` | How many signals it reads, for the tie-break |
+| `signals` | Exactly `1`: the MiniCheck joint signal; the tie-break field is retained |
 | `grid` | Its cutoffs, sorted |
 
 ### `SelectionRule`
@@ -6837,7 +6837,7 @@ groups the two hit counts are equal, and every figure is the single-tally one.
 | Field | Meaning |
 | --- | --- |
 | `candidate_id` | The candidate |
-| `signals` | Signals it reads |
+| `signals` | Exactly `1`, matching the single-signal `Candidate` |
 | `cutoff` | The fitted cutoff, or null when none meets ρ |
 | `precision` | Train labelled precision there against the joint label, or null |
 | `recall` | Train label recall there against the joint label, or null |
@@ -6913,3 +6913,283 @@ codebook and both configuration hashes. It refuses `content_hash_mismatch`, subj
 `no_candidate`, subject `selection`, for one without a selection. `evaluate`
 applies the selected `ScorerCutoff`: accept with the eligible quotes when the joint
 score reaches the cutoff and an eligible quote exists, otherwise review.
+
+## Stage 11 shared and application boundaries (plan 20, A8/A9)
+
+These APIs reuse the existing coding, support and evaluation gates. They keep
+persisted field names and schema versions.
+
+### `SourceBindings`
+
+A nonpersisted `TypedDict` returned by
+`source_bindings(sources: SupportSources) -> SourceBindings` after validating the
+source manifest and codebook. It is used before dispatch, after dispatch and when
+the application prebinds the coding configuration.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `source_run_id` | string | The extraction run's identity |
+| `source_run_hash` | SHA-256 | Digest of the extraction manifest and complete source provenance hash |
+| `documents` | tuple of (string, SHA-256) | Document IDs and canonical hashes, sorted by document ID |
+| `codebook` | CodebookReference | Frozen codebook identity, version and content hash |
+
+### Shared coding gates
+
+
+`coding_configuration(*, source_run_id, source_run_hash, documents, codebook,
+classifier_identity, coding_policy, ceilings, requested_claim_order, schema_hash,
+cache_mode, coding_version, validator_version)` returns the same twelve-key
+configuration material that `ProposalRunRecord.configuration_hash` binds. Coding
+production and proposal reconstruction both call this definition.
+
+`validate_proposal_support(proposals: ProposalRun, support: StoredSupportRun,
+sources: SupportSources) -> None` reuses the gate before `decide_assignments`:
+reverify the support run, recompute proposed inputs, bind the extraction source run
+ID/hash, documents and codebook, and require support targets to be among the
+proposals. The existing support gate establishes unique outcomes in target order.
+The application applies it to both support runs before calibration or reporting.
+
+### `HashedRecord`
+
+A nonpersisted structural `Protocol` bounding `sealed` and `checked`; its existing
+record implementations keep their fields and serialized schema. The shared
+comparison is `hash_matches(record: HashedRecord) -> bool`. `checked` maps a failed
+comparison to `RecordError`; calibration maps it to `preregistration_mismatch`,
+and the calibrated policy maps it to `content_hash_mismatch`.
+
+| Member | Meaning |
+| --- | --- |
+| `content_hash` | The stored digest of every other serialized field |
+| `model_dump` | JSON-compatible serialization used by the shared content digest |
+| `model_copy` | Immutable reconstruction used to fill the content hash |
+
+### Preregistered gate boundary
+
+`derive_gates(report, *, rule: GateRule, judge_floor, preregistration_hash,
+version=1)` takes and rechecks the preregistered rule; an arbitrary metric list or
+undefined-gate string cannot replace it. Gate wrong-partition errors name
+`partition`.
+
+### Gold and rendering consumer boundaries
+
+`check_countable(..., doc_id=parsed_document_id)` binds a gold file to
+the current parsed document ID without loading text; mismatches return `doc_id:
+wrong_document`. `label_views` remains a pure renderer, and its application caller
+must reverify support before rendering. A missing evidence document closes as
+`malformed_record`, with field path `evidence.doc_id`.
+
+### Report counts and stability identities
+
+`stability_figures(runs, codebook, plan, *, run_ids)` requires one unique nonblank
+ID per run and unique events within each run. Different event sets refuse with
+the offending run ID; repeated events name the run and event. `quote_spans`
+provides the shared canonical quote map used by event cells and hard-negative
+scoring; negative dangling references remain tolerated and counted. `gs5_counts`
+is the shared sum behind GS5 shares and their figure counts. Edited and rejected
+shares use accepted + edited + rejected as denominator; added shares use accepted
++ edited + added.
+
+Stability figures remain in dev's `PartitionReport.figures`.
+
+### `Scorer-view vocabulary`
+
+The report uses short scorer qualifiers and score-map keys. Calibration's raw
+`MetricReport.view` names retain the joint scope. Both score against the
+`claim_support` label; support precision separately uses `joint_support`.
+
+| Report qualifier / score-map key | MetricReport.view | Meaning |
+| --- | --- | --- |
+| `minicheck` | `minicheck_joint` | Primary MiniCheck joint score |
+| `deberta` | `deberta_joint` | Alternative DeBERTa joint score, reported only |
+
+### `WorkflowInputs`
+
+A transient `earnings_pipeline.theme_workflow` dataclass containing the verified
+source inputs shared by the ordinary workflow and the pilot phase runner.
+`load_workflow_inputs(config, runtime)` derives acquisition provenance from the
+immutable acquisition predecessors. It appends no processing transition.
+`workflow_configuration_hashes(config: WorkflowConfig, sources: SupportSources,
+*, cache_mode="replay") -> tuple[str, str]` returns coding then support hashes,
+using the shared configuration definitions before a policy is bound or voted.
+`validate_workflow_policy(config: WorkflowConfig, policy: AssignmentPolicy | None)
+-> None` validates the configured policy reference for metadata loading and
+ordinary pilot runs, refusing with `policy_unavailable` or `policy_mismatch`.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `expected` | tuple of ExpectedEvent | Explicit expected event selection |
+| `bundles` | tuple of Bundle | Canonical documents with original structure and masks |
+| `metadata` | tuple of DocumentMetadata | Checked source and document metadata |
+| `canonical` | tuple of CanonicalSnapshot | Immutable canonical artifact bindings |
+| `raw` | tuple of RawSnapshot | Immutable raw artifact bindings |
+| `codebook` | Codebook | The frozen approved codebook |
+| `template` | PromptTemplate | The pinned extraction prompt template |
+| `acquisition` | tuple of AcquisitionStatus | Checked projections of immutable acquisition predecessors |
+| `provenance_hash` | SHA-256 string | Digest binding the selected universe, acquisition, metadata and canonical snapshots |
+
+### `PilotSettings`
+
+A strict local `earnings_pipeline.pilot_records` configuration. File selections
+are confined to the repository, and the alternative scorer must have kind
+`deberta`. Each selected train/dev configuration and runtime manifest has its own
+SHA-256 pin.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `train` | FileSelection | Explicit train workflow configuration path and SHA-256 |
+| `dev` | FileSelection | Explicit dev workflow configuration path and SHA-256 |
+| `runtime_manifest` | FileSelection | B1 runtime manifest path and SHA-256 |
+| `alternative_scorer` | ScorerIdentity | Frozen alternative DeBERTa identity, reported only |
+
+### `ProposalSnapshot`
+
+A strict local checkpoint of classifier output before an assignment decision
+exists. It reconstructs `ProposalRun` without repeating classification. Its
+proposal and novelty records can contain model wording; this snapshot is a local
+input, not a public report artifact.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `record` | ProposalRunRecord | Coding proposal manifest and configuration binding |
+| `classifications` | tuple of ClassificationRecord | Claim classification results |
+| `attempts` | tuple of CodingAttempt | Auditable classifier attempts |
+| `proposals` | tuple of ProposalRecord | Proposed claim-theme targets |
+| `attributes` | tuple of AttributeRecord | Separate analyst attributes |
+| `novelty` | tuple of NoveltyItem | Local novelty suggestions |
+
+### `PassRecord`
+
+A schema-1 local checkpoint for an extraction, classification and support pass.
+The events are unique and sorted. `fresh` passes require a stability run ID and
+are dev-only; `live` passes have no stability run ID. The file is sealed before
+consumption, and its referenced artifacts are independently verified.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | integer | `1` |
+| `partition` | Partition | `train` or `dev` |
+| `mode` | literal | `live` or `fresh` |
+| `stability_run_id` | IdPart or null | Fresh dev pass identity; absent for live passes |
+| `event_ids` | tuple of IdPart | Sorted unique event selection |
+| `configuration_hash` | SHA-256 | Digest of the complete selected WorkflowConfig |
+| `extraction` | StoredSelection | Extraction store and run identity |
+| `proposals` | FileSelection | Local ProposalSnapshot path and SHA-256 |
+| `primary` | StoredSelection | Primary MiniCheck support store and run identity |
+| `alternative` | StoredSelection | Alternative DeBERTa support store and run identity |
+| `status` | literal | `complete` or `partial` |
+| `content_hash` | SHA-256 | Digest of every other serialized field |
+
+### `pilot_records.RunRecord`
+
+The qualified heading distinguishes this schema-1 local frozen-policy checkpoint
+from extraction's `RunRecord`. Events are unique and sorted, and a non-null
+`fresh` identity is dev-only. This record references the verified pass and coding
+decisions rather than materializing model wording.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | integer | `1` |
+| `partition` | Partition | `train` or `dev` |
+| `fresh` | IdPart or null | Fresh dev stability run identity, or null for the ordinary run |
+| `event_ids` | tuple of IdPart | Sorted unique event selection |
+| `pass_record` | FileSelection | Sealed PassRecord path and SHA-256 |
+| `coding` | StoredSelection | Frozen-policy coding store and run identity |
+| `calibration_hash` | SHA-256 | Consumed calibration artifact's content hash |
+| `configuration_hash` | SHA-256 | Frozen configuration and selected policy binding from the calibration artifact |
+| `status` | literal | `complete` or `partial` |
+| `content_hash` | SHA-256 | Digest of every other serialized field |
+
+### `PilotIntake`
+
+A transient `earnings_pipeline.pilot_inputs` dataclass. `open_pilot` verifies
+split signatures, gold document bindings, the committed dev independent-reading
+ledger, preregistration and configuration pins before loading canonical text.
+The derived `local` property is a path accessor, not a serialized field.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `layout` | Layout | Repository paths for the pinned local artifacts |
+| `pinned` | Pinned | Verified Stage 6 pilot, split and codebook pins |
+| `split` | SplitManifest | Verified partition and document bindings |
+| `codebook` | Codebook | Frozen approved codebook |
+| `preregistration` | Preregistration | Verified calibration, sampling and gate rules |
+| `settings` | PilotSettings | Verified train/dev configurations and runtime pins |
+| `config` | WorkflowConfig | Current partition's verified workflow selection |
+| `partition` | Partition | Requested `train` or `dev` partition |
+| `gold` | tuple of Gold | Checked committed gold for the current selection |
+
+### `LoadedPass`
+
+A transient `earnings_pipeline.pilot_workflow` dataclass. `load_pass` checks the
+sealed checkpoint, its selected files and stored runs, source provenance,
+proposal-to-support bindings for both scorers, and frozen configuration before
+returning these inputs to calibration, assignment or reporting.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `record` | PassRecord | Verified local pass checkpoint |
+| `sources` | SupportSources | Original extraction, canonical, raw and codebook bindings |
+| `proposal` | ProposalRun | Reconstructed verified classifier proposals |
+| `primary` | StoredSupportRun | Reverified primary MiniCheck support results |
+| `alternative` | StoredSupportRun | Reverified alternative DeBERTa support results |
+
+
+### Pilot label application interfaces
+
+`earnings_pipeline.pilot_labels.checked_pass(intake, loaded, *, fresh=False)`
+checks partition, event inventory, alternative scorer identity and live mode.
+`pilot_labels.local_path(intake, path)` confines a local path beneath
+`data/runs/pilot`; `pilot_labels.working_path(intake)` selects the partition's
+working TOML file. `pilot_labels.sample(intake, loaded, extensions)` reverifies
+support before building the deterministic preregistered sample.
+`pilot_labels.committed_labels(intake)` requires the existing label base to match
+HEAD and its preregistration. A missing local base is accepted only when the
+HEAD tree confirms no label entry; a locally deleted committed base or failed
+Git metadata check refuses with `not_committed` before publication.
+
+`pilot_labels.write_view(intake, loaded, extensions, labelled_on)` writes an
+ignored local Markdown context view without scores, judge answers, flags or
+extractor identity and a `SupportLabelSet` TOML template with real unsure answers
+and a user-supplied date. `pilot_labels.check_working(intake, loaded, extensions)`
+checks the entire working file before append-only label promotion, preserves
+existing committed rows and extension metadata, requires growth for a train
+extension and atomically replaces the checked committed TOML. Unknown targets
+are reported through the field path `labels.target_id`, without input wording.
+
+
+### Pilot calibration application interfaces
+
+`pilot_calibration.read_label_bytes(path)` returns the checked `SupportLabelSet`
+and exact parsed label bytes. `pilot_calibration.calibrate_pilot(intake, loaded)`
+requires train intake, the checked baseline pass and HEAD-committed labels before
+reading label bytes. It validates the sampled train labels and both proposal/support
+bindings before constructing frozen configuration and calibration decision views,
+hashes the original bytes, and publishes the immutable calibration artifact.
+
+`pilot_calibration.checked_calibration(intake)` requires a HEAD-committed calibration
+artifact, validates its `content_hash` through the shared reader, checks
+the preregistration binding, and calls
+`pilot_calibration.validate_calibration_labels(intake, artifact)`. The latter finds
+the original parsed bytes in reachable HEAD history, refuses changed train labels
+or extension metadata with `labels_changed`, and permits a dev append.
+Downstream workflow policy binding recomputes the public `configuration_hash`
+before binding the calibrated policy.
+`pilot_calibration.evaluation_path(intake, name)` confines output paths to the pinned
+evaluation directory before immutable writes. These interfaces reuse existing
+contracts and introduce no new structural type or schema version.
+
+### `LoadedRun`
+
+A transient `earnings_pipeline.pilot_reporting` dataclass. `load_run` verifies the
+sealed run checkpoint, committed calibration artifact, pass selection, frozen
+configuration, cache mode and stability identity, then reverifies coding against
+the consumed support run and bound policy. Reporting renders these checked inputs
+into the existing `PilotReport`; this dataclass adds no report fields or sidecar.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `record` | pilot_records.RunRecord | Verified local frozen-policy run checkpoint |
+| `passed` | LoadedPass | Verified extraction, proposals and both support runs |
+| `primary` | StoredSupportRun | Consumed primary support results, reloaded for an ordinary replay or retained for a fresh run |
+| `coding` | CodingRun | Reverified frozen-policy coding decisions and assignments |
+| `policy` | AssignmentPolicy or null | Verified bound policy, or null for the verified no-candidate calibration outcome |
