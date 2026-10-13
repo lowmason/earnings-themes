@@ -7,6 +7,7 @@ import pytest
 from earnings_core import digest
 from earnings_themes.support.cache import SupportCache
 from earnings_themes.support.problems import SupportError
+from earnings_themes.support.records import support_configuration
 from earnings_themes.support.run import assess_run
 from earnings_themes.support.scorers import ScoreReply, ScriptedScorer
 
@@ -42,6 +43,33 @@ def test_coordinates_and_counts(case, scorer, panel, policy, allowance, tmp_path
     assert result.record.counts_by_status == (("assessed", 1),)
     assert result.record.extractor_family == "invented-extractor"
     assert len(result.assessments) == 1
+
+
+def test_the_run_hash_digests_the_shared_configuration(
+    case, scorer, panel, policy, allowance, tmp_path
+):
+    """The manifest's configuration hash is the digest of ``support_configuration``
+    over the run's own bound parts, which Stage 11's calibration rebuilds from the
+    record (D19-14). The dictionary is written out here as Stage 8 first digested
+    it, so a change to its bindings cannot go unnoticed."""
+    record = run(case, scorer, panel, policy, allowance.ceilings, tmp_path).record
+    configuration = support_configuration(
+        policy,
+        record.ceilings,
+        record.scorer_identity,
+        record.judge_identities,
+        record.extractor_family,
+        record.cache_mode,
+    )
+    assert configuration == {
+        "policy": policy.model_dump(mode="json"),
+        "ceilings": record.ceilings.model_dump(mode="json"),
+        "scorer": record.scorer_identity.model_dump(mode="json"),
+        "judges": [j.model_dump(mode="json") for j in record.judge_identities],
+        "extractor_family": "invented-extractor",
+        "cache_mode": "live",
+    }
+    assert record.configuration_hash == digest(configuration)
 
 
 def test_caller_order_and_shared_document_ceiling(

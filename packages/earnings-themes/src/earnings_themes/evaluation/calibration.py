@@ -56,6 +56,7 @@ from earnings_themes.support.records import (
     SignalStatus,
     SupportPolicy,
     SupportRunRecord,
+    support_configuration,
 )
 
 
@@ -181,18 +182,18 @@ def frozen_configuration(
 ) -> dict[str, object]:
     """The models, prompts, policies and ceilings a calibrated policy is frozen
     with; ``support_policy`` must be the one ``support`` ran under."""
-    bound = {
-        "policy": support_policy.model_dump(mode="json"),
-        "ceilings": support.ceilings.model_dump(mode="json"),
-        "scorer": support.scorer_identity.model_dump(mode="json"),
-        "judges": [j.model_dump(mode="json") for j in support.judge_identities],
-        "extractor_family": support.extractor_family,
-    }
-    if (
-        digest({**bound, "cache_mode": support.cache_mode})
-        != support.configuration_hash
-    ):
+    ran_with = support_configuration(
+        support_policy,
+        support.ceilings,
+        support.scorer_identity,
+        support.judge_identities,
+        support.extractor_family,
+        support.cache_mode,
+    )
+    if digest(ran_with) != support.configuration_hash:
         raise EvaluationError(EvaluationProblem.MALFORMED_RECORD, "support_policy")
+    # A cache mode is how a run went, not what it is frozen with.
+    bound = {name: value for name, value in ran_with.items() if name != "cache_mode"}
     return {
         "extraction": extraction.configuration.model_dump(mode="json"),
         "coding": {
@@ -213,6 +214,21 @@ def frozen_configuration(
             "validator_version": support.validator_version,
         },
     }
+
+
+def configuration_hash(
+    configuration: Mapping[str, object], selection: Selection | None
+) -> str:
+    """The artifact's ``configuration_hash`` (D19-14): the digest of the frozen
+    configuration together with the selection it was calibrated to, or ``None``."""
+    return digest(
+        {
+            "configuration": dict(configuration),
+            "selection": None
+            if selection is None
+            else selection.model_dump(mode="json"),
+        }
+    )
 
 
 def _family(
@@ -260,7 +276,9 @@ def calibrate(
     is DeBERTa's joint score by target; ``events`` maps each target to its event;
     ``configuration`` is ``frozen_configuration``'s."""
     if content_hash(preregistration) != preregistration.content_hash:
-        raise EvaluationError(EvaluationProblem.PREREGISTRATION_MISMATCH, "content")
+        raise EvaluationError(
+            EvaluationProblem.PREREGISTRATION_MISMATCH, "content_hash"
+        )
     if labels.preregistration_hash != preregistration.content_hash:
         raise EvaluationError(EvaluationProblem.PREREGISTRATION_MISMATCH, "labels")
     train = labels.of(Partition.TRAIN)
@@ -280,7 +298,7 @@ def calibrate(
         if (value := joint_label(label)) is not None
     }
     if len(joint) < preregistration.sampling.minimum_usable:
-        raise EvaluationError(EvaluationProblem.TOO_FEW_LABELS, str(len(joint)))
+        raise EvaluationError(EvaluationProblem.TOO_FEW_LABELS, "labels")
     agreement = tuple(
         _family(preregistration, family, joint, views, events)
         for family in families(t for i in joint for t in views[i].trials)
@@ -376,14 +394,7 @@ def calibrate(
             calibration_version=version,
             preregistration_hash=preregistration.content_hash,
             labels_hash=labels_hash,
-            configuration_hash=digest(
-                {
-                    "configuration": dict(configuration),
-                    "selection": None
-                    if selection is None
-                    else selection.model_dump(mode="json"),
-                }
-            ),
+            configuration_hash=configuration_hash(configuration, selection),
             train_labels=len(train),
             usable_labels=len(joint),
             families=agreement,

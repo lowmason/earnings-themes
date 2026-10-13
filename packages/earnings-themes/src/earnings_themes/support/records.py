@@ -4,6 +4,7 @@ Evidence references never duplicate source text. Signals are diagnostic and carr
 no assignment acceptance. JSON-mode parsing is the safe untrusted-data boundary.
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
 from enum import StrEnum
@@ -395,6 +396,28 @@ class SupportPolicy(SafePart):
     prompt_hash: Sha256Hex
     parameters: Parameters
     max_attempts: Literal[2] = 2
+
+
+def support_configuration(
+    policy: SupportPolicy,
+    ceilings: SupportCeilings,
+    scorer: ScorerIdentity,
+    judges: Sequence[JudgeIdentity],
+    extractor_family: str,
+    cache_mode: str,
+) -> dict[str, object]:
+    """What Stage 8 digests into a run's ``configuration_hash``: the policy, the
+    ceilings, the scorer, the judge panel, the extractor family and the cache mode.
+    The one definition, for the run that records the hash and for whatever rebuilds
+    it from the manifest (Stage 11's calibration)."""
+    return {
+        "policy": policy.model_dump(mode="json"),
+        "ceilings": ceilings.model_dump(mode="json"),
+        "scorer": scorer.model_dump(mode="json"),
+        "judges": [j.model_dump(mode="json") for j in judges],
+        "extractor_family": extractor_family,
+        "cache_mode": cache_mode,
+    }
 
 
 class SupportRunRecord(SupportRecord):

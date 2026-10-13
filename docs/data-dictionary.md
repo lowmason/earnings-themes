@@ -6775,8 +6775,8 @@ interval is the event-clustered percentile bootstrap.
 | Field | Meaning |
 | --- | --- |
 | `cutoff` | A grid cutoff |
-| `precision` | Train labelled precision at it, or null |
-| `recall` | Train label recall at it, or null |
+| `precision` | Train labelled precision at it against the joint label (not the claim label, as `ScorerAuc` is), or null |
+| `recall` | Train label recall at it against the joint label (not the claim label, as `ScorerAuc` is), or null |
 | `accepted` | Targets accepted at it |
 
 ### `CandidateFit`
@@ -6786,8 +6786,8 @@ interval is the event-clustered percentile bootstrap.
 | `candidate_id` | The candidate |
 | `signals` | Signals it reads |
 | `cutoff` | The fitted cutoff, or null when none meets ρ |
-| `precision` | Precision there |
-| `recall` | Recall there |
+| `precision` | Train labelled precision there against the joint label, or null |
+| `recall` | Train label recall there against the joint label, or null |
 | `grid` | Each `CutoffFigure` |
 
 ### `FamilyAgreement`
