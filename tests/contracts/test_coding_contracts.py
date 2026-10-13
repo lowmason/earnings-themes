@@ -13,13 +13,15 @@ from earnings_themes.coding.decide import (
     DecisionInput,
     DecisionSet,
     decide_assignments,
+    validate_proposal_support,
 )
 from earnings_themes.coding.input import (
     CodingInput,
     resolve_coding_input,
     reverify_coding_input,
 )
-from earnings_themes.coding.run import ProposalRun, propose_run
+from earnings_themes.coding.records import coding_configuration
+from earnings_themes.coding.run import ProposalRun, propose_run, source_bindings
 from earnings_themes.coding.store import (
     SCHEMAS,
     read_coding_run,
@@ -139,6 +141,9 @@ def test_coding_exports_implemented_seams():
             "write_coding_run": write_coding_run,
             "read_coding_run": read_coding_run,
             "reverify_coding_run": reverify_coding_run,
+            "coding_configuration": coding_configuration,
+            "source_bindings": source_bindings,
+            "validate_proposal_support": validate_proposal_support,
         }
     )
     assert len(coding.__all__) == len(set(coding.__all__))

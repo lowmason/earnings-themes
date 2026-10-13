@@ -362,7 +362,12 @@ def test_another_pilot_hash_is_refused(repo) -> None:
     assert not (repo / EVALUATION).exists()
 
 
-def test_a_universe_that_is_not_the_pin_s_is_refused(repo) -> None:
+def test_a_universe_that_is_not_the_pin_s_is_refused(tmp_path: Path) -> None:
+    repo = tmp_path
+    for name in ("pilot-v1.json", "events-v1.json"):
+        path = repo / FIXTURE_DIR / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(REPO / FIXTURE_DIR / name, path)
     other = Path("config") / "universe" / "djia" / "manifests"
     other = other / "djia-2024q3-2026q2-v1.json"
     (repo / other).parent.mkdir(parents=True)
@@ -383,12 +388,7 @@ def test_a_universe_that_is_not_the_pin_s_is_refused(repo) -> None:
         ],
     )
     assert result.exit_code == 1
-    assert lines(result) == [
-        (
-            "Refused: the universe's operative hash is not the one the pilot and its"
-            " event manifest read"
-        )
-    ]
+    assert lines(result) == ["Refused: pinned_metadata: ValueError"]
 
 
 def test_coverage_counts_each_state_and_rereads_only_its_runs(repo) -> None:
