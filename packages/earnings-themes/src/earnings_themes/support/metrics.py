@@ -44,7 +44,15 @@ class Acceptance(SafePart):
 
 class MetricReport(SafePart):
     value: Score | None
-    reason: Literal["no_scored_labels", "one_class", "no_labeled_accepted"] | None
+    reason: (
+        Literal[
+            "no_scored_labels",
+            "one_class",
+            "no_labeled_accepted",
+            "no_labeled_positive",
+        ]
+        | None
+    )
     task: LabelTask
     view: NonBlank = Field(repr=False)
     population_count: NonNegativeInt
@@ -196,6 +204,37 @@ def accepted_claim_precision(
         labeled_count=len(human),
         scored_count=0,
         joined_count=len(joined),
+        accepted_count=len(accepted),
+        missing_score_count=0,
+        missing_label_count=len(ids) - len(human),
+        accepted_without_label_count=len(accepted - human.keys()),
+    )
+
+
+def accepted_claim_recall(
+    population: Sequence[str],
+    labels: Sequence[HumanLabel],
+    decisions: Sequence[Acceptance],
+    *,
+    task: LabelTask,
+) -> MetricReport:
+    """The share of supported labels that external decisions accepted (Stage 11's
+    label recall, plan 19); a target with no decision is not accepted."""
+    ids = _population(population, task, "external_acceptance")
+    human = _index(labels, HumanLabel, ids, task)
+    external = _index(decisions, Acceptance, ids, task)
+    accepted = {target_id for target_id, item in external.items() if item.accepted}
+    positive = {target_id for target_id, item in human.items() if item.supported == 1}
+    value = len(positive & accepted) / len(positive) if positive else None
+    return MetricReport(
+        value=value,
+        reason=None if value is not None else "no_labeled_positive",
+        task=task,
+        view="external_acceptance",
+        population_count=len(ids),
+        labeled_count=len(human),
+        scored_count=0,
+        joined_count=len(positive),
         accepted_count=len(accepted),
         missing_score_count=0,
         missing_label_count=len(ids) - len(human),

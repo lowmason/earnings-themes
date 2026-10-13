@@ -271,6 +271,46 @@ def eligible_quote_ids(
     )
 
 
+def decision_input(
+    support: StoredSupportRun, target: TargetRecord, outcome: ReviewOutcome
+) -> DecisionInput:
+    """One stored target's view: its evidence, signals and trials, and, when it is
+    ``assessed``, its eligible quotes. ``outcome`` is the reverified outcome."""
+    evidence = tuple(
+        row for row in support.evidence if row.target_id == target.target_id
+    )
+    entailment = tuple(
+        row for row in support.entailment if row.target_id == target.target_id
+    )
+    trials = tuple(row for row in support.trials if row.target_id == target.target_id)
+    eligible = (
+        eligible_quote_ids(evidence, trials) if outcome.status == "assessed" else ()
+    )
+    return DecisionInput(target, evidence, entailment, trials, outcome, eligible)
+
+
+def decision_inputs(
+    support: StoredSupportRun, sources: SupportSources
+) -> dict[str, DecisionInput]:
+    """Every stored target's view, by target ID, after the consuming gate
+    reverifies the run, as ``decide_assignments`` builds them (Stage 11's
+    calibration reads exactly these, plan 19)."""
+    try:
+        outcomes = {o.target_id: o for o in reverify_support_run(support, sources)}
+        return {
+            target.target_id: decision_input(
+                support, target, outcomes[target.target_id]
+            )
+            for target in support.targets
+        }
+    except CodingError:
+        raise
+    except SupportError as error:
+        raise CodingError(str(error)) from None
+    except Exception:  # noqa: BLE001 - boundary failures never print source data
+        raise CodingError("unexpected_error") from None
+
+
 def _view_hash(view: DecisionInput) -> str:
     return digest(
         {
@@ -372,25 +412,7 @@ def decide_assignments(
                 support_status, flags, missing = None, (), ("missing_assessment",)
             else:
                 outcome = by_id[target.target_id]
-                evidence = tuple(
-                    row for row in support.evidence if row.target_id == target.target_id
-                )
-                entailment = tuple(
-                    row
-                    for row in support.entailment
-                    if row.target_id == target.target_id
-                )
-                trials = tuple(
-                    row for row in support.trials if row.target_id == target.target_id
-                )
-                eligible = (
-                    eligible_quote_ids(evidence, trials)
-                    if outcome.status == "assessed"
-                    else ()
-                )
-                view = DecisionInput(
-                    target, evidence, entailment, trials, outcome, eligible
-                )
+                view = decision_input(support, target, outcome)
                 status, reason, quote_ids = decision_vote(view, policy)
                 require_current()
                 target_id = target.target_id

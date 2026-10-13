@@ -3623,6 +3623,13 @@ decisions are omitted, never inferred. No score join is requested, so score
 counts are zero. These functions establish semantics, not observed quality;
 Stage 11 owns view selection, calibration, pooling, and thresholds.
 
+`accepted_claim_recall(population, labels, decisions, *, task)` (plan 19) is the
+share of labels marked supported whose target an external decision accepted. Its
+denominator is the human-labeled positive targets, reported as `joined_count`; no
+such target yields `no_labeled_positive`. A target with no decision is not
+accepted, and nothing is inferred. Stage 11's calibration reads it beside
+precision, as label recall.
+
 ### `HumanLabel`
 
 | Field | Meaning |
@@ -3653,7 +3660,7 @@ Stage 11 owns view selection, calibration, pooling, and thresholds.
 | Field | Meaning |
 | --- | --- |
 | `value` | Finite metric in `[0,1]`, or `None` when undefined. |
-| `reason` | `None` for a defined value; otherwise `no_scored_labels`, `one_class`, or `no_labeled_accepted`. |
+| `reason` | `None` for a defined value; otherwise `no_scored_labels`, `one_class`, `no_labeled_accepted`, or `no_labeled_positive`. |
 | `task` | Explicit selected label task. |
 | `view` | Selected score view for AUC, or `external_acceptance` for precision. |
 | `population_count` | Number of unique supplied population IDs. |
@@ -4318,6 +4325,12 @@ all original evidence and raw per-quote/joint/family/presentation views. The
 eligible set includes a quote only when all four complete independent trials
 label it `supporting`. This is an eligibility restriction, never sufficient
 acceptance; contextual companions remain raw provenance.
+
+`decision_input(support, target, outcome) -> DecisionInput` builds one stored
+target's view from its reverified outcome, and `decision_inputs(support, sources)
+-> dict[str, DecisionInput]` reverifies the run and builds every target's view,
+keyed by target ID, exactly as `decide_assignments` builds them (plan 19). Stage
+11's calibration reads these, so a cutoff fitted on train decides as Stage 9 will.
 
 `AssignmentPolicy.reference: PolicyReference` and
 `evaluate(view: DecisionInput) -> PolicyVote` form a pure deterministic external

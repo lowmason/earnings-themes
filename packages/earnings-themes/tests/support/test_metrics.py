@@ -7,6 +7,7 @@ from earnings_themes.support.metrics import (
     HumanLabel,
     MetricReport,
     accepted_claim_precision,
+    accepted_claim_recall,
     auc_roc,
 )
 from pydantic import ValidationError
@@ -266,3 +267,23 @@ def test_metric_report_safe_rendering():
     result = auc_roc([], [], [], task=TASK, view="secret-view")
     assert "secret" not in str(result)
     assert "secret" not in repr(result)
+
+
+def test_accepted_claim_recall_is_the_share_of_supported_labels_accepted() -> None:
+    labels = [label("a", 1), label("b", 1), label("c", 0), label("d", 1)]
+    decisions = [
+        Acceptance(target_id=target, task=TASK, accepted=accepted)
+        for target, accepted in (("a", True), ("b", False), ("c", True), ("e", True))
+    ]
+    report = accepted_claim_recall(
+        ["a", "b", "c", "d", "e"], labels, decisions, task=TASK
+    )
+    assert report.value == pytest.approx(1 / 3)
+    assert (
+        report.joined_count,
+        report.accepted_count,
+        report.accepted_without_label_count,
+        report.missing_label_count,
+    ) == (3, 3, 1, 1)
+    none = accepted_claim_recall(["c"], labels[2:3], decisions[2:3], task=TASK)
+    assert (none.value, none.reason) == (None, "no_labeled_positive")
