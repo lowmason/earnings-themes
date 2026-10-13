@@ -6763,3 +6763,74 @@ interval is the event-clustered percentile bootstrap.
 | `bootstrap` | The `BootstrapPlan` |
 | `gates` | The `GateRule` |
 | `content_hash` | Digest of every other field |
+
+### `ScorerCutoff`
+
+| Field | Meaning |
+| --- | --- |
+| `cutoff` | Accept an assessed target with an eligible quote when its joint score reaches this |
+
+### `CutoffFigure`
+
+| Field | Meaning |
+| --- | --- |
+| `cutoff` | A grid cutoff |
+| `precision` | Train labelled precision at it, or null |
+| `recall` | Train label recall at it, or null |
+| `accepted` | Targets accepted at it |
+
+### `CandidateFit`
+
+| Field | Meaning |
+| --- | --- |
+| `candidate_id` | The candidate |
+| `signals` | Signals it reads |
+| `cutoff` | The fitted cutoff, or null when none meets ρ |
+| `precision` | Precision there |
+| `recall` | Recall there |
+| `grid` | Each `CutoffFigure` |
+
+### `FamilyAgreement`
+
+| Field | Meaning |
+| --- | --- |
+| `family` | The judge family |
+| `kappa` | Cohen's κ `Estimate` |
+| `ac1` | Gwet's AC1 `Estimate` |
+| `labels` | Usable joint labels |
+| `uncertain` | Targets whose family consensus is uncertain |
+| `meets_floor` | Whether κ's lower bound reaches the floor; reported only (D19-1) |
+
+### `ScorerAuc`
+
+| Field | Meaning |
+| --- | --- |
+| `scorer` | `minicheck` or `deberta` |
+| `report` | Its `MetricReport` against the claim label |
+
+### `Selection`
+
+| Field | Meaning |
+| --- | --- |
+| `candidate_id` | The selected candidate |
+| `rule` | `scorer_cutoff` |
+| `signal` | `minicheck_joint` |
+| `cutoff` | Its fitted cutoff |
+
+### `CalibrationArtifact`
+
+| Field | Meaning |
+| --- | --- |
+| `schema_version` | `1` |
+| `calibration_version` | Its version |
+| `preregistration_hash` | The preregistration |
+| `labels_hash` | SHA-256 of the committed label file |
+| `configuration_hash` | Digest of the frozen configuration and the selection |
+| `train_labels` | Train labels |
+| `usable_labels` | Of them, with a joint label |
+| `families` | Each `FamilyAgreement` |
+| `candidates` | Each `CandidateFit` |
+| `outcome` | `selected` or `no_candidate` |
+| `selection` | The `Selection`, or null |
+| `scorers` | Each `ScorerAuc` |
+| `content_hash` | Digest of every other field |

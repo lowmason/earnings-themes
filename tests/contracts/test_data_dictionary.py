@@ -48,6 +48,7 @@ from earnings_themes.coding.store import SCHEMAS
 from earnings_themes.evaluation import (
     align,
     bootstrap,
+    calibration,
     cells,
     labels,
     preregistration,
@@ -692,6 +693,12 @@ EVALUATION_MODELS = [
     preregistration.SamplingPlan,
     preregistration.GateRule,
     preregistration.Preregistration,
+    calibration.CutoffFigure,
+    calibration.CandidateFit,
+    calibration.FamilyAgreement,
+    calibration.ScorerAuc,
+    calibration.Selection,
+    calibration.CalibrationArtifact,
 ]
 EVALUATION_ENUMS = [
     evaluation_problems.EvaluationProblem,
@@ -707,6 +714,7 @@ EVALUATION_DATACLASSES = [
     report.EventObservation,
     report.LabelledTarget,
     sampling.PoolTarget,
+    calibration.ScorerCutoff,
 ]
 
 
