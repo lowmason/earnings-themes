@@ -8041,7 +8041,7 @@ git commit -m "docs(specs): complete Stage 11 plan A"
 
 No roadmap box or Stage 11 stamp is written.
 
-- [ ] **Step 6: Report backlog health and retire only this plan**
+- [x] **Step 6: Report backlog health and retire only this plan**
 
 Run the loaded writing-plans backlog script from the repository root:
 
@@ -8060,7 +8060,7 @@ git commit -m "chore(specs): retire plan 20"
 
 Do not move `specs/feasibility-pilot-and-threshold-calibration.md`; plan B still implements it. No new relative links here change depth; recheck any added during execution. Run finishing-a-development-branch only after this completion chain, with the user's gate evidence included.
 
-- [ ] **Step 7: Hand over what plan B consumes, without planning or running it**
+- [x] **Step 7: Hand over what plan B consumes, without planning or running it**
 
 The next writing-plans session starts after plan A merges. It reads the spec and this retired plan. B1 owns model choices and downloads, licenses, the memory check, native smoke, and numeric ceilings. No prototype model identity or invented test ceiling is a baseline choice. B2 owns the numeric preregistration and commits it alone before B3. The operator support checkpoint is mandatory for pass/fresh. B3's visibility remains all 28 signed/committed train/dev files and 8 dev ledger rows.
 
@@ -8138,7 +8138,7 @@ Agent scoped verification at `e64d95501494dfa570faed4ef1ec412a47a21122`: evaluat
 
 Collection only at the reviewed SHA selected **4896/4924 tests, 28 deselected**. The owner executed the main-checkout root gate at that SHA: **4893 passed, 3 skipped, 28 deselected, 1 warning** in **919.87 seconds** (Torch/Python 3.14 warning). The owner's wording gate at `b26010394cedc81ee987a312bd995f8620c16026` gave **7 passed**; the subsequent commit changed only two unrelated legacy tests, so that wording result remains applicable. Agents did not execute either user gate.
 
-Execution opened no pilot text or existing gold/pilot run data, loaded no model/tokenizer/scorer/NLI runtime, and made no network call. Verification uses invented/synthetic/static inputs and does not establish native smoke, resident memory fit, external-server unloading, real pilot quality or feasibility. Retention (ii), safe failures, reload identity checks, label-base refusals and dictionary supplements intentionally diverge from the supplied patches as annotated; embedded patch bodies retain their approved planning text. Task 13's retirement and final handoff checkboxes remain pending for the controller until those actions occur.
+Execution opened no pilot text or existing gold/pilot run data, loaded no model/tokenizer/scorer/NLI runtime, and made no network call. Verification uses invented/synthetic/static inputs and does not establish native smoke, resident memory fit, external-server unloading, real pilot quality or feasibility. Retention (ii), safe failures, reload identity checks, label-base refusals and dictionary supplements intentionally diverge from the supplied patches as annotated; embedded patch bodies retain their approved planning text. Task 13's retirement and Plan B consuming handoff are complete; integration remains the owner's branch disposition.
 
 ## Plan B consuming handoff
 
@@ -8149,3 +8149,7 @@ Plan B starts after plan A merges and consumes the focused `earnings_pipeline.pi
 - **B3 and replay/fresh consumers:** Enforce all **28 signed/committed train/dev bundles and 8 dev ledger rows** before source loading. Test/excluded partitions refuse before text. Resealed reduced splits and wrong configured coding/stability IDs refuse; no missing committed label base or Git failure can silently start an extension. Ordinary replay reuses extraction only and refuses cache misses; fresh IDs and caches remain separate, and partial runs never count toward k = 3. Retention (ii) uses assessed targets only; retention (i) uses quote-reference occurrences and retries, with GS5 count reconciliation.
 - **B8 and later-stage outputs:** `docs/verification/pilot-v1-feasibility.md` must cite the exact SHA-256 of the committed `independent-pass.toml` used in comparisons, alongside existing per-event figures. No new sidecar or PilotReport field is needed. Stability lives in dev figures; gate results stay a list. No configuration comparison precedes V6. The spec's Handoffs table governs later stages after B completes; Stage 11 remains unticked and the shared spec remains live.
 - **Existing backlog:** `specs/deferred_items.md` P18-1/P18-2, P19-2/P19-3/P19-4 and unrelated P17 bundles remain open for their stated closure conditions/triggers. Tie-group maximum matching and the label-bootstrap population remain pilot/Plan B questions. P15-M1's broad workflow decomposition remains open after the typed seam extraction. No new item was deferred by this execution.
+
+## Completion disposition
+
+Plan 20 is retired at this path; the shared spec remains live and Stage 11 remains unticked. Deferred backlog: **56 open, 44 ever closed (44% closure rate), aged >45 days: 0**; oldest open **18 days**, with **28** at 0–14 days and **28** at 15–30 days. Read-only triage proposes **20 quick fixes, 7 plans, 7 design decisions and 22 holds**; no remaining disposition was executed and no new item was deferred. Integration of `plan20-execution` awaits the owner.
