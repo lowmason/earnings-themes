@@ -564,10 +564,11 @@ def workflow_provenance(
 def load_workflow_inputs(
     config: WorkflowConfig, runtime: WorkflowRuntime
 ) -> WorkflowInputs:
-    """Rebind the immutable acquisition inputs; read no processing output or state.
+    """Rebind immutable acquisition inputs from the checked state history.
 
-    Pilot passes and fresh runs use the acquisition predecessors even after a normal
-    run records its separate processing transition. They never append a transition.
+    Processing transitions are filtered before deriving acquisition predecessors.
+    Pilot passes and fresh runs use those predecessors even after a normal run
+    records its separate processing transition. They never append a transition.
     The workflow's terminal/self-or-descendant rule remains in `_baseline` unchanged.
     """
     expected, bundles, metadata, canonical, raw, book, template = _load_metadata(

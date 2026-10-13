@@ -40,9 +40,7 @@ from earnings_themes.records import RecordError, record_json
 from earnings_themes.split import (
     SPLIT_POLICY,
     Partition,
-    SplitEvent,
     SplitManifest,
-    split_events,
 )
 
 from earnings_pipeline.codebook_cli import pinned_codebook, pinned_split
@@ -51,10 +49,10 @@ from earnings_pipeline.stage6 import (
     Layout,
     Pinned,
     committed_gold,
+    derive_split,
     documents,
     fail,
     file_stem,
-    fixture_event_ids,
     guarded,
     kept_drafts,
     load_bundle,
@@ -85,21 +83,8 @@ def split_command(context: typer.Context) -> None:
     """Split the pinned pilot by issuer-time/1, and freeze split-v1.json."""
     layout: Layout = context.obj
     pinned = load_pinned(layout)
-    rows = {row.event_id: row for row in pinned.events.rows}
-    events = [
-        SplitEvent(
-            event_id=row.event_id,
-            issuer_id=rows[row.event_id].issuer_id,
-            period_end=rows[row.event_id].period_end,
-        )
-        for row in pinned.pilot.rows
-    ]
     try:
-        manifest = split_events(
-            events,
-            pinned.pin,
-            fixture_event_ids=fixture_event_ids(layout, pinned.events),
-        )
+        manifest = derive_split(layout, pinned)
     except ValueError as error:
         fail(f"Refused: {error}")
     created = write_once(pinned.split_path, record_json(manifest), layout)

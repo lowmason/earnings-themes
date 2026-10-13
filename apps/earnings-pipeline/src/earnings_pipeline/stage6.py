@@ -49,7 +49,7 @@ from earnings_themes.gold import Gold, load_gold
 from earnings_themes.independent import LEDGER, IndependentLedger, load_ledger
 from earnings_themes.problems import Problem, Refusal
 from earnings_themes.records import Pin, RecordError
-from earnings_themes.split import Partition
+from earnings_themes.split import Partition, SplitEvent, SplitManifest, split_events
 from earnings_themes.wording import labelled_strings, shared
 from pydantic import BaseModel
 
@@ -111,6 +111,22 @@ class Pinned:
     @property
     def gold_dir(self) -> Path:
         return self.evaluation / "gold"
+
+
+def derive_split(layout: Layout, pinned: Pinned) -> SplitManifest:
+    """The authoritative issuer-time/1 split, shared by freeze and pilot intake."""
+    rows = {row.event_id: row for row in pinned.events.rows}
+    events = [
+        SplitEvent(
+            event_id=row.event_id,
+            issuer_id=rows[row.event_id].issuer_id,
+            period_end=rows[row.event_id].period_end,
+        )
+        for row in pinned.pilot.rows
+    ]
+    return split_events(
+        events, pinned.pin, fixture_event_ids=fixture_event_ids(layout, pinned.events)
+    )
 
 
 def file_stem(event_id: str) -> str:

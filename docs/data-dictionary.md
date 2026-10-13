@@ -7026,3 +7026,93 @@ ordinary pilot runs, refusing with `policy_unavailable` or `policy_mismatch`.
 | `template` | PromptTemplate | The pinned extraction prompt template |
 | `acquisition` | tuple of AcquisitionStatus | Checked projections of immutable acquisition predecessors |
 | `provenance_hash` | SHA-256 string | Digest binding the selected universe, acquisition, metadata and canonical snapshots |
+
+### `PilotSettings`
+
+A strict local `earnings_pipeline.pilot_records` configuration. File selections
+are confined to the repository, and the alternative scorer must have kind
+`deberta`. The settings file and each selected file retain separate hash pins.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `train` | FileSelection | Explicit train workflow configuration path and SHA-256 |
+| `dev` | FileSelection | Explicit dev workflow configuration path and SHA-256 |
+| `runtime_manifest` | FileSelection | B1 runtime manifest path and SHA-256 |
+| `alternative_scorer` | ScorerIdentity | Frozen alternative DeBERTa identity, reported only |
+
+### `ProposalSnapshot`
+
+A strict local checkpoint of classifier output before an assignment decision
+exists. It reconstructs `ProposalRun` without repeating classification. Its
+proposal and novelty records can contain model wording; this snapshot is a local
+input, not a public report artifact.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `record` | ProposalRunRecord | Coding proposal manifest and configuration binding |
+| `classifications` | tuple of ClassificationRecord | Claim classification results |
+| `attempts` | tuple of CodingAttempt | Auditable classifier attempts |
+| `proposals` | tuple of ProposalRecord | Proposed claim-theme targets |
+| `attributes` | tuple of AttributeRecord | Separate analyst attributes |
+| `novelty` | tuple of NoveltyItem | Local novelty suggestions |
+
+### `PassRecord`
+
+A schema-1 local checkpoint for an extraction, classification and support pass.
+The events are unique and sorted. `fresh` passes require a stability run ID and
+are dev-only; `live` passes have no stability run ID. The file is sealed before
+consumption, and its referenced artifacts are independently verified.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | integer | `1` |
+| `partition` | Partition | `train` or `dev` |
+| `mode` | literal | `live` or `fresh` |
+| `stability_run_id` | IdPart or null | Fresh dev pass identity; absent for live passes |
+| `event_ids` | tuple of IdPart | Sorted unique event selection |
+| `configuration_hash` | SHA-256 | Digest of the complete selected WorkflowConfig |
+| `extraction` | StoredSelection | Extraction store and run identity |
+| `proposals` | FileSelection | Local ProposalSnapshot path and SHA-256 |
+| `primary` | StoredSelection | Primary MiniCheck support store and run identity |
+| `alternative` | StoredSelection | Alternative DeBERTa support store and run identity |
+| `status` | literal | `complete` or `partial` |
+| `content_hash` | SHA-256 | Digest of every other serialized field |
+
+### `pilot_records.RunRecord`
+
+The qualified heading distinguishes this schema-1 local frozen-policy checkpoint
+from extraction's `RunRecord`. Events are unique and sorted, and a non-null
+`fresh` identity is dev-only. This record references the verified pass and coding
+decisions rather than materializing model wording.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `schema_version` | integer | `1` |
+| `partition` | Partition | `train` or `dev` |
+| `fresh` | IdPart or null | Fresh dev stability run identity, or null for the ordinary run |
+| `event_ids` | tuple of IdPart | Sorted unique event selection |
+| `pass_record` | FileSelection | Sealed PassRecord path and SHA-256 |
+| `coding` | StoredSelection | Frozen-policy coding store and run identity |
+| `calibration_hash` | SHA-256 | Consumed calibration artifact's content hash |
+| `configuration_hash` | SHA-256 | Frozen configuration and selected policy binding from the calibration artifact |
+| `status` | literal | `complete` or `partial` |
+| `content_hash` | SHA-256 | Digest of every other serialized field |
+
+### `PilotIntake`
+
+A transient `earnings_pipeline.pilot_inputs` dataclass. `open_pilot` verifies
+split signatures, gold document bindings, the committed dev independent-reading
+ledger, preregistration and configuration pins before loading canonical text.
+The derived `local` property is a path accessor, not a serialized field.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `layout` | Layout | Repository paths for the pinned local artifacts |
+| `pinned` | Pinned | Verified Stage 6 pilot, split and codebook pins |
+| `split` | SplitManifest | Verified partition and document bindings |
+| `codebook` | Codebook | Frozen approved codebook |
+| `preregistration` | Preregistration | Verified calibration, sampling and gate rules |
+| `settings` | PilotSettings | Verified train/dev configurations and runtime pins |
+| `config` | WorkflowConfig | Current partition's verified workflow selection |
+| `partition` | Partition | Requested `train` or `dev` partition |
+| `gold` | tuple of Gold | Checked committed gold for the current selection |

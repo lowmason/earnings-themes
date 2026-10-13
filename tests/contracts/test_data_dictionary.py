@@ -25,7 +25,13 @@ from earnings_ingestion.cohort import register as cohort_register
 from earnings_ingestion.events import acceptance, coverage, states
 from earnings_ingestion.events import records as events
 from earnings_ingestion.fetch import records as fetch
-from earnings_pipeline import model_runtime, theme_config, theme_workflow
+from earnings_pipeline import (
+    model_runtime,
+    pilot_inputs,
+    pilot_records,
+    theme_config,
+    theme_workflow,
+)
 from earnings_themes import (
     annotation,
     codebook,
@@ -717,6 +723,52 @@ def test_workflow_prebound_configuration_interface_documented():
         "workflow_configuration_hashes(config: WorkflowConfig, sources: SupportSources,"
         in text
     )
+
+
+PILOT_MODELS = {
+    "PilotSettings": pilot_records.PilotSettings,
+    "ProposalSnapshot": pilot_records.ProposalSnapshot,
+    "PassRecord": pilot_records.PassRecord,
+    "pilot_records.RunRecord": pilot_records.RunRecord,
+}
+PILOT_DATACLASSES = {
+    "PilotIntake": pilot_inputs.PilotIntake,
+}
+PILOT_ENUMS = {}
+PILOT_MODULES = [pilot_records, pilot_inputs]
+
+
+@pytest.mark.parametrize(("name", "model"), PILOT_MODELS.items(), ids=PILOT_MODELS)
+def test_pilot_application_fields_documented(name, model):
+    assert documented(name) == set(model.model_fields)
+
+
+@pytest.mark.parametrize(
+    ("name", "record"), PILOT_DATACLASSES.items(), ids=PILOT_DATACLASSES
+)
+def test_pilot_application_dataclass_fields_documented(name, record):
+    assert documented(name) == {field.name for field in fields(record)}
+
+
+@pytest.mark.parametrize(("name", "enum"), PILOT_ENUMS.items(), ids=PILOT_ENUMS)
+def test_pilot_application_enum_values_documented(name, enum):
+    assert documented(name) == {member.value for member in enum}
+
+
+def test_pilot_application_registry_is_complete():
+    defined = {
+        value
+        for module in PILOT_MODULES
+        for value in vars(module).values()
+        if isinstance(value, type)
+        and value.__module__ == module.__name__
+        and not value.__name__.startswith("_")
+    }
+    assert {v for v in defined if issubclass(v, BaseModel)} == set(
+        PILOT_MODELS.values()
+    )
+    assert {v for v in defined if issubclass(v, StrEnum)} == set(PILOT_ENUMS.values())
+    assert {v for v in defined if is_dataclass(v)} == set(PILOT_DATACLASSES.values())
 
 
 EVALUATION_MODELS = [
