@@ -29,8 +29,8 @@ from pydantic import NonNegativeInt, PositiveInt, model_validator
 
 from earnings_themes.coding.decide import DecisionInput, decision_vote
 from earnings_themes.coding.records import PolicyVote, ProposalRunRecord
-from earnings_themes.evaluation.agreement import cohen_kappa, gwet_ac1
-from earnings_themes.evaluation.bootstrap import Estimate, estimate
+from earnings_themes.evaluation.agreement import judge_agreement
+from earnings_themes.evaluation.bootstrap import Estimate
 from earnings_themes.evaluation.labels import (
     SupportLabelSet,
     claim_label,
@@ -40,7 +40,7 @@ from earnings_themes.evaluation.labels import (
 from earnings_themes.evaluation.preregistration import Preregistration
 from earnings_themes.evaluation.problems import EvaluationError, EvaluationProblem
 from earnings_themes.evaluation.records import Real, content_hash, sealed
-from earnings_themes.evaluation.verdicts import consensus, families, family_verdict
+from earnings_themes.evaluation.verdicts import families, family_judgement
 from earnings_themes.extraction.records import RunRecord
 from earnings_themes.records import IdPart, NonBlank, Part, Sha256Hex, ThemesRecord
 from earnings_themes.split import Partition
@@ -238,24 +238,24 @@ def _family(
     views: Mapping[str, DecisionInput],
     events: Mapping[str, str],
 ) -> FamilyAgreement:
-    per_event: dict[str, list[tuple[int, int]]] = {}
-    for target_id, label in joint.items():
-        verdict = family_verdict(views[target_id].trials, family)
-        per_event.setdefault(events[target_id], []).append((verdict, label))
-    plan = preregistration.bootstrap
-    kappa = estimate(
-        per_event, lambda drawn: cohen_kappa([p for e in drawn for p in e]), plan
-    )
-    ac1 = estimate(
-        per_event, lambda drawn: gwet_ac1([p for e in drawn for p in e]), plan
+    kappa, ac1, labels, uncertain = judge_agreement(
+        (
+            (
+                events[target_id],
+                label,
+                *family_judgement(views[target_id].trials, family),
+            )
+            for target_id, label in joint.items()
+        ),
+        preregistration.bootstrap,
     )
     lower = kappa.interval.lower
     return FamilyAgreement(
         family=family,
         kappa=kappa,
         ac1=ac1,
-        labels=len(joint),
-        uncertain=sum(consensus(views[t].trials, family) == "uncertain" for t in joint),
+        labels=labels,
+        uncertain=uncertain,
         meets_floor=lower is not None and lower >= preregistration.floor.floor,
     )
 

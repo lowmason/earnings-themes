@@ -178,6 +178,53 @@ def test_counts_keep_what_was_left_out(report) -> None:
     assert support == {"labelled": 3, "accepted": 2, "accepted_unlabelled": 0}
 
 
+def test_judge_agreement_counts_uncertain_verdicts_over_joint_labelled_events() -> None:
+    """Over ``observations()``'s events: e1 holds t1, t2 and t3, each with a joint
+    label; e2 holds only t4, whose joint label is left out (claim 1, fit unsure).
+
+    Family verdicts (a family supports only when both presentations answer
+    ``supported`` and ``fits``): t1 is (f0 1, f1 1); t2 is (f0 0, uncertain; f1 0,
+    opposes); t3 is (f0 0, opposes; f1 0, uncertain). Pairs (verdict, joint label)
+    for each family: (1, 1), (0, 0), (0, 1). Observed 2/3; verdict share 1/3, label
+    share 2/3. κ chance = 1/3 * 2/3 + 2/3 * 1/3 = 4/9, κ = (2/3 - 4/9) / (5/9) = 2/5.
+    AC1 mean = 1/2, chance = 2 * 1/2 * 1/2 = 1/2, AC1 = (2/3 - 1/2) / (1/2) = 1/3.
+    Each family has 3 labels, and 1 uncertain consensus (f0's t2, f1's t3).
+
+    The resampled events are those holding a joint label: e1 alone. Every one of the
+    50 resamples draws e1 once, so the interval is [2/5, 2/5] with none undefined.
+    (Over e1 and e2, ``random.Random(11)`` draws only e2 12 times: 12 undefined.)
+    The presentation figures pair the same targets: f0 under ``evidence_first``
+    answers t1 ``supported``, t2 ``uncertain`` and t3 ``unsupported``, so it too
+    counts 1 uncertain over e1 alone."""
+    yes, no, unsure = (
+        ("supported", "fits"),
+        ("unsupported", "fits"),
+        ("uncertain", "fits"),
+    )
+    targets = (
+        LabelledTarget("t1", "e1", 1, 1, False, {}, panel("t1", yes, yes)),
+        LabelledTarget("t2", "e1", 0, 0, False, {}, panel("t2", unsure, no)),
+        LabelledTarget("t3", "e1", 1, 1, False, {}, panel("t3", no, unsure)),
+        LabelledTarget("t4", "e2", 1, None, False, {}, panel("t4", yes, yes)),
+    )
+    report = partition_report(
+        observations(), targets, BOOK, PLAN, partition=Partition.DEV
+    )
+    for family in ("f0", "f1"):
+        for metric, point in ((Metric.JUDGE_KAPPA, 2 / 5), (Metric.JUDGE_AC1, 1 / 3)):
+            figure = report.figure(metric, family)
+            assert figure.point == pytest.approx(point)
+            assert dict(figure.counts) == {"labels": 3, "uncertain": 1}
+            interval = figure.interval
+            assert interval.undefined == 0
+            assert interval.lower == pytest.approx(point)
+            assert interval.upper == pytest.approx(point)
+    presentation = report.figure(Metric.JUDGE_KAPPA, "f0:evidence_first")
+    assert presentation.point == pytest.approx(2 / 5)
+    assert dict(presentation.counts) == {"labels": 3, "uncertain": 1}
+    assert presentation.interval.undefined == 0
+
+
 def test_support_precision_interval_skips_draws_without_an_accepted_label(
     report,
 ) -> None:

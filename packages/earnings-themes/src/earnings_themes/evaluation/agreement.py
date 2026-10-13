@@ -8,10 +8,14 @@ R12.10; RC §7).
 
 An empty population, or one whose chance agreement is total, is ``None``, never a
 number (A §Non-negotiables).
+
+``judge_agreement`` is the one estimate of a judge's agreement with the joint
+label, for the report's figures and calibration's floor test alike (R8.4, D19-15).
 """
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 
+from earnings_themes.evaluation.bootstrap import BootstrapPlan, Estimate, estimate
 from earnings_themes.evaluation.problems import EvaluationError, EvaluationProblem
 
 
@@ -47,6 +51,32 @@ def gwet_ac1(pairs: Sequence[tuple[int, int]]) -> float | None:
     mean = (first + second) / 2
     chance = 2 * mean * (1 - mean)
     return (observed - chance) / (1 - chance)
+
+
+def judge_agreement(
+    targets: Iterable[tuple[str, int | None, int, bool]],
+    plan: BootstrapPlan,
+) -> tuple[Estimate, Estimate, int, int]:
+    """A judge's Cohen's κ and Gwet's AC1 against the joint label, each with its
+    event-clustered interval, and the labels and uncertain verdicts behind them.
+
+    Each target is its event, its joint label, the judge's binary verdict, and
+    whether that verdict is uncertain. A target without a joint label is left out,
+    so the bootstrap resamples only the events holding one (D19-10), and only its
+    labelled targets' uncertain verdicts are counted."""
+    per_event: dict[str, list[tuple[int, int]]] = {}
+    uncertain = 0
+    for event_id, label, verdict, unsure in targets:
+        if label is None:
+            continue
+        per_event.setdefault(event_id, []).append((verdict, label))
+        uncertain += unsure
+    pairs = {event_id: tuple(rows) for event_id, rows in per_event.items()}
+    kappa, ac1 = (
+        estimate(pairs, lambda drawn, m=measure: m([p for e in drawn for p in e]), plan)
+        for measure in (cohen_kappa, gwet_ac1)
+    )
+    return kappa, ac1, sum(map(len, pairs.values())), uncertain
 
 
 def fleiss_kappa(ratings: Sequence[Sequence[int]]) -> float | None:

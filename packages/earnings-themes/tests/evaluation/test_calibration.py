@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from earnings_core import digest, sha256_hex
+from earnings_themes.evaluation.align import unit_index
 from earnings_themes.evaluation.calibration import (
     ScorerCutoff,
     accepts,
@@ -19,15 +20,24 @@ from earnings_themes.evaluation.labels import (
     FitAnswer,
     SupportLabel,
     SupportLabelSet,
+    claim_label,
+    joint_label,
 )
 from earnings_themes.evaluation.preregistration import freeze_preregistration
 from earnings_themes.evaluation.problems import EvaluationError
+from earnings_themes.evaluation.records import Metric
+from earnings_themes.evaluation.report import (
+    EventObservation,
+    LabelledTarget,
+    partition_report,
+)
 from earnings_themes.extraction.records import Parameters
 from earnings_themes.split import Partition
 from earnings_themes.support.records import SupportPolicy, support_configuration
 
-from .cases import decision_view
+from .cases import decision_view, example, gold
 from .test_preregistration import fields
+from .test_report import BOOK
 
 REPO = Path(__file__).resolve().parents[4]
 YES, NO = ("supported", "fits"), ("unsupported", "fits")
@@ -355,6 +365,129 @@ def test_a_family_that_always_agrees_meets_the_floor_exactly() -> None:
     assert agreeing.meets_floor and agreeing.uncertain == 0
     assert (constant.kappa.point, constant.kappa.interval.lower) == (0.0, 0.0)
     assert not constant.meets_floor
+
+
+UNSURE = ("uncertain", "fits")
+
+
+def judged():
+    """65 train targets in 13 events, 5 each. f0 always answers ``supported`` and
+    ``fits``. f1: t00-t29 the same, labelled 1; t30-t39 the same, labelled 0;
+    t40-t49 ``unsupported``, labelled 1; t50-t59 ``uncertain``, labelled 0. t60-t64
+    (event e12) answer as t00 does, but their claim answer is ``unsure``, so they
+    have no joint label and e12 holds none."""
+    rows = (
+        [(YES, ClaimAnswer.SUPPORTED)] * 30
+        + [(YES, ClaimAnswer.UNSUPPORTED)] * 10
+        + [(NO, ClaimAnswer.SUPPORTED)] * 10
+        + [(UNSURE, ClaimAnswer.UNSUPPORTED)] * 10
+        + [(YES, ClaimAnswer.UNSURE)] * 5
+    )
+    views, labels, events = {}, [], {}
+    for n, (second, answer) in enumerate(rows):
+        target_id = f"t{n:02}"
+        views[target_id] = decision_view(target_id, 0.95, YES, second)
+        events[target_id] = f"e{n // 5:02}"
+        labels.append(
+            SupportLabel(
+                target_id=target_id,
+                target_input_hash=views[target_id].target.input_hash,
+                partition=Partition.TRAIN,
+                claim_support=answer,
+                theme_fit=FitAnswer.FITS,
+                labelled_on=date(2026, 10, 20),
+            )
+        )
+    label_set = SupportLabelSet(
+        preregistration_hash=PREREG.content_hash, labels=tuple(labels)
+    )
+    return views, label_set, events
+
+
+def test_an_uncertain_family_consensus_is_counted() -> None:
+    """Over ``judged()``'s 60 joint labels. f1's pairs (verdict, label): (1, 1) x30,
+    (1, 0) x10, (0, 1) x10 and (0, 0) x10, an ``uncertain`` consensus counting as
+    0. Observed 40/60 = 2/3, both shares 2/3: κ chance = 4/9 + 1/9 = 5/9, κ = (2/3 -
+    5/9) / (4/9) = 1/4; AC1 chance = 2 * 2/3 * 1/3 = 4/9, AC1 = (2/3 - 4/9) / (5/9) =
+    2/5. Its uncertain count is t50-t59: 10. f0 supports all 60: κ = 0, AC1 = 7/13
+    (as in ``test_agreement_known_answers_by_family``), none uncertain. t60-t64 have
+    no joint label, so 60 of 65 train labels are usable."""
+    views, label_set, events = judged()
+    artifact = calibrate(
+        PREREG,
+        label_set,
+        labels_hash="c" * 64,
+        views=views,
+        alternative={},
+        events=events,
+        configuration={},
+    )
+    assert (artifact.train_labels, artifact.usable_labels) == (65, 60)
+    by_family = {f.family: f for f in artifact.families}
+    assert by_family["f1"].kappa.point == pytest.approx(1 / 4)
+    assert by_family["f1"].ac1.point == pytest.approx(2 / 5)
+    assert (by_family["f1"].labels, by_family["f1"].uncertain) == (60, 10)
+    assert by_family["f0"].kappa.point == pytest.approx(0.0)
+    assert by_family["f0"].ac1.point == pytest.approx(7 / 13)
+    assert (by_family["f0"].labels, by_family["f0"].uncertain) == (60, 0)
+
+
+def test_the_report_and_the_artifact_agree_on_each_family() -> None:
+    """The report's family figures over train's labels are the artifact's
+    ``FamilyAgreement``: the same point, the same interval (both resample e00-e11,
+    the events holding a joint label, never e12) and the same uncertain count, as
+    ``test_an_uncertain_family_consensus_is_counted`` derives them."""
+    views, label_set, events = judged()
+    artifact = calibrate(
+        PREREG,
+        label_set,
+        labels_hash="c" * 64,
+        views=views,
+        alternative={},
+        events=events,
+        configuration={},
+    )
+    source, base = example()
+    observed = tuple(
+        EventObservation(
+            event_id=event_id,
+            gold=gold(event_id, base, partition="train"),
+            index=unit_index(source),
+            accepted=(),
+            release_confirmed=True,
+            quotes=(1, 1),
+            targets=(0, 1),
+        )
+        for event_id in sorted(set(events.values()))
+    )
+    labelled = tuple(
+        LabelledTarget(
+            label.target_id,
+            events[label.target_id],
+            claim_label(label),
+            joint_label(label),
+            False,
+            {},
+            views[label.target_id].trials,
+        )
+        for label in label_set.labels
+    )
+    report = partition_report(
+        observed, labelled, BOOK, PREREG.bootstrap, partition=Partition.TRAIN
+    )
+    for family in artifact.families:
+        for metric, expected in (
+            (Metric.JUDGE_KAPPA, family.kappa),
+            (Metric.JUDGE_AC1, family.ac1),
+        ):
+            figure = report.figure(metric, family.family)
+            assert figure.point == expected.point
+            assert figure.interval == expected.interval
+            assert dict(figure.counts) == {
+                "labels": family.labels,
+                "uncertain": family.uncertain,
+            }
+    assert {f.family: f.uncertain for f in artifact.families} == {"f0": 0, "f1": 10}
 
 
 def test_the_configuration_hash_helper_is_what_the_artifact_stores() -> None:

@@ -6512,7 +6512,7 @@ interval is the event-clustered percentile bootstrap.
 | `gold_evidence_recall` | Gold-supporting units any accepted assignment holds (R12.8 (iii), gated, strictly above zero) |
 | `support_precision` | Joint labels of accepted targets (gated on dev) |
 | `scorer_auc` | AUC-ROC of a scorer view against the claim label (R8.6); qualifier: the view |
-| `judge_kappa` | Cohen's κ against the joint label; qualifier: a family, or `family:presentation` |
+| `judge_kappa` | Cohen's κ against the joint label, over the events holding one, as calibration's `FamilyAgreement`; counts `labels` and `uncertain` (a family's uncertain consensus, or a trial's uncertain answer); qualifier: a family, or `family:presentation` |
 | `judge_ac1` | Gwet's AC1, beside κ |
 | `hard_negative_false_acceptance` | Hard negatives falsely accepted (R12.5); qualifier: none, or a negative kind |
 | `rare_theme_recall` | Recall over themes present in at most two events (descriptive, D1) |

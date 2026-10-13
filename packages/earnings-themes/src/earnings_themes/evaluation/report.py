@@ -8,7 +8,8 @@ nothing and prints nothing.
   label figures resample the events that hold labels.
 - **Label figures** take the joint label for support precision and judge agreement,
   and the claim label for scorer AUC (FP21). A missing label leaves its target out;
-  it is never a negative.
+  it is never a negative. Judge agreement is ``judge_agreement``'s, as calibration's
+  floor test is: over the events holding a joint label, counting uncertain verdicts.
 - **Not estimated.** Sector prevalence and source-selection bias are reported with
   their reason (R12.2, D1).
 """
@@ -19,9 +20,9 @@ from itertools import combinations
 from typing import Literal
 
 from earnings_themes.codebook import Codebook
-from earnings_themes.evaluation.agreement import cohen_kappa, fleiss_kappa, gwet_ac1
+from earnings_themes.evaluation.agreement import fleiss_kappa, judge_agreement
 from earnings_themes.evaluation.align import Span, UnitIndex, units_over
-from earnings_themes.evaluation.bootstrap import BootstrapPlan, estimate
+from earnings_themes.evaluation.bootstrap import BootstrapPlan, Estimate, estimate
 from earnings_themes.evaluation.cells import (
     EventCells,
     GoldReading,
@@ -53,7 +54,11 @@ from earnings_themes.evaluation.scores import (
     total,
     unit_tally,
 )
-from earnings_themes.evaluation.verdicts import families, family_verdict, trial_verdict
+from earnings_themes.evaluation.verdicts import (
+    families,
+    family_judgement,
+    trial_verdict,
+)
 from earnings_themes.gold import Gold
 from earnings_themes.split import Partition
 from earnings_themes.support.metrics import precision_value, ranked_auc
@@ -182,7 +187,15 @@ class _Figures:
         counts: tuple[tuple[str, int], ...] = (),
         qualifier: str | None = None,
     ) -> None:
-        result = estimate(per_event, statistic, self.plan)
+        self.put(metric, estimate(per_event, statistic, self.plan), counts, qualifier)
+
+    def put(
+        self,
+        metric: Metric,
+        result: Estimate,
+        counts: tuple[tuple[str, int], ...] = (),
+        qualifier: str | None = None,
+    ) -> None:
         self.out.append(
             Figure(
                 metric=metric,
@@ -391,9 +404,9 @@ def _label_figures(
     for family in families(trials):
         _agreement(
             figures,
-            by_event,
+            labelled,
             family,
-            lambda t, f=family: (family_verdict(t.trials, f), False),
+            lambda t, f=family: family_judgement(t.trials, f),
         )
         for presentation in sorted({x.presentation.value for x in trials}):
 
@@ -408,39 +421,21 @@ def _label_figures(
                 )
                 return (0, True) if trial is None else trial_verdict(trial)
 
-            _agreement(figures, by_event, f"{family}:{presentation}", verdict)
+            _agreement(figures, labelled, f"{family}:{presentation}", verdict)
 
 
 def _agreement(
     figures: _Figures,
-    by_event: Mapping[str, tuple[LabelledTarget, ...]],
+    labelled: Sequence[LabelledTarget],
     qualifier: str,
     verdict: Callable[[LabelledTarget], tuple[int, bool]],
 ) -> None:
-    pairs = {
-        e: tuple(
-            (verdict(t)[0], t.joint_label) for t in ts if t.joint_label is not None
-        )
-        for e, ts in by_event.items()
-    }
-    unsure = sum(
-        verdict(t)[1]
-        for ts in by_event.values()
-        for t in ts
-        if t.joint_label is not None
+    kappa, ac1, labels, uncertain = judge_agreement(
+        ((t.event_id, t.joint_label, *verdict(t)) for t in labelled), figures.plan
     )
-    counts = _counts(labels=sum(len(p) for p in pairs.values()), uncertain=unsure)
-    for metric, measure in (
-        (Metric.JUDGE_KAPPA, cohen_kappa),
-        (Metric.JUDGE_AC1, gwet_ac1),
-    ):
-        figures.add(
-            metric,
-            pairs,
-            lambda drawn, m=measure: m([p for event in drawn for p in event]),
-            counts,
-            qualifier=qualifier,
-        )
+    counts = _counts(labels=labels, uncertain=uncertain)
+    figures.put(Metric.JUDGE_KAPPA, kappa, counts, qualifier=qualifier)
+    figures.put(Metric.JUDGE_AC1, ac1, counts, qualifier=qualifier)
 
 
 def partition_report(

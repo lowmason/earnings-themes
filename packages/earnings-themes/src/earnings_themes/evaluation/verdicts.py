@@ -42,9 +42,18 @@ def consensus(trials: Iterable[JudgeTrial], family: str) -> Consensus:
     return "uncertain"
 
 
+def family_judgement(
+    trials: Iterable[JudgeTrial], family: str
+) -> tuple[Literal[0, 1], bool]:
+    """``family``'s binary verdict, and whether its consensus is uncertain: what
+    ``trial_verdict`` gives for one trial."""
+    said = consensus(trials, family)
+    return (1 if said == "supports" else 0), said == "uncertain"
+
+
 def family_verdict(trials: Iterable[JudgeTrial], family: str) -> Literal[0, 1]:
     """1 when ``family`` supports, else 0."""
-    return 1 if consensus(trials, family) == "supports" else 0
+    return family_judgement(trials, family)[0]
 
 
 def trial_verdict(trial: JudgeTrial) -> tuple[Literal[0, 1], bool]:
