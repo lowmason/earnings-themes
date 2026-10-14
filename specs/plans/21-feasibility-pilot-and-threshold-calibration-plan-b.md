@@ -12,7 +12,7 @@
 
 > Roadmap: specs/evidence-linked-theme-extraction-roadmap.md, Stage 11
 
-**Status:** OWNER APPROVED 2026-10-13 — execution authorized via subagent-driven-development. Owner gates O1–O7 remain unresolved until their specified checkpoints.
+**Status:** IN EXECUTION (owner approved 2026-10-13) — Task 1 engineering steps 1–2 completed with reviewed corrections; B1 model/native evidence remains pending. Owner gates O1–O7 remain unresolved until their specified checkpoints.
 
 **Base:** `25c9f6a7d1c0dc53ea98fc65c6d2ecf7881c6d0e` (merged Plan A, PR #24). Plans 17–20 implement A. Plan 20's **Execution verification** and **Plan B consuming handoff**, rather than its historical embedded patches, describe the as-built consumer contract.
 
@@ -39,6 +39,7 @@
 - **D21-2** (owner, brief, 2026-10-13): This session produces a reviewable plan and stops; no pilot steps, model download/load, pilot-text inspection or numeric preregistration selection. Applied in: planning verification and Execution Handoff.
 - **D21-3** (owner, plan review, 2026-10-13): Add explicit owner checkpoints for P19-3 tie-group evidence and P19-4 labelled-event bootstrap population **before B2**, with no scoring change implied. Applied in: Task 2, owner gates O3/O4.
 - **D21-4** (owner, execution instruction, 2026-10-13): Plan 21 is approved; execute its nine tasks in order using subagent-driven-development and a fresh engineering worktree. This supersedes D21-2's planning-session stop and the stale draft-review handoff below for this execution session. Approval does not settle O1–O7, V6 acceptance, or the separate concrete `CLAUDE.md` Current state diff approval. Preserve the exact implementation bodies, requirements, protected-input boundary and checkpoint commit order.
+- **D21-5** (owner, execution correction approval, 2026-10-13): Approve the minimal diagnostic correction to Appendix A's helper: text-mode private temporary file plus Python stdout/stderr redirection, retaining native descriptor redirection and restoration. Approve an appended invented-input test exercising actual smoke preflight with Gemma in either judge slot and an uncalled-builder assertion. Preserve the original appendix bodies as historical planning text; these are the only approved executable departures. Applied in: Task 1 steps 1–2, commit `fa3240455e2183868a6f31183e213cd189c33a63`.
 
 ## Owner gates — unresolved choices remain choices
 
@@ -114,7 +115,7 @@ The models-root variable is local, never committed or echoed to the agent. Obtai
 - Consumes: A2 `build_runtime(...) -> LiveRuntime`; Stage 1 canonical fixtures; existing `extract_run`, `StoredRun`, `SupportSources`, `propose_run`, `assess_run` and reply caches.
 - Produces: fixture-only smoke CLI specified in Appendix A; validated real runtime manifest, identities, license evidence, measured memory/timings and owner-approved baseline policies/ceilings for Tasks 2–7.
 
-- [ ] **Step 1: Write the invented-input smoke boundary tests in Appendix A, then run RED**
+- [x] **Step 1: Write the invented-input smoke boundary tests in Appendix A, then run RED**
 
 Run in the engineering worktree:
 
@@ -124,7 +125,7 @@ UV_CACHE_DIR=/private/tmp/earnings-plan21-uv uv run --locked --offline --no-sync
 
 Expected RED: missing helper/API. Tests must demonstrate refusal **before runtime construction** for a path outside committed Stage 1 fixtures, modified fixture bytes, a reused output, and a Gemma judge; hostile exception text must not reach stdout/stderr. Use invented data/runtime injection only.
 
-- [ ] **Step 2: Implement Appendix A's complete helper; run GREEN and review**
+- [x] **Step 2: Implement Appendix A's complete helper; run GREEN and review**
 
 Run the same node file and the existing `tests/contracts/test_data_dictionary.py`, plus `ruff check tools/stage11_fixture_smoke.py tests/contracts/test_stage11_fixture_smoke.py`, `ruff format --check` on those two files, and `git diff --check`, through the same locked/offline/no-sync uv environment. Expected: actual tests pass, lint/format clean. Do not run its native CLI as an agent. Review task/spec compliance and code quality before committing:
 
@@ -1892,6 +1893,14 @@ PY
 Do not mistake these diagnostic single-event points for newly calibrated quality gates or population estimates. A theme with no gold support/prediction remains undefined and counted. Preserve the numeric output provenance/code SHA in the verification record; only the train rows feed Stage 12 discovery.
 
 ## Planning verification and review handoff
+
+### Execution checkpoint — 2026-10-13
+
+The initial checkout was `main` at the exact Base SHA, with only this untracked plan. Owner approval/status was recorded and this plan alone committed on `plan21-approved-plan` as `95f0d206c53e355cbb4bb419d32d828ab53484f8`. The fresh engineering worktree `.claude/worktrees/plan21-engineering` contains that approval commit and uses branch `plan21-engineering`. Existing dependencies were reused without installation, sync, lockfile change or download.
+
+Task 1 steps 1–2 used a fresh implementer and two-stage task review. Expected missing-helper RED gave one collection error. The exact supplied helper then gave 10 passed/1 failed: native diagnostics were suppressed but Python's replacement capture stream bypassed descriptor redirection. D21-5 authorizes the diagnosed correction and supplemental judge-before-builder test. The unchanged privacy test passed; a controlled ordering mutation gave two expected failures, then correct ordering was restored. Final named checks: helper **13 passed**; dictionary **383 passed, 1 skipped**; scoped Ruff lint/format and whitespace checks clean. Scoped re-review returned **spec PASS and quality PASS** with no new important defect. The helper/test/dictionary alone were committed as `fa3240455e2183868a6f31183e213cd189c33a63`, then made available by fast-forwarding the approval branch in the user's main checkout. The `main` branch itself remains at the merged Plan A baseline.
+
+Before any native smoke, O1 must establish the fixed Gemma extractor/classifier and actual non-Gemma judge metadata; O2 must explicitly approve every materialized generation parameter/default and a non-null structure-aware window budget. Schema acceptance alone supplies neither approval. The owner requested a judge recommendation; candidate recommendations are not selections or O1/O2 evidence. No model/tokenizer/scorer loaded, native smoke or B1–B8 operation ran, protected data opened/copied, or root/wording/live/browser gate executed. Task 1 steps 3–5 and Tasks 2–9 remain incomplete; Stage 11 is not completed or retired. Local progress/review artifacts remain in this worktree's plan-specific `.sdd` directory.
 
 Only this Markdown plan is intended to change in the planning session. Static syntax/interface review and document checks do not establish that the proposed helper/tests/scripts pass; execution must perform the RED/GREEN cycle, user smoke, source-input validation and B1–B8 evidence gates. No planning result is a pilot metric, native fit result or selected numeric preregistration.
 
