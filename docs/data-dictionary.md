@@ -7193,3 +7193,28 @@ into the existing `PilotReport`; this dataclass adds no report fields or sidecar
 | `primary` | StoredSupportRun | Consumed primary support results, reloaded for an ordinary replay or retained for a fresh run |
 | `coding` | CodingRun | Reverified frozen-policy coding decisions and assignments |
 | `policy` | AssignmentPolicy or null | Verified bound policy, or null for the verified no-candidate calibration outcome |
+
+## Stage 11 fixture-smoke limits
+
+`tools.stage11_fixture_smoke.Limits` is the explicit local JSON input for the
+user-run Stage 11 fixture smoke. It is not a pilot preregistration or an approved
+production configuration. Values are owner-supplied; no numeric limit is selected
+by the schema. The user may reuse its six policy/ceiling fields in the later local
+pilot-input constructor only after the smoke-derived baseline is approved.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `extraction_policy` | `ExtractionPolicy` | Existing pointer traversal and extraction parameters. |
+| `extraction_ceilings` | `Ceilings` | Explicit bounded fixture extraction requests/tokens. |
+| `coding_parameters` | `Parameters` | Explicit classifier generation parameters. |
+| `coding_ceilings` | `CodingCeilings` | Explicit classifier request/token ceilings. |
+| `support_parameters` | `Parameters` | Explicit judge generation parameters. |
+| `support_ceilings` | `SupportCeilings` | Explicit scorer/judge/token ceilings. |
+
+The CLI pins a committed Stage 1 canonical fixture before runtime construction,
+keeps raw caches and identity/measurement snapshots local under
+`data/runs/stage11-fixture-smoke/<run_id>/`, suppresses native diagnostics and emits
+only closed statuses, fixed role names, counts, timings, usage and hashes. A
+complete smoke exercises extraction, classification, both judge presentations in
+each family, and both scorers. Disagreement does not imply failure; incomplete
+roles do. The smoke makes no assignment or pilot-quality claim.

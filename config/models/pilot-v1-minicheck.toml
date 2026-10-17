@@ -1,0 +1,48 @@
+kind = "minicheck"
+revision = "96eafd01cee2d16cf81aaa2fb226b14f422a37b3"
+runtime_versions = [["torch", "2.14.1"], ["transformers", "5.18.0"], ["sentencepiece", "0.2.2"], ["tokenizers", "0.23.2"], ["safetensors", "0.8.0"]]
+device = "cpu"
+precision = "float32"
+input_limit = 512
+encoding_version = "minicheck-first-step/1"
+label_mapping = [3, 209]
+directory = "pilot-v1-minicheck"
+
+[[files]]
+relative_path = "added_tokens.json"
+sha256 = "4b1c1345a66fdd00264819c5adfc3142debfbd3b03767a04f95a39ac2277ca21"
+
+[[files]]
+relative_path = "config.json"
+sha256 = "d8e91aa8739d845d2572fa8db9cb6523d06208c14fedb8f7623f49283a305653"
+
+[[files]]
+relative_path = "generation_config.json"
+sha256 = "3c4ec6a75c47200afbecd413ee6719007f701821d07b6c11a6c30237d3f9c854"
+
+[[files]]
+relative_path = "pytorch_model.bin"
+sha256 = "41291881e13c6235ed47149cec903bee9493e45d9d7325587a9fa2e266c526c0"
+
+[[files]]
+relative_path = "special_tokens_map.json"
+sha256 = "47389dd56434a0d7d32f736ba34e895b331461980af760e955b62d5c39912626"
+
+[[files]]
+relative_path = "spiece.model"
+sha256 = "d60acb128cf7b7f2536e8f38a5b18a05535c9e14c7a355904270e15b0945ea86"
+
+[[files]]
+relative_path = "tokenizer.json"
+sha256 = "ece24e1e7d9b5a26f4e68a9519b6ea1451474811b52a9da419c9145f1f458fc0"
+
+[[files]]
+relative_path = "tokenizer_config.json"
+sha256 = "284a01dc7b81f159449b96cd0d8814f6da64bbdb59833fe3b8398ea36a860550"
+
+[weight_license]
+source_url = "https://huggingface.co/lytang/MiniCheck-Flan-T5-Large/blob/96eafd01cee2d16cf81aaa2fb226b14f422a37b3/README.md"
+terms_reference = "MIT model artifacts; applicable original and base-model terms reviewed by owner 2026-10-05 (ADR 0005)"
+intended_use = "Local earnings-theme feasibility research, self-hosted inference"
+verified_on = "2026-10-05"
+permits_use = true
