@@ -1,0 +1,46 @@
+schema_version = 1
+family = "qwen"
+base_url = "http://127.0.0.1:8081/v1"
+model_id = "pilot-v1-qwen2.5-14b-q4_k_m"
+runtime = "llama.cpp"
+runtime_version = "0.5.0 (build 11146, commit 7fe450e19)"
+structured = true
+timeout_s = 300.0
+revision = "05244aa5d871c661c80082a15d3bce44714d068d"
+device = "metal"
+precision = "Q4_K_M"
+input_limit = 6144
+output_limit = 2048
+weights_directory = "pilot-v1-qwen/weights"
+tokenizer_directory = "pilot-v1-qwen/tokenizer"
+
+[[weights]]
+relative_path = "Qwen2.5-14B-Instruct-Q4_K_M.gguf"
+sha256 = "e47ad95dad6ff848b431053b375adb5d39321290ea2c638682577dafca87c008"
+
+[[tokenizer_files]]
+relative_path = "config.json"
+sha256 = "0f2085dbbe2ee251bd6a6a0797d84a6ce34436044d629aa3cba793b43d311a9e"
+
+[[tokenizer_files]]
+relative_path = "tokenizer.json"
+sha256 = "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539"
+
+[[tokenizer_files]]
+relative_path = "tokenizer_config.json"
+sha256 = "5b5d4f65d0acd3b2d56a35b56d374a36cbc1c8fa5cf3b3febbbfabf22f359583"
+
+[[tokenizer_files]]
+relative_path = "merges.txt"
+sha256 = "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3"
+
+[[tokenizer_files]]
+relative_path = "vocab.json"
+sha256 = "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+
+[weight_license]
+source_url = "https://huggingface.co/Qwen/Qwen2.5-14B-Instruct/blob/cf98f3b3bbb457ad9e2bb7baf9a0125b6b88caa8/README.md"
+terms_reference = "Apache License 2.0; applicable original and base-model weight terms reviewed by owner 2026-10-13"
+intended_use = "Local earnings-theme feasibility research, self-hosted inference"
+verified_on = "2026-10-13"
+permits_use = true
