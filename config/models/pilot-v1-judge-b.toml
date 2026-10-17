@@ -1,0 +1,50 @@
+schema_version = 1
+family = "mistral"
+base_url = "http://127.0.0.1:8082/v1"
+model_id = "pilot-v1-mistral-nemo-12b-q4_k_m"
+runtime = "llama.cpp"
+runtime_version = "0.5.0 (build 11146, commit 7fe450e19)"
+structured = true
+timeout_s = 300.0
+revision = "a2dd64a0a76ea1bdb2bb6ab6fa5496b003c7c908"
+device = "metal"
+precision = "Q4_K_M"
+input_limit = 6144
+output_limit = 2048
+weights_directory = "pilot-v1-mistral/weights"
+tokenizer_directory = "pilot-v1-mistral/tokenizer"
+
+[[weights]]
+relative_path = "Mistral-Nemo-Instruct-2407-Q4_K_M.gguf"
+sha256 = "7c1a10d202d8788dbe5628dc962254d10654c853cae6aaeca0618f05490d4a46"
+
+[[tokenizer_files]]
+relative_path = "config.json"
+sha256 = "8a42669219f4caadedb891be88c34712572573d42b3d02d665d527f92d94ddfe"
+
+[[tokenizer_files]]
+relative_path = "tokenizer.json"
+sha256 = "e11c71726323d33da7b8d6f6f269f1988931c0a52b7122bcdd8c05042974e0db"
+
+[[tokenizer_files]]
+relative_path = "tokenizer_config.json"
+sha256 = "67f3aeef765b7d78012a081dba98efd4900cd2bac24eac182296841c7e2aef2a"
+
+[[tokenizer_files]]
+relative_path = "merges.txt"
+sha256 = "4e4d41c64d2ed2e26713ae7af7c958b07df532a6f4498dffa9a2cf7f4c6c0aa6"
+
+[[tokenizer_files]]
+relative_path = "vocab.json"
+sha256 = "8572e8853a6b2f2d830de4afa15d43c49257d367abf3c5fd2f6f7687bcd8f63d"
+
+[[tokenizer_files]]
+relative_path = "special_tokens_map.json"
+sha256 = "6fa06efa2785e450051989a6f8fb4416b10149ded485ddd3f127a40734f5cfd0"
+
+[weight_license]
+source_url = "https://huggingface.co/mistralai/Mistral-Nemo-Instruct-2407/blob/04d8a90549d23fc6bd7f642064003592df51e9b3/README.md"
+terms_reference = "Apache License 2.0; applicable original and base-model weight terms reviewed by owner 2026-10-13"
+intended_use = "Local earnings-theme feasibility research, self-hosted inference"
+verified_on = "2026-10-13"
+permits_use = true

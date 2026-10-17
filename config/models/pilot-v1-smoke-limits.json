@@ -1,0 +1,46 @@
+{
+  "extraction_policy": {
+    "parameters": {
+      "temperature": 0.0,
+      "seed": 0,
+      "max_tokens": 2048,
+      "structured": true
+    },
+    "window_budget": 4000,
+    "claim_limit": 500
+  },
+  "extraction_ceilings": {
+    "requests_per_document": 32,
+    "requests_per_run": 32,
+    "tokens_per_run": 262144
+  },
+  "coding_parameters": {
+    "temperature": 0.0,
+    "seed": 0,
+    "max_tokens": 2048,
+    "structured": true
+  },
+  "coding_ceilings": {
+    "requests_per_claim": 2,
+    "requests_per_document": 128,
+    "requests_per_run": 128,
+    "tokens_per_document": 1048576,
+    "tokens_per_run": 1048576
+  },
+  "support_parameters": {
+    "temperature": 0.0,
+    "seed": 0,
+    "max_tokens": 2048,
+    "structured": true
+  },
+  "support_ceilings": {
+    "scorer_per_target": 16,
+    "scorer_per_document": 512,
+    "scorer_per_run": 512,
+    "judge_per_target": 8,
+    "judge_per_document": 256,
+    "judge_per_run": 256,
+    "tokens_per_document": 2097152,
+    "tokens_per_run": 2097152
+  }
+}

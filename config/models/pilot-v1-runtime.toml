@@ -1,0 +1,6 @@
+schema_version = 1
+extractor = "pilot-v1-gemma.toml"
+classifier = "pilot-v1-gemma.toml"
+judges = ["pilot-v1-judge-a.toml", "pilot-v1-judge-b.toml"]
+scorer = "pilot-v1-minicheck.toml"
+alternative_scorer = "pilot-v1-deberta.toml"

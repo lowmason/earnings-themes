@@ -1,0 +1,44 @@
+kind = "deberta"
+revision = "6f5cf0a2b59cabb106aca4c287eed12e357e90eb"
+runtime_versions = [["torch", "2.14.1"], ["transformers", "5.18.0"], ["sentencepiece", "0.2.2"], ["tokenizers", "0.23.2"], ["safetensors", "0.8.0"]]
+device = "cpu"
+precision = "float32"
+input_limit = 512
+encoding_version = "deberta-pair/1"
+label_mapping = [0, 1, 2]
+directory = "pilot-v1-deberta"
+
+[[files]]
+relative_path = "added_tokens.json"
+sha256 = "dc046d04c9b0ada7ae6f1dc89c465801799acdf0c9a6aab8c15a1b2d5ca4e91f"
+
+[[files]]
+relative_path = "config.json"
+sha256 = "a6c616d6dabeacf90fd0e776c741d3f0f30a05533ccf0bd3b5b62e94cfaa8d57"
+
+[[files]]
+relative_path = "model.safetensors"
+sha256 = "06d6fd89edd4f97816831626daafbdb0b029cf63bae8edc0bccab1d64e2e7707"
+
+[[files]]
+relative_path = "special_tokens_map.json"
+sha256 = "9463f61e1b109a8eb4688b829260d7c6b1e6dff04c98ff7269bb89e2b92369b9"
+
+[[files]]
+relative_path = "spm.model"
+sha256 = "c679fbf93643d19aab7ee10c0b99e460bdbc02fedf34b92b05af343b4af586fd"
+
+[[files]]
+relative_path = "tokenizer.json"
+sha256 = "05402ffae6dd382a8491b1d29bfc139bec5d332662e86a026f433ce54c25c202"
+
+[[files]]
+relative_path = "tokenizer_config.json"
+sha256 = "557b3d33d3f41b81ad769244e506549e98a1857d41dd58160aacd4d98d710b5a"
+
+[weight_license]
+source_url = "https://huggingface.co/MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli/blob/6f5cf0a2b59cabb106aca4c287eed12e357e90eb/README.md"
+terms_reference = "MIT model artifacts; applicable original and base-model terms reviewed by owner 2026-10-13 (ADR 0005)"
+intended_use = "Local earnings-theme feasibility research, self-hosted inference"
+verified_on = "2026-10-13"
+permits_use = true
