@@ -1,8 +1,8 @@
 # Pilot v1 feasibility verification
 
 Status on 2026-10-18: B1 evidence is complete and committed (`a91a8e3`), and the
-preregistration is frozen and committed alone (`53ba190`; see the last section).
-For B1, the fifth fixture pass, `s11-fixture-5`, completed all roles with verified
+preregistration is frozen and committed alone (`53ba190`), with the B2 step 4
+workflow selections recorded (D21-24); see the last two sections. For B1, the fifth fixture pass, `s11-fixture-5`, completed all roles with verified
 Metal all-layer startup evidence and measured both phases; the owner accepted it as
 the 36 GB fit with an explicit swap/pressure limitation (D21-19, in the section
 "Owner fit decision, 2026-10-17"). Earlier sections
@@ -1002,8 +1002,24 @@ Provenance: the file was committed before any pilot output existed. The local
 B2 step 2, and no pass, run or label has been produced. The local
 `preregistration-fields.toml` is uncommitted, and no agent opened it.
 
-Not done: B2 step 4 (the local workflow selections) is specified but not run, and
-the final baseline ceilings (limits file `8fae7afb…`) are selected but not yet
-frozen into any configuration. B3 is blocked on O6, the 28 signed train and dev
-gold files and the 8 dev ledger rows. As a file count only, not a validation, the
-default branch tracks 3 gold files. No pilot operation is authorized.
+### B2 step 4 selections, 2026-10-18 (D21-24)
+
+The owner accepted seven workflow selections for Appendix C's owner JSON: the
+bundle ID, the eight run IDs, the raw store root `data/raw/events`, one shared
+`rules` block, mask policy `boilerplate` version `1`, issuer names as `publisher`,
+and a null `event_at` for all 28 events. Evidence from committed inputs and invented
+data only:
+
+| Check | Result |
+| --- | --- |
+| The shared `rules` block against the approved final limits | Patching the committed provisional limits file with D21-12's ceilings and serializing it the same way reproduces SHA-256 `8fae7afbb60fe45e04e178c800f0ae87e5609423e0a65ad02840ead770d110cd`; the block parses as the limits model |
+| A generated owner skeleton against Appendix C's `Owner` model, with invented event IDs | Validates once the 28 publishers are filled in; refuses while any is blank; refuses a naive `event_at`; refuses each fixed permission set to its opposite |
+| Appendix C's script | Compiles, its imports resolve and its definitions execute; its `prepare` function has not been run |
+| Prompts, lockfile, preregistration and codebook that Appendix C copies | All tracked in git |
+
+Not done: the local owner JSON has not been generated or filled in, and Appendix C
+has not been run. The final baseline ceilings are selected but not frozen into any
+configuration until Appendix C writes the train and dev configs. B3 is blocked on O6,
+the 28 signed train and dev gold files and the 8 dev ledger rows. As file counts
+only, not validations, the default branch tracks 3 gold files and no dev ledger
+file. No pilot operation is authorized.
