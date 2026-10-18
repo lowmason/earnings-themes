@@ -1,9 +1,11 @@
 # Pilot v1 feasibility verification
 
-Status on 2026-10-17: B1 evidence complete, pending its commit. The fifth
-fixture pass, `s11-fixture-5`, completed all roles with verified Metal all-layer
-startup evidence and measured both phases; the owner accepted it as the 36 GB fit
-with an explicit swap/pressure limitation (D21-19, last section). Earlier sections
+Status on 2026-10-18: B1 evidence is complete and committed (`a91a8e3`), and the
+preregistration is frozen and committed alone (`53ba190`; see the last section).
+For B1, the fifth fixture pass, `s11-fixture-5`, completed all roles with verified
+Metal all-layer startup evidence and measured both phases; the owner accepted it as
+the 36 GB fit with an explicit swap/pressure limitation (D21-19, in the section
+"Owner fit decision, 2026-10-17"). Earlier sections
 are chronological and state status as of their dates; where a later section closes
 an open item (Metal offload, build/phase evidence, fit), it governs. Whole-system
 Memory Used and the extractor's local token counts remain unavailable. Final
@@ -971,3 +973,37 @@ O2. The owner then approved the drafted ADR 0006 text (“Approve as drafted”)
 ADR 0006 is accepted for the pilot v1 baseline, and chose to commit the provisional
 smoke-limits file with the model configuration. B1 is complete once its evidence
 is committed. B2 has not started, and no pilot operation is authorized.
+
+## B2 preregistration checkpoint, 2026-10-18 (D21-20 to D21-23)
+
+Owner decisions, recorded in plan-only commits `864e92d` and `d7b6e0d`:
+- O3 and O4 (D21-20, D21-21): the shipped tie-group evidence convention and the
+  labelled-event bootstrap population are retained for this baseline. P19-3 and
+  P19-4 stay open at their stated triggers, and neither changes any scoring code.
+- D21-22 records the GS5 reconciliation route: no explanation-only path exists, and
+  a mismatch is reconciled through Stage 6 re-signing before any share is published.
+- O5 (D21-23): the nine values were entered unchanged from the proposal.
+
+The preregistration was frozen through the shipped `freeze_preregistration` and
+committed alone at `53ba1903c5dec15d66d3565fcb27e3c60d6b2107`
+(`chore(pilot): preregister the feasibility baseline`). `git show --name-only` for
+that commit lists exactly one path,
+`evaluation/djia-2024q3-2026q2/pilot-v1/preregistration-v1.toml`, 60 lines.
+
+| Check | Result |
+| --- | --- |
+| Content hash printed by the freeze | `09d51f7453fb3efda24d8f3e4ccf3310a8c4cb024f1af9d800b00cf967f90c04` |
+| Hash printed earlier by the metadata constructor | The same value |
+| `load_preregistration` on the committed file | Loads; the file hashes to its own `content_hash` |
+| Committed values against D21-23 | Floor 0.4; one candidate with a 20-value grid from 0.0 to 0.95; recall floor 0.4; sampling seed 20261018, train 70 (cap 5), dev 24 (cap 3), minimum usable 50, extension step 10; bootstrap seed 20261019, 10000 resamples, level 0.9, `max_undefined_share` 0.1; `undefined_gate` `point_estimate`; the seven required gates |
+
+Provenance: the file was committed before any pilot output existed. The local
+`data/runs/pilot/` directory did not exist before the metadata constructor ran in
+B2 step 2, and no pass, run or label has been produced. The local
+`preregistration-fields.toml` is uncommitted, and no agent opened it.
+
+Not done: B2 step 4 (the local workflow selections) is specified but not run, and
+the final baseline ceilings (limits file `8fae7afb…`) are selected but not yet
+frozen into any configuration. B3 is blocked on O6, the 28 signed train and dev
+gold files and the 8 dev ledger rows. As a file count only, not a validation, the
+default branch tracks 3 gold files. No pilot operation is authorized.
