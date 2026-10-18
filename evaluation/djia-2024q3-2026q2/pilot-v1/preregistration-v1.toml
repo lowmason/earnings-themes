@@ -1,0 +1,60 @@
+# Stage 11's preregistration (FP9), committed before any pilot output exists. Numbers, rules and hashes only. Its content_hash covers every other field.
+schema_version = 1
+preregistration_version = 1
+split_hash = "5c4a2f3c5ed9ffc2cf0065658ec4e75311220338cf9b3fe07802c0db9fcd0e53"
+content_hash = "09d51f7453fb3efda24d8f3e4ccf3310a8c4cb024f1af9d800b00cf967f90c04"
+
+[pin]
+pilot_id = "djia-2024q3-2026q2-pilot"
+pilot_version = 1
+pilot_hash = "3839c800151cc646f11064efdce583f988e511265f8893c90e9a2f2549145926"
+events_version = 1
+events_hash = "2348671b3ae8021d644df12ae2f539258670546970c918f8edb231ba1885c3b7"
+universe_version = 1
+universe_operative_hash = "c350923422d9bf2e65a0b5929f4c0d45370458c6a044c3de012a1dfeb116e573"
+
+[codebook]
+codebook_id = "djia-pilot"
+codebook_version = 0
+content_hash = "635975d1ec952cf5719ea3b473870f96e7e3a52bc3015cc1ac5725aa80ec1e79"
+
+[floor]
+statistic = "cohen_kappa"
+reported = "gwet_ac1"
+population = "family_verdict_vs_joint_label"
+bound = "event_bootstrap_lower"
+floor = 0.4
+consequence = "reported_only"
+
+[[menu]]
+candidate_id = "minicheck-cutoff-v1"
+rule = "scorer_cutoff"
+signal = "minicheck_joint"
+signals = 1
+grid = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95]
+
+[selection]
+recall_floor = 0.4
+objective = "max_train_precision"
+tie_break = "fewer_signals_then_lower_cutoff"
+
+[sampling]
+seed = 20261018
+pool = "assessed_and_flagged"
+train_size = 70
+train_cap = 5
+dev_size = 24
+dev_cap = 3
+minimum_usable = 50
+extension_step = 10
+
+[bootstrap]
+seed = 20261019
+resamples = 10000
+level = 0.9
+max_undefined_share = 0.1
+
+[gates]
+rule = "dev-lower-bound/1"
+gated = ["gold_evidence_recall", "release_precision", "release_recall", "span_unit_f1", "support_precision", "theme_f1_macro", "theme_f1_micro"]
+undefined_gate = "point_estimate"
