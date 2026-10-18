@@ -12,7 +12,7 @@
 
 > Roadmap: specs/evidence-linked-theme-extraction-roadmap.md, Stage 11
 
-**Status:** IN EXECUTION (owner approved 2026-10-13) — Task 1 steps 1–4 completed: O1 resolved by D21-6 to D21-9, D21-11 and the `s11-fixture-5` native evidence; O2 resolved by D21-10 to D21-12 and D21-19's measured fit acceptance (2026-10-17); Task 1 step 5 committed the B1 evidence at `a91a8e3be44d3c3451c45c165c3f046c6fec4167` (2026-10-17): Task 1 (B1) is complete; Task 2 (B2) step 1 is complete (2026-10-17): O3 and O4 are resolved by D21-20 and D21-21, both retaining the shipped convention, and D21-22 records the GS5 reconciliation route; B2 step 2 is complete (2026-10-18): O5 is resolved by D21-23, and B2 step 3 (freeze and alone-commit the preregistration) is next. Owner gates O6–O7 remain unresolved until their specified checkpoints.
+**Status:** IN EXECUTION (owner approved 2026-10-13) — Task 1 steps 1–4 completed: O1 resolved by D21-6 to D21-9, D21-11 and the `s11-fixture-5` native evidence; O2 resolved by D21-10 to D21-12 and D21-19's measured fit acceptance (2026-10-17); Task 1 step 5 committed the B1 evidence at `a91a8e3be44d3c3451c45c165c3f046c6fec4167` (2026-10-17): Task 1 (B1) is complete; Task 2 (B2) step 1 is complete (2026-10-17): O3 and O4 are resolved by D21-20 and D21-21, both retaining the shipped convention, and D21-22 records the GS5 reconciliation route; B2 steps 2 and 3 are complete (2026-10-18): O5 is resolved by D21-23, and the preregistration was frozen and committed alone at `53ba1903c5dec15d66d3565fcb27e3c60d6b2107` with content hash `09d51f7453fb3efda24d8f3e4ccf3310a8c4cb024f1af9d800b00cf967f90c04`. B2 step 4 (the workflow selections, specified only) remains. Owner gates O6–O7 remain unresolved until their specified checkpoints.
 
 **Base:** `25c9f6a7d1c0dc53ea98fc65c6d2ecf7881c6d0e` (merged Plan A, PR #24). Plans 17–20 implement A. Plan 20's **Execution verification** and **Plan B consuming handoff**, rather than its historical embedded patches, describe the as-built consumer contract.
 
@@ -235,7 +235,7 @@ The user creates local `data/runs/pilot/preregistration-fields.toml`. Use the ex
 
 Use the complete metadata constructor in Appendix B to derive fixed fields, accept owner JSON choices interactively, validate and write the local TOML without any model or source loading. This is **user-run** because the destination is protected. Review the numbers/rules through a metadata-only owner summary. Do not ask the owner to paste the local file or views into chat.
 
-- [ ] **Step 3: Freeze through the shipped API and commit only preregistration**
+- [x] **Step 3: Freeze through the shipped API and commit only preregistration**
 
 User runs this inherited Plan 20 mechanism:
 
