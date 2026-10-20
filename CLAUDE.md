@@ -10,8 +10,9 @@ extraction, support and coding. Stage 10 implements explicit replay composition,
 current analytical gates, coverage/prevalence and cited publication on permitted
 synthetic/invented fixtures. Stage 10 technical reviews, native/manual V5 and human
 completion gates are observed on 2026-10-08. Completion documentation awaits scoped
-review; the branch merged on 2026-10-08 (PR #14). No pilot extraction or calibration is
-claimed. The binding specifications and live roadmap govern completion.
+review; the branch merged on 2026-10-08 (PR #14). Stage 11 is in progress: plan A is
+complete and plan B has completed B1 and B2 (see Current state). No pilot extraction or
+calibration is claimed. The binding specifications and live roadmap govern completion.
 Not all of it is binding.
 
 | File | Status |
@@ -32,14 +33,30 @@ Not all of it is binding.
 
 **Deliberately unresolved — do not silently pick one** (AGENTS.md §"Source basis and unresolved choices"): the production provider/model, the final theme taxonomy, and non-exactness quality thresholds. Record these in config or a decision record; do not invent agreement. The fourth such choice, an approved inference budget, is now recorded by `specs/evidence-linked-theme-extraction.md` R14.2: **$100, for the optional hosted-ceiling ablation only**, not prompt-optimizer compiles or any other billable call. The required path needs no billable inference: R14.1 limits it to open-weight, self-hosted models, which narrows the model choice without making it.
 
-## Current state: Stages 1–10 complete; Stage 11 plan A complete
+## Current state: Stages 1–10 complete; Stage 11 plan B through B2, B3 blocked on O6
 
 Stage 11's plan A machinery is complete (plans 17–20): fresh caches and runtime
 assembly; pure evaluation, labels and calibration; and counts-only pilot commands.
-The implementation opened no pilot text and loaded no model. Plan B still owns the
-model choices, preregistration, pilot runs, committed figures and V6 record;
-Stage 11 remains unticked. B1 and B2 may start after plan A merges; B3 waits for all
-28 signed train/dev bundles and the 8 dev ledger rows. See
+The implementation opened no pilot text and loaded no model. Plan B
+(`specs/plans/21-feasibility-pilot-and-threshold-calibration-plan-b.md`) is in
+execution, and its Status line and Decisions (D21-*) are the authority:
+
+- B1 is complete (PR #25; evidence `a91a8e3`): Gemma 4 31B-it stays
+  extractor/classifier, the two judges are Qwen2.5-14B-Instruct and
+  Mistral-Nemo-Instruct-2407 (Q4_K_M), and MiniCheck/DeBERTa keep ADR 0005's pins.
+  ADR 0006 records the selection and the owner-accepted 36 GB fit with its
+  swap/pressure limitation (D21-19).
+- B2 is complete (PR #26): O3/O4 retain the shipped conventions (D21-20, D21-21),
+  O5's values are D21-23, and
+  `evaluation/djia-2024q3-2026q2/pilot-v1/preregistration-v1.toml` was frozen alone
+  at `53ba190`. B2 step 4's selections (D21-24) are a specification; the owner's local
+  input waits for O6.
+- B3 onward is blocked on owner gate O6: all 28 train/dev gold files signed,
+  committed and valid, and all 8 dev records matching committed ledger rows. On
+  2026-10-19, 3 gold files are on `main` and no dev ledger exists.
+
+No pilot pass, run, metric or V6 record exists, and Stage 11 remains unticked.
+`docs/verification/pilot-v1-feasibility.md` records B1/B2's safe evidence. See
 `specs/feasibility-pilot-and-threshold-calibration.md` and plan 20's retired handoff.
 
 Stage 1 of the roadmap (release parser fidelity, `specs/release-parser-fidelity.md`) is done:
@@ -151,12 +168,12 @@ non-package members too. Only the absence of `[project]` removes the root from t
 
 Application CLI entry points belong in `apps/earnings-pipeline`, never in the root.
 
-Verified working from a clean state at the root commit; lock and sync counts refreshed at
-plan 6's Task 16b, which added `pypdf==6.19.0`, via `uv lock --check` and `uv sync`:
+Verified working from a clean state at the root commit; lock and sync counts refreshed on
+2026-10-19 after PR #27 added the `docs` group, via `uv lock --check` and `uv sync` (uv 0.13.1):
 
 ```
-$ uv lock                              # Resolved 152 packages
-$ uv sync --locked --all-packages      # 41 packages incl. earnings-{core,ingestion,pipeline,themes}; dev group synced by default
+$ uv lock                              # Resolved 244 packages
+$ uv sync --locked --all-packages      # 148 packages incl. earnings-{core,ingestion,pipeline,themes}; dev and docs groups synced by default (41 with --no-group docs)
 $ uv run --locked python -c "import earnings_themes; print(earnings_themes.__file__)"
 .../packages/earnings-themes/src/earnings_themes/__init__.py
 ```
@@ -175,7 +192,9 @@ uv run --locked --all-packages --extra browser-capture pytest packages apps test
 ```
 
 Verified: `uv lock` and `uv sync --locked --all-packages`. Configured: a root
-`[dependency-groups] dev` (pytest, pytest-asyncio, pytest-cov, ruff) and
+`[dependency-groups] dev` (pytest, pytest-asyncio, pytest-cov, ruff), a `docs` group
+(`great-docs>=0.17.0,<0.18`, `numpydoc>=1.11`), `[tool.uv] default-groups = ["dev",
+"docs"]`, so a plain `uv sync` installs both, and
 `[tool.ruff] extend-exclude = ["*.md"]`, which keeps Ruff from reformatting code blocks in the
 preserved Markdown. Stage 2 added `[tool.pytest]`: `--import-mode=importlib`, so members may
 repeat a test module's name; `strict = true`; registered `live` and `browser` markers, both deselected by
@@ -190,6 +209,29 @@ Environment: uv 0.12.15, Python 3.14.0 (uv-managed; Homebrew's `python3` is 3.14
 fixtures record the Python version, so any other interpreter fails
 `tests/integration/test_canonical_golden.py` with "regenerate" (plan 4, PA-14). Bump the
 pin and regenerate the fixtures together.
+
+### Documentation site (Great Docs, PR #27)
+
+The site at https://lowmason.github.io/earnings-themes/ documents `earnings_core` only.
+Its config is `packages/earnings-core/great-docs.yml`: the root is virtual, so the site
+builds from that member.
+
+```bash
+uv run great-docs build --project-path packages/earnings-core </dev/null
+```
+
+great-docs exits 0 even when it skips the API reference, so check its output for
+"Skipping API reference" (CI tests that `great-docs/_site/reference/index.html` exists).
+The build writes under `packages/earnings-core/great-docs/`, which `.gitignore` excludes.
+`[tool.numpydoc_validation]` in `packages/earnings-core/pyproject.toml` requires
+PR01, RT01 and GL08 on public objects. `.github/workflows/docs.yml` builds on every pull
+request and publishes to Pages only from `main`, so a skipped "Publish Docs" on a PR is
+expected.
+
+`packages/earnings-core/README.md` is a symlink to the root `README.md`, which is the
+site's homepage. Keep the README valid on GitHub and the site: no GitHub alerts
+(`> [!NOTE]`), no Mermaid, and absolute
+`https://github.com/lowmason/earnings-themes/blob/main/...` links for repository files.
 
 ## Architecture
 
