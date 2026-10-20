@@ -82,7 +82,18 @@ class MaskedDocument(ContractModel):
         return self
 
     def masks_overlapping(self, span: TextSpan) -> tuple[OverlayMask, ...]:
-        """The masks sharing at least one code point with ``span``."""
+        """The masks sharing at least one code point with ``span``.
+
+        Parameters
+        ----------
+        span : TextSpan
+            The span to test each mask against.
+
+        Returns
+        -------
+        tuple of OverlayMask
+            The overlapping masks, in the order of ``masks``.
+        """
         return tuple(mask for mask in self.masks if mask.span.overlaps(span))
 
 
@@ -97,6 +108,22 @@ def apply_masks(
 
     Raises ``ValueError`` for anything ``MaskedDocument`` refuses. Pydantic's
     ``ValidationError`` is a ``ValueError``, so callers need not import it.
+
+    Parameters
+    ----------
+    document : CanonicalDocument
+        The document to overlay.
+    masks : Sequence of OverlayMask
+        The masks to overlay, all from one policy version.
+    policy_id : str
+        The ID of the policy that computed the masks.
+    policy_version : str
+        The version of that policy.
+
+    Returns
+    -------
+    MaskedDocument
+        The document with the masks over it.
     """
     return MaskedDocument(
         document=document,

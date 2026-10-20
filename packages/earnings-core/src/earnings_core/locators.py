@@ -29,6 +29,18 @@ def occurrences(text: str, locator: SpanLocator) -> list[int]:
     """Every start offset of ``exact`` whose surrounding text matches the context.
 
     Overlapping occurrences count: ``"aa"`` occurs twice in ``"aaa"``.
+
+    Parameters
+    ----------
+    text : str
+        The text to search.
+    locator : SpanLocator
+        The exact text and the context around it that a match must have.
+
+    Returns
+    -------
+    list of int
+        The start offset of each match, in ascending order.
     """
     found: list[int] = []
     width = len(locator.exact)
@@ -48,6 +60,23 @@ def make_locator(document: CanonicalDocument, span: TextSpan) -> SpanLocator:
     Plan decision, 2026-09-25: context grows by one whitespace-delimited word on each
     side at a time, so Stage 10's text-fragment links can reuse it. A word cut by the
     span's edge counts as one word. Full context always suffices, so this terminates.
+
+    Parameters
+    ----------
+    document : CanonicalDocument
+        The document whose canonical text holds the span.
+    span : TextSpan
+        The span to locate.
+
+    Returns
+    -------
+    SpanLocator
+        The locator that matches ``span``'s occurrence and no other.
+
+    Raises
+    ------
+    ValueError
+        If ``span`` runs past the document's canonical text.
     """
     text = document.canonical_text
     exact = span.slice_of(text)
@@ -66,7 +95,20 @@ def make_locator(document: CanonicalDocument, span: TextSpan) -> SpanLocator:
 def resolve_locator(
     document: CanonicalDocument, locator: SpanLocator
 ) -> TextSpan | Rejection:
-    """The one span a locator identifies; never a guess at the first match (R5.4)."""
+    """The one span a locator identifies; never a guess at the first match (R5.4).
+
+    Parameters
+    ----------
+    document : CanonicalDocument
+        The document whose canonical text is searched.
+    locator : SpanLocator
+        The exact text and context to find.
+
+    Returns
+    -------
+    TextSpan or Rejection
+        The span of the one match, or the rejection that records why none exists.
+    """
     problem = document_integrity_problem(document)
     if problem is not None:
         return Rejection(reason=RejectionReason.DOCUMENT_INTEGRITY, detail=problem)

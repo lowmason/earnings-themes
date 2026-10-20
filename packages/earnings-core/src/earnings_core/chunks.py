@@ -35,7 +35,25 @@ class TextChunk(VersionedRecord):
 
     @classmethod
     def of(cls, document: CanonicalDocument, span: TextSpan) -> Self:
-        """The chunk of ``document`` over ``span``; raises if it runs past the text."""
+        """The chunk of ``document`` over ``span``; raises if it runs past the text.
+
+        Parameters
+        ----------
+        document : CanonicalDocument
+            The document to slice.
+        span : TextSpan
+            The range of the document's text that the chunk covers.
+
+        Returns
+        -------
+        TextChunk
+            The chunk, with its text sliced from the document.
+
+        Raises
+        ------
+        ValueError
+            If ``span`` runs past the document's text.
+        """
         return cls(
             doc_id=document.doc_id,
             canonical_hash=document.canonical_hash,
@@ -44,7 +62,18 @@ class TextChunk(VersionedRecord):
         )
 
     def to_document_span(self, local: TextSpan) -> TextSpan | Rejection:
-        """Convert a span over ``self.text`` into the document's coordinates."""
+        """Convert a span over ``self.text`` into the document's coordinates.
+
+        Parameters
+        ----------
+        local : TextSpan
+            A span in offsets local to ``text``.
+
+        Returns
+        -------
+        TextSpan or Rejection
+            The span in document offsets, or an ``OUTSIDE_CHUNK`` rejection if ``local`` runs past the chunk.
+        """
         if local.end > len(self.text):
             return Rejection(
                 reason=RejectionReason.OUTSIDE_CHUNK,
