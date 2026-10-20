@@ -71,6 +71,18 @@ def derive_element_id(element_type: ElementType, span: TextSpan) -> str:
     Plan decision, 2026-09-25: derived, so two parsers that agree on an element's type
     and span give it the same ID. The ID is unique within one document version; the
     pair ``(doc_id, element_id)`` is unique across versions.
+
+    Parameters
+    ----------
+    element_type : ElementType
+        The element's type.
+    span : TextSpan
+        The element's span.
+
+    Returns
+    -------
+    str
+        The ID, as ``<type>-<start>-<end>``.
     """
     return f"{element_type.value}-{span.start}-{span.end}"
 
@@ -122,7 +134,37 @@ class DocumentElement(VersionedRecord):
         source_type: str = "",
         text_origin: TextOrigin = TextOrigin.NATIVE,
     ) -> Self:
-        """An element of ``document``, with its ID derived from type and span."""
+        """An element of ``document``, with its ID derived from type and span.
+
+        Parameters
+        ----------
+        document : CanonicalDocument
+            The document version the element belongs to.
+        element_type : ElementType
+            The element's type.
+        span : TextSpan
+            The element's span in the document's text.
+        parent_id : str or None, optional
+            The ``element_id`` of the parent element.
+        level : int or None, optional
+            An outline or list depth, which only section, heading, and list-item elements may carry.
+        table_cell : TableCellContext or None, optional
+            The grid position and header references, required on table cells and forbidden elsewhere.
+        source_type : str, optional
+            The producing parser's own name for the unit.
+        text_origin : TextOrigin, optional
+            Where the element's text came from.
+
+        Returns
+        -------
+        DocumentElement
+            The element, with its ID derived from its type and span.
+
+        Raises
+        ------
+        ValueError
+            If the arguments break an element invariant.
+        """
         return cls(
             element_id=derive_element_id(element_type, span),
             doc_id=document.doc_id,

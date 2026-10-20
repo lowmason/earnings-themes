@@ -21,7 +21,23 @@ def _default(value: object) -> str:
 
 
 def canonical_json(value: object) -> bytes:
-    """``value`` as canonical JSON bytes; a model is dumped in JSON mode first."""
+    """``value`` as canonical JSON bytes; a model is dumped in JSON mode first.
+
+    Parameters
+    ----------
+    value : object
+        A JSON-serializable value, a date, or a Pydantic model.
+
+    Returns
+    -------
+    bytes
+        The UTF-8 canonical JSON of ``value``.
+
+    Raises
+    ------
+    TypeError
+        If ``value`` holds an object with no canonical JSON form.
+    """
     if isinstance(value, BaseModel):
         value = value.model_dump(mode="json")
     text = json.dumps(
@@ -35,5 +51,16 @@ def canonical_json(value: object) -> bytes:
 
 
 def digest(value: object) -> str:
-    """SHA-256 of ``value``'s canonical JSON."""
+    """SHA-256 of ``value``'s canonical JSON.
+
+    Parameters
+    ----------
+    value : object
+        The value to hash, as ``canonical_json`` accepts it.
+
+    Returns
+    -------
+    str
+        The SHA-256 of ``canonical_json(value)``, as lowercase hexadecimal.
+    """
     return sha256_hex(canonical_json(value))

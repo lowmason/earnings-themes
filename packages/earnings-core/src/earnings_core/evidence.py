@@ -37,6 +37,13 @@ class _EvidenceFields(VersionedRecord):
 
     @property
     def span(self) -> TextSpan:
+        """The range ``[start, end)`` as a ``TextSpan``.
+
+        Returns
+        -------
+        TextSpan
+            The span built from ``start`` and ``end``.
+        """
         return TextSpan(start=self.start, end=self.end)
 
 
@@ -62,6 +69,16 @@ def parse_span_candidate(raw: object) -> SpanCandidate | Rejection:
     ``raw`` is JSON text or bytes, or an already-decoded mapping. A bool, float, or
     numeric string offset (R3.2), a list of ranges (R5.5), a missing field, or any
     extra field is ``malformed_record``.
+
+    Parameters
+    ----------
+    raw : object
+        The untrusted input to parse.
+
+    Returns
+    -------
+    SpanCandidate or Rejection
+        The candidate, or a ``malformed_record`` rejection when the input fails the type check.
     """
     try:
         if isinstance(raw, str | bytes):
@@ -95,6 +112,20 @@ def validate_span(
     ``malformed_record`` before any check, as ``parse_span_candidate`` would have
     found for a bool or a float: a candidate built by ``model_copy`` skips it, and a
     bad offset is refused, never raised.
+
+    Parameters
+    ----------
+    document : CanonicalDocument
+        The document the candidate's span must lie in.
+    elements : Sequence of DocumentElement
+        The document's element set.
+    candidate : SpanCandidate
+        The proposed span to verify.
+
+    Returns
+    -------
+    VerifiedSpan or Rejection
+        The verified span, or the rejection for the first check that fails.
     """
     for name in ("start", "end"):
         offset = getattr(candidate, name)
@@ -195,6 +226,20 @@ def reverify_span(
     is ``malformed_record``. The span is never dumped: dumping a copy that holds a
     float in an integer field warns. A span that verifies comes back fresh, under
     the current ``VALIDATOR_VERSION``.
+
+    Parameters
+    ----------
+    document : CanonicalDocument
+        The document the span must lie in.
+    elements : Sequence of DocumentElement
+        The document's element set.
+    span : VerifiedSpan
+        The stored span to verify again.
+
+    Returns
+    -------
+    VerifiedSpan or Rejection
+        The span, verified fresh, or the rejection for the first check that fails.
     """
     fields = {name: getattr(span, name) for name in SpanCandidate.model_fields}
     candidate = parse_span_candidate(fields)

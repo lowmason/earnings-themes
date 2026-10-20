@@ -25,18 +25,63 @@ class TextSpan(ContractModel):
 
     @property
     def length(self) -> int:
+        """The number of code points the span covers.
+
+        Returns
+        -------
+        int
+            ``end`` minus ``start``.
+        """
         return self.end - self.start
 
     def contains(self, other: "TextSpan") -> bool:
-        """True when ``other`` lies wholly inside this span; equal spans contain each other."""
+        """True when ``other`` lies wholly inside this span; equal spans contain each other.
+
+        Parameters
+        ----------
+        other : TextSpan
+            The span to test.
+
+        Returns
+        -------
+        bool
+            Whether ``other`` lies wholly inside this span.
+        """
         return self.start <= other.start and other.end <= self.end
 
     def overlaps(self, other: "TextSpan") -> bool:
-        """True when the two spans share at least one code point."""
+        """True when the two spans share at least one code point.
+
+        Parameters
+        ----------
+        other : TextSpan
+            The span to test.
+
+        Returns
+        -------
+        bool
+            Whether the two spans share at least one code point.
+        """
         return self.start < other.end and other.start < self.end
 
     def slice_of(self, text: str) -> str:
-        """The spanned characters of ``text``; raises rather than truncate a short text."""
+        """The spanned characters of ``text``; raises rather than truncate a short text.
+
+        Parameters
+        ----------
+        text : str
+            The text to slice, which must reach at least to ``end``.
+
+        Returns
+        -------
+        str
+            The characters of ``text`` from ``start`` up to, not including, ``end``.
+
+        Raises
+        ------
+        ValueError
+            If the span ends past the end of ``text``.
+        """
         if self.end > len(text):
             raise ValueError(
                 f"span [{self.start}, {self.end}) runs past a text of length {len(text)}"

@@ -22,6 +22,18 @@ def validate_elements(
     because ``model_copy(update=...)`` skips validation. Parents must precede their
     children, and any two spans must nest or be disjoint: every crossing pair is
     reported.
+
+    Parameters
+    ----------
+    document : CanonicalDocument
+        The document the elements belong to.
+    elements : Sequence of DocumentElement
+        The element set to check.
+
+    Returns
+    -------
+    tuple of Rejection
+        One rejection for each problem found, in the order found.
     """
     problem = document_integrity_problem(document)
     if problem is not None:
@@ -50,6 +62,20 @@ def resolve_pointer(
     V9), from the first element that carries it: another version's is
     ``wrong_document``, and a tampered one ``element_id_mismatch``. With no such
     element, it is ``unknown_element``.
+
+    Parameters
+    ----------
+    document : CanonicalDocument
+        The document the pointer refers to.
+    elements : Sequence of DocumentElement
+        The element set to search.
+    element_id : str
+        The element ID the model named.
+
+    Returns
+    -------
+    TextSpan or Rejection
+        The span of the genuine element, or the rejection that records why the pointer is invalid.
     """
     problem = document_integrity_problem(document)
     if problem is not None:
@@ -77,7 +103,20 @@ def resolve_pointer(
 
 
 def is_genuine(document: CanonicalDocument, element: DocumentElement) -> bool:
-    """An element of this document version whose ID still matches its type and span."""
+    """An element of this document version whose ID still matches its type and span.
+
+    Parameters
+    ----------
+    document : CanonicalDocument
+        The document version to test against.
+    element : DocumentElement
+        The element to test.
+
+    Returns
+    -------
+    bool
+        Whether the element belongs to this document version and its ID matches its type and span.
+    """
     return element.doc_id == document.doc_id and element.element_id == (
         derive_element_id(element.type, element.span)
     )
@@ -93,6 +132,15 @@ def _own_problems(
     name = element.element_id
 
     def reject(reason: RejectionReason, detail: str) -> None:
+        """Record a rejection of this element, with its ID ahead of ``detail``.
+
+        Parameters
+        ----------
+        reason : RejectionReason
+            The reason to record.
+        detail : str
+            What was wrong with the element.
+        """
         found.append(Rejection(reason=reason, detail=f"{name}: {detail}"))
 
     if element.doc_id != document.doc_id:

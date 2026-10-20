@@ -73,6 +73,14 @@ Thumbs.db
 .vscode/
 *.swp
 
+# --- Great Docs (great-docs.yml) ------------------------------------------
+# great-docs build writes the ephemeral site under great-docs/; never commit it.
+great-docs/
+_great_docs_build/
+.great-docs-build/
+.great-docs-cache/
+.great-docs/
+
 # --- Credentials and contact configuration ---------------------------------
 # MUST REMAIN THE LAST BLOCK. AGENTS.md: the SEC User-Agent contact is
 # "configured outside committed code"; keep credentials, secrets, and contact

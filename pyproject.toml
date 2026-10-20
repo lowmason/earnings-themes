@@ -6,6 +6,11 @@
 # member set.
 # Application CLI entry points belong in apps/earnings-pipeline, not here.
 
+[tool.uv]
+# uv's default is ["dev"]; docs is listed too so a plain `uv sync`, locally or in
+# the Pages workflow, installs the pinned great-docs.
+default-groups = ["dev", "docs"]
+
 [tool.uv.workspace]
 members = [
     "packages/earnings-core",
@@ -25,6 +30,12 @@ dev = [
     "pytest-asyncio",
     "pytest-cov",
     "ruff",
+]
+# The documentation site (great-docs.yml). great-docs stays inside its 0.17 minor:
+# 0.17.x writes great-docs.yml at the root, and later releases change that layout.
+docs = [
+    "great-docs>=0.17.0,<0.18",
+    "numpydoc>=1.11",
 ]
 
 [tool.ruff]

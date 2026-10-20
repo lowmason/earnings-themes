@@ -19,6 +19,20 @@ def derive_doc_id(
 
     It embeds the first 16 hex characters of the canonical hash, so changed text is
     always a new ``doc_id`` (R3.3). Plan decision, 2026-09-25: derived and readable.
+
+    Parameters
+    ----------
+    source_document_id : str
+        The ID of the source document.
+    canonicalization_version : str
+        The version of the canonicalization policy.
+    canonical_hash : str
+        The SHA-256 of the canonical text, as hexadecimal.
+
+    Returns
+    -------
+    str
+        The ID, as ``<source_document_id>@<canonicalization_version>#<first 16 hex characters of the hash>``.
     """
     return f"{source_document_id}@{canonicalization_version}#{canonical_hash[:16]}"
 
@@ -55,7 +69,29 @@ class CanonicalDocument(VersionedRecord):
         canonical_text: str,
         text_artifact: ArtifactRef | None = None,
     ) -> Self:
-        """Build a version from its text, deriving ``canonical_hash`` and ``doc_id``."""
+        """Build a version from its text, deriving ``canonical_hash`` and ``doc_id``.
+
+        Parameters
+        ----------
+        source_document_id : str
+            The ID of the source document.
+        canonicalization_version : str
+            The version of the canonicalization policy.
+        canonical_text : str
+            The canonical text, which must not be empty.
+        text_artifact : ArtifactRef or None, optional
+            Where the same UTF-8 bytes are stored, if recorded.
+
+        Returns
+        -------
+        CanonicalDocument
+            The document, with ``canonical_hash`` and ``doc_id`` derived from the text.
+
+        Raises
+        ------
+        ValueError
+            If the text holds a lone surrogate or fails the model's validation.
+        """
         try:
             canonical_hash = hash_canonical_text(canonical_text)
         except UnicodeEncodeError as error:
@@ -79,6 +115,16 @@ def document_integrity_problem(document: CanonicalDocument) -> str | None:
 
     Validators call this rather than trust construction, because
     ``model_copy(update=...)`` skips validation. Returns ``None`` when consistent.
+
+    Parameters
+    ----------
+    document : CanonicalDocument
+        The document whose stored hash and ``doc_id`` are rechecked.
+
+    Returns
+    -------
+    str or None
+        A description of the first inconsistency found, or ``None`` when the document is consistent.
     """
     if not document.canonical_text:
         return "canonical text is empty"

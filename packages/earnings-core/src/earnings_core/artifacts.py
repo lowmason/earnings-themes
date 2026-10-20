@@ -80,7 +80,26 @@ class ArtifactRef(VersionedRecord):
         rights_status: RightsStatus,
         rights_basis: str,
     ) -> Self:
-        """The reference for ``data``, with its SHA-256 computed here."""
+        """The reference for ``data``, with its SHA-256 computed here.
+
+        Parameters
+        ----------
+        data : bytes
+            The artifact's bytes, which are hashed here.
+        media_type : str
+            The media type of ``data``.
+        storage_ref : str
+            A repository-relative path or a non-file URI.
+        rights_status : RightsStatus
+            What may be done with the content.
+        rights_basis : str
+            The recorded basis for ``rights_status``.
+
+        Returns
+        -------
+        ArtifactRef
+            The reference, with ``content_sha256`` set to the SHA-256 of ``data``.
+        """
         return cls(
             content_sha256=sha256_hex(data),
             media_type=media_type,
@@ -90,5 +109,16 @@ class ArtifactRef(VersionedRecord):
         )
 
     def matches(self, data: bytes) -> bool:
-        """True when ``data`` is exactly the artifact this reference names."""
+        """True when ``data`` is exactly the artifact this reference names.
+
+        Parameters
+        ----------
+        data : bytes
+            The bytes to compare with the reference.
+
+        Returns
+        -------
+        bool
+            Whether the SHA-256 of ``data`` equals ``content_sha256``.
+        """
         return sha256_hex(data) == self.content_sha256
