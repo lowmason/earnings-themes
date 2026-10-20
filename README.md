@@ -1,23 +1,28 @@
 # earnings-themes
 
-Evidence-linked research infrastructure for company data and earnings themes.
+[![Python 3.14](https://img.shields.io/badge/python-3.14-blue)](https://www.python.org/downloads/)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://lowmason.github.io/earnings-themes/)
 
-> [!IMPORTANT]
-> **Project status (2026-10-08): Stages 1–10 are implemented and complete, and merged (PR #14).**
-> The workspace implements acquisition, canonical evidence, extraction, support
-> assessment and coding libraries. Stage 10 adds an offline replay command,
-> coverage-aware analytical tables and cited reports, verified on permitted
-> synthetic/invented fixtures. No pilot document has been extracted and no research
-> theme dataset is published. Technical reviews, human-only completion gates and
-> V5 native/manual observations are recorded. The completion documentation delta
-> awaits scoped review.
+earnings-themes is evidence-linked research infrastructure for company data and
+earnings themes. It verifies every quote as an exact span of versioned canonical
+text, and it codes themes against a frozen, versioned codebook.
+
+**Project status (2026-10-08): Stages 1–10 are implemented and complete, and merged (PR #14).**
+The workspace implements acquisition, canonical evidence, extraction, support
+assessment and coding libraries. Stage 10 adds an offline replay command,
+coverage-aware analytical tables and cited reports, verified on permitted
+synthetic/invented fixtures. No pilot document has been extracted and no research
+theme dataset is published. Technical reviews, human-only completion gates and
+V5 native/manual observations are recorded. The completion documentation delta
+awaits scoped review.
 
 ## Stage 8 library status (2026-10-05)
 
 Stage 8 is complete. The actual pinned MiniCheck primary smoke passed under
 process-wide network denial on invented text, the user’s full root default suite
 and both Stage 6 wording gates passed, and the final whole-branch review cleared
-its findings. The [verification record](docs/verification/semantic-support.md)
+its findings. The [verification record](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/semantic-support.md)
 records the observed checks, runtime identity and limits.
 
 `earnings_themes.support` exposes `Target`, `SupportSources`, `ResolvedInput`,
@@ -33,7 +38,7 @@ outcome confers no accepted assignment.
 
 Concrete local scorer adapters live in `earnings_themes.support.nli`, behind the
 optional `support-nli` extra; ordinary imports need no model runtime or weights.
-[ADR 0005](docs/adr/0005-adopt-local-minicheck-for-support-signals.md) records the
+[ADR 0005](https://github.com/lowmason/earnings-themes/blob/main/docs/adr/0005-adopt-local-minicheck-for-support-signals.md) records the
 pinned MiniCheck primary, explicit DeBERTa alternative, external configuration,
 local-file and rights requirements, and the passed network-denied primary smoke.
 The alternative’s real-checkpoint smoke remains unrun. Stage 9 supplies assignment
@@ -60,17 +65,15 @@ completing the broader company-enrichment dataset.
 
 ## Research workflow
 
-```mermaid
-flowchart LR
-    A[Acquire source documents] --> B[Build versioned canonical text]
-    B --> C[Traverse typed structural elements]
-    C --> D[Propose quote-claim evidence]
-    D --> E[Verify exact spans in code]
-    E --> F[Assess semantic support]
-    F --> G[Apply a versioned codebook]
-    G --> H[Aggregate with coverage denominators]
-    H --> I[Report with source-linked evidence]
-```
+1. Acquire source documents.
+2. Build versioned canonical text.
+3. Traverse typed structural elements.
+4. Propose quote-claim evidence.
+5. Verify exact spans in code.
+6. Assess semantic support.
+7. Apply a versioned codebook.
+8. Aggregate with coverage denominators.
+9. Report with source-linked evidence.
 
 The core rule is **the model proposes; code disposes**. Models may identify
 candidate evidence and judge thematic support, but deterministic code decides
@@ -167,7 +170,7 @@ human gates; its completion documentation awaits scoped review and integration.
 Resume Stage 11 planning through `derive-roadmap`; the live roadmap remains authoritative.
 
 The roadmap was amended on 2026-09-22 by
-[the point-in-time DJIA cohort specification](specs/point-in-time-djia-cohort.md).
+[the point-in-time DJIA cohort specification](https://github.com/lowmason/earnings-themes/blob/main/specs/point-in-time-djia-cohort.md).
 It inserts **Stage 4: point-in-time DJIA cohort** before any document is
 acquired, moves the 40-event feasibility pilot into **Stage 5** as a
 deterministic selection frozen before any acquisition or parse outcome is known,
@@ -181,14 +184,14 @@ investigation, not product code. It measured three candidate HTML parsers and a
 plain-text control on eight provenance-recorded earnings-release fixtures, two for
 each of four release classes, and recorded the actual return types of the pinned
 EDGAR acquisition library, edgartools 5.58.0.
-[ADR 0001](docs/adr/0001-use-the-bespoke-lxml-walker-as-the-base-parser-for-release-canonicalization.md)
+[ADR 0001](https://github.com/lowmason/earnings-themes/blob/main/docs/adr/0001-use-the-bespoke-lxml-walker-as-the-base-parser-for-release-canonicalization.md)
 selects a bespoke lxml walker as the base parser for canonicalization. The two
 eligible parsers tied on coverage, footnote merging, and reading order, so header
 loss decided. On those three metrics the walker beat the plain-text control in no
 class, so the fixtures are flagged as unable to discriminate there; the decision
 was accepted with that caveat. The measurements are in
-[V2](docs/verification/V2-parser-fidelity.md) and the return types in
-[V1](docs/verification/V1-edgartools-return-types.md). The harness is in
+[V2](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/V2-parser-fidelity.md) and the return types in
+[V1](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/V1-edgartools-return-types.md). The harness is in
 `expirements/parser-fidelity/`, and the fixtures, with their gold annotations, are
 in `tests/fixtures/releases/`. The harness's offline tests run with:
 
@@ -200,12 +203,12 @@ uv run --locked --all-packages pytest expirements/parser-fidelity --import-mode=
 contracts every later stage builds on: hashed, versioned canonical documents;
 typed elements with derived IDs and code-point spans; overlay masks; span
 locators; and an exactness validator with no tolerance. The
-[data dictionary](docs/data-dictionary.md) documents every field.
+[data dictionary](https://github.com/lowmason/earnings-themes/blob/main/docs/data-dictionary.md) documents every field.
 
 **Stage 3: structure-aware canonicalization** is complete. `earnings-ingestion`
 turns a saved release into a hashed `walker-1` canonical document with typed
 elements, tables, sentences, and boilerplate masks.
-[ADR 0002](docs/adr/0002-keep-the-browser-capture-diagnostic-only.md) keeps its
+[ADR 0002](https://github.com/lowmason/earnings-themes/blob/main/docs/adr/0002-keep-the-browser-capture-diagnostic-only.md) keeps its
 pinned-browser capture diagnostic-only.
 
 **Stage 4: point-in-time DJIA cohort** is complete. `earnings-ingestion` rebuilds
@@ -215,7 +218,7 @@ a zero-padded CIK from SEC's records, and reports every conflict, gap, and
 difference. The reviewed cohort is frozen as a versioned, content-hashed
 manifest in `config/universe/djia/manifests/` before any earnings document is
 acquired. Every SEC request goes through one shared client at 2 requests per
-second. The [verification record](docs/verification/djia-cohort.md) has the
+second. The [verification record](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/djia-cohort.md) has the
 details.
 
 **Stage 5: event discovery, eligibility, and acquisition** is complete. Its first
@@ -225,44 +228,44 @@ EDGAR acceptance time. It freezes the reviewed event manifest and a deterministi
 pilot selection in `config/corpus/djia-2024q3-2026q2/` before any release is
 acquired. Its second plan then acquires the pilot's releases from EDGAR through the
 shared client, chooses and confirms each release exhibit, and records each document's
-processing state. The [verification record](docs/verification/djia-events.md) has
+processing state. The [verification record](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/djia-events.md) has
 the details.
 
 **Stage 6: the pilot codebook, split, and gold-set protocol** is complete. It
 pins the pilot by content hash, splits it by issuer and time into 20 train, 8
 dev, and 7 test events, with 5 excluded, and reports its coverage. Codebook v0,
 discovered from the training partition alone, is approved in
-[ADR 0003](docs/adr/0003-adopt-codebook-v0-as-the-pilot-codebook.md). A Claude
+[ADR 0003](https://github.com/lowmason/earnings-themes/blob/main/docs/adr/0003-adopt-codebook-v0-as-the-pilot-codebook.md). A Claude
 session drafts each bundle's gold under a committed brief, and the maintainer
 verifies every item, reads the release for omissions, and signs; committed
 files hold pointers, labels, and hashes, never release text. Three train
-bundles are signed. The [verification record](docs/verification/pilot-v1-gold-set.md)
+bundles are signed. The [verification record](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/pilot-v1-gold-set.md)
 has the details.
 
 Key planning documents:
 
-- [Evidence-linked theme extraction specification](specs/evidence-linked-theme-extraction.md)
+- [Evidence-linked theme extraction specification](https://github.com/lowmason/earnings-themes/blob/main/specs/evidence-linked-theme-extraction.md)
   — the system requirements and verification criteria.
-- [Implementation roadmap](specs/evidence-linked-theme-extraction-roadmap.md)
+- [Implementation roadmap](https://github.com/lowmason/earnings-themes/blob/main/specs/evidence-linked-theme-extraction-roadmap.md)
   — staged delivery, dependencies, and exit conditions.
-- [Stage 1 parser-fidelity specification](specs/release-parser-fidelity.md)
+- [Stage 1 parser-fidelity specification](https://github.com/lowmason/earnings-themes/blob/main/specs/release-parser-fidelity.md)
   — Stage 1's scope and measurement design.
-- [Point-in-time DJIA cohort specification](specs/point-in-time-djia-cohort.md)
+- [Point-in-time DJIA cohort specification](https://github.com/lowmason/earnings-themes/blob/main/specs/point-in-time-djia-cohort.md)
   — the firm universe, event corpus, and deterministic pilot selection; the
   stage specification for roadmap Stages 4 and 15, and binding on Stage 5's
   event-eligibility and pilot-selection design.
-- [Event discovery, eligibility, and acquisition specification](specs/completed/event-discovery-eligibility-and-acquisition.md)
+- [Event discovery, eligibility, and acquisition specification](https://github.com/lowmason/earnings-themes/blob/main/specs/completed/event-discovery-eligibility-and-acquisition.md)
   — Stage 5's two plans: discovery, eligibility, and the freezes; then
   acquisition and processing states.
-- [Pilot codebook, split, and gold-set protocol specification](specs/completed/pilot-codebook-split-and-gold-set-protocol.md)
+- [Pilot codebook, split, and gold-set protocol specification](https://github.com/lowmason/earnings-themes/blob/main/specs/completed/pilot-codebook-split-and-gold-set-protocol.md)
   — Stage 6: the pin, the issuer-and-time split, codebook v0, and the gold-set
   protocol, with Claude-drafted, user-verified gold.
-- [Earnings-theme learning path](docs/earnings-themes.md) — the original staged
+- [Earnings-theme learning path](https://github.com/lowmason/earnings-themes/blob/main/docs/earnings-themes.md) — the original staged
   learning exercise that motivates the extraction track.
-- [Company-ingestion source note](docs/earnings-ingestion.md) — the original
+- [Company-ingestion source note](https://github.com/lowmason/earnings-themes/blob/main/docs/earnings-ingestion.md) — the original
   research note for membership, identifiers, employment, subsidiaries, and
   establishment data.
-- [Repository working rules](AGENTS.md) — binding engineering, evidence, rights,
+- [Repository working rules](https://github.com/lowmason/earnings-themes/blob/main/AGENTS.md) — binding engineering, evidence, rights,
   and reproducibility requirements.
 
 `AGENTS.md` and the evidence-linked extraction specification define the binding
@@ -325,14 +328,15 @@ the plain documented root command, not the runner, both on 2026-10-11: 836 secon
 `4ba5f35` with `PYTHONPATH` set (4294 passed, 1 skipped, 28 deselected, 1 warning), and
 819 seconds with no `PYTHONPATH` once `pythonpath` joined the pytest configuration (4243
 passed, 9 skipped, 28 deselected); the runner's `root-user` duration remains unknown. See the
-[verification record](docs/verification/theme-vertical-slice.md) for exact results
-and the separate [V5 protocol](docs/verification/stage10-browser.md).
+[verification record](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/theme-vertical-slice.md) for exact results
+and the separate [V5 protocol](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/stage10-browser.md).
 
 Pytest uses importlib handling, strict configuration, `live`/`browser` markers and a
 `pythonpath` of the repository root, so the documented root command and a single test
 file both collect under the `pytest` console script. Default tests make no network or
-billable calls. No type checker or CI configuration is configured. The Stage 1 harness
-retains its separate historical command above.
+billable calls. No type checker is configured. The only CI workflow builds and deploys
+the documentation site (see [Documentation](#documentation)); it runs no tests. The
+Stage 1 harness retains its separate historical command above.
 
 ### Offline replay extraction
 
@@ -349,7 +353,7 @@ pilot selections and pins, sorted selected event IDs, acquisition/canonical/sour
 metadata, frozen codebook, prompts, policies, identities, ceilings, stage run IDs,
 cache paths, optional pinned stored stages, analysis policy, family/copy/no-theme
 choices, rights audience, output directory and software/lock identity. See the
-[workflow contract](docs/data-dictionary.md#explicit-replay-extraction-workflow-schema-1).
+[workflow contract](https://github.com/lowmason/earnings-themes/blob/main/docs/data-dictionary.md#explicit-replay-extraction-workflow-schema-1).
 `tests/fixtures/themes/stage10/replay-config.json` is a template, not a directly
 runnable configuration. The audited `tests/integration/stage10_cases.py` helper
 fills its confined temporary paths, hashes, identities, ceilings and fixture clock,
@@ -396,11 +400,11 @@ no native highlighting. Human V5 observations on 2026-10-08 established five nat
 highlights, one drift non-highlight and six visible canonical fallbacks in the
 pinned available Chrome target. Actual screenshot capture and external HTTPS are
 unverified; the capture command skipped once with its cause unspecified. See
-[the V5 record](docs/verification/stage10-browser.md) and
-[completion verification](docs/verification/theme-vertical-slice.md). Stage 11 owns first pilot extraction,
+[the V5 record](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/stage10-browser.md) and
+[completion verification](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/theme-vertical-slice.md). Stage 11 owns first pilot extraction,
 calibration and fresh-call stability; fixture exactness establishes no model quality.
 
-Completion records: [retired plan 15](specs/plans/completed/15-evidence-linked-theme-extraction.md) and [read-only backlog proposal](docs/verification/stage10-backlog-triage.md). The observed human root result at `611f84a` is 4241 passed / 9 skipped / 28 deselected with zero failures, collection failures and warnings; both wording gates passed one each. No root exit or elapsed time was supplied.
+Completion records: [retired plan 15](https://github.com/lowmason/earnings-themes/blob/main/specs/plans/completed/15-evidence-linked-theme-extraction.md) and [read-only backlog proposal](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/stage10-backlog-triage.md). The observed human root result at `611f84a` is 4241 passed / 9 skipped / 28 deselected with zero failures, collection failures and warnings; both wording gates passed one each. No root exit or elapsed time was supplied.
 
 ## Optional dependencies
 
@@ -426,6 +430,38 @@ Install an extra by repeating `--extra` for each selected group. For example:
 uv sync --locked --all-packages --extra extraction
 ```
 
+## Documentation
+
+The documentation site is at <https://lowmason.github.io/earnings-themes/>.
+[Great Docs](https://posit-dev.github.io/great-docs/) builds it from this README
+and from the numpy-style docstrings of `earnings_core`. The API reference covers
+`earnings_core` only. It is the only package that declares its public exports in
+`__all__`.
+
+The site configuration is
+[`packages/earnings-core/great-docs.yml`](https://github.com/lowmason/earnings-themes/blob/main/packages/earnings-core/great-docs.yml).
+Great Docs finds the package to document from a `[project]` table, and the
+workspace root has none. So every docs command names the member with
+`--project-path`. `packages/earnings-core/README.md` is a symbolic link to this
+file, so this README is the site's homepage.
+
+The `docs` dependency group pins `great-docs>=0.17.0,<0.18`, and `uv sync`
+installs it by default. A build also needs
+[Quarto](https://quarto.org/docs/get-started/). To build and check the site,
+run these from the repository root:
+
+```bash
+uv run great-docs build --project-path packages/earnings-core </dev/null
+uv run great-docs lint --project-path packages/earnings-core
+uv run numpydoc lint packages/earnings-core/src/earnings_core/*.py
+```
+
+The build writes the site to `packages/earnings-core/great-docs/_site/`, which
+Git ignores. To serve it locally, run
+`uv run great-docs preview --project-path packages/earnings-core`. The
+[docs workflow](https://github.com/lowmason/earnings-themes/blob/main/.github/workflows/docs.yml)
+builds the site on each pull request and deploys it to GitHub Pages from `main`.
+
 ## Data, network access, and reproducibility
 
 - `data/raw/`, `data/canonical/`, `data/processed/`, and `data/runs/` are local
@@ -433,10 +469,10 @@ uv sync --locked --all-packages --extra extraction
 - Only small fixtures with documented redistribution permission belong under
   `tests/fixtures/`.
 - The source register that records access, licensing, and redistribution status
-  for release fixtures is [`docs/source-register.toml`](docs/source-register.toml),
+  for release fixtures is [`docs/source-register.toml`](https://github.com/lowmason/earnings-themes/blob/main/docs/source-register.toml),
   a Stage 1 deliverable. Stage 4 added a second register for
   index-membership sources,
-  [`docs/membership-source-register.toml`](docs/membership-source-register.toml),
+  [`docs/membership-source-register.toml`](https://github.com/lowmason/earnings-themes/blob/main/docs/membership-source-register.toml),
   which quotes no source. A free or open-source
   acquisition tool confers no rights to the underlying index data.
 - SEC access requires a descriptive User-Agent with genuine project contact
@@ -454,7 +490,7 @@ uv sync --locked --all-packages --extra extraction
 
 Before changing code or contracts:
 
-1. Read [AGENTS.md](AGENTS.md), the relevant source note and specification, the
+1. Read [AGENTS.md](https://github.com/lowmason/earnings-themes/blob/main/AGENTS.md), the relevant source note and specification, the
    owning package's metadata, and downstream contract consumers.
 2. Make the smallest coherent change and write deterministic fixture-based tests
    before implementation where applicable.

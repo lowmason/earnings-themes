@@ -13,3 +13,11 @@ dependencies = [
 [build-system]
 requires = ["uv_build>=0.12.15,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.numpydoc_validation]
+# numpydoc reads the pyproject.toml nearest the checked files, so this table sits
+# here, beside the package the docs site documents (great-docs.yml). Every public
+# object documents its parameters (PR01) and return value (RT01) and has a
+# docstring (GL08). Private names are exempt.
+checks = ["PR01", "RT01", "GL08"]
+exclude = ['\._\w+$']
