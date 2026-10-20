@@ -8,16 +8,30 @@ earnings-themes is evidence-linked research infrastructure for company data and
 earnings themes. It verifies every quote as an exact span of versioned canonical
 text, and it codes themes against a frozen, versioned codebook.
 
-**Project status (2026-10-08): Stages 1–10 are implemented and complete, and merged (PR #14).**
+**Project status (2026-10-19): Stages 1–10 are complete. Stage 11, the feasibility pilot and threshold calibration, is in progress.**
 The workspace implements acquisition, canonical evidence, extraction, support
 assessment and coding libraries. Stage 10 adds an offline replay command,
 coverage-aware analytical tables and cited reports, verified on permitted
-synthetic/invented fixtures. No pilot document has been extracted and no research
-theme dataset is published. Technical reviews, human-only completion gates and
-V5 native/manual observations are recorded. The completion documentation delta
-awaits scoped review.
+synthetic/invented fixtures.
 
-## Stage 8 library status (2026-10-05)
+[Stage 11](https://github.com/lowmason/earnings-themes/blob/main/specs/feasibility-pilot-and-threshold-calibration.md)
+has two plans. Plan A (plans 17–20) is complete and merged. It built the
+evaluation, label, calibration and pilot-command code without pilot text or a model.
+[Plan B](https://github.com/lowmason/earnings-themes/blob/main/specs/plans/21-feasibility-pilot-and-threshold-calibration-plan-b.md)
+(plan 21) runs the pilot in the maintainer's own terminal. Its step B1, the
+baseline-model selection and fixture smoke test, is complete and recorded in
+[ADR 0006](https://github.com/lowmason/earnings-themes/blob/main/docs/adr/0006-select-the-pilot-baseline-models.md).
+Its step B2, the method choices, is complete, and the preregistration is frozen
+in a commit of its own.
+
+Step B3, the first pass over pilot documents, waits for owner gate O6. O6 needs
+all 28 train and dev gold files signed and committed, with a ledger row for each
+of the 8 dev events. On 2026-10-19, 3 of the 28 gold files are on `main`. No pilot document has been extracted, no pilot metric
+exists and no research theme dataset is published. The
+[feasibility verification record](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/pilot-v1-feasibility.md)
+has the details.
+
+## Stage 8 support library (completed 2026-10-05)
 
 Stage 8 is complete. The actual pinned MiniCheck primary smoke passed under
 process-wide network denial on invented text, the user’s full root default suite
@@ -41,11 +55,14 @@ optional `support-nli` extra; ordinary imports need no model runtime or weights.
 [ADR 0005](https://github.com/lowmason/earnings-themes/blob/main/docs/adr/0005-adopt-local-minicheck-for-support-signals.md) records the
 pinned MiniCheck primary, explicit DeBERTa alternative, external configuration,
 local-file and rights requirements, and the passed network-denied primary smoke.
-The alternative’s real-checkpoint smoke remains unrun. Stage 9 supplies assignment
-decisions; Stage 10 implements the replay application command and coverage mapping; Stage 11
-owns expert labels, calibration, thresholds, production judge selection, and
-fresh-call stability. The offline evidence establishes no pilot accuracy or
-stability result.
+
+Stage 8 did not run the alternative’s real-checkpoint smoke. Stage 11’s step B1
+later loaded both pinned scorers in its fixture-only smoke test, as
+[ADR 0006](https://github.com/lowmason/earnings-themes/blob/main/docs/adr/0006-select-the-pilot-baseline-models.md)
+records. Stage 9 supplies assignment decisions, and Stage 10 composes them in the
+replay application command with coverage mapping. Stage 11’s plan A built the
+expert-label, calibration and fresh-call stability code. Its plan B has not yet
+run that code on pilot documents. No pilot accuracy or stability result exists.
 
 ## Purpose
 
@@ -165,9 +182,13 @@ using those primitives.
 ## Current roadmap
 
 The implementation is organized as a staged, evidence-first roadmap of sixteen
-stages. Stages 1–10 are complete. Stage 10 has fixture V8/V10 evidence and observed
-human gates; its completion documentation awaits scoped review and integration.
-Resume Stage 11 planning through `derive-roadmap`; the live roadmap remains authoritative.
+stages. Stages 1–10 are complete, and Stage 10 merged in PR #14.
+
+Stage 11, the feasibility pilot and threshold calibration, is in progress. Its
+plan A is complete, and its plan B has completed steps B1 (baseline models) and
+B2 (method choices and preregistration). Step B3 waits for owner gate O6, which
+needs all 28 train and dev gold files signed and committed. Stages 12–16 remain
+open. The live roadmap remains authoritative.
 
 The roadmap was amended on 2026-09-22 by
 [the point-in-time DJIA cohort specification](https://github.com/lowmason/earnings-themes/blob/main/specs/point-in-time-djia-cohort.md).
