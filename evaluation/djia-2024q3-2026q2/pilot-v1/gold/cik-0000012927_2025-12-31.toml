@@ -1,0 +1,864 @@
+# Stage 6 gold (the pilot codebook, split, and gold-set protocol). Written by `earnings-pipeline gold anchor`; quotes are pointers, and every other word is the annotator's.
+schema_version = 1
+event_id = "cik-0000012927:2025-12-31"
+document_id = "cik-0000012927:2025-12-31:release"
+doc_id = "0001628280-26-003518_a202512dec318kprex991.htm@walker-1#0494dee13e6b3ef6"
+canonical_hash = "0494dee13e6b3ef6bc4ff11a9511d9cf7dc8df5cf18676081a3e0a06ad25a9d1"
+split_hash = "5c4a2f3c5ed9ffc2cf0065658ec4e75311220338cf9b3fe07802c0db9fcd0e53"
+partition = "dev"
+annotator = "Lowell Mason (independent pass, then verified a Claude draft)"
+no_theme = false
+
+[pin]
+pilot_id = "djia-2024q3-2026q2-pilot"
+pilot_version = 1
+pilot_hash = "3839c800151cc646f11064efdce583f988e511265f8893c90e9a2f2549145926"
+events_version = 1
+events_hash = "2348671b3ae8021d644df12ae2f539258670546970c918f8edb231ba1885c3b7"
+universe_version = 1
+universe_operative_hash = "c350923422d9bf2e65a0b5929f4c0d45370458c6a044c3de012a1dfeb116e573"
+
+[codebook]
+codebook_id = "djia-pilot"
+codebook_version = 0
+content_hash = "635975d1ec952cf5719ea3b473870f96e7e3a52bc3015cc1ac5725aa80ec1e79"
+
+[drafting_aid]
+model_id = "claude-opus-5-5"
+drafted_on = 2026-10-31
+
+[counts]
+accepted = 101
+edited = 12
+rejected = 3
+added = 2
+
+[release_identification]
+label = "release"
+note = "Exhibit 99.1 in which the aerospace maker reports its own fourth-quarter and full-year figures for the year ended in December 2025, matching this event's issuer and period."
+
+[[quotes]]
+start = 226
+end = 307
+element_id = "sentence-226-307"
+quote_sha256 = "6ff83cf3e1465743c258dfba4875365ff3385b2f8cc2d68b69c1aea9a749373c"
+mask_ids = []
+quote_id = "q1"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1582
+end = 1744
+element_id = "sentence-1547-1744"
+quote_sha256 = "0333ba6fcda664e532566b6b63a5b52785307af5d291d9a5943cace669ae1fb0"
+mask_ids = []
+quote_id = "q2"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1745
+end = 1987
+element_id = "sentence-1745-1987"
+quote_sha256 = "7413ddd293d854c147ef8d27e22e45f27db598174086087ff821594a6e7bd7f2"
+mask_ids = []
+quote_id = "q3"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 116
+end = 224
+element_id = "sentence-116-224"
+quote_sha256 = "334b868dd830eea57e63b5bed6215af9fdd598570548bc18a9d6c11b995005f3"
+mask_ids = []
+quote_id = "q4"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2455
+end = 2573
+element_id = "sentence-2454-2774"
+quote_sha256 = "c0d419d40cbed6a23e5fee1b13519680739b9ba80e9ec73bc7cd25729365743c"
+mask_ids = []
+quote_id = "q5"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 421
+end = 503
+element_id = "sentence-421-503"
+quote_sha256 = "cfd7e80efb862d17fa634012747edcd9515255d177a4cd0590f30b86fc529062"
+mask_ids = []
+quote_id = "q6"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3150
+end = 3277
+element_id = "sentence-3150-3277"
+quote_sha256 = "7e9568fb1ee4b46ad52c7280c4eb6f09744f2d0ca5e3fdd3e7f19b97acce4b3f"
+mask_ids = []
+quote_id = "q7"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3278
+end = 3395
+element_id = "sentence-3278-3395"
+quote_sha256 = "025ae6c1b9bbffbf3df327672460e3a0da9ef758455c8364494ae26e16dc3a10"
+mask_ids = []
+quote_id = "q8"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3698
+end = 4073
+element_id = "sentence-3698-4073"
+quote_sha256 = "055c49f3d1c8f370aaac1a81d2e9258bce198ba03215a2183cd1eaea74d57140"
+mask_ids = []
+quote_id = "q9"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4074
+end = 4212
+element_id = "sentence-4074-4212"
+quote_sha256 = "3d4a2e850dd2d1ff3b3fb0b2d16b3b8a849a972ee486d5e29a2c9bb6b43d1752"
+mask_ids = []
+quote_id = "q10"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4213
+end = 4302
+element_id = "sentence-4213-4302"
+quote_sha256 = "b899071fe82f5c3328fe17f315a11da4d38491a52e0adff854538b69ec48193b"
+mask_ids = []
+quote_id = "q11"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 520
+end = 619
+element_id = "sentence-520-619"
+quote_sha256 = "74e45f70300b2257727e345cd76a25256b72b410962d1bc748a70245270110c9"
+mask_ids = []
+quote_id = "q12"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 621
+end = 715
+element_id = "sentence-621-715"
+quote_sha256 = "7d9ba5b99d00b83b1625ff905156d2428583b6824bbe1417a9b019f97c0e3720"
+mask_ids = []
+quote_id = "q13"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2093
+end = 2258
+element_id = "sentence-2093-2258"
+quote_sha256 = "e6622eaa1bc996982c0a40be4934fa42c0a08b173d54bdd8b7238263e43a7bd4"
+mask_ids = []
+quote_id = "q14"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2260
+end = 2386
+element_id = "sentence-2259-2453"
+quote_sha256 = "b998b1b9381a5fbb3e144c2d7af58e5c04f5d6e3fe90ab0a160aae154cd83f7d"
+mask_ids = []
+quote_id = "q15"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2578
+end = 2773
+element_id = "sentence-2454-2774"
+quote_sha256 = "da4c10e4526a922b334e8de3c9860a0475f3d432c19c571ed522988d6307df94"
+mask_ids = []
+quote_id = "q16"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4657
+end = 4829
+element_id = "sentence-4657-4829"
+quote_sha256 = "3ac3900afe9becce9255481bb16dabe3471aee1a3b473ce660735c2247449524"
+mask_ids = []
+quote_id = "q17"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4830
+end = 4913
+element_id = "sentence-4830-4913"
+quote_sha256 = "03dbfe8abb2d5a2c65f62471cf465746cac6a2db8e375511057e1c1ab3affece"
+mask_ids = []
+quote_id = "q18"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4934
+end = 4995
+element_id = "sentence-4914-5123"
+quote_sha256 = "3ecf38fc890a3e64a5816034c413bdcc84f75c9da128ab946edccb29d4847d58"
+mask_ids = []
+quote_id = "q19"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5000
+end = 5122
+element_id = "sentence-4914-5123"
+quote_sha256 = "3a78029d4ba219bb463915a8a325c80b895325992cb4d5264c58d784e3763794"
+mask_ids = []
+quote_id = "q20"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5124
+end = 5238
+element_id = "sentence-5124-5238"
+quote_sha256 = "c901004e95d29107868f3c728b4bb9c359fb7f07f3a253e8e11dd74178b8fff5"
+mask_ids = []
+quote_id = "q21"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5255
+end = 5357
+element_id = "sentence-5239-5416"
+quote_sha256 = "b64ff3b4644a0a783559d384f4896add54b827b1db060915611fa66772973e41"
+mask_ids = []
+quote_id = "q22"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5239
+end = 5416
+element_id = "sentence-5239-5416"
+quote_sha256 = "93aacbe824575e8faa7f08fba33b390495b082ea1b48e90747ed5d7389ee65ff"
+mask_ids = []
+quote_id = "q23"
+origin = "drafted_edited"
+
+[[quotes]]
+start = 5417
+end = 5575
+element_id = "sentence-5417-5575"
+quote_sha256 = "be77962eaff5c106ba80eadc1ce91e3918b7a2312cb32ebf62fc619a908d8940"
+mask_ids = []
+quote_id = "q24"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5576
+end = 5695
+element_id = "sentence-5576-5695"
+quote_sha256 = "7d0aebe4596d05fcf2e7ad7c14e4818815cbea6cf93c4ed42f82f3c38913b843"
+mask_ids = []
+quote_id = "q25"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6002
+end = 6167
+element_id = "sentence-6002-6167"
+quote_sha256 = "7498704857b17495ba6582f59183b701c8000c2bc37cdfa299bbf2845a795bc6"
+mask_ids = []
+quote_id = "q26"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6168
+end = 6313
+element_id = "sentence-6168-6313"
+quote_sha256 = "a1ac08291f9ca915e9e065f1ac33f2d5c7256910d61317a5feba1c3b25b153ab"
+mask_ids = []
+quote_id = "q27"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6360
+end = 6495
+element_id = "sentence-6314-6604"
+quote_sha256 = "a6d961f037c515f73aa9d68363b8f91492eeffe15575618c1a466eb3268700d1"
+mask_ids = []
+quote_id = "q28"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6501
+end = 6603
+element_id = "sentence-6314-6604"
+quote_sha256 = "c31339d175898b7f0b4db4db95653375a12de3d4f8c5ae827851b2d766f60be3"
+mask_ids = []
+quote_id = "q29"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6605
+end = 6739
+element_id = "sentence-6605-6739"
+quote_sha256 = "21e19cae3c4f24327cdac267c2c5bb5153b8f4822aa74fa28100107be3893d93"
+mask_ids = []
+quote_id = "q30"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7021
+end = 7112
+element_id = "sentence-7021-7112"
+quote_sha256 = "afb505ec82ca1837e6ce4ca0591ccf8644f22a77ecbe365653200117abf7ec47"
+mask_ids = []
+quote_id = "q31"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7113
+end = 7261
+element_id = "sentence-7113-7261"
+quote_sha256 = "c4f4a59900c5dcb69b2bf73ad81363d57dc605a250514763dda3204945f71903"
+mask_ids = []
+quote_id = "q32"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7262
+end = 7471
+element_id = "sentence-7262-7471"
+quote_sha256 = "2e0a9f2c5f00ec3019d48e62b50efec43d0ab65fa24536451f7b605abc8bb8f2"
+mask_ids = []
+quote_id = "q33"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7997
+end = 8080
+element_id = "sentence-7997-8080"
+quote_sha256 = "d8459dbd3a8638c999e9b149ee5e118695d68fc868b264c3935590b5617cb39c"
+mask_ids = []
+quote_id = "q34"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 309
+end = 419
+element_id = "sentence-309-419"
+quote_sha256 = "6d2e8374a79d8fb8301791b8749c29b490ff3e80f440d9c899020a7cd6a44cb3"
+mask_ids = []
+quote_id = "q35"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 13865
+end = 14104
+element_id = "sentence-12838-15302"
+quote_sha256 = "0ef7a5b79abc5bfcae00c79daf114f3154a8ca4f1c75643f2b60862528d7ab6d"
+mask_ids = ["safe_harbor-12587-15302"]
+quote_id = "q36"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 13705
+end = 13827
+element_id = "sentence-12838-15302"
+quote_sha256 = "531d40165c70058adbc34dc82c7d948a00169d329ae47a680b6cb0e1cab6c600"
+mask_ids = ["safe_harbor-12587-15302"]
+quote_id = "q37"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 11016
+end = 11287
+element_id = "sentence-11016-11287"
+quote_sha256 = "63fae379fb93ef9328614dfce933657ab7c9b0685a1f0198b8ad224964e8a11f"
+mask_ids = []
+quote_id = "q38"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 12880
+end = 12978
+element_id = "sentence-12838-15302"
+quote_sha256 = "34e403b1e4cdebe4b5e6406a34d6206314f29c8f2a249a7d4c362be0240fdfd2"
+mask_ids = ["safe_harbor-12587-15302"]
+quote_id = "q39"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 9887
+end = 10132
+element_id = "sentence-9887-10132"
+quote_sha256 = "457d5d7c36df726db812d0888a156d0197e76baf154f968dd91560f79ec18cba"
+mask_ids = ["non_gaap_disclaimer-9073-10890"]
+quote_id = "q40"
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c1"
+quote_ids = ["q1", "q2"]
+claim = "Quarterly sales rose to about $23.9B, credited to more jetliners handed over (160) and smoother operations."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c2"
+quote_ids = ["q3", "q35"]
+claim = "A $9.6B gain from selling the digital aviation unit drove quarterly profit, adding $11.83 to per-share earnings."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c3"
+quote_ids = ["q4"]
+claim = "The company bought Spirit AeroSystems in December, presenting the deal as serving safety, quality, and steadier output."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c4"
+quote_ids = ["q5"]
+claim = "The CEO says both the Spirit purchase and the partial divestiture of the digital aviation business closed."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c5"
+quote_ids = ["q6", "q7"]
+claim = "Quarterly operating cash flow was $1.3B and free cash flow $0.4B, helped by more deliveries and working-capital timing."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c6"
+quote_ids = ["q8"]
+claim = "Capital spending chiefly reflected greater investment at the Charleston and Saint Louis sites."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c7"
+quote_ids = ["q9"]
+claim = "Cash and securities climbed to $29.4B from $23.0B on $10.6B of divestiture proceeds and positive free cash flow, less debt paid down in connection with the Spirit deal."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c8"
+quote_ids = ["q10"]
+claim = "Total debt edged up to $54.1B from $53.4B, mostly because of the Spirit purchase."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c9"
+quote_ids = ["q11"]
+claim = "Boeing retained $10 billion of available credit facilities, with none drawn."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c10"
+quote_ids = ["q12"]
+claim = "For the year, sales of $89.5B and 600 jetliner deliveries were the most since 2018."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c11"
+quote_ids = ["q13", "q14"]
+claim = "Company-wide backlog hit a record $682B, led by 1,173 net jetliner orders over the year, with each segment's backlog at a high."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c12"
+quote_ids = ["q15"]
+claim = "The CEO calls 2025 a year of real recovery and expects the progress to carry into next year, without giving figures."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c13"
+quote_ids = ["q16"]
+claim = "Management's priorities are steady operations, finishing development work, and regaining stakeholder trust."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c14"
+quote_ids = ["q17"]
+claim = "Commercial Airplanes reported revenue of $11.4 billion and a negative 5.6% margin, primarily reflecting more deliveries and better operational execution."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c15"
+quote_ids = ["q18"]
+claim = "Commercial jet results include effects of buying Spirit AeroSystems."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c16"
+quote_ids = ["q19"]
+claim = "Output of 737 jets was raised to 42 a month in the quarter."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c17"
+quote_ids = ["q20"]
+claim = "The FAA cleared the 737-10 to enter its last stage of certification flight tests."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c18"
+quote_ids = ["q21"]
+claim = "The 787 line started moving to a rate of eight a month and is working to hold it there."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c19"
+quote_ids = ["q22"]
+claim = "The 777-9 entered the TIA phase 3 stage of its certification flight testing."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c20"
+quote_ids = ["q23"]
+claim = "Boeing continues to expect the first 777-9 delivery in 2027."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c21"
+quote_ids = ["q24"]
+claim = "Q4 commercial net orders totaled 336: Alaska accounted for 105 of the 737-10 and five 787-9 aircraft, and Emirates ordered 65 of the 777-9."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c22"
+quote_ids = ["q25"]
+claim = "The commercial unit's backlog reached a record $567B covering more than 6,100 jets."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c23"
+quote_ids = ["q26"]
+claim = "Defense revenue was $7.4 billion and its margin negative 6.8%, reflecting greater volume and more stable operations."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c24"
+quote_ids = ["q27"]
+claim = "The defense unit took $0.6B of KC-46A losses, mainly from higher estimated production-support and supplier costs."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c25"
+quote_ids = ["q28"]
+claim = "The defense unit won new U.S. orders for 15 KC-46A tankers and 96 Apache helicopters."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c26"
+quote_ids = ["q29"]
+claim = "The first operational T-7A trainer was handed to the Air Force."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c27"
+quote_ids = ["q30"]
+claim = "Defense backlog reached a new high of $85 billion; 26% came from customers outside the United States."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c28"
+quote_ids = ["q31"]
+claim = "Services sales of $5.2B were lifted by more government work."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c29"
+quote_ids = ["q32"]
+claim = "The services segment reported a 202.4% margin, mainly because of the $9.6 billion gain on the digital aviation sale."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c30"
+quote_ids = ["q33"]
+claim = "Services booked a record $28B of orders for the year, including a C-17 cockpit upgrade award, and closed with a record $30B backlog."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c31"
+quote_ids = ["q34"]
+claim = "Corporate and elimination items moved mainly on when allocations were made."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "ac1"
+quote_ids = ["q3"]
+claim = "Q4 per-share earnings were $10.23 under GAAP and $9.92 on the company’s core measure."
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "c1"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c2"
+theme_id = "portfolio"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c3"
+theme_id = "portfolio"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c4"
+theme_id = "portfolio"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c5"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c6"
+theme_id = "capital_investment"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c7"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c7"
+theme_id = "portfolio"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c8"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c8"
+theme_id = "portfolio"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c9"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c10"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c11"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c12"
+theme_id = "outlook"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c13"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c14"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c15"
+theme_id = "portfolio"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c16"
+theme_id = "supply"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c17"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c18"
+theme_id = "supply"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c19"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c20"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c20"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c21"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c22"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c23"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c24"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c25"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c26"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c27"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c28"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c29"
+theme_id = "portfolio"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c30"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c31"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "ac1"
+theme_id = "unmatched"
+support = "supports"
+origin = "annotator_added"
+
+[[hard_negatives]]
+claim_id = "n1"
+quote_ids = ["q36"]
+claim = "Buying Spirit has already yielded synergies and better quality."
+negative_kind = "section"
+theme_id = "portfolio"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n2"
+quote_ids = ["q37"]
+claim = "Tariffs cut into the quarter's foreign sales."
+negative_kind = "section"
+theme_id = "trade_policy"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n3"
+quote_ids = ["q38"]
+claim = "The company paid out cash to its stockholders in the quarter."
+negative_kind = "section"
+theme_id = "shareholder_returns"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n4"
+quote_ids = ["q39"]
+claim = "A weak economy and industry slump hurt this quarter's results."
+negative_kind = "section"
+theme_id = "macro"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n5"
+quote_ids = ["q40"]
+claim = "Pension expense for the defense and services units went up this quarter."
+negative_kind = "section"
+theme_id = "costs"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n6"
+quote_ids = ["q12"]
+claim = "The fourth quarter by itself saw 600 jetliner deliveries."
+negative_kind = "period"
+theme_id = "demand"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n7"
+quote_ids = ["q33"]
+claim = "The services unit took in $28B of orders during the fourth quarter alone."
+negative_kind = "period"
+theme_id = "demand"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n8"
+quote_ids = ["q24"]
+claim = "Alaska Airlines and Emirates reported rising passenger traffic of their own."
+negative_kind = "issuer"
+theme_id = "demand"
+origin = "drafted_accepted"

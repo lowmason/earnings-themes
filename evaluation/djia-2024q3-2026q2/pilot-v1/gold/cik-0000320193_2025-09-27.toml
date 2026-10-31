@@ -1,0 +1,373 @@
+# Stage 6 gold (the pilot codebook, split, and gold-set protocol). Written by `earnings-pipeline gold anchor`; quotes are pointers, and every other word is the annotator's.
+schema_version = 1
+event_id = "cik-0000320193:2025-09-27"
+document_id = "cik-0000320193:2025-09-27:release"
+doc_id = "0000320193-25-000077_a8-kex991q4202509272025.htm@walker-1#34c31534ed1502c3"
+canonical_hash = "34c31534ed1502c30f06f94df81f885a7ecfb29bae56e055f3b7c0054e2a7104"
+split_hash = "5c4a2f3c5ed9ffc2cf0065658ec4e75311220338cf9b3fe07802c0db9fcd0e53"
+partition = "dev"
+annotator = "Lowell Mason (independent pass, then verified a Claude draft)"
+no_theme = false
+
+[pin]
+pilot_id = "djia-2024q3-2026q2-pilot"
+pilot_version = 1
+pilot_hash = "3839c800151cc646f11064efdce583f988e511265f8893c90e9a2f2549145926"
+events_version = 1
+events_hash = "2348671b3ae8021d644df12ae2f539258670546970c918f8edb231ba1885c3b7"
+universe_version = 1
+universe_operative_hash = "c350923422d9bf2e65a0b5929f4c0d45370458c6a044c3de012a1dfeb116e573"
+
+[codebook]
+codebook_id = "djia-pilot"
+codebook_version = 0
+content_hash = "635975d1ec952cf5719ea3b473870f96e7e3a52bc3015cc1ac5725aa80ec1e79"
+
+[drafting_aid]
+model_id = "claude-opus-5-5"
+drafted_on = 2026-10-31
+
+[counts]
+accepted = 34
+edited = 7
+rejected = 0
+added = 5
+
+[release_identification]
+label = "release"
+note = "Exhibit 99.1 in which the issuer reports its own fiscal fourth-quarter results, for the quarter whose end date matches this event."
+
+[[quotes]]
+start = 341
+end = 425
+element_id = "sentence-341-425"
+quote_sha256 = "243f8a9bf3e4fa8e8cb159ad098954bdae33d1c627de703d97142a3ea2121058"
+mask_ids = []
+quote_id = "q1"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 96
+end = 171
+element_id = "heading-96-171"
+quote_sha256 = "91a742daa7ec0d63fb491a8b7817a35c51cd97d7ee831d3375144081a19bc716"
+mask_ids = []
+quote_id = "q2"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 517
+end = 708
+element_id = "sentence-516-737"
+quote_sha256 = "3d47be5d5d2dea81c0f2dfb0f3630cd2f4600e6cf86625ba25a74fc67045dc9c"
+mask_ids = []
+quote_id = "q3"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 172
+end = 214
+element_id = "heading-172-214"
+quote_sha256 = "490d3457978150186c105c23ffd24433b3674489741d0e4453b2a67d8b2a2294"
+mask_ids = []
+quote_id = "q4"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 426
+end = 514
+element_id = "sentence-426-515"
+quote_sha256 = "10f0c01485566f94973da7b36f746e8f82931a03aec27bc8518a640e89ebcdd1"
+mask_ids = []
+quote_id = "q5"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2378
+end = 2570
+element_id = "sentence-2375-2570"
+quote_sha256 = "28683a381d30be8d9eb74278a3a92227bd3e01b4197edeb96ebd8389298f0eab"
+mask_ids = []
+quote_id = "q6"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 739
+end = 872
+element_id = "sentence-738-872"
+quote_sha256 = "b0717a93b49cf1c6d381488d23b992922707a099076b8b4632b56e0f9d59f7ad"
+mask_ids = []
+quote_id = "q7"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 873
+end = 961
+element_id = "sentence-873-961"
+quote_sha256 = "d584f091f72b9f0253f0510bfed3c7842f4248218c55b91390e4067bc56dbb87"
+mask_ids = []
+quote_id = "q8"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 962
+end = 1164
+element_id = "sentence-962-1165"
+quote_sha256 = "789cc6f9123054e8019c7ac1b6002291076aca318fa6894de8f88a24b2cb7961"
+mask_ids = []
+quote_id = "q9"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1167
+end = 1301
+element_id = "sentence-1166-1334"
+quote_sha256 = "2f0fee631591effd9e4e10ffe06bfdfd3463509cbb0b57ef2cbee114881b10e0"
+mask_ids = []
+quote_id = "q10"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1336
+end = 1533
+element_id = "sentence-1335-1534"
+quote_sha256 = "969f8430192342a67d5af835f3d796e042037cd3e4f1d3d4f03d4ad12567b19f"
+mask_ids = []
+quote_id = "q11"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1535
+end = 1640
+element_id = "sentence-1535-1640"
+quote_sha256 = "17b81c0135c602949cad4a56422c05c21ef012c3370f0bf7a8555fffb2c4e4b2"
+mask_ids = []
+quote_id = "q12"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1641
+end = 1762
+element_id = "sentence-1641-1762"
+quote_sha256 = "e8a14c2f7faf7c5afbe5131eeae21bb0af4046cef72b3161d115f5f06706bfc8"
+mask_ids = []
+quote_id = "q13"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 12697
+end = 12894
+element_id = "sentence-12697-12894"
+quote_sha256 = "f279f109e5f26950f06ce0ac3627378d671aa630b630ccc26f3ef8936a850859"
+mask_ids = []
+quote_id = "q14"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 12942
+end = 13236
+element_id = "sentence-12895-13236"
+quote_sha256 = "f29166aad7b0a8ec0d7ccef8cbed5b376bfc126130f4efa3ea1d718d909b8acb"
+mask_ids = []
+quote_id = "q15"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3209
+end = 3434
+element_id = "sentence-3157-3994"
+quote_sha256 = "abdfcd351ccc6ae3ac1cf5239287b34cb46a5cdf98229609ed0c0f6cde4ae9ae"
+mask_ids = ["safe_harbor-2711-4580"]
+quote_id = "q16"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3879
+end = 3993
+element_id = "sentence-3157-3994"
+quote_sha256 = "d5e15361852a02ced343209557e97940252835b3f8986e71007e81b9d1c1c5dc"
+mask_ids = ["safe_harbor-2711-4580"]
+quote_id = "q17"
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c1"
+quote_ids = ["q1", "q2", "q3"]
+claim = "Quarterly sales rose 8% to $102.5 billion, setting a new September-quarter record."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c2"
+quote_ids = ["q2", "q3"]
+claim = "Phone sales set a high-water mark for the September period."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c3"
+quote_ids = ["q3", "q4"]
+claim = "Services sales hit the highest level the company has ever reported in any quarter."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c4"
+quote_ids = ["q2", "q5", "q6"]
+claim = "Quarterly diluted EPS was $1.85, a September-quarter record. Its 13% growth comparison removes the exceptional tax charge recorded in Q4 2024."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c5"
+quote_ids = ["q7", "q8", "q9"]
+claim = "September launches included the iPhone 17 family, iPhone Air, AirPods Pro 3 and new Apple Watches. Apple also highlighted its recently announced M5 versions of MacBook Pro and iPad Pro."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c6"
+quote_ids = ["q10"]
+claim = "Annual revenue reached a record $416 billion, with EPS growth in double digits."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c7"
+quote_ids = ["q11"]
+claim = "The number of devices in active use reached a new peak in every product line and region, which the company credits to customer loyalty."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c8"
+quote_ids = ["q12", "q13"]
+claim = "The board declared $0.26 per common share, payable November 13, 2025 to holders on record at the close of November 10."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c9"
+quote_ids = ["q6", "q14", "q15"]
+claim = "The year-ago quarter carried a net one-off tax charge of roughly $10.2 billion after the EU's top court upheld the Irish State Aid ruling."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "ac1"
+quote_ids = ["q14"]
+claim = "On September 10, 2024, the EU Court of Justice overturned the General Court’s 2020 ruling and upheld the Commission’s state-aid decision from 2016."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac2"
+quote_ids = ["q6", "q15"]
+claim = "The Q4 2024 tax charge reflected $15.8 billion due to Ireland from escrowed funds, offset by a $4.8 billion U.S. tax credit and an $823 million reduction in unrecognized tax benefits."
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "c1"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c2"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c3"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c4"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c4"
+theme_id = "tax"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c5"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c6"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c7"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c8"
+theme_id = "shareholder_returns"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c9"
+theme_id = "tax"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c9"
+theme_id = "legal"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "ac1"
+theme_id = "legal"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac2"
+theme_id = "tax"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac2"
+theme_id = "capital"
+support = "supports"
+origin = "annotator_added"
+
+[[hard_negatives]]
+claim_id = "n1"
+quote_ids = ["q15"]
+claim = "Apple booked a ten-billion-dollar tax charge in the quarter just reported."
+negative_kind = "period"
+theme_id = "tax"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n2"
+quote_ids = ["q9"]
+claim = "Management forecast higher sales for the coming holiday quarter."
+negative_kind = "section"
+theme_id = "outlook"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n3"
+quote_ids = ["q16"]
+claim = "Trade disputes and tariffs held back the quarter's results."
+negative_kind = "section"
+theme_id = "trade_policy"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n4"
+quote_ids = ["q17"]
+claim = "The company faced adverse lawsuits or probes during the quarter."
+negative_kind = "section"
+theme_id = "legal"
+origin = "drafted_accepted"

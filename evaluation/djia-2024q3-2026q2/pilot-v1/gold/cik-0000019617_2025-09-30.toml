@@ -1,0 +1,1413 @@
+# Stage 6 gold (the pilot codebook, split, and gold-set protocol). Written by `earnings-pipeline gold anchor`; quotes are pointers, and every other word is the annotator's.
+schema_version = 1
+event_id = "cik-0000019617:2025-09-30"
+document_id = "cik-0000019617:2025-09-30:release"
+doc_id = "0001628280-25-044845_a3q25erfexhibit991narrative.htm@walker-1#61c34da6d5ab48b9"
+canonical_hash = "61c34da6d5ab48b99c1a3fdd5c9ec284aae059ef3f8b7d2899ad1ca073d690c7"
+split_hash = "5c4a2f3c5ed9ffc2cf0065658ec4e75311220338cf9b3fe07802c0db9fcd0e53"
+partition = "dev"
+annotator = "Lowell Mason (independent pass, then verified a Claude draft)"
+no_theme = false
+
+[pin]
+pilot_id = "djia-2024q3-2026q2-pilot"
+pilot_version = 1
+pilot_hash = "3839c800151cc646f11064efdce583f988e511265f8893c90e9a2f2549145926"
+events_version = 1
+events_hash = "2348671b3ae8021d644df12ae2f539258670546970c918f8edb231ba1885c3b7"
+universe_version = 1
+universe_operative_hash = "c350923422d9bf2e65a0b5929f4c0d45370458c6a044c3de012a1dfeb116e573"
+
+[codebook]
+codebook_id = "djia-pilot"
+codebook_version = 0
+content_hash = "635975d1ec952cf5719ea3b473870f96e7e3a52bc3015cc1ac5725aa80ec1e79"
+
+[drafting_aid]
+model_id = "claude-opus-5-5"
+drafted_on = 2026-10-31
+
+[counts]
+accepted = 95
+edited = 21
+rejected = 0
+added = 75
+
+[release_identification]
+label = "release"
+note = "The exhibit is the bank's own third-quarter 2025 results announcement, for this issuer and the quarter ended in September."
+
+[[quotes]]
+start = 5769
+end = 5806
+element_id = "sentence-5769-5806"
+quote_sha256 = "43efd1156cae52ecd35949d8c03d1c4ad7c004e8b4b8e99c0f092f3e29fdf572"
+mask_ids = []
+quote_id = "q1"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5807
+end = 5844
+element_id = "sentence-5807-5844"
+quote_sha256 = "4f1ba60ff44497b63571e7d4932819663a62ce3fd5228a4e787e2e6044c98924"
+mask_ids = []
+quote_id = "q2"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5938
+end = 6193
+element_id = "sentence-5938-6193"
+quote_sha256 = "f56960a5dcf97a4fc4635ac913201483721b358d2926bee470bfa8d65c3c7442"
+mask_ids = []
+quote_id = "q3"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6194
+end = 6415
+element_id = "sentence-6194-6415"
+quote_sha256 = "b3534b324e976b616c5b78ed35f3e46161e1733a1e227441dca9aee471d96c8d"
+mask_ids = []
+quote_id = "q4"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1904
+end = 2056
+element_id = "sentence-1904-2056"
+quote_sha256 = "98ebd05d73e18d1e0b814971d83ac474e9c0150410dae19a702f2d0d33189336"
+mask_ids = []
+quote_id = "q5"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6458
+end = 6793
+element_id = "sentence-6458-6793"
+quote_sha256 = "5f7a2704c918e563eb4e3b9364752df2cc409e2ab1ba0a38d3eec30b7e2a6234"
+mask_ids = []
+quote_id = "q6"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6794
+end = 6843
+element_id = "sentence-6794-6843"
+quote_sha256 = "c859d890f6a5bc081c13b94950b29fc479fda736afb06cec9971aa596e50831b"
+mask_ids = []
+quote_id = "q7"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6844
+end = 6948
+element_id = "sentence-6844-6948"
+quote_sha256 = "b46a49089191eec2e982395f5b2275b3eadd2fe8f5d3bd1fcc96d4e3fb6b9403"
+mask_ids = []
+quote_id = "q8"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6949
+end = 7056
+element_id = "sentence-6949-7056"
+quote_sha256 = "661c4da6a0eecfbaec85fbcd9ad18bd276ea600108c66993f7f43db85201f3a7"
+mask_ids = []
+quote_id = "q9"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 8819
+end = 8933
+element_id = "sentence-8819-8933"
+quote_sha256 = "205940fb6a94f34d97c4ff8fc4c2ba2f91ac171ee9707ba7904cd51d6e17968e"
+mask_ids = []
+quote_id = "q10"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 8934
+end = 9118
+element_id = "sentence-8934-9118"
+quote_sha256 = "bca0e6743829f530409216fe1beb34a129e76c339c0b454dec7271883bc7acff"
+mask_ids = []
+quote_id = "q11"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 11042
+end = 11368
+element_id = "sentence-11042-11368"
+quote_sha256 = "f8b3288a79da346afb4a6869c281526e80f4d74446558ee908eabeb24c868d4c"
+mask_ids = []
+quote_id = "q12"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 12405
+end = 12518
+element_id = "sentence-12405-12518"
+quote_sha256 = "06c72663276161275de485122c366749eec99908c3d1312f7df063e8e469720d"
+mask_ids = []
+quote_id = "q13"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7838
+end = 8116
+element_id = "sentence-7838-8116"
+quote_sha256 = "d85b4af0e54f4fc71085bf0df90b2e72fc88b261d68d1a7635447b0722b28402"
+mask_ids = []
+quote_id = "q14"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 8117
+end = 8213
+element_id = "sentence-8117-8213"
+quote_sha256 = "ffc06d0d3afe0db0b4d5087b314c5d86f278ecb3b7b1222a4cf9291c28a5b6cb"
+mask_ids = []
+quote_id = "q15"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 8214
+end = 8505
+element_id = "sentence-8214-8505"
+quote_sha256 = "eeccf4a12293f9b30da023f1d4e72f28d52dfd9d56d2acd50d35558c58db0710"
+mask_ids = []
+quote_id = "q16"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 8506
+end = 8682
+element_id = "sentence-8506-8682"
+quote_sha256 = "3ab202c0befd92f51d94943da9c0bbae5c3ca8f27085e61a8d8571299d617fc1"
+mask_ids = []
+quote_id = "q17"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 9950
+end = 10043
+element_id = "sentence-9950-10043"
+quote_sha256 = "379cbeb20897d11b5f9559a8590360a0da663439d5c96dee53c637b01475d825"
+mask_ids = []
+quote_id = "q18"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1810
+end = 1903
+element_id = "sentence-1810-1903"
+quote_sha256 = "2848ee41948afc2c56737ef334a8f5a5bba5079a3bcbdacb861705302f7d7daf"
+mask_ids = []
+quote_id = "q19"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 10087
+end = 10311
+element_id = "sentence-10087-10311"
+quote_sha256 = "4c912a4a1569700b18aa3492b7c6db4ac7d0c261e98d42e834794a81bd93e24d"
+mask_ids = []
+quote_id = "q20"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 10462
+end = 10604
+element_id = "sentence-10462-10604"
+quote_sha256 = "9efc0822ebcbc20559fdd74a1670bdd168a9f657c513673efdededf5effdeebf"
+mask_ids = []
+quote_id = "q21"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 10605
+end = 10732
+element_id = "sentence-10605-10732"
+quote_sha256 = "958a0e019b051dd298d09176b2dacb867a21f6a49ac23b38c1ee1d1885b8ee9d"
+mask_ids = []
+quote_id = "q22"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 10733
+end = 10934
+element_id = "sentence-10733-10934"
+quote_sha256 = "7aa1ced076b47ba47e4541fce92d381369847e2d7a5a8cabe743619ae81089be"
+mask_ids = []
+quote_id = "q23"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 10935
+end = 11041
+element_id = "sentence-10935-11041"
+quote_sha256 = "eec376e129a2777e902d9f755c8f813ac93f9ff79f6a8604990bdac2da11df39"
+mask_ids = []
+quote_id = "q24"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 11966
+end = 12151
+element_id = "sentence-11966-12151"
+quote_sha256 = "04c8405500e20903feb584ca1116675976ae37e231519ad879615f9668ca6d3b"
+mask_ids = []
+quote_id = "q25"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 12646
+end = 12743
+element_id = "sentence-12646-12743"
+quote_sha256 = "3f278ed6329d3b2550576733151e4801c56aa3266b700cbbf05d1a85829254af"
+mask_ids = []
+quote_id = "q26"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 12744
+end = 12827
+element_id = "sentence-12744-12827"
+quote_sha256 = "457e5dd865131798c192c8f17bab6b0f5236570e9c75142dd72d1f84fe5ba845"
+mask_ids = []
+quote_id = "q27"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2402
+end = 2449
+element_id = "sentence-2354-2495"
+quote_sha256 = "46f8737db6f36105d55fc91afe4b6ec4f5c25f934552aa60b8fb54e02372e62f"
+mask_ids = []
+quote_id = "q28"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 12152
+end = 12404
+element_id = "sentence-12152-12404"
+quote_sha256 = "58d9fae9d01141a48bafb070542352ab0d5df4ae5a450cfe4b3d70fae051ec38"
+mask_ids = []
+quote_id = "q29"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 13321
+end = 13490
+element_id = "sentence-13321-13490"
+quote_sha256 = "918896ca9bbd88fe97d1fd2447400a077dbdfe6182b589628e0963ec05c202a5"
+mask_ids = []
+quote_id = "q30"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2510
+end = 2633
+element_id = "sentence-2496-2633"
+quote_sha256 = "6838ce19c9f27c167246d7e8b9a42ad13767655ea564de96a3bc583da1f9234c"
+mask_ids = []
+quote_id = "q31"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2634
+end = 2833
+element_id = "sentence-2634-2833"
+quote_sha256 = "ba9ed42a216ab5b20b7efeae7caa4d52a4c931e4001304990df2a572b0869cf0"
+mask_ids = []
+quote_id = "q32"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3267
+end = 3317
+element_id = "sentence-3265-3317"
+quote_sha256 = "f1e02167c863fb6396164638bd1ae2eb7d6ea32ec92250e8593c69561ddd1362"
+mask_ids = []
+quote_id = "q33"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3320
+end = 3364
+element_id = "sentence-3318-3366"
+quote_sha256 = "ce04ad4d1fa61afa5da2e179a942ed8c2354121b4d59b4f9c8e53b2ee4bd0cf8"
+mask_ids = []
+quote_id = "q34"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2138
+end = 2255
+element_id = "sentence-2057-2256"
+quote_sha256 = "e50778fa717a5cd588ed702bb62879a624d8bb39e5dd5912dfb9f1022339860e"
+mask_ids = []
+quote_id = "q35"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2257
+end = 2353
+element_id = "sentence-2257-2353"
+quote_sha256 = "7da69fc20a18f669d007c3769de73157773b6a3c913ee1c9f444ab4e4ad66297"
+mask_ids = []
+quote_id = "q36"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3635
+end = 3676
+element_id = "sentence-3633-3676"
+quote_sha256 = "7e3f369b35d391d0254c274c9521ecf21d4f88b3353c6790f7a306d3f09a2afc"
+mask_ids = []
+quote_id = "q37"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3791
+end = 3827
+element_id = "sentence-3789-3827"
+quote_sha256 = "3c18e074911793660ed677571e4f7bbfae66ae59637a879497dc1209695e16cd"
+mask_ids = []
+quote_id = "q38"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3830
+end = 3877
+element_id = "sentence-3828-3877"
+quote_sha256 = "2d92f60a8e55355310cc0ae498c80073fe7d9d398d497a9b2fab3ccaab058f53"
+mask_ids = []
+quote_id = "q39"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7057
+end = 7185
+element_id = "sentence-7057-7185"
+quote_sha256 = "23015bb5876b50082328619946844511a8f8d5487041bea913f8d68a0595de88"
+mask_ids = []
+quote_id = "q40"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 11448
+end = 11576
+element_id = "sentence-11448-11576"
+quote_sha256 = "26a2ed2d22b7f63dc48744c18ba2d2bbff0839b21bbb9ddb1b9422acc070fc2f"
+mask_ids = []
+quote_id = "q41"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 22602
+end = 22683
+element_id = "sentence-22602-22683"
+quote_sha256 = "7662169bed96be4e37a24c0928cd198b9d60d7e2017fa8c309d1f04acb88a454"
+mask_ids = ["safe_harbor-22308-23345"]
+quote_id = "q42"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 17744
+end = 17883
+element_id = "sentence-17744-17883"
+quote_sha256 = "23c9dd7926b33b8ee63e3f876800a123641a82f23ba37def307dd0b06d6fae28"
+mask_ids = []
+quote_id = "q43"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 19037
+end = 19148
+element_id = "sentence-19035-19148"
+quote_sha256 = "90f23fde9ca20a0b0ce7c1d4b0c097c8a05a072046b162c4a6e70e38b92213a2"
+mask_ids = []
+quote_id = "q44"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 13491
+end = 13545
+element_id = "sentence-13491-13545"
+quote_sha256 = "31d1dbb2048bb5418cec339d94bbffc0baa1ae18151289f6c1b4e22346dfb05e"
+mask_ids = []
+quote_id = "q45"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 19437
+end = 19694
+element_id = "sentence-19434-19694"
+quote_sha256 = "a18ba9ba54d7d2d36b659f326ac6e5b4bf071264ef230acd2448b519d72831bd"
+mask_ids = []
+quote_id = "aq1"
+origin = "annotator_added"
+
+[[quotes]]
+start = 5845
+end = 5890
+element_id = "sentence-5845-5890"
+quote_sha256 = "80936c8a4a1397ebf1a24101a444ac47a2a93833389ef255c911426f6ab0ee22"
+mask_ids = []
+quote_id = "aq2"
+origin = "annotator_added"
+
+[[quotes]]
+start = 5891
+end = 5937
+element_id = "sentence-5891-5937"
+quote_sha256 = "1c3418b1f20f16bcf62ddf9277358b74cf7ed872ee5049598d73df55094addd8"
+mask_ids = []
+quote_id = "aq3"
+origin = "annotator_added"
+
+[[quotes]]
+start = 7761
+end = 7797
+element_id = "sentence-7761-7797"
+quote_sha256 = "0e8a71f5d7480ef763179b50f8f3f0c80fb345cd01a8d513b001df989bfbac64"
+mask_ids = []
+quote_id = "aq4"
+origin = "annotator_added"
+
+[[quotes]]
+start = 7798
+end = 7837
+element_id = "sentence-7798-7837"
+quote_sha256 = "580af96954cdb01fa6332619ae18b01b595b71a75f9132a296482799d7866353"
+mask_ids = []
+quote_id = "aq5"
+origin = "annotator_added"
+
+[[quotes]]
+start = 8683
+end = 8818
+element_id = "paragraph-8683-9247"
+quote_sha256 = "f93af1f1678e67785994ecbb8ed8d4d3ad1b94eade0b317f37774adaf6dab2a1"
+mask_ids = []
+quote_id = "aq6"
+origin = "annotator_added"
+
+[[quotes]]
+start = 9119
+end = 9247
+element_id = "sentence-9119-9247"
+quote_sha256 = "11ba74ccb59fbb386400ebd5ac092df4c0c25d8ee393fbceb2b75732ed216ce4"
+mask_ids = []
+quote_id = "aq7"
+origin = "annotator_added"
+
+[[quotes]]
+start = 9768
+end = 9804
+element_id = "sentence-9768-9804"
+quote_sha256 = "f9a013eb82ae8763683e0da00b19227c7a396cb32baf3e3f647848fac275c9a7"
+mask_ids = []
+quote_id = "aq8"
+origin = "annotator_added"
+
+[[quotes]]
+start = 9805
+end = 9949
+element_id = "paragraph-9805-10354"
+quote_sha256 = "c6c632da985d31dc19816fe9006af0b4db21405e8ea6dce2258814473b5f07b0"
+mask_ids = []
+quote_id = "aq9"
+origin = "annotator_added"
+
+[[quotes]]
+start = 10044
+end = 10086
+element_id = "sentence-10044-10086"
+quote_sha256 = "0b6013d505653c5f0520737f53c95d48ab78d677aa1ed3dfb27d4f836eec4cf9"
+mask_ids = []
+quote_id = "aq10"
+origin = "annotator_added"
+
+[[quotes]]
+start = 10312
+end = 10354
+element_id = "sentence-10312-10354"
+quote_sha256 = "76404dc40e025c9d292f7b2c026d3cc3158c7f1e5d6e0377e451d283fbacbe1c"
+mask_ids = []
+quote_id = "aq11"
+origin = "annotator_added"
+
+[[quotes]]
+start = 11369
+end = 11447
+element_id = "sentence-11369-11447"
+quote_sha256 = "5b6a7a22a6fa10d88af40d16c6133d128aa98025b9f20344b4650ab580350641"
+mask_ids = []
+quote_id = "aq12"
+origin = "annotator_added"
+
+[[quotes]]
+start = 11929
+end = 11965
+element_id = "sentence-11929-11965"
+quote_sha256 = "50fa0ae9fed782bcb459f53d9ebf17648267125f4fca6d12146a8faa6a7f897a"
+mask_ids = []
+quote_id = "aq13"
+origin = "annotator_added"
+
+[[quotes]]
+start = 12405
+end = 12645
+element_id = "paragraph-12405-12645"
+quote_sha256 = "030367842e43ec81272bc92b39a1014f7975def8381c005b9b9d8e6773d7c50c"
+mask_ids = []
+quote_id = "aq14"
+origin = "annotator_added"
+
+[[quotes]]
+start = 13224
+end = 13271
+element_id = "sentence-13224-13271"
+quote_sha256 = "1f486898f24d84c74861f74bf46638d6da1f9b010ee9be43cc69eadcac7612aa"
+mask_ids = []
+quote_id = "aq15"
+origin = "annotator_added"
+
+[[quotes]]
+start = 13272
+end = 13320
+element_id = "sentence-13272-13320"
+quote_sha256 = "71b09d875f64172345101406ef1c1f8174dada75ba7815797b61f1525ccbd352"
+mask_ids = []
+quote_id = "aq16"
+origin = "annotator_added"
+
+[[quotes]]
+start = 13546
+end = 13602
+element_id = "sentence-13546-13602"
+quote_sha256 = "24212f00b25ca8b9dae097508cf3879c1662d6d5967adba06a9c13d11bb4bfa5"
+mask_ids = []
+quote_id = "aq17"
+origin = "annotator_added"
+
+[[quotes]]
+start = 19876
+end = 20147
+element_id = "sentence-19873-20147"
+quote_sha256 = "131d2fbea53226029c3f84d286bdbef333e34381168310065d4800fda15aeb8d"
+mask_ids = []
+quote_id = "aq18"
+origin = "annotator_added"
+
+[[quotes]]
+start = 3518
+end = 3632
+element_id = "sentence-3516-3632"
+quote_sha256 = "1363881e7ff36134934374572e14ff1360c81e358e61610f3eb692de41ac2fae"
+mask_ids = []
+quote_id = "aq19"
+origin = "annotator_added"
+
+[[quotes]]
+start = 3418
+end = 3515
+element_id = "sentence-3416-3515"
+quote_sha256 = "716f344c0a6a3727fad1604110ddcae59909537990ff22ef5dd0c42947dd0ef0"
+mask_ids = []
+quote_id = "aq20"
+origin = "annotator_added"
+
+[[quotes]]
+start = 3369
+end = 3395
+element_id = "sentence-3367-3395"
+quote_sha256 = "d6127ef351ee69efdb3c2fb0cfb497eadf29b4cb508746cc7cdd9bb6941fec2c"
+mask_ids = []
+quote_id = "aq21"
+origin = "annotator_added"
+
+[[quotes]]
+start = 3725
+end = 3788
+element_id = "sentence-3723-3788"
+quote_sha256 = "ce00793a6e7821b8526fd1076d0a54fe470709cd912ad874bbe5e2cb6cc15644"
+mask_ids = []
+quote_id = "aq22"
+origin = "annotator_added"
+
+[[quotes]]
+start = 3880
+end = 3965
+element_id = "sentence-3878-3965"
+quote_sha256 = "6154cfba674a4fa98f49a16cd7b3f59e0707f5f4b95d102a123566dc7d9cd731"
+mask_ids = []
+quote_id = "aq23"
+origin = "annotator_added"
+
+[[quotes]]
+start = 3968
+end = 4106
+element_id = "sentence-3966-4106"
+quote_sha256 = "fef04c28ee0a7968fdf5dd67bec58718bd3f5f0636890fe8374418c8c21f90da"
+mask_ids = []
+quote_id = "aq24"
+origin = "annotator_added"
+
+[[quotes]]
+start = 20601
+end = 20709
+element_id = "sentence-20601-20709"
+quote_sha256 = "5bcca2d014294710f53493eb01565b26c9df34ddebc0a15994990ae4bcc784f1"
+mask_ids = []
+quote_id = "aq25"
+origin = "annotator_added"
+
+[[quotes]]
+start = 2057
+end = 2133
+element_id = "sentence-2057-2256"
+quote_sha256 = "aa627ce1beb78b34a8e50b6202a5ca9041f625a300d301d81678bd28b05c628f"
+mask_ids = []
+quote_id = "aq26"
+origin = "annotator_added"
+
+[[quotes]]
+start = 226
+end = 312
+element_id = "heading-226-312"
+quote_sha256 = "cb8793fe08180e1a1ecbfd52af02167f3a7dd1b777946ad799b13f29c71a4282"
+mask_ids = []
+quote_id = "aq27"
+origin = "annotator_added"
+
+[[quotes]]
+start = 1627
+end = 1752
+element_id = "sentence-1584-1753"
+quote_sha256 = "3c0c684b332e70eb714376a79909dcb544f29ca882682a856390f2cbcb78fa60"
+mask_ids = []
+quote_id = "aq28"
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "c1"
+quote_ids = ["q1", "q2"]
+claim = "Q3 net profit rose 12% to $14.4 billion, while managed revenue grew 9% to $47.1 billion."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c2"
+quote_ids = ["q3"]
+claim = "Falling interest rates and thinner deposit spreads weighed on net interest income outside Markets."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c3"
+quote_ids = ["q3"]
+claim = "Larger revolving card balances and wholesale deposits largely offset rate and margin pressure, leaving interest income outside Markets at $23.4 billion, unchanged from a year before."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c4"
+quote_ids = ["q4"]
+claim = "Fee and other non-interest revenue outside Markets climbed 16%, helped by asset management, advisory and underwriting, auto leasing and payments fees."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c5"
+quote_ids = ["q5"]
+claim = "Busier clients and appetite for financing lifted Markets revenue to a third-quarter high near nine billion dollars."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c6"
+quote_ids = ["q6"]
+claim = "Group expenses rose 8% to $24.3 billion, driven by employee pay and front-office growth, brokerage, distribution, auto depreciation and marketing, partly offset by lower legal costs."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c7"
+quote_ids = ["q7", "q8", "q9"]
+claim = "Credit provision for the group totaled $3.4 billion. Net write-offs rose $506 million to $2.6 billion, led by Wholesale and cards. The $810 million reserve increase included Consumer at $608 million and Wholesale at $205 million."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c8"
+quote_ids = ["q10", "q11"]
+claim = "CCB built reserves by $575 million, including $550 million for cards and $100 million for mortgages. Card loan growth and revised economic inputs contributed, partly offset by less borrower uncertainty."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c9"
+quote_ids = ["q12"]
+claim = "CIB credit provision was $809 million, reflecting lending activity, write-offs linked to apparent borrower collateral irregularities and changed credit quality, partly offset by revised economic assumptions."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c10"
+quote_ids = ["q13"]
+claim = "In asset and wealth management, one client's write-off drove the period's credit provision."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c11"
+quote_ids = ["q14"]
+claim = "Retail banking and wealth revenue rose 9% on a wider deposit margin, reflecting an internal funding-credit change, and on greater wealth management fees."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c12"
+quote_ids = ["q15"]
+claim = "Mortgage revenue slipped 3% because of lower interest income."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c13"
+quote_ids = ["q16"]
+claim = "Card and auto revenue grew 12% on larger revolving card balances and auto leases, offset in part by weaker net interchange and higher costs of opening new accounts."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c14"
+quote_ids = ["q17"]
+claim = "CCB expenses rose 7% to $10.3 billion, mainly on auto depreciation, marketing and banker/advisor pay."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c15"
+quote_ids = ["q18", "q19"]
+claim = "Investment banking fees rose 16% overall to $2.6 billion, with growth in each product group; the CEO cited stronger equity issuance and merger activity."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c16"
+quote_ids = ["q20"]
+claim = "Setting aside equity-investment effects, payments revenue grew 6% on larger deposits and more fees, net of narrower deposit spreads."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c17"
+quote_ids = ["q21", "q22"]
+claim = "Trading revenue surged, with fixed income up about a fifth on rates, credit and securitized products and equities up a third, led by prime brokerage."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c18"
+quote_ids = ["q23"]
+claim = "Securities Services revenue rose 7% to $1.4 billion as larger deposits, client activity and higher markets lifted fees, partly offset by narrower deposit margins."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c19"
+quote_ids = ["q24"]
+claim = "CIB expenses increased 11% to $9.7 billion, chiefly on employee pay and brokerage costs."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c20"
+quote_ids = ["q25"]
+claim = "AWM revenue rose 12% to $6.1 billion as inflows and higher markets lifted management fees, alongside increased brokerage activity."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c21"
+quote_ids = ["q26", "q27", "q28"]
+claim = "Managed assets reached $4.6 trillion, up 18%, and total client assets $6.8 trillion, up 20%, helped by inflows and market gains. Q3 inflows into managed assets were $109 billion."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c22"
+quote_ids = ["q29"]
+claim = "Lower legal spending substantially cushioned rising distribution and payroll costs in AWM. Expenses grew 5% to $3.8 billion, reflecting pay linked to revenue and a larger private-bank advisory team."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c23"
+quote_ids = ["q30"]
+claim = "Corporate segment interest income fell $1.5 billion because rates declined and consumer deposit funding credits moved to the consumer bank."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c24"
+quote_ids = ["q31"]
+claim = "The chief executive called the American economy resilient overall despite some cooling in hiring."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c25"
+quote_ids = ["q32"]
+claim = "He flagged elevated uncertainty from geopolitics, tariffs, high asset valuations and persistent inflation risk."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c26"
+quote_ids = ["q33", "q34"]
+claim = "Common dividends totaled $4.1 billion, or $1.50 per share; net common-share repurchases were $8.0 billion."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c27"
+quote_ids = ["q35", "q36"]
+claim = "CCB gained over 400,000 checking accounts net during Q3, and first-time wealth investors exceeded 43,000, a record."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c28"
+quote_ids = ["q37"]
+claim = "The firm's supplementary leverage ratio stood at 5.8% at quarter end."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c29"
+quote_ids = ["q38", "q39", "aq1"]
+claim = "Year-to-date credit support totaled $205 billion for consumers and $25 billion for small U.S. businesses; the measure covers new and renewed facilities, including commitments and some undrawn discretionary lines."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c30"
+quote_ids = ["q45"]
+claim = "Corporate revenue outside interest rose $142 million to $297 million."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "ac1"
+quote_ids = ["aq2", "aq3"]
+claim = "Firmwide net interest revenue rose 2% to $24.1 billion; other revenue rose 16% to $23.0 billion."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac2"
+quote_ids = ["aq4", "aq5"]
+claim = "CCB earned $5.0 billion, a 24% increase, on $19.5 billion in revenue, up 9%."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac3"
+quote_ids = ["aq6", "aq7"]
+claim = "CCB credit provision was $2.5 billion and net write-offs $2.0 billion, rising $44 million chiefly in cards; the prior-year figures were $2.8 billion and $1.9 billion, with an $876 million reserve build."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac4"
+quote_ids = ["aq8", "aq9"]
+claim = "CIB earned $6.9 billion, up 21%, on revenue of $19.9 billion, up 17%. Banking and Payments brought in $9.5 billion, rising 10%, including investment banking revenue of $2.7 billion, up 14%."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac5"
+quote_ids = ["aq10", "q20", "aq11"]
+claim = "Payments revenue rose 13% to $4.9 billion; its comparison benefited from larger equity-investment markdowns in the prior year. Lending revenue fell 1% to $1.9 billion."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac6"
+quote_ids = ["aq12", "q41"]
+claim = "CIB wrote off a net $567 million and added $242 million to reserves, versus $156 million and $160 million a year earlier, when provision was $316 million."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac7"
+quote_ids = ["aq13"]
+claim = "AWM earned $1.7 billion, a 23% increase over the prior year."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac8"
+quote_ids = ["aq14"]
+claim = "AWM recorded $62 million in net write-offs and a $3 million reserve release; its credit provision was $59 million compared with $4 million a year before."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac9"
+quote_ids = ["aq15", "aq16"]
+claim = "Corporate net profit fell by $1.0 billion to $825 million; revenue declined $1.4 billion to $1.7 billion."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac10"
+quote_ids = ["aq17"]
+claim = "Corporate expenses declined $144 million to $445 million."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac11"
+quote_ids = ["q43"]
+claim = "The temporary CECL benefit to capital had expired completely by January 1, 2025."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac12"
+quote_ids = ["q44"]
+claim = "On January 1, 2025, the bank reassigned $5.6 billion of loans internally from corporate banking to fixed-income trading."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac13"
+quote_ids = ["aq18"]
+claim = "A funding-allocation change made in Q4 2024 increased CCB interest income from consumer deposits, with an equal reduction in Corporate."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac14"
+quote_ids = ["aq19"]
+claim = "Estimated CET1 capital was $287 billion, with Standardized and Advanced ratios of 14.8% and 14.9%, respectively."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac15"
+quote_ids = ["aq20"]
+claim = "Book value reached $124.96 per share, up 9%, and tangible book value $105.70, up 10%."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac16"
+quote_ids = ["aq21"]
+claim = "The net payout ratio over the last twelve months was 73%."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac17"
+quote_ids = ["aq22", "aq23", "aq24"]
+claim = "The bank supported roughly $2.5 trillion of credit and capital year to date, including $2.2 trillion for companies and foreign governments and $56 billion for U.S. public entities and nonprofits."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac18"
+quote_ids = ["aq25"]
+claim = "At September 30, 2025, the group held $4.6 trillion of assets and $360 billion of shareholder equity."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac19"
+quote_ids = ["q40"]
+claim = "In Q3 2024, firmwide credit provision was $3.1 billion, with net write-offs of $2.1 billion and reserves increasing by $1.0 billion."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac20"
+quote_ids = ["aq26"]
+claim = "CCB retained the leading U.S. retail-deposit ranking for a fifth successive year."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac21"
+quote_ids = ["aq27", "aq28"]
+claim = "The group reported Q3 earnings of $5.07 per share and a 20% return on tangible equity."
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "c1"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c2"
+theme_id = "macro"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c2"
+theme_id = "pricing"
+support = "does_not_support"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c3"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c4"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c5"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c6"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c6"
+theme_id = "legal"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c7"
+theme_id = "credit_quality"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c8"
+theme_id = "credit_quality"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c8"
+theme_id = "macro"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c9"
+theme_id = "credit_quality"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c10"
+theme_id = "credit_quality"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c11"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c12"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c13"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c13"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c14"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c15"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c16"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c17"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c18"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c19"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c20"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c21"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c22"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c22"
+theme_id = "legal"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c23"
+theme_id = "macro"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c24"
+theme_id = "macro"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c25"
+theme_id = "macro"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c25"
+theme_id = "trade_policy"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c26"
+theme_id = "shareholder_returns"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c27"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c28"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c29"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c30"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c8"
+theme_id = "demand"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "c18"
+theme_id = "macro"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "c20"
+theme_id = "macro"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "c21"
+theme_id = "macro"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac1"
+theme_id = "unmatched"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac2"
+theme_id = "unmatched"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac3"
+theme_id = "credit_quality"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac4"
+theme_id = "unmatched"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac5"
+theme_id = "impairments"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac6"
+theme_id = "credit_quality"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac7"
+theme_id = "unmatched"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac8"
+theme_id = "credit_quality"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac9"
+theme_id = "unmatched"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac10"
+theme_id = "costs"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac11"
+theme_id = "regulation"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac11"
+theme_id = "capital"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac12"
+theme_id = "unmatched"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac13"
+theme_id = "unmatched"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac14"
+theme_id = "capital"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac15"
+theme_id = "capital"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac16"
+theme_id = "shareholder_returns"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac17"
+theme_id = "demand"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac18"
+theme_id = "capital"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac19"
+theme_id = "credit_quality"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac20"
+theme_id = "demand"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac21"
+theme_id = "unmatched"
+support = "supports"
+origin = "annotator_added"
+
+[[hard_negatives]]
+claim_id = "n1"
+quote_ids = ["q40"]
+claim = "This quarter the firm wrote off $2.1 billion and built reserves by a billion dollars."
+negative_kind = "period"
+theme_id = "credit_quality"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n2"
+quote_ids = ["q41"]
+claim = "The corporate and investment bank's credit provision this quarter was only $316 million."
+negative_kind = "period"
+theme_id = "credit_quality"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n3"
+quote_ids = ["q42"]
+claim = "Management warned that its forecast for coming quarters may be missed."
+negative_kind = "section"
+theme_id = "outlook"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n4"
+quote_ids = ["q43"]
+claim = "A rule change during the third quarter cut the bank's regulatory capital."
+negative_kind = "period"
+theme_id = "regulation"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n5"
+quote_ids = ["q44"]
+claim = "The trading business bought $5.6 billion of loans from another party."
+negative_kind = "section"
+theme_id = "portfolio"
+origin = "drafted_accepted"
