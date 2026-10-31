@@ -1,0 +1,665 @@
+# Stage 6 gold (the pilot codebook, split, and gold-set protocol). Written by `earnings-pipeline gold anchor`; quotes are pointers, and every other word is the annotator's.
+schema_version = 1
+event_id = "cik-0000320187:2024-08-31"
+document_id = "cik-0000320187:2024-08-31:release"
+doc_id = "0000320187-24-000062_q1fy25exhibit991er.htm@walker-1#b4164926034d86ee"
+canonical_hash = "b4164926034d86ee0c3b1bc705a5d70401dbf61a0acfb03279a3134c00e9939f"
+split_hash = "5c4a2f3c5ed9ffc2cf0065658ec4e75311220338cf9b3fe07802c0db9fcd0e53"
+partition = "train"
+annotator = "Lowell Mason (verified a Claude draft)"
+no_theme = false
+
+[pin]
+pilot_id = "djia-2024q3-2026q2-pilot"
+pilot_version = 1
+pilot_hash = "3839c800151cc646f11064efdce583f988e511265f8893c90e9a2f2549145926"
+events_version = 1
+events_hash = "2348671b3ae8021d644df12ae2f539258670546970c918f8edb231ba1885c3b7"
+universe_version = 1
+universe_operative_hash = "c350923422d9bf2e65a0b5929f4c0d45370458c6a044c3de012a1dfeb116e573"
+
+[codebook]
+codebook_id = "djia-pilot"
+codebook_version = 0
+content_hash = "635975d1ec952cf5719ea3b473870f96e7e3a52bc3015cc1ac5725aa80ec1e79"
+
+[drafting_aid]
+model_id = "claude-opus-5-5"
+drafted_on = 2026-10-20
+
+[counts]
+accepted = 84
+edited = 4
+rejected = 0
+added = 2
+
+[release_identification]
+label = "release"
+note = "The issuer reports its own results for its fiscal first quarter, which closed on the event's period end."
+
+[[quotes]]
+start = 922
+end = 1079
+element_id = "sentence-899-1079"
+quote_sha256 = "b8f110076f048a36ce71f9cdb091f7b6d1bfa38455808e1752fa7e141dedeeaf"
+mask_ids = []
+quote_id = "q1"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1080
+end = 1220
+element_id = "sentence-1080-1220"
+quote_sha256 = "2a26854cd7ab5114b34b0ed185257c5941ae36cdb144f5dbb149a6c59f12e115"
+mask_ids = []
+quote_id = "q2"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1221
+end = 1301
+element_id = "sentence-1221-1301"
+quote_sha256 = "f34d95d5f9296c5b8a650e2376fd1c0782fb254375ca124edafe0d79640cc585"
+mask_ids = []
+quote_id = "q3"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1303
+end = 1361
+element_id = "sentence-1302-1361"
+quote_sha256 = "8b71f21463371639a0cd2e14ee6fa0d5cb577b26bccaa66ea78c59431573ad77"
+mask_ids = []
+quote_id = "q4"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1362
+end = 1501
+element_id = "sentence-1362-1676"
+quote_sha256 = "c79f7775b65f4202b289536ca6e0f2b5d1e98788b240f4492bf5025a3b1404e8"
+mask_ids = []
+quote_id = "q5"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1716
+end = 1870
+element_id = "sentence-1716-1870"
+quote_sha256 = "0f2b1b0dd532020d7ab9b9caa00896142de097424a3a2db17aa84dfe0794f03d"
+mask_ids = []
+quote_id = "q6"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1872
+end = 2035
+element_id = "sentence-1872-2035"
+quote_sha256 = "a012a7284aee15b8a46a465f60b90d2dfc6861fa18d9b3876f15221425c3a456"
+mask_ids = []
+quote_id = "q7"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2037
+end = 2286
+element_id = "sentence-2037-2286"
+quote_sha256 = "2e37a8c4f2cd87a452d63799f28a7a1cdc280799800aa666b3113ab9106f01d5"
+mask_ids = []
+quote_id = "q8"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2288
+end = 2408
+element_id = "sentence-2288-2408"
+quote_sha256 = "69158d0ebf312656b08e71767a7e018856549aa789992f7756a73ec1b8e68327"
+mask_ids = []
+quote_id = "q9"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2410
+end = 2575
+element_id = "sentence-2410-2575"
+quote_sha256 = "df2d7d69727d8b70b4171e90ce322a089659861257e0097c81f7fd5555efdd77"
+mask_ids = []
+quote_id = "q10"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2577
+end = 2786
+element_id = "sentence-2577-2786"
+quote_sha256 = "b39c9dfafae1e3f1bddf3c98247cb2337d24d491704f18014dbf5abfe1656b49"
+mask_ids = []
+quote_id = "q11"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2788
+end = 2859
+element_id = "sentence-2788-2859"
+quote_sha256 = "fd0c1a4291f63b4fa531f28281cce134f88b75562aa4b0b075497e9da3d32b16"
+mask_ids = []
+quote_id = "q12"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2861
+end = 3018
+element_id = "sentence-2861-3018"
+quote_sha256 = "08e414126475bc0701f0ef05a48a3fa61934156f7e6fcb535ee050609390971b"
+mask_ids = []
+quote_id = "q13"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3020
+end = 3129
+element_id = "sentence-3020-3129"
+quote_sha256 = "c70ace7ffdaa0470f1b9a94f49f335223116f13cc0e3e044fdd1dd380f685258"
+mask_ids = []
+quote_id = "q14"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3131
+end = 3390
+element_id = "sentence-3131-3390"
+quote_sha256 = "c4420ac1ba843dfdf4fda84c7fc72745c7f2cb828576415e62d30a78c8c8979b"
+mask_ids = []
+quote_id = "q15"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3392
+end = 3505
+element_id = "sentence-3392-3505"
+quote_sha256 = "16d5d8eec03bcabbc67b6c411bef1325fb6be8bc0b379449faeb006c52cda34b"
+mask_ids = []
+quote_id = "q16"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3544
+end = 3693
+element_id = "sentence-3544-3693"
+quote_sha256 = "bbe7bd719e84829e4ba43b783d438f403abef18d698f214f299affbe2eb4dd03"
+mask_ids = []
+quote_id = "q17"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3695
+end = 3924
+element_id = "sentence-3695-3924"
+quote_sha256 = "8fa091e8728e18808c678e6133c16a004d84635df2ea8675898851f9898311b8"
+mask_ids = []
+quote_id = "q18"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3945
+end = 4104
+element_id = "sentence-3945-4104"
+quote_sha256 = "e91658a1b017cd82321c8152d9499c2687bc13e8011b5ff32e4eaf79d4ca2628"
+mask_ids = []
+quote_id = "q19"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4105
+end = 4202
+element_id = "sentence-4105-4202"
+quote_sha256 = "76256ed051d5fa7419f205288d4230f6f139dd112fef9232f8b73dbe12ed0c4a"
+mask_ids = []
+quote_id = "q20"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4204
+end = 4264
+element_id = "sentence-4204-4264"
+quote_sha256 = "e2894395662b0775b5d1fa77b627450e295ad17983d24615e3880ca7fdfabd7d"
+mask_ids = []
+quote_id = "q21"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4266
+end = 4444
+element_id = "sentence-4266-4444"
+quote_sha256 = "8dcf5909b4c016317ef3843200b475f5300e4fcf6195b282497e7f0c8701eb6b"
+mask_ids = []
+quote_id = "q22"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4445
+end = 4582
+element_id = "sentence-4445-4582"
+quote_sha256 = "52a166b59a8439ea18cdf54be2c2786121a659cd8fa419e0850f04f9d07f5d6e"
+mask_ids = []
+quote_id = "q23"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5639
+end = 5786
+element_id = "sentence-5639-5786"
+quote_sha256 = "addccfd615a8b744f288ed74e89c6c59455ec5e20e4d62dc81c4db2d75edb290"
+mask_ids = ["safe_harbor-5639-5964"]
+quote_id = "q24"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5082
+end = 5206
+element_id = "sentence-5040-5259"
+quote_sha256 = "81a49a8d3354004db2e0a6b0fe5eaac72bd2aab0cd1826eb92d41e7a9142c6ff"
+mask_ids = []
+quote_id = "q25"
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c1"
+quote_ids = ["q1"]
+claim = "The board picked Elliott Hill to take over as chief executive in mid-October."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c2"
+quote_ids = ["q2"]
+claim = "Citing the change of chief executive, the company leaves its stance on guidance to the call and gives no forecast here."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c3"
+quote_ids = ["q3"]
+claim = "A planned investor day has been put off."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c4"
+quote_ids = ["q4"]
+claim = "The finance chief says the quarter came in broadly as management had expected."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c5"
+quote_ids = ["q5"]
+claim = "The finance chief describes a long turnaround, with early gains in key sports and a faster flow of new products."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c6"
+quote_ids = ["q6"]
+claim = "Total company sales fell about a tenth from a year earlier, and 9% excluding exchange rates."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c7"
+quote_ids = ["q7"]
+claim = "NIKE Brand sales dropped about 10%, with every geography lower."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c8"
+quote_ids = ["q8"]
+claim = "NIKE Direct sales fell 13% as digital sales dropped by a fifth, while company-owned stores grew slightly."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c9"
+quote_ids = ["q9"]
+claim = "Sales through wholesale partners fell 8%, or 7% excluding exchange rates."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c10"
+quote_ids = ["q10"]
+claim = "Converse sales fell 15%, lower in every territory."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c11"
+quote_ids = ["q11"]
+claim = "Gross margin widened by 1.2 points to 45.4%, helped mostly by cheaper product, warehousing, and logistics costs."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c12"
+quote_ids = ["q11"]
+claim = "Pricing decisions made in the prior year continued to benefit the quarter’s gross margin."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c13"
+quote_ids = ["q12"]
+claim = "Total selling and administrative spending dropped 2% to $4.0 billion."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c14"
+quote_ids = ["q13"]
+claim = "Demand creation spending rose 15% to $1.2 billion, driven by heavier brand marketing around major sports events."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c15"
+quote_ids = ["q14"]
+claim = "Operating overhead fell 7% to $2.8 billion, mainly on lower wage costs."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c16"
+quote_ids = ["q15"]
+claim = "The tax rate climbed to 19.6% from 12.0%, because last year's quarter had a one-off benefit when U.S. foreign tax credit rules were postponed."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c17"
+quote_ids = ["q16"]
+claim = "Net income dropped 28% to $1.1 billion, and diluted EPS dropped 26% to $0.70."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c18"
+quote_ids = ["q17"]
+claim = "Inventory fell 5% to $8.3 billion, reflecting shifts in product mix and cheaper inputs."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c19"
+quote_ids = ["q18"]
+claim = "Cash and short-term investments reached $10.3 billion, about $1.5 billion more than a year ago, as operating cash outran buybacks, dividends, and capital spending."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c20"
+quote_ids = ["q19"]
+claim = "Dividend payments have risen each year for 22 years."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c21"
+quote_ids = ["q20"]
+claim = "About $1.8 billion went back to shareholders during the quarter."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c22"
+quote_ids = ["q21"]
+claim = "Dividends paid in the quarter totaled $558 million, 6% more than a year before."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c23"
+quote_ids = ["q22"]
+claim = "Buybacks of $1.2 billion in the quarter retired 14.8 million shares under the $18 billion program."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c24"
+quote_ids = ["q22", "q23"]
+claim = "Since its 2022 approval, the $18 billion program has bought back 99.7 million shares for about $10.2 billion."
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c1"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c2"
+theme_id = "outlook"
+support = "does_not_support"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c3"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c4"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c4"
+theme_id = "outlook"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c5"
+theme_id = "demand"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c5"
+theme_id = "products"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c6"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c6"
+theme_id = "currency"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c7"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c8"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c8"
+theme_id = "mix"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c9"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c10"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c11"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c12"
+theme_id = "pricing"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c13"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c14"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c14"
+theme_id = "capital_investment"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c15"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c15"
+theme_id = "restructuring"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c16"
+theme_id = "tax"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c16"
+theme_id = "regulation"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c17"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c18"
+theme_id = "supply"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c18"
+theme_id = "mix"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c18"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c19"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c20"
+theme_id = "shareholder_returns"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c21"
+theme_id = "shareholder_returns"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c22"
+theme_id = "shareholder_returns"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c23"
+theme_id = "shareholder_returns"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c24"
+theme_id = "shareholder_returns"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c19"
+theme_id = "shareholder_returns"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "c19"
+theme_id = "capital_investment"
+support = "uncertain"
+origin = "annotator_added"
+
+[[hard_negatives]]
+claim_id = "n1"
+quote_ids = ["q11"]
+claim = "NIKE raised its selling prices during the quarter being reported."
+negative_kind = "period"
+theme_id = "pricing"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n2"
+quote_ids = ["q15"]
+claim = "Postponed U.S. foreign tax credit rules gave this quarter a one-time tax benefit."
+negative_kind = "period"
+theme_id = "tax"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n3"
+quote_ids = ["q22"]
+claim = "The board approved a new $18 billion buyback plan during this quarter."
+negative_kind = "period"
+theme_id = "shareholder_returns"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n4"
+quote_ids = ["q23"]
+claim = "NIKE spent about $10.2 billion repurchasing stock in this quarter alone."
+negative_kind = "period"
+theme_id = "shareholder_returns"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n5"
+quote_ids = ["q24"]
+claim = "Management now expects results to fall well short of its earlier forecast."
+negative_kind = "section"
+theme_id = "outlook"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n6"
+quote_ids = ["q25"]
+claim = "NIKE won share of the athletic footwear market during the quarter."
+negative_kind = "section"
+theme_id = "demand"
+origin = "drafted_accepted"

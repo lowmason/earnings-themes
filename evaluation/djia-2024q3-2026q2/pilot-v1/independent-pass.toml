@@ -1,0 +1,41 @@
+schema_version = 1
+
+[[rows]]
+event_id = "cik-0000012927:2025-12-31"
+sha256 = "54929a19e143e661199007ff3cf83101bb34526259e886d4d63ac6c88da774f0"
+recorded_on = 2026-10-30
+
+[[rows]]
+event_id = "cik-0000732712:2025-12-31"
+sha256 = "e15d883c9b8d7a3504091b7d90b1b7383b9dbc328afb21a24285cc5e3ea39819"
+recorded_on = 2026-10-30
+
+[[rows]]
+event_id = "cik-0000019617:2025-09-30"
+sha256 = "79f4bb16cfd5483ba89d9579b96561a0c059f3cb7442a27d979da5aa8581aa96"
+recorded_on = 2026-10-30
+
+[[rows]]
+event_id = "cik-0000773840:2025-12-31"
+sha256 = "a1bfef31b5f70e8abb365dcb78f3c3ec52783870a7b83b5704b0da1fadc1abcc"
+recorded_on = 2026-10-30
+
+[[rows]]
+event_id = "cik-0000320193:2025-09-27"
+sha256 = "0188dfc37dbf9a3730cb50f03aede05dde1df41fb1bab8b235a82216cb345b59"
+recorded_on = 2026-10-30
+
+[[rows]]
+event_id = "cik-0000063908:2025-09-30"
+sha256 = "61a68fcbaa76a7d2850c58b050b12a840ae82a1c845da810988b87cf36042ff1"
+recorded_on = 2026-10-30
+
+[[rows]]
+event_id = "cik-0000021344:2025-12-31"
+sha256 = "f7478697f4c9a73fef67e18e241ff3cca4e75a194d0557fe6d124dee6be97547"
+recorded_on = 2026-10-30
+
+[[rows]]
+event_id = "cik-0000318154:2025-09-30"
+sha256 = "3148b0dbb97cd74ee84ee91f63f7314c75c2d57cf57e718ba629b18e76e3e805"
+recorded_on = 2026-10-30
