@@ -1,0 +1,3092 @@
+# Stage 6 gold (the pilot codebook, split, and gold-set protocol). Written by `earnings-pipeline gold anchor`; quotes are pointers, and every other word is the annotator's.
+schema_version = 1
+event_id = "cik-0000318154:2025-09-30"
+document_id = "cik-0000318154:2025-09-30:release"
+doc_id = "0000318154-25-000070_amgn-20250930earningsrelea.htm@walker-1#193df58e0eea3037"
+canonical_hash = "193df58e0eea3037b8dabdaccbb28cc89dda56277fb366fefcc67cc5742cdccd"
+split_hash = "5c4a2f3c5ed9ffc2cf0065658ec4e75311220338cf9b3fe07802c0db9fcd0e53"
+partition = "dev"
+annotator = "Lowell Mason"
+no_theme = false
+
+[pin]
+pilot_id = "djia-2024q3-2026q2-pilot"
+pilot_version = 1
+pilot_hash = "3839c800151cc646f11064efdce583f988e511265f8893c90e9a2f2549145926"
+events_version = 1
+events_hash = "2348671b3ae8021d644df12ae2f539258670546970c918f8edb231ba1885c3b7"
+universe_version = 1
+universe_operative_hash = "c350923422d9bf2e65a0b5929f4c0d45370458c6a044c3de012a1dfeb116e573"
+
+[codebook]
+codebook_id = "djia-pilot"
+codebook_version = 0
+content_hash = "635975d1ec952cf5719ea3b473870f96e7e3a52bc3015cc1ac5725aa80ec1e79"
+
+[drafting_aid]
+model_id = "claude-opus-5-5"
+drafted_on = 2026-10-31
+
+[counts]
+accepted = 323
+edited = 36
+rejected = 0
+added = 64
+
+[release_identification]
+label = "release"
+note = "Amgen's own exhibit 99.1 announcing its results for the quarter that closed at the end of September 2025."
+
+[[quotes]]
+start = 735
+end = 846
+element_id = "sentence-735-846"
+quote_sha256 = "fb94b42bbc9360a8ff4ddd93199b8629abf97398e24454615726bb9c00293a56"
+mask_ids = []
+quote_id = "q1"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 848
+end = 948
+element_id = "sentence-848-948"
+quote_sha256 = "8162e82f4467771f810ece9a36920f75832c7465b1e34a6340d60e06d96ac685"
+mask_ids = []
+quote_id = "q2"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 349
+end = 487
+element_id = "sentence-348-487"
+quote_sha256 = "e7567dfe31fb189ecd47bf08904d2d83706ef9df6fc6978020a9aa497d1e464f"
+mask_ids = []
+quote_id = "q3"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 488
+end = 649
+element_id = "sentence-488-712"
+quote_sha256 = "741f73c18548043fc75f063b1bb111ac66432ccd7442dbc8b8438fc11fda24e7"
+mask_ids = []
+quote_id = "q4"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 950
+end = 1032
+element_id = "sentence-950-1290"
+quote_sha256 = "90ba3e6525082d34fa0f98de99601e6eacc3c14b2ed472d0613de787240a9f76"
+mask_ids = []
+quote_id = "q5"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1292
+end = 1545
+element_id = "sentence-1292-1545"
+quote_sha256 = "3bd80b59126a2681bf7f03c4c3c93231b108f44ccd9a97e1dd3ecd503b420585"
+mask_ids = []
+quote_id = "q6"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1547
+end = 1681
+element_id = "sentence-1547-1681"
+quote_sha256 = "057d7de102ade4adfde48985ed0e73906d2e41f0fdebffff197e35daf862ff88"
+mask_ids = []
+quote_id = "q7"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1683
+end = 1845
+element_id = "sentence-1683-1845"
+quote_sha256 = "47457819e72d9c8318c2e3965f72d0c84973bdf2b83aa88a9fb5775d060b45e5"
+mask_ids = []
+quote_id = "q8"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1847
+end = 1989
+element_id = "sentence-1847-1989"
+quote_sha256 = "f934f799633b72c7e5c89a668d3fb396cb08d20c994e6e271e499d020cb11fba"
+mask_ids = []
+quote_id = "q9"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 12139
+end = 12394
+element_id = "sentence-12139-12394"
+quote_sha256 = "3935e55fb2dcaa83f60b86827f913156016d534f25256f20bb4e34e9dbdc2aeb"
+context_sha256 = "3a8196d7e326551dde71c0f62db84ab4cd3aee3a1b7ce60de8a4ec0c2c192072"
+mask_ids = []
+quote_id = "q10"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2771
+end = 2899
+element_id = "sentence-2771-2899"
+quote_sha256 = "a92e425e592ad15f41b1faeb49fe43ccd965579e24546c7dc8d0a738387d06f8"
+mask_ids = []
+quote_id = "q11"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2901
+end = 3026
+element_id = "sentence-2901-3026"
+quote_sha256 = "237190b5286723a680ffdec9edb504efdf1342719b12a23626191f9a37aa01c4"
+mask_ids = []
+quote_id = "q12"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3028
+end = 3237
+element_id = "sentence-3028-3237"
+quote_sha256 = "404131d9c36a23564be99819a09833735012da4116e7eb169b322b40f0525018"
+mask_ids = []
+quote_id = "q13"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3238
+end = 3371
+element_id = "sentence-3238-3371"
+quote_sha256 = "d7a33d9a50420950d345c5e19de5269fb432f3f85b6e98fee314cd1b32268ddb"
+context_sha256 = "9131a2b5f14885af52984bb56dbe7cb58a2be399f8142b4e7bc9c0f13cdf69ca"
+mask_ids = []
+quote_id = "q14"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6630
+end = 6763
+element_id = "sentence-6630-6763"
+quote_sha256 = "d7a33d9a50420950d345c5e19de5269fb432f3f85b6e98fee314cd1b32268ddb"
+context_sha256 = "6699e82fb59b0ae6363cf78828d71e31720cecd827f7cbb014a54894e1caf370"
+mask_ids = []
+quote_id = "q15"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3386
+end = 3551
+element_id = "sentence-3386-3551"
+quote_sha256 = "54d01bd6f6fcbac41eaa9b475f6574776f80ecf6170fa5bb9b5d2b2a9b0bddd3"
+mask_ids = []
+quote_id = "q16"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3553
+end = 3757
+element_id = "sentence-3553-3757"
+quote_sha256 = "3f612c8170b0bf3c3967ce84386ccd8a860724453c7f3cd7a2428c243ed2dd1c"
+mask_ids = []
+quote_id = "q17"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3759
+end = 3895
+element_id = "sentence-3759-3895"
+quote_sha256 = "fb4286a7dd0b8778f4a67faeb9b21ce85361b2e4acc656d5c8ef8a9a2ab914eb"
+mask_ids = []
+quote_id = "q18"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3896
+end = 4094
+element_id = "sentence-3896-4094"
+quote_sha256 = "04fb4032ae3b6fc4e8ba3f8f43c60a4a187b602a787bc0eb0e74c52a33e1b5f1"
+mask_ids = []
+quote_id = "q19"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4095
+end = 4177
+element_id = "sentence-4095-4177"
+quote_sha256 = "ccff184375e7b81e5d1cae4e163c4ef345b29e10b190eee9dc03603957d92b7f"
+mask_ids = []
+quote_id = "q20"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4179
+end = 4380
+element_id = "sentence-4179-4380"
+quote_sha256 = "548001d7c4b07550482fd3cb0a70d32e72c35d5104a5c6714d4438b20f421531"
+mask_ids = []
+quote_id = "q21"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4643
+end = 4744
+element_id = "sentence-4643-4744"
+quote_sha256 = "b1041d6f08e64173e5e454e71723236d171539086c7bfcbc0e60e411234bece7"
+mask_ids = []
+quote_id = "q22"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4759
+end = 4934
+element_id = "sentence-4759-4934"
+quote_sha256 = "e6b0daf07718036f1fb0909d1b47bbf112ac0024fe30db6cb0439c5af9ec144e"
+mask_ids = []
+quote_id = "q23"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4936
+end = 5169
+element_id = "sentence-4936-5169"
+quote_sha256 = "cb1a06a41d2617eb4c7fee05750469e74a3be767c48987258f168050f9448680"
+mask_ids = []
+quote_id = "q24"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5171
+end = 5350
+element_id = "sentence-5171-5350"
+quote_sha256 = "116c94e9f2b4404f6de1823bc0004f89f9bc108a5df63bf15bac3e0e4e5180a3"
+mask_ids = []
+quote_id = "q25"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5409
+end = 5552
+element_id = "sentence-5409-5552"
+quote_sha256 = "0e7dbda1dd1b61c82d51d9dd35c9d3e5da275dbf1730721080543850668463c7"
+mask_ids = []
+quote_id = "q26"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5554
+end = 5737
+element_id = "sentence-5554-5737"
+quote_sha256 = "39274eddf3ec019c78cb72611471f699cf52a964215a682bbc589f4c696a411c"
+mask_ids = []
+quote_id = "q27"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5739
+end = 5819
+element_id = "sentence-5739-5819"
+quote_sha256 = "d6044ee4000d0093a919ae6c447c07204a2170057187b5aeab191e333dca1ab2"
+mask_ids = []
+quote_id = "q28"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5821
+end = 5924
+element_id = "sentence-5821-5924"
+quote_sha256 = "6fc4cc2975f9fee5aa140cec8c9b2b4179798c81dc0051a386d9bb64eef6d85b"
+mask_ids = []
+quote_id = "q29"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5935
+end = 6105
+element_id = "sentence-5935-6105"
+quote_sha256 = "a81dc81ad2a4f45b53603e5e3e9fe68778144c2298a760a0fc19666869d5afe4"
+mask_ids = []
+quote_id = "q30"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6107
+end = 6202
+element_id = "sentence-6107-6202"
+quote_sha256 = "12d127d6f5f39fed1ba33f6811683e96d63ab4ed640b4ee079e53234b20c13dd"
+mask_ids = []
+quote_id = "q31"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6204
+end = 6323
+element_id = "sentence-6204-6323"
+quote_sha256 = "54f148f0f6069d25603f6d367c823180e9b5bca2ae2fc3024d96b6bd798c543e"
+mask_ids = []
+quote_id = "q32"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6325
+end = 6427
+element_id = "sentence-6325-6427"
+quote_sha256 = "014e5d20c4e9baaefbeb894388bc4c68ddbb602f6b72540d1df43dec6a81bfdb"
+mask_ids = []
+quote_id = "q33"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6429
+end = 6629
+element_id = "sentence-6429-6629"
+quote_sha256 = "07e85ee9a20484542e575c941ff218af342033c0be144dc838785f22586a0e5e"
+mask_ids = []
+quote_id = "q34"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6856
+end = 6939
+element_id = "sentence-6856-6939"
+quote_sha256 = "b3c0eb95d45ede633d5e6666460bf98e3b00d914b6e19f22b02e6d5a5a40c2db"
+mask_ids = []
+quote_id = "q35"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6940
+end = 7047
+element_id = "sentence-6940-7047"
+quote_sha256 = "0d69d733a47e4f6757e4e06b962dd100c7a8a8b3eea76a6146015e15d8e4626c"
+mask_ids = []
+quote_id = "q36"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7156
+end = 7232
+element_id = "sentence-7156-7232"
+quote_sha256 = "091301d27283de9d7ed05a5814fcbb3ba39c8dc7cbafe0e62810f5f3de77a5db"
+mask_ids = []
+quote_id = "q37"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7234
+end = 7390
+element_id = "sentence-7234-7390"
+quote_sha256 = "daaa143687a2dcef74c2a97983695059a6030b1314e3c45c5a6617b7eb0163dd"
+mask_ids = []
+quote_id = "q38"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7597
+end = 7781
+element_id = "sentence-7597-7781"
+quote_sha256 = "c5636cd61e908ade87c5b4c83fba52095d510bd795d176601993acea79ad4278"
+mask_ids = []
+quote_id = "q39"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7049
+end = 7155
+element_id = "sentence-7049-7155"
+quote_sha256 = "e82990dad32ade32b8ba16794b11005597a3866d9f35a1a3540ec6bae9136949"
+mask_ids = []
+quote_id = "q40"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 9340
+end = 9415
+element_id = "sentence-9340-9415"
+quote_sha256 = "c74c3dde62b238a2f2a6c1508fa75370657ad043bcf32e9d6e1d0a92b80672c9"
+mask_ids = []
+quote_id = "q41"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 9416
+end = 9703
+element_id = "sentence-9416-9703"
+quote_sha256 = "51314a62b2f8b8cd17cf287ad3ef0883b54d3ea375fa2a96f809ed0213d49788"
+mask_ids = []
+quote_id = "q42"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 9704
+end = 9900
+element_id = "sentence-9704-9900"
+quote_sha256 = "71a3488f42dee3e8eb1a8e49e6ad61d4ced9fb7ff55c0ee4aa045a0f73e649b0"
+mask_ids = []
+quote_id = "q43"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 9901
+end = 10081
+element_id = "sentence-9901-10081"
+quote_sha256 = "2ef9131446a33a9d1bf12c3a2b30547f7a6ef8c162d8653b644d0463cfb2d167"
+mask_ids = []
+quote_id = "q44"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 10082
+end = 10179
+element_id = "sentence-10082-10179"
+quote_sha256 = "092063a34acf61a6b83c77ea0f4b2442892ee0622d57cb33e7042ba94c64e705"
+mask_ids = []
+quote_id = "q45"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 10181
+end = 10293
+element_id = "sentence-10181-10293"
+quote_sha256 = "27c13822d075d1b388eba399a72f5d53e4c4ac9b613559856529eecb88655054"
+mask_ids = []
+quote_id = "q46"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 10295
+end = 10492
+element_id = "sentence-10295-10492"
+quote_sha256 = "86af39113ebeca5f82a5ea652acdd14d4f8124e8fa8e77177c4c263696ee2488"
+mask_ids = []
+quote_id = "q47"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 10515
+end = 10591
+element_id = "sentence-10515-10591"
+quote_sha256 = "91c3bd59901df04b1b097ccad51b3795025be5d6edeb34ca6890e313eafb679c"
+mask_ids = []
+quote_id = "q48"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 10592
+end = 10785
+element_id = "sentence-10592-10785"
+quote_sha256 = "491e9286692736d3ab23f503ebc9b5c7949ade18e7decc559417331db74a0ce3"
+mask_ids = []
+quote_id = "q49"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 10786
+end = 10957
+element_id = "sentence-10786-10957"
+quote_sha256 = "a37d9e070feead0d58e47af06d9ca8c6bc78eb105186b72af62e4392c54740e6"
+mask_ids = []
+quote_id = "q50"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 10958
+end = 11038
+element_id = "sentence-10958-11038"
+quote_sha256 = "5e2d6cb6d2222e7ccb779735774e63f57fb3c83e1f8cae52702bd123e0cb9299"
+mask_ids = []
+quote_id = "q51"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 11040
+end = 11152
+element_id = "sentence-11040-11152"
+quote_sha256 = "dc3e02ee42a94726a015e3eda4e6dd41d1c04c26e3ef790dc93db3ec24e21806"
+mask_ids = []
+quote_id = "q52"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 11154
+end = 11250
+element_id = "sentence-11154-11250"
+quote_sha256 = "ffd06043879007d69ff4953c97c8a9633100ce7069a880ec23a344b7d9102561"
+mask_ids = []
+quote_id = "q53"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 12396
+end = 12629
+element_id = "sentence-12396-12629"
+quote_sha256 = "9dd0de7a24d5cc2443228a86c71717b9e0b5c92bc418be0fffff739a2831f70d"
+mask_ids = []
+quote_id = "q54"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 12631
+end = 12735
+element_id = "sentence-12631-12735"
+quote_sha256 = "c87e43d67f9ca41c55606ff6437d26c67e2767f0f2f4d3e1343029e1be4388ae"
+mask_ids = []
+quote_id = "q55"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 12737
+end = 12858
+element_id = "sentence-12737-12858"
+quote_sha256 = "d54ab7272171dc2e0968fc3b5f8edd223cafed8f235c93b27835c5104791e3d2"
+mask_ids = []
+quote_id = "q56"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 12860
+end = 12975
+element_id = "sentence-12860-12975"
+quote_sha256 = "cd7e4486ad73a3df90dbc23dd6e5e5a653a020ede75b1b96409f978cbe0787dc"
+mask_ids = []
+quote_id = "q57"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 13565
+end = 13627
+element_id = "sentence-13565-13627"
+quote_sha256 = "b4df304bba00e5abb7d88d200b7183017c0bf7abb71b7d98ce3f6c4fbf508cae"
+mask_ids = []
+quote_id = "q58"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 13629
+end = 13730
+element_id = "sentence-13629-13730"
+quote_sha256 = "3bb8136f3bb8d1f670a9e7c9d73baa3e6bbe9bf85db7dae78df2bd93efafb889"
+mask_ids = []
+quote_id = "q59"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 13732
+end = 13837
+element_id = "sentence-13732-13837"
+quote_sha256 = "ecafb68f2591e46ad8785b193496d817c78ff96d9f7467fc8538e2bb23f0f51d"
+mask_ids = []
+quote_id = "q60"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 13839
+end = 13905
+element_id = "sentence-13839-13905"
+quote_sha256 = "87aea6f81461016ead92b52ffa815a0296a24ccb35318a7c3c1e04f985ea4145"
+mask_ids = []
+quote_id = "q61"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 13907
+end = 13952
+element_id = "sentence-13907-13952"
+quote_sha256 = "2487d644406f48dcd57868f408cfc8a7890d274d89e3217b0555af090eb488f1"
+mask_ids = []
+quote_id = "q62"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 13953
+end = 14238
+element_id = "sentence-13953-14238"
+quote_sha256 = "c59ee0e691a3d2ab2ae1c30c71455b296367a884309279970a6fe229f838b1fc"
+context_sha256 = "8629b5902750c28c581ad967197900866bf9f1fa8cd5b2dcb0f234c41f131cc6"
+mask_ids = []
+quote_id = "q63"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 56097
+end = 56414
+element_id = "sentence-56097-56414"
+quote_sha256 = "f8956de298949aa7e54482016fe35b38c1e76b5c23ff2f72c68330f3680e9283"
+mask_ids = []
+quote_id = "q64"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 55973
+end = 56096
+element_id = "sentence-55973-56096"
+quote_sha256 = "2653891d7e9bc43fa271c73562763495059a013efaf5aa5af1870d71335a2cd5"
+mask_ids = []
+quote_id = "q65"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 53216
+end = 53372
+element_id = "sentence-53216-53372"
+quote_sha256 = "7fa7f2a06f6613ebd4fe9d158592459954df4206f1e368f4b2558c267d6fbc63"
+mask_ids = []
+quote_id = "q66"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 53951
+end = 54237
+element_id = "sentence-53951-54237"
+quote_sha256 = "004874e8f0ba9f6129f82b9a4537f1eedecfe3413efd419211255bdf359acfa3"
+mask_ids = []
+quote_id = "q67"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 14628
+end = 14799
+element_id = "sentence-14628-14799"
+quote_sha256 = "af6790bff3d281b005694214fdf4d93eba79892c5b9fc17e146c469026e968ff"
+mask_ids = []
+quote_id = "q68"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 14801
+end = 14951
+element_id = "sentence-14801-14951"
+quote_sha256 = "c18260a40d627d4b7b4e9f141caae59999dc321c59b1e8a9e10383e26be0017e"
+mask_ids = []
+quote_id = "q69"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 15352
+end = 15540
+element_id = "sentence-15352-15540"
+quote_sha256 = "a58d18befb16843a5354459cc3bdab8998aba5eebd3c294a0238b78076e9bf88"
+mask_ids = []
+quote_id = "q70"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 15542
+end = 15734
+element_id = "sentence-15542-15734"
+quote_sha256 = "308196ce3071e8eaedf40f59dda52b305ac61a428c09e5a7fdea262f542d7590"
+mask_ids = []
+quote_id = "q71"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 14953
+end = 15136
+element_id = "sentence-14953-15136"
+quote_sha256 = "0b0b5ef60147be3bfce3e5aab219cf1b7c4c55ba9049da56ee852175a4ba689a"
+mask_ids = []
+quote_id = "q72"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 15138
+end = 15350
+element_id = "sentence-15138-15350"
+quote_sha256 = "02e44ccb000af86b900bb7f7998a680891d7ee97748e0560a1ab191ca5990fe4"
+mask_ids = []
+quote_id = "q73"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 15794
+end = 15964
+element_id = "sentence-15794-15964"
+quote_sha256 = "9a378072c514dc49d87cfce7cc5742eeec6420951f6e8565c6228b1f57a2345e"
+mask_ids = []
+quote_id = "q74"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 15966
+end = 16123
+element_id = "list_item-15965-16123"
+quote_sha256 = "e1a2dcb665d2a73db73be79a0e1ee83b4ac2195a108cf8efb0cac6265c59fde1"
+mask_ids = []
+quote_id = "q75"
+origin = "drafted_edited"
+
+[[quotes]]
+start = 16133
+end = 16200
+element_id = "sentence-16133-16200"
+quote_sha256 = "919a37740f26cf7969aff5f943eafa4c978ecf7d16c0ba50a6120c00a816a71a"
+mask_ids = []
+quote_id = "q76"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 16210
+end = 16476
+element_id = "sentence-16210-16476"
+quote_sha256 = "4eedc04fddd32e4fcab571d6515a23e680d53573c02878b3cd83c33225d0dff7"
+mask_ids = []
+quote_id = "q77"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 17055
+end = 17187
+element_id = "list_item-16758-17187"
+quote_sha256 = "4f4b755f1d740e7c8150f13e7eca3e92471b13a7d52598fa1103df2b62279cf1"
+mask_ids = []
+quote_id = "q78"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 17189
+end = 17376
+element_id = "sentence-17189-17376"
+quote_sha256 = "38936760e9c76bce08e28a403d93eaf133b971075f99e5f85242668ab14100c5"
+mask_ids = []
+quote_id = "q79"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 17378
+end = 17538
+element_id = "sentence-17378-17538"
+quote_sha256 = "4c3ac396f1191a8eb8ea749ebc99a8a40501d1d218970f8ca023fde1336fa55f"
+mask_ids = []
+quote_id = "q80"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 17882
+end = 18026
+element_id = "sentence-17882-18026"
+quote_sha256 = "2c7a277794e60d9c6863f33821ec63b8500b9444d33aa512f90d042398ba0497"
+mask_ids = []
+quote_id = "q81"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 18202
+end = 18355
+element_id = "sentence-18202-18355"
+quote_sha256 = "60a8087bb92459abe230a056994245ebad81b5bd8eef738d09b648236def4892"
+mask_ids = []
+quote_id = "q82"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 18357
+end = 18529
+element_id = "sentence-18357-18529"
+quote_sha256 = "2e3697dc388e9878a21920cd613ba5db8a2c39411ad42cd9f457dbb2867ee01e"
+mask_ids = []
+quote_id = "q83"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 18892
+end = 19043
+element_id = "sentence-18892-19043"
+quote_sha256 = "61d2ec26c7890e2307454d17898df16acfb5db17f1f57553ee6678bd2527bc90"
+mask_ids = []
+quote_id = "q84"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 19045
+end = 19215
+element_id = "sentence-19045-19215"
+quote_sha256 = "0a640d4693757e63f23e4c5684390fef8f872d959acfaa712fcfab96de6b7f03"
+mask_ids = []
+quote_id = "q85"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 19225
+end = 19365
+element_id = "sentence-19225-19365"
+quote_sha256 = "694db3c0563f69e00a1494fd8c09ef18f9a7d2f3ad7ec55dad9e61fb690142db"
+mask_ids = []
+quote_id = "q86"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 19367
+end = 19483
+element_id = "sentence-19367-19483"
+quote_sha256 = "dbd14b740ae91837f3b089372eecfcabd4422cc33ef94c97e503f4d842df3090"
+mask_ids = []
+quote_id = "q87"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 19493
+end = 19697
+element_id = "sentence-19493-19770"
+quote_sha256 = "2cee5b5ee562f3ea225bb6933a73007ec4afececfcbd0c0430ea2480c1e1990e"
+mask_ids = []
+quote_id = "q88"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 19838
+end = 20114
+element_id = "list_item-19837-20114"
+quote_sha256 = "1bd2522a8e016133ce6253f7662b0ad2a80a327fceae5dd6f855ef60d5de8ea5"
+mask_ids = []
+quote_id = "q89"
+origin = "drafted_edited"
+
+[[quotes]]
+start = 20227
+end = 20378
+element_id = "sentence-20227-20378"
+quote_sha256 = "c471ca00f74cc3e6abf1c99c03e024aa1c4529f770ba2da6dd69421d28fbc545"
+mask_ids = []
+quote_id = "q90"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 20380
+end = 20495
+element_id = "sentence-20380-20495"
+quote_sha256 = "0aaa1879f721d22b67caefb3ae1dc77eecb802cd7111bab17556561d29923aed"
+mask_ids = []
+quote_id = "q91"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 20603
+end = 20676
+element_id = "sentence-20603-20676"
+quote_sha256 = "b63b78ab785807df6ff4fa23e31fe2990e805979b2b95b57a619dfcb6b5113d2"
+mask_ids = []
+quote_id = "q92"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 20838
+end = 20922
+element_id = "sentence-20838-20922"
+quote_sha256 = "3e429e2edf4c710f569489372ccdf218d897482a7acc6abf5492b43ace8e5ffa"
+mask_ids = []
+quote_id = "q93"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 20946
+end = 21156
+element_id = "sentence-20946-21156"
+quote_sha256 = "4cfa847c644cbe8eac8c3503b4a3630ebf16f1b1602682cbb3bb385767ce37af"
+mask_ids = []
+quote_id = "q94"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 21158
+end = 21310
+element_id = "sentence-21158-21310"
+quote_sha256 = "bc6430d2e03309dec0caa29cd8abd646fd052f10b3bbb8d924a8bcd0ecdcd9c9"
+mask_ids = []
+quote_id = "q95"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 21312
+end = 21393
+element_id = "sentence-21312-21393"
+quote_sha256 = "757747a6aa2e918f1bb813e54fb21aede75a0215fd6c55d1773d413f497fb1e6"
+mask_ids = []
+quote_id = "q96"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 21559
+end = 21767
+element_id = "list_item-21558-21767"
+quote_sha256 = "1afe1946014104ac21c7da9b8d910f9c3de730a353782599d2946007db98cf3d"
+mask_ids = []
+quote_id = "q97"
+origin = "drafted_edited"
+
+[[quotes]]
+start = 21769
+end = 22031
+element_id = "sentence-21769-22033"
+quote_sha256 = "00e805b30c39a332b112babe30a5ac84254c2c5bfa354c0e3700fcdf35272e7e"
+mask_ids = []
+quote_id = "q98"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 22132
+end = 22448
+element_id = "list_item-22131-22675"
+quote_sha256 = "58788ae413c4e4fa9b75e00d6cc2fcc3750b865282208fec8c37fb456fb42915"
+mask_ids = []
+quote_id = "q99"
+origin = "drafted_edited"
+
+[[quotes]]
+start = 22449
+end = 22506
+element_id = "sentence-22449-22506"
+quote_sha256 = "c7e136a4f78a007661c7542b91d93bdd34517a23f2f9fcad3c61e1fec18ebc84"
+mask_ids = []
+quote_id = "q100"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 22677
+end = 22763
+element_id = "sentence-22677-22763"
+quote_sha256 = "19602ce29f128302185ad8dcb8bb553dce5fbf475228117afb845013c8143036"
+mask_ids = []
+quote_id = "q101"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 22765
+end = 22857
+element_id = "sentence-22765-22857"
+quote_sha256 = "9a2a422f4fd3399772269f53b4167328919532d6ebf82a7fa117e0d8a944d43a"
+mask_ids = []
+quote_id = "q102"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 23388
+end = 23592
+element_id = "sentence-23388-23592"
+quote_sha256 = "a247b10c7f62d3406c4b013b91c202bead0131e4b66437e52608c59f7fb005cf"
+mask_ids = []
+quote_id = "q103"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 23679
+end = 23777
+element_id = "sentence-23679-23777"
+quote_sha256 = "6ef199b072cf92442a3124257b4ef57e4c8875d794f0606ca2633cb7aaa49fd2"
+mask_ids = []
+quote_id = "q104"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 23901
+end = 23966
+element_id = "sentence-23901-23966"
+quote_sha256 = "e94ccb8af3d7edd2a2292c6901011cbb7bc3a459e0aa882d79eb57a9f94376c8"
+mask_ids = []
+quote_id = "q105"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 24258
+end = 24385
+element_id = "sentence-24258-24385"
+quote_sha256 = "e79ac9ca22b4c3ac60795f71235d987cc8f6a63bc1771ba3d97924c78f4ba4e9"
+mask_ids = []
+quote_id = "q106"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 24387
+end = 24560
+element_id = "sentence-24387-24560"
+quote_sha256 = "4f948a96bc147f8cc43510aec31204e0fa6994287d0f0979eefb9ed9714dafb8"
+mask_ids = []
+quote_id = "q107"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 24983
+end = 25336
+element_id = "sentence-24983-25336"
+quote_sha256 = "7b08b5c8ab55d2285a1b4817840b6c19bb0ea99f42f0d392169271cdd488aff3"
+mask_ids = []
+quote_id = "q108"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 25338
+end = 26134
+element_id = "list_item-25337-26134"
+quote_sha256 = "bec034eb12866dc77676eb32a4c023d5f4e67f233e4e8013c8f865da2c09e3af"
+mask_ids = []
+quote_id = "q109"
+origin = "drafted_edited"
+
+[[quotes]]
+start = 26195
+end = 26450
+element_id = "sentence-26195-26450"
+quote_sha256 = "7c80966d1b87b37737506ae885cbd8bd719ecc07a6611f4c269244aa49dc2dbd"
+mask_ids = []
+quote_id = "q110"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 26451
+end = 26526
+element_id = "sentence-26451-26526"
+quote_sha256 = "cc8fe77025c68af776851178dad1a34354002fef457e8ec9aa1a821f96cb398f"
+mask_ids = []
+quote_id = "q111"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 26921
+end = 27066
+element_id = "sentence-26921-27066"
+quote_sha256 = "e6e1503ff1e11741b3d760552be84d094473b0753b5e36aaee88c24a056cd666"
+mask_ids = []
+quote_id = "q112"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 27818
+end = 27965
+element_id = "sentence-27818-27965"
+quote_sha256 = "5419be5479f9bfdbadd6bbf4729f890e5c9ce9956780e1631caf819ce20ecf28"
+mask_ids = []
+quote_id = "q113"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 28119
+end = 28304
+element_id = "sentence-28119-28304"
+quote_sha256 = "769b1371aad66046fce4175924657efd20ee4bb3c4ab9c14dcc64a05a4e22408"
+mask_ids = []
+quote_id = "q114"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 28306
+end = 28472
+element_id = "sentence-28306-28472"
+quote_sha256 = "0d2e4b35b7a4b7179794aab08f8e900d05991699a2ae2e62ea5d65ff855328db"
+mask_ids = []
+quote_id = "q115"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 29220
+end = 29399
+element_id = "sentence-29220-29399"
+quote_sha256 = "a0c958c8bbecb9091b9b729161e0700e3d8f544e73ffa025877409e570b0715b"
+mask_ids = []
+quote_id = "q116"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 29786
+end = 30030
+element_id = "sentence-29786-30087"
+quote_sha256 = "d3796d37d1d3b1431aaf6a9b0479d1f82f412585ad12092c211c0713c26a8e23"
+mask_ids = []
+quote_id = "q117"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 30089
+end = 30343
+element_id = "sentence-30089-30343"
+quote_sha256 = "ca2863202a6a047218ed4ccc5ab9eeb207ce754089f0d5c5f38592ac1c043739"
+mask_ids = []
+quote_id = "q118"
+origin = "drafted_edited"
+
+[[quotes]]
+start = 30345
+end = 30483
+element_id = "sentence-30345-30483"
+quote_sha256 = "4a7e562b2001d8c5df4d727786ba62040fb48ff418ba53f3109d96189611bdf5"
+mask_ids = []
+quote_id = "q119"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 30485
+end = 30663
+element_id = "sentence-30485-30663"
+quote_sha256 = "99307a39945b7ab1b54bbc1f2a377900eb9eb9346f567b971dea6e0a5084563c"
+mask_ids = []
+quote_id = "q120"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 30952
+end = 31115
+element_id = "sentence-30952-31115"
+quote_sha256 = "2463d29b6c5ac7776e6c4517336ca3a3510b00374194f4b44b2dbcc7e92def3a"
+mask_ids = []
+quote_id = "q121"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 31581
+end = 31796
+element_id = "sentence-31581-31796"
+quote_sha256 = "5e529238588f0192adff4859629771ac1dcaaf416c34d1d4c228ee356ad3c839"
+mask_ids = []
+quote_id = "q122"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 31857
+end = 32062
+element_id = "sentence-31857-32062"
+quote_sha256 = "10cf97809fb27bbc47333e7b2ff5063a0e3789b4aa923c3b645eeb335d0cffef"
+mask_ids = []
+quote_id = "q123"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 32071
+end = 32234
+element_id = "sentence-32071-32234"
+quote_sha256 = "1a9dfeaa149e55880a728f7c6ab782c0f7c80d35e16c9ee9ccd0d2cfdcfa2176"
+mask_ids = []
+quote_id = "q124"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 32248
+end = 32489
+element_id = "sentence-32248-32489"
+quote_sha256 = "948e437228f22741b25394dfecfdc5af9853311ac64f6326c6e97bc579a52f5f"
+mask_ids = []
+quote_id = "q125"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 33033
+end = 33227
+element_id = "sentence-33033-33227"
+quote_sha256 = "37775252f6850d7e5c5a3c866ac91b42438954358547f04b889fbf30f190aaeb"
+mask_ids = []
+quote_id = "q126"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 33228
+end = 33290
+element_id = "sentence-33228-33290"
+quote_sha256 = "e7c35393f710a45e6d221203366c9568f0cd863cb5c486b10a599bb8d7616b07"
+mask_ids = []
+quote_id = "q127"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 33353
+end = 33446
+element_id = "sentence-33353-33446"
+quote_sha256 = "9e1872b63207d80e6f0812f1e72147fe90fb1298c085c30bf05a7fde35ab500e"
+mask_ids = []
+quote_id = "q128"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 33552
+end = 33648
+element_id = "sentence-33552-33648"
+quote_sha256 = "d87ba67cc2581b2a810ecdb8992dbd343a53f217e32a1c1931606c1113f7b2d5"
+mask_ids = []
+quote_id = "q129"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 40091
+end = 40190
+element_id = "sentence-40091-40190"
+quote_sha256 = "944adba1d919fd170c820b07ee9a5155c728147b189748ce98bed6765417c7da"
+mask_ids = ["safe_harbor-38800-43532"]
+quote_id = "q130"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 39380
+end = 39610
+element_id = "sentence-39380-39772"
+quote_sha256 = "05db79967de1c2aae930982a5109cfc8176b6c54dbe31c526f1e2dc7bfaff7fe"
+mask_ids = ["safe_harbor-38800-43532"]
+quote_id = "q131"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 35314
+end = 35398
+element_id = "sentence-35314-35398"
+quote_sha256 = "cd7a4968487ab54919bc3d12ea4b2989efa4686f8a489f2ad6e6ba3a886fd7a2"
+mask_ids = ["non_gaap_disclaimer-34806-35398"]
+quote_id = "q132"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 43844
+end = 44015
+element_id = "sentence-43844-44015"
+quote_sha256 = "a2826a77ec01a0cf5f5df724d13ef5245cec33c596e87ca3196b7a541bbf8af2"
+mask_ids = ["safe_harbor-43592-44121"]
+quote_id = "q133"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 43765
+end = 43843
+element_id = "sentence-43765-43843"
+quote_sha256 = "b3bfd5af2a376b244de0aa76b339652ff9bc20e0480a1466a33e3e188da2ff25"
+mask_ids = ["safe_harbor-43592-44121"]
+quote_id = "q134"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 40602
+end = 40918
+element_id = "sentence-40602-40918"
+quote_sha256 = "a1bc3f68e7d2a278d820b4d08eee3c1da4cbb68d92c147981451d3b3549ae060"
+mask_ids = ["safe_harbor-38800-43532"]
+quote_id = "q135"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 36411
+end = 36498
+element_id = "sentence-36411-36588"
+quote_sha256 = "3781f3b5de3820bcf32353b665f9528ec9fbcf527e2ee02c80d93db3c810baf1"
+mask_ids = []
+quote_id = "q136"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 43052
+end = 43189
+element_id = "sentence-43052-43189"
+quote_sha256 = "0ff50e11e2d5858fcd353b5a317d4565086dac7a8f4ac69893bab01bcfe7e3ff"
+mask_ids = ["safe_harbor-38800-43532"]
+quote_id = "q137"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 53037
+end = 53215
+element_id = "sentence-53037-53215"
+quote_sha256 = "c818d564dcfd3f4aa1266f259788a2e1272b8609309d44ddfaf2c36f3362e4bd"
+mask_ids = []
+quote_id = "q138"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 16478
+end = 16757
+element_id = "list_item-16477-16757"
+quote_sha256 = "ceac77d92a532e95c8f03ba7f33d01de1c30a79782b9aea6a0809c8745e35f77"
+mask_ids = []
+quote_id = "aq1"
+origin = "annotator_added"
+
+[[quotes]]
+start = 22034
+end = 22130
+element_id = "sentence-22034-22130"
+quote_sha256 = "2f745196884ed38e693dde34ef58fce4301228ddc8b73d74f331a42fa0d41eaa"
+mask_ids = []
+quote_id = "aq2"
+origin = "annotator_added"
+
+[[quotes]]
+start = 22596
+end = 22675
+element_id = "sentence-22596-22675"
+quote_sha256 = "fc36be76351eacce395c415f70190a19637dca8a9cc43c6a4bd2a08f51574f9a"
+mask_ids = []
+quote_id = "aq3"
+origin = "annotator_added"
+
+[[quotes]]
+start = 24001
+end = 24257
+element_id = "sentence-24001-24257"
+quote_sha256 = "f15e590f98c004d98405e1391f01d718265afa999c544762372b489b0450169e"
+mask_ids = []
+quote_id = "aq4"
+origin = "annotator_added"
+
+[[quotes]]
+start = 26664
+end = 26919
+element_id = "sentence-26664-26919"
+quote_sha256 = "f565dd722c27125387b7dc0d93ed82f1eb69fe5cd31de570af35262ef6bc1caf"
+mask_ids = []
+quote_id = "aq5"
+origin = "annotator_added"
+
+[[quotes]]
+start = 27068
+end = 27190
+element_id = "sentence-27068-27190"
+quote_sha256 = "9e821ceb1dd96fddacf273c5605eb8e7667d38f6ebb0b73d495993c55cae0eba"
+mask_ids = []
+quote_id = "aq6"
+origin = "annotator_added"
+
+[[quotes]]
+start = 27192
+end = 27314
+element_id = "sentence-27192-27314"
+quote_sha256 = "61e1c53b409f6723f2ee0fc02b347127a802646b638e8f2a2b8083b50542f548"
+mask_ids = []
+quote_id = "aq7"
+origin = "annotator_added"
+
+[[quotes]]
+start = 27316
+end = 27455
+element_id = "sentence-27316-27455"
+quote_sha256 = "7a75e4224dd01c3ffbd25b2053346f40193a5a7359404b74ec1f100b4a10effd"
+mask_ids = []
+quote_id = "aq8"
+origin = "annotator_added"
+
+[[quotes]]
+start = 27457
+end = 27640
+element_id = "sentence-27457-27640"
+quote_sha256 = "05ae913eb0b0e8dc22334b4f02b0219dd7a2c8f333bc3337a7ffa5d1f9bbdb86"
+mask_ids = []
+quote_id = "aq9"
+origin = "annotator_added"
+
+[[quotes]]
+start = 27642
+end = 27816
+element_id = "sentence-27642-27816"
+quote_sha256 = "69b8a8cdd5119cef32d216fe6a32299132f6f10be556ca218fd94ad32298ec1d"
+mask_ids = []
+quote_id = "aq10"
+origin = "annotator_added"
+
+[[quotes]]
+start = 28474
+end = 28843
+element_id = "list_item-28473-28843"
+quote_sha256 = "ce9563850b21514d5a791a41c66d492af576dab2f967014ecd3d2bcbee902e08"
+mask_ids = []
+quote_id = "aq11"
+origin = "annotator_added"
+
+[[quotes]]
+start = 28845
+end = 29023
+element_id = "sentence-28845-29023"
+quote_sha256 = "c5e16eec3afee1bd8ab58240dc7868fa74c3417ed6246125622dcf270b5efa70"
+mask_ids = []
+quote_id = "aq12"
+origin = "annotator_added"
+
+[[quotes]]
+start = 29084
+end = 29218
+element_id = "sentence-29084-29218"
+quote_sha256 = "c47c74404c0731bf2baceebe627c5d639218055b545d113752b796117a9ac2db"
+mask_ids = []
+quote_id = "aq13"
+origin = "annotator_added"
+
+[[quotes]]
+start = 30665
+end = 30804
+element_id = "sentence-30665-30804"
+quote_sha256 = "711abae61ef73899537d94d566f6a6ad7c3b752046a90cc29cc9c35f19e00b68"
+mask_ids = []
+quote_id = "aq14"
+origin = "annotator_added"
+
+[[quotes]]
+start = 31117
+end = 31251
+element_id = "sentence-31117-31251"
+quote_sha256 = "ff070b64b9645a900d88c5a23e77fda3c4dfd2c97bdd9d5641bd7fe86e4260dc"
+mask_ids = []
+quote_id = "aq15"
+origin = "annotator_added"
+
+[[quotes]]
+start = 31253
+end = 31394
+element_id = "sentence-31253-31394"
+quote_sha256 = "615db01544113ec38feaeabb3d7556194d19669884cdc0fb035d0221af30dab6"
+mask_ids = []
+quote_id = "aq16"
+origin = "annotator_added"
+
+[[quotes]]
+start = 31396
+end = 31561
+element_id = "sentence-31396-31561"
+quote_sha256 = "6cf8ec6c5d926a70e35e98a33335a209cc4ade30b0b7726cc01b3a16ec386cbe"
+mask_ids = []
+quote_id = "aq17"
+origin = "annotator_added"
+
+[[quotes]]
+start = 32491
+end = 32656
+element_id = "sentence-32491-32656"
+quote_sha256 = "f62b5ed6e07ff3ba8b71b7a09d8b1fdfba662090808ba7befb6ff4828ab72282"
+mask_ids = []
+quote_id = "aq18"
+origin = "annotator_added"
+
+[[quotes]]
+start = 32658
+end = 32849
+element_id = "sentence-32658-32849"
+quote_sha256 = "b3fe08aa343014218d75d737abb06daa89259e84c2cae4d1ef15bb4cfc1c006f"
+mask_ids = []
+quote_id = "aq19"
+origin = "annotator_added"
+
+[[quotes]]
+start = 32851
+end = 33031
+element_id = "sentence-32851-33031"
+quote_sha256 = "6491a2beeecdcc07c49d9c554ade566a67c8eeb38190634e8a801b79258bc244"
+mask_ids = []
+quote_id = "aq20"
+origin = "annotator_added"
+
+[[quotes]]
+start = 52417
+end = 52742
+element_id = "footnote-52417-52742"
+quote_sha256 = "e44beb92ad77df27d98fa46de2551805bf2857613c0d4e349c49819617a23788"
+mask_ids = []
+quote_id = "aq21"
+origin = "annotator_added"
+
+[[quotes]]
+start = 33291
+end = 33352
+element_id = "sentence-33291-33352"
+quote_sha256 = "4af2448a5bb9a2a54c12f8475f8fda57c1a045e19e292cacccd064b37a34d4eb"
+mask_ids = []
+quote_id = "aq22"
+origin = "annotator_added"
+
+[[quotes]]
+start = 33447
+end = 33551
+element_id = "sentence-33447-33551"
+quote_sha256 = "84c4a4562f2538a79d8c2dd291ed28785fc9b648d0c73bb5dfa573770d87b5a0"
+mask_ids = []
+quote_id = "aq23"
+origin = "annotator_added"
+
+[[quotes]]
+start = 6765
+end = 6855
+element_id = "sentence-6765-6855"
+quote_sha256 = "3fd3396b526d85f93fc9a391e8bb447d60cb20a27648f04d8d638112ca55e06a"
+mask_ids = []
+quote_id = "aq24"
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "c1"
+quote_ids = ["q1", "q2"]
+claim = "Quarterly revenue grew 12% from a year earlier, reaching about $9.6 billion."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c2"
+quote_ids = ["q2"]
+claim = "Product sales rose 12% as unit growth of 14% outweighed a 4% drop in net prices."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c3"
+quote_ids = ["q3"]
+claim = "The CEO credits the quarter's growth to strong volumes and patient demand for Amgen's medicines."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c4"
+quote_ids = ["q4"]
+claim = "The CEO frames the strategy around investment, a first-in-class pipeline, broader access, and lasting growth."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c5"
+quote_ids = ["q5"]
+claim = "Sixteen of Amgen's products grew sales by 10% or more this quarter."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c6"
+quote_ids = ["q6"]
+claim = "GAAP EPS climbed 14% to $5.93 on higher revenue, held back by higher operating costs that included a $400 million Otezla intangible impairment."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c7"
+quote_ids = ["q7", "q46"]
+claim = "GAAP operating income rose to about $2.5 billion and GAAP operating margin widened 2.5 points to 27.6%."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c8"
+quote_ids = ["q8"]
+claim = "Non-GAAP EPS edged up 1% to $5.64: revenue growth was mostly offset by higher operating costs and a higher effective tax rate."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c9"
+quote_ids = ["q9", "q52"]
+claim = "Non-GAAP operating income grew to about $4.3 billion, though non-GAAP operating margin narrowed 2.5 points to 47.1%."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c10"
+quote_ids = ["q10"]
+claim = "Free cash flow rose to $4.2 billion from $3.3 billion, helped by working-capital timing and smaller interest payments, partly offset by more capital spending."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c11"
+quote_ids = ["q11"]
+claim = "Repatha sales jumped 40% to $794 million, mainly on higher volume."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c12"
+quote_ids = ["q12"]
+claim = "EVENITY sales rose 36% to $541 million on volume growth."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c13"
+quote_ids = ["q13"]
+claim = "Prolia sales grew 9% to $1.1 billion, mostly from favorable revisions to estimated sales deductions, partly offset by lower net price."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c14"
+quote_ids = ["q14", "q15"]
+claim = "Amgen expects Prolia and XGEVA sales to erode through the rest of 2025 now that U.S. biosimilars have launched."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c15"
+quote_ids = ["q16"]
+claim = "TEPEZZA sales rose 15% to $560 million on channel inventory build and higher net price."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c16"
+quote_ids = ["q17"]
+claim = "KRYSTEXXA sales rose 3%: 9% volume growth and 3% higher net price, less a 10% inventory drawdown."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c17"
+quote_ids = ["q18", "q20"]
+claim = "UPLIZNA sales rose 46% to $155 million, mainly on volume; excluding partner shipment timing, growth was 101%."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c18"
+quote_ids = ["q19"]
+claim = "UPLIZNA's year-over-year comparison was distorted because partner shipments that fell in last year's third quarter came in this year's second quarter."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c19"
+quote_ids = ["q21"]
+claim = "TAVNEOS sales rose 34% on 66% volume growth, partly offset by a 16% inventory drawdown and a 10% lower net price."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c20"
+quote_ids = ["q22"]
+claim = "Sales of the Ultra-Rare group rose 6%, mainly because channel inventory increased."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c21"
+quote_ids = ["q23"]
+claim = "TEZSPIRE sales grew 40% to $377 million on 48% volume growth, partly offset by lower net price."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c22"
+quote_ids = ["q24"]
+claim = "Otezla sales rose 4%, from 6% volume growth and 5% favorable deduction changes, less a 5% lower net price."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c23"
+quote_ids = ["q25", "q26"]
+claim = "Enbrel sales fell 30%, chiefly from a 38% lower net price caused by the Medicare Part D redesign and a larger share of 340B sales."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c24"
+quote_ids = ["q27"]
+claim = "AMJEVITA/AMGEVITA sales fell 7% because estimated sales deductions moved unfavorably."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c25"
+quote_ids = ["q28", "q29"]
+claim = "Q3 sales were $213M for PAVBLU and $44M for WEZLANA/WEZENLA."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c26"
+quote_ids = ["q30"]
+claim = "BLINCYTO sales rose 20% to $392 million on 31% volume growth, partly offset by lower inventory."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c27"
+quote_ids = ["q31", "q33"]
+claim = "Vectibix sales were up 1% and LUMAKRAS/LUMYKRAS sales down 2%, with no driver given."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c28"
+quote_ids = ["q32"]
+claim = "KYPROLIS sales fell 5% to $359 million because volume declined."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c29"
+quote_ids = ["q34"]
+claim = "XGEVA sales were flat at $539 million: favorable deduction changes offset lower volume and inventory."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c30"
+quote_ids = ["q35", "q36", "aq24"]
+claim = "Nplate was flat overall as U.S. government orders shrank; without those orders, its sales rose 12% on volume."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c31"
+quote_ids = ["q40", "q37"]
+claim = "IMDELLTRA sales reached $178 million, up 33% sequentially, mainly on volume."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c32"
+quote_ids = ["q38"]
+claim = "MVASI sales rose 9% thanks to favorable changes in estimated sales deductions."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c33"
+quote_ids = ["q39"]
+claim = "Established products rose 3%, from favorable deduction changes and 5% volume growth, less lower net price."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c34"
+quote_ids = ["q41", "q48"]
+claim = "Total operating expenses rose 9% on a GAAP basis and 18% on a non-GAAP basis."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c35"
+quote_ids = ["q42"]
+claim = "GAAP cost of sales fell 6.9 points as a share of product sales, on lower Horizon inventory step-up amortization and cheaper manufacturing, partly offset by profit-share expense and sales mix."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c36"
+quote_ids = ["q43", "q50"]
+claim = "R&D spending rose 31% on later-stage trials, notably MariTide, which has six global Phase 3 studies running."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c37"
+quote_ids = ["q44"]
+claim = "GAAP SG&A rose 6% on higher G&A costs, partly offset by lower Horizon deal-related expenses."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c38"
+quote_ids = ["q45"]
+claim = "Other operating expenses included the $400 million Otezla intangible impairment."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c39"
+quote_ids = ["q47"]
+claim = "The GAAP tax rate rose 9.3 points because of a shift in earnings mix, including lower Horizon step-up amortization."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c40"
+quote_ids = ["q49"]
+claim = "Non-GAAP cost of sales rose 0.4 points as a share of product sales on profit-share expense and sales mix, partly offset by cheaper manufacturing."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c41"
+quote_ids = ["q51"]
+claim = "Non-GAAP SG&A rose 9% on higher G&A costs."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c42"
+quote_ids = ["q53"]
+claim = "The non-GAAP tax rate rose 4.8 points because of a shift in earnings mix."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c43"
+quote_ids = ["q54"]
+claim = "Amgen paid a $2.38 quarterly dividend, 6% above last year's."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c44"
+quote_ids = ["q55"]
+claim = "Amgen paid down $1.6 billion of debt in the quarter and $6.0 billion so far this year."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c45"
+quote_ids = ["q56"]
+claim = "Amgen bought back no shares in the quarter."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c46"
+quote_ids = ["q57"]
+claim = "At quarter end Amgen held $9.4 billion of cash against $54.6 billion of debt."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c47"
+quote_ids = ["q58"]
+claim = "Amgen forecasts full-year 2025 revenue of $35.8 to $36.6 billion."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c48"
+quote_ids = ["q59", "q60"]
+claim = "Full-year 2025 EPS is guided to $13.76-$14.60 GAAP and $20.60-$21.40 non-GAAP, with tax rates of 14.5-16.0% and 15.0-16.5%."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c49"
+quote_ids = ["q61"]
+claim = "Amgen plans 2025 capital spending of $2.2 to $2.3 billion."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c50"
+quote_ids = ["q62"]
+claim = "Amgen caps 2025 share buybacks at $500 million."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c51"
+quote_ids = ["q63"]
+claim = "The forecast includes tariffs already implemented, while excluding pricing measures and tariffs that have been announced without taking effect or could arise later."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c52"
+quote_ids = ["q64"]
+claim = "The GAAP EPS forecast leaves out the effect of later events such as deals, impairments, lawsuits, or swings in equity investment values."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c53"
+quote_ids = ["q65"]
+claim = "Otezla intangible impairments were booked in both the first and third quarters of 2025 and are excluded from non-GAAP guidance."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c54"
+quote_ids = ["q66"]
+claim = "The adjusted results remove revaluation of the BeOne equity holding for Q3 and the first nine months in both 2025 and 2024."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c55"
+quote_ids = ["q67"]
+claim = "The tax rate applied to the non-GAAP adjustments was 44.0% for the quarter, down from 58.6% a year earlier."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c56"
+quote_ids = ["q68", "q69"]
+claim = "Both MARITIME-1 and MARITIME-2 weight-management Phase 3 trials of MariTide have finished enrolling."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c57"
+quote_ids = ["q70", "q71"]
+claim = "Two new Phase 3 MariTide trials in sleep apnea have started."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c58"
+quote_ids = ["q72", "q73"]
+claim = "MariTide's Phase 3 cardiovascular-outcomes and heart-failure trials are enrolling."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c59"
+quote_ids = ["q74", "q75"]
+claim = "Two Phase 2 MariTide studies, in weight management and diabetes, are ongoing, with data expected in the fourth quarter of 2025."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c60"
+quote_ids = ["q76"]
+claim = "The Phase 1 AMG 513 trial is recruiting adults with obesity."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c61"
+quote_ids = ["q77", "q78"]
+claim = "October results from VESALIUS-CV showed Repatha met both primary cardiovascular endpoints in people with no previous heart attack or stroke, with no new safety signal."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c62"
+quote_ids = ["q79", "q80"]
+claim = "The complete VESALIUS-CV findings are scheduled for AHA on November 8 and journal submission; separate real-world Repatha findings are also due at AHA."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c63"
+quote_ids = ["q81"]
+claim = "A Phase 4 Repatha study after acute heart attack, EVOLVE-MI, continues."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c64"
+quote_ids = ["q82", "q83"]
+claim = "Olpasiran secondary-prevention testing continues in OCEAN(a)-Outcomes; the newly begun OCEAN(a)-PreEvent trial recruits patients at risk of a first cardiovascular event."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c65"
+quote_ids = ["q84"]
+claim = "New subgroup data from UPLIZNA's MITIGATE trial showed benefit consistent with the overall IgG4-RD population."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c66"
+quote_ids = ["q85"]
+claim = "The UPLIZNA myasthenia-gravis filing remains under FDA review, with December 14, 2025 as the scheduled decision date."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c67"
+quote_ids = ["q86", "q87"]
+claim = "TEPEZZA finished recruitment for its Japanese Phase 3 in chronic, low-activity thyroid eye disease; a Phase 3 of under-the-skin teprotumumab continues in that disease."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c68"
+quote_ids = ["q88"]
+claim = "The Phase 3 TAVNEOS combination study is recruiting ages 6-17 with active ANCA vasculitis, using rituximab or a regimen containing cyclophosphamide."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c69"
+quote_ids = ["q89"]
+claim = "Two Phase 3 dazodalibep trials cover Sjögren disease: one continues in systemic disease, while another recruits people with substantial symptoms but low systemic activity."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c70"
+quote_ids = ["q90", "q91", "q92", "q93"]
+claim = "Phase 2 testing continues for daxdilimab in resistant discoid lupus and inflammatory muscle disease, and for AMG 329 in Sjögren disease; AMG 732 recruits patients with active thyroid eye disease."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c71"
+quote_ids = ["q94"]
+claim = "The October TEZSPIRE approval covers add-on maintenance for inadequately controlled rhinosinusitis with nasal polyps in patients aged at least 12."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c72"
+quote_ids = ["q95", "q96"]
+claim = "Two Phase 3 TEZSPIRE trials recruit adults with moderate-to-very-severe COPD and BEC at least 150 cells per microliter; testing in eosinophilic esophagitis continues."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c73"
+quote_ids = ["q97"]
+claim = "Enrollment across all eight Phase 3 ROCKET trials is complete, covering more than 3,300 patients with moderate or severe atopic dermatitis."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c74"
+quote_ids = ["q98"]
+claim = "Amgen and Kyowa Kirin reported preliminary top-line ASCEND maintenance-dosing data for rocatinlimab in September."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c75"
+quote_ids = ["q99", "q100"]
+claim = "The 52-week adolescent ASTRO trial finished and met its primary and secondary efficacy goals; it tested 150mg and 300mg doses, alone or with topical treatment."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c76"
+quote_ids = ["q101", "q102"]
+claim = "Rocatinlimab is in a Phase 2 asthma study, and its prurigo nodularis Phase 3 has finished enrolling."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c77"
+quote_ids = ["q103", "q104", "q105"]
+claim = "Autoimmune Phase 2 trials recruit for blinatumomab in lupus with or without nephritis and resistant rheumatoid arthritis, and for inebilizumab in lupus nephritis. AMG 104 completed asthma recruitment."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c78"
+quote_ids = ["q106", "q107"]
+claim = "A potentially registrational Phase 2 of subcutaneous blinatumomab has begun, and the Golden Gate Phase 3 of BLINCYTO is enrolling."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c79"
+quote_ids = ["q108", "q109"]
+claim = "First-line IMDELLTRA combinations showed manageable safety: the maintenance cohort had median survival of 25.3 months; the induction/maintenance cohort had 81% survival at one year with its median not reached."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c80"
+quote_ids = ["q110", "q111"]
+claim = "The FDA accepted the DeLLphi-304 filing for IMDELLTRA with a December 18, 2025 decision date, and other regulators are reviewing it too."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c81"
+quote_ids = ["q112", "q113"]
+claim = "DeLLphi-305 has completed enrollment and DeLLphi-312 is enrolling, among a broad IMDELLTRA program in small cell lung cancer."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c82"
+quote_ids = ["q114", "q115", "q116"]
+claim = "Xaluritamig has two Phase 3 prostate cancer trials under way, one newly started, plus a new Phase 1b combination study."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c83"
+quote_ids = ["q117", "q118"]
+claim = "In FORTITUDE-101, primary-analysis survival medians were 17.9 months with bemarituzumab plus chemotherapy versus 12.5 in control. Descriptive follow-up medians were 14.5 versus 13.2 months."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c84"
+quote_ids = ["q119"]
+claim = "Amgen halted the FORTITUDE-102 study of bemarituzumab in gastric cancer."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c85"
+quote_ids = ["q120"]
+claim = "FORTITUDE-103 of bemarituzumab has completed enrollment."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c86"
+quote_ids = ["q121", "q122", "q123", "q124"]
+claim = "AMG 193 recruits previously treated MTAP-null lung cancer into Phase 2. Phase 3 recruitment continues for LUMAKRAS combinations in first-line KRAS G12C colorectal and lung cancer, and for Nplate against chemotherapy-related platelet loss."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c87"
+quote_ids = ["q125", "q126"]
+claim = "A biosimilar candidate to nivolumab, ABP 206, met its pharmacokinetic similarity endpoint; an ocrelizumab biosimilar study is enrolling."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c88"
+quote_ids = ["q127", "q128"]
+claim = "TEZSPIRE and rocatinlimab are co-developed with partners AstraZeneca and Kyowa Kirin."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "ac1"
+quote_ids = ["q26"]
+claim = "Favorable deduction estimates and increased Enbrel volume partly cushioned its Q3 sales decline."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac2"
+quote_ids = ["aq1"]
+claim = "More than 12,000 high-risk participants entered VESALIUS-CV; roughly 85% used moderate- or high-intensity treatment to lower LDL, and median observation lasted about 4.5 years."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac3"
+quote_ids = ["aq2", "aq3"]
+claim = "ASCEND continues assessing longer-term safety, while ASTRO safety findings resembled the other ROCKET studies."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac4"
+quote_ids = ["aq4"]
+claim = "For blinatumomab given under the skin, dose optimization and expansion finished in adults with relapsed or refractory B-ALL that was CD19-positive and Ph-negative."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac5"
+quote_ids = ["aq5", "aq6"]
+claim = "DeLLphi-303 continues Phase 1b combination work in first-line extensive-stage small-cell disease; DeLLphi-306 recruits limited-stage disease after combined chemoradiation."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac6"
+quote_ids = ["aq7", "aq8"]
+claim = "Recruitment continues for subcutaneous tarlatamab in DeLLphi-308 and alternative IV dosing in DeLLphi-309, both in later-line extensive-stage small-cell disease."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac7"
+quote_ids = ["aq9", "aq10"]
+claim = "DeLLphi-310 recruits patients for IMDELLTRA plus YL201, with or without PD-L1 therapy; DeLLphi-311 recruits for the combination with etakafusp alfa."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac8"
+quote_ids = ["aq11"]
+claim = "An early xaluritamig study continues before taxane treatment, alone or with abiraterone, and also studies previously taxane-treated patients in an outpatient setting."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac9"
+quote_ids = ["aq12", "aq13"]
+claim = "Phase 1b xaluritamig recruitment covers treatment before prostate surgery in localized higher-risk disease and treatment of high-risk biochemical recurrence following definitive therapy."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac10"
+quote_ids = ["aq14"]
+claim = "FORTITUDE-301 continues early-stage bemarituzumab monotherapy testing across solid tumors with excess FGFR2b expression."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac11"
+quote_ids = ["aq15", "aq16", "aq17"]
+claim = "Beyond its Phase 2 lung trial, AMG 193 recruits MTAP-null tumors into dose expansion and early thoracic, gastrointestinal, biliary and pancreatic combination studies."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac12"
+quote_ids = ["aq18"]
+claim = "A separate comparative ABP 206 trial against nivolumab is recruiting previously untreated melanoma that is unresectable or metastatic."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac13"
+quote_ids = ["aq19", "aq20"]
+claim = "ABP 234 is recruiting against pembrolizumab in two nonsquamous lung-cancer studies: an adjuvant study in early disease and a combined PK/clinical study in advanced disease."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac14"
+quote_ids = ["q138"]
+claim = "The 2024 comparators include impairment of research assets acquired with Teneobio in 2021."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac15"
+quote_ids = ["aq21"]
+claim = "The R&D reconciliation removes acquired-intangible amortization for Q3 2025 and Q3 2024; its nine-month adjustments chiefly concern Horizon transaction costs."
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "ac16"
+quote_ids = ["aq22", "aq23"]
+claim = "AMG 104 is co-developed with AstraZeneca, and the xaluritamig program operates under a research collaboration with Xencor."
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "c1"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c2"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c2"
+theme_id = "pricing"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c3"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c4"
+theme_id = "pipeline"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c5"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c6"
+theme_id = "impairments"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c6"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c7"
+theme_id = "costs"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c8"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c8"
+theme_id = "tax"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c9"
+theme_id = "costs"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c10"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c10"
+theme_id = "capital_investment"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c11"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c12"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c13"
+theme_id = "pricing"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c14"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c14"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c15"
+theme_id = "supply"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c15"
+theme_id = "pricing"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c16"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c16"
+theme_id = "pricing"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c16"
+theme_id = "supply"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c17"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c18"
+theme_id = "supply"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c19"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c19"
+theme_id = "supply"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c19"
+theme_id = "pricing"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c20"
+theme_id = "supply"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c21"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c21"
+theme_id = "pricing"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c22"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c22"
+theme_id = "pricing"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c23"
+theme_id = "pricing"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c23"
+theme_id = "regulation"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c23"
+theme_id = "mix"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c24"
+theme_id = "pricing"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c25"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c26"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c26"
+theme_id = "supply"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c27"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c28"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c29"
+theme_id = "pricing"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c29"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c29"
+theme_id = "supply"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c30"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c31"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c32"
+theme_id = "pricing"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c33"
+theme_id = "pricing"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c33"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c34"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c35"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c35"
+theme_id = "mix"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c36"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c36"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c37"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c37"
+theme_id = "portfolio"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c38"
+theme_id = "impairments"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c39"
+theme_id = "tax"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c39"
+theme_id = "mix"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c40"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c40"
+theme_id = "mix"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c41"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c42"
+theme_id = "tax"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c42"
+theme_id = "mix"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c43"
+theme_id = "shareholder_returns"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c44"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c45"
+theme_id = "shareholder_returns"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c46"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c47"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c48"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c48"
+theme_id = "tax"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c49"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c49"
+theme_id = "capital_investment"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c50"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c50"
+theme_id = "shareholder_returns"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c51"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c51"
+theme_id = "trade_policy"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c51"
+theme_id = "pricing"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c52"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c52"
+theme_id = "impairments"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c52"
+theme_id = "legal"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c53"
+theme_id = "impairments"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c53"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c54"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c55"
+theme_id = "tax"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c56"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c57"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c58"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c59"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c60"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c61"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c62"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c63"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c64"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c65"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c66"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c67"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c68"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c69"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c70"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c71"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c72"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c73"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c74"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c75"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c76"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c77"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c78"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c79"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c80"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c81"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c82"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c83"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c84"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c85"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c86"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c87"
+theme_id = "pipeline"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c88"
+theme_id = "portfolio"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c35"
+theme_id = "portfolio"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "c55"
+theme_id = "unmatched"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "c88"
+theme_id = "unmatched"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac1"
+theme_id = "pricing"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac1"
+theme_id = "demand"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac2"
+theme_id = "pipeline"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac3"
+theme_id = "pipeline"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac4"
+theme_id = "pipeline"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac5"
+theme_id = "pipeline"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac6"
+theme_id = "pipeline"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac7"
+theme_id = "pipeline"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac8"
+theme_id = "pipeline"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac9"
+theme_id = "pipeline"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac10"
+theme_id = "pipeline"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac11"
+theme_id = "pipeline"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac12"
+theme_id = "pipeline"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac13"
+theme_id = "pipeline"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac14"
+theme_id = "impairments"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac14"
+theme_id = "portfolio"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac15"
+theme_id = "costs"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac15"
+theme_id = "portfolio"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac16"
+theme_id = "unmatched"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "c6"
+theme_id = "demand"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "c8"
+theme_id = "demand"
+support = "supports"
+origin = "annotator_added"
+
+[[hard_negatives]]
+claim_id = "n1"
+quote_ids = ["q55"]
+claim = "Amgen retired $6.0 billion of debt in the third quarter alone."
+negative_kind = "period"
+theme_id = "capital"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n2"
+quote_ids = ["q65"]
+claim = "All of the year's Otezla impairment was recorded in the third quarter."
+negative_kind = "period"
+theme_id = "impairments"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n3"
+quote_ids = ["q138"]
+claim = "This quarter's results carried an impairment of Teneobio in-process R&D."
+negative_kind = "period"
+theme_id = "impairments"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n4"
+quote_ids = ["q129"]
+claim = "Amgen developed YL201 as its own B7-H3 candidate."
+negative_kind = "issuer"
+theme_id = "pipeline"
+origin = "drafted_edited"
+
+[[hard_negatives]]
+claim_id = "n5"
+quote_ids = ["q125"]
+claim = "OPDIVO met a primary endpoint in a melanoma trial this quarter."
+negative_kind = "issuer"
+theme_id = "pipeline"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n6"
+quote_ids = ["q130"]
+claim = "Amgen faced new government investigations or lawsuits during the quarter."
+negative_kind = "section"
+theme_id = "legal"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n7"
+quote_ids = ["q131"]
+claim = "Payer pricing pressure lowered Amgen's net prices in the quarter."
+negative_kind = "section"
+theme_id = "pricing"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n8"
+quote_ids = ["q132"]
+claim = "Amgen's liquidity improved in the quarter."
+negative_kind = "section"
+theme_id = "capital"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n9"
+quote_ids = ["q133"]
+claim = "Amgen's board limited the dividend or buybacks because of weak results."
+negative_kind = "section"
+theme_id = "shareholder_returns"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n10"
+quote_ids = ["q134"]
+claim = "A weakening global economy hurt Amgen's quarterly sales."
+negative_kind = "section"
+theme_id = "macro"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n11"
+quote_ids = ["q135"]
+claim = "Supply constraints at Puerto Rico plants held back sales this quarter."
+negative_kind = "section"
+theme_id = "supply"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n12"
+quote_ids = ["q136"]
+claim = "Amgen launched innovative new products during the quarter."
+negative_kind = "section"
+theme_id = "products"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n13"
+quote_ids = ["q137"]
+claim = "Amgen completed a new acquisition of Horizon in the quarter."
+negative_kind = "section"
+theme_id = "portfolio"
+origin = "drafted_accepted"
