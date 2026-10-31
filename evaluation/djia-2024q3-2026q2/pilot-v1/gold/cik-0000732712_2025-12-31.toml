@@ -1,0 +1,991 @@
+# Stage 6 gold (the pilot codebook, split, and gold-set protocol). Written by `earnings-pipeline gold anchor`; quotes are pointers, and every other word is the annotator's.
+schema_version = 1
+event_id = "cik-0000732712:2025-12-31"
+document_id = "cik-0000732712:2025-12-31:release"
+doc_id = "0000732712-26-000003_a2025q4exhibit99.htm@walker-1#f30b3c7f7d6f451a"
+canonical_hash = "f30b3c7f7d6f451a87b202a5347941dd4220f7cb6e72a9229980b3bd64671526"
+split_hash = "5c4a2f3c5ed9ffc2cf0065658ec4e75311220338cf9b3fe07802c0db9fcd0e53"
+partition = "dev"
+annotator = "Lowell Mason"
+no_theme = false
+
+[pin]
+pilot_id = "djia-2024q3-2026q2-pilot"
+pilot_version = 1
+pilot_hash = "3839c800151cc646f11064efdce583f988e511265f8893c90e9a2f2549145926"
+events_version = 1
+events_hash = "2348671b3ae8021d644df12ae2f539258670546970c918f8edb231ba1885c3b7"
+universe_version = 1
+universe_operative_hash = "c350923422d9bf2e65a0b5929f4c0d45370458c6a044c3de012a1dfeb116e573"
+
+[codebook]
+codebook_id = "djia-pilot"
+codebook_version = 0
+content_hash = "635975d1ec952cf5719ea3b473870f96e7e3a52bc3015cc1ac5725aa80ec1e79"
+
+[drafting_aid]
+model_id = "claude-opus-5-5"
+drafted_on = 2026-10-31
+
+[counts]
+accepted = 105
+edited = 22
+rejected = 2
+added = 5
+
+[release_identification]
+label = "release"
+note = "The issuer's own news release, filed as an exhibit, giving its Q4 and annual 2025 figures with supporting schedules that end on the named date."
+
+[[quotes]]
+start = 3491
+end = 3687
+element_id = "sentence-3491-3687"
+quote_sha256 = "2a3d4bce5ec1ca887fc3c917c103668a7d3c29e528e92df568a573551ed28cbd"
+mask_ids = []
+quote_id = "q1"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 452
+end = 574
+element_id = "sentence-452-617"
+quote_sha256 = "6f847383e9934fb6e962a7280070fd0e9fe18f58e0d193b1d6e244191eac8371"
+mask_ids = []
+quote_id = "q2"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 996
+end = 1083
+element_id = "sentence-941-1145"
+quote_sha256 = "b52a49970ccda83ec436545e708e7c6113552302250dadc8f3dbd517112f05ca"
+mask_ids = []
+quote_id = "q3"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 619
+end = 767
+element_id = "sentence-619-767"
+quote_sha256 = "0e366a8b995a5a2ecf99ae71e326930cc39dc33d25bc1fef50f2a46903b33d80"
+mask_ids = []
+quote_id = "q4"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1527
+end = 1607
+element_id = "sentence-1527-1607"
+quote_sha256 = "635fe5449f8e8512bdb3d9fd4b2b6700c3a7c1b5f33a1fc2cd8362cea82bd312"
+mask_ids = []
+quote_id = "q5"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4287
+end = 4421
+element_id = "sentence-4287-4421"
+quote_sha256 = "462fcf19d49e7c5854022b9994396611d32fc55ef67a46ac8900eef691f59fa4"
+mask_ids = []
+quote_id = "q6"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2211
+end = 2297
+element_id = "sentence-2211-2297"
+quote_sha256 = "b8b051ed85081d93dbe00a2f822db60cc1af361e55ff581106b44f2d502e465d"
+mask_ids = []
+quote_id = "q7"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2781
+end = 2846
+element_id = "sentence-2781-2846"
+quote_sha256 = "93abd1772eaa41bb6d48bfb917ee19953c840641e0d0da309b5abdf16d38cf0e"
+mask_ids = []
+quote_id = "q8"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3689
+end = 3787
+element_id = "sentence-3689-3787"
+quote_sha256 = "1f9373ec207cb315c046b6fe911998e1b1b902d690c2b5d914c0e5df90eece62"
+mask_ids = []
+quote_id = "q9"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3789
+end = 3887
+element_id = "sentence-3789-3887"
+quote_sha256 = "bb784261e480f25ad1bc7327f3868aebac7121272a8abcfc27d91cfb0b250ee4"
+mask_ids = []
+quote_id = "q10"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3889
+end = 3962
+element_id = "sentence-3889-3962"
+quote_sha256 = "7c76422806dbed597582fbc2a114ad6ebf60ddfa218a958c34ee6285ed9ead13"
+mask_ids = []
+quote_id = "q11"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4003
+end = 4154
+element_id = "sentence-4003-4154"
+quote_sha256 = "3ecc4fd4c614f945118386f23e592c941447bd681c8fb199dbdb1c5a5d99f5f4"
+mask_ids = []
+quote_id = "q12"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4156
+end = 4285
+element_id = "sentence-4156-4285"
+quote_sha256 = "fa963e620b0b273229b7396a95a1f397abacf0bfbbf019107cb93697ffd09bfa"
+mask_ids = []
+quote_id = "q13"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2299
+end = 2395
+element_id = "sentence-2299-2395"
+quote_sha256 = "bf61b3c907c9fa5556a6c1c5c213f63b47664314fe45bc9e63789d689e142ef2"
+mask_ids = []
+quote_id = "q14"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2397
+end = 2473
+element_id = "sentence-2397-2473"
+quote_sha256 = "4dcba2bdf40635dae75a518ac58bdba87b573fb41a96e599b36ba14739b93148"
+mask_ids = []
+quote_id = "q15"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2580
+end = 2628
+element_id = "sentence-2580-2628"
+quote_sha256 = "a0b2110c1ec07095e6102643d7f06e9a8a031336e647d55635aaba211c6df38b"
+mask_ids = []
+quote_id = "q16"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2967
+end = 3116
+element_id = "sentence-2967-3116"
+quote_sha256 = "68a9e7f9836d6cd3b846a1b87ccc9753d536bb9c29805814582d0aab37cc852e"
+mask_ids = []
+quote_id = "q17"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3117
+end = 3269
+element_id = "sentence-3117-3269"
+quote_sha256 = "4f07c2652bef8a8fc4d264264ee96feb5ef4597254898c9fa5d1133f3b3227c5"
+mask_ids = []
+quote_id = "q18"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3270
+end = 3466
+element_id = "sentence-3270-3466"
+quote_sha256 = "d4eaa6c9fda783a5e00b4c4bfc2eba5a82b386baa9e281d7c00285002dc2231d"
+mask_ids = []
+quote_id = "q19"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2111
+end = 2209
+element_id = "sentence-2111-2209"
+quote_sha256 = "e4417a4106b368a2c9a23672130eb81556f28c5ad539109882586f9a4d1bb549"
+mask_ids = []
+quote_id = "q20"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2672
+end = 2779
+element_id = "sentence-2672-2779"
+quote_sha256 = "e51914218335f2691d381290863024d982a1ca66f941aca527dd9ccae700f27d"
+mask_ids = []
+quote_id = "q21"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2848
+end = 2965
+element_id = "sentence-2848-2965"
+quote_sha256 = "ddbcd54bcfc22eaa68eb18b7cde150a3ef1265c6122e4f83c9d550719d39e0a5"
+mask_ids = []
+quote_id = "q22"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2475
+end = 2578
+element_id = "sentence-2475-2578"
+quote_sha256 = "4a60b735d8e3361fe98f8edf10320a2cd6d65f5c700a471eb037db073e386840"
+mask_ids = []
+quote_id = "q23"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 231
+end = 317
+element_id = "sentence-231-317"
+quote_sha256 = "cd58b876f99d24f8822b057fcf4efec7bd8bfd5b1f930422dea9ac1082347fa9"
+mask_ids = []
+quote_id = "q24"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1808
+end = 1917
+element_id = "sentence-1808-1985"
+quote_sha256 = "30726f277343b37b552bdd117eb7265e0291f0d94b21c76dd04a4ef59199e2b6"
+mask_ids = []
+quote_id = "q25"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1336
+end = 1462
+element_id = "sentence-1335-1462"
+quote_sha256 = "04e1a10ee2ddadbe1b2f1d4e6397f3c44a9f698735f107776621c7e9c032eb10"
+mask_ids = []
+quote_id = "q26"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1463
+end = 1526
+element_id = "sentence-1463-1526"
+quote_sha256 = "788f0b4148db6f67e240733a0944548c68798cd843afecf8a6a8991d77e0f319"
+mask_ids = []
+quote_id = "q27"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5247
+end = 5377
+element_id = "sentence-5247-5377"
+quote_sha256 = "b555b631f5c732bcdfea8b88edfab3506f0d706d4b8675bc85fc4d6d50c30d32"
+mask_ids = []
+quote_id = "q28"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5379
+end = 5500
+element_id = "sentence-5379-5500"
+quote_sha256 = "a4bea837ea8f802bd4ee14a88ab57102134496ec40e99d6b2c8dd738b09bf649"
+mask_ids = []
+quote_id = "q29"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5501
+end = 5630
+element_id = "sentence-5501-5630"
+quote_sha256 = "4388fcb4a4459e1135a1a62fa12f93024438c87ec58327c433fedb8c3f4e9e10"
+mask_ids = []
+quote_id = "q30"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5632
+end = 5803
+element_id = "sentence-5632-5803"
+quote_sha256 = "2b5aace278734c67ec8e33f8d87a219caf12184692f9546304c8a5e3a09f110f"
+mask_ids = []
+quote_id = "q31"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5805
+end = 5865
+element_id = "sentence-5805-5865"
+quote_sha256 = "19612a7b7ce7aacbe781a345ba5916b69e628a7793895ec2221fa368290e6bff"
+mask_ids = []
+quote_id = "q32"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5867
+end = 5922
+element_id = "sentence-5867-5922"
+quote_sha256 = "15e1c2e39b60ffc635f70c05754dee763a9210780d3b5acc12f58c04dd10a269"
+mask_ids = []
+quote_id = "q33"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5923
+end = 5997
+element_id = "sentence-5923-5997"
+quote_sha256 = "798d32a743432743edf98a0060f2c41fd2f0b0cf6681cf091bc27c18e76161e2"
+mask_ids = []
+quote_id = "q34"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5999
+end = 6159
+element_id = "sentence-5999-6159"
+quote_sha256 = "14d58175d91923dc8d7a43721fa27bac3343c6e9901e07c55b91550c0e984110"
+mask_ids = []
+quote_id = "q35"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4794
+end = 4916
+element_id = "sentence-4794-4916"
+quote_sha256 = "2d258054ca5f4d2262709f883dcd2887f3671b09a832953ea27c6b5a54b206df"
+mask_ids = []
+quote_id = "q36"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4507
+end = 4658
+element_id = "sentence-4507-4658"
+quote_sha256 = "b4af445c102bfbfe42742a0dd2d3f346723d9d497172168d5f694c500ec34fd4"
+mask_ids = []
+quote_id = "q37"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4659
+end = 4792
+element_id = "sentence-4659-4793"
+quote_sha256 = "e85cf48929fcaa27a8c9d078d739ddb03b942fb78eb92add492fda8307b89115"
+mask_ids = []
+quote_id = "q38"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6160
+end = 6346
+element_id = "sentence-6160-6346"
+quote_sha256 = "cf407a0bb54f213debcc8d9d9280b57952edef0bb86c44bf0668e63ca47c5ea0"
+mask_ids = []
+quote_id = "q39"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5008
+end = 5108
+element_id = "sentence-5008-5204"
+quote_sha256 = "035433729cda7e4fca2f1b40f309bb3d461dca6851b9b80e386aa3d3a40ab456"
+mask_ids = []
+quote_id = "q40"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 9650
+end = 9711
+element_id = "sentence-9076-12403"
+quote_sha256 = "f029a88618e0fb32c2c28a254906e18a9992ead7bd84b93c04e78bfdf7d9861b"
+mask_ids = ["safe_harbor-8132-12403"]
+quote_id = "q41"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 9947
+end = 10036
+element_id = "sentence-9076-12403"
+quote_sha256 = "dba1d9c30c52317a460f8b04bc52d67cd65f1c607f09e310dd9d7a4a21058d8f"
+mask_ids = ["safe_harbor-8132-12403"]
+quote_id = "q42"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 12025
+end = 12147
+element_id = "sentence-9076-12403"
+quote_sha256 = "da11e2e0aa65d63d66f934adf3f89ce973cdc17c7a919277a868bcacb5627c4d"
+mask_ids = ["safe_harbor-8132-12403"]
+quote_id = "q43"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 9803
+end = 9945
+element_id = "sentence-9076-12403"
+quote_sha256 = "2642db8ddbb9f6a06050e30ab917c4d3f4a203e2baae6e58adee8deefd003e9e"
+mask_ids = ["safe_harbor-8132-12403"]
+quote_id = "q44"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 11203
+end = 11332
+element_id = "sentence-9076-12403"
+quote_sha256 = "a88429334d660c0ada7e4dd4c5a4f35dbfd1faee51c1b9a594d0854068b92fda"
+mask_ids = ["safe_harbor-8132-12403"]
+quote_id = "q45"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1085
+end = 1144
+element_id = "sentence-941-1145"
+quote_sha256 = "7f3238c8115360387f9ac7b007cb1d6a010460c64cf3531af0e907e3d48b239b"
+mask_ids = []
+quote_id = "q46"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6918
+end = 7194
+element_id = "paragraph-6831-7194"
+quote_sha256 = "4eb7b893b8fe0210f6b5cd153bc80df235d0a032e6679f6f99b8096df3a4e2d2"
+mask_ids = []
+quote_id = "aq1"
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "c1"
+quote_ids = ["q1"]
+claim = "Verizon gained 616,000 postpaid phone customers net in Q4, versus 504,000 a year earlier, its strongest quarter since 2019."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c2"
+quote_ids = ["q2", "q3", "q24"]
+claim = "Combined wireless and home-internet subscriber gains topped one million in Q4, the most in any quarter since 2019."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c3"
+quote_ids = ["q4", "q5", "q6", "q36"]
+claim = "The Frontier purchase closed January 20, 2026. It expanded fiber coverage beyond 30 million premises and lifted combined fiber and fixed-wireless connections above 16.3 million."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c4"
+quote_ids = ["q7"]
+claim = "Annual revenue reached $138.2 billion in 2025, compared with $134.8 billion in 2024."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c5"
+quote_ids = ["q8"]
+claim = "Revenue in Q4 2025 totaled $36.4 billion."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c6"
+quote_ids = ["q9"]
+claim = "Q4 wireless services brought in $21.0 billion, rising 1.1% from a year earlier."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c7"
+quote_ids = ["q10"]
+claim = "Q4 equipment sales were $8.2 billion, a 9.1% increase on the prior year."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c8"
+quote_ids = ["q11"]
+claim = "Broadband gained 372,000 subscribers net during Q4."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c9"
+quote_ids = ["q12"]
+claim = "Fixed wireless added 319,000 subscribers net in Q4, bringing its base above 5.7 million."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c10"
+quote_ids = ["q13"]
+claim = "Fios internet gained 67,000 subscribers net in Q4, its strongest final quarter of a year since 2020."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c11"
+quote_ids = ["q14"]
+claim = "Operating cash generation for 2025 reached $37.1 billion, versus $36.9 billion in 2024."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c12"
+quote_ids = ["q15"]
+claim = "Free cash for 2025 totaled $20.1 billion, compared with $19.8 billion in 2024."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c13"
+quote_ids = ["q16"]
+claim = "Capital spending for the year was about $17 billion."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c14"
+quote_ids = ["q17", "q18", "q19"]
+claim = "At year end, unsecured borrowings were $131.1 billion versus $117.9 billion a year before; net borrowings fell to $110.1 billion from $113.7 billion. Gross debt equaled 7.4 times trailing net profit, and net debt was 2.2 times adjusted EBITDA."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c15"
+quote_ids = ["q20"]
+claim = "Full-year GAAP per-share earnings were $4.06, and $4.71 once special items are removed."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c16"
+quote_ids = ["q21"]
+claim = "Q4 GAAP per-share earnings were $0.55, roughly half the $1.09 earned once special items are removed."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c17"
+quote_ids = ["q22"]
+claim = "Q4 net income was about $2.4 billion and adjusted EBITDA about $11.9 billion."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c18"
+quote_ids = ["q23"]
+claim = "Full-year net income was about $17.6 billion and adjusted EBITDA about $50 billion."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c19"
+quote_ids = ["q24"]
+claim = "The company says its full-year results met the financial targets it had set for the year."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c20"
+quote_ids = ["q25"]
+claim = "The chief executive says the organization is being slimmed down and is making decisions faster."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c21"
+quote_ids = ["q26", "q27"]
+claim = "The chief executive argues the quarter shows growth can come from customer satisfaction and loyalty, and that rivals will stop winning its customers away."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c22"
+quote_ids = ["q46"]
+claim = "The release presents the quarter as the opening of a broad turnaround under the new chief executive."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c23"
+quote_ids = ["q28"]
+claim = "Management forecasts 2026 postpaid phone subscriber gains of 0.75 to 1 million, two to three times the 2025 level."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c24"
+quote_ids = ["q29", "q30"]
+claim = "For 2026 the company projects 2 to 3 percent growth in combined wireless and broadband service revenue, near $93 billion, with wireless service revenue about level as growth shifts toward subscriber volume."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c25"
+quote_ids = ["q31"]
+claim = "Adjusted per-share earnings are forecast at $4.90 to $4.95 for 2026, up 4 to 5 percent."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c26"
+quote_ids = ["q32"]
+claim = "The company forecasts 2026 operating cash flow between $37.5 and $38 billion."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c27"
+quote_ids = ["q33", "q34"]
+claim = "Planned 2026 capital spending is $16 to $16.5 billion, funding at least two million new fiber passings."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c28"
+quote_ids = ["q35"]
+claim = "For 2026, Verizon targets free cash of at least $21.5 billion, implying growth of about 7% or more and its strongest annual total since 2020."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c29"
+quote_ids = ["q36"]
+claim = "The 2026 forecasts count Frontier's results from the deal's closing date onward."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c30"
+quote_ids = ["q37"]
+claim = "The chief executive names investing in the business to keep network quality high as the top priority."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c31"
+quote_ids = ["q38"]
+claim = "The chief executive describes the 2026 outlook as a marked improvement over the average of the prior five years."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c32"
+quote_ids = ["q39"]
+claim = "Verizon updated its existing wholesale mobile agreement with Charter and Comcast, describing it as supporting profitable growth for the three companies."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "ac1"
+quote_ids = ["aq1"]
+claim = "Starting in Q1 2025, recurring handset-protection and insurance revenue moved from Other to wireless services, with earlier comparisons revised where relevant."
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "c1"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c2"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c3"
+theme_id = "portfolio"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c4"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c5"
+theme_id = "unmatched"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "c6"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c7"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c8"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c9"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c10"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c11"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c12"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c13"
+theme_id = "capital_investment"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c14"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c15"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c16"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c17"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c18"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c19"
+theme_id = "outlook"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c19"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c20"
+theme_id = "restructuring"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c21"
+theme_id = "demand"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c22"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c23"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c23"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c24"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c24"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c25"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c26"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c26"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c27"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c27"
+theme_id = "capital_investment"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c28"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c28"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c29"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c29"
+theme_id = "portfolio"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c30"
+theme_id = "capital_investment"
+support = "uncertain"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c31"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c32"
+theme_id = "portfolio"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c32"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c3"
+theme_id = "demand"
+support = "supports"
+origin = "annotator_added"
+
+[[assignments]]
+claim_id = "ac1"
+theme_id = "unmatched"
+support = "supports"
+origin = "annotator_added"
+
+[[hard_negatives]]
+claim_id = "n1"
+quote_ids = ["q1"]
+claim = "Postpaid phone net additions in the reported quarter were 504 thousand."
+negative_kind = "period"
+theme_id = "demand"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n2"
+quote_ids = ["q18"]
+claim = "Net unsecured borrowings stood near $113.7 billion when the reported quarter ended."
+negative_kind = "period"
+theme_id = "capital"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n3"
+quote_ids = ["q35"]
+claim = "Free cash flow for 2025 was the highest the company had produced since 2020."
+negative_kind = "period"
+theme_id = "capital"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n4"
+quote_ids = ["q39"]
+claim = "The two cable operators grew their wireless businesses profitably during the quarter."
+negative_kind = "issuer"
+theme_id = "demand"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n5"
+quote_ids = ["q41"]
+claim = "The company reported results driven by artificial intelligence offerings."
+negative_kind = "section"
+theme_id = "ai"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n6"
+quote_ids = ["q42"]
+claim = "Tariffs raised the company's costs or cut its sales in the period."
+negative_kind = "section"
+theme_id = "trade_policy"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n7"
+quote_ids = ["q43"]
+claim = "The company bought back stock and raised its dividend in the period."
+negative_kind = "section"
+theme_id = "shareholder_returns"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n8"
+quote_ids = ["q44"]
+claim = "Inflation and rate moves in the domestic economy weighed on the quarter's results."
+negative_kind = "section"
+theme_id = "macro"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n9"
+quote_ids = ["q45"]
+claim = "The company booked material legal costs or settlements in the quarter."
+negative_kind = "section"
+theme_id = "legal"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n10"
+quote_ids = ["q40"]
+claim = "Management declined to give a forecast for its adjusted measures."
+negative_kind = "section"
+theme_id = "outlook"
+origin = "drafted_accepted"
