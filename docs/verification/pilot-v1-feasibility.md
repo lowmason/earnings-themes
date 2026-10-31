@@ -2,7 +2,8 @@
 
 Status on 2026-10-18: B1 evidence is complete and committed (`a91a8e3`), and the
 preregistration is frozen and committed alone (`53ba190`), with the B2 step 4
-workflow selections recorded (D21-24); see the last two sections. For B1, the fifth fixture pass, `s11-fixture-5`, completed all roles with verified
+workflow selections recorded (D21-24). On 2026-10-31, O6 was met: all 28 train and
+dev gold files are signed and committed (D21-26); see the last three sections. For B1, the fifth fixture pass, `s11-fixture-5`, completed all roles with verified
 Metal all-layer startup evidence and measured both phases; the owner accepted it as
 the 36 GB fit with an explicit swap/pressure limitation (D21-19, in the section
 "Owner fit decision, 2026-10-17"). Earlier sections
@@ -1023,3 +1024,38 @@ configuration until Appendix C writes the train and dev configs. B3 is blocked o
 the 28 signed train and dev gold files and the 8 dev ledger rows. As file counts
 only, not validations, the default branch tracks 3 gold files and no dev ledger
 file. No pilot operation is authorized.
+
+## O6 gate, 2026-10-31 (D21-26)
+
+O6 is met. All 28 train and dev gold files are signed and on `main` at `66d4e55`.
+PR #30 merged the dev ledger and the other 17 train files. PR #31 merged the 8 dev
+files, their signature fix and D21-25. Evidence is counts, IDs, hashes and times
+only. No agent opened a release text, a draft, a working copy's items, a view or an
+independent record.
+
+| Check | Result |
+| --- | --- |
+| Gold files tracked under `evaluation/djia-2024q3-2026q2/pilot-v1/gold` | 28: 20 train and 8 dev, per split v1 |
+| Rows in `independent-pass.toml` | 8, one per dev event, committed alone at `1439ff0` and unchanged since |
+| Each dev independent record against its ledger row | SHA-256 matches, 8 of 8 |
+| Ledger commit against the dev drafts | Ledger committed 2026-10-31 11:04:54 -0400; each dev draft file was created between 11:44 and 12:24 that day, after it |
+| Dev gold commits | 8, each holding only its own file and citing `Independent pass: 1439ff0.` |
+| `gold validate` over the 28 literal IDs | 28 valid and signed; exit 0 |
+| `pilot recount` over the 28 literal IDs (D21-25) | 28 rebuilt from their kept drafts, no refusal; exit 0 |
+| Recount totals, train (20 files) | accepted 3144, edited 93, rejected 1, added 6 |
+| Recount totals, dev (8 files) | accepted 1068, edited 151, rejected 12, added 309 |
+
+The two commands ran with the literal IDs from split v1, never the default all-gold
+selection. The agent ran them in the main checkout with the owner's approval, not
+through Appendix D's saved launcher.
+
+Signature fix: the 8 dev files were first signed `"Lowell Mason"`, which `gold
+validate` accepts because it checks only for a non-blank annotator. GS19 requires
+`"Lowell Mason (independent pass, then verified a Claude draft)"`. On the owner's
+choice, commit `26ae169` changes only that line in each file. The recount counts are
+identical before and after, and no pass existed, so D21-22's post-exposure
+disposition does not apply.
+
+Not done: the agent did not run the Stage 6 wording gate. Appendix C has not been
+run, and no pilot pass, run or label exists. B3 step 1's remainder, Appendix C and
+the intake check, runs next in the owner's terminal.
