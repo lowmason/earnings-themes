@@ -1,0 +1,1001 @@
+# Stage 6 gold (the pilot codebook, split, and gold-set protocol). Written by `earnings-pipeline gold anchor`; quotes are pointers, and every other word is the annotator's.
+schema_version = 1
+event_id = "cik-0000731766:2024-09-30"
+document_id = "cik-0000731766:2024-09-30:release"
+doc_id = "0000731766-24-000320_a2024q3exhibit991.htm@walker-1#cf348ad038762967"
+canonical_hash = "cf348ad038762967fa19976127cd7a5e9300a4178f6e9898a4a2790402db3ddc"
+split_hash = "5c4a2f3c5ed9ffc2cf0065658ec4e75311220338cf9b3fe07802c0db9fcd0e53"
+partition = "train"
+annotator = "Lowell Mason (verified a Claude draft)"
+no_theme = false
+
+[pin]
+pilot_id = "djia-2024q3-2026q2-pilot"
+pilot_version = 1
+pilot_hash = "3839c800151cc646f11064efdce583f988e511265f8893c90e9a2f2549145926"
+events_version = 1
+events_hash = "2348671b3ae8021d644df12ae2f539258670546970c918f8edb231ba1885c3b7"
+universe_version = 1
+universe_operative_hash = "c350923422d9bf2e65a0b5929f4c0d45370458c6a044c3de012a1dfeb116e573"
+
+[codebook]
+codebook_id = "djia-pilot"
+codebook_version = 0
+content_hash = "635975d1ec952cf5719ea3b473870f96e7e3a52bc3015cc1ac5725aa80ec1e79"
+
+[drafting_aid]
+model_id = "claude-opus-5-5"
+drafted_on = 2026-10-20
+
+[counts]
+accepted = 128
+edited = 6
+rejected = 0
+added = 1
+
+[release_identification]
+label = "release"
+note = "Exhibit 99.1 in which UnitedHealth Group reports its own consolidated and segment results for the quarter ended on the event's period end."
+
+[[quotes]]
+start = 95
+end = 154
+element_id = "sentence-95-154"
+quote_sha256 = "c484cef94ff9cbad2aee4dc529886e64b5fd36e8f67a663bc2665536c85600f2"
+mask_ids = []
+quote_id = "q1"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 156
+end = 254
+element_id = "sentence-156-254"
+quote_sha256 = "0708606aba74da5bada6b6208bc6a4c0c94e8cc9e32203dd388897ac50e48513"
+mask_ids = []
+quote_id = "q2"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 256
+end = 325
+element_id = "sentence-256-325"
+quote_sha256 = "300b8177fb4bd383e9d678eb22dbf96ac0861d7969ea68f863a3f10928ff33c7"
+mask_ids = []
+quote_id = "q3"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 327
+end = 445
+element_id = "sentence-327-445"
+quote_sha256 = "42ce2a189cbf8fd472a63769b4fd6198f9ebc3dce003ae06b1585f7485631f68"
+mask_ids = []
+quote_id = "q4"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 496
+end = 623
+element_id = "sentence-446-623"
+quote_sha256 = "3b10c888886cd6fe28214d373178f95523761b6564bbd2d9c783e7f4b2d3610f"
+mask_ids = []
+quote_id = "q5"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 625
+end = 766
+element_id = "sentence-624-911"
+quote_sha256 = "62432064eea22b66f4c9e555bab6cca5096434cdb3f6958adcfd2d02412536b7"
+mask_ids = []
+quote_id = "q6"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 912
+end = 1130
+element_id = "sentence-912-1130"
+quote_sha256 = "f24885f351c681b7dfce7acf7af1b7dc0610312df241a1e7998e159cae76d493"
+mask_ids = []
+quote_id = "q7"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1131
+end = 1268
+element_id = "sentence-1131-1472"
+quote_sha256 = "da163cd2edb0d863f00b06227ff159edc5da35b1c31ed18fb5cc45dcba693f5f"
+mask_ids = []
+quote_id = "q8"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1270
+end = 1472
+element_id = "sentence-1131-1472"
+quote_sha256 = "c6c7b323b475d58659d430be8d3d58e24458ec6f6a7ca31a53d2c52c2764890b"
+mask_ids = []
+quote_id = "q9"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1793
+end = 1936
+element_id = "sentence-1793-1936"
+quote_sha256 = "69da1a399337561e624bfc7ab8b63ccfbfb65773f3b579f7b964950addef6ad2"
+mask_ids = []
+quote_id = "q10"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1937
+end = 2053
+element_id = "sentence-1937-2053"
+quote_sha256 = "76db9035ce39027aff4b760cd724176831c2776050c8e41ddf03e2136b11c743"
+mask_ids = []
+quote_id = "q11"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2054
+end = 2212
+element_id = "sentence-2054-2212"
+quote_sha256 = "7e894c2679b16a98e9009b00b7caeb14c1ad2b81a18df64e50a8baf1457a851b"
+mask_ids = []
+quote_id = "q12"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2214
+end = 2294
+element_id = "sentence-2214-2294"
+quote_sha256 = "5179f066ef436688e29ce56ad0be5abb15ec7c0b0d4fca9f084acce864017f38"
+mask_ids = []
+quote_id = "q13"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2295
+end = 2461
+element_id = "sentence-2295-2461"
+quote_sha256 = "1033996b7718f65ebe467dd8fb8132f32c4dbcafef4ffbe373c67343c7a91044"
+mask_ids = []
+quote_id = "q14"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2462
+end = 2563
+element_id = "sentence-2462-2563"
+quote_sha256 = "51bc78cb774c84ebff2032a17103deef1ad7f82a872c56da9a6ca52c5ced7794"
+mask_ids = []
+quote_id = "q15"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2565
+end = 2678
+element_id = "sentence-2565-2678"
+quote_sha256 = "1f88995d1420b3b307cf2328115924dca631650315d6ae40b0914f77c91a0bcb"
+mask_ids = []
+quote_id = "q16"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2679
+end = 2803
+element_id = "sentence-2679-2803"
+quote_sha256 = "9a73db8cd7e71cf993844fc9528b59b8d8e502eb52c637a5f57c0a1b9ff9ce50"
+mask_ids = []
+quote_id = "q17"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2804
+end = 2915
+element_id = "sentence-2804-2915"
+quote_sha256 = "66523260a9d45e749001ee8be8e89f407df34cd6a01beb5b66f6a099a4faef3c"
+mask_ids = []
+quote_id = "q18"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2917
+end = 3104
+element_id = "sentence-2917-3104"
+quote_sha256 = "5d4559ba3c1c55ca0671ce8b25eb4bcef3b9d972beb05b3465184035d060477e"
+mask_ids = []
+quote_id = "q19"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3106
+end = 3256
+element_id = "sentence-3106-3256"
+quote_sha256 = "91ed578d1fd0001b4cee4acf306b4c71b39cdec9ca55e01718a79823f073aa62"
+mask_ids = []
+quote_id = "q20"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3257
+end = 3390
+element_id = "sentence-3257-3390"
+quote_sha256 = "bb9e07c1983aac4589a90410d002361c3c7bbfe8279d421a73a302f3b9219a8c"
+mask_ids = []
+quote_id = "q21"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3391
+end = 3521
+element_id = "sentence-3391-3521"
+quote_sha256 = "a01d7ea469233356474ae764d03c9bc9ae29df22e2af684c28fa2396baa5e84d"
+mask_ids = []
+quote_id = "q22"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3667
+end = 3902
+element_id = "sentence-3667-3902"
+quote_sha256 = "d15d95fbb09e8571040ef08ad4fa21466653e21ff8b9281ca72fe5f4428600ef"
+mask_ids = []
+quote_id = "q23"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4158
+end = 4319
+element_id = "sentence-4158-4319"
+quote_sha256 = "ea8491e30fe54625133e711322f18de1a96e2bd9fea804eee3d0cafe67a0fcff"
+mask_ids = []
+quote_id = "q24"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4320
+end = 4357
+element_id = "sentence-4320-4357"
+quote_sha256 = "ad8b8063134fd52753bcbdd6812c7d0c3e477dfbf0a1ba28dc46b1d85de7e81b"
+mask_ids = []
+quote_id = "q25"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4359
+end = 4617
+element_id = "sentence-4359-4617"
+quote_sha256 = "1905f362304d35fbda6323e6a14f9a7bbf39b4a7a7aa3b2540777415ae4cc9a2"
+mask_ids = []
+quote_id = "q26"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4619
+end = 4692
+element_id = "sentence-4619-4791"
+quote_sha256 = "4511eaf19760272b30166bfce43602283c645bfeeda2ed5d803ee88a30e9d963"
+mask_ids = []
+quote_id = "q27"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4697
+end = 4791
+element_id = "sentence-4619-4791"
+quote_sha256 = "2a3d23f60eedc4ba8f46488a2cb772d9f0893d091f3e11612fda72f7095a4844"
+mask_ids = []
+quote_id = "q28"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4792
+end = 4928
+element_id = "sentence-4792-4928"
+quote_sha256 = "4aa1fd38c6537f738904200040c87b756fc3ce2fceab045e60f84c258530fbc4"
+mask_ids = []
+quote_id = "q29"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4930
+end = 5120
+element_id = "sentence-4930-5120"
+quote_sha256 = "e8084d8e6d1a0648091faba4a4abfbfca3bd5c57929ac36407a8cbd52796166d"
+mask_ids = []
+quote_id = "q30"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5989
+end = 6119
+element_id = "sentence-5989-6119"
+quote_sha256 = "9f9b4894939629e3e077cbcf382346103f2921ed3f3c5bc046aa5efe5d3a98cf"
+mask_ids = []
+quote_id = "q31"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6308
+end = 6432
+element_id = "sentence-6308-6432"
+quote_sha256 = "f470cf1ba2d8d0a28d3ea9c51ac7e9859b85acdb9d0dd3728f4a38a30dbcd4f6"
+mask_ids = []
+quote_id = "q32"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6434
+end = 6628
+element_id = "sentence-6434-6628"
+quote_sha256 = "f738e7011a28615acc3bd5181ed30445b893fd145491a01c981f7339a35211db"
+mask_ids = []
+quote_id = "q33"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6629
+end = 6767
+element_id = "sentence-6629-6767"
+quote_sha256 = "31748de8cc6a54e0c27cb6473a194b607ae7071eadb08517f8d1c12f1c1e728b"
+mask_ids = []
+quote_id = "q34"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6769
+end = 6920
+element_id = "sentence-6769-6920"
+quote_sha256 = "7e439aa73714f451d033253dd9b88884cb44f56adb950b5c505839de4b7fee49"
+mask_ids = []
+quote_id = "q35"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6921
+end = 7075
+element_id = "sentence-6921-7075"
+quote_sha256 = "f64a823f8cfe3c65f161109e2a749d6182cbd09eeb4b1d8a1de2bd8539ee6b03"
+mask_ids = []
+quote_id = "q36"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7076
+end = 7187
+element_id = "sentence-7076-7187"
+quote_sha256 = "4af2f39524b68d805a62f698d3c772fd6d52bf9d4eec9d62d847c5706b57a2db"
+mask_ids = []
+quote_id = "q37"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7189
+end = 7441
+element_id = "sentence-7189-7441"
+quote_sha256 = "d9fccd0b082ff66d7aa8e04b516755e480e034aea71073386793b68e3ff27b1c"
+mask_ids = []
+quote_id = "q38"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7442
+end = 7521
+element_id = "sentence-7442-7521"
+quote_sha256 = "899838f3df11734b9fb2e82eaf82390015518317402d63233be386115b1009e4"
+mask_ids = []
+quote_id = "q39"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 22888
+end = 22989
+element_id = "sentence-22882-22989"
+quote_sha256 = "a3ba40b0e2dfc09178a66eb892dc34e3a1e38579afda6b9126eacf3bfac7080c"
+mask_ids = []
+quote_id = "q40"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 24197
+end = 24367
+element_id = "sentence-24047-24448"
+quote_sha256 = "b9ec4b949be55e0cfffc3f79e9aee41f7e09181021ee76765f9dae2aa42e3153"
+mask_ids = ["non_gaap_disclaimer-24047-24951"]
+quote_id = "q41"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 24627
+end = 24703
+element_id = "sentence-24627-24951"
+quote_sha256 = "0f0f88099280769326b27ccf6401e7b28eabbf8b1158b9d1b13c8dcb8ebfbe40"
+mask_ids = ["non_gaap_disclaimer-24047-24951"]
+quote_id = "q42"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 8262
+end = 8380
+element_id = "sentence-8237-8413"
+quote_sha256 = "93fd16eef330bcb75e45e975ca66f90f162f76b45d00c6739c8af39ef019308c"
+mask_ids = []
+quote_id = "q43"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 10402
+end = 10474
+element_id = "sentence-9804-10479"
+quote_sha256 = "6c5f4fccf8ed38da8538b3963489322039422f93a0871d5165d5b4cbd66701b1"
+mask_ids = ["safe_harbor-9264-10479"]
+quote_id = "q44"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 11746
+end = 11794
+element_id = "sentence-10492-12231"
+quote_sha256 = "7e980dfba00c4e6f1e1d98301206aacdce54f1fa3272a630f2e84557f990f217"
+mask_ids = ["safe_harbor-10492-12231"]
+quote_id = "q45"
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c1"
+quote_ids = ["q1", "q10"]
+claim = "Quarterly revenue rose about $8.5 billion from a year earlier, to $100.8 billion, mainly because more people were served across both businesses."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c2"
+quote_ids = ["q5"]
+claim = "Both segments added people served, and management calls the growth wide-ranging."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c3"
+quote_ids = ["q6"]
+claim = "The CEO credits ongoing growth to the company's offerings and its staff's service, without naming a product."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c4"
+quote_ids = ["q3", "q11"]
+claim = "GAAP results for the quarter carry cyberattack harm, which took about $0.3 billion off operating earnings of $8.7 billion."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c5"
+quote_ids = ["q4", "q12"]
+claim = "Adjusted EPS was $7.15 after retaining a twelve-cent per-share business-disruption impact and excluding twenty-eight cents per share of direct cyberattack response costs."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c6"
+quote_ids = ["q7"]
+claim = "Management forecasts annual GAAP EPS of $15.50 to $15.75, including the effects of the South American disposals and the cyberattack."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c7"
+quote_ids = ["q8"]
+claim = "Adjusted EPS guidance for the year is $27.50 to $27.75, inside the band the company first gave roughly twelve months before."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c8"
+quote_ids = ["q9"]
+claim = "The adjusted guidance takes in about $0.75 a share of disruption losses at Change Healthcare, roughly ten cents more than the prior quarter's estimate."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c9"
+quote_ids = ["q13"]
+claim = "Medical costs took a larger share of premiums: the ratio climbed to 85.2% from 82.3% a year before."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c10"
+quote_ids = ["q14"]
+claim = "Lower Medicare funding from CMS is one cause the company gives for the higher medical care ratio."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c11"
+quote_ids = ["q14"]
+claim = "A shift in the blend of businesses and members also pushed the medical care ratio up."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c12"
+quote_ids = ["q14", "q15"]
+claim = "Reserve development worked against the ratio, and no favorable prior-period reserve release helped earnings this quarter."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c13"
+quote_ids = ["q16", "q17", "q18"]
+claim = "Days claims payable rose to 47.4 from 45.2 a quarter earlier as providers resumed normal billing, but stayed under the year-ago 50.7 because claims are now paid faster."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c14"
+quote_ids = ["q19"]
+claim = "The operating cost ratio eased to 13.2%, below both the prior quarter and the year before, which the company puts down to efficiency."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c15"
+quote_ids = ["q20"]
+claim = "Operating cash flow in the quarter was $14.0 billion, more than twice net income, helped partly by when cash came in."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c16"
+quote_ids = ["q21"]
+claim = "Dividends and buybacks gave shareholders more than $9.6 billion over the year's first three quarters."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c17"
+quote_ids = ["q22"]
+claim = "The quarter produced a 26.3% return on equity, which management attributes to consistent earnings across the business and effective use of capital."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c18"
+quote_ids = ["q24"]
+claim = "UnitedHealthcare revenue rose $5 billion from a year earlier, to $74.9 billion, on more domestic members."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c19"
+quote_ids = ["q25"]
+claim = "UnitedHealthcare earned $4.2 billion from operations in the quarter."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c20"
+quote_ids = ["q2", "q26"]
+claim = "Domestic commercial membership has risen by 2.4 million since the start of the year, to 29.7 million, which the company credits to its plan lineup."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c21"
+quote_ids = ["q27"]
+claim = "UnitedHealthcare covers 9.4 million older people and people with complex needs."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c22"
+quote_ids = ["q28"]
+claim = "Next year's Medicare Advantage plans will be on offer to 96% of people eligible for Medicare."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c23"
+quote_ids = ["q29"]
+claim = "The latest CMS star ratings for 2026 plans match the first 2025 levels and what the company expected."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c24"
+quote_ids = ["q30"]
+claim = "Medicaid and other state program membership grew sequentially to 7.5 million once states finished rechecking eligibility."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c25"
+quote_ids = ["q31"]
+claim = "Optum revenue rose $7.2 billion from a year earlier to $63.9 billion, with Optum Health and Optum Rx leading."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c26"
+quote_ids = ["q32"]
+claim = "Both Optum earnings measures include a $135 million hit from the disruption at Change Healthcare."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c27"
+quote_ids = ["q33"]
+claim = "Optum Health revenue rose $2.1 billion to $25.9 billion on more value-based care patients and a wider range of care."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c28"
+quote_ids = ["q34"]
+claim = "Optum Health kept expanding clinical support for patients at home and in clinics."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c29"
+quote_ids = ["q35"]
+claim = "Optum Insight earned about $800 million from operations, or $1 billion with attack response spending left out."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c30"
+quote_ids = ["q36"]
+claim = "Disruption losses at Change Healthcare shrank to $135 million this quarter from $335 million the quarter before."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c31"
+quote_ids = ["q37"]
+claim = "Optum Insight's backlog is over $1 billion larger than a year ago, mostly from new hospital-system partners."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c32"
+quote_ids = ["q38"]
+claim = "Optum Rx revenue rose $5.4 billion to $34.2 billion on new and deeper client relationships and broader pharmacy services."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c33"
+quote_ids = ["q39"]
+claim = "Optum Rx filled close to 410 million adjusted prescriptions, up from 380 million a year earlier."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c34"
+quote_ids = ["q40"]
+claim = "Across all its businesses the group served 148 million distinct people at quarter end."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c35"
+quote_ids = ["q7", "q41", "q42"]
+claim = "The company is leaving South America: it sold its Brazil business and holds the rest of its South American operations for sale, with losses on both."
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c1"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c2"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c3"
+theme_id = "demand"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c3"
+theme_id = "products"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c4"
+theme_id = "costs"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c4"
+theme_id = "supply"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c5"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c5"
+theme_id = "supply"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c6"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c6"
+theme_id = "portfolio"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c7"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c8"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c8"
+theme_id = "supply"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c9"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c10"
+theme_id = "regulation"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c10"
+theme_id = "pricing"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c11"
+theme_id = "mix"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c12"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c13"
+theme_id = "capital"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c14"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c15"
+theme_id = "capital"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c16"
+theme_id = "shareholder_returns"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c17"
+theme_id = "capital"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c18"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c19"
+theme_id = "unmatched"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c20"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c20"
+theme_id = "products"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c21"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c22"
+theme_id = "products"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c23"
+theme_id = "regulation"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c24"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c24"
+theme_id = "regulation"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c25"
+theme_id = "demand"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c26"
+theme_id = "supply"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c27"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c27"
+theme_id = "products"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c28"
+theme_id = "products"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c29"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c30"
+theme_id = "supply"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c31"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c32"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c32"
+theme_id = "products"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c33"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c34"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c35"
+theme_id = "portfolio"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c22"
+theme_id = "outlook"
+support = "supports"
+origin = "annotator_added"
+
+[[hard_negatives]]
+claim_id = "n1"
+quote_ids = ["q43"]
+claim = "This passage gives management's expectations for coming periods."
+negative_kind = "section"
+theme_id = "outlook"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n2"
+quote_ids = ["q44"]
+claim = "The Justice Department's risk-adjustment case moved forward during the quarter."
+negative_kind = "section"
+theme_id = "legal"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n3"
+quote_ids = ["q45"]
+claim = "The company wrote down goodwill and intangible assets in the quarter."
+negative_kind = "section"
+theme_id = "impairments"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n4"
+quote_ids = ["q23"]
+claim = "UnitedHealthcare brought down the total cost of care in the quarter."
+negative_kind = "section"
+theme_id = "costs"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n5"
+quote_ids = ["q36"]
+claim = "Change Healthcare disruption cost Optum Insight $335 million of revenue this quarter."
+negative_kind = "period"
+theme_id = "supply"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n6"
+quote_ids = ["q16"]
+claim = "Days claims payable stood at 50.7 at the end of the reported quarter."
+negative_kind = "period"
+theme_id = "capital"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n7"
+quote_ids = ["q19"]
+claim = "The operating cost ratio for the reported quarter was 15.0%."
+negative_kind = "period"
+theme_id = "costs"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n8"
+quote_ids = ["q41"]
+claim = "The Brazil sale closed during the reported quarter."
+negative_kind = "period"
+theme_id = "portfolio"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n9"
+quote_ids = ["q8"]
+claim = "Current adjusted EPS guidance for the year runs from $27.50 to $28.00."
+negative_kind = "period"
+theme_id = "outlook"
+origin = "drafted_accepted"

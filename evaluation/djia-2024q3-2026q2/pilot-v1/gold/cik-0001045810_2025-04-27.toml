@@ -1,0 +1,1645 @@
+# Stage 6 gold (the pilot codebook, split, and gold-set protocol). Written by `earnings-pipeline gold anchor`; quotes are pointers, and every other word is the annotator's.
+schema_version = 1
+event_id = "cik-0001045810:2025-04-27"
+document_id = "cik-0001045810:2025-04-27:release"
+doc_id = "0001045810-25-000115_q1fy26pr.htm@walker-1#3dc4ee963e1c01aa"
+canonical_hash = "3dc4ee963e1c01aab0bbe9673a089378d0957233aa6ab193d5d3fde7727008c1"
+split_hash = "5c4a2f3c5ed9ffc2cf0065658ec4e75311220338cf9b3fe07802c0db9fcd0e53"
+partition = "train"
+annotator = "Lowell Mason (verified a Claude draft)"
+no_theme = false
+
+[pin]
+pilot_id = "djia-2024q3-2026q2-pilot"
+pilot_version = 1
+pilot_hash = "3839c800151cc646f11064efdce583f988e511265f8893c90e9a2f2549145926"
+events_version = 1
+events_hash = "2348671b3ae8021d644df12ae2f539258670546970c918f8edb231ba1885c3b7"
+universe_version = 1
+universe_operative_hash = "c350923422d9bf2e65a0b5929f4c0d45370458c6a044c3de012a1dfeb116e573"
+
+[codebook]
+codebook_id = "djia-pilot"
+codebook_version = 0
+content_hash = "635975d1ec952cf5719ea3b473870f96e7e3a52bc3015cc1ac5725aa80ec1e79"
+
+[drafting_aid]
+model_id = "claude-opus-5-5"
+drafted_on = 2026-10-20
+
+[counts]
+accepted = 220
+edited = 9
+rejected = 0
+added = 1
+
+[release_identification]
+label = "release"
+note = "The issuer's own results for its first fiscal 2026 quarter, which closed on the event's period end."
+
+[[quotes]]
+start = 279
+end = 446
+element_id = "sentence-246-446"
+quote_sha256 = "0aa047d9a2a406d6ed3af1493470f0d2bedcdce0319dc4c654fff4971a89e112"
+mask_ids = []
+quote_id = "q1"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 447
+end = 589
+element_id = "sentence-447-589"
+quote_sha256 = "12e7d6fc89ebdefbeeec25292123b9a2bfe443d41f4cbfc579eea9885bc846e6"
+mask_ids = []
+quote_id = "q2"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 590
+end = 798
+element_id = "sentence-590-798"
+quote_sha256 = "0f78d53731f6076e1dd70be50e31ddcc58b83cecb65cfd98cf85a2a58a3781d0"
+mask_ids = []
+quote_id = "q3"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 799
+end = 923
+element_id = "sentence-799-923"
+quote_sha256 = "892af58d17d93733194a0a8fedd5d8df0eff76c0a7bcc27ff73420daaa8fa72c"
+mask_ids = []
+quote_id = "q4"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 924
+end = 1013
+element_id = "sentence-924-1013"
+quote_sha256 = "9a7032bac62c9315217ddac13781c1019310a439d432ca2fc80cd899eca373a4"
+mask_ids = []
+quote_id = "q5"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1014
+end = 1098
+element_id = "sentence-1014-1098"
+quote_sha256 = "661c6b3abeceaf1569bb471cae5328a5acfc2761e44b83487518b0101aaac23e"
+mask_ids = []
+quote_id = "q6"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1099
+end = 1192
+element_id = "sentence-1099-1192"
+quote_sha256 = "1e5d47354e18f5fdd24731ed3cb1341291c0a65ebd82eea94e9b26891d307198"
+mask_ids = []
+quote_id = "q7"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1193
+end = 1290
+element_id = "sentence-1193-1290"
+quote_sha256 = "8d139e6b345bc05e0abb0a11dee1cd3696d54f8f89291c59dc97bbd9806c9a5f"
+mask_ids = []
+quote_id = "q8"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1291
+end = 1421
+element_id = "sentence-1291-1421"
+quote_sha256 = "6db46bcae6cb2096fdf2561cfad20042cf35bedde74f57523f2de3125bf4a6ab"
+mask_ids = []
+quote_id = "q9"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1440
+end = 1600
+element_id = "sentence-1422-1648"
+quote_sha256 = "c01de9963da4176b89f3f1442a88f5349a5be5f3ee4aaf384c9297968f02b9c6"
+mask_ids = []
+quote_id = "q10"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1650
+end = 1716
+element_id = "sentence-1649-1716"
+quote_sha256 = "508e25eae6abbb8d3aa6671e52b6186cfb0a3a3d49f43de53b871b0a49546b8c"
+mask_ids = []
+quote_id = "q11"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1717
+end = 1782
+element_id = "sentence-1717-1864"
+quote_sha256 = "62f3cf82b03551e8fa94cd2231bc3ffd466358c58f54171b8eb65c76e826519c"
+mask_ids = []
+quote_id = "q12"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1788
+end = 1863
+element_id = "sentence-1717-1864"
+quote_sha256 = "847569fb611eda19a73fb0f582ad3aed9e99f0c5f7aae5c049d4f6564aab232f"
+mask_ids = []
+quote_id = "q13"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 1865
+end = 2046
+element_id = "sentence-1865-2047"
+quote_sha256 = "541098fea7f3cd082b6f99cff3e111c14f51c5e27dcc82d9815f68324dd2465f"
+mask_ids = []
+quote_id = "q14"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 2048
+end = 2180
+element_id = "sentence-2048-2180"
+quote_sha256 = "2e89e32f8d30edc4a62a207acb053c84a2521426dfce1ad49e3aba72e9756d2b"
+mask_ids = []
+quote_id = "q15"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3095
+end = 3245
+element_id = "sentence-3095-3245"
+quote_sha256 = "8280f836066697ceb96559761f37f2efcc5b2c43bc0ac6949306b15e78f25bd3"
+mask_ids = []
+quote_id = "q16"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3325
+end = 3383
+element_id = "sentence-3325-3383"
+quote_sha256 = "c55650e088b1713f0d627a0f15aef20981106a8a9ad67988c0d428f24bf42f42"
+mask_ids = []
+quote_id = "q17"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3384
+end = 3503
+element_id = "sentence-3384-3503"
+quote_sha256 = "7738330f6f89e28117d992be3ed7f6ba14f2f473809a71706bef186b0d5dc32a"
+mask_ids = []
+quote_id = "q18"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3505
+end = 3617
+element_id = "sentence-3505-3617"
+quote_sha256 = "a08f8b0de53b435a53ddd42f84c7dd48a010bae7ad68dd72671b46606bb29470"
+mask_ids = []
+quote_id = "q19"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3618
+end = 3719
+element_id = "sentence-3618-3719"
+quote_sha256 = "34ac74171177ce81c0f7f47dce8e1915b21d2974a5184b2f255c5af116a974cf"
+mask_ids = []
+quote_id = "q20"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3721
+end = 3835
+element_id = "sentence-3721-3835"
+quote_sha256 = "058582eba0442a62f271ca9f76106ecc99584884d3c13efd0476cdaac354fc81"
+mask_ids = []
+quote_id = "q21"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3836
+end = 3922
+element_id = "sentence-3836-3922"
+quote_sha256 = "c7c2407b2faef19bde0a2b2808efea5885902b01a2b28f852a09ddbe07b640b5"
+mask_ids = []
+quote_id = "q22"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 3924
+end = 4110
+element_id = "sentence-3924-4110"
+quote_sha256 = "a2a8782dc3d2e99153ba7de699ecdd88ba5cf14c2530dcde16d9ba0a5f19ce35"
+mask_ids = []
+quote_id = "q23"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4112
+end = 4213
+element_id = "sentence-4112-4213"
+quote_sha256 = "c1f1b0c57570946520b949f288b3a49a0514d37ce7a886d796b7d707830c93cf"
+mask_ids = []
+quote_id = "q24"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4320
+end = 4421
+element_id = "sentence-4320-4421"
+quote_sha256 = "d7d6ec2e2199a52c0cfdcabac1e8da840ada20ab8de34648281cc520468c7f48"
+mask_ids = []
+quote_id = "q25"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4423
+end = 4556
+element_id = "sentence-4423-4556"
+quote_sha256 = "4e23c67659e7c66212acae36d564d1add1e3c77767a79bdeb34c24311191f50c"
+mask_ids = []
+quote_id = "q26"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4558
+end = 4659
+element_id = "sentence-4558-4659"
+quote_sha256 = "131f563e21b0f0564547d30cbd204997017991507d985508ec22e301107c1f52"
+mask_ids = []
+quote_id = "q27"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4661
+end = 4810
+element_id = "sentence-4661-4810"
+quote_sha256 = "fe44f9b74b65ea99732bba1b27077950dea19f33842762a613b553ac02fd775b"
+mask_ids = []
+quote_id = "q28"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4812
+end = 4990
+element_id = "sentence-4812-4990"
+quote_sha256 = "ce64429d4ac0845629afac23b2d8c6c59742f36a7e7d0011ea2f85a4a5ee964d"
+mask_ids = []
+quote_id = "q29"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 4992
+end = 5091
+element_id = "sentence-4992-5091"
+quote_sha256 = "fb87b6f08ae01d0baa348046d8a48c155192df5e20708cfff076611c611ef51a"
+mask_ids = []
+quote_id = "q30"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5093
+end = 5201
+element_id = "sentence-5093-5211"
+quote_sha256 = "c1e41c40d20d5b4f9c5ea55affa6a2b7d788eced7d68c7a599fe1f1b3ba18ac1"
+mask_ids = []
+quote_id = "q31"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5213
+end = 5321
+element_id = "sentence-5213-5321"
+quote_sha256 = "9e146773695a11e849a2ecef47dd153add209b0da7be95c017cfdd5b1bf80dbd"
+mask_ids = []
+quote_id = "q32"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5323
+end = 5453
+element_id = "sentence-5323-5453"
+quote_sha256 = "73df59d0e25bb1c9c79e1206556e98a1b1676e752ed757fde9a125c26a1a33f7"
+mask_ids = []
+quote_id = "q33"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5455
+end = 5592
+element_id = "sentence-5455-5592"
+quote_sha256 = "edf63096de4ed3375ba10d49ae8d29cd22a82472cbf2c193faa0b4e8080d7da7"
+mask_ids = []
+quote_id = "q34"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5594
+end = 5708
+element_id = "sentence-5594-5708"
+quote_sha256 = "5892d1b476551cc1f50e773347eed35c9fe05e96132fd1ec1de04ad6af6e1fdd"
+mask_ids = []
+quote_id = "q35"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5710
+end = 5824
+element_id = "sentence-5710-5824"
+quote_sha256 = "e3af1c6684218c3cbf9da6200d0f07ee26ec9322ece066f26bda207f1860f745"
+mask_ids = []
+quote_id = "q36"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5826
+end = 5961
+element_id = "sentence-5826-5961"
+quote_sha256 = "82702ca37d60367bfa6dc4c15d543730e9762f7e0b1322f36fea7509ba1ad811"
+mask_ids = []
+quote_id = "q37"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 5963
+end = 6099
+element_id = "sentence-5963-6099"
+quote_sha256 = "cd9ac192f86c273d639d1027f76830676177a08591724d5dd1c32858d3a997df"
+mask_ids = []
+quote_id = "q38"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6101
+end = 6195
+element_id = "sentence-6101-6195"
+quote_sha256 = "3cd09602ca11bbe59af7b6e6c6723781aa44d6e3fff9154370a8ac5b7ce3136c"
+mask_ids = []
+quote_id = "q39"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6197
+end = 6331
+element_id = "sentence-6197-6331"
+quote_sha256 = "9a26c4d2151d7c6549cb44c058b5c783e361b8c2bc2e7284f416d14aeb6df893"
+mask_ids = []
+quote_id = "q40"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6333
+end = 6432
+element_id = "sentence-6333-6432"
+quote_sha256 = "c6dbc6b0a7bb44d2730eb7bd62f46504df7617c98d92cabf96975f0c492b5175"
+mask_ids = []
+quote_id = "q41"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6434
+end = 6548
+element_id = "sentence-6434-6548"
+quote_sha256 = "6287879900dad60e26268b9255945c1c629a03e780d06ea8313e8b4f6fbba43b"
+mask_ids = []
+quote_id = "q42"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6567
+end = 6683
+element_id = "sentence-6567-6683"
+quote_sha256 = "15de3eff96cd0571a91be227749ea3e12036387ae6d088d19a58984f3db159d9"
+mask_ids = []
+quote_id = "q43"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6685
+end = 6841
+element_id = "sentence-6685-6841"
+quote_sha256 = "de4f191d975aff1fb21d3ed49da875916b1d1e0faa85f84575d36b645765e66d"
+mask_ids = []
+quote_id = "q44"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 6843
+end = 6900
+element_id = "sentence-6843-7024"
+quote_sha256 = "3340f96238c24e8a5695e2c2871af3535817a57f9c8f52ec75a1114952640576"
+mask_ids = []
+quote_id = "q45"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7026
+end = 7140
+element_id = "sentence-7026-7140"
+quote_sha256 = "8c1420b5e013f897f9ec8823024b9c4ee79c52d253e0c04fb750a73cd8f6b021"
+mask_ids = []
+quote_id = "q46"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7142
+end = 7274
+element_id = "sentence-7142-7274"
+quote_sha256 = "f8c0770d571d7bdbf54a8c892418ed5e99d732f5f50790185383db0931b3a101"
+mask_ids = []
+quote_id = "q47"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7303
+end = 7401
+element_id = "sentence-7303-7401"
+quote_sha256 = "52c51dbd10b26cf3f0756fa295c91295d195b883cc5a57e65366a8bcbed66f1a"
+mask_ids = []
+quote_id = "q48"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7403
+end = 7479
+element_id = "sentence-7403-7479"
+quote_sha256 = "db40eb4fc81963271f41c47cd19ac7bd0df7e55465a69a12a618e3fd7c06d75c"
+mask_ids = []
+quote_id = "q49"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7481
+end = 7598
+element_id = "sentence-7481-7598"
+quote_sha256 = "d39f952a2ed78e2c07617966397ac1d15c9d23ea17fcc413a6786cdc8da71977"
+mask_ids = []
+quote_id = "q50"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7600
+end = 7867
+element_id = "sentence-7600-7867"
+quote_sha256 = "0d2e69eee4705bbea94aeeece40009314b670a7104a8bbb8ce60e0cdce2a50a4"
+mask_ids = []
+quote_id = "q51"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 7893
+end = 8005
+element_id = "sentence-7893-8005"
+quote_sha256 = "a4e4233002c8eb4b69ae5e925ff7c39994926bbb7bfcdd8e3daf2866d5321596"
+mask_ids = []
+quote_id = "q52"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 8007
+end = 8164
+element_id = "sentence-8007-8164"
+quote_sha256 = "7778ea1a1cb88d0bc80ddd52e554791780771e203548f3713b856c1f09b9934d"
+mask_ids = []
+quote_id = "q53"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 8166
+end = 8297
+element_id = "sentence-8166-8297"
+quote_sha256 = "7ba079f7926c3920726494ff2d31df2cd28af230d33a1f7b32062e7690ee3ad5"
+mask_ids = []
+quote_id = "q54"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 8299
+end = 8387
+element_id = "sentence-8299-8574"
+quote_sha256 = "4c96e35cec1a41a1c6b3cd70be15d0ec3bc96bbad4c3b0064993c733295e9b60"
+mask_ids = []
+quote_id = "q55"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 8576
+end = 8655
+element_id = "sentence-8576-8655"
+quote_sha256 = "fa3aba4ead8c3d7ca7e4808abbecf24d5ae40f3f757d656a0c840387c0dbd054"
+mask_ids = []
+quote_id = "q56"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 10704
+end = 10762
+element_id = "sentence-10704-10762"
+quote_sha256 = "d26e5783161c74e8fb1bd5c33460edef71f2c27a2c515f1cc2efa43340d93032"
+mask_ids = ["non_gaap_disclaimer-9392-11445"]
+quote_id = "q57"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 10763
+end = 10989
+element_id = "sentence-10763-10989"
+quote_sha256 = "d409d34177e16248618266535f14a10cd8a8e57fb7441af16eddfdedd0b47517"
+mask_ids = ["non_gaap_disclaimer-9392-11445"]
+quote_id = "q58"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 11813
+end = 11860
+element_id = "sentence-11723-13386"
+quote_sha256 = "adee04c97f778261e3a8aac7e393d59691bbc29beb29383c02cf4fbd83953177"
+mask_ids = ["safe_harbor-11723-14245"]
+quote_id = "q59"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 12637
+end = 12698
+element_id = "sentence-11723-13386"
+quote_sha256 = "296e3836fb77a7e5b66d4fa98eb000ba7a47646e513c0e58cb417771223f6112"
+mask_ids = ["safe_harbor-11723-14245"]
+quote_id = "q60"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 13467
+end = 13507
+element_id = "sentence-13387-14245"
+quote_sha256 = "a7a9d226eeb1de55c09f814ffb55c67fab18ace50d9a7951492068f028a1092f"
+mask_ids = ["safe_harbor-11723-14245"]
+quote_id = "q61"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 14077
+end = 14119
+element_id = "sentence-13387-14245"
+quote_sha256 = "efeabac821189099724ad017630f71568f29235d9413bc33eb8b45885ad47919"
+mask_ids = ["safe_harbor-11723-14245"]
+quote_id = "q62"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 13509
+end = 13604
+element_id = "sentence-13387-14245"
+quote_sha256 = "60c2c00d7a92011feb73e7af7e2d670a71f6a02f89dbea96f60bbac3eb8c6577"
+mask_ids = ["safe_harbor-11723-14245"]
+quote_id = "q63"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 15195
+end = 15283
+element_id = "sentence-15195-15283"
+quote_sha256 = "6b871c37d600098cc7adb8007f9fd5f451a67ccf0a8dc34ea53232128919870d"
+mask_ids = ["repeated_legal-14745-15283"]
+quote_id = "q64"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 10026
+end = 10171
+element_id = "sentence-10026-10430"
+quote_sha256 = "62dec7ac6fa0f7dac4b8ff153d3af46b078153b9afe1ad8cac8c4bd211496872"
+mask_ids = ["non_gaap_disclaimer-9392-11445"]
+quote_id = "q65"
+origin = "drafted_accepted"
+
+[[quotes]]
+start = 8299
+end = 8574
+element_id = "sentence-8299-8574"
+quote_sha256 = "63ae6dda8c22e4b69a4a30098dce7f5af21d188f8469c47e14778c05a9e05c38"
+mask_ids = []
+quote_id = "q66"
+origin = "annotator_added"
+
+[[claims]]
+claim_id = "c1"
+quote_ids = ["q1"]
+claim = "Quarterly revenue reached about $44 billion, rising 12% sequentially and 69% on the year."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c2"
+quote_ids = ["q2"]
+claim = "The US government told the company it now needs a license to export its H20 chips to China."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c3"
+quote_ids = ["q3"]
+claim = "The new export rule led to a $4.5 billion charge in the quarter for surplus H20 inventory and purchase commitments."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c4"
+quote_ids = ["q3"]
+claim = "Demand for H20 declined after the export licensing requirement took effect."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c5"
+quote_ids = ["q4"]
+claim = "Before the license rule took hold, H20 sales in the quarter came to $4.6 billion."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c6"
+quote_ids = ["q2", "q5"]
+claim = "The export rule kept the company from shipping another $2.5 billion of H20 sales in the quarter."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c7"
+quote_ids = ["q3", "q6", "q7"]
+claim = "The H20 charge cut quarterly non-GAAP gross margin by roughly ten points, from about 71% to 61%."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c8"
+quote_ids = ["q3", "q8", "q9"]
+claim = "The H20 charge, net of tax, lowered non-GAAP diluted EPS from 96 cents to 81 cents."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c9"
+quote_ids = ["q10"]
+claim = "The Blackwell NVL72 AI system is now in full-scale production with system makers and cloud providers."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c10"
+quote_ids = ["q11"]
+claim = "The CEO calls worldwide demand for the company's AI infrastructure very strong."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c11"
+quote_ids = ["q12"]
+claim = "AI inference token output grew ten times over the past year."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c12"
+quote_ids = ["q13"]
+claim = "The CEO expects demand for AI computing to speed up as AI agents spread."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c13"
+quote_ids = ["q14"]
+claim = "Nations are coming to treat AI as basic infrastructure."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c14"
+quote_ids = ["q15"]
+claim = "A quarterly dividend of one cent per share will be paid in early July."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c15"
+quote_ids = ["q16"]
+claim = "Per-share figures are restated for the earlier ten-for-one split."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c16"
+quote_ids = ["q17"]
+claim = "Second-quarter revenue is guided to about $45 billion, within 2% either way."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c17"
+quote_ids = ["q18"]
+claim = "The second-quarter guide assumes roughly $8 billion of H20 revenue lost to export controls."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c18"
+quote_ids = ["q19"]
+claim = "Second-quarter gross margin is guided near 72%, within half a point."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c19"
+quote_ids = ["q20"]
+claim = "Management aims for gross margin in the mid-70s by late in the year."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c20"
+quote_ids = ["q21"]
+claim = "Second-quarter operating expenses are guided to about $5.7 billion GAAP and $4.0 billion non-GAAP."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c21"
+quote_ids = ["q22"]
+claim = "Operating expenses for the full fiscal year are expected to grow in the mid-30s percent."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c22"
+quote_ids = ["q23"]
+claim = "The roughly $450 million second-quarter other-income forecast leaves out investment gains and losses on public and private shares."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c23"
+quote_ids = ["q24"]
+claim = "Second-quarter income tax rates are forecast near 16.5%, within one percentage point, before discrete tax items."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c24"
+quote_ids = ["q25"]
+claim = "Data Center revenue was $39.1 billion, up 10% sequentially and 73% on the year."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c25"
+quote_ids = ["q26"]
+claim = "NVIDIA is building US factories and working with partners to manufacture its AI supercomputers in the country."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c26"
+quote_ids = ["q27"]
+claim = "Blackwell Ultra and Dynamo launched to speed up AI reasoning models."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c27"
+quote_ids = ["q28"]
+claim = "A partnership with HUMAIN will build AI factories in Saudi Arabia."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c28"
+quote_ids = ["q29"]
+claim = "The Stargate UAE AI cluster in Abu Dhabi was unveiled with several partners."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c29"
+quote_ids = ["q30"]
+claim = "The company plans an AI factory supercomputer with Foxconn and Taiwan's government."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c30"
+quote_ids = ["q31"]
+claim = "NVIDIA says RTX PRO is speeding enterprise infrastructure's shift toward AI factories."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c31"
+quote_ids = ["q32"]
+claim = "NVLink Fusion lets other firms build semi-custom AI infrastructure."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c32"
+quote_ids = ["q33"]
+claim = "New networking switches using silicon photonics were announced for very large AI factories."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c33"
+quote_ids = ["q34"]
+claim = "A DGX SuperPOD on Blackwell Ultra GPUs launched for agentic AI work."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c34"
+quote_ids = ["q35"]
+claim = "Joint work with Alphabet and Google targets agentic AI, robotics, and drug discovery."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c35"
+quote_ids = ["q36"]
+claim = "Its inference software and accelerated computing now work inside Oracle's AI infrastructure."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c36"
+quote_ids = ["q37"]
+claim = "The four large cloud providers now offer Blackwell instances."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c37"
+quote_ids = ["q38"]
+claim = "Blackwell set MLPerf inference records with up to 30 times more throughput."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c38"
+quote_ids = ["q39"]
+claim = "DGX Cloud Lepton launched to link developers with the company's compute network."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c39"
+quote_ids = ["q40"]
+claim = "An open Llama Nemotron model family with reasoning launched as a base for AI agents."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c40"
+quote_ids = ["q41"]
+claim = "An AI Data Platform reference design launched for inference workloads."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c41"
+quote_ids = ["q42"]
+claim = "A new research center in Japan houses a very large quantum computing system."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c42"
+quote_ids = ["q43"]
+claim = "Gaming revenue hit a record $3.8 billion, up 48% sequentially and 42% on the year."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c43"
+quote_ids = ["q44"]
+claim = "GeForce RTX 5070 and 5060 cards launched, priced from $299 in desktop form and $1,099 in laptops."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c44"
+quote_ids = ["q45"]
+claim = "DLSS 4 now works in more than 125 games."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c45"
+quote_ids = ["q46"]
+claim = "The Nintendo Switch 2 runs on a company processor with AI-based DLSS."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c46"
+quote_ids = ["q47"]
+claim = "The RTX Remix modding platform launched and drew more than 2 million gamers, alongside a demo of Half-Life 2 RTX."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c47"
+quote_ids = ["q48"]
+claim = "Professional Visualization revenue was $509 million, flat sequentially and up 19% on the year."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c48"
+quote_ids = ["q49"]
+claim = "An RTX PRO Blackwell line for workstations and servers was announced."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c49"
+quote_ids = ["q50"]
+claim = "Two personal AI supercomputers, DGX Spark and DGX Station, were unveiled."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c50"
+quote_ids = ["q51"]
+claim = "Major industrial software firms are building Omniverse into their products for physical AI."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c51"
+quote_ids = ["q52"]
+claim = "The automotive segment brought in $567 million, 1% below the prior quarter and 72% above a year earlier."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c52"
+quote_ids = ["q53"]
+claim = "The company and General Motors will work together on future vehicles, factories, and robots."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c53"
+quote_ids = ["q54"]
+claim = "Halos, an automotive safety system that draws on AV safety AI research, launched."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c54"
+quote_ids = ["q55", "q66"]
+claim = "NVIDIA announced the GR00T N1 and N1.5 models for humanoid robots, a GR00T-Dreams tool for synthetic movement data, and Blackwell hardware for robot development."
+origin = "drafted_edited"
+
+[[claims]]
+claim_id = "c55"
+quote_ids = ["q56"]
+claim = "The company released more Cosmos world models and data tools for physical AI."
+origin = "drafted_accepted"
+
+[[claims]]
+claim_id = "c56"
+quote_ids = ["q57"]
+claim = "The H20 was made mainly for Chinese customers."
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c1"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c2"
+theme_id = "trade_policy"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c2"
+theme_id = "regulation"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c3"
+theme_id = "trade_policy"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c3"
+theme_id = "supply"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c3"
+theme_id = "impairments"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c4"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c4"
+theme_id = "trade_policy"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c5"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c6"
+theme_id = "trade_policy"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c7"
+theme_id = "trade_policy"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c7"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c8"
+theme_id = "trade_policy"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c8"
+theme_id = "tax"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c9"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c9"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c9"
+theme_id = "supply"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c10"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c10"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c11"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c11"
+theme_id = "demand"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c12"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c12"
+theme_id = "outlook"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c13"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c14"
+theme_id = "shareholder_returns"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c15"
+theme_id = "shareholder_returns"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c16"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c17"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c17"
+theme_id = "trade_policy"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c18"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c19"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c20"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c20"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c21"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c21"
+theme_id = "costs"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c22"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c23"
+theme_id = "outlook"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c23"
+theme_id = "tax"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c24"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c24"
+theme_id = "ai"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c25"
+theme_id = "capital_investment"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c25"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c25"
+theme_id = "trade_policy"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c26"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c26"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c27"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c27"
+theme_id = "portfolio"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c28"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c28"
+theme_id = "products"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c29"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c30"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c30"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c31"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c31"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c32"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c32"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c33"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c33"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c34"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c35"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c35"
+theme_id = "products"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c36"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c37"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c37"
+theme_id = "ai"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c38"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c39"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c39"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c40"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c40"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c41"
+theme_id = "capital_investment"
+support = "uncertain"
+tie_group = "t1"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c41"
+theme_id = "products"
+support = "uncertain"
+tie_group = "t1"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c42"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c43"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c43"
+theme_id = "pricing"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c44"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c45"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c45"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c46"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c46"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_edited"
+
+[[assignments]]
+claim_id = "c47"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c48"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c49"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c49"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c50"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c51"
+theme_id = "demand"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c52"
+theme_id = "products"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c52"
+theme_id = "portfolio"
+support = "does_not_support"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c53"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c53"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c54"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c54"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c55"
+theme_id = "products"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c55"
+theme_id = "ai"
+support = "supports"
+origin = "drafted_accepted"
+
+[[assignments]]
+claim_id = "c56"
+theme_id = "trade_policy"
+support = "uncertain"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n1"
+quote_ids = ["q58"]
+claim = "The company's free cash flow grew in the quarter."
+negative_kind = "section"
+theme_id = "capital"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n2"
+quote_ids = ["q59"]
+claim = "Export license rules cut the quarter's results, as this passage reports."
+negative_kind = "section"
+theme_id = "trade_policy"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n3"
+quote_ids = ["q60"]
+claim = "The company raised its dividend and planned more buybacks."
+negative_kind = "section"
+theme_id = "shareholder_returns"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n4"
+quote_ids = ["q61"]
+claim = "The world economy and politics turned weaker during the quarter."
+negative_kind = "section"
+theme_id = "macro"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n5"
+quote_ids = ["q62"]
+claim = "A change in the law hurt the company's results this quarter."
+negative_kind = "section"
+theme_id = "regulation"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n6"
+quote_ids = ["q63"]
+claim = "A contract manufacturer's disruption limited supply in the quarter."
+negative_kind = "section"
+theme_id = "supply"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n7"
+quote_ids = ["q64"]
+claim = "The company changed prices on its products."
+negative_kind = "section"
+theme_id = "pricing"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n8"
+quote_ids = ["q65"]
+claim = "The company booked costs from a named acquisition in the quarter."
+negative_kind = "section"
+theme_id = "portfolio"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n9"
+quote_ids = ["q17"]
+claim = "Revenue for the quarter just reported was $45 billion."
+negative_kind = "period"
+theme_id = "demand"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n10"
+quote_ids = ["q20"]
+claim = "Gross margin reached the mid-70s in the quarter just reported."
+negative_kind = "period"
+theme_id = "costs"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n11"
+quote_ids = ["q22"]
+claim = "Operating expenses rose by about a third in the reported quarter."
+negative_kind = "period"
+theme_id = "costs"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n12"
+quote_ids = ["q16"]
+claim = "The ten-for-one stock split took effect in the reported quarter."
+negative_kind = "period"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n13"
+quote_ids = ["q46"]
+claim = "The company launched its own game console."
+negative_kind = "issuer"
+theme_id = "products"
+origin = "drafted_accepted"
+
+[[hard_negatives]]
+claim_id = "n14"
+quote_ids = ["q51"]
+claim = "The company added physical AI features to its own industrial design software."
+negative_kind = "issuer"
+theme_id = "products"
+origin = "drafted_accepted"
