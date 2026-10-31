@@ -6,7 +6,7 @@ doc_id = "0000318154-25-000070_amgn-20250930earningsrelea.htm@walker-1#193df58e0
 canonical_hash = "193df58e0eea3037b8dabdaccbb28cc89dda56277fb366fefcc67cc5742cdccd"
 split_hash = "5c4a2f3c5ed9ffc2cf0065658ec4e75311220338cf9b3fe07802c0db9fcd0e53"
 partition = "dev"
-annotator = "Lowell Mason"
+annotator = "Lowell Mason (independent pass, then verified a Claude draft)"
 no_theme = false
 
 [pin]

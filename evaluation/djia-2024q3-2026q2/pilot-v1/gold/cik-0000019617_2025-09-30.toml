@@ -6,7 +6,7 @@ doc_id = "0001628280-25-044845_a3q25erfexhibit991narrative.htm@walker-1#61c34da6
 canonical_hash = "61c34da6d5ab48b99c1a3fdd5c9ec284aae059ef3f8b7d2899ad1ca073d690c7"
 split_hash = "5c4a2f3c5ed9ffc2cf0065658ec4e75311220338cf9b3fe07802c0db9fcd0e53"
 partition = "dev"
-annotator = "Lowell Mason"
+annotator = "Lowell Mason (independent pass, then verified a Claude draft)"
 no_theme = false
 
 [pin]
