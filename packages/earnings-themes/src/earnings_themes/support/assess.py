@@ -245,11 +245,17 @@ def _score_signals(
 
 def _retry_request(original: JudgeRequest, reason: str) -> JudgeRequest:
     # Only trusted vocabulary enters feedback; raw unusable text is never echoed.
-    feedback = Message(
-        role="user",
-        content=f"Reply validation failed: {reason}. Return the closed answer schema with exactly the supplied quote_assessments references.",
+    # The feedback joins the final user message, so the roles stay [system, user]:
+    # some chat templates refuse two consecutive user messages (D21-27).
+    *head, last = original.messages
+    if last.role != "user":
+        raise SupportError("malformed_record")
+    feedback = (
+        f"Reply validation failed: {reason}. Return the closed answer schema"
+        " with exactly the supplied quote_assessments references."
     )
-    return original.model_copy(update={"messages": (*original.messages, feedback)})
+    merged = Message(role="user", content=f"{last.content}\n\n{feedback}")
+    return original.model_copy(update={"messages": (*head, merged)})
 
 
 def _judge_attempt(

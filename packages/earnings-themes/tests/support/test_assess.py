@@ -1,6 +1,7 @@
 """Invented offline assessment, independent trial retries, and raw replay."""
 
 from dataclasses import replace
+from itertools import pairwise
 
 import pytest
 from earnings_themes.extraction.adapters import ModelReply, Usage
@@ -135,7 +136,8 @@ def test_unusable_first_cached_then_valid_second_replays(
     positive = judge_reply()
 
     def script(request):
-        if len(request.messages) == 2:
+        # A retry carries its feedback in the final user message (D21-27).
+        if "Reply validation failed:" not in request.messages[-1].content:
             raw = ModelReply(
                 text="INVENTED_PRIVATE_REPLY",
                 model="wrong" if failure == "model" else "invented-judge",
@@ -176,6 +178,8 @@ def test_failed_trials_at_most_two_independent_requests(
     assert len(panel[0].requests) == 4
     assert len(panel[1].requests) == 2
     assert len(panel[0].requests[2].messages) == 2
+    assert "Reply validation failed:" in panel[0].requests[1].messages[-1].content
+    assert "Reply validation failed:" not in panel[0].requests[2].messages[-1].content
     assert all(
         "INVENTED_PRIVATE_REPLY" not in r.messages[-1].content
         for j in panel
@@ -303,7 +307,7 @@ def test_otherwise_valid_refused_transport_reply_retained_on_replay(
 ):
     def script(request):
         raw = judge_reply()(request)
-        if len(request.messages) == 2:
+        if "Reply validation failed:" not in request.messages[-1].content:
             raise SupportTransportError(reason, raw)
         assert reason in request.messages[-1].content
         return raw
@@ -313,6 +317,7 @@ def test_otherwise_valid_refused_transport_reply_retained_on_replay(
     assert first.attempts[0].problem == reason
     assert first.attempts[0].answer is None
     assert first.attempts[0].actual_completion_tokens == 3
+    assert first.attempts[1].answer is not None
     assert len(first.attempts) == 6
     counts = tuple(len(j.requests) for j in panel)
     second = assess(resolved, scorer, panel, policy, allowance, tmp_path, "replay")
@@ -335,6 +340,40 @@ def test_errors_without_raw_still_two_attempts(
     assert len(panel[0].requests) == 4
     assert all(a.answer is None and a.problem == reason for a in result.attempts[:4])
     assert all(u.unreported for u in result.usage[3:7])
+
+
+def _alternating_template(request):
+    # Like a chat template that refuses two consecutive messages with one role.
+    roles = [message.role for message in request.messages]
+    if any(a == b for a, b in pairwise(roles)):
+        raise RuntimeError("invented template refusal")
+    return 5
+
+
+@pytest.mark.parametrize("index", [0, 1])
+def test_retry_keeps_alternating_roles_under_a_strict_template(
+    resolved, scorer, panel, policy, allowance, tmp_path, index
+):
+    """D21-27: a retry keeps [system, user], so a strict template still counts it."""
+    positive = judge_reply()
+    replies = iter([ModelReply(text="invented unusable reply", model="invented-judge")])
+
+    def script(request):
+        return next(replies, None) or positive(request)
+
+    judge = panel[index]
+    judge.script = script
+    judge._token_counter = _alternating_template
+    result = assess(resolved, scorer, panel, policy, allowance, tmp_path)
+    original, retry = judge.requests[0], judge.requests[1]
+    assert result.outcome.status == "assessed"
+    assert [m.role for m in retry.messages] == ["system", "user"]
+    assert retry.messages[0] == original.messages[0]
+    assert retry.messages[1].content.startswith(original.messages[1].content + "\n\n")
+    assert retry.messages[1].content.endswith(
+        "Reply validation failed: malformed_reply. Return the closed answer schema"
+        " with exactly the supplied quote_assessments references."
+    )
 
 
 def test_same_family_panel_refuses_before_scorer(
