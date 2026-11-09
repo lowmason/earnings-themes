@@ -277,7 +277,8 @@ def judge_reply(
     from earnings_themes.extraction.adapters import ModelReply, Usage
 
     def reply(request):
-        blocks = json.loads(request.messages[1].content)
+        # A retry appends feedback after the JSON blocks (D21-27).
+        blocks, _ = json.JSONDecoder().raw_decode(request.messages[1].content)
         evidence = next(b for b in blocks if "quoted_evidence" in b)
         return ModelReply(
             text=json.dumps(

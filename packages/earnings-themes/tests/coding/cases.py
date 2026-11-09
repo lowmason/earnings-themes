@@ -256,7 +256,8 @@ def make_support_parts(contribution="supporting", *, score=0.25, replay=False):
     )
 
     def answer(request):
-        blocks = json.loads(request.messages[1].content)
+        # A retry appends feedback after the JSON blocks (D21-27).
+        blocks, _ = json.JSONDecoder().raw_decode(request.messages[1].content)
         evidence = next(b["quoted_evidence"] for b in blocks if "quoted_evidence" in b)
         return ModelReply(
             model=runtime.model_id,
