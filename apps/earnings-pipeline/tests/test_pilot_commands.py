@@ -311,3 +311,43 @@ def test_fresh_requirements_refuse_before_intake(tmp_path, monkeypatch, options)
     assert result.exit_code == 1
     assert "fresh" in result.output
     assert "intake opened" not in result.output
+
+
+def _assessment_error(kind):
+    from earnings_themes.coding.records import CodingError
+    from earnings_themes.support.problems import SupportError
+
+    class Unlisted(SupportError):
+        def __str__(self):
+            return MARKER
+
+    return {
+        "coding": lambda: CodingError("hierarchy_conflict"),
+        "support": lambda: SupportError("unexpected_error"),
+        "unlisted": lambda: Unlisted("unexpected_error"),
+    }[kind]()
+
+
+@pytest.mark.parametrize(
+    ("kind", "reason"),
+    [
+        ("coding", "hierarchy_conflict"),
+        ("support", "unexpected_error"),
+        ("unlisted", "malformed_record"),
+    ],
+)
+def test_assessment_refusal_prints_its_closed_reason(
+    kind, reason, tmp_path, monkeypatch
+):
+    """D21-28: the closed reason is printed; anything else stays malformed_record."""
+    module = importlib.import_module("earnings_pipeline.pilot_commands")
+
+    def refuse(*args, **kwargs):
+        raise _assessment_error(kind)
+
+    monkeypatch.setattr(module, "open_pilot", refuse)
+    args = ["pilot", "--repo", str(tmp_path), "pass", "--settings", "invented.json"]
+    result = CliRunner().invoke(app, [*args, "--models-root", str(tmp_path)])
+    assert result.exit_code == 1
+    assert f"Refused: assessment: {reason}" in result.output
+    assert MARKER not in result.output

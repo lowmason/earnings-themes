@@ -10,11 +10,12 @@ from typing import TYPE_CHECKING, Annotated
 
 import typer
 from earnings_core import canonical_json
+from earnings_themes.coding.records import REASONS as CODING_REASONS
 from earnings_themes.coding.records import CodingError
 from earnings_themes.evaluation import EvaluationError, evaluate_gates, load_gates
 from earnings_themes.records import IdPart, RecordError
 from earnings_themes.split import Partition
-from earnings_themes.support.problems import SupportError
+from earnings_themes.support.problems import REASONS, SupportError
 
 from earnings_pipeline.pilot_calibration import calibrate_pilot, checked_calibration
 from earnings_pipeline.pilot_inputs import PilotIntake, open_pilot, require_committed
@@ -92,8 +93,11 @@ def safe[**P](command: Callable[P, None]) -> Callable[P, None]:
         except EvaluationError as error:
             typer.echo(f"Refused: evaluation: {error.problem.value}", err=True)
             raise typer.Exit(1) from None
-        except (CodingError, SupportError):
-            typer.echo("Refused: assessment: malformed_record", err=True)
+        except (CodingError, SupportError) as error:
+            # Both constructors keep a closed reason; check it again before printing.
+            reasons = CODING_REASONS if isinstance(error, CodingError) else REASONS
+            reason = str(error) if str(error) in reasons else "malformed_record"
+            typer.echo(f"Refused: assessment: {reason}", err=True)
             raise typer.Exit(1) from None
 
     return guarded(run)
