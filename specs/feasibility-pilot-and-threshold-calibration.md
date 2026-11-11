@@ -355,7 +355,7 @@ views and working file; and the anchored independent records (FP16).
 | A family below the floor | Reported, and recorded by V6; no pilot decision changes. *(Amended by the user, plan 19, 2026-10-12.)* |
 | No candidate meets ρ | `no_candidate`, as in §Calibration. |
 | A live pass or run crashes | Rerun it. Cached replies replay. |
-| A fresh run crashes | Discard it and rerun under a new stability run ID. Both IDs are recorded, and a partial fresh run never counts toward k. |
+| A fresh run crashes | Discard it and rerun under a new stability run ID. Both IDs are recorded, and a partial fresh run never counts toward k. *(Amended by the user, plan 21, 2026-11-11: a partial fresh run counts toward k when its only failures are closed reply-validation codes, D21-31.)* |
 | A ceiling is hit | A visible `partial` status, never silent truncation. |
 | A corrupt record, cache entry or label hash; a test or excluded event | Refused, printed as reason and IDs. |
 | A GS5 recheck mismatch | The shares are not reported until the event's gold is re-signed or the mismatch is explained in the verification doc. |
