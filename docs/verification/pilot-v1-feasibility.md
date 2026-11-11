@@ -5,7 +5,9 @@ preregistration is frozen and committed alone (`53ba190`), with the B2 step 4
 workflow selections recorded (D21-24). On 2026-10-31, O6 was met: all 28 train and
 dev gold files are signed and committed (D21-26). On 2026-11-11, the B3 train pass
 exited with `status partial`, and the owner accepted it as the frozen train baseline
-(D21-29); see the last section. For B1, the fifth fixture pass, `s11-fixture-5`, completed all roles with verified
+(D21-29); see the section "B3 train pass checkpoint". On 2026-11-11, B4
+committed 70 train support labels that Codex made under the owner's override
+(D21-32); see the last section. For B1, the fifth fixture pass, `s11-fixture-5`, completed all roles with verified
 Metal all-layer startup evidence and measured both phases; the owner accepted it as
 the 36 GB fit with an explicit swap/pressure limitation (D21-19, in the section
 "Owner fit decision, 2026-10-17"). Earlier sections
@@ -13,7 +15,7 @@ are chronological and state status as of their dates; where a later section clos
 an open item (Metal offload, build/phase evidence, fit), it governs. Whole-system
 Memory Used and the extractor's local token counts remain unavailable. Final
 baseline ceilings are owner-selected below. The only pilot operations recorded are
-B3's input preparation and train pass. Stage 11 remains open. This record contains metadata and safe
+B3's input preparation and train pass, and B4's train labels. Stage 11 remains open. This record contains metadata and safe
 numeric/status evidence only.
 
 ## Code and engineering evidence
@@ -1229,3 +1231,87 @@ Not done:
 - The validation loop correction is not yet proposed or applied.
 - The agent did not run the Stage 6 wording gate or the default suite for this
   record.
+
+## B4 train labels checkpoint, 2026-11-11 (D21-32)
+
+B4 ran in the owner's terminal, in the main checkout. Evidence is IDs, hashes,
+counts, closed codes and times only. The agent read no label view, no working file
+and no release text. It counted only the closed fields of the committed labels file.
+
+**The train labels are model-authored.** Codex, running the hosted model
+gpt-6-astra, made both answers for all 70 train targets from the blinded view. The
+owner overrode the rule that no agent helps answer, for train only (D21-32). No
+human reviewed the answers. The answers counted below are Codex's. B5's train
+figures therefore measure the judges' agreement with a model, not judge-to-human
+agreement (R8.4). The 24 dev labels in B6 stay the owner's unaided answers.
+
+### Code before B4
+
+| Date | Event |
+| --- | --- |
+| 2026-11-11 | D21-30 (store validation) passes the owner's gates at `0cb2696`: 4913 passed, 3 skipped, 28 deselected and 1 warning in 948.15 s; `tests/integration/test_stage6_wording.py` 7 passed. |
+| 2026-11-11 | D21-31 (processed partial runs) passes the owner's gates at `bd3d1dd`: 4929 passed, 3 skipped, 28 deselected and 1 warning in 930.67 s; the wording gate 7 passed. |
+| 2026-11-11 | PR #36 merges both at `2fe1770`. |
+
+`sample` and `view` ran at `2fe1770`. `check` ran at `2fe1770` or at `0dd492e`, the
+labels commit's parent (PR #37), which adds only `specs/deferred_items.md`. The
+code is the same at both.
+
+The B3 section's open items are settled. D21-30 lands the validation correction
+and keeps the current dev settings. D21-31 decides when a partial dev pass or a
+partial fresh run counts.
+
+### Commands and times
+
+| Command (`pilot21 labels …`, `--partition train`) | Output | Time |
+| --- | --- | --- |
+| `sample` | `partition train targets 70`, then the 70 target IDs | 33 min 49.9 s |
+| `view --labelled-on …` | `partition train targets 70 local_views 1 working_labels 1` | 35 min 45.7 s |
+| `check` | `partition train targets 70 labels checked` | 2,138.51 s real (35 min 38.5 s), 2,128.60 s user, 6.64 s sys |
+
+Each command loads the train pass through `load_pass` and sends no request. The
+work is CPU-bound: `check`'s user time is 99.5% of its real time. `view` and `check`
+each call `sample()` once more than `sample` does, and each took about 2 min
+longer. So the load itself takes about 32 min, an estimate from these times. At
+1 min 41 s into `sample`, the process's resident size was 591,088 KiB (`ps`), about
+577 MiB. D21-30 estimated that, before its correction, the grouping loop alone
+would have added at least about 1 h 45 min to each command.
+
+### The sample
+
+`sample` drew 70 targets, at most 5 from each of the 20 train events, from the
+targets whose primary outcome is `assessed` or `flagged` (FP8). There was no
+shortage. `view` and `check` drew the same sample, and `check` accepted the working
+file against it.
+
+### The committed labels
+
+`b0b6005` (`data(pilot): commit blinded train support labels`, parent `0dd492e`)
+adds only `evaluation/djia-2024q3-2026q2/pilot-v1/labels/support-labels-v1.toml`,
+564 lines. Its body records the Codex authorship. The file has `schema_version` 1,
+`train_extensions` 0 and the frozen preregistration's content hash
+`09d51f7453fb3efda24d8f3e4ccf3310a8c4cb024f1af9d800b00cf967f90c04`. Each of its
+70 labels holds only `target_id`, `target_input_hash`, `partition` (`train` for all
+70), `claim_support`, `theme_fit` and `labelled_on` (2026-11-11 for all 70).
+
+| `claim_support` / `theme_fit` | `fits` | `does_not_fit` | `unsure` | Total |
+| --- | ---: | ---: | ---: | ---: |
+| `supported` | 41 | 18 | 3 | 62 |
+| `unsupported` | 2 | 0 | 0 | 2 |
+| `unsure` | 4 | 2 | 0 | 6 |
+| Total | 47 | 20 | 3 | 70 |
+
+The joint label is positive for 41 targets and negative for 22 (18 + 2 + 2). It is
+excluded for 7 (3 + 4), where one answer is `unsure` and neither is negative. The
+owner's Appendix F reader printed `partition train labels 70 usable_joint 63
+excluded_joint 7`, which agrees. 63 is at least FP8's minimum of 50, so Task 4
+step 3's extension is not needed.
+
+### Disposition and open items
+
+B4 is complete. D21-32 is committed at `4562c8e`.
+
+Not done:
+- B5, the train calibration, is next.
+- The agent did not run the Stage 6 wording gate, which reads the labels file, or
+  the default suite for this record.
