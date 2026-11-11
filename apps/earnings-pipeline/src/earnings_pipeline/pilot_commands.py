@@ -38,6 +38,7 @@ from earnings_pipeline.pilot_workflow import (
     load_pass,
     make_pass,
     make_run,
+    processed,
 )
 from earnings_pipeline.stage6 import Layout, guarded
 from earnings_pipeline.theme_config import WorkflowError, confined_path, read_selected
@@ -241,6 +242,7 @@ def run_command(
     )
     typer.echo(
         f"partition {result.partition.value} status {result.status} events {len(result.event_ids)} fresh {result.fresh or 'none'}"
+        f" processed {'yes' if processed(loaded) else 'no'}"
     )
 
 

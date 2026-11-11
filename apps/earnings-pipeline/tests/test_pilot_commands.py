@@ -274,6 +274,7 @@ def test_run_dispatch_binds_before_runtime_and_uses_exact_config(
         ("load_pass", load_pass),
         ("checked_pass", checked_pass),
         ("make_run", make_run),
+        ("processed", lambda passed: passed is (loaded if fresh else baseline)),
     ):
         monkeypatch.setattr(module, name, callback)
     args = ["pilot", "--repo", str(tmp_path), "run", "--settings", "invented.json"]
@@ -282,10 +283,54 @@ def test_run_dispatch_binds_before_runtime_and_uses_exact_config(
         args += ["--fresh", "invented-fresh", "--models-root", str(tmp_path)]
     result = CliRunner().invoke(app, args)
     assert result.exit_code == 0
+    assert result.output.strip().splitlines()[-1].endswith("processed yes")
     assert MARKER not in result.output
     assert calls == (
         ["bind", "live", "pass", "load", "check", "run"] if fresh else ["bind", "run"]
     )
+
+
+@pytest.mark.parametrize(
+    ("status", "counted", "expected"),
+    [("complete", True, "yes"), ("partial", True, "yes"), ("partial", False, "no")],
+)
+def test_run_prints_whether_its_pass_is_processed(
+    tmp_path, monkeypatch, status, counted, expected
+):
+    from types import SimpleNamespace
+
+    from earnings_themes.split import Partition
+
+    module = importlib.import_module("earnings_pipeline.pilot_commands")
+    baseline = object()
+    current = SimpleNamespace(
+        config=object(), local=tmp_path / "data/runs/pilot", partition=Partition.DEV
+    )
+    seen = []
+    monkeypatch.setattr(module, "intake", lambda *args: current)
+    monkeypatch.setattr(module, "baseline", lambda selected: baseline)
+    monkeypatch.setattr(module, "artifact", lambda selected: object())
+    monkeypatch.setattr(module, "bind_policy", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        module, "processed", lambda passed: seen.append(passed) or counted
+    )
+    monkeypatch.setattr(
+        module,
+        "make_run",
+        lambda *args, **kwargs: SimpleNamespace(
+            partition=Partition.DEV,
+            status=status,
+            event_ids=("invented-event",),
+            fresh=None,
+        ),
+    )
+    args = ["pilot", "--repo", str(tmp_path), "run", "--settings", "invented.json"]
+    result = CliRunner().invoke(app, [*args, "--partition", "dev"])
+    assert result.exit_code == 0
+    assert result.output.strip().splitlines()[-1] == (
+        f"partition dev status {status} events 1 fresh none processed {expected}"
+    )
+    assert seen == [baseline]
 
 
 @pytest.mark.parametrize(
