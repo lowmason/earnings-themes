@@ -377,7 +377,12 @@ def test_fresh_policy_decides_without_changing_acquisition_state(tmp_path):
 def test_crash_resume_binds_policies_and_complete_requires_all_proposals(tmp_path):
     from dataclasses import replace
 
-    from earnings_pipeline.pilot_workflow import _complete, load_pass, make_pass
+    from earnings_pipeline.pilot_workflow import (
+        _complete,
+        load_pass,
+        make_pass,
+        processed,
+    )
     from earnings_pipeline.theme_config import WorkflowError
 
     config, _ = seed_case(tmp_path, seed=False, review=True)
@@ -408,6 +413,8 @@ def test_crash_resume_binds_policies_and_complete_requires_all_proposals(tmp_pat
     assert not _complete(
         loaded.sources.stored_run, loaded.proposal, truncated, truncated
     )
+    assert processed(loaded)
+    assert not processed(replace(loaded, primary=truncated, alternative=truncated))
     (directory / "pass.json").unlink()
     changed = config.model_copy(
         update={

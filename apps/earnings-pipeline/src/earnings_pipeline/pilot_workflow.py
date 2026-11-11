@@ -216,6 +216,55 @@ def _complete(
     )
 
 
+# D21-31: the closed codes for a model reply that failed validation.
+REPLY_FAILURES = frozenset(
+    {"malformed_reply", "invalid_references", "tool_call_refused"}
+)
+CLASSIFICATION_REPLY_FAILURES = REPLY_FAILURES | {"hierarchy_conflict"}
+
+
+def processed(loaded: LoadedPass) -> bool:
+    """D21-31: every input was processed, and any failure is a failed model reply."""
+    support = (loaded.primary, loaded.alternative)
+    return (
+        all(d.outcome == "completed" for d in loaded.sources.stored_run.documents)
+        and all(
+            c.status == "completed"
+            or (c.status == "incomplete" and c.reason in CLASSIFICATION_REPLY_FAILURES)
+            for c in loaded.proposal.classifications
+        )
+        and all(
+            tuple(t.target for t in run.targets) == loaded.proposal.targets
+            for run in support
+        )
+        and all(_reply_failures_only(run) for run in support)
+    )
+
+
+def _reply_failures_only(run: StoredSupportRun) -> bool:
+    incomplete = {}
+    for outcome in run.outcomes:
+        if outcome.status == "refused":
+            return False
+        if outcome.status == "incomplete":
+            incomplete[outcome.target_id] = outcome
+    trials = {target_id: [] for target_id in incomplete}
+    for trial in run.trials:
+        if trial.target_id in trials:
+            trials[trial.target_id].append(trial)
+    return (
+        all(set(o.missing) <= REPLY_FAILURES for o in incomplete.values())
+        and all(
+            s.status == "available" for s in run.entailment if s.target_id in incomplete
+        )
+        and all(
+            len(own) == 4
+            and all(t.status == "available" or t.reason in REPLY_FAILURES for t in own)
+            for own in trials.values()
+        )
+    )
+
+
 def _integrity(
     rows: Iterable[
         ExtractionRejection | ClassificationRecord | EntailmentSignal | JudgeTrial

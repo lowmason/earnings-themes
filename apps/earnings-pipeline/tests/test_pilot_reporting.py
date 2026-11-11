@@ -28,6 +28,137 @@ def test_retention_counts_quote_occurrences_and_retry_rejections():
     assert quote_retention(source, "d") == (3, 6)
 
 
+def _support(*, outcome="incomplete", missing=("invalid_references",), trials=None):
+    """An invented support run: one flagged target and one incomplete target."""
+    if trials is None:
+        trials = (*(("available", None),) * 3, ("unavailable", "invalid_references"))
+    return SimpleNamespace(
+        targets=(SimpleNamespace(target="p1"), SimpleNamespace(target="p2")),
+        outcomes=(
+            SimpleNamespace(target_id="t1", status="flagged", missing=()),
+            SimpleNamespace(target_id="t2", status=outcome, missing=missing),
+        ),
+        trials=tuple(
+            SimpleNamespace(target_id="t2", status=status, reason=reason)
+            for status, reason in trials
+        ),
+        entailment=(SimpleNamespace(target_id="t2", status="available", reason=None),),
+    )
+
+
+def _processed_pass(**changes):
+    """An invented loaded pass whose only failures are reply-validation codes."""
+    parts = {
+        "documents": (SimpleNamespace(outcome="completed"),),
+        "classifications": (
+            SimpleNamespace(status="completed", reason=None),
+            SimpleNamespace(status="incomplete", reason="hierarchy_conflict"),
+        ),
+        "targets": ("p1", "p2"),
+        "support": _support(),
+    } | changes
+    return SimpleNamespace(
+        sources=SimpleNamespace(
+            stored_run=SimpleNamespace(documents=parts["documents"])
+        ),
+        proposal=SimpleNamespace(
+            classifications=parts["classifications"], targets=parts["targets"]
+        ),
+        primary=parts["support"],
+        alternative=parts["support"],
+    )
+
+
+def _fresh_runs(*passes):
+    return [
+        SimpleNamespace(
+            record=SimpleNamespace(
+                partition=Partition.DEV,
+                fresh=f"r{i}",
+                status="partial",
+                event_ids=("e1",),
+                configuration_hash="a" * 64,
+                calibration_hash="b" * 64,
+            ),
+            passed=passed,
+        )
+        for i, passed in enumerate(passes)
+    ]
+
+
+def test_stability_counts_partial_runs_with_reply_failures_only():
+    from earnings_pipeline.pilot_reporting import checked_stability
+
+    runs = _fresh_runs(*(_processed_pass() for _ in range(3)))
+    assert checked_stability(runs, ("e1",), "a" * 64, "b" * 64) == ("r0", "r1", "r2")
+
+
+def _classification(status, reason):
+    return {
+        "classifications": (
+            SimpleNamespace(status="completed", reason=None),
+            SimpleNamespace(status=status, reason=reason),
+        )
+    }
+
+
+def _unavailable_signal():
+    support = _support()
+    support.entailment = (
+        SimpleNamespace(
+            target_id="t2", status="unavailable", reason="scorer_exhausted"
+        ),
+    )
+    return {"support": support}
+
+
+@pytest.mark.parametrize(
+    "changes",
+    (
+        {"documents": (SimpleNamespace(outcome="partial"),)},
+        _classification("incomplete", "transport_error"),
+        _classification("incomplete", "requests_exhausted"),
+        _classification("incomplete", "model_mismatch"),
+        _classification("refused", "input_changed"),
+        {"targets": ("p1",)},
+        {"support": _support(outcome="refused", missing=("input_changed",))},
+        {"support": _support(missing=("invalid_references", "input_too_long"))},
+        {
+            "support": _support(
+                trials=(*(("available", None),) * 3, ("unavailable", "transport_error"))
+            )
+        },
+        {
+            "support": _support(
+                trials=(*(("available", None),) * 3, ("unavailable", "model_mismatch"))
+            )
+        },
+        {"support": _support(trials=(("available", None),) * 3)},
+        _unavailable_signal(),
+    ),
+    ids=(
+        "document",
+        "classification_transport",
+        "classification_ceiling",
+        "classification_model",
+        "classification_refused",
+        "targets",
+        "outcome_refused",
+        "missing_ceiling",
+        "trial_transport",
+        "trial_model",
+        "three_trials",
+        "signal",
+    ),
+)
+def test_stability_refuses_a_partial_run_with_any_other_failure(changes):
+    from earnings_pipeline.pilot_reporting import checked_stability
+
+    runs = _fresh_runs(_processed_pass(), _processed_pass(), _processed_pass(**changes))
+    with pytest.raises(RecordError, match="complete_fresh_runs"):
+        checked_stability(runs, ("e1",), "a" * 64, "b" * 64)
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     (
@@ -52,11 +183,15 @@ def test_stability_refuses_partial_duplicate_or_changed_inventory_before_figures
         configuration_hash="a" * 64,
         calibration_hash="b" * 64,
     )
-    loaded = SimpleNamespace(record=record)
+    unprocessed = _processed_pass(documents=(SimpleNamespace(outcome="partial"),))
+    loaded = SimpleNamespace(record=record, passed=unprocessed)
     with pytest.raises(RecordError, match="complete_fresh_runs"):
         checked_stability((loaded, loaded, loaded), ("e1",), "a" * 64, "b" * 64)
     records = [
-        SimpleNamespace(record=SimpleNamespace(**{**record.__dict__, "fresh": f"r{i}"}))
+        SimpleNamespace(
+            record=SimpleNamespace(**{**record.__dict__, "fresh": f"r{i}"}),
+            passed=unprocessed,
+        )
         for i in range(3)
     ]
     assert checked_stability(records, ("e1",), "a" * 64, "b" * 64) == ("r0", "r1", "r2")
