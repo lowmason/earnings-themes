@@ -1,0 +1,564 @@
+# Stage 11 support labels (FP8, FP17, FP21): target IDs, input hashes and the user's answers, never text. Written by `earnings-pipeline pilot labels check`.
+schema_version = 1
+preregistration_hash = "09d51f7453fb3efda24d8f3e4ccf3310a8c4cb024f1af9d800b00cf967f90c04"
+train_extensions = 0
+
+[[labels]]
+target_id = "support-0251855a34704b9099a4c9e4d5b7fe0c9a60ba6d0e033334b233699c6cc5897b"
+target_input_hash = "49b8f9e4efb7a5ba4df4031e9c0195b9c64c9ea022a247187d063984ca1178b1"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-07bf55279d57b3bc1aca7d389615b7e09e40454db9ed6f80ec6876633f380094"
+target_input_hash = "357745df358e085a5c531455729cb5e0dd49d07cf7b2c0d3b3a8de10cf54669f"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-08057e180911bb5b79b30de1808c686792cd485bc5dca712a1be390f8d56717c"
+target_input_hash = "73a030a118c4434c49da302cd98a5a5c2c4204b9e17744ca6317baadb8334f58"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-083d3959ecf1c38ca239a6d33ab396d7be2681c91464ee91aeada0d37f2134c7"
+target_input_hash = "d8a8dc35116f9fd95e33cfce0ac576ee0a71c2a71e093e27103b42bbfcb7b34b"
+partition = "train"
+claim_support = "supported"
+theme_fit = "unsure"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-0be7b30a11d1da9d264a0d58a9ce73de0e9c65cf36ae41028743011be9f51aa0"
+target_input_hash = "21d9f7b4242f0db129770096ffd045acbc1067966391f440047054e0c698c69d"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-1329c88d952e5942d9b212c37ba89462c54bbb824acf4f3d14a287566af24766"
+target_input_hash = "3c062479206805a8a91bb1e83432aa84105e49d21946920d0406763d72fc3625"
+partition = "train"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-139c8e645bd036c10b5cc59078d65fde32367a2616dcc6255530f64cba7ac556"
+target_input_hash = "590aa25381d6eb922261c936ec2edd715d5dcd70d5eee329f34751174a9bae52"
+partition = "train"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-1761337caeb3a37711e313f56ea56d4db0de2a9daa9fec77a438803140938024"
+target_input_hash = "dedac610509adc61168a4fa7f667bcb8b4d43aea5c592e1e6e2fbee68557503d"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-1e17a957caa2f846d3394d814c881c92445e01991bf0a5613c055c0f538b8288"
+target_input_hash = "d9b4172b00c4fd8992428d7ec7009159eca68c6e7d134bdfe68717a60213520c"
+partition = "train"
+claim_support = "unsure"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-20b4468d57dc227867f15e96cefd122cbf9209ef80cb303d08e7f21e34b97691"
+target_input_hash = "4802527316d67967ca1b19f37d7e346ce008d7298f0a079e9a6d1b8d10aecb9b"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-265b00a23560b76c1f5a40411381165ea9526ebe906a4460579da85fec452b0c"
+target_input_hash = "427aaeb6d58a1ea60c61402815332bdbb8bc6a86550bdf69569a861f32cd4103"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-2aebf5d6b0c03a402e1a8525e718c047acc297caa0ca95c804582ceb1b9f00ff"
+target_input_hash = "5ca2f51837161e3e2067248d4927fd0ccb0e28df4c5c34f310601095cc9bef4f"
+partition = "train"
+claim_support = "unsure"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-30ae88afa7dec5bb0a34798758261c30bc420afa778460c07cc8dde70ac900b0"
+target_input_hash = "64486840ea6d4ba1f4a625b98333a6560f56651bd2eba0142e128964035437bc"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-329ab239b63aa08cea85a1a1c2307764877d00f90e94028c773cb6a2b4ff0b72"
+target_input_hash = "29d69be176bf2134da6f609ea2c12e990ea0851de6e60841d92646a3329ac63e"
+partition = "train"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-39c60d9196a8709d1d46be424d8c23e7a0cfa869e853538ed52cfc1b94652dda"
+target_input_hash = "5f14e531735dfd6096b7cede24e8a66afbd43b0abe3a06e685725cf7b43fb1c0"
+partition = "train"
+claim_support = "unsupported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-3a82df14d38da6d588a3a704614bef078b5f71378bd60c3e9308b9749a2a42f9"
+target_input_hash = "60070226f0267955c1bfef1a9355df26b3bd5942ebdf13e1d5945abec4e034e0"
+partition = "train"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-3cb646c5ed3ed885c323fe00385ccefffedbb4e32aabcd8e3bdf44ed687a21b1"
+target_input_hash = "75173fa020c8c5a5cbb0e4a210a80cb0d4519ba4237fb25b06649a3b2fb1edb1"
+partition = "train"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-424ceef72eb076001d46e338959232ee6020ebd442166c8c91ce692e0461d7d7"
+target_input_hash = "9352e940e4535d99d937052247fca76db854dbd70b203137857272dca1fe276f"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-430df8ffbdb353c61c6c317e1dda0b0e47a556d1823df3d3e1d93abdfbf8dad7"
+target_input_hash = "ea6d3ac8d0ee318e63cb6a684e0d957eb24876f6bc82e11a2d3db124d2441e55"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-4544c8bd44cbbcec83a1403c94836ed177f1db50e4f2b75092d84205eebdfb78"
+target_input_hash = "3ff9e751e3f8a625c724f313f7cd24e772d168bf6e20d8f4296c1661bc8053c1"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-4b9334fd08714d5110055ffd863f43515c80b7d036d38779d789c64f7fda4e9a"
+target_input_hash = "189db9cd6ab68c71fbcc0a2335d4043d070ef2815862c66c2dda306e41a4be13"
+partition = "train"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-4fadc1886eb48c684e91c8bba241fed78baebb21921261b00fc77111607a0ff7"
+target_input_hash = "535038c92d8fb90d44ee2488127466834362213164d2f2eca1a32313b1672fdf"
+partition = "train"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-5102fab123e10ea119661ff1eac52dfcd8fc31803beb22a52ac5208ad7110223"
+target_input_hash = "65fb435ce84865f991b0fb9af88dcc5e834de29875ead2ba909327ad0ad89327"
+partition = "train"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-513c5eb323088ec97b89f01a9f7641349a36cf7e0134f7dd505fc74269a190e6"
+target_input_hash = "50820d4181a58d8caf1ee1015d70b734d8226c8e90c44777b7609a0eaa800efb"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-519d27b67fe05e727c99042080079d88952746c51e691ab32722fe36f3d92f2b"
+target_input_hash = "f52dab82b8190d53c567e70c66830bebc78768dcb163783f7a8e511c9e4b060e"
+partition = "train"
+claim_support = "unsure"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-52236a9e34af6ed42b34a071d2ce5b929726f16f28bd1dcfac8e11b724bb53ed"
+target_input_hash = "54484787e2c4e7ef89111bad2ab8696b6014a33cef2bdec12eab7b19b4aff922"
+partition = "train"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-52bbe74ef7df75593aa8802925fe900cd474f1640cf7f4904bfa701721eee07c"
+target_input_hash = "bd754f91b1ee54182f2929704abbb2f2b688c89e38fdb840efab7da7ac700dc4"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-53beeb3aac0674a55883ebcd0c46a1734bc77421ad5ea46ce7ca44449241711b"
+target_input_hash = "a5fb669db709c98d0e9b02703c9ae2942940208b9c80f38141cea9e5aad8384b"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-5b288912e8e27f00b3ee164397b369cbb5e858cd3a9e0ef9e27bba9095fa6bf5"
+target_input_hash = "9baecf53667ddd1307d96f076b268828fa5f820258385590649232eb94d308ec"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-5f75d4761896a33aa3f12b86e73e829960cacd2d8661b4725e85769cbce89825"
+target_input_hash = "33ba37f3ff693b342b6c1404acdb7bf7cd5a044b9f76415e6800a54dcb8153f6"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-602951faad18270535c90e68c0e65e0258eedeebe98ec8de704a13f679fadffe"
+target_input_hash = "90e99ca5caa8b4ba55541926e5cfa45b334e364cac96c52dffd3729090505b9c"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-60c671a03e73ac08beaf4e7b91714d4fc02df988f7418e47d643f6a69de688fe"
+target_input_hash = "07cb2db8a146e0601557e64976f7f7d8232240649c6c2b65cc93e312fc2542ad"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-63bbcc09284672b3afb5fb8d5ec49365b6647a04652a3b6ca488b5edd8ddf215"
+target_input_hash = "d975d7e27f9ae4de33fdbad1c5cb3988009be6cd56fe495efb0e7af4dfb4bc12"
+partition = "train"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-65e040c1fef00ed81f650ab3665b945b2277a038b948578d3353edafc331544e"
+target_input_hash = "90a3c1e7f83cb9716767c9f663811ccb2d0df2b06817f40ff510bf00ac4e069f"
+partition = "train"
+claim_support = "unsure"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-694b09d01af122d2e90501d71abb214116bdfc138cf2db3912b300f4c9d49af6"
+target_input_hash = "f1932524e6cdf611ce76d79017acf62ee2fea80775def6e60454b1d8e5b14fe8"
+partition = "train"
+claim_support = "unsupported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-72133df4a342504b19e1932708e99a657a247bd43e13e0e065c60fd0d8988e6f"
+target_input_hash = "da5e873788ef494d13198cd86d33f386b0ddc25e83df73212ae051710913c1aa"
+partition = "train"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-766e87fb17f6f07bdf7931dac8bac2d4cfbf0187464522f54ed25611a286418e"
+target_input_hash = "c4a5a501416ccbd3ae437e4a87ac6820aa6ccb5633ac32d15ce50066b351e034"
+partition = "train"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-7b3ed1439d321dfd7ce805422e4414d6d0d79dfd3e360b5ca17648704dfe98e4"
+target_input_hash = "08372816d1fd2bbdc94d67ed314576af0d96e26397571d5da172c46886f4a2cb"
+partition = "train"
+claim_support = "unsure"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-7d8e64a955c969da5721788191b64c3035d1f745dd2de48b0fd53bba061f8f3e"
+target_input_hash = "a23c2b890ebc13d81c315c5dcde054a13bf66f1ac98b4c97c58623b8bf5e5f3a"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-7e84ce37deac252e838cb77957ac434f255da39e90713eb2b30316d6ba29d7d4"
+target_input_hash = "9a201d93967de249f65ede86c27f12314eb9a95834bc8c71f15e5f2dcff3f0a6"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-7f5a70b53bda90a9707e748f7a72151c276b9528247df34f4f3939b942b711d0"
+target_input_hash = "f2063492989e9c35c0a68d105f08e56c6fe1839a37b4c40fa9bf548a6feaa6a5"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-7fe006a1b86df3f34f89b12aba424df0413116eca83bcb736132fa21354ce1a4"
+target_input_hash = "5e407fb8b17ce8c93047e7551687418f7ef7a0454f724f0d32f569faa735508e"
+partition = "train"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-843e562a6469d2be38109798e30302e97a541cc095de064ba798919403cafafe"
+target_input_hash = "3f967cadf864ad5c9fd95968ee6eae16716aee38803864cde570a46a24e30c45"
+partition = "train"
+claim_support = "supported"
+theme_fit = "unsure"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-9afd822be0a4316daa3e45c81032fa9d83df4bb73d38fa0d7062adbbff573fba"
+target_input_hash = "6725f8f55281c5dd85f8073947d0ce4488106054c96c7d06d0948e5840338199"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-a4dc9ee03f53785da96e4fc55e06621fc1c086dd6d6a32ff6dd6fd59b3e49ad0"
+target_input_hash = "2ebe00d7c7c53eac27e0bd5a18c5c2f488ca5fe41322cb38fb639a5cce2b2fa5"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-a502c6bef36f9ad5ba10c4eec2cdad21dc06c91d95cb02c6b5e2cfb601ed448c"
+target_input_hash = "fae2288c82ee710f065e0ae39570a2687b90ac587a70ae40ad024b73d1cff926"
+partition = "train"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-a8c4d908ef12342689f3cf8617528ef69a40a055b7a7980069ae787523ea86f7"
+target_input_hash = "c83f0a924a2dd84798416cb8346b1f201ed8664b210ab4fa050d8d07bf5be145"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-aa5e1416fd3043dc5648780bf90784ab800c8a6ccf2286fce3a564d0e27df031"
+target_input_hash = "0488e0d91717d8ed97babfaa324ce031ef833baa3c34c65e10389c0bb5f0fdd2"
+partition = "train"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-b0d51c6cfcddb73e605b5f08fbc3fe6e23d98608240e8da6eb5aa289f8d1e75e"
+target_input_hash = "3b95ece1646f56be47c9d29631f49584c62aba4020ee8168ec7a6d06392deeeb"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-b38dfb8697c8532269e11186f0bd58dbddc9adfc80749b55f058a09dfb3bd356"
+target_input_hash = "383edd1e5287eb1b80d98ff36dcc2589cc192940c3cac42e725b9f4fa59fced4"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-b4d6b33e2b24f3edac3bb02c2496762b94bfefb23dfae481697af00200ebb277"
+target_input_hash = "103167e09cdb94c2fd34d5dfc56fc3f16c3a160636e6effaf09d7d4c4dc611e7"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-be2e9a39c62dac5d9e73ae8b536ed137c9f9282b5d35013c2013a0a2a7589c96"
+target_input_hash = "4593b1e93efc27ff20007ee43ffe9e3007ea397238928656bbc3d3f2e0efca13"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-bef3c80a09eb18827510396a34930dbc879f7346f2bf038cbd6235cd14749d41"
+target_input_hash = "53e04dec6bd61eb2724b772731f1cd3f7f53f17894d2a0bfc6b2a2c6428b54b1"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-c5394d80930fbe460320b60107d12adc3d72d66607e5deae86924393e05fa110"
+target_input_hash = "1bb77a2ff1cc86098b02186f8d39ab4d0b5dfb547f64aff722e8ca11c7e97721"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-c8b161da5379f45b86b28b48c35b5c3fa069756a5405366eb1cad693aa51d678"
+target_input_hash = "238c274278078fa03e19deec7df9f316d19ee244375eb28d96612bad267116c5"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-d4546b69626416268f61262860f015983f3266eec3f286ad2bce5d885cf8a95f"
+target_input_hash = "9657981e74e59c5a91f92eee2715ffa252932c3aae451a22b8665f60c18ce89f"
+partition = "train"
+claim_support = "supported"
+theme_fit = "unsure"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-d8ec657424bc911e2eaa7317321718070de68f9d7ed23940113010ea98c360fb"
+target_input_hash = "c1488fb57258440c3dae60b2751c8fa4ad489f867785eaca77b9be8ada5dc3a6"
+partition = "train"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-da465bcb0f127be2c8f4ad5817a1e6fa518c827540487beaa49837375c3aea9f"
+target_input_hash = "612e4259e8c1bec094b6ac0de7ff250c6342821f7c8b760fc41dcc662ea6a510"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-db2f97e0eeee0e622b2a0654b3a6a6d893f183409b0b88207c24f5258b2d2e2b"
+target_input_hash = "85d8da927e59df1a984b0477e6fd6cfe4e028a036ca5d5928279968cf307defc"
+partition = "train"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-de5de1b7f25b5d35d0ec2c06fda4048edf5d636b1709bb26e355237cab4b651a"
+target_input_hash = "afe517305af1f528b194c9587ee640ea17529fa7dd51e333d46f72b8e2a6d9b2"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-de7ec18aa6a8b44f5f148cb952c15990c79a92992a7898228164962ed7b6b8c6"
+target_input_hash = "0195ac0cbe8ced312f05a66f9578bf5107626385c1226099507713e5c138e4c8"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-e01105b2819c4ead7aa7b747d6cb9ed75490ee36d307a9d7d331a7e30e1b4ea6"
+target_input_hash = "f10b1bc1d8eab774b148924572bd9c1e7ed04df34b73b4628050a34777cc780b"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-e05bb5dcb49471c0009bb4fd050be1a124172eb8c1ae2aa5fe26825e379a3986"
+target_input_hash = "1badf63e84afa02b11711bc0e7c0187717c73db45237f54e883eb28545d0ee12"
+partition = "train"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-e881839e6e96cc0852154d8af4047b214414db8cd9d51f56553eca71100398c0"
+target_input_hash = "39ec461189cb809c1d7edce9af42088259c4b9c21a884f3bc3749705f1dfbb77"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-f13d78258a181240045b0ce60afb3eb2d38371b0689403a3144e5d075a8749b9"
+target_input_hash = "bb5d55e421fabde76cb37aa30b25eccabac3cc167632c1fdb69bb19e5752a0c7"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-f61ee17c5c4dfb7a6cb8138d5da75051b452145b6f72b323a545f8dceca75805"
+target_input_hash = "8c340a13cc738b85b30253721426821cad86a808e26c5f40ea1961b367d4826b"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-f7e2c8a2d388a021a2219679704504c1f4e85717cb2f2ce5db0b86669547691f"
+target_input_hash = "91ae069fc1fcc5d82d1668e3994284718a061f87dee609cae20b3837eca32e00"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-f92450d74015510499a735a765c36b17e4aca7aab2892d78b2ade130928580eb"
+target_input_hash = "42c8483e25e29bc201c293bfc6303888e4235e89cf1755eec9471e3fad45bce4"
+partition = "train"
+claim_support = "unsure"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-fd4d7fca6ba7e5c881fa5f2e7ead453719bb4b91188e870a6015b65206cd0b7e"
+target_input_hash = "d29e8df9e30b1cdcf507bf8248485d19c4f2e59c65cc096ed6195c0ebc355a3f"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-ffc21a6799fe0f0af2619aa1ba87ff20fc168319374b94444b4a6d82c4f7c0dc"
+target_input_hash = "1a6d3955e06f93167cc5af155045cb0ca26a4a19ec813599f397f3fe775c1421"
+partition = "train"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-11
