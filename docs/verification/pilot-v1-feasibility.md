@@ -1,17 +1,19 @@
 # Pilot v1 feasibility verification
 
-Status on 2026-10-18: B1 evidence is complete and committed (`a91a8e3`), and the
+Status on 2026-11-11: B1 evidence is complete and committed (`a91a8e3`), and the
 preregistration is frozen and committed alone (`53ba190`), with the B2 step 4
 workflow selections recorded (D21-24). On 2026-10-31, O6 was met: all 28 train and
-dev gold files are signed and committed (D21-26); see the last three sections. For B1, the fifth fixture pass, `s11-fixture-5`, completed all roles with verified
+dev gold files are signed and committed (D21-26). On 2026-11-11, the B3 train pass
+exited with `status partial`, and the owner accepted it as the frozen train baseline
+(D21-29); see the last section. For B1, the fifth fixture pass, `s11-fixture-5`, completed all roles with verified
 Metal all-layer startup evidence and measured both phases; the owner accepted it as
 the 36 GB fit with an explicit swap/pressure limitation (D21-19, in the section
 "Owner fit decision, 2026-10-17"). Earlier sections
 are chronological and state status as of their dates; where a later section closes
 an open item (Metal offload, build/phase evidence, fit), it governs. Whole-system
 Memory Used and the extractor's local token counts remain unavailable. Final
-baseline ceilings are owner-selected below. No pilot operation is authorized or
-recorded. Stage 11 remains open. This record contains metadata and safe
+baseline ceilings are owner-selected below. The only pilot operations recorded are
+B3's input preparation and train pass. Stage 11 remains open. This record contains metadata and safe
 numeric/status evidence only.
 
 ## Code and engineering evidence
@@ -1059,3 +1061,171 @@ disposition does not apply.
 Not done: the agent did not run the Stage 6 wording gate. Appendix C has not been
 run, and no pilot pass, run or label exists. B3 step 1's remainder, Appendix C and
 the intake check, runs next in the owner's terminal.
+
+## B3 train pass checkpoint, 2026-10-31 to 2026-11-11 (D21-27 to D21-29)
+
+B3 steps 1 and 2 ran in the owner's terminal, in the main checkout. Evidence is IDs,
+hashes, counts, closed codes and times only. No agent opened a release text, a
+prompt, a reply or a judge's free-text field. Times are local (America/New_York).
+
+### Step 1: input preparation and intake, 2026-10-31
+
+| Check | Result |
+| --- | --- |
+| Code | `main` at `b94cfcc7a64129061c63da8b4baec70befe7d472` |
+| Owner JSON (D21-24) | 28 events, 0 with `event_at`, bundle `pilot-v1-inputs-1`; each `publisher` is the issuer's SEC registrant name from the committed universe |
+| Appendix C | `status prepared`, train 20, dev 8; the bundle holds 91 files |
+| `settings.json` SHA-256 | `bf25bc24603d127746f54f04146f75b7388388cf055304f9a3379a07aeb732b4` |
+| `train.json` SHA-256, the train pass's configuration hash | `0389368121cb7f499b85e0e2dec5c58ef4c3311a1c6485a214f9b787ecf9eff2` |
+| `dev.json` SHA-256 | `d88b5c455b3f0afa17798e3d87f100e321873e4f60c3b783457c8a8ba502ce8a` |
+| Runtime manifest `config/models/pilot-v1-runtime.toml` SHA-256 | `d74cdf30b37741a03e2c029346a8f44149ab0c860724085b29620762d92a035e`, unchanged since `a91a8e3` |
+| Intake check | `visibility train 20 dev 8 committed_gold 28 ledger_rows 8` |
+| Preregistration content hash | `09d51f7453fb3efda24d8f3e4ccf3310a8c4cb024f1af9d800b00cf967f90c04`, as frozen in B2 |
+
+### Step 2: the train pass
+
+Command, run without change at each start:
+
+```bash
+pilot21 pass --settings data/runs/pilot/config/settings.json --partition train --models-root "$EARNINGS_MODELS_ROOT"
+```
+
+| Time | Event |
+| --- | --- |
+| 2026-10-31 | A first launch was refused with `model_mismatch`: the models-root variable named the directory one level too high. The owner corrected the level. |
+| 2026-10-31 13:44:56 | Attempt 1 starts at `b94cfcc`. The extraction and both support run records hold this time as `started_at` (17:44:56Z). |
+| 2026-10-31 15:07 | Extraction completes and is stored. |
+| 2026-10-31 | The agent mistook a stray typed `y` for the operator checkpoint, and the owner unloaded Gemma too early. The owner stopped the pass with Ctrl-C during claim resolution, before any classification request. No `proposals.json` and no coding-cache entry existed. |
+| 2026-11-07 17:37:52 | Resume at `b94cfcc` with Gemma only. The stored extraction is reused, and claim resolution takes about 20 minutes. |
+| 2026-11-07 17:57 | Classification starts. |
+| 2026-11-09 03:17:48 | `proposals.json` is written. |
+| 2026-11-09 about 08:36 | The owner unloads Gemma, starts both judges and confirms the checkpoint. The first support-cache entry is at 08:37:11. |
+| 2026-11-09 about 08:39 | The pass stops with `Refused: assessment: malformed_record` after 6 support-cache entries. D21-27 records the cause and the correction, and D21-28 the printed reason. |
+| 2026-11-09 | PR #34 pins the docs build runner, merged at `4bde871`. The owner's gates at `98a2c11`: 4911 passed, 3 skipped, 28 deselected and 1 warning in 906.50 s; `tests/integration/test_stage6_wording.py` 7 passed. PR #33 merges D21-27 and D21-28 at `7aac525`, which differs from `98a2c11` only in `.github/workflows/docs.yml`. |
+| 2026-11-09 about 10:09 | The same command runs again at `7aac525`. The first new entry, at 10:10:06, is a judge B retry with roles `[system, user]`, and it is not refused. |
+| 2026-11-10 05:39:42 | The last support-run cache entry; all support targets are evaluated. |
+| 2026-11-10 09:52 | `support/` is written. |
+| 2026-11-10 12:06 to 18:21:01 | The alternative run's scorer evaluations. |
+| 2026-11-10 22:44 | `alternative/` is written. |
+| 2026-11-11 00:58 | `pass.json` is written, and the pass exits. |
+
+The phase times after 2026-10-31 are observed file and cache-entry times, not
+record fields. The `support` and `alternative` records name `software.git_revision`
+`b94cfcc`, but their phase ran at `7aac525` (D21-27's recorded deviation).
+
+Elapsed time, from the observed times:
+
+| Phase | Elapsed |
+| --- | --- |
+| Extraction, attempt 1 | About 1 h 22 min |
+| Classification | About 33 h 21 min |
+| Support run, from the rerun to its last entry | About 19 h 30 min |
+| Support run write, then read-back and proposal validation | About 4 h 12 min, then 2 h 14 min |
+| Alternative run evaluations | About 6 h 15 min |
+| Alternative run write, then read-back and pass completion | About 4 h 23 min, then 2 h 14 min |
+
+The four write and read-back periods took about 13 h. They used CPU only and sent no
+request. Their cost comes from a store validation loop that grows with targets,
+attempts and trials together. A correction will be proposed before the dev pass.
+
+Memory and disk: during classification the reply time rose from about 80 s to about
+155 s after a memory-pressure episode (swap about 11.8 GB, pressure level 2). During
+the support run, swap used peaked at about 21.9 GB on 2026-11-10 at 01:05, above
+D21-19's measured 13.2 GiB. Pressure reached level 2 (warning) and never level 4
+(critical). The support cache holds 6,329 entries, about 81 GB, and 7,792 entries
+after the alternative run. Each entry is about 13.7 MB because its key material
+holds every bundle. Startup printed three library warnings: a Mistral tokenizer
+regex warning, a T5 tied-weights notice and torch's `torch.jit` FutureWarning. None
+is an error.
+
+### The pass record
+
+| Field | Value |
+| --- | --- |
+| Partition, mode, events | train, live, 20 |
+| Status | `partial` (D21-29) |
+| `stability_run_id` | null |
+| Content hash | `44a9337fd45895c2473b0a69c88d891cc27a356855559f4ce2936148e6b5eb3b` |
+| Configuration hash | `0389368121cb7f499b85e0e2dec5c58ef4c3311a1c6485a214f9b787ecf9eff2`, the `train.json` SHA-256 |
+| `extraction.sha256` | `cb63593076b5d9429e2ef780da6ffe19f52238d287187532b7f2c16980a2dfc7` |
+| `proposals.sha256` | `7f1fb15a9e09dbf541ad104d5b701c61fc54d79b48ded2fe38213eae454dec45` |
+| `primary.sha256` | `35d6303c38e57122acc75f2f18085084315ae917be09a02c5eebbb04173d8257` |
+| `alternative.sha256` | `d9eae54227cdb08ab4cf02db3c20bb2c96dc194815a88bd97d5bbdc8c64dd302` |
+
+### Extraction and classification
+
+Extraction run `pilot-v1-train-extraction`, cache mode `live`:
+
+| Count | Value |
+| --- | --- |
+| Documents | 20, all `completed` |
+| Windows | 109, none failed |
+| Units | 2,701 |
+| Candidates, claims, quotes | 1,171, 1,171, 1,248 |
+| Rejections | 0 |
+| Requests, cache hits | 109, 0 |
+| Prompt and completion tokens | 121,516 and 45,783; 0 unreported |
+| Exactness rate | 1.0 |
+
+Classification, from `proposals.json`:
+
+| Count | Value |
+| --- | --- |
+| Classifications | 1,171: 1,162 `completed`, 9 `incomplete` with `hierarchy_conflict` |
+| Attempts | 1,181: 1,171 first and 10 second |
+| Attempts with `hierarchy_conflict` | 19: both attempts of the 9 incomplete claims, and 1 first attempt whose retry completed |
+| Proposals, attributes, novelty records | 1,170, 1,162, 278 |
+| Prompt, completion and reserved tokens | 8,263,039, 33,927 and 10,681,727 |
+| Claims per document | 22 to 110, against a ceiling of 128 requests per document; no ceiling bound |
+
+### Support runs
+
+| Field | `support` | `alternative` |
+| --- | --- | --- |
+| Run ID | `pilot-v1-train-support` | `pilot-v1-train-support-alternative` |
+| Configuration hash | `82ad0e5c5ea69dded68a3668cb56b0cc657746c7257d11bdedc41777543ef47e` | `6ba02d7f4f3f64b50215767e252b95f57e6dada71fa7c0aa019cfa4f2a438966` |
+| Source run hash | `4d86a0a8c2cd1eb7ab8422aa9a9557bb3e15f49363eb34fce999c6da5c0820af` | The same |
+| Lock hash | `e2f8ec4d2ba556a51f30d8dcf9a3b122af4aaa5ed87ca4dc030b91e1930ddc16` | The same |
+| Targets | 1,170 | 1,170 |
+| Outcomes | 1 `assessed`, 1,105 `flagged`, 64 `incomplete`, 0 `refused` | The same |
+| Trials | 4,680: 4,604 available, 76 unavailable | The same |
+| Judge attempts | 4,866: 4,680 first and 186 second | 4,866 |
+| Evaluations | 1,460 | 1,463 |
+| Requests, cache hits | 4,863, 7 | 0, 4,867 |
+| Prompt, completion and reserved tokens | 8,095,622, 615,887 and 17,948,144 | 95,834, 0 and 0 |
+| Unreported usage | 0 | 0 |
+
+The alternative run sent no judge request and replayed every judge reply from the
+cache. Its `trials.parquet` is byte-identical to the support run's.
+
+Retry evidence, support run: 262 judge attempts failed closed validation, 162 with
+`invalid_references` and 100 with `malformed_reply`. Of the 186 trials that were
+retried, 110 completed on the second attempt and 76 stayed unavailable.
+
+The 76 unavailable trials, one row per judge and presentation (unit: trial):
+
+| Judge | Presentation | Reason | Trials |
+| --- | --- | --- | --- |
+| Mistral-Nemo | `claim_theme_first` | `invalid_references` | 45 |
+| Mistral-Nemo | `evidence_first` | `invalid_references` | 12 |
+| Qwen | `claim_theme_first` | `malformed_reply` | 5 |
+| Qwen | `evidence_first` | `malformed_reply` | 14 |
+
+Unit: target. 52 of the 64 incomplete targets miss 1 trial and 12 miss 2. Their
+`missing` codes are `invalid_references` for 47 targets and `malformed_reply` for 18
+targets; one target has both.
+
+### Disposition and open items
+
+The owner accepted the partial pass as the frozen train baseline (D21-29). No
+ceiling bound, and no transport error, crash or refusal occurred in the rerun at
+`7aac525`. Only 1 of the 1,170 targets is `assessed`.
+
+Not done:
+- D21-29 leaves open how a partial dev pass and partial fresh dev runs are treated.
+  The owner decides this before dev is exposed.
+- D21-27's choice whether to prepare the dev settings again before the dev pass
+  is still open.
+- The validation loop correction is not yet proposed or applied.
+- The agent did not run the Stage 6 wording gate or the default suite for this
+  record.
