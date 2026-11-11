@@ -1657,3 +1657,36 @@
       event with a joint label and no accepted target giving 12 undefined resamples).
       Source: plan 19's final review. Size: quick-fix. Revisit if: a dev gate's
       `SUPPORT_PRECISION` lower bound depends on events without a usable label.
+
+## 21-feasibility-pilot-and-threshold-calibration-plan-b — 2026-11-11
+
+- [ ] **P21-1 — Stop the support cache from growing with the square of the run size.**
+      `_key` in packages/earnings-themes/src/earnings_themes/support/cache.py puts
+      the whole source run into each key's material. The material holds every bundle
+      (document, elements and masks), every stored claim and every stored quote.
+      `put` writes that material into each entry, and `_entry` reads it back and
+      compares it on each lookup. Thus each entry gets larger as the run holds more
+      documents, and the number of entries also grows with the run. The extraction
+      and coding caches do not embed bundles. After the B3 train pass (20 events),
+      the support cache held 7,792 entries of about 13.7 MB each, about 107 GB
+      (`docs/verification/pilot-v1-feasibility.md`, "Step 2: the train pass").
+      The figures that follow are linear estimates from that pass, not measurements.
+      One run over Stage 15's 239 eligible events would write about 93,000 entries
+      of about 164 MB, about 15 TB. Twelve runs of 20 events would write about
+      1.3 TB. The main checkout's disk had 460 GiB free on 2026-11-11. D21-30 left
+      this cost as a later item and did not measure it. It also left two related
+      costs: the repeated source resolution in each reverification, and the artifact
+      hash that reads each entry again. R14.6 names the canonical hash as a key
+      component, not the canonical text, and the material already holds
+      `provenance_hash`. Whether a hash can replace the embedded run is a design
+      decision. That decision also covers `SUPPORT_VERSION` and the cache layout.
+      Do not change the key before Stage 11 completes. A new key misses every cached
+      train entry, and Task 6 replays the frozen train baseline (D21-29) from those
+      entries. A new key also stops Stage 15 from reusing the pilot's support
+      entries, which the roadmap's Stage 15 Consumes line expects where the key
+      still matches. Source: the B3 train pass and a session question on Stage 11–16
+      run time (2026-11-11). Size: design. Revisit if: Stage 15's plan is written,
+      or a run with more than the pilot's 40 events is planned. Done when: Stage
+      15's plan has decided the key's form, and a test shows that an entry's size
+      does not depend on the number of documents in the run. Otherwise, the plan
+      records why it splits the run instead, with the measured disk need.
