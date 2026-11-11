@@ -61,6 +61,7 @@ from earnings_pipeline.pilot_workflow import (
     bind_policy,
     load_pass,
     phase_path,
+    processed,
     stored_directory,
 )
 from earnings_pipeline.stage6 import (
@@ -370,7 +371,10 @@ def checked_stability(
         len(runs) != 3
         or any(
             run.record.partition is not Partition.DEV
-            or run.record.status != "complete"
+            or not (
+                run.record.status == "complete"
+                or (run.record.status == "partial" and processed(run.passed))
+            )
             or run.record.fresh is None
             or run.record.event_ids != events
             or run.record.configuration_hash != configuration_hash

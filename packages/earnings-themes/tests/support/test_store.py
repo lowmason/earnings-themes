@@ -2,13 +2,16 @@
 
 import json
 from dataclasses import replace
+from types import SimpleNamespace
 
 import polars as pl
 import pytest
 from earnings_core import sha256_hex
 from earnings_themes.support.problems import SupportError
+from earnings_themes.support.records import AssessmentResult
 from earnings_themes.support.store import (
     SCHEMAS,
+    _assessments,
     read_support_run,
     reverify_support_run,
     write_support_run,
@@ -481,3 +484,106 @@ def test_repeated_quote_text_live_and_replay_publish_and_consume(
     assert len({u.operation_id for u in replay_stored.usage}) == expected_usage
     assert calls == (len(scorer.requests), *(len(j.requests) for j in panel))
     assert no_network == []
+
+
+class _CountingTrial:
+    """An invented trial that counts reads of its target ID."""
+
+    def __init__(self, reads: list, target_id: str, trial_id: str) -> None:
+        self._reads = reads
+        self._target_id = target_id
+        self.trial_id = trial_id
+
+    @property
+    def target_id(self) -> str:
+        self._reads.append(self.trial_id)
+        return self._target_id
+
+
+def _stored_rows(targets, trials, attempts, **tables):
+    empty = {kind: () for kind in ("evidence", "contexts", "entailment", "usage")}
+    return SimpleNamespace(
+        targets=targets,
+        outcomes=tuple(SimpleNamespace(target_id=t.target_id) for t in targets),
+        trials=trials,
+        attempts=attempts,
+        **(empty | tables),
+    )
+
+
+def _reference_assessments(stored):
+    """The grouping before D21-30, kept as the reference for equality."""
+    outcomes = {o.target_id: o for o in stored.outcomes}
+    return tuple(
+        AssessmentResult(
+            t,
+            *(
+                tuple(r for r in getattr(stored, kind) if r.target_id == t.target_id)
+                for kind in ("evidence", "contexts", "entailment", "trials")
+            ),
+            tuple(
+                a
+                for a in stored.attempts
+                if a.trial_id
+                in {
+                    trial.trial_id
+                    for trial in stored.trials
+                    if trial.target_id == t.target_id
+                }
+            ),
+            tuple(u for u in stored.usage if u.target_id == t.target_id),
+            outcomes[t.target_id],
+        )
+        for t in stored.targets
+    )
+
+
+def test_assessment_grouping_reads_each_trial_target_a_bounded_number_of_times():
+    reads = []
+    targets = tuple(SimpleNamespace(target_id=f"target-{i}") for i in range(24))
+    trials = tuple(
+        _CountingTrial(reads, t.target_id, f"{t.target_id}-trial-{k}")
+        for t in targets
+        for k in range(4)
+    )
+    retries = tuple(trials[i] for i in range(0, len(trials), 5))
+    attempts = tuple(
+        SimpleNamespace(trial_id=trial.trial_id) for trial in (*trials, *retries)
+    )
+    result = _assessments(_stored_rows(targets, trials, attempts))
+    assert [len(a.trials) for a in result] == [4] * len(targets)
+    assert sum(len(a.attempts) for a in result) == len(attempts)
+    assert len(reads) <= 2 * len(trials)
+
+
+def test_assessment_grouping_equals_the_reference_on_edge_cases():
+    def row(target_id, name):
+        return SimpleNamespace(target_id=target_id, name=name)
+
+    targets = tuple(SimpleNamespace(target_id=t) for t in ("a", "b", "c"))
+    trials = (
+        SimpleNamespace(target_id="a", trial_id="a-1"),
+        SimpleNamespace(target_id="b", trial_id="b-1"),
+        SimpleNamespace(target_id="a", trial_id="shared"),
+        SimpleNamespace(target_id="b", trial_id="shared"),
+        SimpleNamespace(target_id="a", trial_id="twice"),
+        SimpleNamespace(target_id="a", trial_id="twice"),
+        SimpleNamespace(target_id="z", trial_id="z-1"),
+    )
+    attempts = tuple(
+        SimpleNamespace(trial_id=trial_id, name=f"attempt-{i}")
+        for i, trial_id in enumerate(
+            ("b-1", "a-1", "absent", "shared", "twice", "a-1", "z-1", "b-1")
+        )
+    )
+    tables = {
+        kind: tuple(
+            row(target_id, f"{kind}-{i}")
+            for i, target_id in enumerate(("b", "a", "z", "a", "b", "a"))
+        )
+        for kind in ("evidence", "contexts", "entailment", "usage")
+    }
+    stored = _stored_rows(targets, trials, attempts, **tables)
+    result = _assessments(stored)
+    assert result == _reference_assessments(stored)
+    assert [len(a.attempts) for a in result] == [4, 3, 0]

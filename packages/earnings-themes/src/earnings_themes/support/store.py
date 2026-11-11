@@ -9,6 +9,7 @@ import json
 import os
 import shutil
 import tempfile
+from collections import defaultdict
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -275,26 +276,35 @@ def _raw_name(reference: str) -> bool:
     )
 
 
+_ASSESSMENT_TABLES = (
+    "evidence",
+    "contexts",
+    "entailment",
+    "trials",
+    "attempts",
+    "usage",
+)
+
+
 def _assessments(stored: StoredSupportRun) -> tuple[AssessmentResult, ...]:
+    """Group each table's rows by target once, keeping stored order (D21-30)."""
     outcomes = {o.target_id: o for o in stored.outcomes}
+    grouped = {kind: defaultdict(list) for kind in _ASSESSMENT_TABLES}
+    for kind in ("evidence", "contexts", "entailment", "usage"):
+        for row in getattr(stored, kind):
+            grouped[kind][row.target_id].append(row)
+    owners = defaultdict(dict)  # trial ID -> its target IDs, as an ordered set
+    for trial in stored.trials:
+        target_id = trial.target_id
+        grouped["trials"][target_id].append(trial)
+        owners[trial.trial_id][target_id] = None
+    for attempt in stored.attempts:
+        for target_id in owners.get(attempt.trial_id, ()):
+            grouped["attempts"][target_id].append(attempt)
     return tuple(
         AssessmentResult(
             t,
-            *(
-                tuple(r for r in getattr(stored, kind) if r.target_id == t.target_id)
-                for kind in ("evidence", "contexts", "entailment", "trials")
-            ),
-            tuple(
-                a
-                for a in stored.attempts
-                if a.trial_id
-                in {
-                    trial.trial_id
-                    for trial in stored.trials
-                    if trial.target_id == t.target_id
-                }
-            ),
-            tuple(u for u in stored.usage if u.target_id == t.target_id),
+            *(tuple(grouped[kind].get(t.target_id, ())) for kind in _ASSESSMENT_TABLES),
             outcomes[t.target_id],
         )
         for t in stored.targets
@@ -348,12 +358,8 @@ def _validate(stored: StoredSupportRun, *, published: bool) -> StoredSupportRun:
         )
         for kind in ("evidence", "contexts", "entailment", "trials", "usage"):
             _require(all(r.target_id in ids for r in getattr(stored, kind)))
-        _require(
-            all(
-                a.trial_id in {t.trial_id for t in stored.trials}
-                for a in stored.attempts
-            )
-        )
+        trial_ids = {t.trial_id for t in stored.trials}
+        _require(all(a.trial_id in trial_ids for a in stored.attempts))
         raw_refs = {a.raw_ref for a in stored.attempts if a.raw_ref is not None}
         _require(all(_raw_name(ref) for ref in raw_refs))
         artifacts = dict(record.artifact_hashes)
