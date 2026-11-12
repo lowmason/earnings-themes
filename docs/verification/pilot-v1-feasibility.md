@@ -1423,13 +1423,27 @@ needs a selection. That is a code reading, not a run.
 - B6's train and dev runs replay with a null `policy_reference`, so every target
   stays in review. `test_normal_run_reuses_live_pass_and_replays_without_dispatch`
   covers that path with a `no_candidate` artifact.
-- B7's fresh runs decide with no policy through `finalize_coding`. No test runs
-  that path with a `no_candidate` artifact.
-  `test_fresh_policy_decides_without_changing_acquisition_state` uses a selected
+- B7's fresh runs decide with no policy through `finalize_coding`. At this
+  checkpoint, no test ran that path with a `no_candidate` artifact:
+  `test_fresh_policy_decides_without_changing_acquisition_state` used a selected
   one.
 - B8's report loads each run with no policy and reads no selection. The agent did
   not trace the report's figures or gate dispositions when nothing is accepted. No
   test builds a report from a `no_candidate` artifact.
+
+D21-33 (2026-11-12) adds three tests, which change no behavior. They pass at their
+commit:
+- `test_fresh_policy_decides_without_changing_acquisition_state` now runs B7's
+  fresh path with both artifacts. Under `no_candidate`, every decision is `review`.
+- `test_complete_normal_run_collects_live_labels_and_replay_decisions` now runs
+  B8's run loader with both. Under `no_candidate`, it binds no policy and accepts no
+  labelled target.
+- `test_an_all_review_baseline_leaves_support_precision_ungated_and_fails` derives
+  gates from an all-review dev report. Support precision is ungated as
+  `undefined_point`, and the report fails its own gates on
+  `zero_gold_evidence_recall`, so no configuration passes.
+
+The report's other figures for an all-review run are still not traced.
 
 ### Disposition and open items
 
@@ -1438,6 +1452,8 @@ B5 is complete. No D21 entry is needed: the run followed Task 5 as written.
 Not done:
 - B6 is next: the train replay, then the dev pass and run, then the owner's unaided
   dev labels.
-- No test covers B7's fresh path or B8's report under `no_candidate`.
+- No test covered B7's fresh path, B8's run loader or the gate rule under
+  `no_candidate`. D21-33 adds them (above). B8's report figures are still not
+  traced, and no test builds a report from a `no_candidate` artifact.
 - The agent did not run the Stage 6 wording gate, which reads
   `calibration-v1.json`, or the default suite for this record.

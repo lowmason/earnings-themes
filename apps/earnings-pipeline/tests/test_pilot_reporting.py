@@ -286,9 +286,12 @@ def test_coverage_and_recount_gates_precede_every_share_figure(tmp_path, monkeyp
         module.write_report(current, dev, base, base, ())
 
 
+@pytest.mark.parametrize("none", [False, True])
 def test_complete_normal_run_collects_live_labels_and_replay_decisions(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, none
 ):
+    """B8's run loader binds the calibration; a ``no_candidate`` artifact binds
+    no policy, and no labelled target is accepted (D21-33)."""
     from datetime import date
 
     import earnings_pipeline.pilot_calibration as calibration
@@ -303,7 +306,7 @@ def test_complete_normal_run_collects_live_labels_and_replay_decisions(
     write_view(intake, passed, 0, date(2026, 10, 13))
     label_path = check_working(intake, passed, 0)
     artifact = sealed(
-        cases.cases.bound_artifact(intake.config, passed).model_copy(
+        cases.cases.bound_artifact(intake.config, passed, none=none).model_copy(
             update={
                 "preregistration_hash": intake.preregistration.content_hash,
                 "labels_hash": sha256_hex(label_path.read_bytes()),
@@ -329,7 +332,8 @@ def test_complete_normal_run_collects_live_labels_and_replay_decisions(
     targets = module.labelled_targets(intake, run, load_labels(label_path))
     assert len(targets) == 1
     assert set(targets[0].scores) == {"minicheck", "deberta"}
-    assert targets[0].accepted
+    assert targets[0].accepted is not none
+    assert (run.policy is None) is none
     assert run.record.status == "complete"
 
 
