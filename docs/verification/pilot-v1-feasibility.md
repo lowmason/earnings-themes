@@ -1,13 +1,15 @@
 # Pilot v1 feasibility verification
 
-Status on 2026-11-11: B1 evidence is complete and committed (`a91a8e3`), and the
+Status on 2026-11-12: B1 evidence is complete and committed (`a91a8e3`), and the
 preregistration is frozen and committed alone (`53ba190`), with the B2 step 4
 workflow selections recorded (D21-24). On 2026-10-31, O6 was met: all 28 train and
 dev gold files are signed and committed (D21-26). On 2026-11-11, the B3 train pass
 exited with `status partial`, and the owner accepted it as the frozen train baseline
 (D21-29); see the section "B3 train pass checkpoint". On 2026-11-11, B4
 committed 70 train support labels that Codex made under the owner's override
-(D21-32); see the last section. For B1, the fifth fixture pass, `s11-fixture-5`, completed all roles with verified
+(D21-32); see the section "B4 train labels checkpoint". On 2026-11-12, B5's
+train calibration ended `no_candidate` and was committed alone (`0801704`); see the
+last section. For B1, the fifth fixture pass, `s11-fixture-5`, completed all roles with verified
 Metal all-layer startup evidence and measured both phases; the owner accepted it as
 the 36 GB fit with an explicit swap/pressure limitation (D21-19, in the section
 "Owner fit decision, 2026-10-17"). Earlier sections
@@ -15,7 +17,7 @@ are chronological and state status as of their dates; where a later section clos
 an open item (Metal offload, build/phase evidence, fit), it governs. Whole-system
 Memory Used and the extractor's local token counts remain unavailable. Final
 baseline ceilings are owner-selected below. The only pilot operations recorded are
-B3's input preparation and train pass, and B4's train labels. Stage 11 remains open. This record contains metadata and safe
+B3's input preparation and train pass, B4's train labels and B5's calibration. Stage 11 remains open. This record contains metadata and safe
 numeric/status evidence only.
 
 ## Code and engineering evidence
@@ -1315,3 +1317,127 @@ Not done:
 - B5, the train calibration, is next.
 - The agent did not run the Stage 6 wording gate, which reads the labels file, or
   the default suite for this record.
+
+## B5 train calibration checkpoint, 2026-11-12
+
+B5 ran in the owner's terminal, in the main checkout. Evidence is IDs, hashes,
+counts, closed codes and times only. The agent read no label view, no working file
+and no release text. The figures below come from the owner's run of Appendix F's
+reader, which prints the typed calibration record.
+
+Codex made the train labels (D21-32). So every agreement and AUC figure below
+measures agreement with a model's answers, not with a person's (R8.4).
+
+### Command and time
+
+`calibrate` ran on the branch `data/train-calibration` at `8c14cd3`, the merge of
+PR #38. Its code is the same as at `2fe1770`, where B4 ran: the commits between them
+change only documents, specifications and the labels file.
+
+| Command | Output | Time |
+| --- | --- | --- |
+| `pilot21 calibrate --settings data/runs/pilot/config/settings.json --partition train` | `calibration 221cc696baf42f16a7a7885358d29fa643c3f129aae33734e58b8a580c8a5394 outcome no_candidate` | 1 h 7 min 6.4 s |
+
+The command loads the train pass, draws the sample again, validates the proposal
+against both support runs and then calibrates. It sends no request and needs no
+model server. From B4's times, the load and the sample take about 34 min. The other
+33 min include the two validations and the bootstrap. Their split was not measured.
+
+### The committed artifact
+
+`0801704` (`data(pilot): freeze train calibration and baseline configuration`,
+parent `8c14cd3`) adds only
+`evaluation/djia-2024q3-2026q2/pilot-v1/calibration-v1.json`, one line of 3,102
+bytes.
+
+| Identity | Value |
+| --- | --- |
+| `content_hash` | `221cc696baf42f16a7a7885358d29fa643c3f129aae33734e58b8a580c8a5394` |
+| `configuration_hash`, the frozen configuration | `1127f2be93d4173fe75f9960daa4aea9a926576ab0e7f7149a0d0e05053c94d1` |
+| SHA-256 of the file's bytes | `3b57ff09fb89fdb23b0d3d70b95542576a4a042d456bab3acabbbb4cfea7e44a` |
+| `preregistration_hash` | `09d51f7453fb3efda24d8f3e4ccf3310a8c4cb024f1af9d800b00cf967f90c04`, as frozen in B2 |
+| `labels_hash` | `85bc7f3c65ab70056973ce373fc21a9dc7bdcb067cd49147e16491dea9f023b9` |
+
+These are distinct identities. `configuration_hash` binds the models, prompts,
+policies and ceilings together with the selection, which is null. It is not the
+`settings.json` hash or the train pass's configuration hash in the B3 section.
+`labels_hash` is the SHA-256 of `support-labels-v1.toml` as committed at `b0b6005`.
+The agent hashed that committed file again and got the same value. The record has
+`calibration_version` 1, `schema_version` 1, `train_labels` 70 and `usable_labels`
+63, which agrees with B4.
+
+### Outcome: `no_candidate`
+
+The menu has one candidate, `minicheck-cutoff-v1`, with 20 cutoffs from 0.0 to 0.95
+(D21-23). At every cutoff, Stage 9 accepts none of the 63 joint-labelled targets:
+`accepted` is 0, recall is 0.0 and precision is undefined. No cutoff reaches the
+recall floor ρ = 0.4, so the fitted cutoff and the selection are null.
+
+Calibration counts a target as accepted only when Stage 9's `decision_vote` would
+accept it. A flagged, incomplete or refused target is never accepted. The B3 pass
+marked only 1 of the 1,170 train targets `assessed`. Even if that target were
+labelled positive and accepted, recall would be 1/41, below ρ. So no cutoff could
+reach ρ.
+
+As the spec's §Calibration states, no policy is bound and every target stays in
+review. This is a feasibility finding, not an error (Task 5 step 2).
+
+### Judge agreement with the joint label
+
+The κ floor is 0.4, judged on the 90% lower bound (D21-23). It is reported only and
+changes no assignment (D19-1).
+
+| Family | κ (90% interval) | AC1 (90% interval) | Labels | Uncertain | Meets floor |
+| --- | --- | --- | ---: | ---: | --- |
+| Mistral | 0.005 (−0.092, 0.101) | −0.163 (−0.464, 0.141) | 63 | 17 | no |
+| Qwen | 0.344 (0.180, 0.476) | 0.496 (0.316, 0.670) | 63 | 9 | no |
+
+Each interval used 10,000 event-clustered resamples, and none was undefined. An
+uncertain verdict counts as not supporting in the floor population. Neither family
+meets the floor. Mistral's κ is about 0 and its AC1 is below 0. These figures do not
+show why.
+
+### Scorer AUC against the claim label
+
+| Scorer | View | AUC | Labelled | No claim label | Scored |
+| --- | --- | ---: | ---: | ---: | ---: |
+| MiniCheck | `minicheck_joint` | 0.540 | 64 | 6 | 70 |
+| DeBERTa | `deberta_joint` | 0.895 | 64 | 6 | 70 |
+
+The 64 claim labels are 62 `supported` and 2 `unsupported` (B4). AUC compares each
+positive with each negative, which gives 124 pairs, and the two values are exactly
+67/124 and 111/124. With only 2 negatives, one claim moves either value by a large
+amount, and the artifact gives no interval for AUC. So the difference between the
+two scorers is not a finding.
+
+### Later steps under `no_candidate`
+
+Task 5 step 2 asks that a step that cannot proceed under `no_candidate` be raised
+as a protocol blocker. The agent read the code for B6 to B8 and found no step that
+needs a selection. That is a code reading, not a run.
+
+- `CalibratedPolicy` refuses an artifact with no selection, and `bind_policy` turns
+  that refusal into no policy. Each later caller accepts no policy: `run`, the
+  report's run loader, `finalize_coding`, `write_coding_run` and
+  `reverify_coding_run`.
+- B6's train and dev runs replay with a null `policy_reference`, so every target
+  stays in review. `test_normal_run_reuses_live_pass_and_replays_without_dispatch`
+  covers that path with a `no_candidate` artifact.
+- B7's fresh runs decide with no policy through `finalize_coding`. No test runs
+  that path with a `no_candidate` artifact.
+  `test_fresh_policy_decides_without_changing_acquisition_state` uses a selected
+  one.
+- B8's report loads each run with no policy and reads no selection. The agent did
+  not trace the report's figures or gate dispositions when nothing is accepted. No
+  test builds a report from a `no_candidate` artifact.
+
+### Disposition and open items
+
+B5 is complete. No D21 entry is needed: the run followed Task 5 as written.
+
+Not done:
+- B6 is next: the train replay, then the dev pass and run, then the owner's unaided
+  dev labels.
+- No test covers B7's fresh path or B8's report under `no_candidate`.
+- The agent did not run the Stage 6 wording gate, which reads
+  `calibration-v1.json`, or the default suite for this record.
