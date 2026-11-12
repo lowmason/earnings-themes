@@ -17,6 +17,8 @@
 - Spec-required gates stay in full (D21-34): exact spans before scoring, before support publication and at each consuming gate (Stage 8 SS3, R8.5, R6.1); current sources, masks and codebook at each consuming gate (plan 15 §5); raw-cache bytes through the cache's own reader before `verified` (plan 15 Task 3).
 - Refusal reasons stay the same closed codes. Only when an in-place mutation inside one gate is detected may change: at the end of that gate instead of at once (owner, D21-34).
 - `assess_run` and its scorer/judge dispatch path get no scope memo. Per-target resolution there stays as it is.
+- The Stage 8 spec says that "possessing a resolved input does not waive a re-check" (`specs/completed/semantic-support-assessment.md:120`). This plan meets it as D21-34 states: every gate still re-checks. Only a repeat inside one gate reuses that gate's first check (D23-1).
+- Two memos are content-keyed and process-wide, not scoped: `_binding_once` and `_check_records_once` (Task 3). They survive across gates, including fresh ones. They are exact, because each is a pure function of immutable text, so changed text always gets a new key. `artifact_hash` still reads and hashes the entry bytes on every call.
 - Each memoized body is a module-level function called through its module's globals, so a test can count its calls with `monkeypatch.setattr`.
 - Tests and helpers use invented text only (GS13). No agent opens `data/`, pilot views, working files or cache entries under `data/`. No agent runs the root suite, the Stage 6 wording gate, browser or user-only modes, or `-m live`.
 - Commands: `uv run --locked --all-packages pytest <paths> -m "not live and not browser" -q --tb=short`; `uv run --locked ruff check .`; `uv run --locked ruff format --check .`.
@@ -66,6 +68,7 @@
   - `gate(*, fresh: bool = False) -> ContextManager[None]`: opens a scope, or joins the open one unless `fresh`. A `fresh` scope hides the outer memo until it closes.
   - `gated(function=None, *, fresh: bool = False)`: decorator form of `gate` for a whole call.
   - `once(kind: str, objects: tuple[object, ...], compute: Callable[[], T]) -> T`: inside a scope, returns the value computed earlier for the same `kind` and the same objects (compared by identity), else calls `compute`. Outside a scope it always calls `compute`. The scope holds strong references to the keyed objects, so an identity cannot be reused while the scope is open. An exception is never stored.
+  - `remember(kind: str, objects: tuple[object, ...], value: object) -> None`: inside a scope, stores `value` under one more key, so a later `once` with those objects returns it. Outside a scope it does nothing.
 - The active scope lives in a `contextvars.ContextVar`.
 
 - [ ] **Step 1: Write the failing tests:**
@@ -74,7 +77,8 @@
   - `test_nested_gate_joins_and_fresh_gate_hides_the_outer_memo`;
   - `test_an_exception_is_not_remembered`;
   - `test_closing_the_outermost_gate_releases_the_memo`: use a `weakref` to a keyed object, and check that it dies after the gate closes;
-  - `test_gated_decorator_opens_or_joins`.
+  - `test_gated_decorator_opens_or_joins`;
+  - `test_remember_adds_a_second_key`.
 - [ ] **Step 2: Run** `pytest packages/earnings-themes/tests/test_scope.py`. Expected: FAIL (module missing).
 - [ ] **Step 3: Implement `scope.py`** to the interfaces above. Import nothing from other `earnings_themes` modules.
 - [ ] **Step 4: Run the tests.** Expected: PASS.
@@ -158,7 +162,7 @@
 - Test: `apps/earnings-pipeline/tests/test_pilot_gate_counts.py`
 
 **Interfaces:**
-- `consume._reverify_analysis_inputs(inputs)`: today's body. The public `reverify_analysis_inputs` is `@gated` and calls it through `once("analysis", (inputs,), ...)`.
+- `consume._reverify_analysis_inputs(inputs)`: today's body. The public `reverify_analysis_inputs` is `@gated` and calls it through `once("analysis", (inputs,), ...)`. Then it calls `remember("analysis", (bound.inputs,), bound)`. This matters because `strict_analysis_inputs` returns a copy, and `BoundAnalysis.inputs` holds that copy. A planning probe of the tiny `make_run` found that 78 of 128 `strict_analysis_inputs` calls received an earlier result's `.inputs` copy, not the caller's object. Without the second key, those calls would all miss.
 - `_cache_verification(inputs)` is called through `once("raw_caches", (inputs.raw_caches.coding, inputs.raw_caches.support, inputs.coding, inputs.support), ...)`.
 - `document_completions`, `build_coverage`, `build_analysis` and `build_observations` are `@gated` (they join).
 - The publication and read-back gates, `write_analysis_run`, `reverify_analysis_run` and `write_theme_report`, are `@gated(fresh=True)`.
