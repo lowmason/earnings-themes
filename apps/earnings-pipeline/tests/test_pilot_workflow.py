@@ -333,8 +333,12 @@ def test_scorer_cache_corruption_refuses_before_publication(tmp_path):
     assert not (tmp_path / "data/runs/pilot/train/corrupt").exists()
 
 
-def test_fresh_policy_decides_without_changing_acquisition_state(tmp_path):
+@pytest.mark.parametrize("none", [False, True])
+def test_fresh_policy_decides_without_changing_acquisition_state(tmp_path, none):
+    """B7's fresh run decides under the calibration; a ``no_candidate`` artifact
+    binds no policy, so every decision stays in review (D21-33)."""
     from earnings_pipeline.pilot_workflow import load_pass, make_pass, make_run
+    from earnings_themes.coding.store import read_coding_run
 
     config, _ = seed_case(tmp_path, seed=False, review=True)
     rt = runtime(config, [])
@@ -348,7 +352,7 @@ def test_fresh_policy_decides_without_changing_acquisition_state(tmp_path):
         support_ready=lambda: None,
         now=lambda: cases.NOW,
     )
-    artifact = bound_artifact(config, load_pass(config, base))
+    artifact = bound_artifact(config, load_pass(config, base), none=none)
     before = {p.name: p.read_bytes() for p in (tmp_path / config.states_dir).iterdir()}
     directory = tmp_path / "data/runs/pilot/dev/fresh/s-1"
     fresh = make_pass(
@@ -369,6 +373,11 @@ def test_fresh_policy_decides_without_changing_acquisition_state(tmp_path):
         now=lambda: cases.NOW,
     )
     assert record.fresh == "s-1" and record.status == "complete"
+    coding = read_coding_run(tmp_path / record.coding.directory)
+    assert {d.status for d in coding.decisions} == (
+        {"review"} if none else {"accepted"}
+    )
+    assert coding.record.cache_mode == "fresh"
     assert before == {
         p.name: p.read_bytes() for p in (tmp_path / config.states_dir).iterdir()
     }

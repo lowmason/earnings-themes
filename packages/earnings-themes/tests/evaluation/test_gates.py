@@ -101,6 +101,34 @@ def test_a_configuration_that_rejects_everything_fails(baseline) -> None:
     assert (Metric.SUPPORT_PRECISION, "undefined") in failed
 
 
+@pytest.mark.parametrize("undefined_gate", ["not_gated", "point_estimate"])
+def test_an_all_review_baseline_leaves_support_precision_ungated_and_fails(
+    undefined_gate,
+) -> None:
+    """A ``no_candidate`` calibration binds no policy, so every target stays in
+    review (D21-33). Support precision then has no point estimate and is ungated
+    under either rule, and the baseline fails its own gates on gold-evidence
+    recall: no configuration passes."""
+    rejecting = tuple(
+        EventObservation(
+            o.event_id, o.gold, o.index, (), o.release_confirmed, o.quotes, (0, 1)
+        )
+        for o in observations()
+    )
+    labels = tuple(replace(t, accepted=False) for t in labelled())
+    report = partition_report(rejecting, labels, BOOK, PLAN, partition=Partition.DEV)
+    gates = gates_of(report, undefined_gate=undefined_gate)
+    assert (Metric.SUPPORT_PRECISION, "undefined_point") in {
+        (u.metric, u.reason) for u in gates.ungated
+    }
+    assert Metric.SUPPORT_PRECISION not in {g.metric for g in gates.gates}
+    verdict = evaluate_gates(gates, report)
+    assert not verdict.passed
+    assert (Metric.GOLD_EVIDENCE_RECALL, "zero_gold_evidence_recall") in {
+        (r.metric, r.reason) for r in verdict.results if not r.passed
+    }
+
+
 def test_an_undefined_interval_is_ungated_or_gated_at_the_point(baseline) -> None:
     figures = tuple(
         f.model_copy(update={"interval": f.interval.model_copy(update={"lower": None})})
