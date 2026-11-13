@@ -497,6 +497,10 @@ def decide_assignments(
         # The digests each per-target re-check compares, taken before external code
         # runs. Each key is taken now too, so a later change cannot redirect it.
         outcome_rows = {row.target_id: row for row in support.outcomes}
+        # This call's own copies (``reverify_support_run`` copies on every call).
+        # In an outer scope they come from that scope's check, so each is compared
+        # with its stored row before its vote.
+        by_id = {outcome.target_id: outcome for outcome in outcomes}
         record_row = _row_hash(proposals.record)
         rows = tuple(
             (
@@ -536,7 +540,8 @@ def decide_assignments(
         def require_target(proposal, proposal_row, key, voted=None) -> None:
             """One target's re-check by content digest, covering every value the
             decision reads: the proposal row, the proposal run's record, the support
-            and outcome rows and, before the vote, the evidence, entailment and trial
+            and outcome rows and, before the vote, the outcome copy the decision
+            reads (against its stored row) and the evidence, entailment and trial
             rows the vote reads. After a vote (``voted`` is ``(view, view hash)``),
             the view is compared before and after the policy reference is read, and
             the reference too. Anything else is checked again at the end of the gate.
@@ -558,12 +563,17 @@ def decide_assignments(
                     target_id, outcome_row, target_hash, outcome_hash, rows_hash = (
                         target_rows[key]
                     )
+                    copy = by_id.get(target_id)
                     if (
                         _row_hash(stored[key]) != target_hash
                         or _row_hash(outcome_row) != outcome_hash
                         or (
                             voted is None
-                            and _view_rows_hash(support, target_id) != rows_hash
+                            and (
+                                copy is None
+                                or _row_hash(copy) != outcome_hash
+                                or _view_rows_hash(support, target_id) != rows_hash
+                            )
                         )
                     ):
                         raise CodingError("input_changed")
@@ -572,7 +582,6 @@ def decide_assignments(
 
         # Reference properties are external code too; recheck after reading them.
         require_current()
-        by_id = {outcome.target_id: outcome for outcome in outcomes}
         decisions = []
         for proposal, key, proposal_row in rows:
             require_target(proposal, proposal_row, key)

@@ -685,10 +685,14 @@ def reverify_support_run(
     """Re-resolve current evidence/theme/context; return processing outcomes only.
 
     One gate checks the same run against the same sources once (plan 23, D23-1).
+    Each call still gets its own outcome copies, as before the memo, so no caller
+    can change the outcomes another caller, or the memo, holds. Every outcome field
+    is immutable, so a shallow copy is enough.
     """
-    return once(
+    outcomes = once(
         "support", (stored, sources), lambda: _reverify_support_run(stored, sources)
     )
+    return tuple(outcome.model_copy() for outcome in outcomes)
 
 
 def _reverify_support_run(

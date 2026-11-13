@@ -362,3 +362,152 @@ def test_a_view_changed_while_its_vote_is_read_is_refused(two_targets):
     with pytest.raises(CodingError, match="^input_changed$"):
         case.decide(policy)
     assert len(views) == 1
+
+
+@pytest.mark.parametrize("where", ["own_scope", "outer_scope", "outer_scope_before"])
+def test_another_targets_outcome_copy_changed_during_a_vote_is_not_used(
+    two_targets, where
+):
+    """``reverify_support_run`` gives each call its own outcome copies, as base did,
+    so a policy that changes the copies it got cannot reach the ones the gate reads.
+    The decisions stay those of the stored outcomes, also when an outer scope that
+    holds the memo is open, and when the change is made there before the gate."""
+    from earnings_themes.support.records import ReviewStatus
+
+    case = two_targets
+
+    def change(outcomes, voted):
+        for outcome in outcomes:
+            if outcome.target_id not in voted:
+                outcome.__dict__["status"] = ReviewStatus.FLAGGED
+                outcome.__dict__["flags"] = ("invented_flag",)
+
+    def on_vote(policy, view):
+        change(reverify_support_run(case.support, case.sources), policy.voted)
+
+    if where == "own_scope":
+        policy = SteppedPolicy(case, on_vote=on_vote)
+        result = case.decide(policy)
+    else:
+        with gate():
+            shared = reverify_support_run(case.support, case.sources)
+            if where == "outer_scope_before":
+                change(shared, ())
+                policy = SteppedPolicy(case)
+            else:
+                policy = SteppedPolicy(case, on_vote=on_vote)
+            result = case.decide(policy)
+    stored = {row.target_id: row for row in case.support.outcomes}
+    assert len(policy.voted) == 2
+    assert [row.status for row in result.decisions] == ["accepted", "accepted"]
+    for row in result.decisions:
+        outcome = stored[row.target_id]
+        assert (row.support_status, row.flags, row.missing) == (
+            outcome.status,
+            outcome.flags,
+            outcome.missing,
+        )
+
+
+@pytest.mark.parametrize(
+    "check",
+    [
+        test_a_later_targets_rows_changed_and_restored_are_refused,
+        test_a_run_id_changed_after_a_vote_and_restored_is_refused,
+        test_an_outcome_changed_through_its_view_after_the_vote_is_refused,
+        test_a_view_changed_while_its_vote_is_read_is_refused,
+    ],
+    ids=["restored_rows", "restored_run_id", "outcome_through_view", "vote_read"],
+)
+def test_the_per_target_checks_hold_in_an_outer_scope(two_targets, check):
+    """The same refusals, inside an outer scope that already holds the memo."""
+    with gate():
+        reverify_support_run(two_targets.support, two_targets.sources)
+        check(two_targets)
+
+
+def test_each_reverify_call_in_a_gate_gets_its_own_outcome_copies(
+    assessed_case, monkeypatch
+):
+    calls = count_calls(monkeypatch, _store, "_reverify_support_run")
+    with gate():
+        first = reverify_support_run(assessed_case.support, assessed_case.sources)
+        second = reverify_support_run(assessed_case.support, assessed_case.sources)
+    assert len(calls) == 1
+    assert first == second == assessed_case.support.outcomes
+    assert all(a is not b for a, b in zip(first, second, strict=True))
+
+
+def test_every_outcome_field_is_immutable(assessed_case):
+    """A shallow ``model_copy`` keeps copies apart only if no field holds a mutable
+    value, such as a list or a dict, that the copies would share."""
+    from typing import Literal, get_args, get_origin
+
+    from earnings_themes.support.records import ReviewOutcome
+
+    def immutable(annotation) -> bool:
+        if get_origin(annotation) is Literal:
+            return all(isinstance(arg, int | str) for arg in get_args(annotation))
+        if get_origin(annotation) is tuple:
+            return True
+        return isinstance(annotation, type) and issubclass(annotation, int | str)
+
+    for name, field in ReviewOutcome.model_fields.items():
+        assert immutable(field.annotation), name
+    for outcome in assessed_case.support.outcomes:
+        for name in ReviewOutcome.model_fields:
+            value = getattr(outcome, name)
+            assert isinstance(value, int | str | tuple), name
+            if isinstance(value, tuple):
+                assert all(isinstance(item, str) for item in value), name
+
+
+def test_an_outcome_copy_dumps_as_its_stored_row(assessed_case):
+    """The per-target check compares each outcome copy with its stored row's digest,
+    so the two must dump alike, for a run read back and for one built in memory."""
+    for support in (assessed_case.support, _store._stored(assessed_case.result)):
+        copies = reverify_support_run(support, assessed_case.sources)
+        assert [o.model_dump(mode="json") for o in copies] == [
+            o.model_dump(mode="json") for o in support.outcomes
+        ]
+
+
+def test_a_support_changed_in_an_outer_scope_before_decide_is_refused(two_targets):
+    """An outer scope checked the run, and then the run changed in place into
+    another valid run: the later target is now ``flagged``. The scope's outcomes
+    are stale, so the gate refuses rather than decide on them (D21-34)."""
+    from earnings_themes.support.assess import derive_outcome
+    from earnings_themes.support.records import ReviewOutcome
+    from earnings_themes.support.run import accounting
+
+    case = two_targets
+    support = case.support
+    later = support.targets[1]
+    policy = SteppedPolicy(case)
+    with gate():
+        reverify_support_run(support, case.sources)
+        trial_ids = {
+            t.trial_id for t in support.trials if t.target_id == later.target_id
+        }
+        for row in (*support.trials, *support.attempts):
+            if row.trial_id in trial_ids and row.answer is not None:
+                row.answer.__dict__["claim_support"] = "unsupported"
+        outcome = derive_outcome(
+            later.target_id,
+            tuple(s for s in support.entailment if s.target_id == later.target_id),
+            tuple(t for t in support.trials if t.target_id == later.target_id),
+            later.evidence_ids,
+        )
+        assert outcome.status == "flagged"
+        row = next(o for o in support.outcomes if o.target_id == later.target_id)
+        for name in ReviewOutcome.model_fields:
+            row.__dict__[name] = getattr(outcome, name)
+        for key, value in accounting(
+            _store._assessments(support), support.usage
+        ).items():
+            support.record.__dict__[key] = value
+        with gate(fresh=True):
+            fresh = reverify_support_run(support, case.sources)
+        assert {o.target_id: o.status for o in fresh}[later.target_id] == "flagged"
+        with pytest.raises(CodingError, match="^input_changed$"):
+            case.decide(policy)
