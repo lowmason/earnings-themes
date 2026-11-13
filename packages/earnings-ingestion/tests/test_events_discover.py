@@ -15,6 +15,11 @@ import httpx
 import pytest
 from earnings_core import sha256_hex
 from earnings_ingestion.cohort.freeze import load_manifest
+from earnings_ingestion.cohort.records import (
+    EvidenceLocator,
+    LocatorKind,
+    OverrideCitation,
+)
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
 from earnings_ingestion.events.build import (
     EventBuildError,
@@ -393,6 +398,12 @@ def bytes_changed(store, layer):
     return ACME, url, refetch_remedy(url)
 
 
+def index_bytes_gone(store, layer):
+    url = filing_index_url(ACME.cik, ACME_RELEASE)
+    stored_at(store, url).unlink()
+    return ACME, url, refetch_remedy(url)
+
+
 def redirected_record(store, layer):
     url = EASTFIELD_PAGE
     saved = SavedResponses(store).get(url)
@@ -764,9 +775,46 @@ def test_a_companyfacts_file_of_another_cik_names_a_remedy_in_the_build(
     )
 
 
+def companyfacts_gone(store, layer):
+    url = companyfacts_url(ACME.cik)
+    stored_at(store, url).unlink()
+    return url
+
+
+def companyfacts_refused(store, layer):
+    url = companyfacts_url(ACME.cik)
+    resave(store, url, b"{}", JSON)
+    return url
+
+
+@pytest.mark.parametrize("damage", [companyfacts_gone, companyfacts_refused])
+def test_an_unusable_companyfacts_file_names_a_remedy_in_the_build(
+    universe, layer, tmp_path, damage
+) -> None:
+    """Its bytes gone, or valid bytes the reader refuses."""
+    store = populated(universe, layer, tmp_path)
+    url = damage(store, layer)
+    with pytest.raises(EventBuildError) as caught:
+        build_events(
+            universe,
+            SavedResponses(store),
+            load_overrides(REPO / FIXTURE_DIR / "overrides.toml"),
+            corpus_id=SYNTHETIC_CORPUS,
+        )
+    (problem,) = caught.value.problems
+    assert problem.startswith(f"{url}: ") and problem.endswith(refetch_remedy(url))
+
+
 @pytest.mark.parametrize(
     "damage",
-    [bytes_changed, another_accessions_index_page, an_index_page_of_another_form],
+    [
+        bytes_changed,
+        index_bytes_gone,
+        received_for_accepted,
+        an_accepted_time_daylight_saving_repeats,
+        another_accessions_index_page,
+        an_index_page_of_another_form,
+    ],
 )
 def test_an_override_s_unusable_index_page_names_a_remedy(
     universe, layer, tmp_path, damage
@@ -829,6 +877,60 @@ def test_a_citation_a_refetch_cannot_mend_names_no_refetch(
     ]
 
 
+def test_a_cited_artifact_whose_bytes_are_gone_names_a_remedy(
+    universe, layer, tmp_path
+) -> None:
+    """Its retrieval records remain, so it was saved: a refetch restores it."""
+    store = populated(universe, layer, tmp_path)
+    overrides = load_overrides(REPO / FIXTURE_DIR / "overrides.toml").overrides
+    (override,) = [o for o in overrides if o.override_id == "release-acme-2025-02-28"]
+    (citation,) = override.citations
+    _, url, remedy = index_bytes_gone(store, layer)
+    assert citation.url == url
+    gone = (
+        f"no artifact {citation.artifact_sha256} for source 'sec-edgar': its"
+        f" retrieval records remain, but its bytes are gone; {remedy}"
+    )
+    folder = archive_url(ACME.cik, ACME_RELEASE, "")
+    assert citations_refused(override, SavedResponses(store), folder) == [
+        f"release-acme-2025-02-28: {gone}"
+    ]
+    manifest = load_event_manifest(REPO / FIXTURE_DIR / "events-v1.json")
+    evidence = load_event_evidence(
+        REPO / FIXTURE_DIR / "events-v1.evidence.json", manifest
+    )
+    problems = check_evidence(evidence, store)
+    assert problems
+    assert set(problems) == {gone}
+
+
+def test_a_locator_that_raises_a_plain_value_error_is_refused(
+    universe, layer, tmp_path
+) -> None:
+    """A pointer token that ``str.isdigit`` accepts and ``int`` refuses, a
+    superscript two, raises a plain ``ValueError``. The citation is refused, as one
+    whose locator no longer verifies, with no remedy: its saved bytes are valid."""
+    store = populated(universe, layer, tmp_path)
+    overrides = load_overrides(REPO / FIXTURE_DIR / "overrides.toml").overrides
+    (override,) = [o for o in overrides if o.override_id == "release-acme-2025-02-28"]
+    url = submissions_url(ACME.cik)
+    token = "\N{SUPERSCRIPT TWO}"
+    citation = OverrideCitation(
+        source_id=SEC_SOURCE_ID,
+        url=url,
+        artifact_sha256=SavedResponses(store).get(url).artifact.content_sha256,
+        locator=EvidenceLocator(
+            kind=LocatorKind.JSON_POINTER,
+            pointer=f"/filings/recent/accessionNumber/{token}",
+            cited_sha256="0" * 64,
+        ),
+    )
+    cited = override.model_copy(update={"citations": (citation,)})
+    assert citations_refused(cited, SavedResponses(store), None) == [
+        f"release-acme-2025-02-28: invalid literal for int() with base 10: '{token}'"
+    ]
+
+
 def test_evidence_no_saved_retrieval_names_has_no_remedy(tmp_path) -> None:
     store = ArtifactStore(tmp_path / "data" / "raw" / "events", tmp_path)
     manifest = load_event_manifest(REPO / FIXTURE_DIR / "events-v1.json")
@@ -846,11 +948,20 @@ def test_evidence_no_saved_retrieval_names_has_no_remedy(tmp_path) -> None:
     )
 
 
+@pytest.mark.parametrize(
+    "damage",
+    [
+        bytes_changed,
+        index_bytes_gone,
+        received_for_accepted,
+        another_accessions_index_page,
+    ],
+)
 def test_discover_filing_names_an_unusable_index_page_and_fetches_nothing(
-    universe, layer, tmp_path
+    universe, layer, tmp_path, damage
 ) -> None:
     store = populated(universe, layer, tmp_path)
-    _, url, remedy = bytes_changed(store, layer)
+    _, url, remedy = damage(store, layer)
     recorder = Recorder(layer)
     result, sent, _ = run(universe, recorder, store, filing=(ACME.cik, ACME_RELEASE))
     (problem,) = result.problems

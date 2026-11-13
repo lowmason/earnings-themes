@@ -48,7 +48,7 @@ from pathlib import Path
 
 from earnings_ingestion.cohort.config import load_toml
 from earnings_ingestion.cohort.identity import operative_hash
-from earnings_ingestion.cohort.locators import ArtifactText, LocatorError
+from earnings_ingestion.cohort.locators import ArtifactText
 from earnings_ingestion.cohort.records import UniverseManifest
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
 from earnings_ingestion.events.acceptance import (
@@ -377,7 +377,7 @@ def citations_refused(
                 ArtifactText(stored.body, stored.ref.media_type).verify(
                     citation.locator
                 )
-        except LocatorError as exc:
+        except ValueError as exc:  # LocatorError is a ValueError.
             refused.append(f"{override.override_id}: {exc}")
             failed |= inside
             continue
