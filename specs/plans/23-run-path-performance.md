@@ -1,6 +1,8 @@
 # Run-Path Performance Implementation Plan
 
-**Status:** IN EXECUTION. Approved by the owner on 2026-11-12 (D23-4). Tasks 1 to 6 were executed and reviewed on 2026-11-13. Task 7 stopped at its step 4 because the projected train `pilot run` was 13.49 h, not under 8 h (D23-5). Plan 24 continued the work (`specs/plans/24-cheaper-key-check.md`), and Task 7 is complete through plan 24's Task 4 (2026-11-13): the projected train `pilot run` is 7.19 h (7.29 h with the scaled reverify term), under the 8 h goal, and `docs/verification/pilot-v1-feasibility.md` records it. The owner's root and wording gates and the merge remain.
+**Status: COMPLETE (2026-11-13)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
+Outcome: Tasks 1 to 6 were executed and reviewed. Task 7's projection stopped at 13.49 h (D23-5), and plan 24 (`specs/plans/completed/24-cheaper-key-check.md`) finished the work: the projected train `pilot run` is 7.19 h on invented text. The owner's root and wording gates passed at `5804663` (5,810 passed; wording 7 passed).
 
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -58,12 +60,12 @@
 **Interfaces:**
 - Produces: `realsize.py` CLI `python expirements/run-path-performance/realsize.py <docs> <paragraphs> [--themes N]`, printing one line per phase (`<phase> n=<count> <seconds> s`) and the per-unit costs that Task 7 projects. It builds N invented themes (default 22, as codebook v0) in the pattern of `tests/coding/cases.py::invented_codebook`.
 
-- [ ] **Step 1: Write the pinned-digest test.** `test_support_and_coding_cache_names_are_pinned` runs the invented `assessed_case` fixture path (`make_proposal_job` then `make_assessed_case`, live mode, `tmp_path` caches). It asserts `sorted(p.name for p in (tmp_path / "support-cache").rglob("*.json"))` and the same for `classifier-cache` equal two literal lists. Fill the lists by running the test once on this commit. Each name is `<sha256>.json`, so the names pin the key digests.
-- [ ] **Step 2: Write the output-bytes test.** `test_pilot_run_writes_the_same_bytes[selected|none]` reuses `test_pilot_workflow.py`'s `seed_case`, `runtime` and `bound_artifact`. It runs `make_pass`, then `make_run` (replay, train), and asserts `{relative path: sha256}` for every file under the pass and run directories equals a literal dict. Fill each dict from one run on this commit. Run the test twice. If any hash differs between the two runs, stop and report. Do not drop a file to make it stable.
-- [ ] **Step 3: Run both tests.** Expected: PASS (they pin today's behavior).
-- [ ] **Step 4: Extend the harness.** Add `--themes N` to `realsize.py` and `scaling.py`. Write the README: invented text only, how to run, and that the costs are floors.
-- [ ] **Step 5: Record the baseline.** Run `realsize.py 20 1850 --themes 22` and keep its output for Task 7. Planning-time reference with 2 themes: proposal replay 2.56 s per claim, support replay 2.95 s per entry, `artifact_hash` 1.35 s per judge entry, `decide_assignments` 67 s at 21 targets.
-- [ ] **Step 6: Run ruff and the two new tests; commit** `test(perf): pin cache digests and run bytes; add run-path harness (plan 23)`.
+- [x] **Step 1: Write the pinned-digest test.** `test_support_and_coding_cache_names_are_pinned` runs the invented `assessed_case` fixture path (`make_proposal_job` then `make_assessed_case`, live mode, `tmp_path` caches). It asserts `sorted(p.name for p in (tmp_path / "support-cache").rglob("*.json"))` and the same for `classifier-cache` equal two literal lists. Fill the lists by running the test once on this commit. Each name is `<sha256>.json`, so the names pin the key digests.
+- [x] **Step 2: Write the output-bytes test.** `test_pilot_run_writes_the_same_bytes[selected|none]` reuses `test_pilot_workflow.py`'s `seed_case`, `runtime` and `bound_artifact`. It runs `make_pass`, then `make_run` (replay, train), and asserts `{relative path: sha256}` for every file under the pass and run directories equals a literal dict. Fill each dict from one run on this commit. Run the test twice. If any hash differs between the two runs, stop and report. Do not drop a file to make it stable.
+- [x] **Step 3: Run both tests.** Expected: PASS (they pin today's behavior).
+- [x] **Step 4: Extend the harness.** Add `--themes N` to `realsize.py` and `scaling.py`. Write the README: invented text only, how to run, and that the costs are floors.
+- [x] **Step 5: Record the baseline.** Run `realsize.py 20 1850 --themes 22` and keep its output for Task 7. Planning-time reference with 2 themes: proposal replay 2.56 s per claim, support replay 2.95 s per entry, `artifact_hash` 1.35 s per judge entry, `decide_assignments` 67 s at 21 targets.
+- [x] **Step 6: Run ruff and the two new tests; commit** `test(perf): pin cache digests and run bytes; add run-path harness (plan 23)`.
 
 ### Task 2: The gate scope
 
@@ -79,7 +81,7 @@
   - `remember(kind: str, objects: tuple[object, ...], value: object) -> None`: inside a scope, stores `value` under one more key, so a later `once` with those objects returns it. Outside a scope it does nothing.
 - The active scope lives in a `contextvars.ContextVar`.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
   - `test_once_outside_a_scope_always_computes`;
   - `test_once_inside_a_gate_computes_once_per_identity`: two equal but distinct objects compute twice;
   - `test_nested_gate_joins_and_fresh_gate_hides_the_outer_memo`;
@@ -87,10 +89,10 @@
   - `test_closing_the_outermost_gate_releases_the_memo`: use a `weakref` to a keyed object, and check that it dies after the gate closes;
   - `test_gated_decorator_opens_or_joins`;
   - `test_remember_adds_a_second_key`.
-- [ ] **Step 2: Run** `pytest packages/earnings-themes/tests/test_scope.py`. Expected: FAIL (module missing).
-- [ ] **Step 3: Implement `scope.py`** to the interfaces above. Import nothing from other `earnings_themes` modules.
-- [ ] **Step 4: Run the tests.** Expected: PASS.
-- [ ] **Step 5: Commit** `feat(themes): add a gate-scoped validation memo (plan 23)`.
+- [x] **Step 2: Run** `pytest packages/earnings-themes/tests/test_scope.py`. Expected: FAIL (module missing).
+- [x] **Step 3: Implement `scope.py`** to the interfaces above. Import nothing from other `earnings_themes` modules.
+- [x] **Step 4: Run the tests.** Expected: PASS.
+- [x] **Step 5: Commit** `feat(themes): add a gate-scoped validation memo (plan 23)`.
 
 ### Task 3: Support-cache lookups do each check once
 
@@ -107,16 +109,18 @@
   - If a request or identity model returned by `_binding_once` is not frozen, the call returns a `model_copy()`, so one caller cannot change another caller's value.
 - `artifact_hash(reference)` and `_entry` share one private reader, `_read_entry(path, key, kind) -> SupportCacheEntry`. It reads the bytes once, runs every check `_entry` runs today, and returns the entry. `artifact_hash` hashes the same bytes it read.
 
-- [ ] **Step 1: Write the failing tests** over invented sources with 2 documents and a 2-theme codebook:
+- [x] **Step 1: Write the failing tests** over invented sources with 2 documents and a 2-theme codebook:
   - `test_a_lookup_validates_its_binding_once`: `_validate_binding` runs once for one `lookup`, and not again when the same key is looked up a second time.
   - `test_bundle_records_are_validated_once_across_keys`: across all scorer and judge lookups of one assessed case, `_check_records` runs once per distinct list, not once per lookup.
   - `test_artifact_hash_reads_each_entry_once`: count `Path.read_bytes` in the cache directory. One `artifact_hash` call reads once.
   - `test_changed_bundle_text_is_validated_and_refused`: build a second source with one element changed. Its keys validate their bundle list anew, and a key whose material was edited still raises `SupportError("malformed_record")`.
-- [ ] **Step 2: Run them.** Expected: FAIL on the counts.
-- [ ] **Step 3: Implement** to the interfaces. The material, entry bytes and file names stay byte-identical.
-- [ ] **Step 4: Run** `pytest packages/earnings-themes/tests/support` and Task 1's two tests. Expected: PASS.
-- [ ] **Step 5: Measure** `realsize.py 20 1850 --themes 22`. Record the support-replay and `artifact_hash` costs per entry in the commit body.
-- [ ] **Step 6: Commit** `perf(themes): check each support-cache binding once (plan 23)`.
+- [x] **Step 2: Run them.** Expected: FAIL on the counts.
+- [x] **Step 3: Implement** to the interfaces. The material, entry bytes and file names stay byte-identical.
+- [x] **Step 4: Run** `pytest packages/earnings-themes/tests/support` and Task 1's two tests. Expected: PASS.
+- [x] **Step 5: Measure** `realsize.py 20 1850 --themes 22`. Record the support-replay and `artifact_hash` costs per entry in the commit body.
+- [x] **Step 6: Commit** `perf(themes): check each support-cache binding once (plan 23)`.
+
+> Deviation: the record-list memo keeps 512 lists, not 16, and `artifact_hash` shares `_check_entry` with `_read_entry` (D23-6).
 
 ### Task 4: One support re-verification per gate in decide
 
@@ -137,14 +141,16 @@
   - After the loop: one full `require_current()` inside `gate(fresh=True)`.
   - `decision_vote`'s `_view_hash` check stays as it is.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
   - `test_decide_reverifies_the_support_run_twice_at_any_size`: count `_reverify_support_run` over 3 targets and over 6 targets. Expected: 2 both times.
   - `test_a_gate_validates_each_bundle_once`: count `_checked_bundle` while resolving 2 claims × 2 themes on one document inside `gate()`. Expected: 1.
   - `test_reverify_outside_a_gate_still_checks_each_call`: two top-level `reverify_support_run` calls count 2.
-- [ ] **Step 2: Run them.** Expected: FAIL.
-- [ ] **Step 3: Implement** to the interfaces.
-- [ ] **Step 4: Run** `pytest packages/earnings-themes/tests/coding packages/earnings-themes/tests/support` and Task 1's tests. Expected: PASS, including every existing mutation test in `test_decide.py`.
-- [ ] **Step 5: Commit** `perf(themes): re-verify support once per decide gate (plan 23)`.
+- [x] **Step 2: Run them.** Expected: FAIL.
+- [x] **Step 3: Implement** to the interfaces.
+- [x] **Step 4: Run** `pytest packages/earnings-themes/tests/coding packages/earnings-themes/tests/support` and Task 1's tests. Expected: PASS, including every existing mutation test in `test_decide.py`.
+- [x] **Step 5: Commit** `perf(themes): re-verify support once per decide gate (plan 23)`.
+
+> Deviation: the task also digests the sources, the proposal record and the rows each vote reads, and `reverify_support_run` returns fresh outcome copies (D23-7).
 
 ### Task 5: One resolution per claim in classification
 
@@ -157,11 +163,13 @@
 - `classify_claim` is `@gated`, so one claim's inputs, prompt rendering and attempts share one scope.
 - In `propose_run` (`coding/run.py`), the resolution of every claim before the loop (today lines 209–211) runs inside one `gate(fresh=True)`, and the checks after the loop and before publication (today lines 269–304) run inside another. Both stay outside every claim's scope, as today.
 
-- [ ] **Step 1: Write the failing test** `test_each_claim_checks_its_bundle_once`: count `_checked_bundle` during `propose_run` replay of 3 claims on one document with a 2-theme codebook. Expected: 5 (one for the pre-loop gate, one per claim gate, and one for the post-loop gate). Today the same replay runs `resolve_target` about 74 times per claim.
-- [ ] **Step 2: Run it.** Expected: FAIL.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Run** `pytest packages/earnings-themes/tests/coding` and Task 1's tests. Expected: PASS, including `test_invalid_source_mutation_during_callback_aborts_publication` and `test_classification_final_preflight_checks_bindings_after_callback`.
-- [ ] **Step 5: Commit** `perf(themes): resolve each claim once per classification gate (plan 23)`.
+- [x] **Step 1: Write the failing test** `test_each_claim_checks_its_bundle_once`: count `_checked_bundle` during `propose_run` replay of 3 claims on one document with a 2-theme codebook. Expected: 5 (one for the pre-loop gate, one per claim gate, and one for the post-loop gate). Today the same replay runs `resolve_target` about 74 times per claim.
+- [x] **Step 2: Run it.** Expected: FAIL.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Run** `pytest packages/earnings-themes/tests/coding` and Task 1's tests. Expected: PASS, including `test_invalid_source_mutation_during_callback_aborts_publication` and `test_classification_final_preflight_checks_bindings_after_callback`.
+- [x] **Step 5: Commit** `perf(themes): resolve each claim once per classification gate (plan 23)`.
+
+> Deviation: the expected `_checked_bundle` count is 9, not 5, because `propose_run` has two fresh post-loop gates (D23-8).
 
 ### Task 6: Analysis gates share one verification
 
@@ -176,11 +184,13 @@
 - The publication and read-back gates, `write_analysis_run`, `reverify_analysis_run` and `write_theme_report`, are `@gated(fresh=True)`.
 - In `run_theme_workflow`, the consuming steps before publication run inside one `with gate():` block: `reverify_analysis_inputs`, `document_completions`, the transitions that use them, and `build_analysis`, which is now assigned to a variable inside the block. `write_analysis_run` is called after the block.
 
-- [ ] **Step 1: Write the failing test** `test_one_pilot_run_counts_its_gates`. It runs Task 1's tiny `make_pass` and `make_run` (both artifacts) and counts calls through monkeypatched module globals. Today's counts: `_proposal_support_inputs` 67, `_cache_verification` 192, `_reverify_analysis_inputs` 64 (body), `_reverify_support_run` 473. Expected bounds: `_proposal_support_inputs` ≤ 12, `_cache_verification` ≤ 8, `_reverify_analysis_inputs` ≤ 8, `_reverify_support_run` ≤ 30.
-- [ ] **Step 2: Run it.** Expected: FAIL.
-- [ ] **Step 3: Implement** to the interfaces.
-- [ ] **Step 4: Run** `pytest packages/earnings-themes/tests/analysis apps/earnings-pipeline/tests` and Task 1's tests. Expected: PASS, including `test_policy_callback_mutation_refuses_before_writes` and `test_policy_mutation_of_original_inputs_refuses`.
-- [ ] **Step 5: Commit** `perf: share one verification per analysis gate (plan 23)`.
+- [x] **Step 1: Write the failing test** `test_one_pilot_run_counts_its_gates`. It runs Task 1's tiny `make_pass` and `make_run` (both artifacts) and counts calls through monkeypatched module globals. Today's counts: `_proposal_support_inputs` 67, `_cache_verification` 192, `_reverify_analysis_inputs` 64 (body), `_reverify_support_run` 473. Expected bounds: `_proposal_support_inputs` ≤ 12, `_cache_verification` ≤ 8, `_reverify_analysis_inputs` ≤ 8, `_reverify_support_run` ≤ 30.
+- [x] **Step 2: Run it.** Expected: FAIL.
+- [x] **Step 3: Implement** to the interfaces.
+- [x] **Step 4: Run** `pytest packages/earnings-themes/tests/analysis apps/earnings-pipeline/tests` and Task 1's tests. Expected: PASS, including `test_policy_callback_mutation_refuses_before_writes` and `test_policy_mutation_of_original_inputs_refuses`.
+- [x] **Step 5: Commit** `perf: share one verification per analysis gate (plan 23)`.
+
+> Deviation: no `raw_caches` memo, `_require_unchanged` and option R instead, 12 sweeps, not 8, and `storage_corrupt` where the base refused `input_changed` in one case (D23-9).
 
 ### Task 7: Check the budget and record it
 
@@ -189,8 +199,10 @@
 **Files:**
 - Modify: `expirements/run-path-performance/realsize.py` (projection), `docs/verification/pilot-v1-feasibility.md`, `specs/plans/21-feasibility-pilot-and-threshold-calibration-plan-b.md` (Status line only)
 
-- [ ] **Step 1: Add `--project`** to `realsize.py`. It prints the projected train `pilot run` time from the measured per-unit costs: 1,171 claims × proposal replay × 2 passes, plus 7,800 support entries × support replay × 2 passes, plus Task 6's sweep count × 4,866 judge entries × `artifact_hash`, plus Task 6's decide count × 1,170 targets × decide cost per target, plus 32 min for the load (the measured pre-plan time, an upper bound).
-- [ ] **Step 2: Run** `realsize.py 20 1850 --themes 22 --project`. Expected: a projection under 8 h. If it is 8 h or more, stop and report the per-phase figures to the owner. Do not add optimizations this plan does not name.
-- [ ] **Step 3: Record** a section "Plan 23 run-path performance, <date>" in the verification doc: a before/after table per phase, the projection, the gate counts, and the note that these are invented-text floors. In plan 21's Status line, add that plan 23 merged, if it has, and that B6 may resume (D21-34).
-- [ ] **Step 4: Run** `uv run --locked ruff check .`, `uv run --locked ruff format --check .` and `uv run --locked --all-packages pytest packages apps tests/contracts -m "not live and not browser" -q --tb=short`. Expected: clean, all pass. Then ask the owner to run the root suite and `tests/integration/test_stage6_wording.py` at the branch head.
-- [ ] **Step 5: Commit** `docs(pilot): record the run-path performance correction (plan 23)`.
+- [x] **Step 1: Add `--project`** to `realsize.py`. It prints the projected train `pilot run` time from the measured per-unit costs: 1,171 claims × proposal replay × 2 passes, plus 7,800 support entries × support replay × 2 passes, plus Task 6's sweep count × 4,866 judge entries × `artifact_hash`, plus Task 6's decide count × 1,170 targets × decide cost per target, plus 32 min for the load (the measured pre-plan time, an upper bound).
+- [x] **Step 2: Run** `realsize.py 20 1850 --themes 22 --project`. Expected: a projection under 8 h. If it is 8 h or more, stop and report the per-phase figures to the owner. Do not add optimizations this plan does not name.
+- [x] **Step 3: Record** a section "Plan 23 run-path performance, <date>" in the verification doc: a before/after table per phase, the projection, the gate counts, and the note that these are invented-text floors. In plan 21's Status line, add that plan 23 merged, if it has, and that B6 may resume (D21-34).
+- [x] **Step 4: Run** `uv run --locked ruff check .`, `uv run --locked ruff format --check .` and `uv run --locked --all-packages pytest packages apps tests/contracts -m "not live and not browser" -q --tb=short`. Expected: clean, all pass. Then ask the owner to run the root suite and `tests/integration/test_stage6_wording.py` at the branch head.
+- [x] **Step 5: Commit** `docs(pilot): record the run-path performance correction (plan 23)`.
+
+> Deviation: steps 3 to 5 moved to plan 24, Task 4, after the projection stopped at 13.49 h (D23-5). Plan 24 completed them on 2026-11-13 with a projection of 7.19 h.
