@@ -52,10 +52,14 @@ class SupportCacheKey(str):
 
     def __new__(cls, material: str):
         try:
-            canonical = canonical_json(json.loads(material)).decode()
-            if type(material) is not str or canonical != material:
-                raise ValueError
-            value = super().__new__(cls, digest(json.loads(material)))
+            if _light_material(material, "canonical") is not None:
+                # The text is canonical JSON, so its digest is the hash of its bytes.
+                value = super().__new__(cls, sha256_hex(material.encode()))
+            else:
+                canonical = canonical_json(json.loads(material)).decode()
+                if type(material) is not str or canonical != material:
+                    raise ValueError
+                value = super().__new__(cls, digest(json.loads(material)))
             object.__getattribute__(value, "__dict__")["_material"] = material
             return value
         except (ValueError, TypeError, AttributeError):
@@ -193,6 +197,165 @@ def _check_records_once(model, records: list) -> None:
             _checked_records.popitem(last=False)
 
 
+def _check_bundles(bundles) -> None:
+    """Validate the ``bundles`` value of one material; any failure is a ValueError."""
+    if type(bundles) is not list:
+        raise ValueError
+    for bundle in bundles:
+        if set(bundle) != {"document", "elements", "masks"}:
+            raise ValueError
+        CanonicalDocument.model_validate_json(canonical_json(bundle["document"]))
+        for name, model in (
+            ("elements", DocumentElement),
+            ("masks", OverlayMask),
+        ):
+            if type(bundle[name]) is not list:
+                raise ValueError
+            _check_records_once(model, bundle[name])
+
+
+# A key's text is 12 to 13 MB at pilot size, and 99.7% of it is three values that are
+# the same in every key of one source. They are checked once per SHA-256 of their text,
+# and only the small rest of the key is parsed. The canonical key order puts
+# ``bundles`` first and the other two after ``schema_version``.
+_FRAGMENT_MEMO_SIZE = 64
+"""Fragment checks kept: each is a pair of short strings, and no text is kept."""
+_FRAGMENT_NAMES = ("bundles", "source_claims", "source_quotes")
+_BUNDLES_START = '{"bundles":'
+_CLAIM_MARKER = ',"claim":'
+_CLAIMS_MARKER = ',"source_claims":'
+_QUOTES_MARKER = ',"source_quotes":'
+_RUN_MARKER = ',"source_run":'
+
+
+def _split_material(material: str) -> tuple[tuple[str, str, str], str] | None:
+    """The three big values of a key's text, and the text with each replaced by ``[]``.
+
+    A value is the text strictly between two markers, and a marker is the first one
+    after the text before it. A marker can also sit inside a value, and then the value
+    is cut short: it is no JSON text, and no check accepts it. ``None`` when a marker
+    is missing or out of order.
+    """
+    if not material.startswith(_BUNDLES_START):
+        return None
+    bundles_start = len(_BUNDLES_START)
+    bundles_end = material.find(_CLAIM_MARKER, bundles_start)
+    if bundles_end < 0:
+        return None
+    claims_marker = material.find(_CLAIMS_MARKER, bundles_end)
+    if claims_marker < 0:
+        return None
+    claims_start = claims_marker + len(_CLAIMS_MARKER)
+    claims_end = material.find(_QUOTES_MARKER, claims_start)
+    if claims_end < 0:
+        return None
+    quotes_start = claims_end + len(_QUOTES_MARKER)
+    quotes_end = material.find(_RUN_MARKER, quotes_start)
+    if quotes_end < 0:
+        return None
+    fragments = (
+        material[bundles_start:bundles_end],
+        material[claims_start:claims_end],
+        material[quotes_start:quotes_end],
+    )
+    placeholder = (
+        material[:bundles_start]
+        + "[]"
+        + material[bundles_end:claims_start]
+        + "[]"
+        + material[claims_end:quotes_start]
+        + "[]"
+        + material[quotes_end:]
+    )
+    return fragments, placeholder
+
+
+def _check_fragment(
+    level: Literal["canonical", "valid"],
+    name: Literal["bundles", "source_claims", "source_quotes"],
+    fragment: str,
+) -> None:
+    """Check one big value of a key's text; any failure is a ValueError.
+
+    ``canonical``: the text is the canonical JSON of its own parse, and is one value,
+    because the whole text is parsed. ``valid`` adds today's checks of the parse: a
+    list, and then each bundle, claim or quote record as ``_validate_binding`` does.
+    """
+    try:
+        parsed = json.loads(fragment)
+        if canonical_json(parsed) != fragment.encode():
+            raise ValueError
+        if level == "valid":
+            if name == "bundles":
+                _check_bundles(parsed)
+            else:
+                if type(parsed) is not list:
+                    raise ValueError
+                _check_records_once(Claim if name == "source_claims" else Quote, parsed)
+    except (ValueError, TypeError, KeyError, AttributeError):
+        raise ValueError from None
+
+
+_checked_fragments: OrderedDict[tuple[str, str], None] = OrderedDict()
+_checked_fragments_lock = threading.Lock()
+
+
+def _fragment_checked(
+    level: Literal["canonical", "valid"],
+    name: Literal["bundles", "source_claims", "source_quotes"],
+    fragment: str,
+) -> None:
+    """``_check_fragment``, unless a text of identical content already passed.
+
+    The check is a pure function of the level, the name and the text, and the SHA-256
+    of the text fixes it. So a text that differs in one character has another digest
+    and is checked in full. The name is part of the key because the ``valid`` check
+    differs by name. Only a text that passed is remembered, and no text is kept. The
+    lock covers the memo only: two threads may check one text once each.
+    """
+    memo_key = (f"{level}:{name}", sha256_hex(fragment.encode()))
+    with _checked_fragments_lock:
+        if memo_key in _checked_fragments:
+            _checked_fragments.move_to_end(memo_key)
+            return
+    _check_fragment(level, name, fragment)
+    with _checked_fragments_lock:
+        _checked_fragments[memo_key] = None
+        while len(_checked_fragments) > _FRAGMENT_MEMO_SIZE:
+            _checked_fragments.popitem(last=False)
+
+
+def _light_material(material: str, level: Literal["canonical", "valid"]) -> dict | None:
+    """The parse of a key's small rest, when its text is canonical JSON; else ``None``.
+
+    The rest is the text with its three big values replaced by ``[]``. It is returned
+    only if every big value passed its check at ``level``, the rest is the canonical
+    JSON of its own parse, and its three top-level lists are the empty ones that stand
+    in for the big values. Then the whole text is canonical JSON too, and each of the
+    three values is the top-level one. This only accepts: on any doubt the answer is
+    ``None``, and the caller runs today's code, which gives today's outcome.
+    """
+    if type(material) is not str:
+        return None
+    try:
+        split = _split_material(material)
+        if split is None:
+            return None
+        fragments, placeholder = split
+        for name, fragment in zip(_FRAGMENT_NAMES, fragments, strict=True):
+            _fragment_checked(level, name, fragment)
+        parsed = json.loads(placeholder)
+        if canonical_json(parsed) != placeholder.encode():
+            return None
+        if type(parsed) is not dict or any(
+            parsed.get(name) != [] for name in _FRAGMENT_NAMES
+        ):
+            return None
+        return parsed
+    except (ValueError, TypeError, RecursionError):
+        return None
+
+
 def _validate_binding(key_text: str, material_text: str, kind: str):
     """The key's typed ``(request, identity)``, or ``malformed_record``.
 
@@ -236,19 +399,7 @@ def _validate_binding(key_text: str, material_text: str, kind: str):
             or any(c not in "0123456789abcdef" for c in provenance)
         ):
             raise ValueError
-        if type(material["bundles"]) is not list:
-            raise ValueError
-        for bundle in material["bundles"]:
-            if set(bundle) != {"document", "elements", "masks"}:
-                raise ValueError
-            CanonicalDocument.model_validate_json(canonical_json(bundle["document"]))
-            for name, model in (
-                ("elements", DocumentElement),
-                ("masks", OverlayMask),
-            ):
-                if type(bundle[name]) is not list:
-                    raise ValueError
-                _check_records_once(model, bundle[name])
+        _check_bundles(material["bundles"])
         request = (
             ScoreRequest if kind == "scorer" else JudgeRequest
         ).model_validate_json(canonical_json(material["request"]))
