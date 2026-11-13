@@ -358,3 +358,81 @@ def test_the_second_sweep_runs_when_a_cache_or_binding_changed(
         consume.reverify_analysis_inputs(changed)
         assert len(sweeps) == 3
     assert policy.fired
+
+
+# A change seen by the end compare runs a fresh full check. That check also reads
+# the policy after its last copy of the caller's inputs, so it is compared once
+# more before the gate may pass (Task 6 review, round 1, Important 1).
+
+
+class TwoStepPolicy(LastReadPolicy):
+    """The real policy, plus an action on the last ``reference`` read of the first
+    and of the second full check in ``place``."""
+
+    def __init__(self, actual, per_check, place, first, second):
+        super().__init__(actual, per_check, None, wanted=None)
+        self.place = place
+        self.steps = {1: first, 2: second}
+        self.done = []
+
+    def enter_check(self):
+        self.counts[self.context] = self.counts.get(self.context, 0) + 1
+        self.reads = 0
+        number = self.counts[self.context]
+        self.action = self.steps.get(number) if self.context == self.place else None
+        self.armed = self.action is not None and number not in self.done
+
+    @property
+    def reference(self):
+        self.reads += 1
+        if self.armed and self.reads == self.per_check:
+            self.armed = False
+            self.done.append(self.counts[self.context])
+            self.action()
+        return self.actual.reference
+
+
+def two_step_policy(inputs, place):
+    """Step 1 swaps in an equal ``raw_caches`` container: no check can see it, but
+    the end compare does, so the fresh check runs. Step 2, on that fresh check's
+    last read, changes the publisher and leaves it changed. Returns the policy and
+    the inputs to pass, which the first step changes in place."""
+    from earnings_themes.analysis.records import RawCacheInputs
+
+    holder = []
+
+    def swap_caches():
+        caches = holder[0].raw_caches
+        object.__setattr__(
+            holder[0], "raw_caches", RawCacheInputs(caches.coding, caches.support)
+        )
+
+    policy = TwoStepPolicy(
+        inputs.assignment_policy,
+        reads_per_check(inputs),
+        place,
+        swap_caches,
+        change_publisher(inputs),
+    )
+    holder.append(replace(inputs, assignment_policy=policy))
+    return policy, holder[0]
+
+
+def test_a_change_on_the_fresh_checks_last_read_refuses_before_writes(
+    analysis_input_factory, tmp_path, monkeypatch
+):
+    inputs, _ = analysis_input_factory(caches=True)
+    result = build_analysis(inputs, inputs.analysis_policy, None)
+    policy, changed = two_step_policy(inputs, None)
+    watch_checks(monkeypatch, policy)
+    with pytest.raises(AnalysisError, match="^input_changed$"):
+        store.write_analysis_run(
+            tmp_path / "changed",
+            result,
+            changed,
+            inputs.analysis_policy,
+            None,
+            evidence=(),
+        )
+    assert policy.done == [1, 2]
+    assert not (tmp_path / "changed").exists()

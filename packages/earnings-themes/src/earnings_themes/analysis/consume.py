@@ -578,15 +578,27 @@ def _require_unchanged(inputs: AnalysisInputs, bound: BoundAnalysis) -> None:
     The full check reads the policy's ``reference`` after its last copy of the
     caller's inputs. Base checked the inputs again later in the same gate, and a
     gate now reuses its first check (D23-1). So copy them once more here and compare
-    the copy with the checked one, with no external code. On a change, the next full
-    check runs now and its refusal is the one base gave (D21-34). The raw-cache
-    bytes are not part of the copy: the full check's last sweep reads them after
-    the policy's last read.
+    the copy with the checked one, with no external code. On a change, a fresh full
+    check runs now and gives the refusal. That check also reads the policy after
+    its last copy, so its own result is compared once more, and any change then
+    refuses ``input_changed``, with no further check. The raw-cache bytes are not
+    part of the copy: the full check's last sweep reads them after the policy's
+    last read.
     """
+    if _unchanged_since(inputs, bound.inputs):
+        return
+    with gate(fresh=True):
+        again = _reverify_analysis_inputs(inputs)
+    _require(again.binding_hash == bound.binding_hash)
+    _require(_unchanged_since(inputs, again.inputs))
+
+
+def _unchanged_since(inputs: AnalysisInputs, checked: AnalysisInputs) -> bool:
+    """Whether a new copy of the caller's inputs equals ``checked``. It runs no
+    external code."""
     try:
         final = strict_analysis_inputs(inputs)
-        checked = bound.inputs
-        unchanged = (
+        return (
             final.assignment_policy is checked.assignment_policy
             and final.raw_caches is checked.raw_caches
             and all(
@@ -599,11 +611,6 @@ def _require_unchanged(inputs: AnalysisInputs, bound: BoundAnalysis) -> None:
         raise
     except Exception:  # noqa: BLE001 - suppress arbitrary model/policy/source errors
         raise AnalysisError("input_changed") from None
-    if unchanged:
-        return
-    with gate(fresh=True):
-        again = _reverify_analysis_inputs(inputs)
-    _require(again.binding_hash == bound.binding_hash)
 
 
 def _reverify_analysis_inputs(inputs: AnalysisInputs) -> BoundAnalysis:

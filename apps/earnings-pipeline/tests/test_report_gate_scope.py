@@ -120,3 +120,39 @@ def test_a_change_during_a_vote_refuses_the_report(
         )
     assert policy.fired
     assert not (tmp_path / "report").exists()
+
+
+def test_a_change_on_the_fresh_checks_last_read_refuses_the_report(
+    tmp_path, monkeypatch
+):
+    # Read-back 2 is the last check before the report is written. A change that
+    # its end compare sees runs a fresh full check, and a change made on that
+    # check's last read must still refuse (Task 6 review, round 1, Important 1).
+    inputs, families, views, stored = report_cases.setup_case(tmp_path, caches=True)
+    policy, changed = probes.two_step_policy(inputs, ("read-back", 2))
+    policy.context = "report"
+    probes.watch_checks(monkeypatch, policy)
+    original = theme_report.reverify_analysis_run
+    started = []
+
+    def read_back(*args, **kwargs):
+        started.append(True)
+        policy.context = ("read-back", len(started))
+        try:
+            return original(*args, **kwargs)
+        finally:
+            policy.context = "report"
+
+    monkeypatch.setattr(theme_report, "reverify_analysis_run", read_back)
+    with pytest.raises(AnalysisError, match="^input_changed$"):
+        theme_report.write_theme_report(
+            tmp_path / "report",
+            stored,
+            changed,
+            inputs.analysis_policy,
+            families,
+            views,
+            audience="export",
+        )
+    assert policy.done == [1, 2]
+    assert not (tmp_path / "report").exists()
