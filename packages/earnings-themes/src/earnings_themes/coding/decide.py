@@ -4,7 +4,7 @@ Stage 11 supplies calibrated policy artifacts and approval. This module implemen
 no policy, numeric gate, signal pooling, or calibration-artifact authority.
 """
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Protocol
@@ -133,6 +133,34 @@ def _row_hash(row: BaseModel) -> str:
     return digest(_dump(row))
 
 
+_UNREADABLE = (ValueError, TypeError, AttributeError, OverflowError)
+
+
+def _recheck_digest[T](compute: Callable[[T], str], value: T) -> str:
+    """A re-check's digest of source or proposal rows. A value that no longer
+    serializes is a change: base's full re-check refused it as ``input_changed``.
+    Support-row digests stay outside this, as base refused those differently."""
+    try:
+        return compute(value)
+    except _UNREADABLE:
+        raise CodingError("input_changed") from None
+
+
+def _view_rows(support: StoredSupportRun, target_id: str) -> tuple[tuple, ...]:
+    """One target's evidence, entailment and trial rows, in stored order: the rows
+    its decision view reads."""
+    return tuple(
+        tuple(row for row in getattr(support, name) if row.target_id == target_id)
+        for name in ("evidence", "entailment", "trials")
+    )
+
+
+def _view_rows_hash(support: StoredSupportRun, target_id: str) -> str:
+    return digest(
+        [[_dump(row) for row in rows] for rows in _view_rows(support, target_id)]
+    )
+
+
 def _sources_content_hash(sources: SupportSources) -> str:
     """Catch callback mutation of the sources that one gate's checks read.
 
@@ -149,7 +177,6 @@ def _sources_content_hash(sources: SupportSources) -> str:
             },
             "bundles": [
                 {
-                    "name": bundle.name,
                     "document": _dump(bundle.document),
                     "elements": [_dump(element) for element in bundle.elements],
                     "masks": [_dump(mask) for mask in bundle.masks],
@@ -337,13 +364,7 @@ def decision_input(
 ) -> DecisionInput:
     """One stored target's view: its evidence, signals and trials, and, when it is
     ``assessed``, its eligible quotes. ``outcome`` is the reverified outcome."""
-    evidence = tuple(
-        row for row in support.evidence if row.target_id == target.target_id
-    )
-    entailment = tuple(
-        row for row in support.entailment if row.target_id == target.target_id
-    )
-    trials = tuple(row for row in support.trials if row.target_id == target.target_id)
+    evidence, entailment, trials = _view_rows(support, target.target_id)
     eligible = (
         eligible_quote_ids(evidence, trials) if outcome.status == "assessed" else ()
     )
@@ -486,9 +507,11 @@ def decide_assignments(
         )
         target_rows = {
             key: (
+                target.target_id,
                 outcome_rows[target.target_id],
                 _row_hash(target),
                 _row_hash(outcome_rows[target.target_id]),
+                _view_rows_hash(support, target.target_id),
             )
             for key, target in stored.items()
         }
@@ -501,7 +524,8 @@ def decide_assignments(
                     again != reference
                     or proposal_run_hash(proposals) != proposal_hash
                     or _support_content_hash(support) != support_content_hash
-                    or _sources_content_hash(sources) != sources_content_hash
+                    or _recheck_digest(_sources_content_hash, sources)
+                    != sources_content_hash
                 ):
                     raise CodingError("input_changed")
                 reverify_support_run(support, sources)
@@ -509,20 +533,26 @@ def decide_assignments(
                     raise CodingError("input_changed")
 
         def require_target(proposal, proposal_row, key, *, voted=False) -> None:
-            """One target's re-check: its rows by digest, and after a vote the policy
-            reference too. Anything else is checked again at the end of the gate."""
+            """One target's re-check by content digest: its proposal, support and
+            outcome rows and, before its vote, the evidence, entailment and trial
+            rows the vote reads. After a vote, the policy reference too. Anything
+            else is checked again at the end of the gate."""
             with _refuse_changes():
                 if voted and _policy_reference(policy, proposals, support) != reference:
                     raise CodingError("input_changed")
-                if _row_hash(proposal) != proposal_row:
+                if _recheck_digest(_row_hash, proposal) != proposal_row:
                     raise CodingError("input_changed")
-                if key in target_rows:
-                    outcome_row, target_row, outcome_hash = target_rows[key]
-                    if (_row_hash(stored[key]), _row_hash(outcome_row)) != (
-                        target_row,
-                        outcome_hash,
-                    ):
-                        raise CodingError("input_changed")
+                if key not in target_rows:
+                    return
+                target_id, outcome_row, target_hash, outcome_hash, view_hash = (
+                    target_rows[key]
+                )
+                if (
+                    _row_hash(stored[key]) != target_hash
+                    or _row_hash(outcome_row) != outcome_hash
+                    or (not voted and _view_rows_hash(support, target_id) != view_hash)
+                ):
+                    raise CodingError("input_changed")
 
         # Reference properties are external code too; recheck after reading them.
         require_current()

@@ -6,12 +6,18 @@ validated the whole document again for each (claim, theme). These tests count th
 module-level check bodies, `_reverify_support_run` and `_checked_bundle`, over
 invented sources only (GS13). They also hold the other side: a call outside a gate
 checks every time, and a refusal is never remembered as a pass.
+
+The per-target re-check compares content digests instead (D21-34, D23-1). The last
+tests hold that each vote still reads only rows equal to the checked ones, and that
+a change keeps base's refusal code: changed or unreadable rows refuse as
+``input_changed``.
 """
 
 from importlib import import_module
 
 import pytest
 from earnings_themes.anchoring import Bundle
+from earnings_themes.coding.records import CodingError
 from earnings_themes.scope import gate
 from earnings_themes.support import resolve_target, reverify_support_run
 from earnings_themes.support.records import (
@@ -21,7 +27,13 @@ from earnings_themes.support.records import (
     Target,
 )
 
-from .cases import FixturePolicy, invented_bundle, invented_codebook, make_sources
+from .cases import (
+    FixturePolicy,
+    invented_bundle,
+    invented_codebook,
+    make_assessed_case,
+    make_sources,
+)
 
 _resolve = import_module("earnings_themes.support.resolve")
 _store = import_module("earnings_themes.support.store")
@@ -142,3 +154,141 @@ def test_a_refused_bundle_is_checked_again_inside_a_gate(
     assert isinstance(second, RefusedTarget)
     assert first.outcome.missing == second.outcome.missing == ("malformed_record",)
     assert len(calls) == 2
+
+
+class SteppedPolicy:
+    """The fixture policy, with a step run at a chosen read of ``reference`` and at
+    each vote. ``decide_assignments`` reads ``reference`` once at the start, once
+    before the loop, once after each vote and once at the end."""
+
+    def __init__(self, case, *, on_read=None, on_vote=None):
+        self.actual = FixturePolicy(case.proposals, case.support)
+        self.on_read = on_read or {}
+        self.on_vote = on_vote
+        self.reads = 0
+        self.voted = []
+
+    @property
+    def reference(self):
+        self.reads += 1
+        step = self.on_read.get(self.reads)
+        if step is not None:
+            step(self)
+        return self.actual.reference
+
+    def evaluate(self, view):
+        self.voted.append(view.target.target_id)
+        if self.on_vote is not None:
+            self.on_vote(self, view)
+        return self.actual.evaluate(view)
+
+
+@pytest.fixture
+def two_targets(proposal_job, tmp_path):
+    """One claim proposed for both themes: two assessed targets in one gate."""
+    proposals, _ = proposal_job.run(
+        [{"theme_ids": ["capacity", "demand"], "attributes": {}}]
+    )
+    case = make_assessed_case(proposals, proposal_job.sources, tmp_path)
+    assert len(case.support.targets) == 2
+    return case
+
+
+def later_rows(case, policy, table):
+    """The rows of ``table`` that belong to a target not yet voted on."""
+    return [
+        row for row in getattr(case.support, table) if row.target_id not in policy.voted
+    ]
+
+
+def test_a_later_targets_rows_changed_and_restored_are_refused(two_targets):
+    case = two_targets
+    saved = {}
+
+    def change(policy):
+        for signal in later_rows(case, policy, "entailment"):
+            saved[signal.signal_id] = (signal, signal.score)
+            signal.__dict__["score"] = 0.99
+
+    def restore(policy):
+        for signal, score in saved.values():
+            signal.__dict__["score"] = score
+
+    assert all(signal.score != 0.99 for signal in case.support.entailment)
+    # Read 3 follows the first vote, and read 4 follows the second one.
+    policy = SteppedPolicy(case, on_read={3: change, 4: restore})
+    with pytest.raises(CodingError, match="^input_changed$"):
+        case.decide(policy)
+    assert len(policy.voted) == 1
+
+
+@pytest.mark.parametrize("write", ["trial_answer", "evidence_quote"])
+def test_inconsistent_later_rows_refuse_as_input_changed(two_targets, write):
+    case = two_targets
+
+    def change(policy, view):
+        if write == "trial_answer":
+            for trial in later_rows(case, policy, "trials"):
+                trial.__dict__["answer"] = None
+        else:
+            for reference in later_rows(case, policy, "evidence"):
+                reference.__dict__["quote_id"] = "q-0-1"
+
+    policy = SteppedPolicy(case, on_vote=change)
+    with pytest.raises(CodingError, match="^input_changed$"):
+        case.decide(policy)
+    assert len(policy.voted) == 1
+
+
+@pytest.mark.parametrize(
+    "write", ["source_on_read", "source_on_vote", "later_proposal_on_vote"]
+)
+def test_an_unserializable_change_refuses_as_input_changed(two_targets, write):
+    case = two_targets
+    claim = case.sources.stored_run.claims[0]
+
+    def change_source(*args):
+        claim.__dict__["claim"] = object()
+
+    def change_later_proposal(policy, view):
+        for proposal in case.proposals.proposals:
+            if proposal.target != view.target.target:
+                proposal.__dict__["input_hash"] = object()
+
+    if write == "source_on_read":
+        policy = SteppedPolicy(case, on_read={1: change_source})
+    elif write == "source_on_vote":
+        policy = SteppedPolicy(case, on_vote=change_source)
+    else:
+        policy = SteppedPolicy(case, on_vote=change_later_proposal)
+    with pytest.raises(CodingError, match="^input_changed$") as failure:
+        case.decide(policy)
+    assert failure.value.__cause__ is None
+    assert failure.value.__suppress_context__
+
+
+@pytest.mark.parametrize(
+    ("table", "field"),
+    [
+        ("targets", "claim_hash"),
+        ("outcomes", "status"),
+        ("entailment", "score"),
+        ("trials", "reason"),
+    ],
+)
+def test_an_unserializable_later_support_row_keeps_its_base_code(
+    two_targets, table, field
+):
+    """Base refused an unreadable support row from its content hash, outside the
+    change mapping, so the code stays ``unexpected_error``. Only source and proposal
+    digests map such a value to ``input_changed``."""
+    case = two_targets
+
+    def change(policy, view):
+        for row in later_rows(case, policy, table):
+            row.__dict__[field] = object()
+
+    policy = SteppedPolicy(case, on_vote=change)
+    with pytest.raises(CodingError, match="^unexpected_error$"):
+        case.decide(policy)
+    assert len(policy.voted) == 1
