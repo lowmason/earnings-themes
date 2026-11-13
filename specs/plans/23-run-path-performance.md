@@ -1,6 +1,6 @@
 # Run-Path Performance Implementation Plan
 
-**Status:** IN EXECUTION. Approved by the owner on 2026-11-12 (D23-4). Tasks 1 to 6 were executed and reviewed on 2026-11-13. Task 7 stopped at its step 4 because the projected train `pilot run` was 13.49 h, not under 8 h (D23-5). Plan 24 continues the work (`specs/plans/24-cheaper-key-check.md`).
+**Status:** IN EXECUTION. Approved by the owner on 2026-11-12 (D23-4). Tasks 1 to 6 were executed and reviewed on 2026-11-13. Task 7 stopped at its step 4 because the projected train `pilot run` was 13.49 h, not under 8 h (D23-5). Plan 24 continued the work (`specs/plans/24-cheaper-key-check.md`), and Task 7 is complete through plan 24's Task 4 (2026-11-13): the projected train `pilot run` is 7.19 h (7.29 h with the scaled reverify term), under the 8 h goal, and `docs/verification/pilot-v1-feasibility.md` records it. The owner's root and wording gates and the merge remain.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
