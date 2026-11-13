@@ -8,6 +8,7 @@ Prints sizes, counts and seconds only: one line per phase, then the per-unit cos
 
 Usage (from the worktree root):
   uv run --locked --all-packages python expirements/run-path-performance/realsize.py 20 1850 --themes 22
+  ... --themes 22 --project   # also print the projected train `pilot run` time
 """
 
 import argparse
@@ -36,6 +37,7 @@ from earnings_core import (
     sha256_hex,
 )
 from earnings_themes.anchoring import Bundle
+from earnings_themes.coding.cache import CodingCache
 from earnings_themes.coding.decide import decide_assignments
 from earnings_themes.coding.records import CodingPolicy
 from earnings_themes.extraction.adapters import (
@@ -59,6 +61,23 @@ from earnings_themes.support.records import SupportSources
 from earnings_themes.support.store import reverify_support_run
 
 SENTENCE = "Invented Lumen widgets shipped {i} units in an invented quarter."
+
+# Train's size (D21-34, P21-1) and plan 23 Task 7's projection formula.
+TRAIN_CLAIMS = 1171
+TRAIN_SUPPORT_ENTRIES = 7800
+TRAIN_JUDGE_ENTRIES = 4866
+TRAIN_TARGETS = 1170
+REPLAY_PASSES = 2
+LOAD_SECONDS = 32 * 60  # `load_pass`, measured before plan 23: an upper bound
+# Gate counts over one tiny `make_run`, after plan 23. The first three are pinned
+# by apps/earnings-pipeline/tests/test_pilot_gate_counts.py (sweeps are
+# `_cache_verification` calls, the third is `_reverify_support_run`). The decide
+# count was counted over the same `make_run` helpers by a scratch test that
+# patched every module name bound to `decide_assignments`.
+SWEEPS = 12
+DECIDES = 9
+REVERIFY_CALLS = 25
+REVERIFY_PER_DECIDE = 2  # one `decide_assignments` call reverifies twice (Task 4)
 
 
 def bundle(doc, paragraphs):
@@ -115,6 +134,72 @@ def sources(book, template, docs, paragraphs, every):
     ), count["n"]
 
 
+def project(per_unit, sweeps=SWEEPS, decides=DECIDES):
+    """The plan's terms for one train `pilot run`: (label, seconds) pairs.
+
+    `per_unit` holds the four measured costs, in seconds. The terms are plan 23
+    Task 7's formula: proposal replay and support replay, each over 2 passes; the
+    raw-cache sweeps of the judge entries; the decide calls; and the load.
+    """
+    return [
+        (
+            f"proposal replay: {TRAIN_CLAIMS} claims x {REPLAY_PASSES} passes",
+            TRAIN_CLAIMS * per_unit["proposal replay, per claim"] * REPLAY_PASSES,
+        ),
+        (
+            f"support replay: {TRAIN_SUPPORT_ENTRIES} entries x {REPLAY_PASSES} passes",
+            TRAIN_SUPPORT_ENTRIES
+            * per_unit["support replay, per support entry"]
+            * REPLAY_PASSES,
+        ),
+        (
+            f"raw-cache sweeps: {sweeps} x {TRAIN_JUDGE_ENTRIES} judge entries",
+            sweeps * TRAIN_JUDGE_ENTRIES * per_unit["artifact_hash, per judge entry"],
+        ),
+        (
+            f"decide: {decides} calls x {TRAIN_TARGETS} targets",
+            decides * TRAIN_TARGETS * per_unit["decide_assignments, per target"],
+        ),
+        ("load (measured before plan 23, an upper bound)", LOAD_SECONDS),
+    ]
+
+
+def hours(seconds):
+    return f"{seconds / 3600:7.2f} h"
+
+
+def print_terms(title, terms):
+    print(title)
+    for label, seconds in terms:
+        print(f"  {label:<60} {seconds:11.0f} s {hours(seconds)}")
+    total = sum(seconds for _, seconds in terms)
+    print(f"  {'total':<60} {total:11.0f} s {hours(total)}", flush=True)
+    return total
+
+
+def extra_terms(extra, n, scaled=False):
+    """Costs the plan's formula leaves out, from the same measured run.
+
+    One `decide_assignments` call reverifies the support run twice, and the decide
+    term already prices those calls. So only the other `_reverify_support_run`
+    calls are extra. `n` is the number of targets the one reverify call covered.
+    With `scaled`, each of them is priced as growing linearly with the targets.
+    """
+    own = REVERIFY_CALLS - REVERIFY_PER_DECIDE * DECIDES
+    grow = TRAIN_TARGETS / n if scaled else 1
+    return [
+        (
+            f"classifier-cache sweeps: {SWEEPS} x {TRAIN_CLAIMS} entries",
+            SWEEPS * TRAIN_CLAIMS * extra["classifier artifact_hash, per entry"],
+        ),
+        (
+            f"reverify_support_run outside decide: {own} calls at {n} targets"
+            + (f", x {grow:.1f}" if scaled else ""),
+            own * extra["reverify_support_run, per call"] * grow,
+        ),
+    ]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("docs", type=int, help="documents")
@@ -123,6 +208,11 @@ def main():
         "every", type=int, nargs="?", default=0, help="claim every N windows"
     )
     parser.add_argument("--themes", type=int, default=scaling.DEFAULT_THEMES)
+    parser.add_argument(
+        "--project",
+        action="store_true",
+        help="print the projected train `pilot run` time from the measured costs",
+    )
     args = parser.parse_args()
     docs, paragraphs, every = args.docs, args.paragraphs, args.every
     book = scaling.codebook(args.themes)
@@ -160,6 +250,14 @@ def main():
             f"coding cache: {len(coding_files)} entries, largest "
             f"{max((p.stat().st_size for p in coding_files), default=0) / 1e6:.2f} MB"
         )
+        coding_cache = CodingCache(root / "classifier-cache", "replay")
+        start = time.perf_counter()
+        for path in coding_files:
+            coding_cache.artifact_hash(path.name)
+        extra = {
+            "classifier artifact_hash, per entry": (time.perf_counter() - start)
+            / max(1, len(coding_files))
+        }
         scaling.timed(
             "propose replay",
             n,
@@ -215,9 +313,40 @@ def main():
         per_unit["decide_assignments, per target"] = scaling.ELAPSED[
             "decide (no policy)"
         ] / len(proposals.targets)
+        extra["reverify_support_run, per call"] = scaling.ELAPSED[
+            "reverify_support_run"
+        ]
         print("per-unit costs (floors, in seconds):")
         for name, seconds in per_unit.items():
             print(f"  {name:<36} {seconds:9.3f} s")
+        print("per-unit costs not in the plan's formula (floors, in seconds):")
+        for name, seconds in extra.items():
+            print(f"  {name:<36} {seconds:9.3f} s")
+        if args.project:
+            print()
+            plan = print_terms(
+                f"projected train `pilot run` ({SWEEPS} sweeps, {DECIDES} decides),"
+                " the plan's formula:",
+                project(per_unit),
+            )
+            measured = print_terms(
+                "not in the plan's formula, measured as it is:",
+                extra_terms(extra, n),
+            )
+            scaled = print_terms(
+                "not in the plan's formula, reverify calls scaled to train's targets"
+                " (extrapolated):",
+                extra_terms(extra, n, scaled=True),
+            )
+            print(f"total, the plan's formula {hours(plan)}")
+            print(
+                f"total, plan formula + measured extra terms {hours(plan + measured)}"
+            )
+            print(
+                "total, plan formula + extra terms with scaled reverify "
+                f"{hours(plan + scaled)}",
+                flush=True,
+            )
 
 
 if __name__ == "__main__":

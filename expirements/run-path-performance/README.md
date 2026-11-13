@@ -39,6 +39,14 @@ per-unit costs:
 - `artifact_hash`, per judge entry
 - `decide_assignments`, per target
 
+Add `--project` to print the projected time of one train `pilot run`. It prices
+plan 23 Task 7's terms from these costs: proposal replay and support replay over
+2 passes, the raw-cache sweeps of 4,866 judge entries, the decide calls over 1,170
+targets, and a 32 minute load. The gate counts are constants in the script (12
+sweeps and 9 decides over one tiny `make_run`). It then prints two costs that the
+plan's formula leaves out, with their own totals: the classifier-cache sweeps, and
+the `reverify_support_run` calls that sit outside `decide_assignments`.
+
 `scaling.py` builds small documents and many claims. Its arguments are the
 number of documents, then one or more claim counts per document. It runs once
 for each claim count and times each phase that `pilot run` repeats: replay of
