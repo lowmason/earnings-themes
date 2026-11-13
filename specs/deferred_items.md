@@ -1017,7 +1017,7 @@
 
 ## 9-pilot-codebook-split-and-gold-set-protocol — 2026-10-03
 
-- [ ] Draft, verify, and sign the other 17 train and 8 dev bundles of pilot v1
+- [x] Draft, verify, and sign the other 17 train and 8 dev bundles of pilot v1
       (plan 9, Handoffs). Stage 6's exit needed three; Stage 11 uses all 28.
       Each follows plan 9's Task 19, Steps 1 to 7
       (specs/plans/completed/9-pilot-codebook-split-and-gold-set-protocol.md):
@@ -1030,6 +1030,7 @@
       user's independent pass, with its ledger row committed before drafting, and
       waits for the `--independent --check` item below. Pilot order's #2 and #4
       are dev. Train bundles proceed unchanged.
+      → retired 2026-11-13: 28 gold files in evaluation/djia-2024q3-2026q2/pilot-v1/gold on main; docs/verification/pilot-v1-feasibility.md "O6 gate, 2026-10-31 (D21-26)" records 28 valid and signed under `gold validate`, exit 0, at `66d4e55` (PRs #31, #32); the validate result comes from that record and was not re-run.
 - [x] Harden the gold before the next Task 19 bundle is anchored (plan 9's final
       review: M1, T8-M1, and M5, deferred by the user on 2026-10-03). (1) `_ids`
       in packages/earnings-themes/src/earnings_themes/annotation.py accepts a
@@ -1114,11 +1115,12 @@
       (T11-M1); v0's committed path is. apps/earnings-pipeline/src/earnings_pipeline/codebook_cli.py.
       Size: quick-fix. Done when: it lands with a test, before codebook v1 is
       frozen.
-- [ ] Watch `fail(f"Refused: {error}")`, which prints an error's raw text at
+- [x] Watch `fail(f"Refused: {error}")`, which prints an error's raw text at
       apps/earnings-pipeline/src/earnings_pipeline/stage6.py:178,199 and
       pilot_cli.py:69-70,95-96 (T10-M3). Today its inputs are config and state
       rows, never document text. Size: quick-fix. Revisit if: a stage writes free
       text to the state table or to the pilot's records.
+      → retired 2026-11-13: `e64d955` (2026-10-13) replaced the raw `{error}` prints in stage6.py and pilot_cli.py with `type(error).__name__` or counts; grep of apps/earnings-pipeline/src finds `fail(f"Refused: {error}")` only in events_cli.py and cohort_cli.py, outside the named files.
 
 ## 10-harden-the-gold-before-bundle-4 — 2026-10-03
 
