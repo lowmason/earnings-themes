@@ -157,6 +157,89 @@ def test_empty_bytes_in_a_new_folder_are_synced_before_they_are_linked(
     assert [p.name for p in (tmp_path / "new").iterdir()] == ["empty.json"]
 
 
+def damage_and_rewrite(tmp_path: Path) -> tuple[ArtifactStore, Path]:
+    """Store ``BODY``, change its bytes to ``BODY[:5]``, then put it again a day later."""
+    store = store_in(tmp_path)
+    path = tmp_path / store.put("press", BODY, retrieval(), **RIGHTS).storage_ref
+    path.write_bytes(BODY[:5])
+    store.put("press", BODY, retrieval(when=WHEN + timedelta(days=1)), **RIGHTS)
+    return store, path
+
+
+def test_changed_bytes_are_moved_aside_by_a_rewrite_never_deleted(tmp_path) -> None:
+    store, path = damage_and_rewrite(tmp_path)
+    assert store.get("press", sha256_hex(BODY), **RIGHTS).body == BODY
+    moved = (
+        path.parent / "quarantine" / sha256_hex(BODY) / f"{sha256_hex(BODY[:5])}.html"
+    )
+    assert moved.read_bytes() == BODY[:5]
+    assert store.quarantined == [moved]
+    assert len(store.retrievals("press", sha256_hex(BODY))) == 2
+
+
+def test_bytes_that_are_gone_need_no_quarantine(tmp_path) -> None:
+    store = store_in(tmp_path)
+    path = tmp_path / store.put("press", BODY, retrieval(), **RIGHTS).storage_ref
+    path.unlink()
+    store.put("press", BODY, retrieval(when=WHEN + timedelta(days=1)), **RIGHTS)
+    assert store.quarantined == []
+    assert not (path.parent / "quarantine").exists()
+    assert store.get("press", sha256_hex(BODY), **RIGHTS).body == BODY
+
+
+def test_valid_bytes_are_never_moved_or_replaced(tmp_path) -> None:
+    store = store_in(tmp_path)
+    path = tmp_path / store.put("press", BODY, retrieval(), **RIGHTS).storage_ref
+    inode = path.stat().st_ino
+    store.put("press", BODY, retrieval(when=WHEN + timedelta(days=1)), **RIGHTS)
+    assert path.stat().st_ino == inode
+    assert store.quarantined == []
+
+
+def test_the_same_damage_twice_is_kept_once_and_other_damage_beside_it(
+    tmp_path,
+) -> None:
+    store = store_in(tmp_path)
+    path = tmp_path / store.put("press", BODY, retrieval(), **RIGHTS).storage_ref
+    for day, damage in enumerate([BODY[:5], BODY[:5], BODY[:7]], start=1):
+        path.write_bytes(damage)
+        store.put("press", BODY, retrieval(when=WHEN + timedelta(days=day)), **RIGHTS)
+    folder = path.parent / "quarantine" / sha256_hex(BODY)
+    assert len(list(folder.iterdir())) == 2
+
+
+def test_a_failed_rewrite_after_the_move_loses_nothing(tmp_path, monkeypatch) -> None:
+    store = store_in(tmp_path)
+    path = tmp_path / store.put("press", BODY, retrieval(), **RIGHTS).storage_ref
+    path.write_bytes(BODY[:5])
+    later = retrieval(when=WHEN + timedelta(days=1))
+    calls: list[Path] = []
+
+    def write_new(target: Path, data: bytes) -> None:
+        calls.append(target)
+        raise OSError("disk")
+
+    monkeypatch.setattr("earnings_ingestion.fetch.store.write_new", write_new)
+    with pytest.raises(OSError, match="disk"):
+        store.put("press", BODY, later, **RIGHTS)
+    monkeypatch.undo()
+    assert len(calls) == 1
+    (moved,) = (path.parent / "quarantine" / sha256_hex(BODY)).iterdir()
+    assert moved.read_bytes() == BODY[:5]
+    with pytest.raises(FileNotFoundError, match="bytes are gone"):
+        store.get("press", sha256_hex(BODY), **RIGHTS)
+    store.put("press", BODY, later, **RIGHTS)
+    assert store.get("press", sha256_hex(BODY), **RIGHTS).body == BODY
+
+
+def test_the_quarantine_is_not_read_as_a_saved_response(tmp_path) -> None:
+    store, path = damage_and_rewrite(tmp_path)
+    assert len(store.retrievals("press", sha256_hex(BODY))) == 2
+    assert [p.name for p in path.parent.glob("*.html")] == [path.name]
+    latest = store.latest("press", "https://press.example.org/a", **RIGHTS)
+    assert latest.body == BODY
+
+
 def test_a_retrieval_is_utc_and_records_status_only_for_http() -> None:
     fields = {
         "request_url": "https://www.example.gov/x",
