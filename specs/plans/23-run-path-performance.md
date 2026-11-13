@@ -1,6 +1,6 @@
 # Run-Path Performance Implementation Plan
 
-**Status:** APPROVED (owner, 2026-11-12, D23-4); not yet executed.
+**Status:** IN EXECUTION. Approved by the owner on 2026-11-12 (D23-4). Tasks 1 to 6 were executed and reviewed on 2026-11-13. Task 7 stopped at its step 4 because the projected train `pilot run` was 13.49 h, not under 8 h (D23-5). Plan 24 continues the work (`specs/plans/24-cheaper-key-check.md`).
 
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -39,6 +39,11 @@
 - **D23-2** (owner, brief, 2026-11-12): This is its own plan. D21-34 in plan 21 records the pause in B6 (D21-34, “Own plan + D21-34”). Applied in: header, Task 7.
 - **D23-3** (owner, brief, 2026-11-12): One train-scale pilot replay command finishes within 8 h on the owner's machine (D21-34, “Under 8 h (overnight)”). Live passes are bounded by model time and are outside this budget. Applied in: Goal, Task 7.
 - **D23-4** (owner, plan review, 2026-11-12): “Approve both” — D21-34's text and this plan as written at `1c76e23`. Applied in: header.
+- **D23-5** (owner, execution, 2026-11-13): Task 7's projection was 13.49 h (invented text at real key size, floors): proposal replay 3.45 h, support replay 2.99 h, 12 raw-cache sweeps 5.42 h, 9 decides 1.10 h, load 0.53 h. Task 7's stop rule fired. The owner chose “Plan cheaper key check”, and then “Key check only” as its scope, so the `resolve_target` memo stays out. Applied in: header, Task 7 (steps 3 to 5 move to plan 24).
+- **D23-6** (controller ruling, execution, 2026-11-13, for the owner's review in the PR): Task 3 changed two details of the text. The record-list memo keeps 512 lists, not 16, because a cyclic scan of 44 lists never hits an LRU of 16. `artifact_hash` shares `_check_entry` with `_read_entry` and does not call `_read_entry`, because it has no key until it has parsed the bytes. Applied in: Task 3.
+- **D23-7** (controller ruling, execution, 2026-11-13, for the owner's review in the PR): Task 4 added more than its text names. `decide_assignments` digests the sources, the proposal record, and the rows each vote reads (evidence, entailment, trials, the outcome copy) before external code runs, and compares them before each vote. `reverify_support_run` returns fresh shallow copies of its outcomes on every call. Three review rounds found each hole; the existing mutation tests stay green. Applied in: Task 4.
+- **D23-8** (controller ruling, execution, 2026-11-13, for the owner's review in the PR): Task 5's expected `_checked_bundle` count is 9, not 5. `propose_run` has two fresh post-loop gates, so the final bundle check runs after the identity read, and `classify_claim` ends each claim with a fresh full current-request check. Applied in: Task 5.
+- **D23-9** (controller ruling, execution, 2026-11-13, for the owner's review in the PR): Task 6 has no `raw_caches` memo, because a changed cache file would be published and two refusal codes would change. Each full check ends with a policy-free compare (`_require_unchanged`) and a fresh fallback check. The second raw-cache sweep reuses the first only when the cache objects and the raw bindings are unchanged (option R), so a sweep runs 12 times, not 8. In the workflow block, a policy that changes the caller's `RawSnapshot.data` on its last read now refuses `storage_corrupt` where base refused `input_changed`. A test pins this one difference. Applied in: Task 6.
 
 ---
 
@@ -178,6 +183,8 @@
 - [ ] **Step 5: Commit** `perf: share one verification per analysis gate (plan 23)`.
 
 ### Task 7: Check the budget and record it
+
+> Execution note (2026-11-13): steps 1 and 2 are done (`1b5562f`). Step 2 stopped at 13.49 h, so D23-5 moves steps 3 to 5 to plan 24, Task 4, which measures again after its change.
 
 **Files:**
 - Modify: `expirements/run-path-performance/realsize.py` (projection), `docs/verification/pilot-v1-feasibility.md`, `specs/plans/21-feasibility-pilot-and-threshold-calibration-plan-b.md` (Status line only)
