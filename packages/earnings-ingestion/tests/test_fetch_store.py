@@ -240,6 +240,53 @@ def test_the_quarantine_is_not_read_as_a_saved_response(tmp_path) -> None:
     assert latest.body == BODY
 
 
+def test_quarantine_moves_nothing_absent_or_valid(tmp_path) -> None:
+    store = store_in(tmp_path)
+    assert store.quarantine("press", sha256_hex(BODY), "text/html") is None
+    path = tmp_path / store.put("press", BODY, retrieval(), **RIGHTS).storage_ref
+    assert store.quarantine("press", sha256_hex(BODY), "text/html") is None
+    assert path.read_bytes() == BODY
+    assert not (path.parent / "quarantine").exists()
+    assert store.quarantined == []
+
+
+def test_quarantine_links_the_damaged_file_under_its_own_extension(tmp_path) -> None:
+    store = store_in(tmp_path)
+    body = b"%PDF-1.4\n%%EOF\n"
+    record = retrieval(body).model_copy(
+        update={"media_type": "application/pdf", "content_type": "application/pdf"}
+    )
+    path = tmp_path / store.put("press", body, record, **RIGHTS).storage_ref
+    path.write_bytes(body[:4])
+    inode = path.stat().st_ino
+    moved = store.quarantine("press", sha256_hex(body), "application/pdf")
+    assert moved == (
+        path.parent / "quarantine" / sha256_hex(body) / f"{sha256_hex(body[:4])}.pdf"
+    )
+    assert moved.stat().st_ino == inode
+    assert moved.read_bytes() == body[:4]
+    assert not path.exists()
+    assert store.quarantined == [moved]
+
+
+def test_every_move_is_listed_oldest_first_and_no_kept_copy_is_replaced(
+    tmp_path,
+) -> None:
+    store = store_in(tmp_path)
+    path = tmp_path / store.put("press", BODY, retrieval(), **RIGHTS).storage_ref
+    folder = path.parent / "quarantine" / sha256_hex(BODY)
+    first, other = (folder / f"{sha256_hex(d)}.html" for d in (BODY[:5], BODY[:7]))
+    inodes = []
+    for day, damage in enumerate([BODY[:5], BODY[:5], BODY[:7]], start=1):
+        path.write_bytes(damage)
+        store.put("press", BODY, retrieval(when=WHEN + timedelta(days=day)), **RIGHTS)
+        inodes.append(first.stat().st_ino)
+    assert store.quarantined == [first, first, other]
+    assert inodes[0] == inodes[1] == inodes[2]
+    assert (first.read_bytes(), other.read_bytes()) == (BODY[:5], BODY[:7])
+    assert store_in(tmp_path).quarantined == []
+
+
 def test_a_retrieval_is_utc_and_records_status_only_for_http() -> None:
     fields = {
         "request_url": "https://www.example.gov/x",
