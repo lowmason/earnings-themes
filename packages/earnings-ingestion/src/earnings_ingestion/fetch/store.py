@@ -164,7 +164,10 @@ class ArtifactStore:
 
 def write_new(path: Path, data: bytes) -> None:
     """Write ``data`` to a new file at ``path``, atomically; the same bytes again are
-    a no-op, and other bytes raise ``FileExistsError``."""
+    a no-op, and other bytes raise ``FileExistsError``. The file is synced to disk
+    before it is linked, so a crash cannot leave a linked file with no data. The
+    directory entry is not synced: a lost entry leaves a missing file, not a damaged
+    one."""
     if path.exists():
         if path.read_bytes() == data:
             return
@@ -174,6 +177,8 @@ def write_new(path: Path, data: bytes) -> None:
     try:
         with os.fdopen(handle, "wb") as out:
             out.write(data)
+            out.flush()
+            os.fsync(out.fileno())
         os.link(temporary, path)
     finally:
         os.unlink(temporary)

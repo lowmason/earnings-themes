@@ -1,6 +1,7 @@
 """Saved artifacts: content-addressed, never overwritten, every retrieval kept in a
 checked retrieval record."""
 
+import os
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -100,6 +101,38 @@ def test_a_written_file_is_never_replaced(tmp_path) -> None:
         write_new(path, b"second")
     assert path.read_bytes() == b"first"
     assert [p.name for p in tmp_path.iterdir()] == ["manifest.json"]
+
+
+def test_a_file_is_synced_before_it_is_linked(tmp_path, monkeypatch) -> None:
+    calls: list[str] = []
+    real_fsync, real_link = os.fsync, os.link
+    data = b"x" * 100
+
+    def fsync(fd: int) -> None:
+        # The bytes must have left Python's buffer before the sync, or it syncs nothing.
+        assert os.fstat(fd).st_size == len(data)
+        calls.append("fsync")
+        real_fsync(fd)
+
+    def link(source, destination) -> None:
+        calls.append("link")
+        real_link(source, destination)
+
+    monkeypatch.setattr(os, "fsync", fsync)
+    monkeypatch.setattr(os, "link", link)
+    write_new(tmp_path / "a.json", data)
+    assert calls == ["fsync", "link"]
+    assert (tmp_path / "a.json").read_bytes() == data
+
+
+def test_a_failed_sync_leaves_nothing_at_the_path(tmp_path, monkeypatch) -> None:
+    def fsync(fd: int) -> None:
+        raise OSError("disk")
+
+    monkeypatch.setattr(os, "fsync", fsync)
+    with pytest.raises(OSError, match="disk"):
+        write_new(tmp_path / "a.json", b"x")
+    assert list(tmp_path.iterdir()) == []
 
 
 def test_a_retrieval_is_utc_and_records_status_only_for_http() -> None:
