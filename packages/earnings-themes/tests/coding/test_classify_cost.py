@@ -4,17 +4,20 @@
 checks that input again at each request step. Each `resolve_target` validated the
 whole document anew, so one claim ran it about 74 times. These tests count the
 module-level check body, `_checked_bundle`, over invented sources only (GS13).
-`propose_run` opens a gate for its claims' resolution and two for its final checks,
-and `classify_claim` opens one for each claim. Each gate checks a bundle once.
+`propose_run` opens a gate for its claims' resolution and two for its final checks.
+`classify_claim` opens one for each claim, and a second, fresh one for the claim's
+last check. Each gate checks a bundle once.
 
-The last tests hold that a change made in place to a bundle while the final checks
-run is refused, not published. Those checks are the last before publication, so
-no later gate would catch it (D21-34).
+Two tests hold that a change made in place to a bundle is refused as ``input_changed``,
+the code that every check gave before the memo (D21-34). One is a change made while
+the final checks run, which are the last before publication, so no later gate would
+catch it. The other is a change that stays after a claim other than the last.
 """
 
 from importlib import import_module
 
 import pytest
+from earnings_themes.coding.adapters import ScriptedClassifier
 from earnings_themes.coding.cache import CodingCache
 from earnings_themes.coding.records import CodingError
 from earnings_themes.extraction.adapters import ModelReply
@@ -30,6 +33,7 @@ THREE_CLAIMS = (
     "A second invented equipment claim.",
     "A third invented equipment claim.",
 )
+TWO_CLAIMS = THREE_CLAIMS[:2]
 
 
 def test_each_claim_checks_its_bundle_once(
@@ -54,10 +58,12 @@ def test_each_claim_checks_its_bundle_once(
     assert replay_calls == 0
     assert replay.proposals == live.proposals
     assert len(replay.proposals) == 3
-    # The gate before the loop, one gate for each claim, and two gates after the
-    # loop. The second one opens before the final identity read, so its bundle
-    # check runs after that external code and is not a hit from the first (D21-34).
-    assert len(calls) == 1 + 3 + 2
+    # The gate before the loop, two gates for each claim, and two gates after the
+    # loop. A claim's second gate holds its last check. It opens before the final
+    # identity read, so its bundle check runs after that external code and is not a
+    # hit from the claim's first gate. The last gate before publication is the same
+    # (D21-34). The plan's first count was 5, then 6, and is now 9.
+    assert len(calls) == 1 + 3 * 2 + 2
 
 
 @pytest.mark.parametrize("read", ["identity", "cache"])
@@ -125,4 +131,46 @@ def test_a_bundle_change_during_the_final_checks_is_refused(
     with pytest.raises(CodingError, match="^input_changed$"):
         changed()
     assert classifier.changed
+    assert len(classifier.requests) == 1
+
+
+@pytest.mark.parametrize("memo", ["on", "off"])
+@pytest.mark.parametrize("change", ["text", "element"])
+def test_a_bundle_change_that_stays_is_refused_as_input_changed_after_its_claim(
+    change,
+    memo,
+    coding_case,
+    template,
+    coding_policy,
+    classifier_identity,
+    tmp_path,
+):
+    """Claim 1's reply changes the bundle outside the quoted spans, and the change
+    stays. The run refuses as ``input_changed`` after that one request, with the
+    memo on or off. Without a full check at the end of claim 1, claim 2's first
+    check would refuse it with the resolver's own reason (``malformed_record`` for
+    changed text), which tells a reader that a stored record is malformed."""
+    sources = make_sources(
+        coding_case.codebook, invented_bundle(), template, claim_texts=TWO_CLAIMS
+    )
+    bundle = sources.bundles[0]
+
+    def complete(request):
+        if change == "text":
+            document = bundle.document
+            object.__setattr__(
+                document, "canonical_text", document.canonical_text + " x"
+            )
+        else:
+            element = bundle.elements[0]
+            shorter = element.span.model_copy(update={"end": element.span.end - 1})
+            object.__setattr__(element, "span", shorter)
+        return ModelReply(text=EMPTY, model=classifier_identity.runtime.model_id)
+
+    classifier = ScriptedClassifier(complete, lambda request: 5, classifier_identity)
+    with pytest.MonkeyPatch.context() as patch:
+        if memo == "off":
+            patch.setattr(_resolve, "once", lambda kind, objects, compute: compute())
+        with pytest.raises(CodingError, match="^input_changed$"):
+            run_with(sources, coding_policy, classifier, CodingCache(tmp_path, "live"))
     assert len(classifier.requests) == 1
