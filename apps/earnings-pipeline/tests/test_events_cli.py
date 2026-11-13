@@ -253,13 +253,14 @@ def client(
     status: int = 200,
     moved: str | None = None,
     requested: list[str] | None = None,
-    statuses: dict[str, int] | None = None,
+    statuses: dict[str, list[int]] | None = None,
 ):
     """Replace the CLI's client with the shared client over a serving transport,
     which redirects any URL ending in ``moved``, answers a URL in ``statuses`` with
-    its status and any other with ``status``, and appends each URL it is asked for
-    to ``requested``."""
+    each of its statuses in turn and then with ``status``, as it answers any other,
+    and appends each URL it is asked for to ``requested``."""
     budgets: list[int] = []
+    pending = {url: list(codes) for url, codes in (statuses or {}).items()}
 
     def handle(request: httpx.Request) -> httpx.Response:
         url = str(request.url)
@@ -268,7 +269,11 @@ def client(
         if moved is not None and url.endswith(moved):
             return httpx.Response(301, headers={"Location": f"{request.url}-moved"})
         body, media_type = responses.get(url, (b"", "text/plain"))
-        code = (statuses or {}).get(url, status) if url in responses else 404
+        code = status
+        if pending.get(url):
+            code = pending[url].pop(0)
+        if url not in responses:
+            code = 404
         return httpx.Response(code, content=body, headers={"content-type": media_type})
 
     @contextmanager
@@ -1080,7 +1085,10 @@ def test_refetch_stopped_partway_prints_what_it_saved(
         saved = quarantined
     requested: list[str] = []
     budgets = client(
-        monkeypatch, responses, requested=requested, statuses={EASTFIELD_PAGE: 403}
+        monkeypatch,
+        responses,
+        requested=requested,
+        statuses={EASTFIELD_PAGE: [403, 403]},
     )
     result = run(
         repo,
@@ -1115,7 +1123,10 @@ def test_refetch_stopped_at_its_first_url_prints_nothing_saved(
     truncate(repo, EASTFIELD_MAIN)
     requested: list[str] = []
     budgets = client(
-        monkeypatch, served(), requested=requested, statuses={EASTFIELD_MAIN: 403}
+        monkeypatch,
+        served(),
+        requested=requested,
+        statuses={EASTFIELD_MAIN: [403, 403]},
     )
     result = run(
         repo,
@@ -1151,4 +1162,114 @@ def test_refetch_prints_its_count_on_an_unforeseen_error(
         repo, "discover", "--refetch", INDEX, "--max-requests", "1", store=EVENTS_STORE
     )
     assert isinstance(result.exception, LookupError)
+    assert result.stdout.splitlines()[-1] == RERUN.format(1)
+
+
+def test_refetch_names_every_url_it_refuses(repo, moved, monkeypatch) -> None:
+    usable = submissions_url("0009990001")
+    budgets = client(monkeypatch, served())
+    result = run(
+        repo,
+        "discover",
+        "--refetch",
+        usable,
+        "--refetch",
+        UNSAVED_PAGE,
+        "--max-requests",
+        "5",
+        store=EVENTS_STORE,
+    )
+    assert result.exit_code == 1
+    assert budgets == []
+    assert result.stdout == ""
+    first, second = result.stderr.splitlines()
+    assert first.startswith(f"Refused: {usable} is not among the responses")
+    assert second.startswith(f"nothing saved from {UNSAVED_PAGE}: ")
+
+
+def test_refetch_counts_a_retry_against_its_cap(repo, moved, monkeypatch) -> None:
+    """One 403, then the page: the retry fits the approved cap, above the stated
+    count, and the count sent is not the count refetched."""
+    quarantined = truncate(repo, INDEX)
+    requested: list[str] = []
+    budgets = client(
+        monkeypatch, served(), requested=requested, statuses={INDEX: [403]}
+    )
+    result = run(
+        repo, "discover", "--refetch", INDEX, "--max-requests", "2", store=EVENTS_STORE
+    )
+    assert result.exit_code == 0, result.output
+    assert budgets == [2]
+    assert requested == [INDEX, INDEX]
+    assert result.stdout.splitlines() == [
+        REFETCH.format(1),
+        f"  {INDEX}",
+        "refetched 1; requests sent: 2",
+        quarantined,
+    ]
+
+
+def test_refetch_stopped_partway_prints_each_move_and_then_each_change(
+    repo, moved, monkeypatch
+) -> None:
+    """Eastfield's main file comes back as it was saved, so its cut file is moved
+    aside, and its older page comes back other; Acme's index page then meets a
+    persistent 403."""
+    quarantined = truncate(repo, EASTFIELD_MAIN)
+    truncate(repo, INDEX)
+    budgets = client(
+        monkeypatch,
+        {**served(), **other_bytes(EASTFIELD_PAGE)},
+        statuses={INDEX: [403, 403]},
+    )
+    result = run(
+        repo,
+        "discover",
+        "--refetch",
+        EASTFIELD_MAIN,
+        "--refetch",
+        INDEX,
+        "--max-requests",
+        "4",
+        store=EVENTS_STORE,
+    )
+    assert result.exit_code == 1
+    assert budgets == [4]
+    assert result.stdout.splitlines()[4:] == [
+        quarantined,
+        changed(EASTFIELD_PAGE),
+        RERUN.format(4),
+    ]
+    assert result.stderr.startswith(f"Stopped: 403 persisted for {INDEX}; ")
+
+
+def full_disk(*args, **kwargs):
+    raise OSError(28, "No space left on device")
+
+
+def ctrl_c(*args, **kwargs):
+    raise KeyboardInterrupt
+
+
+def test_refetch_prints_its_count_when_saving_fails(repo, moved, monkeypatch) -> None:
+    """A stop that is not a 403 is stopped as discover stops it, with its count."""
+    truncate(repo, INDEX)
+    client(monkeypatch, served())
+    monkeypatch.setattr(ArtifactStore, "put", full_disk)
+    result = run(
+        repo, "discover", "--refetch", INDEX, "--max-requests", "1", store=EVENTS_STORE
+    )
+    assert result.exit_code == 1
+    assert result.stdout.splitlines()[-1] == RERUN.format(1)
+    assert result.stderr == "Stopped: [Errno 28] No space left on device\n"
+
+
+def test_refetch_prints_its_count_on_ctrl_c(repo, moved, monkeypatch) -> None:
+    truncate(repo, INDEX)
+    client(monkeypatch, served())
+    monkeypatch.setattr(ArtifactStore, "put", ctrl_c)
+    result = run(
+        repo, "discover", "--refetch", INDEX, "--max-requests", "1", store=EVENTS_STORE
+    )
+    assert result.exit_code == 130
     assert result.stdout.splitlines()[-1] == RERUN.format(1)
