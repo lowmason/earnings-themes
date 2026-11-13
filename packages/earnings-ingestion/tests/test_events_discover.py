@@ -8,7 +8,7 @@ request exactly the responses the build reads, each once, and never an exhibit.
 import json
 import re
 import shutil
-from dataclasses import replace
+from dataclasses import FrozenInstanceError, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -29,7 +29,12 @@ from earnings_ingestion.events.build import (
     citations_refused,
     load_overrides,
 )
-from earnings_ingestion.events.discover import discover, discover_filing, read_back
+from earnings_ingestion.events.discover import (
+    ReadBack,
+    discover,
+    discover_filing,
+    read_back,
+)
 from earnings_ingestion.events.evidence import check_evidence
 from earnings_ingestion.events.filings import issuer_filings
 from earnings_ingestion.events.fixture import (
@@ -52,6 +57,7 @@ from earnings_ingestion.events.layer import (
     filings,
 )
 from earnings_ingestion.events.recover import (
+    Refetched,
     RefetchPlan,
     expected_types,
     plan_refetch,
@@ -1336,3 +1342,13 @@ def test_a_refetch_runs_no_discovery_phase(universe, layer, tmp_path) -> None:
     assert recorder.requested == [url]
     assert missing not in SavedResponses(store)
     assert (result.fetched, result.problems) == ((url,), ())
+
+
+@pytest.mark.parametrize(
+    "record",
+    [ReadBack((), ()), RefetchPlan(()), Refetched((), (), (), ())],
+    ids=["ReadBack", "RefetchPlan", "Refetched"],
+)
+def test_a_read_back_and_a_refetch_are_frozen(record) -> None:
+    with pytest.raises(FrozenInstanceError):
+        record.problems = ("added",)
