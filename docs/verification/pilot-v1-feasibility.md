@@ -1457,3 +1457,118 @@ Not done:
   traced, and no test builds a report from a `no_candidate` artifact.
 - The agent did not run the Stage 6 wording gate, which reads
   `calibration-v1.json`, or the default suite for this record.
+
+## Plans 23 and 24 run-path performance, 2026-11-13 (D21-34)
+
+D21-34 paused B6 because the train `pilot run` could not finish. Its goal is one
+train-scale command in under 8 h. Plan 23 and plan 24 change the run path to meet
+that goal. This section records their measured effect. All figures come from
+invented text of real key size (20 documents of 1,850 paragraphs, 22 themes). The
+agent read no pilot text and nothing under `data/`. The figures are floors: each is
+the best of its runs. No stored record, hash, cache-key text, cache-key digest or
+cache entry changes. Plan 23's known-answer test pins one key digest, and plan 24's
+oracle pins the key check on 187 labelled materials.
+
+### What changed
+
+- Plan 23 (D23-1 to D23-9): each consuming gate shares one memo for its unchanged
+  inputs. Every gate that a spec names still checks its inputs in full. The checks
+  that repeated inside one gate now run once, and a change made in place during the
+  gate is caught when the gate ends.
+- Plan 24 (D24-1 to D24-6): a cache key's text is 12 to 13 MB, and 99.7% of it is
+  three values that repeat in every key of one source. Each is now checked once per
+  SHA-256 of its text, and only the small rest of the key is parsed. This path only
+  accepts. When anything is in doubt, the old code runs and gives the old answer.
+
+### Projected train `pilot run`
+
+The harness is `expirements/run-path-performance/realsize.py 20 1850 --themes 22
+--project`. It measures each unit cost on a 21-claim source and applies the plan's
+formula for train: 1,171 claims, about 7,800 support entries, 12 raw-cache sweeps
+and 9 decides. The "before" column applies the same formula to the unit costs that
+plan 23's Task 1 measured. It is derived, not measured as one run.
+
+| Unit cost | Before plan 23 | After plan 23 | After plan 24 |
+| --- | --- | --- | --- |
+| Proposal replay, per claim | 28.118 s | 5.308 s | 5.464 s |
+| Support replay, per entry | 3.105 s | 0.690 s | 0.253 s |
+| `artifact_hash`, per judge entry | 1.453 s | 0.334 s | 0.053 s |
+| `decide_assignments`, per target | 20.267 s | 0.375 s | 0.392 s |
+
+| Phase | Before plan 23 | After plan 23 | After plan 24 |
+| --- | --- | --- | --- |
+| Proposal replay (1,171 claims, 2 passes) | 18.29 h | 3.45 h | 3.55 h |
+| Support replay (7,800 entries, 2 passes) | 13.46 h | 2.99 h | 1.10 h |
+| Raw-cache sweeps (12 x 4,866 judge entries) | 23.57 h | 5.42 h | 0.85 h |
+| Decides (9 calls x 1,170 targets) | 59.28 h | 1.10 h | 1.15 h |
+| Load (measured before plan 23, an upper bound) | 0.53 h | 0.53 h | 0.53 h |
+| Total | 115.13 h | 13.49 h | 7.19 h |
+
+With the `reverify_support_run` calls scaled to train's targets, plan 24's total is
+7.29 h. The classifier-cache sweeps add under 0.01 h. The margin under the 8 h goal
+is about 0.7 h. Proposal replay is the largest term left, and plan 24 does not change
+it (D24-2). Plan 23's gate counts over one tiny `make_run` are: 6 full checks, 12
+raw-cache sweeps, 9 `_proposal_support_inputs`, 25 `_reverify_support_run` and 9
+`decide_assignments`. Plan 23 aimed at 8 sweeps and reached 12 (D23-9).
+
+### Key-path figures
+
+The harness is `expirements/run-path-performance/keypath.py 20 1850 --themes 22`,
+and again with `--every 1`, which makes 620 claims and a larger rest. Times are in
+milliseconds, for one key and one judge entry.
+
+| Phase | Before (21 / 620 claims) | After (21 / 620 claims) |
+| --- | --- | --- |
+| Key build, `scorer_key` on fresh text | 391.1 / 410.4 | 118.8 / 126.2 |
+| `SupportCacheKey(material)` | 160.9 / 169.4 | 12.5 / 13.2 |
+| `_binding_once` on fresh text | 134.3 / 140.0 | 12.7 / 13.3 |
+| `_material_kind` on fresh text | 29.4 / 32.1 | 8.5 / 8.8 |
+| `artifact_hash` on fresh text (a real sweep) | 343.4 / 360.6 | 51.0 / 53.7 |
+| `artifact_hash` with warm text memos | 177.3 / 187.7 | 30.2 / 31.9 |
+| Entry parse | 10.5 / 10.8 | 10.1 / 10.7 |
+
+After the change, the 620-claim figures stay within 8 ms of the 21-claim figures
+(the key build differs most, by 7.4 ms). The larger rest does not hide a cost that
+grows with the claim count.
+
+### Evidence that the key check is exact
+
+- Task 1 of plan 24 froze the old key check in an oracle and built a corpus of 187
+  labelled materials. It holds the real scorer and judge keys and mutations such as
+  a changed byte in each big value, a nested key named like a marker, and an extra,
+  dropped or duplicate key inside each part. Every later change must give the
+  oracle's outcome on each label, with cold and warm memos.
+- Differential fuzz against the oracle found no difference. The controller's runs
+  after the last change to the split used about 34,000 inputs for the key
+  constructor and about 23,500 for the binding and the kind read, with an
+  eight-thread pass. A deliberately weakened check was caught.
+- Opus reviews found one issue in Task 2 and none in Task 3. In Task 2, a nested key
+  named like a marker could take the split (fixed, D24-5). For Task 3 the reviewer
+  broke 17 parts of the fast path on purpose, and the tests caught every one.
+- Two existing cost tests clear one memo in the middle of a test. A test-only
+  fixture makes that clear also empty the new memo. No existing test is edited
+  (D24-6).
+
+### Tests run
+
+At `f038233`, with a clean tree, the agent ran `uv run --locked --all-packages pytest
+packages apps tests/contracts -m "not live and not browser" -q --tb=short`. The result
+was 5,643 passed, 3 skipped and 17 deselected, in 6 min 54 s. `ruff check .` and
+`ruff format --check .` were clean. No existing test is edited.
+
+The owner then ran the gates in the main checkout, detached at `5804663`, on
+2026-11-13. `pytest -q` (the root suite) gave 5,810 passed, 3 skipped and 28
+deselected, with 1 warning, in 8 min 10 s. The warning is torch's `FutureWarning` in
+`test_nli.py`. `pytest tests/integration/test_stage6_wording.py -q` gave 7 passed.
+
+### What this section does not show
+
+- The real train support cache (7,792 entries, about 107 GB) was not replayed here.
+  The agent has no access to it. The key format is unchanged. B6's restart is the
+  real check. `bind_policy` recomputes B5's configuration hash, so a changed record
+  shape refuses before anything is written.
+- These are floors on invented text. A real run can differ. Proposal replay (3.55 h)
+  and the load (0.53 h, measured before plan 23) are the least certain terms.
+- The agent did not run the root suite, the Stage 6 wording gate, the browser modes
+  or any live test. The owner ran the root suite and the wording gate, as "Tests
+  run" records.

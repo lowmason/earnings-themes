@@ -30,6 +30,7 @@ from earnings_themes.coding.records import CodingRun, PolicyReference
 from earnings_themes.coding.store import reverify_coding_run
 from earnings_themes.extraction import validate_stored_run
 from earnings_themes.extraction.store import StoredRun, refused_quotes
+from earnings_themes.scope import gate, gated, once, remember
 from earnings_themes.support.cache import SupportCache
 from earnings_themes.support.records import FileHash, StoredSupportRun, SupportSources
 from earnings_themes.support.store import reverify_support_run
@@ -412,6 +413,25 @@ def verify_original_links_and_masks(
         _require(all((claim.doc_id, q) in quotes for q in claim.quote_ids))
 
 
+def _raw_reads(inputs):
+    """What a sweep reads: each stage's cache object and its raw-file bindings."""
+    return tuple(
+        (
+            stage,
+            cache,
+            tuple(
+                (name[4:], h)
+                for name, h in run.record.artifact_hashes
+                if name.startswith("raw/")
+            ),
+        )
+        for stage, cache, run in (
+            ("classifier", inputs.raw_caches.coding, inputs.coding),
+            ("judge", inputs.raw_caches.support, inputs.support),
+        )
+    )
+
+
 def _cache_verification(inputs):
     statuses = [
         RawCacheVerification(
@@ -422,26 +442,7 @@ def _cache_verification(inputs):
             version="1",
         )
     ]
-    for stage, cache, bindings in (
-        (
-            "classifier",
-            inputs.raw_caches.coding,
-            tuple(
-                (name[4:], h)
-                for name, h in inputs.coding.record.artifact_hashes
-                if name.startswith("raw/")
-            ),
-        ),
-        (
-            "judge",
-            inputs.raw_caches.support,
-            tuple(
-                (name[4:], h)
-                for name, h in inputs.support.record.artifact_hashes
-                if name.startswith("raw/")
-            ),
-        ),
-    ):
+    for stage, cache, bindings in _raw_reads(inputs):
         checked = {}
         if cache is not None:
             try:
@@ -476,6 +477,24 @@ def _cache_verification(inputs):
         )
     )
     return tuple(sorted(statuses, key=lambda s: s.stage))
+
+
+def _second_sweep(current, reads, first):
+    """The sweep after the policy's votes: the first sweep's result, when it would
+    read the same cache objects for the same raw bindings (plan 23, Task 6).
+
+    The cache objects are compared by identity and the bindings by value, against
+    ``reads``, which was taken just before the first sweep. Otherwise the sweep runs
+    in full. The full check's last sweep reads every file again after the policy's
+    last read, so a change to the bytes that stays is still refused.
+    """
+    unchanged = all(
+        cache is first_cache and bindings == first_bindings
+        for (_, cache, bindings), (_, first_cache, first_bindings) in zip(
+            _raw_reads(current), reads, strict=True
+        )
+    )
+    return first if unchanged else _cache_verification(current)
 
 
 def _binding_material(inputs):
@@ -529,13 +548,79 @@ def bind_checked_analysis(
     )
 
 
+@gated
 def reverify_analysis_inputs(inputs: AnalysisInputs) -> BoundAnalysis:
-    """Fail closed before analysis, and repeat all bindings after policy callbacks."""
+    """Fail closed before analysis, and repeat all bindings after policy callbacks.
+
+    One gate checks the same input once (plan 23, D23-1). A later call in the gate,
+    with the same input or with the checked copy that the result holds, returns the
+    first result. The full check ends with a compare that runs no external code, so
+    a change that a policy callback makes on its last read is refused there.
+    """
+    bound = once("analysis", (inputs,), lambda: _checked_to_the_end(inputs))
+    remember("analysis", (bound.inputs,), bound)
+    return bound
+
+
+def _checked_to_the_end(inputs: AnalysisInputs) -> BoundAnalysis:
+    bound = _reverify_analysis_inputs(inputs)
+    _require_unchanged(inputs, bound)
+    return bound
+
+
+# A full check keeps these by identity; it replaces ``raw_verification``.
+_NOT_COPIED = frozenset({"assignment_policy", "raw_caches", "raw_verification"})
+
+
+def _require_unchanged(inputs: AnalysisInputs, bound: BoundAnalysis) -> None:
+    """Refuse a change to the caller's inputs since the full check copied them.
+
+    The full check reads the policy's ``reference`` after its last copy of the
+    caller's inputs. Base checked the inputs again later in the same gate, and a
+    gate now reuses its first check (D23-1). So copy them once more here and compare
+    the copy with the checked one, with no external code. On a change, a fresh full
+    check runs now and gives the refusal. That check also reads the policy after
+    its last copy, so its own result is compared once more, and any change then
+    refuses ``input_changed``, with no further check. The raw-cache bytes are not
+    part of the copy: the full check's last sweep reads them after the policy's
+    last read.
+    """
+    if _unchanged_since(inputs, bound.inputs):
+        return
+    with gate(fresh=True):
+        again = _reverify_analysis_inputs(inputs)
+    _require(again.binding_hash == bound.binding_hash)
+    _require(_unchanged_since(inputs, again.inputs))
+
+
+def _unchanged_since(inputs: AnalysisInputs, checked: AnalysisInputs) -> bool:
+    """Whether a new copy of the caller's inputs equals ``checked``. It runs no
+    external code."""
+    try:
+        final = strict_analysis_inputs(inputs)
+        return (
+            final.assignment_policy is checked.assignment_policy
+            and final.raw_caches is checked.raw_caches
+            and all(
+                getattr(final, field.name) == getattr(checked, field.name)
+                for field in fields(AnalysisInputs)
+                if field.name not in _NOT_COPIED
+            )
+        )
+    except AnalysisError:
+        raise
+    except Exception:  # noqa: BLE001 - suppress arbitrary model/policy/source errors
+        raise AnalysisError("input_changed") from None
+
+
+def _reverify_analysis_inputs(inputs: AnalysisInputs) -> BoundAnalysis:
+    """``reverify_analysis_inputs``'s full check of one input."""
     try:
         checked = strict_analysis_inputs(inputs)
         extraction = checked.sources.stored_run
         verify_current_inventory(checked, extraction)
         verify_original_links_and_masks(checked, extraction)
+        reads = _raw_reads(checked)
         checked = replace(checked, raw_verification=_cache_verification(checked))
         before = digest(_binding_material(checked))
         reverify_support_run(checked.support, checked.sources)
@@ -547,7 +632,10 @@ def reverify_analysis_inputs(inputs: AnalysisInputs) -> BoundAnalysis:
         current = strict_analysis_inputs(inputs)
         verify_current_inventory(current, current.sources.stored_run)
         verify_original_links_and_masks(current, current.sources.stored_run)
-        current = replace(current, raw_verification=_cache_verification(current))
+        current = replace(
+            current,
+            raw_verification=_second_sweep(current, reads, checked.raw_verification),
+        )
         _require(digest(_binding_material(current)) == before)
         verify_current_inventory(checked, extraction)
         verify_original_links_and_masks(checked, extraction)

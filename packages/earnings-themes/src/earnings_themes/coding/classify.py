@@ -30,6 +30,7 @@ from earnings_themes.coding.records import (
 )
 from earnings_themes.extraction.adapters import Message, ModelReply, Usage
 from earnings_themes.extraction.records import CacheMode
+from earnings_themes.scope import gate, gated
 from earnings_themes.support.records import JudgeIdentity
 
 _RETRYABLE = frozenset(
@@ -394,6 +395,7 @@ def _verify_attempts(
             )
 
 
+@gated
 def classify_claim(
     input: CodingInput,
     classifier: Classifier,
@@ -402,7 +404,11 @@ def classify_claim(
     *,
     cache: CodingCache,
 ) -> ClassificationResult:
-    """At most two unusable-reply attempts; an explicit valid empty reply is final."""
+    """At most two unusable-reply attempts; an explicit valid empty reply is final.
+
+    One gate checks each source bundle once for this claim's inputs, prompt
+    rendering and attempts (plan 23, D23-1).
+    """
     try:
         reverify_coding_input(input)
         if type(allowance) is not CodingAllowance or type(cache) is not CodingCache:
@@ -496,9 +502,15 @@ def classify_claim(
             input, classifier, policy, request, identity, policy_hash, feedback
         )
         _verify_attempts(input, policy, identity, tuple(attempts), cache)
-        _require_current_request(
-            input, classifier, policy, request, identity, policy_hash, feedback
-        )
+        # The claim's last check opens its own fresh scope, so its bundle check runs
+        # after the identity read inside it and is not a hit from this claim's gate.
+        # A change that stays is then refused here as ``input_changed``, not by the
+        # next claim's first check. No external code runs after that bundle check
+        # (D21-34).
+        with gate(fresh=True):
+            _require_current_request(
+                input, classifier, policy, request, identity, policy_hash, feedback
+            )
         return ClassificationResult(
             record, tuple(attempts), proposals, attribute, novelty
         )

@@ -6,6 +6,7 @@ import polars as pl
 from earnings_core import digest
 
 from earnings_themes.codebook import Codebook, codebook_hash
+from earnings_themes.scope import gated
 from earnings_themes.support.records import CodebookReference
 
 from .completion import document_completions
@@ -289,6 +290,7 @@ def prevalence(
         raise AnalysisError("input_changed") from None
 
 
+@gated
 def build_analysis(
     inputs: AnalysisInputs, policy: AnalysisPolicy, families: ThemeFamilyMap | None
 ) -> AnalysisRun:

@@ -1690,3 +1690,42 @@
       15's plan has decided the key's form, and a test shows that an entry's size
       does not depend on the number of documents in the run. Otherwise, the plan
       records why it splits the run instead, with the measured disk need.
+
+## 23-run-path-performance — 2026-11-13
+- [ ] Decide whether `write_theme_report`'s two read-backs may share one scope (plan 23,
+      option J, final review). Plan 23 reached 12 raw-cache sweeps over one pilot run, not
+      the planned 8 (D23-9). Merging the two read-backs in `write_theme_report` into one
+      scope would remove 4 sweeps. The controller refused it, because it turns two
+      spec-named read-back gates into memo hits. After plan 24 one sweep over 4,866 judge
+      entries costs about 4.3 min (3,076 s for 12 sweeps), so removing 4 saves about 0.3 h
+      of the 7.19 h projection
+      (`docs/verification/pilot-v1-feasibility.md`, "Plans 23 and 24 run-path
+      performance"). See `specs/plans/completed/23-run-path-performance.md` (D23-9) and
+      `packages/earnings-themes/src/earnings_themes/analysis/consume.py`. Size: design.
+      Done when: the owner rules whether those two read-back gates may share one scope,
+      and either the exact-count test in `apps/earnings-pipeline/tests/test_pilot_gate_counts.py`
+      shows 8 sweeps or the plan records that 12 stays.
+- [ ] Harden decide's memo against a policy that plants values under its private kind
+      string (plan 23, ruling N1, final review). A policy that calls
+      `scope.once("proposal_inputs", ...)` with decide's private kind string can change and
+      restore the memo's dict, so a missing-assessment row gets a wrong `target_id` with no
+      refusal. The ruling put this outside the threat model: it needs a policy that knows
+      the private string and calls the scope module directly. The cheap fix: snapshot each
+      missing key's `target_id` string at the start of `decide_assignments`
+      (`packages/earnings-themes/src/earnings_themes/coding/decide.py`) and read the
+      snapshot at the row. Size: quick-fix. Done when: a test with such a policy shows the
+      row's `target_id` equals the value at the start of the call.
+
+## 24-cheaper-key-check — 2026-11-13
+- [ ] Cut the proposal replay cost (plan 24, D24-2, final review). Proposal replay is the
+      largest term left in the train `pilot run` projection: 3.55 h of 7.19 h, with about
+      800 `resolve_target` calls per claim (18 `reverify_coding_input` calls x 22 themes),
+      5.46 s per claim at real key size. The owner kept it out of plan 24 and chose to
+      stop at the key check. The margin under the 8 h goal is about 0.7 h, and the figure
+      is a floor on invented text. Source: `docs/verification/pilot-v1-feasibility.md`,
+      "Plans 23 and 24 run-path performance". Size: plan. Revisit if: the first real B6
+      train `pilot run` takes more than 7 h, or Stage 15's plan needs a run of more than
+      40 events (about 239 eligible events). Done when: a plan memoizes or batches
+      those calls, `resolve_target`'s counts per claim are pinned by a test, and a new
+      projection shows the proposal replay term lower, with every record and hash
+      unchanged.

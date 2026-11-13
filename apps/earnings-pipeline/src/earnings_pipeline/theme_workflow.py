@@ -74,6 +74,7 @@ from earnings_themes.extraction.prompt import PromptTemplate, parse_template
 from earnings_themes.extraction.run import extract_run
 from earnings_themes.extraction.store import SCHEMAS as EXTRACTION_SCHEMAS
 from earnings_themes.extraction.store import StoredRun, read_run, write_run
+from earnings_themes.scope import gate
 from earnings_themes.support import (
     assess_run,
     read_support_run,
@@ -1174,65 +1175,80 @@ def run_theme_workflow(
                 if config.scope == "fixture"
                 else None,
             )
-            bound = reverify_analysis_inputs(inputs)
-            completions = document_completions(bound)
-            if terminals:
-                by_doc = {c.doc_id: c for c in completions}
-                for current in terminals.values():
-                    completion = by_doc[current.doc_id]
+            # One consuming gate checks the inputs once, and its later steps reuse that
+            # check (plan 23, D23-1). Publication below opens fresh gates of its own.
+            # The capture renderer is the only external code after the first check
+            # here. The next gate's fresh first check (write_analysis_run, or
+            # reverify_analysis_run for a stored run) sees a change that it makes,
+            # before any write.
+            with gate():
+                bound = reverify_analysis_inputs(inputs)
+                completions = document_completions(bound)
+                if terminals:
+                    by_doc = {c.doc_id: c for c in completions}
+                    for current in terminals.values():
+                        completion = by_doc[current.doc_id]
+                        _require(
+                            current.completion_hash
+                            == digest(completion.model_dump(mode="json"))
+                            and current.to_state.value == completion.processing_state,
+                            "state_not_processable",
+                        )
+                        wanted = _transition(
+                            config,
+                            baseline[current.document_id],
+                            completion,
+                            existing.manifest_hash,
+                            current.recorded_at,
+                            current.sequence,
+                        )
+                        _require(
+                            current.missing_reason == wanted.missing_reason
+                            and current.processing_reason == wanted.processing_reason,
+                            "state_not_processable",
+                        )
+                views = tuple(
+                    make_evidence_view(
+                        bound,
+                        q.span.doc_id,
+                        q.quote_id,
+                        audience=config.audience,
+                        raw_snapshot=next(
+                            (s for s in raw if s.doc_id == q.span.doc_id), None
+                        ),
+                    )
+                    for q in extraction.quotes
+                )
+                if config.capture and runtime.renderer is not None:
+                    from dataclasses import asdict
+
+                    from earnings_ingestion.browser.policy import ISOLATED_1
+
+                    from earnings_pipeline.browser_evidence import (
+                        capture_evidence_view,
+                    )
+
+                    policy_fields = asdict(ISOLATED_1)
+                    policy_fields["required_resource_types"] = sorted(
+                        ISOLATED_1.required_resource_types
+                    )
                     _require(
-                        current.completion_hash
-                        == digest(completion.model_dump(mode="json"))
-                        and current.to_state.value == completion.processing_state,
-                        "state_not_processable",
+                        config.capture_policy
+                        == json.loads(canonical_json(policy_fields))
                     )
-                    wanted = _transition(
-                        config,
-                        baseline[current.document_id],
-                        completion,
-                        existing.manifest_hash,
-                        current.recorded_at,
-                        current.sequence,
-                    )
-                    _require(
-                        current.missing_reason == wanted.missing_reason
-                        and current.processing_reason == wanted.processing_reason,
-                        "state_not_processable",
-                    )
-            views = tuple(
-                make_evidence_view(
-                    bound,
-                    q.span.doc_id,
-                    q.quote_id,
-                    audience=config.audience,
-                    raw_snapshot=next(
-                        (s for s in raw if s.doc_id == q.span.doc_id), None
-                    ),
+                    read_selected(config, config.installed_binary_reference)
+                    for view in views:
+                        if view.reference.status != "withheld":
+                            capture_evidence_view(view, runtime.renderer, ISOLATED_1)
+                analysis = (
+                    build_analysis(inputs, config.analysis_policy, config.families)
+                    if existing is None
+                    else None
                 )
-                for q in extraction.quotes
-            )
-            if config.capture and runtime.renderer is not None:
-                from dataclasses import asdict
-
-                from earnings_ingestion.browser.policy import ISOLATED_1
-
-                from earnings_pipeline.browser_evidence import capture_evidence_view
-
-                policy_fields = asdict(ISOLATED_1)
-                policy_fields["required_resource_types"] = sorted(
-                    ISOLATED_1.required_resource_types
-                )
-                _require(
-                    config.capture_policy == json.loads(canonical_json(policy_fields))
-                )
-                read_selected(config, config.installed_binary_reference)
-                for view in views:
-                    if view.reference.status != "withheld":
-                        capture_evidence_view(view, runtime.renderer, ISOLATED_1)
             if existing is None:
                 write_analysis_run(
                     analysis_dir,
-                    build_analysis(inputs, config.analysis_policy, config.families),
+                    analysis,
                     inputs,
                     config.analysis_policy,
                     config.families,

@@ -20,6 +20,7 @@ from earnings_themes.analysis.records import AnalysisPart
 from earnings_themes.analysis.store import new_run_directory
 from earnings_themes.coding.records import PolicyReference
 from earnings_themes.records import NonBlank, Sha256Hex
+from earnings_themes.scope import gated
 from earnings_themes.support.records import CodebookReference
 from pydantic import AwareDatetime, model_validator
 
@@ -427,6 +428,7 @@ def _render(stored, bound, views, audience, limits):
     return "".join(parts).encode("utf-8")
 
 
+@gated(fresh=True)
 def write_theme_report(
     directory: Path,
     stored: StoredAnalysisRun,

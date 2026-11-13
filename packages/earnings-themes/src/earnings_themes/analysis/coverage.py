@@ -3,6 +3,8 @@
 import polars as pl
 from earnings_core import digest
 
+from earnings_themes.scope import gated
+
 from .completion import checked_bound, document_completions
 from .problems import AnalysisError
 from .records import (
@@ -139,6 +141,7 @@ def _release(
     )
 
 
+@gated
 def build_coverage(
     bound: BoundAnalysis, completions: tuple[DocumentCompletion, ...]
 ) -> pl.DataFrame:
