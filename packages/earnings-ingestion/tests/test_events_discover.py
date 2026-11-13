@@ -1306,3 +1306,33 @@ def test_read_back_passes_over_a_missing_companyfacts_file(
     )
     read = read_back(universe, SavedResponses(store))
     assert (read.unusable, read.problems) == ((), ())
+
+
+def test_read_back_names_a_companyfacts_file_beside_an_unusable_submissions_file(
+    universe, layer, tmp_path
+) -> None:
+    """Both are named at once, so one refetch can replace both."""
+    store = populated(universe, layer, tmp_path)
+    facts = companyfacts_url(ACME.cik)
+    stored_at(store, facts).write_bytes(b"{}")
+    _, submissions, _ = bytes_gone(store, layer)
+    read = read_back(universe, SavedResponses(store))
+    assert read.unusable == (submissions, facts)
+    first, second = read.problems
+    assert first.endswith(refetch_remedy(submissions))
+    assert second.endswith(refetch_remedy(facts))
+
+
+def test_a_refetch_runs_no_discovery_phase(universe, layer, tmp_path) -> None:
+    """Dynamo's companyfacts file is missing, which a discovery phase would fetch."""
+    store = populated(universe, layer, tmp_path)
+    missing = companyfacts_url(DYNAMO.cik)
+    sha = SavedResponses(store).get(missing).artifact.content_sha256
+    shutil.rmtree(store.root / SEC_SOURCE_ID / "retrievals" / sha)
+    assert missing not in SavedResponses(store)
+    _, url, _ = bytes_changed(store, layer)
+    recorder = Recorder(layer)
+    result = refetch(universe, store, plan_refetch(universe, store, [url]), recorder)
+    assert recorder.requested == [url]
+    assert missing not in SavedResponses(store)
+    assert (result.fetched, result.problems) == ((url,), ())
