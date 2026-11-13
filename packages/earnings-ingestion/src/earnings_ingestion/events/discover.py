@@ -224,7 +224,7 @@ def read_back(universe: UniverseManifest, saved: SavedResponses) -> ReadBack:
             found = identify(slot, filings.releases, saved, cutoff=cutoff)
             problems.extend(found.problems)
             unusable.extend(found.unusable)
-    return ReadBack(problems=tuple(problems), unusable=tuple(unusable))
+    return ReadBack(problems=tuple(problems), unusable=tuple(dict.fromkeys(unusable)))
 
 
 def _companyfacts(

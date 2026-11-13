@@ -1352,3 +1352,22 @@ def test_a_refetch_runs_no_discovery_phase(universe, layer, tmp_path) -> None:
 def test_a_read_back_and_a_refetch_are_frozen(record) -> None:
     with pytest.raises(FrozenInstanceError):
         record.problems = ("added",)
+
+
+def test_read_back_names_an_unusable_url_once_when_a_release_is_listed_twice(
+    universe, layer, tmp_path
+) -> None:
+    """A repeat refuses the submissions file but keeps both copies, so the release's
+    document is read twice; its URL is unusable once."""
+    store = populated(universe, layer, tmp_path)
+    filing = acme_filing("2024-09-26 16:05:00")
+    document = archive_url(ACME.cik, filing.accession, filing.primary_document)
+    main = submissions_url(ACME.cik)
+    listed = [f for f, _ in filings(ACME)]
+    body = submissions_file(
+        ACME.cik, ACME.name, [*listed, filing], convention=ACME.convention
+    )
+    resave(store, main, body, JSON)
+    stored_at(store, document).write_bytes(b"damaged")
+    read = read_back(universe, SavedResponses(store))
+    assert read.unusable == (main, document)
