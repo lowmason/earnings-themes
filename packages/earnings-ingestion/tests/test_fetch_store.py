@@ -135,6 +135,28 @@ def test_a_failed_sync_leaves_nothing_at_the_path(tmp_path, monkeypatch) -> None
     assert list(tmp_path.iterdir()) == []
 
 
+def test_empty_bytes_in_a_new_folder_are_synced_before_they_are_linked(
+    tmp_path, monkeypatch
+) -> None:
+    calls: list[str] = []
+    real_fsync, real_link = os.fsync, os.link
+
+    def fsync(fd: int) -> None:
+        calls.append("fsync")
+        real_fsync(fd)
+
+    def link(source, destination) -> None:
+        calls.append("link")
+        real_link(source, destination)
+
+    monkeypatch.setattr(os, "fsync", fsync)
+    monkeypatch.setattr(os, "link", link)
+    write_new(tmp_path / "new" / "empty.json", b"")
+    assert calls == ["fsync", "link"]
+    assert (tmp_path / "new" / "empty.json").read_bytes() == b""
+    assert [p.name for p in (tmp_path / "new").iterdir()] == ["empty.json"]
+
+
 def test_a_retrieval_is_utc_and_records_status_only_for_http() -> None:
     fields = {
         "request_url": "https://www.example.gov/x",
