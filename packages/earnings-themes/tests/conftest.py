@@ -19,6 +19,7 @@ from earnings_themes.extraction.prompt import PromptTemplate, parse_template
 from earnings_themes.extraction.records import ExtractionProblem
 from earnings_themes.extraction.windows import plan_windows
 from earnings_themes.records import parse
+from earnings_themes.support import cache as support_cache
 from earnings_themes.synthetic import (
     DEV,
     LATER,
@@ -50,6 +51,40 @@ def fixture_bundle(fixture_id: str) -> Bundle:
         elements=tuple(read(DocumentElement, r) for r in data["elements"]),
         masks=tuple(read(OverlayMask, r) for r in data["masks"]),
     )
+
+
+def forget_fragment_checks() -> None:
+    """Empty the support cache's memo of checked big values (plan 24, Task 3)."""
+    with support_cache._checked_fragments_lock:
+        support_cache._checked_fragments.clear()
+
+
+@pytest.fixture(autouse=True)
+def cold_fragment_memo():
+    """Each test starts and ends with no memoized big value of a support-cache key,
+    and, for the test's duration, clearing the record memo clears that memo too.
+
+    Both memos are process-wide and content-keyed, and the invented cases repeat their
+    text from test to test, so a test that counts the checks of one case would see the
+    checks an earlier test did. The first part restores the cold state those tests
+    assume. The second part is for tests that build their case inside the test and
+    then call their own ``forget_memos``, which clears ``_checked_records`` in the
+    middle of the test. The valid-level fragment memo is a record-check memo too, so
+    that clear is made to cover it. The shim changes nothing else about the record
+    memo, and it is removed when the test ends.
+    """
+    records = support_cache._checked_records
+    clear_records = records.clear
+
+    def clear_records_and_fragments() -> None:
+        clear_records()
+        forget_fragment_checks()
+
+    forget_fragment_checks()
+    records.clear = clear_records_and_fragments
+    yield
+    del records.clear
+    forget_fragment_checks()
 
 
 @pytest.fixture

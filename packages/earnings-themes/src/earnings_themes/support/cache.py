@@ -368,57 +368,86 @@ def _light_material(material: str, level: Literal["canonical", "valid"]) -> dict
         return None
 
 
+def _check_material(material: dict, kind: str, fragments_checked: bool):
+    """The typed ``(request, identity)`` of a key's parsed material, or ValueError.
+
+    Every check of ``_validate_binding`` but the two on the text: that it is the
+    canonical JSON of its parse, and that its hash is the key. With
+    ``fragments_checked`` the three big values are not read, because
+    ``_check_fragment`` at level ``valid`` already did the checks on them, and the
+    parse holds ``[]`` in their place. Both paths of ``_validate_binding`` call this
+    one body, so a check added here applies to both.
+    """
+    if set(material) != _BINDING_FIELDS:
+        raise ValueError
+    if (
+        material["kind"] != kind
+        or material["schema_version"] != SUPPORT_SCHEMA_VERSION
+        or material["support_version"] != SUPPORT_VERSION
+    ):
+        raise ValueError
+    for name, model in (
+        ("record", TargetRecord),
+        ("policy", SupportPolicy),
+        ("source_run", RunRecord),
+    ):
+        model.model_validate_json(canonical_json(material[name]))
+    for name, model in (
+        ("evidence", EvidenceReference),
+        ("contexts", ContextReference),
+        ("source_claims", Claim),
+        ("source_quotes", Quote),
+    ):
+        if fragments_checked and name in _FRAGMENT_NAMES:
+            continue
+        if type(material[name]) is not list:
+            raise ValueError
+        _check_records_once(model, material[name])
+    if type(material["claim"]) is not str or not material["claim"].strip():
+        raise ValueError
+    provenance = material["provenance_hash"]
+    if (
+        type(provenance) is not str
+        or len(provenance) != 64
+        or any(c not in "0123456789abcdef" for c in provenance)
+    ):
+        raise ValueError
+    if not fragments_checked:
+        _check_bundles(material["bundles"])
+    request = (ScoreRequest if kind == "scorer" else JudgeRequest).model_validate_json(
+        canonical_json(material["request"])
+    )
+    identity = (
+        ScorerIdentity if kind == "scorer" else JudgeIdentity
+    ).model_validate_json(canonical_json(material["identity"]))
+    return request, identity
+
+
 def _validate_binding(key_text: str, material_text: str, kind: str):
     """The key's typed ``(request, identity)``, or ``malformed_record``.
 
     A pure function of its three immutable texts, which is what makes
-    ``_binding_once`` exact.
+    ``_binding_once`` exact. A text that is canonical JSON, and is the hash ``key_text``
+    names, is checked through its small rest and its three big values' memo. Anything
+    else, or any failure on that path, runs the whole text through the checks one
+    more time, and that run gives the outcome. So the memo can only skip work on a text
+    that passed, and never decides a refusal.
     """
     try:
+        light = _light_material(material_text, "valid")
+        if light is not None and sha256_hex(material_text.encode()) == key_text:
+            return _check_material(light, kind, True)
+    except (ValueError, TypeError, KeyError, AttributeError, RecursionError):
+        pass
+    try:
         material = json.loads(material_text)
+        # As today, a wrong set of fields is refused before the text is dumped.
         if set(material) != _BINDING_FIELDS:
             raise ValueError
         canonical = canonical_json(material)
-        if (
-            canonical.decode() != material_text
-            or sha256_hex(canonical) != key_text
-            or material["kind"] != kind
-            or material["schema_version"] != SUPPORT_SCHEMA_VERSION
-            or material["support_version"] != SUPPORT_VERSION
-        ):
+        if canonical.decode() != material_text or sha256_hex(canonical) != key_text:
             raise ValueError
-        for name, model in (
-            ("record", TargetRecord),
-            ("policy", SupportPolicy),
-            ("source_run", RunRecord),
-        ):
-            model.model_validate_json(canonical_json(material[name]))
-        for name, model in (
-            ("evidence", EvidenceReference),
-            ("contexts", ContextReference),
-            ("source_claims", Claim),
-            ("source_quotes", Quote),
-        ):
-            if type(material[name]) is not list:
-                raise ValueError
-            _check_records_once(model, material[name])
-        if type(material["claim"]) is not str or not material["claim"].strip():
-            raise ValueError
-        provenance = material["provenance_hash"]
-        if (
-            type(provenance) is not str
-            or len(provenance) != 64
-            or any(c not in "0123456789abcdef" for c in provenance)
-        ):
-            raise ValueError
-        _check_bundles(material["bundles"])
-        request = (
-            ScoreRequest if kind == "scorer" else JudgeRequest
-        ).model_validate_json(canonical_json(material["request"]))
-        identity = (
-            ScorerIdentity if kind == "scorer" else JudgeIdentity
-        ).model_validate_json(canonical_json(material["identity"]))
-        return request, identity
+        return _check_material(material, kind, False)
     except (ValueError, TypeError, KeyError, AttributeError):
         raise SupportError("malformed_record") from None
 
@@ -435,7 +464,15 @@ def _binding_once(key_text: str, material_text: str, kind: str):
 
 @lru_cache(maxsize=_BINDING_MEMO_SIZE)
 def _material_kind(material_text: str):
-    """The kind a material names, parsed once per text instead of once per call."""
+    """The kind a material names, read once per text instead of once per call.
+
+    A canonical text is read through its small rest, and its three big values pass
+    the same memo as in the constructor. Any other text is parsed whole, which gives
+    today's value or today's error.
+    """
+    light = _light_material(material_text, "canonical")
+    if light is not None and "kind" in light:
+        return light["kind"]
     return json.loads(material_text)["kind"]
 
 

@@ -1,28 +1,38 @@
-"""The key check reads each big constant text of one source once (plan 24, Task 2).
+"""The key check reads each big constant text of one source once (plan 24, Tasks 2, 3).
 
 A support-cache key holds three values that are the same in every key of one source:
-``bundles``, ``source_claims`` and ``source_quotes``. The constructor splits the text
-at their fixed canonical markers, checks each of them once per SHA-256 of its text,
-and parses only the small rest. These tests count the module-level bodies, over the
-invented ``assessed_case`` materials of Task 1's corpus (GS13). They also hold the
-other side: the fast path only accepts, and any text that is changed, that does not
-split, or that splits inside a value takes today's path and gets today's outcome.
+``bundles``, ``source_claims`` and ``source_quotes``. The constructor, the binding
+check and the kind read split the text at their fixed canonical markers, check each of
+the three values once per SHA-256 of its text, and parse only the small rest. These
+tests count the module-level bodies, over the invented ``assessed_case`` materials of
+Task 1's corpus (GS13). They also hold the other side: the fast path only accepts, and
+any text that is changed, that does not split, or that splits inside a value takes
+today's path and gets today's outcome, with a cold memo or a warm one.
 """
 
 import json
 import threading
+from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 from earnings_core import canonical_json, sha256_hex
 from earnings_themes.support import cache as cache_module
-from earnings_themes.support.cache import SupportCacheKey
+from earnings_themes.support.cache import (
+    SupportCache,
+    SupportCacheKey,
+    _material_kind,
+    _validate_binding,
+)
 
 from .test_key_check_equivalence import (
     KINDS,
+    OTHER,
     SURROGATE,
+    _with_document_text,
     corpus,
     forget_memos,
+    key_text_for,
     oracle_binding,
     oracle_key,
     oracle_kind,
@@ -533,3 +543,297 @@ def test_a_canonical_pass_is_not_a_valid_pass():
     cache_module._fragment_checked("canonical", "source_claims", fragments[1])
     with pytest.raises(ValueError):
         cache_module._fragment_checked("valid", "source_claims", fragments[1])
+
+
+# --- Task 3: the binding and the kind ------------------------------------------------
+
+
+def binding_outcome(material, kind, key_text=None):
+    """``_validate_binding``'s outcome for ``material``, as ``outcome`` shapes it."""
+    if key_text is None:
+        key_text = sha256_hex(material.encode())
+    return outcome(_validate_binding, key_text, material, kind)
+
+
+def oracle_binding_outcome(material, kind, key_text=None):
+    if key_text is None:
+        key_text = sha256_hex(material.encode())
+    return outcome(oracle_binding, key_text, material, kind)
+
+
+def test_the_big_texts_are_validated_once_across_bindings(monkeypatch, tmp_path):
+    keys = [(label.split("-")[1], SupportCacheKey(m)) for label, m in real_materials()]
+    assert {kind for kind, _ in keys} == set(KINDS)
+    calls = spy(monkeypatch)
+    cache = SupportCache(tmp_path / "support-cache", "replay")
+    for kind, key in keys:
+        SupportCache._binding(key, kind)
+        assert cache.raw_ref(key) == f"{key}.json"
+    assert sorted(calls) == sorted(("valid", name) for name in NAMES)
+    # A binding that its text does not memoize still finds each big value checked.
+    for _ in range(2):
+        for kind, key in keys:
+            assert outcome(_validate_binding, str(key), key.material, kind)[0] == "ok"
+    assert len(calls) == 3
+
+
+def rest_broken(material):
+    """Materials that keep the three big values and break the rest, labeled."""
+    return [
+        ("kind-invalid", edited(material, lambda b: b.__setitem__("kind", "x"))),
+        ("extra-key", edited(material, lambda b: b.__setitem__("zzz", 1))),
+        ("dropped-key", edited(material, lambda b: b.pop("policy"))),
+        ("claim-blank", edited(material, lambda b: b.__setitem__("claim", "   "))),
+        (
+            "provenance-bad",
+            edited(material, lambda b: b.__setitem__("provenance_hash", "A" * 64)),
+        ),
+    ]
+
+
+@pytest.mark.parametrize("kind", KINDS)
+def test_a_good_fragment_with_a_bad_rest_is_refused(monkeypatch, kind):
+    material = first_material(kind)
+    SupportCacheKey(material)
+    assert binding_outcome(material, kind)[0] == "ok"
+    memo = sorted(cache_module._checked_fragments)
+    assert len(memo) == 6
+    calls = spy(monkeypatch)
+    expected_refused = ("refused", "SupportError", "malformed_record")
+    base_fragments = cache_module._split_material(material)[0]
+    broken = [
+        *rest_broken(material),
+        # The kind of the other valid kind: the request and identity are of this one.
+        ("kind-other", edited(material, lambda b: b.__setitem__("kind", OTHER[kind]))),
+    ]
+    assert len(broken) == 6
+    for label, text in broken:
+        split = cache_module._split_material(text)
+        # Each keeps the three big values; the rest is what is broken.
+        assert split is not None and split[0] == base_fragments, label
+        for asked in KINDS:
+            got = binding_outcome(text, asked)
+            assert got == oracle_binding_outcome(text, asked), (label, asked)
+            if label != "kind-other" or asked == kind:
+                assert got == expected_refused, (label, asked)
+        assert sorted(cache_module._checked_fragments) == memo, label
+    assert calls == []
+
+
+@pytest.mark.parametrize("kind", KINDS)
+def test_a_rest_that_does_not_split_is_refused_as_today(monkeypatch, kind):
+    """A key sorted first, or a dropped ``claim``, takes today's body: no marker
+    matches, so no fragment is looked at, and the outcome is today's."""
+    material = first_material(kind)
+    SupportCacheKey(material)
+    calls = spy(monkeypatch)
+    for text in (
+        edited(material, lambda b: b.__setitem__("a", 1)),
+        edited(material, lambda b: b.pop("claim")),
+    ):
+        assert cache_module._split_material(text) is None
+        assert binding_outcome(text, kind) == oracle_binding_outcome(text, kind)
+        assert binding_outcome(text, kind)[0] == "refused"
+    assert calls == []
+
+
+CHANGES = {
+    # One character changes and the text stays canonical JSON. The oracle accepts the
+    # claim record and refuses the other two, whose derived values no longer fit.
+    "bundles": ("element end", one_character_changed("bundles"), "refused"),
+    "source_claims": ("claim text", one_character_changed("source_claims"), "ok"),
+    "source_quotes": ("quote start", one_character_changed("source_quotes"), "refused"),
+}
+INVALID = {
+    "bundles": lambda b: b["bundles"][0]["elements"][0].__setitem__("type", "x"),
+    "source_claims": lambda b: b["source_claims"][0].__setitem__("claim_id", 7),
+    "source_quotes": lambda b: b["source_quotes"][0].__setitem__("mask_ids", "m"),
+}
+
+
+@pytest.mark.parametrize("kind", KINDS)
+@pytest.mark.parametrize("name", NAMES)
+def test_a_changed_fragment_is_validated_anew_and_refused(monkeypatch, name, kind):
+    material = first_material(kind)
+    SupportCacheKey(material)
+    assert binding_outcome(material, kind)[0] == "ok"
+    calls = spy(monkeypatch)
+    _, change, accepted = CHANGES[name]
+    for change_name, how, expected_tag in (
+        ("one character", change, accepted),
+        ("an invalid record", INVALID[name], "refused"),
+    ):
+        calls.clear()
+        changed = edited(material, how)
+        assert changed != material, change_name
+        expected = oracle_binding_outcome(changed, kind)
+        assert expected[0] == expected_tag, change_name
+        before = sorted(cache_module._checked_fragments)
+        # Only the changed value is looked at again, and the others are memoized.
+        assert binding_outcome(changed, kind) == expected
+        assert calls == [("valid", name)], change_name
+        if expected_tag == "refused":
+            # A refused value is not remembered: it is validated in full each time,
+            # and the refusal is today's.
+            assert sorted(cache_module._checked_fragments) == before
+            for attempt in (2, 3):
+                assert binding_outcome(changed, kind) == expected
+                assert calls == [("valid", name)] * attempt, change_name
+        else:
+            assert len(cache_module._checked_fragments) == len(before) + 1
+            assert binding_outcome(changed, kind) == expected
+            assert calls == [("valid", name)], change_name
+    # The unchanged key keeps its answer.
+    assert binding_outcome(material, kind) == oracle_binding_outcome(material, kind)
+
+
+class RecordingJson:
+    """A stand-in for ``json`` in ``cache.py`` that records each text it is asked to
+    parse, by length, and keeps no text."""
+
+    def __init__(self):
+        self.sizes = []
+
+    def loads(self, text, *args, **kwargs):
+        self.sizes.append(len(text))
+        return json.loads(text, *args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(json, name)
+
+
+def big_materials():
+    """A scorer's and a judge's key of one invented source, with a document of about
+    280 KB. They share the three big values and differ in the rest, as the keys of one
+    source do."""
+    document = "Lumen opened a new line today. " * 9000
+    scorer = _with_document_text(first_material("scorer"), document)
+    judge = _with_document_text(first_material("judge"), document)
+    assert len(scorer) > 250_000 and len(judge) > 250_000
+    assert (
+        cache_module._split_material(scorer)[0]
+        == cache_module._split_material(judge)[0]
+    )
+    assert (
+        cache_module._split_material(scorer)[1]
+        != cache_module._split_material(judge)[1]
+    )
+    return scorer, judge
+
+
+def test_the_kind_of_a_material_is_read_without_parsing_the_big_texts(monkeypatch):
+    scorer, judge = big_materials()
+    SupportCacheKey(scorer)
+    recording = RecordingJson()
+    monkeypatch.setattr(cache_module, "json", recording)
+    # The second key of the source: its big values are known, so only the rest is parsed.
+    assert _material_kind(judge) == "judge"
+    assert recording.sizes and max(recording.sizes) < 100_000
+    assert _material_kind(scorer) == "scorer"
+    assert max(recording.sizes) < 100_000
+    # A source that has not been seen parses its big values once, and once only.
+    recording.sizes.clear()
+    forget_memos()
+    assert _material_kind(judge) == "judge"
+    assert max(recording.sizes) > 250_000
+    recording.sizes.clear()
+    forget_memos()
+    SupportCacheKey(judge)
+    recording.sizes.clear()
+    assert _material_kind(scorer) == "scorer"
+    assert max(recording.sizes) < 100_000
+
+
+def test_the_binding_of_a_second_key_is_read_without_parsing_the_big_texts(
+    monkeypatch,
+):
+    scorer, judge = big_materials()
+    SupportCacheKey(scorer)
+    assert binding_outcome(scorer, "scorer") == oracle_binding_outcome(scorer, "scorer")
+    assert binding_outcome(scorer, "scorer")[0] == "ok"
+    expected = oracle_binding_outcome(judge, "judge")
+    assert expected[0] == "ok"
+    recording = RecordingJson()
+    monkeypatch.setattr(cache_module, "json", recording)
+    # The big values of the source are known: only the rest of the second key is parsed.
+    assert binding_outcome(judge, "judge") == expected
+    assert recording.sizes and max(recording.sizes) < 100_000
+
+
+def test_the_fast_and_the_slow_path_share_one_body_of_checks(monkeypatch):
+    calls = []
+    real = cache_module._check_material
+
+    def counting(material, kind, fragments_checked):
+        calls.append((kind, fragments_checked))
+        return real(material, kind, fragments_checked)
+
+    monkeypatch.setattr(cache_module, "_check_material", counting)
+    for label, material in real_materials():
+        kind = label.split("-")[1]
+        calls.clear()
+        assert binding_outcome(material, kind) == oracle_binding_outcome(material, kind)
+        assert calls == [(kind, True)], label
+    # A key that does not split, with a nested marker, takes today's path whole.
+    nested, _, _ = nested_triple("judge", "reply_schema", top_level="empty")
+    calls.clear()
+    key_text = sha256_hex(nested.encode())
+    assert outcome(oracle_binding, key_text, nested, "judge")[0] == "ok"
+    assert binding_outcome(nested, "judge") == oracle_binding_outcome(nested, "judge")
+    assert calls == [("judge", False)]
+
+
+def test_a_material_without_a_kind_is_read_as_today():
+    material = first_material("scorer")
+    SupportCacheKey(material)
+    text = edited(material, lambda b: b.pop("kind"))
+    for warm in (False, True):
+        forget_memos()
+        if warm:
+            warm_memos()
+        expected = outcome(oracle_kind, text)
+        assert expected[0] == "refused" and expected[1] == "KeyError"
+        assert outcome(_material_kind, text) == expected
+
+
+@pytest.mark.parametrize(
+    ("label", "material"), corpus(), ids=[label for label, _ in corpus()]
+)
+def test_a_warm_memo_never_changes_the_binding_or_the_kind(label, material):
+    """The memo holds what the real materials passed. A text that differs from them,
+    in the big values or in the rest, is judged as the oracle judges it, with the key
+    text right or wrong and for each kind."""
+    try:
+        bytes_hash = sha256_hex(material.encode("utf-8", "surrogatepass"))
+    except (AttributeError, TypeError):
+        bytes_hash = sha256_hex(b"")
+    wrong = [sha256_hex(b"other"), bytes_hash.upper(), bytes_hash[:-1], ""]
+    for warm in (False, True):
+        forget_memos()
+        if warm:
+            warm_memos()
+        assert outcome(_material_kind, material) == outcome(oracle_kind, material)
+        for kind in KINDS:
+            for key_text in (bytes_hash, key_text_for(material), *wrong):
+                assert outcome(_validate_binding, key_text, material, kind) == outcome(
+                    oracle_binding, key_text, material, kind
+                ), (kind, key_text)
+
+
+def test_clearing_the_record_memo_also_clears_the_fragment_memo():
+    """The shim of ``tests/conftest.py``: a test's own ``forget_memos`` clears the
+    record memo mid-test, and the valid-level fragment memo is a record-check memo."""
+    material = first_material("scorer")
+    SupportCacheKey(material)
+    assert binding_outcome(material, "scorer")[0] == "ok"
+    assert {key[0] for key in cache_module._checked_fragments} >= {
+        f"valid:{name}" for name in NAMES
+    }
+    assert cache_module._checked_records
+    cache_module._checked_records.clear()
+    assert len(cache_module._checked_records) == 0
+    assert len(cache_module._checked_fragments) == 0
+    # Only a clear is shimmed: the record memo is the same dict and still works.
+    assert type(cache_module._checked_records) is OrderedDict
+    assert binding_outcome(material, "scorer")[0] == "ok"
+    assert cache_module._checked_records
