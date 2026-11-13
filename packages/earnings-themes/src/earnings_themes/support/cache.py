@@ -329,11 +329,18 @@ def _light_material(material: str, level: Literal["canonical", "valid"]) -> dict
     """The parse of a key's small rest, when its text is canonical JSON; else ``None``.
 
     The rest is the text with its three big values replaced by ``[]``. It is returned
-    only if every big value passed its check at ``level``, the rest is the canonical
-    JSON of its own parse, and its three top-level lists are the empty ones that stand
-    in for the big values. Then the whole text is canonical JSON too, and each of the
-    three values is the top-level one. This only accepts: on any doubt the answer is
-    ``None``, and the caller runs today's code, which gives today's outcome.
+    only if every big value passed its check at ``level``, and the rest is the
+    canonical JSON of its own parse. Then the whole text is canonical JSON too.
+
+    Each of the three values must also be the top-level one. A nested key can be named
+    like a marker, for example in ``request.reply_schema``, which holds any JSON. The
+    split would then take the nested text, and the returned parse would hold ``[]``
+    where the key holds a value. So each of the two later markers must occur exactly
+    once in the rest, and a top-level key of that name must be there too. Then the one
+    occurrence is the top-level one. ``bundles`` needs no count, because it is the
+    first key and is read from the start of the text. This only accepts: on any doubt
+    the answer is ``None``, and the caller runs today's code, which gives today's
+    outcome.
     """
     if type(material) is not str:
         return None
@@ -342,6 +349,11 @@ def _light_material(material: str, level: Literal["canonical", "valid"]) -> dict
         if split is None:
             return None
         fragments, placeholder = split
+        if (
+            placeholder.count(_CLAIMS_MARKER) != 1
+            or placeholder.count(_QUOTES_MARKER) != 1
+        ):
+            return None
         for name, fragment in zip(_FRAGMENT_NAMES, fragments, strict=True):
             _fragment_checked(level, name, fragment)
         parsed = json.loads(placeholder)

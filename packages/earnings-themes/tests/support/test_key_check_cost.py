@@ -23,7 +23,9 @@ from .test_key_check_equivalence import (
     SURROGATE,
     corpus,
     forget_memos,
+    oracle_binding,
     oracle_key,
+    oracle_kind,
     outcome,
     real_materials,
     warm_memos,
@@ -341,8 +343,9 @@ def test_the_light_check_takes_the_real_materials_and_none_of_the_cut_ones():
 
 def test_markers_nested_in_the_rest_are_not_taken_for_the_big_values():
     """A nested key named as a marker, in a value that sorts before the top-level
-    one, would take the split away from the top-level values. The top-level lists
-    would then stay in the rest, unchecked. No check accepts such a text."""
+    one, takes the split away from the top-level values. The top-level lists then
+    stay in the rest, unchecked. No check accepts such a text: each marker must occur
+    once in the rest."""
     material = edited(
         first_material("scorer"),
         lambda b: b["request"].__setitem__(
@@ -355,6 +358,80 @@ def test_markers_nested_in_the_rest_are_not_taken_for_the_big_values():
     for level in ("canonical", "valid"):
         assert cache_module._light_material(material, level) is None
     assert key_outcome(material) == outcome(oracle_key, material)
+
+
+NESTED_PLACES = {
+    # ``reply_schema`` of a judge request holds any JSON, so the oracle accepts it.
+    ("judge", "reply_schema"): lambda body: body["request"]["reply_schema"],
+    # No model has a free key here: the oracle accepts the key text and then refuses
+    # the binding, and the two must agree.
+    ("judge", "request"): lambda body: body["request"],
+    ("scorer", "request"): lambda body: body["request"],
+}
+
+
+def nested_triple(kind, place, *, top_level):
+    """The real material of ``kind`` with a nested ``source_claims``, ``source_quotes``
+    and ``source_run`` key in ``place``, which sorts before the top-level ones. Each
+    nested list holds the first real record. The top-level lists are the empty ones
+    (``top_level="empty"``) or are dropped (``top_level="dropped"``)."""
+    body = json.loads(first_material(kind))
+    claim, quote = body["source_claims"][0], body["source_quotes"][0]
+    for name in ("source_claims", "source_quotes"):
+        if top_level == "empty":
+            body[name] = []
+        else:
+            del body[name]
+    NESTED_PLACES[kind, place](body)["x"] = {
+        "a": 0,
+        "source_claims": [claim],
+        "source_quotes": [quote],
+        "source_run": 3,
+    }
+    return canonical_json(body).decode(), claim, quote
+
+
+@pytest.mark.parametrize("top_level", ["empty", "dropped"])
+@pytest.mark.parametrize(("kind", "place"), list(NESTED_PLACES))
+def test_nested_markers_before_the_top_level_ones_are_never_taken(
+    kind, place, top_level
+):
+    """The split takes the nested text when no top-level list is there to stop it, and
+    the parse of the rest would then hold ``[]`` where the key holds a record. Task 3
+    builds the request and the identity from that parse. Each marker must occur once
+    in the rest, and the top-level key must be there, or no check accepts the text."""
+    material, claim, quote = nested_triple(kind, place, top_level=top_level)
+    fragments, placeholder = cache_module._split_material(material)
+    assert fragments[1] == canonical_json([claim]).decode()
+    assert fragments[2] == canonical_json([quote]).decode()
+    nested = json.loads(placeholder)["request"]
+    nested = nested["reply_schema"] if place == "reply_schema" else nested
+    assert nested["x"]["source_claims"] == []
+    assert json.loads(material)["request"] != json.loads(placeholder)["request"]
+    assert placeholder.count(',"source_claims":') == (2 if top_level == "empty" else 1)
+    for level in ("canonical", "valid"):
+        for warm in (False, True):
+            forget_memos()
+            if warm:
+                warm_memos()
+            assert cache_module._light_material(material, level) is None
+    # Today's body gives today's outcome for the key, the binding and the kind.
+    expected = outcome(oracle_key, material)
+    assert expected[0] == "ok"
+    for warm in (False, True):
+        forget_memos()
+        if warm:
+            warm_memos()
+        assert key_outcome(material) == expected
+        text = expected[1]
+        assert outcome(cache_module._material_kind, material) == outcome(
+            oracle_kind, material
+        )
+        assert outcome(cache_module._validate_binding, text, material, kind) == outcome(
+            oracle_binding, text, material, kind
+        )
+    if (kind, place) == ("judge", "reply_schema") and top_level == "empty":
+        assert outcome(oracle_binding, expected[1], material, kind)[0] == "ok"
 
 
 @pytest.mark.parametrize("name", NAMES)
