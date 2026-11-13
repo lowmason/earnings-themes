@@ -243,6 +243,7 @@
       `subprocess.TimeoutExpired` from `reported_version` prints a traceback.
       Size: quick-fix. Revisit if: a real install fails with a traceback, or the
       CLI gains a second command.
+      → triggered 2026-11-13: The CLI now registers seven command groups (browser, cohort, events, extract, pilot, codebook, gold) in apps/earnings-pipeline/src/earnings_pipeline/cli.py. The second group, cohort, arrived in b9603b1 (2026-09-26) and events in 73e6fbc (2026-09-27). The browser setup handler still catches only ValueError. The item is still open.
 - [ ] Three small robustness fixes (final review, Minor #6):
       - `install` in
         `packages/earnings-ingestion/src/earnings_ingestion/browser/install.py`
@@ -1221,6 +1222,7 @@
       floor and lists clients by name. No source module uses a relative import
       today. Size: quick-fix. Revisit if: a module under
       packages/earnings-themes/src adopts a relative import.
+      → triggered 2026-11-13: Modules under packages/earnings-themes/src now use relative imports: 32 top-level `from .` lines, for example analysis/completion.py lines 13-16 and analysis/store.py line 18. The first came in d338f7c (2026-10-06), so "No source module uses a relative import today" no longer holds. tests/contracts/test_import_scan.py still skips them (`node.level == 0` in `imported` and `local_adapter_imports`). The real boundary risk is low, because a relative import stays inside earnings_themes. The item is still open.
 - [ ] Close plan 12's test gaps (its review's M1-2, M1-3, M2-3, M3-5, M4-2, M4-4,
       M5-4, M6-1, M6-2, M6-5, M7-2 to M7-4, M8-7, M8-8, M9-2, M10-2, and M10-3;
       deferred by the user). Under packages/earnings-themes/tests:
@@ -1278,6 +1280,7 @@
       are code-written document IDs, reason values, and software names, never
       release text. Size: quick-fix. Revisit if: a `RunRecord` map key can hold
       model or release text, or Stage 6's freeze lifts.
+      → triggered 2026-11-13: Plan 12's freeze list (specs/plans/completed/12-evidence-selection-and-verification-plan-b.md, lines 230-231) names packages/earnings-themes/src/earnings_themes/records.py as a frozen Stage 6 module, yet that file changed later in ee68622 (2026-10-12) and a3b12c4 (2026-10-13). This is a reading of "Stage 6's freeze", not a decision that it lifted. The fix is still open: describe in records.py keeps a map key in the path when the key's value is refused (checked 2026-11-13 with a one-key dict).
 - [ ] Keep the live test's failure output to IDs and counts (plan 12's review's
       M9-4; deferred by the user).
       packages/earnings-themes/tests/test_extraction_live.py's assertions over
@@ -1645,6 +1648,7 @@
       and in plan 19's Handoffs (H16). Source: plan 19's final review. Size: design.
       Revisit if: the pilot's signed gold contains tie groups with overlapping evidence,
       or a dev gate's `span_unit_f1` bound turns on them.
+      → triggered 2026-11-13: The pilot's signed gold holds 33 tie_group rows in 9 of its 28 files (counts only, from evaluation/djia-2024q3-2026q2/pilot-v1/gold/ and the partitions in split-v1.json): 31 rows in 8 train files and 2 rows in 1 dev file. Rows that share a tie_group are alternative themes for one claim, so they share that claim's quotes. Reading that as "overlapping evidence" is a reading. The second half of the signal, a dev gate's span_unit_f1 bound, is untested because no dev gate has run. No gold file was opened beyond these counts.
 - [ ] **P19-4 — `SUPPORT_PRECISION` and `SCORER_AUC` resample every event that holds any
       labelled target.** `evaluation/report.py` (`_label_figures`) puts each event with
       at least one `LabelledTarget` into the bootstrap population, including an event
