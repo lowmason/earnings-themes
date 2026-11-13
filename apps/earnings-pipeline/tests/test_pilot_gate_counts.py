@@ -25,18 +25,20 @@ BODIES = (
     ("earnings_themes.analysis.consume", "_reverify_analysis_inputs"),
     ("earnings_themes.support.store", "_reverify_support_run"),
 )
-# Plan 23's bounds were 12, 8, 8 and 30. The sweep count is 18, not 8 or less:
-# each full check sweeps before the policy runs, after it, and after its last
-# policy read, and a memo of the last sweep would hide a cache change made on that
-# read (packages/earnings-themes/tests/analysis/test_gate_scope.py). The analysis checks are 6 gates: the
-# workflow's consuming gate, write_analysis_run, reverify_analysis_run, and
-# write_theme_report's own check plus its two read-back gates, which are fresh.
+# Plan 23's bounds were 12, 8, 8 and 30. The sweep count is 12, not 8 or less.
+# Each full check sweeps before the policy runs and again after its last policy
+# read. A memo of that last sweep would hide a cache change made on that read
+# (packages/earnings-themes/tests/analysis/test_gate_scope.py). The analysis
+# checks are 6 gates: the workflow's consuming gate, write_analysis_run,
+# reverify_analysis_run, and write_theme_report's own check plus its two
+# read-back gates, which are fresh.
 EXPECTED = {
     # 3 before analysis (finalize_coding's decide, the coding write's re-check and
     # the workflow's re-check), plus one decide per full analysis check.
     "_proposal_support_inputs": 3 + 6,
-    # 3 sweeps for each full analysis check.
-    "_cache_verification": 3 * 6,
+    # 2 sweeps for each full analysis check. The sweep after the votes reuses the
+    # first, because the cache objects and the raw bindings did not change.
+    "_cache_verification": 2 * 6,
     # One full check for each analysis gate.
     "_reverify_analysis_inputs": 6,
     # 13 before analysis (support write and re-check, finalize_coding, the coding

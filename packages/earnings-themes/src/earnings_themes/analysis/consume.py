@@ -413,6 +413,25 @@ def verify_original_links_and_masks(
         _require(all((claim.doc_id, q) in quotes for q in claim.quote_ids))
 
 
+def _raw_reads(inputs):
+    """What a sweep reads: each stage's cache object and its raw-file bindings."""
+    return tuple(
+        (
+            stage,
+            cache,
+            tuple(
+                (name[4:], h)
+                for name, h in run.record.artifact_hashes
+                if name.startswith("raw/")
+            ),
+        )
+        for stage, cache, run in (
+            ("classifier", inputs.raw_caches.coding, inputs.coding),
+            ("judge", inputs.raw_caches.support, inputs.support),
+        )
+    )
+
+
 def _cache_verification(inputs):
     statuses = [
         RawCacheVerification(
@@ -423,26 +442,7 @@ def _cache_verification(inputs):
             version="1",
         )
     ]
-    for stage, cache, bindings in (
-        (
-            "classifier",
-            inputs.raw_caches.coding,
-            tuple(
-                (name[4:], h)
-                for name, h in inputs.coding.record.artifact_hashes
-                if name.startswith("raw/")
-            ),
-        ),
-        (
-            "judge",
-            inputs.raw_caches.support,
-            tuple(
-                (name[4:], h)
-                for name, h in inputs.support.record.artifact_hashes
-                if name.startswith("raw/")
-            ),
-        ),
-    ):
+    for stage, cache, bindings in _raw_reads(inputs):
         checked = {}
         if cache is not None:
             try:
@@ -477,6 +477,24 @@ def _cache_verification(inputs):
         )
     )
     return tuple(sorted(statuses, key=lambda s: s.stage))
+
+
+def _second_sweep(current, reads, first):
+    """The sweep after the policy's votes: the first sweep's result, when it would
+    read the same cache objects for the same raw bindings (plan 23, Task 6).
+
+    The cache objects are compared by identity and the bindings by value, against
+    ``reads``, which was taken just before the first sweep. Otherwise the sweep runs
+    in full. The full check's last sweep reads every file again after the policy's
+    last read, so a change to the bytes that stays is still refused.
+    """
+    unchanged = all(
+        cache is first_cache and bindings == first_bindings
+        for (_, cache, bindings), (_, first_cache, first_bindings) in zip(
+            _raw_reads(current), reads, strict=True
+        )
+    )
+    return first if unchanged else _cache_verification(current)
 
 
 def _binding_material(inputs):
@@ -595,6 +613,7 @@ def _reverify_analysis_inputs(inputs: AnalysisInputs) -> BoundAnalysis:
         extraction = checked.sources.stored_run
         verify_current_inventory(checked, extraction)
         verify_original_links_and_masks(checked, extraction)
+        reads = _raw_reads(checked)
         checked = replace(checked, raw_verification=_cache_verification(checked))
         before = digest(_binding_material(checked))
         reverify_support_run(checked.support, checked.sources)
@@ -606,7 +625,10 @@ def _reverify_analysis_inputs(inputs: AnalysisInputs) -> BoundAnalysis:
         current = strict_analysis_inputs(inputs)
         verify_current_inventory(current, current.sources.stored_run)
         verify_original_links_and_masks(current, current.sources.stored_run)
-        current = replace(current, raw_verification=_cache_verification(current))
+        current = replace(
+            current,
+            raw_verification=_second_sweep(current, reads, checked.raw_verification),
+        )
         _require(digest(_binding_material(current)) == before)
         verify_current_inventory(checked, extraction)
         verify_original_links_and_masks(checked, extraction)

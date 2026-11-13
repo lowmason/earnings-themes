@@ -206,3 +206,155 @@ def test_a_raw_binding_changed_during_a_vote_stays_storage_corrupt(
     with pytest.raises(AnalysisError, match="^storage_corrupt$"):
         consume.reverify_analysis_inputs(replace(inputs, assignment_policy=policy))
     assert policy.changed
+
+
+# A full check sweeps the raw caches before the policy runs and again after the
+# policy's last read. Between them it reuses the first sweep's result only when
+# the cache objects and the raw bindings are the ones the first sweep read.
+
+
+class VotePolicy(LastReadPolicy):
+    """The real policy, plus one action on the first vote of a chosen full check."""
+
+    def __init__(self, actual, action, wanted):
+        super().__init__(actual, None, action, wanted)
+
+    @property
+    def reference(self):
+        return self.actual.reference
+
+    def evaluate(self, view):
+        if self.armed:
+            self.armed = False
+            self.fired = True
+            self.action()
+        return self.actual.evaluate(view)
+
+
+def count_sweeps(monkeypatch):
+    calls = []
+    original = consume._cache_verification
+
+    def counted(inputs):
+        calls.append(True)
+        return original(inputs)
+
+    monkeypatch.setattr(consume, "_cache_verification", counted)
+    return calls
+
+
+@pytest.mark.parametrize("change", ["publisher", "cache"])
+def test_a_change_during_a_vote_refuses_before_writes(
+    analysis_input_factory, tmp_path, monkeypatch, change
+):
+    inputs, root = analysis_input_factory(caches=True)
+    result = build_analysis(inputs, inputs.analysis_policy, None)
+    action = (
+        change_publisher(inputs)
+        if change == "publisher"
+        else tamper_cache(inputs, root)
+    )
+    policy = VotePolicy(inputs.assignment_policy, action, wanted=first_check)
+    watch_checks(monkeypatch, policy)
+    expected = "input_changed" if change == "publisher" else "storage_corrupt"
+    with pytest.raises(AnalysisError, match=f"^{expected}$"):
+        store.write_analysis_run(
+            tmp_path / "changed",
+            result,
+            replace(inputs, assignment_policy=policy),
+            inputs.analysis_policy,
+            None,
+            evidence=(),
+        )
+    assert policy.fired
+    assert not (tmp_path / "changed").exists()
+
+
+@pytest.mark.parametrize("change", ["publisher", "cache"])
+def test_a_change_during_a_vote_fails_the_read_back(
+    analysis_input_factory, tmp_path, monkeypatch, change
+):
+    inputs, root = analysis_input_factory(caches=True)
+    result = build_analysis(inputs, inputs.analysis_policy, None)
+    store.write_analysis_run(
+        tmp_path / "analysis", result, inputs, inputs.analysis_policy, None, ()
+    )
+    stored = store.read_analysis_run(tmp_path / "analysis")
+    action = (
+        change_publisher(inputs)
+        if change == "publisher"
+        else tamper_cache(inputs, root)
+    )
+    policy = VotePolicy(inputs.assignment_policy, action, wanted=first_check)
+    watch_checks(monkeypatch, policy)
+    with pytest.raises(AnalysisError, match="^input_changed$"):
+        store.reverify_analysis_run(
+            stored,
+            replace(inputs, assignment_policy=policy),
+            inputs.analysis_policy,
+            None,
+        )
+    assert policy.fired
+
+
+def test_a_full_check_with_nothing_changed_sweeps_twice(
+    analysis_input_factory, monkeypatch
+):
+    inputs, _ = analysis_input_factory(caches=True)
+    sweeps = count_sweeps(monkeypatch)
+    bound = consume.reverify_analysis_inputs(inputs)
+    statuses = {r.stage: r.status for r in bound.inputs.raw_verification}
+    assert statuses["classifier"] == statuses["judge"] == "verified"
+    assert len(sweeps) == 2
+
+
+def change_binding(inputs, stage):
+    record = (inputs.coding if stage == "coding" else inputs.support).record
+
+    def action():
+        hashes = list(record.artifact_hashes)
+        index = next(i for i, (name, _) in enumerate(hashes) if name.startswith("raw/"))
+        hashes[index] = (hashes[index][0], "0" * 64)
+        object.__setattr__(record, "artifact_hashes", tuple(hashes))
+
+    return action
+
+
+def change_cache_object(inputs, root, stage):
+    from earnings_themes.coding.cache import CodingCache
+    from earnings_themes.support.cache import SupportCache
+
+    # An equal cache over the same files, as a new object.
+    other = (
+        CodingCache(root / "classifier-cache", "replay")
+        if stage == "coding"
+        else SupportCache(root / "support-cache", "replay")
+    )
+    return lambda: object.__setattr__(inputs.raw_caches, stage, other)
+
+
+@pytest.mark.parametrize("stage", ["coding", "support"])
+@pytest.mark.parametrize("change", ["binding", "cache_object"])
+def test_the_second_sweep_runs_when_a_cache_or_binding_changed(
+    analysis_input_factory, monkeypatch, change, stage
+):
+    inputs, root = analysis_input_factory(caches=True)
+    action = (
+        change_binding(inputs, stage)
+        if change == "binding"
+        else change_cache_object(inputs, root, stage)
+    )
+    policy = VotePolicy(inputs.assignment_policy, action, wanted=first_check)
+    watch_checks(monkeypatch, policy)
+    sweeps = count_sweeps(monkeypatch)
+    changed = replace(inputs, assignment_policy=policy)
+    if change == "binding":
+        # The second sweep reads the changed binding through the cache's reader.
+        with pytest.raises(AnalysisError, match="^storage_corrupt$"):
+            consume.reverify_analysis_inputs(changed)
+        assert len(sweeps) == 2
+    else:
+        # The new object reads the same files, so every sweep agrees.
+        consume.reverify_analysis_inputs(changed)
+        assert len(sweeps) == 3
+    assert policy.fired

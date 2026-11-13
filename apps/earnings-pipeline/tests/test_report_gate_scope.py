@@ -74,3 +74,49 @@ def test_a_change_on_the_last_policy_read_refuses_the_report(
         )
     assert policy.fired
     assert not (tmp_path / "report").exists()
+
+
+@pytest.mark.parametrize(("change", "place"), list(EXPECTED), ids=str)
+def test_a_change_during_a_vote_refuses_the_report(
+    tmp_path, monkeypatch, change, place
+):
+    # Base's second sweep, after the votes, saw a cache change made there. The
+    # check's last sweep, after the policy's last read, must see it now.
+    inputs, families, views, stored = report_cases.setup_case(tmp_path, caches=True)
+    root = tmp_path / "invented"
+    action = (
+        probes.change_publisher(inputs)
+        if change == "publisher"
+        else probes.tamper_cache(inputs, root)
+    )
+    policy = probes.VotePolicy(
+        inputs.assignment_policy,
+        action,
+        wanted=lambda context, number: (context, number) == (place, 1),
+    )
+    policy.context = "report"
+    probes.watch_checks(monkeypatch, policy)
+    original = theme_report.reverify_analysis_run
+    started = []
+
+    def read_back(*args, **kwargs):
+        started.append(True)
+        policy.context = ("read-back", len(started))
+        try:
+            return original(*args, **kwargs)
+        finally:
+            policy.context = "report"
+
+    monkeypatch.setattr(theme_report, "reverify_analysis_run", read_back)
+    with pytest.raises(AnalysisError, match=f"^{EXPECTED[(change, place)]}$"):
+        theme_report.write_theme_report(
+            tmp_path / "report",
+            stored,
+            replace(inputs, assignment_policy=policy),
+            inputs.analysis_policy,
+            families,
+            views,
+            audience="export",
+        )
+    assert policy.fired
+    assert not (tmp_path / "report").exists()
