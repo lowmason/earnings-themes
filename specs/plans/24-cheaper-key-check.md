@@ -1,6 +1,6 @@
 # Cheaper Exact Key Check Implementation Plan
 
-**Status:** DRAFT for the owner's review (2026-11-13). Not yet approved.
+**Status:** APPROVED (owner, plan review, 2026-11-13, D24-3); in execution.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -42,6 +42,7 @@
 
 - **D24-1** (owner, brief, 2026-11-13): after plan 23 Task 7's projection of 13.49 h, plan a cheaper exact key check (answer “Plan cheaper key check”). Applied in: Goal, Tasks 2 and 3.
 - **D24-2** (owner, brief, 2026-11-13): the scope is the key check only. The `resolve_target` memo for proposal replay stays out (answer “Key check only”). If Task 4's projection is still 8 h or more, Task 4 stops and reports; it adds no further lever. Applied in: Task 4.
+- **D24-3** (owner, plan review, 2026-11-13): “Approve, run here” — this plan as written at `e372c47`, executed in the same session and branch through subagent-driven-development. Applied in: header.
 
 ---
 
