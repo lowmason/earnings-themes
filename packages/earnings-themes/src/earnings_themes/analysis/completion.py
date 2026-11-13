@@ -8,6 +8,7 @@ from earnings_themes.anchoring import Bundle
 from earnings_themes.coding.decide import REQUIRED_TRIALS
 from earnings_themes.extraction.records import DocumentOutcome, WindowOutcome
 from earnings_themes.extraction.windows import plan_windows
+from earnings_themes.scope import gated
 
 from .consume import reverify_analysis_inputs
 from .problems import AnalysisError
@@ -264,6 +265,7 @@ def _document_completion(
     )
 
 
+@gated
 def document_completions(bound: BoundAnalysis) -> tuple[DocumentCompletion, ...]:
     """Prove each selected document's work inventory; never infer an empty negative."""
     try:

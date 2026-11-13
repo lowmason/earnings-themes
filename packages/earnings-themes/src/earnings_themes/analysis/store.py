@@ -13,6 +13,8 @@ from urllib.parse import urlsplit, urlunsplit
 import polars as pl
 from earnings_core import TextSpan, canonical_json, digest, make_locator, sha256_hex
 
+from earnings_themes.scope import gated
+
 from .consume import reverify_analysis_inputs
 from .prevalence import build_analysis
 from .problems import AnalysisError
@@ -374,6 +376,7 @@ def _check_record_tables(record, tables):
     )
 
 
+@gated(fresh=True)
 def write_analysis_run(
     directory: Path,
     result: AnalysisRun,
@@ -462,6 +465,7 @@ def read_analysis_run(directory: Path) -> StoredAnalysisRun:
         raise AnalysisError("storage_corrupt") from None
 
 
+@gated(fresh=True)
 def reverify_analysis_run(
     stored: StoredAnalysisRun,
     inputs: AnalysisInputs,

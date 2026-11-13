@@ -30,6 +30,7 @@ from earnings_themes.coding.records import CodingRun, PolicyReference
 from earnings_themes.coding.store import reverify_coding_run
 from earnings_themes.extraction import validate_stored_run
 from earnings_themes.extraction.store import StoredRun, refused_quotes
+from earnings_themes.scope import gate, gated, once, remember
 from earnings_themes.support.cache import SupportCache
 from earnings_themes.support.records import FileHash, StoredSupportRun, SupportSources
 from earnings_themes.support.store import reverify_support_run
@@ -529,8 +530,66 @@ def bind_checked_analysis(
     )
 
 
+@gated
 def reverify_analysis_inputs(inputs: AnalysisInputs) -> BoundAnalysis:
-    """Fail closed before analysis, and repeat all bindings after policy callbacks."""
+    """Fail closed before analysis, and repeat all bindings after policy callbacks.
+
+    One gate checks the same input once (plan 23, D23-1). A later call in the gate,
+    with the same input or with the checked copy that the result holds, returns the
+    first result. The full check ends with a compare that runs no external code, so
+    a change that a policy callback makes on its last read is refused there.
+    """
+    bound = once("analysis", (inputs,), lambda: _checked_to_the_end(inputs))
+    remember("analysis", (bound.inputs,), bound)
+    return bound
+
+
+def _checked_to_the_end(inputs: AnalysisInputs) -> BoundAnalysis:
+    bound = _reverify_analysis_inputs(inputs)
+    _require_unchanged(inputs, bound)
+    return bound
+
+
+# A full check keeps these by identity; it replaces ``raw_verification``.
+_NOT_COPIED = frozenset({"assignment_policy", "raw_caches", "raw_verification"})
+
+
+def _require_unchanged(inputs: AnalysisInputs, bound: BoundAnalysis) -> None:
+    """Refuse a change to the caller's inputs since the full check copied them.
+
+    The full check reads the policy's ``reference`` after its last copy of the
+    caller's inputs. Base checked the inputs again later in the same gate, and a
+    gate now reuses its first check (D23-1). So copy them once more here and compare
+    the copy with the checked one, with no external code. On a change, the next full
+    check runs now and its refusal is the one base gave (D21-34). The raw-cache
+    bytes are not part of the copy: the full check's last sweep reads them after
+    the policy's last read.
+    """
+    try:
+        final = strict_analysis_inputs(inputs)
+        checked = bound.inputs
+        unchanged = (
+            final.assignment_policy is checked.assignment_policy
+            and final.raw_caches is checked.raw_caches
+            and all(
+                getattr(final, field.name) == getattr(checked, field.name)
+                for field in fields(AnalysisInputs)
+                if field.name not in _NOT_COPIED
+            )
+        )
+    except AnalysisError:
+        raise
+    except Exception:  # noqa: BLE001 - suppress arbitrary model/policy/source errors
+        raise AnalysisError("input_changed") from None
+    if unchanged:
+        return
+    with gate(fresh=True):
+        again = _reverify_analysis_inputs(inputs)
+    _require(again.binding_hash == bound.binding_hash)
+
+
+def _reverify_analysis_inputs(inputs: AnalysisInputs) -> BoundAnalysis:
+    """``reverify_analysis_inputs``'s full check of one input."""
     try:
         checked = strict_analysis_inputs(inputs)
         extraction = checked.sources.stored_run

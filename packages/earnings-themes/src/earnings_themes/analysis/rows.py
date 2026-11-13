@@ -8,6 +8,7 @@ from earnings_core import TextSpan, digest, sha256_hex
 
 from earnings_themes.anchoring import mask_id
 from earnings_themes.coding.records import CodingRun
+from earnings_themes.scope import gated
 
 from .consume import reverify_analysis_inputs
 from .problems import AnalysisError
@@ -360,6 +361,7 @@ def _observations(
     return tuple(rows)
 
 
+@gated
 def build_observations(bound: BoundAnalysis) -> AnalysisTables:
     """Rebind current inputs, then project originals and unique accepted spans.
 
