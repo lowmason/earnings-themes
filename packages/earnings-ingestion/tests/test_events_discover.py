@@ -13,10 +13,12 @@ from pathlib import Path
 
 import httpx
 import pytest
+from earnings_core import sha256_hex
 from earnings_ingestion.cohort.freeze import load_manifest
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
 from earnings_ingestion.events.build import (
     EventBuildError,
+    _named_filing,
     build_events,
     citations_refused,
     load_overrides,
@@ -37,13 +39,18 @@ from earnings_ingestion.events.layer import (
     DYNAMO,
     EASTFIELD,
     OLDER_PAGES,
+    RETRIEVED,
     Registrant,
     Release,
     exhibit_bodies,
     filings,
 )
 from earnings_ingestion.events.release import identify
-from earnings_ingestion.events.saved import SavedResponses, refetch_remedy
+from earnings_ingestion.events.saved import (
+    SavedResponses,
+    cited_remedy,
+    refetch_remedy,
+)
 from earnings_ingestion.events.slots import issuer_slots
 from earnings_ingestion.events.synthetic import (
     HTML,
@@ -612,6 +619,252 @@ def test_discover_filing_names_the_unusable_file_it_cannot_list(
         run(universe, recorder, store, filing=(ACME.cik, ACME_RELEASE))
     assert str(caught.value).endswith(refetch_remedy(url))
     assert recorder.requested == []
+
+
+def test_saved_responses_list_urls_by_prefix_and_every_hash_of_a_url(
+    tmp_path,
+) -> None:
+    store = ArtifactStore(tmp_path / "data" / "raw" / "events", tmp_path)
+    page = submissions_page_url("CIK0009990001-submissions-001.json")
+    main, facts = submissions_url(ACME.cik), companyfacts_url(ACME.cik)
+    for number, url in enumerate([page, facts, main]):
+        save(store, url, b"{}", JSON, RETRIEVED + timedelta(seconds=number))
+    save(store, main, b'{"saved": "again"}', JSON, RETRIEVED + timedelta(days=1))
+    saved = SavedResponses(store)
+    assert saved.urls() == (facts, page, main)
+    assert saved.urls(submissions_page_url("CIK0009990001")) == (page, main)
+    assert saved.hashes(main) == {sha256_hex(b"{}"), sha256_hex(b'{"saved": "again"}')}
+    assert saved.hashes(facts) == {sha256_hex(b"{}")}
+    assert saved.hashes(submissions_url(BOREALIS.cik)) == frozenset()
+
+
+def test_cited_remedy_names_the_url_whose_newest_response_the_artifact_is(
+    tmp_path,
+) -> None:
+    """An artifact saved from two URLs is restored by the one whose newest response
+    it still is; one whose URLs were all saved again cannot be restored."""
+    store = ArtifactStore(tmp_path / "data" / "raw" / "events", tmp_path)
+    first, second, third = (f"<p>{n}</p>".encode() for n in ("a", "b", "c"))
+    index = filing_index_url(ACME.cik, ACME_RELEASE)
+    copy = archive_url(ACME.cik, ACME_RELEASE, "copy.htm")
+    save(store, index, first, HTML, RETRIEVED)
+    save(store, index, second, HTML, RETRIEVED + timedelta(seconds=1))
+    save(store, copy, first, HTML, RETRIEVED)
+    other = archive_url(ACME.cik, ACME_RELEASE, "other.htm")
+    save(store, other, third, HTML, RETRIEVED)
+    save(store, other, second, HTML, RETRIEVED + timedelta(seconds=1))
+    saved = SavedResponses(store)
+    assert cited_remedy(saved, sha256_hex(first)) == refetch_remedy(copy)
+    assert cited_remedy(saved, sha256_hex(second)) == refetch_remedy(index)
+    assert cited_remedy(saved, sha256_hex(third)) == (
+        f"{other} was saved again with other bytes, so a refetch cannot restore a"
+        " citation that names these bytes by hash"
+    )
+    assert cited_remedy(saved, "0" * 64) == ""
+
+
+def an_accepted_time_daylight_saving_repeats(store, layer):
+    url = filing_index_url(ACME.cik, ACME_RELEASE)
+    body = layer[url][0].replace(b">2025-03-20 16:05:00<", b">2024-11-03 01:30:00<")
+    resave(store, url, body, HTML)
+    return ACME, url, refetch_remedy(url)
+
+
+def an_index_page_without_its_rows_document(store, layer):
+    url = filing_index_url(ACME.cik, ACME_RELEASE)
+    filing = replace(acme_filing("2025-03-20 16:05:00"), primary_document="x.htm")
+    resave(store, url, index_page(ACME.cik, filing), HTML)
+    return ACME, url, refetch_remedy(url)
+
+
+def listed_twice_in_the_main_file(store, layer):
+    url = submissions_url(ACME.cik)
+    listed = [filing for filing, _ in filings(ACME)]
+    body = submissions_file(
+        ACME.cik, ACME.name, [*listed, listed[3]], convention=ACME.convention
+    )
+    resave(store, url, body, JSON)
+    return ACME, url, refetch_remedy(url, "the submissions file with its older pages")
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [
+        an_accepted_time_daylight_saving_repeats,
+        an_index_page_without_its_rows_document,
+        listed_twice_in_the_main_file,
+    ],
+)
+def test_other_damaged_responses_are_unusable_never_missing(
+    universe, layer, tmp_path, damage
+) -> None:
+    store = populated(universe, layer, tmp_path)
+    registrant, url, remedy = damage(store, layer)
+    read = read_issuer(universe, store, registrant)
+    assert (read.unusable, read.missing) == ((url,), ())
+    (problem,) = read.problems
+    assert problem.endswith(remedy)
+
+
+def test_an_unusable_file_is_listed_once_for_all_its_problems(
+    universe, layer, tmp_path
+) -> None:
+    store = populated(universe, layer, tmp_path)
+    url = submissions_url(ACME.cik)
+    listed = [filing for filing, _ in filings(ACME)]
+    body = submissions_file(
+        ACME.cik, ACME.name, [*listed, *listed[3:5]], convention=ACME.convention
+    )
+    resave(store, url, body, JSON)
+    read = read_issuer(universe, store, ACME)
+    assert read.unusable == (url,)
+    remedy = refetch_remedy(url, "the submissions file with its older pages")
+    assert [problem.endswith(remedy) for problem in read.problems] == [True, True]
+
+
+def test_a_missing_primary_document_is_missing_never_unusable(
+    universe, layer, tmp_path, monkeypatch
+) -> None:
+    store = populated(universe, layer, tmp_path)
+    filing = acme_filing("2024-09-26 16:05:00")
+    url = archive_url(ACME.cik, filing.accession, filing.primary_document)
+    get = SavedResponses.get
+    monkeypatch.setattr(
+        SavedResponses, "get", lambda self, u: None if u == url else get(self, u)
+    )
+    found = identification(universe, store, ACME, "cik-0009990001:2024-08-31")
+    assert found.unusable == ()
+    assert found.problems == (f"nothing saved from {url}: run events discover",)
+
+
+def test_a_companyfacts_file_of_another_cik_names_a_remedy_in_the_build(
+    universe, layer, tmp_path
+) -> None:
+    store = populated(universe, layer, tmp_path)
+    url = companyfacts_url(ACME.cik)
+    resave(store, url, layer[companyfacts_url(BOREALIS.cik)][0], JSON)
+    with pytest.raises(EventBuildError) as caught:
+        build_events(
+            universe,
+            SavedResponses(store),
+            load_overrides(REPO / FIXTURE_DIR / "overrides.toml"),
+            corpus_id=SYNTHETIC_CORPUS,
+        )
+    assert caught.value.problems == (
+        f"{url} is the companyfacts file of CIK {BOREALIS.cik}; {refetch_remedy(url)}",
+    )
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [bytes_changed, another_accessions_index_page, an_index_page_of_another_form],
+)
+def test_an_override_s_unusable_index_page_names_a_remedy(
+    universe, layer, tmp_path, damage
+) -> None:
+    """The build reads an override's filing only once its first stage has read every
+    saved index page, so this reads one that stage did not."""
+    store = populated(universe, layer, tmp_path)
+    definition = universe.definition
+    read = read_issuer(universe, store, ACME)
+    facts = SavedResponses(store).get(companyfacts_url(ACME.cik)).text.body
+    made, _ = issuer_slots(
+        read,
+        read_companyfacts(facts),
+        f"cik-{ACME.cik}",
+        start=definition.period_end_start,
+        stop=definition.period_end_stop,
+    )
+    (slot,) = [slot for slot in made if slot.event_id == "cik-0009990001:2025-02-28"]
+    _, url, remedy = damage(store, layer)
+    placed, why = _named_filing(
+        read,
+        SavedResponses(store),
+        ACME_RELEASE,
+        slot,
+        definition.public_information_cutoff,
+    )
+    assert placed is None
+    assert why.startswith(url) and why.endswith(remedy)
+
+
+def test_a_citation_a_refetch_cannot_mend_names_no_refetch(
+    universe, layer, tmp_path
+) -> None:
+    """A stale locator over valid bytes, and an artifact no saved retrieval names."""
+    store = populated(universe, layer, tmp_path)
+    overrides = load_overrides(REPO / FIXTURE_DIR / "overrides.toml").overrides
+    (override,) = [o for o in overrides if o.override_id == "release-acme-2025-02-28"]
+    (citation,) = override.citations
+    stale = citation.model_copy(
+        update={
+            "locator": citation.locator.model_copy(update={"cited_sha256": "0" * 64})
+        }
+    )
+    unknown = citation.model_copy(update={"artifact_sha256": "0" * 64})
+    folder = archive_url(ACME.cik, ACME_RELEASE, "")
+    saved = SavedResponses(store)
+    refused = [
+        citations_refused(
+            override.model_copy(update={"citations": (c,)}), saved, folder
+        )
+        for c in (stale, unknown)
+    ]
+    unknown_line = (
+        f"release-acme-2025-02-28: no artifact {'0' * 64} for source 'sec-edgar'"
+        f" under {store.root}"
+    )
+    assert refused == [
+        ["release-acme-2025-02-28: the cited content no longer hashes to cited_sha256"],
+        [unknown_line],
+    ]
+
+
+def test_evidence_no_saved_retrieval_names_has_no_remedy(tmp_path) -> None:
+    store = ArtifactStore(tmp_path / "data" / "raw" / "events", tmp_path)
+    manifest = load_event_manifest(REPO / FIXTURE_DIR / "events-v1.json")
+    evidence = load_event_evidence(
+        REPO / FIXTURE_DIR / "events-v1.evidence.json", manifest
+    )
+    problems = check_evidence(evidence, store)
+    under = re.escape(str(store.root))
+    assert problems
+    assert all(
+        re.fullmatch(
+            f"no artifact [0-9a-f]{{64}} for source 'sec-edgar' under {under}", p
+        )
+        for p in problems
+    )
+
+
+def test_discover_filing_names_an_unusable_index_page_and_fetches_nothing(
+    universe, layer, tmp_path
+) -> None:
+    store = populated(universe, layer, tmp_path)
+    _, url, remedy = bytes_changed(store, layer)
+    recorder = Recorder(layer)
+    result, sent, _ = run(universe, recorder, store, filing=(ACME.cik, ACME_RELEASE))
+    (problem,) = result.problems
+    assert problem.startswith(f"{url}: ") and problem.endswith(remedy)
+    assert (recorder.requested, sent) == ([], 0)
+
+
+def test_discover_filing_names_only_an_unusable_file_that_lists_filings(
+    universe, layer, tmp_path
+) -> None:
+    """An unusable older page may hold the filing; an unusable index page lists
+    none, so a filing no file lists still needs discovery."""
+    store = populated(universe, layer, tmp_path)
+    bytes_changed(store, layer)
+    with pytest.raises(ValueError) as caught:
+        run(universe, Recorder(layer), store, filing=(ACME.cik, "0009990001-99-000001"))
+    assert str(caught.value).endswith(": run events discover")
+    stored_at(store, EASTFIELD_PAGE).write_bytes(b"{}")
+    _, since, until = OLDER_PAGES[EASTFIELD][0]
+    (paged, *_) = [f for f, _ in filings(EASTFIELD) if since <= f.accepted[:10] < until]
+    with pytest.raises(ValueError) as caught:
+        run(universe, Recorder(layer), store, filing=(EASTFIELD.cik, paged.accession))
+    assert str(caught.value).endswith(refetch_remedy(EASTFIELD_PAGE))
 
 
 def test_stage_5_has_no_client_or_throttle_of_its_own() -> None:
