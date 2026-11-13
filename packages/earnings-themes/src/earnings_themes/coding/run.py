@@ -290,6 +290,11 @@ def propose_run(
                         ),
                         cache,
                     )
+        # The identity read runs external code, and nothing checks after these last
+        # checks. They open their own fresh scope, so the bundle check in the final
+        # loop runs after that code and is not a hit from the scope above. No
+        # external code runs between that check and the end of this scope (D21-34).
+        with gate(fresh=True):
             # Audit callbacks and identity properties precede the final pure bindings.
             if _current_identity(classifier) != identity:
                 raise CodingError("model_mismatch")
