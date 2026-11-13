@@ -8,6 +8,9 @@ is always rechecked by the caller, including after cache hits. No verdict is kep
 import json
 import os
 import tempfile
+import threading
+from collections import OrderedDict
+from functools import lru_cache
 from pathlib import Path
 from types import MappingProxyType
 from typing import Literal
@@ -136,6 +139,143 @@ def judge_key(
     return _key(input, request, identity, policy, "judge")
 
 
+_BINDING_MEMO_SIZE = 8
+"""Bindings kept: each holds one key's text, which is about 13 MB at pilot size."""
+_RECORD_MEMO_SIZE = 512
+"""Record lists kept: a source holds two per document, and each entry is a digest."""
+_BINDING_FIELDS = frozenset(
+    {
+        "kind",
+        "schema_version",
+        "support_version",
+        "record",
+        "evidence",
+        "contexts",
+        "claim",
+        "provenance_hash",
+        "source_run",
+        "source_claims",
+        "source_quotes",
+        "bundles",
+        "request",
+        "identity",
+        "policy",
+    }
+)
+
+
+def _check_records(model, records: list) -> None:
+    """Validate each record of one list as ``model``; any failure is a ValueError."""
+    for record in records:
+        model.model_validate_json(canonical_json(record))
+
+
+_checked_records: OrderedDict[tuple[str, str], None] = OrderedDict()
+_checked_records_lock = threading.Lock()
+
+
+def _check_records_once(model, records: list) -> None:
+    """Validate one record list, unless a list of identical content already passed.
+
+    Validation is a pure function of each record's canonical JSON, and the digest of
+    the list fixes every one of those texts. So a list that differs in any element has
+    another digest and is validated in full. Only a list that passed is remembered.
+    """
+    memo_key = (f"{model.__module__}.{model.__qualname__}", digest(records))
+    with _checked_records_lock:
+        if memo_key in _checked_records:
+            _checked_records.move_to_end(memo_key)
+            return
+    _check_records(model, records)
+    with _checked_records_lock:
+        _checked_records[memo_key] = None
+        while len(_checked_records) > _RECORD_MEMO_SIZE:
+            _checked_records.popitem(last=False)
+
+
+def _validate_binding(key_text: str, material_text: str, kind: str):
+    """The key's typed ``(request, identity)``, or ``malformed_record``.
+
+    A pure function of its three immutable texts, which is what makes
+    ``_binding_once`` exact.
+    """
+    try:
+        material = json.loads(material_text)
+        if set(material) != _BINDING_FIELDS:
+            raise ValueError
+        canonical = canonical_json(material)
+        if (
+            canonical.decode() != material_text
+            or sha256_hex(canonical) != key_text
+            or material["kind"] != kind
+            or material["schema_version"] != SUPPORT_SCHEMA_VERSION
+            or material["support_version"] != SUPPORT_VERSION
+        ):
+            raise ValueError
+        for name, model in (
+            ("record", TargetRecord),
+            ("policy", SupportPolicy),
+            ("source_run", RunRecord),
+        ):
+            model.model_validate_json(canonical_json(material[name]))
+        for name, model in (
+            ("evidence", EvidenceReference),
+            ("contexts", ContextReference),
+            ("source_claims", Claim),
+            ("source_quotes", Quote),
+        ):
+            if type(material[name]) is not list:
+                raise ValueError
+            _check_records_once(model, material[name])
+        if type(material["claim"]) is not str or not material["claim"].strip():
+            raise ValueError
+        provenance = material["provenance_hash"]
+        if (
+            type(provenance) is not str
+            or len(provenance) != 64
+            or any(c not in "0123456789abcdef" for c in provenance)
+        ):
+            raise ValueError
+        if type(material["bundles"]) is not list:
+            raise ValueError
+        for bundle in material["bundles"]:
+            if set(bundle) != {"document", "elements", "masks"}:
+                raise ValueError
+            CanonicalDocument.model_validate_json(canonical_json(bundle["document"]))
+            for name, model in (
+                ("elements", DocumentElement),
+                ("masks", OverlayMask),
+            ):
+                if type(bundle[name]) is not list:
+                    raise ValueError
+                _check_records_once(model, bundle[name])
+        request = (
+            ScoreRequest if kind == "scorer" else JudgeRequest
+        ).model_validate_json(canonical_json(material["request"]))
+        identity = (
+            ScorerIdentity if kind == "scorer" else JudgeIdentity
+        ).model_validate_json(canonical_json(material["identity"]))
+        return request, identity
+    except (ValueError, TypeError, KeyError, AttributeError):
+        raise SupportError("malformed_record") from None
+
+
+@lru_cache(maxsize=_BINDING_MEMO_SIZE)
+def _binding_once(key_text: str, material_text: str, kind: str):
+    """``_validate_binding``, remembered by the exact text it was given.
+
+    A change to any text is a different key, so it is validated anew. A call that
+    raises is not remembered, so a refusal is never served as success.
+    """
+    return _validate_binding(key_text, material_text, kind)
+
+
+@lru_cache(maxsize=_BINDING_MEMO_SIZE)
+def _material_kind(material_text: str):
+    """The kind a material names, parsed once per text instead of once per call."""
+    return json.loads(material_text)["kind"]
+
+
 _REFUSAL_REASONS = frozenset(
     {
         "transport_error",
@@ -172,6 +312,45 @@ class SupportCacheEntry(SupportRecord):
         return self
 
 
+def _checked_reply(request, identity, kind, raw):
+    if kind == "scorer":
+        raw = _validated(raw, ScoreReply)
+        if raw.identity != identity:
+            raise SupportError("model_mismatch")
+        if raw.input_hash != request.input_hash:
+            raise SupportError("input_changed")
+    else:
+        raw = _validated(raw, ModelReply)
+        # Wrong-model replies remain auditable unusable attempts. The expected
+        # runtime stays bound by the key; parse_answer rejects the raw identity.
+    return raw
+
+
+def _check_entry(entry, key, kind) -> None:
+    """Every check a stored entry must pass against its key; a failure raises."""
+    request, identity = SupportCache._binding(key, kind)
+    if (
+        entry.key != str(key)
+        or entry.kind != kind
+        or entry.material != key.material
+        or entry.request != request
+        or entry.identity != identity
+        or entry.reply_hash != _raw_hash(entry.reply, entry.refusal_reason)
+    ):
+        raise ValueError
+    _checked_reply(request, identity, kind, entry.reply)
+
+
+def _read_entry(path, key, kind):
+    """Read an entry's bytes once, parse them and run every check; else cache_corrupt."""
+    try:
+        entry = SupportCacheEntry.model_validate_json(path.read_bytes())
+        _check_entry(entry, key, kind)
+        return entry
+    except (OSError, ValueError, TypeError):
+        raise SupportError("cache_corrupt") from None
+
+
 class SupportCache:
     """Caller-selected raw artifact directory, or under ``fresh`` its stability
     run's own (A1); no dispatch or import-time I/O."""
@@ -201,84 +380,12 @@ class SupportCache:
         try:
             if type(key) is not SupportCacheKey or kind not in ("scorer", "judge"):
                 raise ValueError
-            material = json.loads(key.material)
-            expected_fields = {
-                "kind",
-                "schema_version",
-                "support_version",
-                "record",
-                "evidence",
-                "contexts",
-                "claim",
-                "provenance_hash",
-                "source_run",
-                "source_claims",
-                "source_quotes",
-                "bundles",
-                "request",
-                "identity",
-                "policy",
-            }
-            if set(material) != expected_fields:
-                raise ValueError
-            if (
-                canonical_json(material).decode() != key.material
-                or digest(material) != str(key)
-                or material["kind"] != kind
-                or material["schema_version"] != SUPPORT_SCHEMA_VERSION
-                or material["support_version"] != SUPPORT_VERSION
-            ):
-                raise ValueError
-            for name, model in (
-                ("record", TargetRecord),
-                ("policy", SupportPolicy),
-                ("source_run", RunRecord),
-            ):
-                model.model_validate_json(canonical_json(material[name]))
-            for name, model in (
-                ("evidence", EvidenceReference),
-                ("contexts", ContextReference),
-                ("source_claims", Claim),
-                ("source_quotes", Quote),
-            ):
-                if type(material[name]) is not list:
-                    raise ValueError
-                for record in material[name]:
-                    model.model_validate_json(canonical_json(record))
-            if type(material["claim"]) is not str or not material["claim"].strip():
-                raise ValueError
-            provenance = material["provenance_hash"]
-            if (
-                type(provenance) is not str
-                or len(provenance) != 64
-                or any(c not in "0123456789abcdef" for c in provenance)
-            ):
-                raise ValueError
-            if type(material["bundles"]) is not list:
-                raise ValueError
-            for bundle in material["bundles"]:
-                if set(bundle) != {"document", "elements", "masks"}:
-                    raise ValueError
-                CanonicalDocument.model_validate_json(
-                    canonical_json(bundle["document"])
-                )
-                for name, model in (
-                    ("elements", DocumentElement),
-                    ("masks", OverlayMask),
-                ):
-                    if type(bundle[name]) is not list:
-                        raise ValueError
-                    for record in bundle[name]:
-                        model.model_validate_json(canonical_json(record))
-            request = (
-                ScoreRequest if kind == "scorer" else JudgeRequest
-            ).model_validate_json(canonical_json(material["request"]))
-            identity = (
-                ScorerIdentity if kind == "scorer" else JudgeIdentity
-            ).model_validate_json(canonical_json(material["identity"]))
-            return request, identity
+            request, identity = _binding_once(str(key), key.material, kind)
         except (ValueError, TypeError, KeyError, AttributeError):
             raise SupportError("malformed_record") from None
+        # The models are frozen, but a judge request holds a schema dict. A copy
+        # keeps one caller from changing the value the memo serves to the next.
+        return request.model_copy(deep=True), identity
 
     def artifact_hash(self, reference: str) -> str:
         """Hash a validated local cache artifact by its confined digest filename."""
@@ -296,15 +403,16 @@ class SupportCache:
             payload = path.read_bytes()
             entry = SupportCacheEntry.model_validate_json(payload)
             key = SupportCacheKey(entry.material)
-            if reference != self.raw_ref(key) or self._entry(key, entry.kind) != entry:
+            if reference != self.raw_ref(key):
                 raise ValueError
+            _check_entry(entry, key, entry.kind)
             return sha256_hex(payload)
         except (OSError, ValueError, TypeError, AttributeError):
             raise SupportError("cache_corrupt") from None
 
     def raw_ref(self, key: SupportCacheKey) -> str:
         try:
-            kind = json.loads(key.material)["kind"]
+            kind = _material_kind(key.material)
         except (ValueError, TypeError, KeyError, AttributeError):
             raise SupportError("malformed_record") from None
         self._binding(key, kind)
@@ -312,38 +420,15 @@ class SupportCache:
 
     def _reply(self, key, kind, raw):
         request, identity = self._binding(key, kind)
-        if kind == "scorer":
-            raw = _validated(raw, ScoreReply)
-            if raw.identity != identity:
-                raise SupportError("model_mismatch")
-            if raw.input_hash != request.input_hash:
-                raise SupportError("input_changed")
-        else:
-            raw = _validated(raw, ModelReply)
-            # Wrong-model replies remain auditable unusable attempts. The expected
-            # runtime stays bound by the key; parse_answer rejects the raw identity.
-        return raw
+        return _checked_reply(request, identity, kind, raw)
 
     def _entry(self, key: SupportCacheKey, kind: Literal["scorer", "judge"]):
-        request, identity = self._binding(key, kind)
+        # A bad key or kind is refused before the file is looked for.
+        self._binding(key, kind)
         path = self._directory / self.raw_ref(key)
         if not path.exists():
             return None
-        try:
-            entry = SupportCacheEntry.model_validate_json(path.read_bytes())
-            if (
-                entry.key != str(key)
-                or entry.kind != kind
-                or entry.material != key.material
-                or entry.request != request
-                or entry.identity != identity
-                or entry.reply_hash != _raw_hash(entry.reply, entry.refusal_reason)
-            ):
-                raise ValueError
-            self._reply(key, kind, entry.reply)
-            return entry
-        except (OSError, ValueError, TypeError):
-            raise SupportError("cache_corrupt") from None
+        return _read_entry(path, key, kind)
 
     def lookup(self, key: SupportCacheKey, kind: Literal["scorer", "judge"]):
         entry = self._entry(key, kind)
