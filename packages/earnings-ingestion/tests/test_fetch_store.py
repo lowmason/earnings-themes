@@ -240,6 +240,19 @@ def test_the_quarantine_is_not_read_as_a_saved_response(tmp_path) -> None:
     assert latest.body == BODY
 
 
+def test_an_empty_damaged_artifact_is_quarantined_not_left_in_the_way(
+    tmp_path,
+) -> None:
+    store = store_in(tmp_path)
+    path = tmp_path / store.put("press", BODY, retrieval(), **RIGHTS).storage_ref
+    path.write_bytes(b"")
+    store.put("press", BODY, retrieval(when=WHEN + timedelta(days=1)), **RIGHTS)
+    assert store.get("press", sha256_hex(BODY), **RIGHTS).body == BODY
+    moved = path.parent / "quarantine" / sha256_hex(BODY) / f"{sha256_hex(b'')}.html"
+    assert moved.read_bytes() == b""
+    assert store.quarantined == [moved]
+
+
 def test_quarantine_moves_nothing_absent_or_valid(tmp_path) -> None:
     store = store_in(tmp_path)
     assert store.quarantine("press", sha256_hex(BODY), "text/html") is None
