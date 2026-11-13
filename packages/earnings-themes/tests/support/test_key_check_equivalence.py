@@ -319,6 +319,11 @@ def _mutations(base: str, kind: str) -> list[tuple[str, str]]:
     assert rest.startswith(claim_piece)
     first_comma = base.index(",")
     assert first_comma < len(head)
+    claims_at = base.index(',"source_claims":')
+    quotes_at = base.index(',"source_quotes":', claims_at)
+    run_at = base.index(',"source_run":', quotes_at)
+    claims_piece = base[claims_at:quotes_at]
+    quotes_piece = base[quotes_at:run_at]
 
     def set_(name, value):
         return _edit(base, lambda b: b.__setitem__(name, value))
@@ -457,6 +462,12 @@ def _mutations(base: str, kind: str) -> list[tuple[str, str]]:
         ("key-dropped-claim", drop("claim")),
         ("key-dropped-policy", drop("policy")),
         ("key-dropped-source-quotes", drop("source_quotes")),
+        ("key-dropped-source-claims", drop("source_claims")),
+        ("key-dropped-source-run", drop("source_run")),
+        # An extra key that sorts inside a span between two of the split markers.
+        ("extra-key-in-bundles-span", set_("c", 1)),
+        ("extra-key-in-source-claims-span", set_("source_d", 1)),
+        ("extra-key-in-source-quotes-span", set_("source_r", 1)),
         ("evidence-not-a-list", set_("evidence", {})),
         ("evidence-record-invalid", set_("evidence", [{}])),
         ("contexts-record-invalid", set_("contexts", [{}])),
@@ -527,6 +538,14 @@ def _mutations(base: str, kind: str) -> list[tuple[str, str]]:
             base[: len(head)] + claim_piece + claim_piece + rest[len(claim_piece) :],
         ),
         ("duplicate-key-bundles-first-empty", '{"bundles":[],' + base[1:]),
+        (
+            "duplicate-key-source-claims",
+            base[:quotes_at] + claims_piece + base[quotes_at:],
+        ),
+        (
+            "duplicate-key-source-quotes",
+            base[:run_at] + quotes_piece + base[run_at:],
+        ),
         (
             "duplicate-key-in-a-claim",
             _replaced(base, '"attempt":1,', '"attempt":1,"attempt":1,'),
@@ -692,6 +711,34 @@ def test_the_corpus_holds_the_structural_traps():
         assert ',"source_quotes":' in _canonical(json.loads(claims)["source_claims"])
         quotes = by_label[f"{kind}-nested-source-run-key-in-a-quote"]
         assert ',"source_run":' in _canonical(json.loads(quotes)["source_quotes"])
+
+
+def test_an_extra_top_level_key_lies_between_the_markers_of_its_span():
+    """The extra key sits inside a span that a split reads, so a split that takes
+    the span whole would take the key with it. Positions are read from the text."""
+    by_label = dict(corpus())
+    for kind in KINDS:
+        for label, key, before, after in (
+            ("extra-key-in-bundles-span", '"c":1', '{"bundles":', ',"claim":'),
+            (
+                "extra-key-in-source-claims-span",
+                '"source_d":1',
+                ',"source_claims":',
+                ',"source_quotes":',
+            ),
+            (
+                "extra-key-in-source-quotes-span",
+                '"source_r":1',
+                ',"source_quotes":',
+                ',"source_run":',
+            ),
+        ):
+            material = by_label[f"{kind}-{label}"]
+            assert material.count(key) == 1, label
+            at = material.index(key)
+            start = material.index(before)
+            end = material.index(after, start + len(before))
+            assert start < at < end, label
 
 
 @pytest.mark.parametrize(
