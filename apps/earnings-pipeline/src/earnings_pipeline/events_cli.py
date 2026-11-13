@@ -4,6 +4,7 @@ select and freeze its pilot (plan 7, P7-18), and acquire the pilot's releases (p
 
     earnings-pipeline events discover --max-requests N    # the shared SEC client
     earnings-pipeline events discover --filing CIK ACCESSION    # at most 2 requests
+    earnings-pipeline events discover --refetch URL --max-requests N    # count first
     earnings-pipeline events build
     earnings-pipeline events freeze
     earnings-pipeline events select
@@ -18,7 +19,19 @@ approved on its own, and a second ``--filing`` is refused. It prints the request
 sent on every exit, a stop, a Ctrl-C, or an error no stop names included (PR #6's
 review, F31; plan 8's final review). ``discover`` exits 1 and names each saved
 submissions file, older page, index page, or primary document the build cannot read,
-which no rerun fetches again, since it is saved.
+which no rerun fetches again, since it is saved, with the ``--refetch`` that
+replaces it.
+
+``discover --refetch`` states its count before it opens the client: one request for
+each named URL, and for each older page saved beside a named submissions file. It
+then needs ``--max-requests``, at least that count, as the client's cap. It replaces
+only a response the build cannot use, so never a usable one under a frozen citation,
+and refuses ``--filing`` beside it. It prints each damaged file it moved into
+``quarantine/``, and each URL that returned other bytes, whose build may then differ
+from the frozen version; a stop prints these for what it saved first. It runs no
+discovery phase: a plain ``events discover`` then fetches what a refreshed file now
+lists (plan 25).
+
 ``build``, ``freeze``, and ``select`` read committed files and saved responses alone.
 ``build`` exits 1 while anything holds the freeze.
 
@@ -51,6 +64,7 @@ prints the version and hash it read (PR #6's review, F4; plan 8, P8-4).
 """
 
 from collections import Counter
+from collections.abc import Callable, Sequence
 from contextlib import ExitStack
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -76,7 +90,12 @@ from earnings_ingestion.events.build import (
     build_events,
     load_overrides,
 )
-from earnings_ingestion.events.discover import discover, discover_filing
+from earnings_ingestion.events.discover import (
+    Discovery,
+    Fetch,
+    discover,
+    discover_filing,
+)
 from earnings_ingestion.events.freeze import (
     EventFreezeRefused,
     FrozenEvents,
@@ -88,6 +107,12 @@ from earnings_ingestion.events.records import (
     ACKNOWLEDGEABLE,
     EventFindingKind,
     EventStatus,
+)
+from earnings_ingestion.events.recover import (
+    Refetched,
+    RefetchInterrupted,
+    plan_refetch,
+    run_refetch,
 )
 from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.fetch.client import (
@@ -190,18 +215,46 @@ def discover_command(
         int | None,
         typer.Option(
             help="The request count approved at the gate; the client's cap. With"
-            " --filing, the cap is 2, or this count if it is smaller."
+            " --filing, the cap is 2, or this count if it is smaller. With"
+            " --refetch, it is at least the stated count."
         ),
     ] = None,
     filing: Annotated[
         tuple[str, str] | None,
         typer.Option(help="CIK ACCESSION: one filing's index page and 8-K document."),
     ] = None,
+    refetch: Annotated[
+        list[str] | None,
+        typer.Option(
+            help="URL: a saved response the build cannot use, to fetch again; repeat"
+            " for each. A submissions file brings its saved older pages."
+        ),
+    ] = None,
 ) -> None:
     """Save what the build reads from SEC, through the shared SEC client. Exit 1,
-    naming each one, when a saved response cannot be read: a rerun cannot mend it."""
+    naming each one, when a saved response cannot be read: a rerun cannot mend it,
+    and --refetch replaces it."""
     layout: Layout = context.obj
+    if refetch is not None and filing is not None:
+        _fail("Refused: pass --refetch or --filing, not both")
     universe = layout.universes()[-1]
+    if refetch is None:
+        problems = _discover(layout, universe, filing, max_requests)
+    else:
+        problems = _refetch(layout, universe, refetch, max_requests)
+    for problem in problems:
+        typer.echo(f"problem: {problem}", err=True)
+    if problems:
+        raise typer.Exit(1)
+
+
+def _discover(
+    layout: Layout,
+    universe: UniverseManifest,
+    filing: tuple[str, str] | None,
+    max_requests: int | None,
+) -> Sequence[str]:
+    """Discovery, or one filing's, within the approved count; what it cannot read."""
     if filing is None:
         budget = max_requests
     elif max_requests is None:
@@ -211,18 +264,78 @@ def discover_command(
     if budget is None:
         _fail("Refused: pass --max-requests, the request count the user approved")
     typer.echo(f"at most {budget} requests to SEC, through the shared client")
+
+    def discovering(fetch: Fetch) -> Discovery:
+        if filing is not None:
+            return discover_filing(
+                universe, *filing, fetch, layout.store(), say=typer.echo
+            )
+        return discover(universe, fetch, layout.store(), say=typer.echo)
+
+    result, sent = _counted(budget, discovering)
+    typer.echo(f"fetched {len(result.fetched)}; requests sent: {sent}")
+    return result.problems
+
+
+def _refetch(
+    layout: Layout,
+    universe: UniverseManifest,
+    named: list[str],
+    max_requests: int | None,
+) -> Sequence[str]:
+    """Fetch again each named response the build cannot use, after its count is
+    stated and approved; what the build still cannot use."""
+    store = layout.store()
+    try:
+        plan = plan_refetch(universe, store, named)
+    except ValueError as error:
+        _fail(f"Refused: {error}")
+    typer.echo(f"refetch: {plan.count} requests to SEC, through the shared client")
+    for url in plan.urls:
+        typer.echo(f"  {url}")
+    if max_requests is None:
+        _fail("Refused: pass --max-requests, the request count the user approved")
+    if max_requests < plan.count:
+        _fail(
+            f"Refused: --max-requests {max_requests} is below the {plan.count}"
+            " requests to refetch"
+        )
+
+    def refetching(fetch: Fetch) -> Refetched:
+        try:
+            return run_refetch(universe, plan, fetch, store)
+        except RefetchInterrupted as interrupted:
+            _saved(interrupted.partial, layout.repo)
+            raise interrupted.__cause__  # the failure itself, which _counted names
+
+    result, sent = _counted(max_requests, refetching)
+    typer.echo(f"refetched {len(result.fetched)}; requests sent: {sent}")
+    _saved(result, layout.repo)
+    return result.problems
+
+
+def _saved(refetched: Refetched, repo: Path) -> None:
+    """Where a refetch moved bytes that no longer hashed to their name, and each URL
+    that returned other bytes than any earlier retrieval of it."""
+    for path in refetched.quarantined:
+        typer.echo(f"quarantined: {shown(path, repo)}")
+    for url in refetched.changed:
+        typer.echo(
+            f"changed: {url} returned other bytes than its earlier retrieval; run"
+            " events build and compare its content hash with the frozen version's"
+            " before relying on it"
+        )
+
+
+def _counted[T](budget: int, run: Callable[[Fetch], T]) -> tuple[T, int]:
+    """``run`` with the shared SEC client's fetch, capped at ``budget``: its result
+    and the requests sent. Every exit prints that count; a stop exits 1, and any
+    other error propagates (PR #6's review, F31)."""
     sent = 0
     try:
         with open_sec_client(max_requests=budget) as sec:
             try:
-                if filing is not None:
-                    result = discover_filing(
-                        universe, *filing, sec.fetch, layout.store(), say=typer.echo
-                    )
-                else:
-                    result = discover(
-                        universe, sec.fetch, layout.store(), say=typer.echo
-                    )
+                result = run(sec.fetch)
             finally:
                 sent = sec.throttle.count
     except STOPS as error:
@@ -231,11 +344,7 @@ def discover_command(
     except BaseException:
         typer.echo(f"requests sent: {sent}; a rerun fetches only what is missing")
         raise
-    typer.echo(f"fetched {len(result.fetched)}; requests sent: {sent}")
-    for problem in result.problems:
-        typer.echo(f"problem: {problem}", err=True)
-    if result.problems:
-        raise typer.Exit(1)
+    return result, sent
 
 
 def _build(layout: Layout) -> tuple[EventBuild, SavedResponses]:
