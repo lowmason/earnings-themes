@@ -2,7 +2,7 @@
 
 These scripts measure how long the `pilot run` path takes per unit of work.
 Plan 21 B6 stopped after 8 h 15 min (D21-34). Plan 23
-(`specs/plans/23-run-path-performance.md`) corrects the path. The scripts here
+(`specs/plans/completed/23-run-path-performance.md`) corrects the path. The scripts here
 produced D21-34's figures, and they give plan 23 its before and after numbers.
 Plan 24 (`specs/plans/24-cheaper-key-check.md`) makes the support-cache key check
 cheaper. `keypath.py` measures that check for one key.

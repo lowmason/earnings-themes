@@ -12,7 +12,7 @@ Outcome: the projected train `pilot run` is 7.19 h (7.29 h with the scaled rever
 
 **Tech Stack:** Python 3.14.0, stdlib `json` and `hashlib`, pydantic, pytest; uv workspace (`earnings-themes`).
 
-**Spec:** none. The requirements are D23-3 in `specs/plans/23-run-path-performance.md` (one train-scale replay command within 8 h), D23-5 there (the 13.49 h projection), and D24-1 and D24-2 below. Read plan 23's Decisions first.
+**Spec:** none. The requirements are D23-3 in `specs/plans/completed/23-run-path-performance.md` (one train-scale replay command within 8 h), D23-5 there (the 13.49 h projection), and D24-1 and D24-2 below. Read plan 23's Decisions first.
 
 **Evidence (planning session, invented text at real key size, 20 documents x 1850 paragraphs, 22 themes, 21 claims; a floor):**
 - One key's material is 12.04 MB. `bundles` is 12,004,141 bytes of it. `json.loads` takes 30.7 ms, `canonical_json` 51.1 ms and a SHA-256 3.9 ms.
@@ -133,7 +133,7 @@ Outcome: the projected train `pilot run` is 7.19 h (7.29 h with the scaled rever
 ### Task 4: Project the budget and record it
 
 **Files:**
-- Modify: `docs/verification/pilot-v1-feasibility.md`, `specs/plans/21-feasibility-pilot-and-threshold-calibration-plan-b.md` (Status line only), `specs/plans/23-run-path-performance.md` (Status line only)
+- Modify: `docs/verification/pilot-v1-feasibility.md`, `specs/plans/21-feasibility-pilot-and-threshold-calibration-plan-b.md` (Status line only), `specs/plans/completed/23-run-path-performance.md` (Status line only)
 
 **Interfaces:**
 - Consumes: `realsize.py --project` (plan 23 Task 7) and `keypath.py` (Task 1).
