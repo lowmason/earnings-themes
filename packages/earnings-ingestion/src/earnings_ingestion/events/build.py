@@ -88,7 +88,11 @@ from earnings_ingestion.events.release import (
     Identification,
     identify,
 )
-from earnings_ingestion.events.saved import SavedResponses
+from earnings_ingestion.events.saved import (
+    SavedResponses,
+    cited_remedy,
+    refetch_remedy,
+)
 from earnings_ingestion.events.slots import Slot, issuer_slots
 from earnings_ingestion.sec.companyfacts import CompanyFacts, read_companyfacts
 from earnings_ingestion.sec.data import SecDataError
@@ -255,10 +259,12 @@ def _companyfacts(
             return None
         facts = read_companyfacts(artifact.text.body)
     except (FileNotFoundError, ValueError) as exc:
-        problems.append(f"{url}: {exc}")
+        problems.append(f"{url}: {exc}; {refetch_remedy(url)}")
         return None
     if facts.cik != cik:
-        problems.append(f"{url} is the companyfacts file of CIK {facts.cik}")
+        problems.append(
+            f"{url} is the companyfacts file of CIK {facts.cik}; {refetch_remedy(url)}"
+        )
         return None
     return facts
 
@@ -294,11 +300,13 @@ def _named_filing(
         index = read_filing_index(artifact.text.body)
         instant = accepted_instant(index.accepted)
     except (FileNotFoundError, ValueError, SecDataError, AcceptanceTimeError) as exc:
-        return None, f"{url}: {exc}"
+        return None, f"{url}: {exc}; {refetch_remedy(url)}"
     if index.accession != accession:
-        return None, f"{url} is the index page of {index.accession}"
+        return None, (
+            f"{url} is the index page of {index.accession}; {refetch_remedy(url)}"
+        )
     if (why := index_disagreement(filing, index)) is not None:
-        return None, f"{url}: {why}"
+        return None, f"{url}: {why}; {refetch_remedy(url)}"
     why = release_refusal(
         accession, instant, slot.period_end, slot.next_period_end, cutoff
     )
@@ -340,10 +348,11 @@ def citations_refused(
     saved: SavedResponses,
     folder: str | None,
 ) -> list[str]:
-    """Why an override's citations fail: a stored locator that no longer cites what it
-    hashed, or a cited URL whose retrievals were all redirected (F13); or, with the
-    named filing's ``folder``, no citation there of an SEC artifact retrieved from its
-    own URL, unredirected, at a locator that verifies."""
+    """Why an override's citations fail: a cited artifact whose bytes are gone or
+    changed, with ``cited_remedy``'s remedy; a stored locator that no longer cites
+    what it hashed; or a cited URL whose retrievals were all redirected (F13); or,
+    with the named filing's ``folder``, no citation there of an SEC artifact retrieved
+    from its own URL, unredirected, at a locator that verifies."""
     refused = []
     grounded = failed = False
     for citation in override.citations:
@@ -357,11 +366,18 @@ def citations_refused(
                 rights_status=SEC_RIGHTS.rights_status,
                 rights_basis=SEC_RIGHTS.rights_basis,
             )
+        except (FileNotFoundError, ValueError) as exc:
+            line = f"{override.override_id}: {exc}"
+            remedy = cited_remedy(saved, citation.artifact_sha256)
+            refused.append(f"{line}; {remedy}" if remedy else line)
+            failed |= inside
+            continue
+        try:
             if citation.locator is not None:
                 ArtifactText(stored.body, stored.ref.media_type).verify(
                     citation.locator
                 )
-        except (FileNotFoundError, ValueError, LocatorError) as exc:
+        except LocatorError as exc:
             refused.append(f"{override.override_id}: {exc}")
             failed |= inside
             continue

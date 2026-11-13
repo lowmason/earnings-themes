@@ -17,18 +17,20 @@ So discovery fetches exactly what the build reads, and never an exhibit (EV2).
 Last, it reads back what it saved as the build does: each issuer's submissions
 file, older pages, and index pages, and each candidate's primary document. A saved
 response among them that the build cannot read, because its bytes are gone or changed
-or it is not the response its URL names, is never fetched again, since it is saved.
-``Discovery.problems`` names each one, and ``events discover`` exits 1. The read-back
-does not check a companyfacts file's CIK, which the build refuses, and it reads a
-companyfacts file outside any handler, as phase 3 does; ``discover_filing`` reads
-nothing back.
+or it is not the response its URL names, is not fetched by discovery, since it is
+saved: it is refetched by an explicit command (plan 25). ``Discovery.problems`` names
+each one with that command, and ``events discover`` exits 1. The read-back does not
+check a companyfacts file's CIK, which the build refuses, and it reads a companyfacts
+file outside any handler, as phase 3 does; ``discover_filing`` reads nothing back.
 
 ``discover_filing`` saves one filing's index page, and an 8-K's or 8-K/A's primary
 document. It is the remedy for an ``acceptance_time_unknown`` finding, and for a
 ``set_release_filing`` that names a filing discovery did not read. It reads the
 index page before it fetches the document, and fetches nothing more when the page
-describes another filing than the issuer's submissions row does (F12), which
-``Discovery.problems`` then names.
+cannot be used or describes another filing than the issuer's submissions row does
+(F12), which ``Discovery.problems`` then names with the command that refetches it.
+When the issuer's saved files do not list the filing, and one of them cannot be
+used, it fetches nothing and names that command.
 """
 
 from collections.abc import Callable, Iterable
@@ -42,7 +44,7 @@ from earnings_ingestion.events.filings import (
     issuer_filings,
 )
 from earnings_ingestion.events.release import identify
-from earnings_ingestion.events.saved import SavedResponses
+from earnings_ingestion.events.saved import SavedResponses, refetch_remedy
 from earnings_ingestion.events.slots import issuer_slots
 from earnings_ingestion.fetch.responses import Fetched
 from earnings_ingestion.fetch.store import ArtifactStore
@@ -52,6 +54,7 @@ from earnings_ingestion.sec.urls import (
     archive_url,
     companyfacts_url,
     filing_index_url,
+    submissions_page_url,
     submissions_url,
 )
 
@@ -62,6 +65,8 @@ DOCUMENT = frozenset({"text/html", "text/plain"})
 """A primary document may be plain text; ``release-id/1`` then reports it unread."""
 NOT_SAVED = "nothing saved from "
 """How the readers begin a problem that discovery answers by fetching."""
+SUBMISSIONS = submissions_page_url("")
+"""How the URL of every submissions file and older page begins."""
 
 
 @dataclass
@@ -220,8 +225,13 @@ def discover_filing(
         f for file in filings.files for f in file.filings if f.accession == accession
     ]
     if not listed:
+        unread = [url for url in filings.unusable if url.startswith(SUBMISSIONS)]
+        why = "".join(
+            f", and {url} cannot be used; {refetch_remedy(url)}" for url in unread
+        )
         raise ValueError(
-            f"the saved filings of CIK {cik} list no {accession}: run events discover"
+            f"the saved filings of CIK {cik} list no {accession}"
+            f"{why or ': run events discover'}"
         )
     filing = listed[0]
     index = filing_index_url(cik, accession)
@@ -232,14 +242,14 @@ def discover_filing(
     try:
         page = read_filing_index(SavedResponses(store).get(index).text.body)
     except (FileNotFoundError, ValueError) as exc:
-        run.result.problems.append(f"{index}: {exc}")
+        run.result.problems.append(f"{index}: {exc}; {refetch_remedy(index)}")
         return run.result
     if page.accession != accession:
         why = f"it is the index page of {page.accession}"
     else:
         why = index_disagreement(filing, page)
     if why is not None:
-        run.result.problems.append(f"{index}: {why}")
+        run.result.problems.append(f"{index}: {why}; {refetch_remedy(index)}")
         return run.result
     document = archive_url(cik, accession, filing.primary_document)
     run.phase(f"{filing.form} {accession}'s document", [(document, DOCUMENT)])

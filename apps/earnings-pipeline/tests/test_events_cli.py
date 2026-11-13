@@ -22,7 +22,7 @@ from earnings_ingestion.events.layer import (
     filings,
 )
 from earnings_ingestion.events.records import PilotManifest, pilot_content_hash
-from earnings_ingestion.events.saved import SavedResponses
+from earnings_ingestion.events.saved import SavedResponses, refetch_remedy
 from earnings_ingestion.events.state_table import read_runs
 from earnings_ingestion.events.states import DocumentState
 from earnings_ingestion.events.synthetic import SyntheticStore, save, submissions_file
@@ -331,7 +331,8 @@ def test_discover_names_a_saved_response_it_cannot_read_and_fails(
     assert result.stderr.splitlines() == [
         (
             f"problem: {url}: no artifact {artifact.content_sha256} for source"
-            " 'sec-edgar': its retrieval records remain, but its bytes are gone"
+            " 'sec-edgar': its retrieval records remain, but its bytes are gone;"
+            f" {refetch_remedy(url)}"
         )
     ]
 
