@@ -1,5 +1,7 @@
 # Run-Path Performance Implementation Plan
 
+**Status:** APPROVED (owner, 2026-11-12, D23-4); not yet executed.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make one train-scale `pilot21` replay command (`run`, `labels`, `calibrate`, `report`) finish within 8 h, without changing a stored record, hash, cache key or refusal reason.
@@ -36,6 +38,7 @@
 - **D23-1** (owner, brief, 2026-11-12): Inside one gate, each unchanged input is validated once and reused. Per-target re-checks compare content digests. In-place mutation between two targets is caught at the end of the gate (D21-34, “Once per gate, shared”). Applied in: Global Constraints, Tasks 2–6.
 - **D23-2** (owner, brief, 2026-11-12): This is its own plan. D21-34 in plan 21 records the pause in B6 (D21-34, “Own plan + D21-34”). Applied in: header, Task 7.
 - **D23-3** (owner, brief, 2026-11-12): One train-scale pilot replay command finishes within 8 h on the owner's machine (D21-34, “Under 8 h (overnight)”). Live passes are bounded by model time and are outside this budget. Applied in: Goal, Task 7.
+- **D23-4** (owner, plan review, 2026-11-12): “Approve both” — D21-34's text and this plan as written at `1c76e23`. Applied in: header.
 
 ---
 
