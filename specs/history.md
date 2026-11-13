@@ -18,3 +18,11 @@ Differences from the design:
 - Deviation (Task 6): no `raw_caches` memo, `_require_unchanged` and option R instead, 12 sweeps, not 8, and `storage_corrupt` where the base refused `input_changed` in one case (D23-9). Source: plan, Task 6.
 - Deviation (Task 7): steps 3 to 5 moved to plan 24, Task 4, after the projection stopped at 13.49 h (D23-5). Plan 24 completed them on 2026-11-13 with a projection of 7.19 h. Source: plan, Task 7.
 - Deferred: 2 items. Source: specs/deferred_items.md, § 23-run-path-performance.
+
+## 24-cheaper-key-check — 2026-11-13
+Plan: specs/plans/completed/24-cheaper-key-check.md · Spec: none
+
+Differences from the design:
+- Deviation (Task 2): the memo key holds the fragment name (D24-4), and `_light_material` also requires the top-level lists to be empty and each later marker to occur once (D24-5). Source: plan, Task 2.
+- Deviation (Task 3): `_check_material` takes `kind`, `RecursionError` joins the fallback list, and a test-only conftest shim keeps two existing cost tests unchanged (D24-6). Source: plan, Task 3.
+- Deferred: 1 item. Source: specs/deferred_items.md, § 24-cheaper-key-check.
