@@ -43,6 +43,7 @@ from earnings_themes.coding.records import (
 )
 from earnings_themes.extraction.records import RunRecord
 from earnings_themes.extraction.store import StoredRun
+from earnings_themes.scope import gate
 from earnings_themes.support.records import CodebookReference, SupportSources, Target
 
 
@@ -206,13 +207,16 @@ def propose_run(
             ProposalRunRecord,
         )
         resolved: list[CodingInput | ClassificationRecord] = []
-        for doc_id, claim_id in record.requested_claim_order:
-            try:
-                resolved.append(resolve_coding_input(sources, doc_id, claim_id))
-            except CodingError as error:
-                resolved.append(
-                    _refused(run_id, doc_id, claim_id, bindings, str(error))
-                )
+        # One gate checks each source bundle once for all claims. It closes before
+        # any claim's gate opens, and the final checks open their own (D23-1).
+        with gate(fresh=True):
+            for doc_id, claim_id in record.requested_claim_order:
+                try:
+                    resolved.append(resolve_coding_input(sources, doc_id, claim_id))
+                except CodingError as error:
+                    resolved.append(
+                        _refused(run_id, doc_id, claim_id, bindings, str(error))
+                    )
         allowance = CodingAllowance(ceiling_value, run_id=run_id)
         classifications = []
         attempts = []
@@ -266,47 +270,53 @@ def propose_run(
             ),
             ProposalRunRecord,
         )
-        for input in resolved:
-            if type(input) is CodingInput:
-                identifier = classification_id(
-                    run_id, input.doc_id, input.claim_id, input.input_hash
-                )
-                _verify_attempts(
-                    input,
-                    policy,
-                    identity,
-                    tuple(
-                        row for row in attempts if row.classification_id == identifier
-                    ),
-                    cache,
-                )
-        # Audit callbacks and identity properties precede the final pure bindings.
-        if _current_identity(classifier) != identity:
-            raise CodingError("model_mismatch")
-        if (
-            source_bindings(sources) != bindings
-            or digest(_policy(policy).model_dump(mode="json")) != policy_hash
-            or checked(ceilings, CodingCeilings) != ceiling_value
-            or tuple(sorted(software.items())) != record.software
-            or tuple(claim_order) != order
-            or cache.mode != configuration["cache_mode"]
-            or digest(CodingReply.model_json_schema()) != schema_hash
-        ):
-            raise CodingError("input_changed")
-        for input in resolved:
-            if type(input) is CodingInput:
-                try:
-                    reverify_coding_input(input)
-                except CodingError:
-                    raise CodingError("input_changed") from None
-            else:
-                try:
-                    resolve_coding_input(sources, input.doc_id, input.claim_id)
-                except CodingError as error:
-                    if str(error) != input.reason:
+        # A fresh scope checks every source in full after the claims' callbacks
+        # ran, so a change made in place during a claim is not hidden by a result
+        # that an earlier gate remembers (D21-34).
+        with gate(fresh=True):
+            for input in resolved:
+                if type(input) is CodingInput:
+                    identifier = classification_id(
+                        run_id, input.doc_id, input.claim_id, input.input_hash
+                    )
+                    _verify_attempts(
+                        input,
+                        policy,
+                        identity,
+                        tuple(
+                            row
+                            for row in attempts
+                            if row.classification_id == identifier
+                        ),
+                        cache,
+                    )
+            # Audit callbacks and identity properties precede the final pure bindings.
+            if _current_identity(classifier) != identity:
+                raise CodingError("model_mismatch")
+            if (
+                source_bindings(sources) != bindings
+                or digest(_policy(policy).model_dump(mode="json")) != policy_hash
+                or checked(ceilings, CodingCeilings) != ceiling_value
+                or tuple(sorted(software.items())) != record.software
+                or tuple(claim_order) != order
+                or cache.mode != configuration["cache_mode"]
+                or digest(CodingReply.model_json_schema()) != schema_hash
+            ):
+                raise CodingError("input_changed")
+            for input in resolved:
+                if type(input) is CodingInput:
+                    try:
+                        reverify_coding_input(input)
+                    except CodingError:
                         raise CodingError("input_changed") from None
                 else:
-                    raise CodingError("input_changed")
+                    try:
+                        resolve_coding_input(sources, input.doc_id, input.claim_id)
+                    except CodingError as error:
+                        if str(error) != input.reason:
+                            raise CodingError("input_changed") from None
+                    else:
+                        raise CodingError("input_changed")
         return ProposalRun(
             record,
             tuple(classifications),
