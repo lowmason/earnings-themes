@@ -292,3 +292,73 @@ def test_an_unserializable_later_support_row_keeps_its_base_code(
     with pytest.raises(CodingError, match="^unexpected_error$"):
         case.decide(policy)
     assert len(policy.voted) == 1
+
+
+def test_a_run_id_changed_after_a_vote_and_restored_is_refused(two_targets):
+    case = two_targets
+    record = case.proposals.record
+    run_id = record.run_id
+
+    def change(policy):
+        record.__dict__["run_id"] = "invented-other-run"
+
+    def restore(policy):
+        record.__dict__["run_id"] = run_id
+
+    # Read 3 follows the first vote, and read 4 follows the second one.
+    policy = SteppedPolicy(case, on_read={3: change, 4: restore})
+    with pytest.raises(CodingError, match="^input_changed$"):
+        case.decide(policy)
+    assert len(policy.voted) == 1
+
+
+def test_an_outcome_changed_through_its_view_after_the_vote_is_refused(two_targets):
+    """The view's outcome is the gate's own copy, and the decision reads it after
+    the vote. A policy that keeps the view and changes it then is refused, as a
+    change during ``evaluate`` is."""
+    case = two_targets
+    views = []
+
+    def keep(policy, view):
+        views.append(view)
+
+    def change(policy):
+        views[0].outcome.__dict__["missing"] = ("invented_missing",)
+
+    # Read 3 follows the first vote.
+    policy = SteppedPolicy(case, on_read={3: change}, on_vote=keep)
+    with pytest.raises(CodingError, match="^input_changed$"):
+        case.decide(policy)
+    assert len(policy.voted) == 1
+
+
+def test_a_view_changed_while_its_vote_is_read_is_refused(two_targets):
+    """``decision_vote`` reads a returned vote through its ``model_dump``, which a
+    policy's own vote class can run. A view changed then is refused, even when the
+    next ``reference`` read restores it."""
+    from earnings_themes.coding.records import PolicyVote
+
+    case = two_targets
+    views = []
+    saved = []
+
+    class ChangingVote(PolicyVote):
+        def model_dump(self, **kwargs):
+            saved.append(views[-1].eligible_quote_ids)
+            object.__setattr__(views[-1], "eligible_quote_ids", ("q-0-1",))
+            return super().model_dump(**kwargs)
+
+    def restore(policy):
+        object.__setattr__(views[-1], "eligible_quote_ids", saved[-1])
+
+    def evaluate(view):
+        views.append(view)
+        return ChangingVote(action="accept", supporting_quote_ids=("q-0-1",))
+
+    # Read 3 follows the first vote.
+    policy = SteppedPolicy(case, on_read={3: restore})
+    policy.evaluate = evaluate
+    assert all(e.quote_id != "q-0-1" for e in case.support.evidence)
+    with pytest.raises(CodingError, match="^input_changed$"):
+        case.decide(policy)
+    assert len(views) == 1

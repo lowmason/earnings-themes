@@ -497,6 +497,7 @@ def decide_assignments(
         # The digests each per-target re-check compares, taken before external code
         # runs. Each key is taken now too, so a later change cannot redirect it.
         outcome_rows = {row.target_id: row for row in support.outcomes}
+        record_row = _row_hash(proposals.record)
         rows = tuple(
             (
                 proposal,
@@ -532,26 +533,41 @@ def decide_assignments(
                 if _current_proposal_inputs(proposals, sources) != current:
                     raise CodingError("input_changed")
 
-        def require_target(proposal, proposal_row, key, *, voted=False) -> None:
-            """One target's re-check by content digest: its proposal, support and
-            outcome rows and, before its vote, the evidence, entailment and trial
-            rows the vote reads. After a vote, the policy reference too. Anything
-            else is checked again at the end of the gate."""
+        def require_target(proposal, proposal_row, key, voted=None) -> None:
+            """One target's re-check by content digest, covering every value the
+            decision reads: the proposal row, the proposal run's record, the support
+            and outcome rows and, before the vote, the evidence, entailment and trial
+            rows the vote reads. After a vote (``voted`` is ``(view, view hash)``),
+            the view is compared before and after the policy reference is read, and
+            the reference too. Anything else is checked again at the end of the gate.
+            """
             with _refuse_changes():
-                if voted and _policy_reference(policy, proposals, support) != reference:
-                    raise CodingError("input_changed")
-                if _recheck_digest(_row_hash, proposal) != proposal_row:
-                    raise CodingError("input_changed")
-                if key not in target_rows:
-                    return
-                target_id, outcome_row, target_hash, outcome_hash, view_hash = (
-                    target_rows[key]
-                )
+                if voted is not None:
+                    view, view_hash = voted
+                    # Reading the vote can run the policy's code (``checked``).
+                    if _view_hash(view) != view_hash:
+                        raise CodingError("input_changed")
+                    if _policy_reference(policy, proposals, support) != reference:
+                        raise CodingError("input_changed")
                 if (
-                    _row_hash(stored[key]) != target_hash
-                    or _row_hash(outcome_row) != outcome_hash
-                    or (not voted and _view_rows_hash(support, target_id) != view_hash)
+                    _recheck_digest(_row_hash, proposal) != proposal_row
+                    or _recheck_digest(_row_hash, proposals.record) != record_row
                 ):
+                    raise CodingError("input_changed")
+                if key in target_rows:
+                    target_id, outcome_row, target_hash, outcome_hash, rows_hash = (
+                        target_rows[key]
+                    )
+                    if (
+                        _row_hash(stored[key]) != target_hash
+                        or _row_hash(outcome_row) != outcome_hash
+                        or (
+                            voted is None
+                            and _view_rows_hash(support, target_id) != rows_hash
+                        )
+                    ):
+                        raise CodingError("input_changed")
+                if voted is not None and _view_hash(view) != view_hash:
                     raise CodingError("input_changed")
 
         # Reference properties are external code too; recheck after reading them.
@@ -568,8 +584,10 @@ def decide_assignments(
             else:
                 outcome = by_id[target.target_id]
                 view = decision_input(support, target, outcome)
+                view_hash = _view_hash(view)
                 status, reason, quote_ids = decision_vote(view, policy)
-                require_target(proposal, proposal_row, key, voted=True)
+                require_target(proposal, proposal_row, key, (view, view_hash))
+                # No external code runs from the check above to the decision row.
                 target_id = target.target_id
                 support_status, flags, missing = (
                     outcome.status,
