@@ -58,6 +58,7 @@ from earnings_ingestion.events.layer import (
 )
 from earnings_ingestion.events.recover import (
     Refetched,
+    RefetchInterrupted,
     RefetchPlan,
     expected_types,
     plan_refetch,
@@ -83,6 +84,7 @@ from earnings_ingestion.events.synthetic import (
 )
 from earnings_ingestion.fetch.client import UnexpectedResponse
 from earnings_ingestion.fetch.records import Retrieval
+from earnings_ingestion.fetch.responses import Fetched
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.client import open_sec_client
 from earnings_ingestion.sec.companyfacts import read_companyfacts
@@ -1371,3 +1373,130 @@ def test_read_back_names_an_unusable_url_once_when_a_release_is_listed_twice(
     stored_at(store, document).write_bytes(b"damaged")
     read = read_back(universe, SavedResponses(store))
     assert read.unusable == (main, document)
+
+
+def test_a_refetch_plan_refuses_a_damaged_response_discovery_does_not_read(
+    universe, layer, tmp_path
+) -> None:
+    """An exhibit, which only acquisition refetches (EV2), and a page behind an
+    unusable submissions file: each is saved and its bytes changed, but neither is
+    among the responses discovery cannot use."""
+    store = populated(universe, layer, tmp_path)
+    exhibit, (body, media_type) = min(exhibit_bodies().items())
+    save(store, exhibit, body, media_type, RETRIEVED)
+    main = submissions_url(EASTFIELD.cik)
+    paths = [stored_at(store, url) for url in (exhibit, EASTFIELD_PAGE, main)]
+    for path in paths:
+        path.write_bytes(path.read_bytes()[:16])
+    for url in (exhibit, EASTFIELD_PAGE):
+        with pytest.raises(ValueError, match="no longer hashes"):
+            SavedResponses(store).get(url)
+        with pytest.raises(ValueError) as caught:
+            plan_refetch(universe, store, [url])
+        assert str(caught.value) == refused_as_usable(url)
+    assert "events acquire --refetch" in refused_as_usable(exhibit)
+    assert "classified once that file is refetched" in refused_as_usable(EASTFIELD_PAGE)
+
+
+def interrupted(universe, store: ArtifactStore, responses, fetch_through):
+    """``run_refetch`` of Acme's release index page, then a Borealis index page,
+    through ``fetch_through(sec.fetch)``; the ``RefetchInterrupted`` it raises."""
+    first = filing_index_url(ACME.cik, ACME_RELEASE)
+    borealis = f"/edgar/data/{int(BOREALIS.cik)}/"
+    second = min(u for u in responses if borealis in u and u.endswith("-index.htm"))
+    recorder = Recorder(responses)
+    with (
+        open_sec_client(
+            environ=IDENTITY,
+            transport=recorder.transport(),
+            sleep=lambda seconds: None,
+            now=lambda: datetime.now(UTC) + timedelta(minutes=1),
+        ) as sec,
+        pytest.raises(RefetchInterrupted) as caught,
+    ):
+        run_refetch(
+            universe,
+            RefetchPlan((first, second)),
+            fetch_through(sec.fetch, first, second),
+            store,
+        )
+    return caught.value, recorder
+
+
+STOPPED = UnexpectedResponse("HTTP 403: the invented stop")
+
+
+def stop_at(where: str):
+    def through(fetch, first, second):
+        def stopping(url: str, types: frozenset[str]):
+            if url == {"first": first, "second": second}[where]:
+                raise STOPPED
+            return fetch(url, types)
+
+        return stopping
+
+    return through
+
+
+def mismatched(fetch, first, second):
+    """Each response's body no longer matches its retrieval record: the save fails."""
+
+    def fetching(url: str, types: frozenset[str]):
+        response = fetch(url, types)
+        return Fetched(body=response.body + b"!", retrieval=response.retrieval)
+
+    return fetching
+
+
+@pytest.mark.parametrize(
+    ("damaged", "suffix"),
+    [(False, b"\n"), (True, b"")],
+    ids=["other bytes", "bytes changed"],
+)
+def test_a_refetch_stopped_partway_reports_what_it_saved(
+    universe, layer, tmp_path, damaged, suffix
+) -> None:
+    """The first URL is saved before the second fails: what it changed, and where
+    it moved damaged bytes, survive in the interruption, for no rerun can tell."""
+    store = populated(universe, layer, tmp_path)
+    first = filing_index_url(ACME.cik, ACME_RELEASE)
+    if damaged:
+        stored_at(store, first).write_bytes(DAMAGED)
+    served = layer[first][0] + suffix
+    stopped, recorder = interrupted(
+        universe, store, {**layer, first: (served, HTML)}, stop_at("second")
+    )
+    assert stopped.__cause__ is STOPPED
+    assert recorder.requested == [first]
+    assert stopped.partial.fetched == (first,)
+    assert stopped.partial.problems == ()
+    assert SavedResponses(store).get(first).text.body == served
+    assert str(stopped) == "the refetch stopped after it saved 1 URL(s)"
+    if damaged:
+        folder = store.root / SEC_SOURCE_ID / "quarantine" / sha256_hex(served)
+        assert stopped.partial.changed == ()
+        assert stopped.partial.quarantined == (folder / f"{sha256_hex(DAMAGED)}.html",)
+    else:
+        assert stopped.partial.changed == (first,)
+        assert stopped.partial.quarantined == ()
+
+
+@pytest.mark.parametrize(
+    "through", [stop_at("first"), mismatched], ids=["fetch", "save"]
+)
+def test_a_refetch_stopped_at_its_first_url_saved_nothing(
+    universe, layer, tmp_path, through
+) -> None:
+    """A failed fetch, or a failed save, stops the refetch at its first URL."""
+    store = populated(universe, layer, tmp_path)
+    first = filing_index_url(ACME.cik, ACME_RELEASE)
+    stopped, recorder = interrupted(universe, store, layer, through)
+    assert stopped.partial == Refetched((), (), (), ())
+    assert str(stopped) == "the refetch stopped after it saved 0 URL(s)"
+    if through is mismatched:
+        assert recorder.requested == [first]
+        assert isinstance(stopped.__cause__, ValueError)
+        assert str(stopped.__cause__) == "the retrieval record describes other bytes"
+    else:
+        assert recorder.requested == []
+        assert stopped.__cause__ is STOPPED

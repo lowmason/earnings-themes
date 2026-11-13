@@ -29,8 +29,10 @@ any handler (item P2.3). ``discover_filing`` reads nothing back.
 ``plan_refetch`` accepts only those URLs, and adds a submissions file's saved older
 pages. ``run_refetch`` fetches exactly the plan's URLs, saves each as discovery
 does, as a newer retrieval that the readers then read, and reads back again. It runs
-no discovery phase. A page that the readers reach only through an unusable file is
-read, and classified, once that file is refetched.
+no discovery phase. A fetch or a save that fails stops it with
+``RefetchInterrupted``, which holds what it saved before. A page that the readers
+reach only through an unusable file is read, and classified, once that file is
+refetched.
 
 ``discover_filing`` saves one filing's index page, and an 8-K's or 8-K/A's primary
 document. It is the remedy for an ``acceptance_time_unknown`` finding, and for a

@@ -20,7 +20,12 @@ into ``quarantine/`` before it writes them again, and never moves valid bytes. A
 whose new bytes match no earlier retrieval of it is ``changed``: the build may then
 read other bytes than it froze. Last, it reads back the saved responses and returns
 what still cannot be used. It runs no discovery phase: a plain ``events discover``
-rerun fetches what a refreshed file now lists.
+rerun fetches what a refetched file now lists.
+
+A fetch or a save that fails stops the refetch. ``RefetchInterrupted`` is raised
+from that failure, and its ``partial`` holds what was saved before it: the URLs,
+which of them changed, and where bytes were moved. A rerun cannot tell this again,
+because the saved URLs then read, and are refused as usable.
 """
 
 from collections.abc import Sequence
@@ -60,6 +65,7 @@ class Refetched:
     """What a refetch fetched, and what it found."""
 
     fetched: tuple[str, ...]
+    """Each URL fetched and saved, in plan order."""
     changed: tuple[str, ...]
     """Each URL whose new bytes match no earlier retrieval of it."""
     quarantined: tuple[Path, ...]
@@ -119,24 +125,44 @@ def plan_refetch(
     return RefetchPlan(urls=tuple(dict.fromkeys(urls)))
 
 
+class RefetchInterrupted(Exception):
+    """A refetch that stopped when a fetch or a save failed. ``partial`` holds what it
+    saved before, with no problems read back; ``__cause__`` is the failure. Only the
+    refetch knows each URL's earlier hashes, so only it can tell what ``changed``."""
+
+    def __init__(self, partial: Refetched) -> None:
+        super().__init__(
+            f"the refetch stopped after it saved {len(partial.fetched)} URL(s)"
+        )
+        self.partial = partial
+
+
 def run_refetch(
     universe: UniverseManifest, plan: RefetchPlan, fetch: Fetch, store: ArtifactStore
 ) -> Refetched:
     """Fetch each of ``plan``'s URLs again and save it as its newest response, then
-    read back what still cannot be used."""
+    read back what still cannot be used. A fetch or a save that fails raises
+    ``RefetchInterrupted`` from that failure, with what was saved before it."""
     saved = SavedResponses(store)
     earlier = {url: saved.hashes(url) for url in plan.urls}
     before = len(store.quarantined)
     fetched, changed = [], []
+
+    def found(problems: tuple[str, ...]) -> Refetched:
+        return Refetched(
+            fetched=tuple(fetched),
+            changed=tuple(changed),
+            quarantined=tuple(dict.fromkeys(store.quarantined[before:])),
+            problems=problems,
+        )
+
     for url in plan.urls:
-        response = fetch(url, expected_types(url))
-        save_fetched(store, response)
+        try:
+            response = fetch(url, expected_types(url))
+            save_fetched(store, response)
+        except Exception as exc:
+            raise RefetchInterrupted(found(())) from exc
         fetched.append(url)
         if response.retrieval.sha256 not in earlier[url]:
             changed.append(url)
-    return Refetched(
-        fetched=tuple(fetched),
-        changed=tuple(changed),
-        quarantined=tuple(dict.fromkeys(store.quarantined[before:])),
-        problems=read_back(universe, SavedResponses(store)).problems,
-    )
+    return found(read_back(universe, SavedResponses(store)).problems)
