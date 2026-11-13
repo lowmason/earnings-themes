@@ -621,6 +621,15 @@ def test_discover_filing_names_the_unusable_file_it_cannot_list(
     assert recorder.requested == []
 
 
+def test_the_refetch_remedy_names_the_command_and_the_url() -> None:
+    url = submissions_url(ACME.cik)
+    command = f"earnings-pipeline events discover --refetch {url}"
+    assert refetch_remedy(url) == f"refetch it: {command}"
+    assert refetch_remedy(url, "the submissions file with its older pages") == (
+        f"refetch the submissions file with its older pages: {command}"
+    )
+
+
 def test_saved_responses_list_urls_by_prefix_and_every_hash_of_a_url(
     tmp_path,
 ) -> None:
