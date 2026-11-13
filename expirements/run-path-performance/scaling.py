@@ -6,10 +6,15 @@ scale: replay of proposals and support, support write/read, proposal-support
 validation, decisions, and the coding run's write (validate + reverify), read and
 reverify. Prints phase names, sizes and seconds only.
 
+The codebook holds N invented themes (`--themes N`, default 22, as codebook v0).
+`--themes 2` reproduces the two-theme figures that D21-34 was planned from.
+
 Usage (from the worktree root):
   uv run --locked --all-packages python expirements/run-path-performance/scaling.py 20 2 4 8
+  uv run --locked --all-packages python expirements/run-path-performance/scaling.py 20 2 4 --themes 2
 """
 
+import argparse
 import importlib
 import json
 import sys
@@ -25,6 +30,9 @@ from earnings_core import digest, sha256_hex
 from earnings_themes.codebook import (
     Approval,
     CodebookDraft,
+    Example,
+    Theme,
+    codebook_hash,
     freeze_codebook,
 )
 from earnings_themes.coding import validate_proposal_support
@@ -75,9 +83,31 @@ from earnings_themes.synthetic import (
 cases = importlib.import_module("packages.earnings-themes.tests.coding.cases")
 REPO = Path.cwd()
 BIG = 10**9
+DEFAULT_THEMES = 22  # codebook v0 holds 22 themes
+ELAPSED: dict[str, float] = {}  # label -> seconds of the last `timed` call
 
 
-def codebook():
+def invented_theme(index):
+    """A theme in the pattern of `cases.invented_codebook`, with invented text."""
+    return Theme(
+        theme_id=f"invented-theme-{index:02d}",
+        label=f"Invented theme {index}",
+        definition=f"Invented changes of kind {index}.",
+        inclusion_rules=(f"Explicit invented changes of kind {index}.",),
+        exclusion_rules=(f"Invented text without kind {index}.",),
+        positive_examples=(
+            Example(synthetic=True, text="An invented positive illustration."),
+        ),
+        hard_negatives=(
+            Example(synthetic=True, text="An invented unrelated illustration."),
+        ),
+        sector_applicability="all",
+    )
+
+
+def codebook(themes=DEFAULT_THEMES):
+    """The invented codebook with `themes` themes. The first two are
+    `cases.invented_codebook`'s own (`capacity`, `demand`)."""
     made = freeze_codebook(
         parse(codebook_draft(), CodebookDraft, "draft"),
         pin=PIN,
@@ -89,7 +119,10 @@ def codebook():
             adr="docs/adr/0003-approve-pilot-codebook-v0.md",
         ),
     )
-    return cases.invented_codebook(made)
+    base = cases.invented_codebook(made)
+    extra = tuple(invented_theme(i) for i in range(len(base.themes) + 1, themes + 1))
+    book = base.model_copy(update={"themes": (*base.themes, *extra)[:themes]})
+    return book.model_copy(update={"content_hash": codebook_hash(book)})
 
 
 def sources(book, template, docs, claims):
@@ -187,7 +220,8 @@ def assess(src, proposals, root, mode):
 def timed(label, n, fn):
     start = time.perf_counter()
     value = fn()
-    print(f"{label:<28} n={n:<6} {time.perf_counter() - start:9.2f} s", flush=True)
+    took = ELAPSED[label] = time.perf_counter() - start
+    print(f"{label:<28} n={n:<6} {took:9.2f} s", flush=True)
     return value
 
 
@@ -255,13 +289,18 @@ def one(book, template, docs, claims):
 
 
 def main():
-    docs = int(sys.argv[1])
-    book = codebook()
+    parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    parser.add_argument("docs", type=int, help="documents")
+    parser.add_argument("claims", type=int, nargs="+", help="claims per document")
+    parser.add_argument("--themes", type=int, default=DEFAULT_THEMES)
+    args = parser.parse_args()
+    book = codebook(args.themes)
     template = parse_template(
         (REPO / "prompts/extraction/pointer-1.md").read_text(encoding="utf-8")
     )
-    for claims in (int(a) for a in sys.argv[2:]):
-        one(book, template, docs, claims)
+    print(f"themes={len(book.themes)}", flush=True)
+    for claims in args.claims:
+        one(book, template, args.docs, claims)
 
 
 if __name__ == "__main__":

@@ -3,12 +3,14 @@
 Invented documents of real length: D documents x P one-sentence paragraph
 elements, with about one claim per document. The support-cache key embeds every
 bundle, claim and quote, so its size tracks the documents, not the claim count.
-Prints sizes, counts and seconds only.
+The codebook holds N invented themes (`--themes N`, default 22, as codebook v0).
+Prints sizes, counts and seconds only: one line per phase, then the per-unit costs.
 
 Usage (from the worktree root):
-  uv run --locked --all-packages python expirements/run-path-performance/realsize.py 20 1850
+  uv run --locked --all-packages python expirements/run-path-performance/realsize.py 20 1850 --themes 22
 """
 
+import argparse
 import importlib.util
 import json
 import sys
@@ -114,9 +116,16 @@ def sources(book, template, docs, paragraphs, every):
 
 
 def main():
-    docs, paragraphs = int(sys.argv[1]), int(sys.argv[2])
-    every = int(sys.argv[3]) if len(sys.argv) > 3 else 0
-    book = scaling.codebook()
+    parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    parser.add_argument("docs", type=int, help="documents")
+    parser.add_argument("paragraphs", type=int, help="paragraph elements per document")
+    parser.add_argument(
+        "every", type=int, nargs="?", default=0, help="claim every N windows"
+    )
+    parser.add_argument("--themes", type=int, default=scaling.DEFAULT_THEMES)
+    args = parser.parse_args()
+    docs, paragraphs, every = args.docs, args.paragraphs, args.every
+    book = scaling.codebook(args.themes)
     template = parse_template(
         Path("prompts/extraction/pointer-1.md").read_text("utf-8")
     )
@@ -128,9 +137,9 @@ def main():
         src, requests = sources(book, template, docs, paragraphs, every or windows)
         n = len(src.stored_run.claims)
         print(
-            f"build: docs={docs} paragraphs/doc={paragraphs} extraction_requests="
-            f"{requests} claims={n} quotes={len(src.stored_run.quotes)} "
-            f"{time.perf_counter() - start:.1f} s",
+            f"build: docs={docs} paragraphs/doc={paragraphs} themes={len(book.themes)} "
+            f"extraction_requests={requests} claims={n} "
+            f"quotes={len(src.stored_run.quotes)} {time.perf_counter() - start:.1f} s",
             flush=True,
         )
         text = "Classify invented claims using only supplied frozen theme IDs."
@@ -173,15 +182,18 @@ def main():
             f"= {took / len(files):.2f} s per support entry",
             flush=True,
         )
+        per_unit = {
+            "proposal replay, per claim": scaling.ELAPSED["propose replay"] / n,
+            "support replay, per support entry": took / len(files),
+        }
         cache = SupportCache(root / "support-cache", "replay")
         judge = [p for p in files if json.loads(p.read_bytes())["kind"] == "judge"]
         start = time.perf_counter()
         for path in judge[:5]:
             cache.artifact_hash(path.name)
-        print(
-            f"artifact_hash (judge entry)  {(time.perf_counter() - start) / 5:9.2f} s each",
-            flush=True,
-        )
+        each = (time.perf_counter() - start) / 5
+        print(f"artifact_hash (judge entry)  {each:9.2f} s each", flush=True)
+        per_unit["artifact_hash, per judge entry"] = each
         scaling.timed(
             "write support",
             n,
@@ -200,6 +212,12 @@ def main():
             n,
             lambda: decide_assignments(proposals, stored, src, None),
         )
+        per_unit["decide_assignments, per target"] = scaling.ELAPSED[
+            "decide (no policy)"
+        ] / len(proposals.targets)
+        print("per-unit costs (floors, in seconds):")
+        for name, seconds in per_unit.items():
+            print(f"  {name:<36} {seconds:9.3f} s")
 
 
 if __name__ == "__main__":
