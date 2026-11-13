@@ -1020,6 +1020,39 @@ def test_refetch_reports_other_bytes(repo, moved, monkeypatch) -> None:
     ]
 
 
+def test_refetch_prints_each_url_that_returned_other_bytes(
+    repo, moved, monkeypatch
+) -> None:
+    """Eastfield's main file and the older page it brings both come back other:
+    one changed line for each, in the plan's order."""
+    truncate(repo, EASTFIELD_MAIN)
+    responses = {
+        **served(),
+        **other_bytes(EASTFIELD_MAIN),
+        **other_bytes(EASTFIELD_PAGE),
+    }
+    budgets = client(monkeypatch, responses)
+    result = run(
+        repo,
+        "discover",
+        "--refetch",
+        EASTFIELD_MAIN,
+        "--max-requests",
+        "2",
+        store=EVENTS_STORE,
+    )
+    assert result.exit_code == 0, result.output
+    assert budgets == [2]
+    assert result.stdout.splitlines() == [
+        REFETCH.format(2),
+        f"  {EASTFIELD_MAIN}",
+        f"  {EASTFIELD_PAGE}",
+        "refetched 2; requests sent: 2",
+        changed(EASTFIELD_MAIN),
+        changed(EASTFIELD_PAGE),
+    ]
+
+
 def test_refetch_prints_each_move_and_then_each_change(
     repo, moved, monkeypatch
 ) -> None:
