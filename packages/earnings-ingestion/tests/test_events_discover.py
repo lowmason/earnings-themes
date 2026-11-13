@@ -82,7 +82,7 @@ from earnings_ingestion.events.synthetic import (
     save,
     submissions_file,
 )
-from earnings_ingestion.fetch.client import UnexpectedResponse
+from earnings_ingestion.fetch.client import AccessStop, UnexpectedResponse
 from earnings_ingestion.fetch.records import Retrieval
 from earnings_ingestion.fetch.responses import Fetched
 from earnings_ingestion.fetch.store import ArtifactStore
@@ -1423,14 +1423,21 @@ def interrupted(universe, store: ArtifactStore, responses, fetch_through):
     return caught.value, recorder
 
 
-STOPPED = UnexpectedResponse("HTTP 403: the invented stop")
+UNEXPECTED = UnexpectedResponse("an invented unexpected response")
+"""What the shared client raises for a response it must not keep."""
+PERSISTENT_403 = AccessStop(
+    "403 persisted for the invented second URL; stopping without changing identity"
+)
+"""What the shared client raises for a persistent 403: an ``AccessStop``, never an
+``UnexpectedResponse``. It raises the same class for spent retries, a block page and
+a spent budget."""
 
 
-def stop_at(where: str):
+def stop_at(where: str, failure: Exception):
     def through(fetch, first, second):
         def stopping(url: str, types: frozenset[str]):
             if url == {"first": first, "second": second}[where]:
-                raise STOPPED
+                raise failure
             return fetch(url, types)
 
         return stopping
@@ -1449,12 +1456,15 @@ def mismatched(fetch, first, second):
 
 
 @pytest.mark.parametrize(
+    "failure", [UNEXPECTED, PERSISTENT_403], ids=["unexpected", "persistent 403"]
+)
+@pytest.mark.parametrize(
     ("damaged", "suffix"),
     [(False, b"\n"), (True, b"")],
     ids=["other bytes", "bytes changed"],
 )
 def test_a_refetch_stopped_partway_reports_what_it_saved(
-    universe, layer, tmp_path, damaged, suffix
+    universe, layer, tmp_path, damaged, suffix, failure
 ) -> None:
     """The first URL is saved before the second fails: what it changed, and where
     it moved damaged bytes, survive in the interruption, for no rerun can tell."""
@@ -1464,9 +1474,9 @@ def test_a_refetch_stopped_partway_reports_what_it_saved(
         stored_at(store, first).write_bytes(DAMAGED)
     served = layer[first][0] + suffix
     stopped, recorder = interrupted(
-        universe, store, {**layer, first: (served, HTML)}, stop_at("second")
+        universe, store, {**layer, first: (served, HTML)}, stop_at("second", failure)
     )
-    assert stopped.__cause__ is STOPPED
+    assert stopped.__cause__ is failure
     assert recorder.requested == [first]
     assert stopped.partial.fetched == (first,)
     assert stopped.partial.problems == ()
@@ -1482,7 +1492,7 @@ def test_a_refetch_stopped_partway_reports_what_it_saved(
 
 
 @pytest.mark.parametrize(
-    "through", [stop_at("first"), mismatched], ids=["fetch", "save"]
+    "through", [stop_at("first", UNEXPECTED), mismatched], ids=["fetch", "save"]
 )
 def test_a_refetch_stopped_at_its_first_url_saved_nothing(
     universe, layer, tmp_path, through
@@ -1499,4 +1509,4 @@ def test_a_refetch_stopped_at_its_first_url_saved_nothing(
         assert str(stopped.__cause__) == "the retrieval record describes other bytes"
     else:
         assert recorder.requested == []
-        assert stopped.__cause__ is STOPPED
+        assert stopped.__cause__ is UNEXPECTED
