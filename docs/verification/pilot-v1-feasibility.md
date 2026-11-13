@@ -1556,6 +1556,11 @@ packages apps tests/contracts -m "not live and not browser" -q --tb=short`. The 
 was 5,643 passed, 3 skipped and 17 deselected, in 6 min 54 s. `ruff check .` and
 `ruff format --check .` were clean. No existing test is edited.
 
+The owner then ran the gates in the main checkout, detached at `5804663`, on
+2026-11-13. `pytest -q` (the root suite) gave 5,810 passed, 3 skipped and 28
+deselected, with 1 warning, in 8 min 10 s. The warning is torch's `FutureWarning` in
+`test_nli.py`. `pytest tests/integration/test_stage6_wording.py -q` gave 7 passed.
+
 ### What this section does not show
 
 - The real train support cache (7,792 entries, about 107 GB) was not replayed here.
@@ -1565,4 +1570,5 @@ was 5,643 passed, 3 skipped and 17 deselected, in 6 min 54 s. `ruff check .` and
 - These are floors on invented text. A real run can differ. Proposal replay (3.55 h)
   and the load (0.53 h, measured before plan 23) are the least certain terms.
 - The agent did not run the root suite, the Stage 6 wording gate, the browser modes
-  or any live test. The owner's gates at the branch head are open.
+  or any live test. The owner ran the root suite and the wording gate, as "Tests
+  run" records.
