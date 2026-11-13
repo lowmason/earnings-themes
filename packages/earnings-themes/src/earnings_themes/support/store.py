@@ -17,6 +17,7 @@ import polars as pl
 from earnings_core import VALIDATOR_VERSION, digest, sha256_hex
 
 from earnings_themes.records import record_json
+from earnings_themes.scope import gated, once
 from earnings_themes.support.assess import derive_outcome
 from earnings_themes.support.judges import validate_panel
 from earnings_themes.support.problems import SupportError
@@ -677,10 +678,23 @@ def _check_ceilings(stored: StoredSupportRun) -> None:
         charged_documents[row.doc_id] = charged_document + charge
 
 
+@gated
 def reverify_support_run(
     stored: StoredSupportRun, sources: SupportSources
 ) -> tuple[ReviewOutcome, ...]:
-    """Re-resolve current evidence/theme/context; return processing outcomes only."""
+    """Re-resolve current evidence/theme/context; return processing outcomes only.
+
+    One gate checks the same run against the same sources once (plan 23, D23-1).
+    """
+    return once(
+        "support", (stored, sources), lambda: _reverify_support_run(stored, sources)
+    )
+
+
+def _reverify_support_run(
+    stored: StoredSupportRun, sources: SupportSources
+) -> tuple[ReviewOutcome, ...]:
+    """``reverify_support_run``'s check of one run against its current sources."""
     stored = _validate(
         stored,
         published=any(

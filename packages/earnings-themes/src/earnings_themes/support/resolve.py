@@ -25,6 +25,7 @@ from earnings_themes.anchoring import Bundle, bundle_problems, mask_id
 from earnings_themes.codebook import Codebook, CodebookStatus, codebook_hash
 from earnings_themes.extraction.records import Claim, DocumentRecord, Quote, RunRecord
 from earnings_themes.extraction.store import StoredRun
+from earnings_themes.scope import once
 from earnings_themes.support.context import context_elements
 from earnings_themes.support.problems import SupportError
 from earnings_themes.support.records import (
@@ -210,6 +211,19 @@ def _redacted_target() -> Target:
     )
 
 
+def _checked_bundle(bundle: Bundle) -> Bundle:
+    """The bundle with its document, elements and masks validated, and its structure
+    checked. A gate checks one bundle once (plan 23, D23-1)."""
+    document = _validated(bundle.document, CanonicalDocument)
+    elements = tuple(_validated(e, DocumentElement) for e in bundle.elements)
+    masks = tuple(_validated(m, OverlayMask) for m in bundle.masks)
+    checked = replace(bundle, document=document, elements=elements, masks=masks)
+    problems = bundle_problems(checked)
+    if problems:
+        raise SupportError(problems[0])
+    return checked
+
+
 def resolve_target(
     stored_run: StoredRun,
     bundles: Sequence[Bundle],
@@ -254,15 +268,10 @@ def resolve_target(
             or row.canonical_hash != bundle.document.canonical_hash
         ):
             raise SupportError("wrong_document")
-        document = _validated(bundle.document, CanonicalDocument)
-        elements = tuple(_validated(e, DocumentElement) for e in bundle.elements)
-        masks = tuple(_validated(m, OverlayMask) for m in bundle.masks)
-        checked_bundle = replace(
-            bundle, document=document, elements=elements, masks=masks
-        )
-        problems = bundle_problems(checked_bundle)
-        if problems:
-            raise SupportError(problems[0])
+        checked_bundle = once("bundle", (bundle,), lambda: _checked_bundle(bundle))
+        document = checked_bundle.document
+        elements = checked_bundle.elements
+        masks = checked_bundle.masks
         claim = _one(
             [
                 c

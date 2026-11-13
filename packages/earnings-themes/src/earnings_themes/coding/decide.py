@@ -4,10 +4,13 @@ Stage 11 supplies calibrated policy artifacts and approval. This module implemen
 no policy, numeric gate, signal pooling, or calibration-artifact authority.
 """
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Protocol
 
 from earnings_core import VALIDATOR_VERSION, digest
+from pydantic import BaseModel
 
 from earnings_themes.coding.classify import classification_id
 from earnings_themes.coding.input import resolve_coding_input
@@ -26,6 +29,7 @@ from earnings_themes.coding.records import (
     coding_configuration,
 )
 from earnings_themes.coding.run import ProposalRun
+from earnings_themes.scope import gate, gated, once
 from earnings_themes.support import reverify_support_run
 from earnings_themes.support.problems import SupportError
 from earnings_themes.support.records import (
@@ -118,6 +122,67 @@ def _support_content_hash(support: StoredSupportRun) -> str:
                 )
             },
         }
+    )
+
+
+def _dump(row: BaseModel) -> dict:
+    return row.model_dump(mode="json", warnings=False)
+
+
+def _row_hash(row: BaseModel) -> str:
+    return digest(_dump(row))
+
+
+def _sources_content_hash(sources: SupportSources) -> str:
+    """Catch callback mutation of the sources that one gate's checks read.
+
+    A repeat check inside one gate reuses the gate's first result (plan 23, D23-1),
+    so a change made in place since then shows here, not in that result.
+    """
+    run = sources.stored_run
+    return digest(
+        {
+            "record": _dump(run.record),
+            **{
+                name: [_dump(row) for row in getattr(run, name)]
+                for name in ("documents", "quotes", "claims")
+            },
+            "bundles": [
+                {
+                    "name": bundle.name,
+                    "document": _dump(bundle.document),
+                    "elements": [_dump(element) for element in bundle.elements],
+                    "masks": [_dump(mask) for mask in bundle.masks],
+                }
+                for bundle in sources.bundles
+            ],
+            "codebook": _dump(sources.codebook),
+            "provenance_hash": sources.provenance_hash,
+        }
+    )
+
+
+@contextmanager
+def _refuse_changes() -> Iterator[None]:
+    """A failed re-check refuses as ``input_changed``; a redacted error stays one."""
+    try:
+        yield
+    except CodingError as error:
+        if str(error) == "unexpected_error":
+            raise CodingError("unexpected_error") from None
+        raise CodingError("input_changed") from None
+    except SupportError:
+        raise CodingError("input_changed") from None
+
+
+def _current_proposal_inputs(
+    proposals: ProposalRun, sources: SupportSources
+) -> dict[str, TargetRecord]:
+    """``_proposal_inputs``, which one gate computes once (plan 23, D23-1)."""
+    return once(
+        "proposal_inputs",
+        (proposals, sources),
+        lambda: _proposal_inputs(proposals, sources),
     )
 
 
@@ -354,7 +419,7 @@ def _proposal_support_inputs(
 ) -> tuple[tuple[ReviewOutcome, ...], dict[str, TargetRecord], dict[str, TargetRecord]]:
     """The shared reverified gate before calibration or assignment consumption."""
     outcomes = reverify_support_run(support, sources)
-    current = _proposal_inputs(proposals, sources)
+    current = _current_proposal_inputs(proposals, sources)
     if (
         support.record.source_run_hash != proposals.record.source_run_hash
         or support.record.source_run_id != proposals.record.source_run_id
@@ -370,6 +435,7 @@ def _proposal_support_inputs(
     return outcomes, current, stored
 
 
+@gated
 def validate_proposal_support(
     proposals: ProposalRun, support: StoredSupportRun, sources: SupportSources
 ) -> None:
@@ -385,13 +451,20 @@ def validate_proposal_support(
         raise CodingError("unexpected_error") from None
 
 
+@gated
 def decide_assignments(
     proposals: ProposalRun,
     support: StoredSupportRun,
     sources: SupportSources,
     policy: AssignmentPolicy | None,
 ) -> DecisionSet:
-    """One decision per proposal, after current evidence and frozen-policy checks."""
+    """One decision per proposal, after current evidence and frozen-policy checks.
+
+    The gate checks its inputs in full before the loop and again, in a fresh scope,
+    after it. Per target it compares the policy reference and content digests of the
+    target's rows, so a callback that changes another input in place is refused at
+    the end of the gate (plan 23, D21-34, D23-1).
+    """
     try:
         proposal_hash = proposal_run_hash(proposals)
         outcomes, current, stored = _proposal_support_inputs(
@@ -399,33 +472,64 @@ def decide_assignments(
         )
         support_hash = support_run_hash(support)
         support_content_hash = _support_content_hash(support)
+        sources_content_hash = _sources_content_hash(sources)
+        # The digests each per-target re-check compares, taken before external code
+        # runs. Each key is taken now too, so a later change cannot redirect it.
+        outcome_rows = {row.target_id: row for row in support.outcomes}
+        rows = tuple(
+            (
+                proposal,
+                digest(proposal.target.model_dump(mode="json")),
+                _row_hash(proposal),
+            )
+            for proposal in proposals.proposals
+        )
+        target_rows = {
+            key: (
+                outcome_rows[target.target_id],
+                _row_hash(target),
+                _row_hash(outcome_rows[target.target_id]),
+            )
+            for key, target in stored.items()
+        }
         reference = _policy_reference(policy, proposals, support)
 
         def require_current() -> None:
-            try:
+            with _refuse_changes():
                 again = _policy_reference(policy, proposals, support)
                 if (
                     again != reference
                     or proposal_run_hash(proposals) != proposal_hash
                     or _support_content_hash(support) != support_content_hash
+                    or _sources_content_hash(sources) != sources_content_hash
                 ):
                     raise CodingError("input_changed")
                 reverify_support_run(support, sources)
-                if _proposal_inputs(proposals, sources) != current:
+                if _current_proposal_inputs(proposals, sources) != current:
                     raise CodingError("input_changed")
-            except CodingError as error:
-                if str(error) == "unexpected_error":
-                    raise CodingError("unexpected_error") from None
-                raise CodingError("input_changed") from None
-            except SupportError:
-                raise CodingError("input_changed") from None
+
+        def require_target(proposal, proposal_row, key, *, voted=False) -> None:
+            """One target's re-check: its rows by digest, and after a vote the policy
+            reference too. Anything else is checked again at the end of the gate."""
+            with _refuse_changes():
+                if voted and _policy_reference(policy, proposals, support) != reference:
+                    raise CodingError("input_changed")
+                if _row_hash(proposal) != proposal_row:
+                    raise CodingError("input_changed")
+                if key in target_rows:
+                    outcome_row, target_row, outcome_hash = target_rows[key]
+                    if (_row_hash(stored[key]), _row_hash(outcome_row)) != (
+                        target_row,
+                        outcome_hash,
+                    ):
+                        raise CodingError("input_changed")
 
         # Reference properties are external code too; recheck after reading them.
         require_current()
         by_id = {outcome.target_id: outcome for outcome in outcomes}
         decisions = []
-        for proposal in proposals.proposals:
-            key = digest(proposal.target.model_dump(mode="json"))
+        for proposal, key, proposal_row in rows:
+            require_target(proposal, proposal_row, key)
             target = stored.get(key)
             if target is None:
                 target_id = current[key].target_id
@@ -435,7 +539,7 @@ def decide_assignments(
                 outcome = by_id[target.target_id]
                 view = decision_input(support, target, outcome)
                 status, reason, quote_ids = decision_vote(view, policy)
-                require_current()
+                require_target(proposal, proposal_row, key, voted=True)
                 target_id = target.target_id
                 support_status, flags, missing = (
                     outcome.status,
@@ -473,7 +577,10 @@ def decide_assignments(
                     input_hash=proposal.input_hash,
                 )
             )
-        require_current()
+        # A fresh scope checks everything again, so a change made in place during
+        # the loop is not hidden by a result the gate remembers (D21-34).
+        with gate(fresh=True):
+            require_current()
         return DecisionSet(
             tuple(decisions),
             proposals,
