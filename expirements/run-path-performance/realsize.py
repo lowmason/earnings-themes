@@ -287,9 +287,10 @@ def main():
         cache = SupportCache(root / "support-cache", "replay")
         judge = [p for p in files if json.loads(p.read_bytes())["kind"] == "judge"]
         start = time.perf_counter()
-        for path in judge[:5]:
+        sampled = judge[:5]
+        for path in sampled:
             cache.artifact_hash(path.name)
-        each = (time.perf_counter() - start) / 5
+        each = (time.perf_counter() - start) / len(sampled)
         print(f"artifact_hash (judge entry)  {each:9.2f} s each", flush=True)
         per_unit["artifact_hash, per judge entry"] = each
         scaling.timed(
