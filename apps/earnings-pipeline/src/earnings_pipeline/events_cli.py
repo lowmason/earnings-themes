@@ -28,9 +28,10 @@ then needs ``--max-requests``, at least that count, as the client's cap. It repl
 only a response the build cannot use, so never a usable one under a frozen citation,
 and refuses ``--filing`` beside it. It prints each damaged file it moved into
 ``quarantine/``, and each URL that returned other bytes, whose build may then differ
-from the frozen version; a stop prints these for what it saved first. It runs no
-discovery phase: a plain ``events discover`` then fetches what a refreshed file now
-lists (plan 25).
+from the frozen version. A stop prints these for what it saved first, and says that
+a rerun may name only the URLs that are still unusable, since a saved one now reads
+and is refused. It runs no discovery phase: a plain ``events discover`` then fetches
+what a refreshed file now lists (plan 25).
 
 ``build``, ``freeze``, and ``select`` read committed files and saved responses alone.
 ``build`` exits 1 while anything holds the freeze.
@@ -136,6 +137,10 @@ FETCHING = frozenset({"discover", "acquire"})
 STOPS = (AccessStop, UnexpectedResponse, OSError, ValueError, RuntimeError)
 """What ends a live run with ``Stopped:`` and its request count; ``OSError`` covers a
 full disk and a saved body that is gone."""
+DISCOVER_RERUN = "a rerun fetches only what is missing"
+REFETCH_RERUN = "a rerun may name only the URLs that are still unusable"
+"""After a stopped refetch: a rerun that names a URL it saved is refused, since that
+URL now reads."""
 RUNS_DIR = Path("data") / "runs" / "events"
 ACQUIRE_LOCK = ".acquire.lock"
 """In ``--runs-dir``: every ``acquire`` run holds it while it counts and records."""
@@ -308,7 +313,7 @@ def _refetch(
             _saved(interrupted.partial, layout.repo)
             raise interrupted.__cause__  # the failure itself, which _counted names
 
-    result, sent = _counted(max_requests, refetching)
+    result, sent = _counted(max_requests, refetching, rerun=REFETCH_RERUN)
     typer.echo(f"refetched {len(result.fetched)}; requests sent: {sent}")
     _saved(result, layout.repo)
     return result.problems
@@ -327,10 +332,12 @@ def _saved(refetched: Refetched, repo: Path) -> None:
         )
 
 
-def _counted[T](budget: int, run: Callable[[Fetch], T]) -> tuple[T, int]:
+def _counted[T](
+    budget: int, run: Callable[[Fetch], T], *, rerun: str = DISCOVER_RERUN
+) -> tuple[T, int]:
     """``run`` with the shared SEC client's fetch, capped at ``budget``: its result
-    and the requests sent. Every exit prints that count; a stop exits 1, and any
-    other error propagates (PR #6's review, F31)."""
+    and the requests sent. Every exit prints that count, with what a ``rerun`` does;
+    a stop exits 1, and any other error propagates (PR #6's review, F31)."""
     sent = 0
     try:
         with open_sec_client(max_requests=budget) as sec:
@@ -339,10 +346,10 @@ def _counted[T](budget: int, run: Callable[[Fetch], T]) -> tuple[T, int]:
             finally:
                 sent = sec.throttle.count
     except STOPS as error:
-        typer.echo(f"requests sent: {sent}; a rerun fetches only what is missing")
+        typer.echo(f"requests sent: {sent}; {rerun}")
         _fail(f"Stopped: {error}")
     except BaseException:
-        typer.echo(f"requests sent: {sent}; a rerun fetches only what is missing")
+        typer.echo(f"requests sent: {sent}; {rerun}")
         raise
     return result, sent
 

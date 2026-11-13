@@ -825,7 +825,10 @@ EASTFIELD_PAGE = submissions_page_url(OLDER_PAGES[EASTFIELD][0][0])
 UNSAVED_PAGE = submissions_page_url("CIK0009990006-submissions-002.json")
 """Eastfield's older page whose dates miss the range, which discovery never saves."""
 REFETCH = "refetch: {} requests to SEC, through the shared client"
-RERUN = "requests sent: {}; a rerun fetches only what is missing"
+RERUN = "requests sent: {}; a rerun may name only the URLs that are still unusable"
+"""A stopped refetch's count. A rerun that names a URL it saved is refused, since that
+URL now reads; discover's own tail, that a rerun fetches only what is missing, would
+mislead."""
 
 
 def truncate(repo: Path, url: str) -> str:
