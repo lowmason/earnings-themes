@@ -855,6 +855,7 @@
       link; each problem line names a remedy that works; and a test truncates a
       fixture index page, runs the opt-in refetch over a fake fetch, sees exactly
       that URL fetched, and rebuilds the synthetic events v1 content hash.
+      → planned 2026-11-13: specs/plans/25-recover-unusable-saved-responses.md
 - [ ] Read companyfacts in discovery through the problem-collecting reader (PR
       #6's review, P2.3): in the documents phase of `discover` in
       `events/discover.py`, the saved read of each issuer's companyfacts and
