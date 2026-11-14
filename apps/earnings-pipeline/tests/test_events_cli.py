@@ -345,6 +345,39 @@ def test_an_overrides_error_of_two_entries_prints_a_problem_line_for_each(
     assert len(lines) == 2, lines
 
 
+@pytest.mark.parametrize(
+    ("named", "label"),
+    [
+        (FIXTURE_DIR / "overrides.toml", "problem:"),
+        (UNIVERSES / "djia-synthetic-v1.json", "Refused:"),
+    ],
+    ids=["overrides", "universe"],
+)
+def test_a_file_that_cannot_be_read_is_named(repo, named, label) -> None:
+    """A read error is an ``OSError``, not a ``ValueError``, and is named too."""
+    path = repo / named
+    path.unlink()
+    path.mkdir()
+    lines = named_lines(run(repo, "build"), f"{label} {named}: ")
+    assert len(lines) == 1, lines
+    assert "Is a directory" in lines[0], lines
+
+
+def test_an_error_inside_the_build_is_never_named_as_the_overrides_file(
+    repo, monkeypatch
+) -> None:
+    """Only the overrides file's load is wrapped: a ``LocatorError`` the build raises
+    is a ``ValueError`` too, and no line blames the overrides file for it."""
+
+    def uncited(*args, **kwargs):
+        raise LocatorError("'Acme Industrial' is not in the walker-1 text")
+
+    monkeypatch.setattr(events_cli, "build_events", uncited)
+    result = run(repo, "build")
+    assert isinstance(result.exception, LocatorError), result.exception
+    assert "overrides.toml" not in result.stderr
+
+
 def test_freeze_names_the_version_that_holds_the_content(repo) -> None:
     result = run(repo, "freeze")
     assert result.exit_code == 0, result.output
@@ -462,6 +495,19 @@ def test_freeze_reports_a_leftover_evidence_file_as_a_refusal(
     assert isinstance(result.exception, SystemExit), result.exception
     assert result.stderr.splitlines() == [f"Refused: {leftover}"]
     assert "delete it" in result.stderr
+
+
+def test_freeze_refuses_a_write_that_fails(repo, monkeypatch) -> None:
+    """A failed write is an ``OSError``, not a ``ValueError``, and is refused too."""
+
+    def full(*args, **kwargs):
+        raise OSError(28, "No space left on device")
+
+    monkeypatch.setattr(events_cli, "freeze_events", full)
+    result = run(repo, "freeze")
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stderr.splitlines() == ["Refused: [Errno 28] No space left on device"]
 
 
 def test_select_says_to_rerun_when_another_select_froze_first(
