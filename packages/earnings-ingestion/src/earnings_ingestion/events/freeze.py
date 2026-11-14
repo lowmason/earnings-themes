@@ -21,7 +21,8 @@
   ``events acquire`` read it, never the highest-numbered version.
 - Loading reads the committed JSON alone and rechecks the content hash and the name.
   An evidence record loads only with its manifest: the same ``corpus_id``, version,
-  and content hash, and one citation per row, in the rows' order.
+  and content hash, and one citation per row, in the rows' order. Each row's release
+  citation is its release's index page, and a row with no release has none (plan 26).
 """
 
 import json
@@ -41,6 +42,7 @@ from earnings_ingestion.events.records import (
 )
 from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.fetch.store import write_new
+from earnings_ingestion.sec.urls import filing_index_url
 
 
 class EventFreezeRefused(ValueError):
@@ -96,7 +98,9 @@ def load_event_manifest(path: Path) -> EventManifest:
 def load_event_evidence(path: Path, manifest: EventManifest) -> EventEvidence:
     """A committed evidence record, refused if its name disagrees, or unless it is
     ``manifest``'s: the same ``corpus_id``, version, and content hash, and one
-    citation per row, in the rows' order."""
+    citation per row, in the rows' order. A row's release citation must be its
+    release filing's index page, and a row with no release filing has no release
+    citation."""
     evidence = EventEvidence.model_validate_json(path.read_bytes())
     if path.name != evidence_path(path.parent, evidence.event_manifest_version).name:
         raise ValueError(f"{path} holds version {evidence.event_manifest_version}")
@@ -121,6 +125,19 @@ def load_event_evidence(path: Path, manifest: EventManifest) -> EventEvidence:
         raise ValueError(
             f"{path}: the event_ids of its events are not the manifest's rows, in order"
         )
+    for row, citations in zip(manifest.rows, evidence.events, strict=True):
+        expected = (
+            None
+            if row.release_accession is None
+            else filing_index_url(row.cik, row.release_accession)
+        )
+        found = None if citations.release is None else citations.release.url
+        if found != expected:
+            raise ValueError(
+                f"{path}: {row.event_id}: its release citation is"
+                f" {found or 'absent'}, not {expected or 'absent'}, its release"
+                " filing's index page"
+            )
     return evidence
 
 

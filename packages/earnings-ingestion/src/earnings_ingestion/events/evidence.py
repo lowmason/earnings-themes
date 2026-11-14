@@ -17,9 +17,13 @@ convention, and each older page skipped by its dates. Every citation carries its
 ``retrieved_at``. The record lies outside the manifest's hash, so a re-fetch changes
 it and nothing else. It holds URLs, hashes, and locators, never source text (P6-3).
 
-``check_evidence`` verifies every citation again against a store.
+``check_evidence`` verifies every citation again against a store: the saved bytes,
+each locator, and the citation's source, URL and ``retrieved_at`` against its
+artifact's retrievals. Loading checks that each release citation is its row's index
+page (``freeze.load_event_evidence``).
 """
 
+from datetime import datetime
 from functools import cache
 
 from earnings_ingestion.cohort.locators import ArtifactText, LocatorError
@@ -34,7 +38,7 @@ from earnings_ingestion.events.records import (
     FileEvidence,
 )
 from earnings_ingestion.events.saved import SavedResponses, cited_remedy
-from earnings_ingestion.fetch.store import ArtifactStore
+from earnings_ingestion.fetch.store import ArtifactStore, StoredArtifact
 from earnings_ingestion.sec.data import Filing
 from earnings_ingestion.sec.urls import companyfacts_url
 
@@ -151,15 +155,18 @@ def _citations(events: EventCitations) -> list[tuple[str, Citation]]:
 
 
 def check_evidence(evidence: EventEvidence, store: ArtifactStore) -> tuple[str, ...]:
-    """Every citation, and every file read, checked against ``store``'s saved bytes;
-    the problems found, or none. An artifact whose bytes are gone or changed is named
-    with ``cited_remedy``'s remedy, which reads the store's records only then."""
+    """Every citation, and every file read, checked against ``store``'s saved bytes
+    and retrievals; the problems found, or none. A citation or file must name a URL
+    its artifact was retrieved from, and a ``retrieved_at`` that retrieval gave. A
+    citation must name the ``sec-edgar`` source. An artifact whose bytes are gone or
+    changed is named with ``cited_remedy``'s remedy, which reads the store's records
+    only then, and its URL and ``retrieved_at`` are not checked."""
     problems = []
     saved = cache(lambda: SavedResponses(store))
 
-    def read(sha256: str) -> ArtifactText | None:
+    def read(sha256: str) -> StoredArtifact | None:
         try:
-            stored = store.get(
+            return store.get(
                 SEC_SOURCE_ID,
                 sha256,
                 rights_status=SEC_RIGHTS.rights_status,
@@ -169,18 +176,40 @@ def check_evidence(evidence: EventEvidence, store: ArtifactStore) -> tuple[str, 
             remedy = cited_remedy(saved(), sha256)
             problems.append(f"{exc}; {remedy}" if remedy else str(exc))
             return None
-        return ArtifactText(stored.body, stored.ref.media_type)
+
+    def retrieved(
+        where: str, url: str, retrieved_at: datetime, stored: StoredArtifact
+    ) -> None:
+        """Refuse a ``url`` that is not among the artifact's retrievals, or a
+        ``retrieved_at`` that none of that URL's retrievals gave."""
+        own = [r for r in stored.retrievals if r.request_url == url]
+        if not own:
+            problems.append(f"{where}: url {url} is not where its artifact came from")
+        elif retrieved_at not in {r.retrieved_at for r in own}:
+            problems.append(
+                f"{where}: retrieved_at {retrieved_at.isoformat()} matches no"
+                f" retrieval of {url}"
+            )
 
     for file in evidence.files:
-        read(file.sha256)
+        if (stored := read(file.sha256)) is not None:
+            retrieved(f"files {file.url}", file.url, file.retrieved_at, stored)
     for events in evidence.events:
         for name, citation in _citations(events):
-            text = read(citation.artifact.content_sha256)
-            if text is None:
+            stored = read(citation.artifact.content_sha256)
+            if stored is None:
                 continue
+            where = f"{events.event_id} {name}"
+            if citation.source_id != SEC_SOURCE_ID:
+                problems.append(
+                    f"{where}: source_id {citation.source_id!r} is not"
+                    f" {SEC_SOURCE_ID!r}"
+                )
+            retrieved(where, citation.url, citation.retrieved_at, stored)
+            text = ArtifactText(stored.body, stored.ref.media_type)
             for locator in citation.locators:
                 try:
                     text.verify(locator)
                 except LocatorError as exc:
-                    problems.append(f"{events.event_id} {name}: {exc}")
+                    problems.append(f"{where}: {exc}")
     return tuple(problems)

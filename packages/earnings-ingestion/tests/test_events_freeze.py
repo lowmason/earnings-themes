@@ -319,6 +319,57 @@ def test_loading_evidence_binds_it_to_its_manifest(
         load_event_evidence(path, frozen.manifest)
 
 
+def release_of(evidence, event_id: str):
+    return next(e.release for e in evidence.events if e.event_id == event_id)
+
+
+def with_release(evidence, event_id: str, release):
+    """``evidence``, with ``event_id``'s release citation replaced by ``release``."""
+    events = tuple(
+        e.model_copy(update={"release": release}) if e.event_id == event_id else e
+        for e in evidence.events
+    )
+    return evidence.model_copy(update={"events": events})
+
+
+@pytest.mark.parametrize(
+    "tamper",
+    ["another filing", "another filing's page, as a URL", "no citation", "no filing"],
+)
+def test_loading_evidence_refuses_a_release_citation_of_another_filing(
+    universe, layer, tmp_path, tamper
+) -> None:
+    """Each row's release citation is its release's index page. A row with no
+    ``release_accession`` has no release citation, and one with an accession has
+    one (plan 26, Task 7)."""
+    frozen = freeze(reviewed(universe, layer), layer, tmp_path / "corpus")
+    evidence = load_event_evidence(frozen.evidence_path, frozen.manifest)
+    rows = {row.event_id: row for row in frozen.manifest.rows}
+    released = [i for i, row in rows.items() if row.release_accession is not None]
+    unreleased = [i for i, row in rows.items() if row.release_accession is None]
+    assert released and unreleased
+    event, other = released[0], released[1]
+    assert release_of(evidence, event).url != release_of(evidence, other).url
+    if tamper == "another filing":
+        changed = with_release(evidence, event, release_of(evidence, other))
+    elif tamper == "another filing's page, as a URL":
+        url = release_of(evidence, other).url
+        changed = with_release(
+            evidence, event, release_of(evidence, event).model_copy(update={"url": url})
+        )
+    elif tamper == "no citation":
+        changed = with_release(evidence, event, None)
+    else:
+        event = unreleased[0]
+        assert release_of(evidence, event) is None
+        changed = with_release(evidence, event, release_of(evidence, other))
+    path = tmp_path / "events-v1.evidence.json"
+    path.write_bytes(serialize(changed))
+    with pytest.raises(ValueError, match=event):
+        load_event_evidence(path, frozen.manifest)
+    assert load_event_evidence(frozen.evidence_path, frozen.manifest) == evidence
+
+
 def test_a_changed_interval_or_policy_changes_the_hash_and_a_version_alone_does_not(
     universe, layer
 ) -> None:

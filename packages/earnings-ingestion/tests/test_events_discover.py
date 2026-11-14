@@ -375,6 +375,14 @@ def populated(universe, layer, repo: Path) -> ArtifactStore:
     return store
 
 
+def committed_copy(repo: Path) -> ArtifactStore:
+    """A copy of the committed synthetic store under ``repo``. The committed evidence
+    cites its retrievals, which a store that discovery filled does not have, since
+    its retrievals carry the time of that run."""
+    root = Path(shutil.copytree(RAW, repo / "data" / "raw" / "events"))
+    return ArtifactStore(root, repo)
+
+
 def stored_at(store: ArtifactStore, url: str) -> Path:
     """The file that holds the newest response saved from ``url``."""
     return store.repo / SavedResponses(store).get(url).artifact.storage_ref
@@ -596,12 +604,12 @@ def test_a_damaged_companyfacts_file_names_a_remedy_in_the_build(
 
 
 def test_a_cited_artifact_that_cannot_be_read_names_a_remedy_that_works(
-    universe, layer, tmp_path
+    tmp_path,
 ) -> None:
     """A cited artifact is read by its hash. While it is its URL's newest response,
     a refetch restores it. Once the URL is saved again with other bytes, a refetch
     restores those, never the bytes the citation names."""
-    store = populated(universe, layer, tmp_path)
+    store = committed_copy(tmp_path)
     overrides = load_overrides(REPO / FIXTURE_DIR / "overrides.toml").overrides
     (override,) = [o for o in overrides if o.override_id == "release-acme-2025-02-28"]
     (citation,) = override.citations
@@ -893,11 +901,9 @@ def test_a_citation_a_refetch_cannot_mend_names_no_refetch(
     ]
 
 
-def test_a_cited_artifact_whose_bytes_are_gone_names_a_remedy(
-    universe, layer, tmp_path
-) -> None:
+def test_a_cited_artifact_whose_bytes_are_gone_names_a_remedy(tmp_path) -> None:
     """Its retrieval records remain, so it was saved: a refetch restores it."""
-    store = populated(universe, layer, tmp_path)
+    store = committed_copy(tmp_path)
     overrides = load_overrides(REPO / FIXTURE_DIR / "overrides.toml").overrides
     (override,) = [o for o in overrides if o.override_id == "release-acme-2025-02-28"]
     (citation,) = override.citations
@@ -945,6 +951,71 @@ def test_a_locator_that_raises_a_plain_value_error_is_refused(
     assert citations_refused(cited, SavedResponses(store), None) == [
         f"release-acme-2025-02-28: invalid literal for int() with base 10: '{token}'"
     ]
+
+
+def committed_evidence():
+    manifest = load_event_manifest(REPO / FIXTURE_DIR / "events-v1.json")
+    return load_event_evidence(REPO / FIXTURE_DIR / "events-v1.evidence.json", manifest)
+
+
+@pytest.mark.parametrize("field", ["url", "source_id", "retrieved_at"])
+def test_check_evidence_refuses_a_citation_no_retrieval_supports(field) -> None:
+    """The store holds the cited bytes, and the citation is still wrong: it names
+    a URL, a source, or a retrieval time that no saved retrieval of those bytes
+    gives (PR #6's review, F21)."""
+    evidence = committed_evidence()
+    event = next(e for e in evidence.events if e.release is not None)
+    release = event.release
+    other_page = next(
+        e.release.url
+        for e in evidence.events
+        if e.release is not None and e.release.url != release.url
+    )
+    later = release.retrieved_at + timedelta(days=1)
+    new, expected = {
+        "url": (other_page, f"url {other_page} is not where its artifact came from"),
+        "source_id": ("other-source", "source_id 'other-source' is not 'sec-edgar'"),
+        "retrieved_at": (
+            later,
+            f"retrieved_at {later.isoformat()} matches no retrieval of {release.url}",
+        ),
+    }[field]
+    changed = evidence.model_copy(
+        update={
+            "events": tuple(
+                e.model_copy(
+                    update={"release": release.model_copy(update={field: new})}
+                )
+                if e is event
+                else e
+                for e in evidence.events
+            )
+        }
+    )
+    (problem,) = check_evidence(changed, ArtifactStore(RAW, REPO))
+    assert problem == f"{event.event_id} release: {expected}"
+
+
+@pytest.mark.parametrize("field", ["url", "retrieved_at"])
+def test_check_evidence_refuses_a_file_no_retrieval_supports(field) -> None:
+    evidence = committed_evidence()
+    file = evidence.files[0]
+    later = file.retrieved_at + timedelta(days=1)
+    other_page = evidence.files[1].url
+    new, expected = {
+        "url": (other_page, f"url {other_page} is not where its artifact came from"),
+        "retrieved_at": (
+            later,
+            f"retrieved_at {later.isoformat()} matches no retrieval of {file.url}",
+        ),
+    }[field]
+    changed = evidence.model_copy(
+        update={
+            "files": (file.model_copy(update={field: new}), *evidence.files[1:]),
+        }
+    )
+    (problem,) = check_evidence(changed, ArtifactStore(RAW, REPO))
+    assert problem == f"files {changed.files[0].url}: {expected}"
 
 
 def test_evidence_no_saved_retrieval_names_has_no_remedy(tmp_path) -> None:
