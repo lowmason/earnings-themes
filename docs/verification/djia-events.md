@@ -327,11 +327,12 @@ is the "bytes gone" case.
 **The two refetch commands.** Each takes `--refetch URL` once for each URL.
 
 - `events discover --refetch URL` accepts a saved response that discovery reads and
-  cannot use. That means a submissions file, an older page, a companyfacts file, and
-  the index page or primary document of a filing that discovery reads. A submissions
-  file brings every older page saved for its issuer, because a damaged file cannot
-  list them. It runs no discovery phase, so it fetches nothing that a refetched file
-  now lists.
+  cannot use. That means a submissions file, an older page, a companyfacts file, the
+  index page of any filing in the files that discovery reads, and the primary
+  document of an 8-K that `release-id/1` reads. The index page that a
+  `set_release_filing` override cites is one of these. A submissions file brings every
+  older page saved for its issuer, because a damaged file cannot list them. It runs
+  no discovery phase, so it fetches nothing that a refetched file now lists.
 - `events acquire --refetch URL` accepts a saved exhibit that a run would try and
   cannot read. Discovery never fetches an exhibit (EV2, a rule of the Stage 5 spec),
   so only this command refetches one.
@@ -388,10 +389,14 @@ it. A rerun may name only the URLs or exhibits that are still unusable.
 - **(b) The cohort store.** `cohort fetch-sec` fetches each filed N-PORT document once.
   It stops with a `Stopped:` line when a saved one is gone or changed. The line names
   the artifact's SHA-256 and no URL.
-- **(c) A response of a filing that discovery does not read.** That means an
-  override's index page, and the index page or primary document of a filing that a
-  `set_release_filing` override named, such as a filing without Item 2.02. Their
-  problem lines name `events discover --refetch`, but it refuses them and points here.
+- **(c) The primary document of a filing that discovery does not read.**
+  `release-id/1` reads a primary document only for an 8-K whose index page lists Item
+  2.02 and an EX-99* exhibit. A `set_release_filing` override can name another filing:
+  an 8-K/A, or an 8-K without them. The override cites its primary document. If that
+  file is damaged, the problem line names `events discover --refetch`, but `--refetch`
+  refuses it and points here. An index page is not in this class. Discovery reads the
+  index page of every filing in the files that it reads, and `--refetch` replaces a
+  damaged one.
 
 The manual repair moves damaged files out of the store, and never deletes one. A
 damaged retrieval record moves. An artifact moves only if its bytes are damaged. A
@@ -455,7 +460,7 @@ N-PORT documents.
      10-digit CIK, as the universe manifest spells it. `<accession>` is the dashed
      form, `<10 digits>-<2 digits>-<6 digits>`. The command has no dry run, unlike
      `--refetch`. It sends as soon as it runs, so the user approves its 2 requests
-     first. It fetches whichever of the index page and the 8-K document is now
+     first. It fetches whichever of the index page and the primary document is now
      unsaved. It takes `--max-requests` only to lower that cap.
 4. Run the build, `events build` or `cohort build`, and compare its content hash with
    the frozen one.

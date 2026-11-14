@@ -96,9 +96,10 @@ def _refusal(url: str, saved: SavedResponses) -> str:
         " replaces only those; an exhibit is refetched by earnings-pipeline events"
         " acquire --refetch, a page behind an unusable submissions file is"
         " classified once that file is refetched, and a response of a filing that"
-        " discovery does not read (an override's index page, or the index page or"
-        " primary document of a filing that a set_release_filing override named) is"
-        ' repaired by hand: see "Repairing the store" in'
+        " discovery does not read (the primary document of a filing that"
+        " release-id/1 passes over: an 8-K/A, or an 8-K whose index page lists no"
+        " Item 2.02 or no EX-99* exhibit) is repaired by hand: see"
+        ' "Repairing the store" in'
         " docs/verification/djia-events.md"
     )
 

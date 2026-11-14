@@ -43,12 +43,12 @@ P8-6 to P8-12).
   ``planned_requests`` counts it and refuses any URL that ``unusable_exhibits`` does
   not list. A run never fetches an index page or a primary document. When discovery
   reads one, its problem names ``events discover --refetch`` (``refetch_remedy``).
-  One of a filing discovery does not read (an override's index page, or the index
-  page or primary document of a filing a ``set_release_filing`` override names) is
-  repaired by hand, though its problem names that command: see "Repairing the
-  store" in ``docs/verification/djia-events.md``. An override applied under its ID
-  and since edited to name another event or exhibit is a problem too: an applied
-  override is not edited in place.
+  One of a filing discovery does not read (the primary document of a filing that
+  ``release-id/1`` passes over: an 8-K/A, or an 8-K whose index page lists no Item
+  2.02 or no ``EX-99*`` exhibit) is repaired by hand, though its problem names that
+  command: see "Repairing the store" in ``docs/verification/djia-events.md``. An
+  override applied under its ID and since edited to name another event or exhibit
+  is a problem too: an applied override is not edited in place.
 - **Canonical documents.** Each is written once under its ``doc_id``, which hashes
   its text. One already there that differs only in the Python, lxml, and libxml2
   versions its manifest records, as another environment writes it, is kept; any
