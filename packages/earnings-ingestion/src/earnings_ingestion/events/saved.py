@@ -23,7 +23,7 @@ restore it.
 from earnings_ingestion.cohort.locators import ArtifactText, CitableArtifact
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
 from earnings_ingestion.fetch.records import Retrieval
-from earnings_ingestion.fetch.store import ArtifactStore
+from earnings_ingestion.fetch.store import ArtifactStore, read_retrieval
 
 
 def refetch_remedy(url: str, what: str = "it") -> str:
@@ -40,7 +40,7 @@ class SavedResponses:
         hashes: dict[str, set[str]] = {}
         folder = store.root / SEC_SOURCE_ID / "retrievals"
         for path in sorted(folder.glob("*/*.json")):
-            record = Retrieval.model_validate_json(path.read_text(encoding="utf-8"))
+            record = read_retrieval(path)
             hashes.setdefault(record.request_url, set()).add(record.sha256)
             known = newest.get(record.request_url)
             if known is None or (record.retrieved_at, record.sha256) > (

@@ -14,6 +14,7 @@ from earnings_ingestion.events.build import EventBuild, build_events
 from earnings_ingestion.events.evidence import check_evidence, evidence_of
 from earnings_ingestion.events.freeze import (
     EventFreezeRefused,
+    LeftoverEvidence,
     current_events,
     freeze_events,
     frozen_event_manifests,
@@ -247,6 +248,48 @@ def test_a_changed_fact_writes_the_next_version(universe, layer, tmp_path) -> No
     corvid = rows["cik-0009990003:2025-06-30"]
     assert (corvid.reported_fiscal_year, corvid.reported_fiscal_quarter) == (2025, "Q2")
     assert load_event_manifest(first.path) == first.manifest
+
+
+def test_a_leftover_evidence_file_with_other_bytes_is_refused(
+    universe, layer, tmp_path
+) -> None:
+    """A freeze that stopped between its two writes left ``events-v2.evidence.json``
+    alone, and the facts changed since: the freeze names the file and never
+    overwrites it."""
+    directory = tmp_path / "corpus"
+    before = reviewed(universe, layer)
+    freeze(before, layer, directory)
+    again = SyntheticStore(layer.store.root, layer.store.repo, LATER)
+    again.companyfacts(CORVID.cik, CORVID.name, corvid_facts(agreeing=True))
+    leftover = directory / "events-v2.evidence.json"
+    leftover.write_bytes(b"{}\n")
+    with pytest.raises(LeftoverEvidence, match="delete it") as refused:
+        freeze(build(universe, again, before.overrides), again, directory)
+    assert refused.value.path == leftover
+    assert str(refused.value) == (
+        f"{leftover} exists without events-v2.json and holds other bytes: delete it,"
+        " then freeze again"
+    )
+    assert leftover.read_bytes() == b"{}\n"
+    assert not (directory / "events-v2.json").exists()
+
+
+def test_a_leftover_evidence_file_with_the_same_bytes_completes(
+    universe, layer, tmp_path
+) -> None:
+    """The leftover holds the bytes this freeze would write: the freeze completes, and
+    keeps the file."""
+    built = reviewed(universe, layer)
+    first = freeze(built, layer, tmp_path / "elsewhere")
+    directory = tmp_path / "corpus"
+    directory.mkdir()
+    leftover = directory / first.evidence_path.name
+    shutil.copy(first.evidence_path, leftover)
+    inode = leftover.stat().st_ino
+    frozen = freeze(built, layer, directory)
+    assert frozen.created
+    assert frozen.path.read_bytes() == first.path.read_bytes()
+    assert (frozen.evidence_path, leftover.stat().st_ino) == (leftover, inode)
 
 
 def test_loading_rechecks_the_hash_and_the_name(universe, layer, tmp_path) -> None:

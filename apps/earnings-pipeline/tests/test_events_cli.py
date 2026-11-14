@@ -3,6 +3,7 @@ runs the shared SEC client over a transport that serves the corpus's saved
 responses, so no request leaves the process."""
 
 import shutil
+from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import replace
 from datetime import timedelta
@@ -11,11 +12,16 @@ from pathlib import Path
 import httpx
 import pytest
 from earnings_core import sha256_hex
+from earnings_ingestion.cohort.locators import LocatorError
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
 from earnings_ingestion.events.acquire import exhibit_remedy
 from earnings_ingestion.events.filings import issuer_filings
 from earnings_ingestion.events.fixture import COHORT_MANIFEST, FIXTURE_DIR
-from earnings_ingestion.events.freeze import load_event_manifest, serialize
+from earnings_ingestion.events.freeze import (
+    LeftoverEvidence,
+    load_event_manifest,
+    serialize,
+)
 from earnings_ingestion.events.layer import (
     ACME,
     CORVID,
@@ -266,6 +272,79 @@ def test_build_prints_a_repeated_finding_id_as_a_problem_not_a_traceback(
     assert result.stderr.splitlines() == [f"problem: {REPEATED}"]
 
 
+OVERRIDES_PROBLEM = "problem: tests/fixtures/events/overrides.toml: "
+SECOND_OF_ONE_KIND = """
+[[overrides]]
+override_id = "keep-borealis-again"
+kind = "retain_unresolved"
+event_id = "cik-0009990002:2024-09-30"
+reason = "same_day_transition"
+rationale = "A second retain_unresolved override of one event."
+reviewer = "Synthetic Reviewer"
+recorded_on = 2026-09-28
+"""
+
+
+def named_lines(result, prefix: str) -> list[str]:
+    """``result``'s stderr lines, each checked to start with ``prefix`` and to hold
+    no line of a pydantic error's own text."""
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    lines = result.stderr.splitlines()
+    assert lines
+    assert all(line.startswith(prefix) for line in lines), lines
+    assert not any("For further information" in line for line in lines), lines
+    return lines
+
+
+@pytest.mark.parametrize("command", ["build", "freeze"])
+@pytest.mark.parametrize(
+    ("edit", "said"),
+    [
+        (
+            lambda text: text.replace(
+                'override_id = "gap-corvid"', 'override_id = "gap-borealis"', 1
+            ),
+            "override_id repeated: ['gap-borealis']",
+        ),
+        (
+            lambda text: text + SECOND_OF_ONE_KIND,
+            (
+                "event_id repeated in one kind:"
+                " ['cik-0009990002:2024-09-30 (retain_unresolved)']"
+            ),
+        ),
+        (
+            lambda text: text.replace("schema_version = 1", "schema_version = ", 1),
+            "(at line 2, column",
+        ),
+    ],
+    ids=["repeated-override-id", "second-of-one-kind", "toml-syntax"],
+)
+def test_an_overrides_error_ends_with_a_problem_line(repo, command, edit, said) -> None:
+    path = repo / FIXTURE_DIR / "overrides.toml"
+    path.write_text(edit(path.read_text(encoding="utf-8")), encoding="utf-8")
+    lines = named_lines(run(repo, command), OVERRIDES_PROBLEM)
+    assert any(said in line for line in lines), lines
+
+
+def test_an_overrides_error_of_two_entries_prints_a_problem_line_for_each(
+    repo,
+) -> None:
+    """A validation error with two entries prints two lines, each with the path."""
+    path = repo / FIXTURE_DIR / "overrides.toml"
+    text = path.read_text(encoding="utf-8")
+    for override_id in ("gap-borealis", "gap-corvid"):
+        text = text.replace(
+            f'override_id = "{override_id}"',
+            f'override_id = "{override_id}"\nunexpected = 1',
+            1,
+        )
+    path.write_text(text, encoding="utf-8")
+    lines = named_lines(run(repo, "build"), OVERRIDES_PROBLEM)
+    assert len(lines) == 2, lines
+
+
 def test_freeze_names_the_version_that_holds_the_content(repo) -> None:
     result = run(repo, "freeze")
     assert result.exit_code == 0, result.output
@@ -349,6 +428,60 @@ def test_select_reads_the_version_the_build_reproduces(repo) -> None:
         "unchanged: djia-synthetic-pilot v1: 27 of target 27, underfilled",
         f"tests/fixtures/events/pilot-v1.json  {PILOT_HASH}",
     ]
+
+
+def test_freeze_reports_a_citation_error_as_a_problem(repo, monkeypatch) -> None:
+    """The evidence record cites a value the saved page's text does not hold."""
+
+    def uncited(*args, **kwargs):
+        raise LocatorError("'Acme Industrial' is not in the walker-1 text")
+
+    monkeypatch.setattr(events_cli, "freeze_events", uncited)
+    result = run(repo, "freeze")
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stderr.splitlines() == [
+        "problem: 'Acme Industrial' is not in the walker-1 text"
+    ]
+
+
+def test_freeze_reports_a_leftover_evidence_file_as_a_refusal(
+    repo, monkeypatch
+) -> None:
+    corpus = repo / FIXTURE_DIR
+    leftover = LeftoverEvidence(
+        corpus / "events-v2.evidence.json", corpus / "events-v2.json"
+    )
+
+    def left(*args, **kwargs):
+        raise leftover
+
+    monkeypatch.setattr(events_cli, "freeze_events", left)
+    result = run(repo, "freeze")
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stderr.splitlines() == [f"Refused: {leftover}"]
+    assert "delete it" in result.stderr
+
+
+def test_select_says_to_rerun_when_another_select_froze_first(
+    repo, monkeypatch
+) -> None:
+    """Two selects raced, and the other wrote ``pilot-v2.json`` first."""
+    pilot = repo / FIXTURE_DIR / "pilot-v2.json"
+
+    def raced(*args, **kwargs):
+        raise FileExistsError(f"{pilot} holds other bytes")
+
+    monkeypatch.setattr(events_cli, "freeze_pilot", raced)
+    result = run(repo, "select")
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stderr.endswith("rerun events select\n")
+    assert result.stderr == (
+        f"Refused: {pilot} holds other bytes; another events select froze this pilot"
+        " first: rerun events select\n"
+    )
 
 
 def served() -> dict[str, tuple[bytes, str]]:
@@ -656,6 +789,73 @@ def test_discover_prints_its_count_when_a_saved_body_is_gone(
         "requests sent: 0; a rerun fetches only what is missing"
     )
     assert "Stopped: no artifact" in result.stderr
+
+
+UNREADABLE = (
+    "unreadable retrieval record; repair it by hand"
+    ' (docs/verification/djia-events.md, "Repairing the store")'
+)
+
+
+def test_an_empty_retrieval_record_is_named(repo, moved, monkeypatch) -> None:
+    """Build names the record and its manual repair. Discover stops on it with its
+    count and gives no rerun advice, since a rerun meets the same record."""
+    (record, *_) = sorted((moved / SEC_SOURCE_ID / "retrievals").glob("*/*.json"))
+    record.write_bytes(b"")
+    built = run(repo, "build", store=EVENTS_STORE)
+    assert built.exit_code == 1, built.output
+    assert isinstance(built.exception, SystemExit), built.exception
+    assert built.stderr.splitlines() == [
+        f"problem: {record.relative_to(repo)}: {UNREADABLE}"
+    ]
+    assert built.stderr.startswith("problem: data/raw/events/sec-edgar/retrievals/")
+    client(monkeypatch, served())
+    result = run(repo, "discover", "--max-requests", "5", store=EVENTS_STORE)
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stdout.splitlines()[-1] == "requests sent: 0"
+    assert result.stderr.splitlines() == [f"Stopped: {record}: {UNREADABLE}"]
+    output = result.stdout + result.stderr
+    assert "a rerun fetches only what is missing" not in output
+
+
+def tamper_universe(repo: Path, change: Callable[[str], str]) -> str:
+    """Apply ``change`` to the copy's universe manifest; return the refusal's
+    prefix, which names the manifest's path."""
+    path = repo / UNIVERSES / "djia-synthetic-v1.json"
+    path.write_text(change(path.read_text(encoding="utf-8")), encoding="utf-8")
+    return f"Refused: {path.relative_to(repo)}: "
+
+
+def test_build_refuses_a_tampered_universe_manifest(repo, monkeypatch) -> None:
+    """One fact changed, so the manifest no longer hashes to its content_hash. Build
+    and discover refuse it, discover before any client opens."""
+    prefix = tamper_universe(
+        repo,
+        lambda text: text.replace(
+            '"announcement_date": "2024-10-31"', '"announcement_date": "2024-10-30"', 1
+        ),
+    )
+    built = run(repo, "build")
+    assert built.exit_code == 1, built.output
+    assert isinstance(built.exception, SystemExit), built.exception
+    assert built.stderr.startswith(prefix)
+    assert "does not hash to its content_hash" in built.stderr
+    budgets = client(monkeypatch, served())
+    result = run(repo, "discover", "--max-requests", "5", store=EVENTS_STORE)
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stderr.startswith(prefix)
+    assert budgets == []
+
+
+def test_a_universe_manifest_that_does_not_validate_is_refused_line_by_line(
+    repo,
+) -> None:
+    """Each entry of its validation error is one line, and each names the path."""
+    prefix = tamper_universe(repo, lambda text: "{}")
+    lines = named_lines(run(repo, "build"), prefix)
+    assert len(lines) > 1, lines
 
 
 def test_discover_prints_its_count_on_ctrl_c(repo, monkeypatch) -> None:

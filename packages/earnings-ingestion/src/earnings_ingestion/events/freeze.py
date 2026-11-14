@@ -8,7 +8,10 @@
   content is the next version.
 - ``events-v<N>.evidence.json`` is written first and ``events-v<N>.json`` second, each
   to a temporary file linked into place: a manifest never appears without its
-  evidence, and neither is ever replaced.
+  evidence, and neither is ever replaced. A freeze that stops between the two writes
+  leaves the evidence alone. A later freeze with the same evidence completes, and one
+  with other evidence is refused with ``LeftoverEvidence``, which says to delete the
+  file (plan 26).
 - A directory holds one corpus's versions: freezing refuses a build of another, and
   loading refuses a directory that holds two. Listing them also refuses two versions
   of one content, and a manifest whose evidence record is missing (PR #6's review,
@@ -58,6 +61,18 @@ class EventFreezeRefused(ValueError):
             ]
         )
         super().__init__("; ".join(self.reasons))
+
+
+class LeftoverEvidence(ValueError):
+    """An evidence record that a freeze left without its manifest, and that holds
+    other bytes than this freeze's evidence. The freeze never overwrites it."""
+
+    def __init__(self, path: Path, manifest: Path) -> None:
+        self.path = path
+        super().__init__(
+            f"{path} exists without {manifest.name} and holds other bytes: delete it,"
+            " then freeze again"
+        )
 
 
 @dataclass(frozen=True)
@@ -215,7 +230,8 @@ def freeze_events(
     build: EventBuild, saved: SavedResponses, directory: Path, *, now: datetime
 ) -> FrozenEvents:
     """Freeze ``build`` into ``directory``, or return the version that holds it.
-    Refused if ``directory`` holds another corpus."""
+    Refused if ``directory`` holds another corpus. ``LeftoverEvidence`` refuses an
+    evidence record that a stopped freeze left with other bytes."""
     existing = _versions(build, directory)
     if (held := _holding(build, directory, existing)) is not None:
         return held
@@ -223,9 +239,14 @@ def freeze_events(
         (m.definition.event_manifest_version for m in existing), default=0
     )
     manifest = build.manifest(version, now)
-    evidence = evidence_of(build, manifest, saved)
+    evidence = serialize(evidence_of(build, manifest, saved))
+    target = evidence_path(directory, version)
+    # A freeze stopped between its writes can leave this version's evidence alone.
+    # Its manifest is absent, since ``existing`` lists every manifest in the folder.
+    if target.exists() and target.read_bytes() != evidence:
+        raise LeftoverEvidence(target, manifest_path(directory, version))
     directory.mkdir(parents=True, exist_ok=True)
-    write_new(evidence_path(directory, version), serialize(evidence))
+    write_new(target, evidence)
     write_new(manifest_path(directory, version), serialize(manifest))
     return FrozenEvents(
         manifest=manifest,

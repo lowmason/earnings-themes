@@ -37,6 +37,14 @@ what a refreshed file now lists (plan 25).
 ``build``, ``freeze``, and ``select`` read committed files and saved responses alone.
 ``build`` exits 1 while anything holds the freeze.
 
+Each load failure ends with a line that names it (plan 26). An overrides file that
+does not load gives a ``problem: <path>:`` line for each of its errors. An unreadable
+retrieval record gives ``problem: <path>:`` with its manual repair, and ``discover``
+stops on it with no rerun advice. A universe manifest that does not load is
+refused with its path on each line. ``freeze`` prints a citation error as a
+``problem:`` line and any other refusal as ``Refused:``. ``select`` says to rerun
+when another ``select`` froze the pilot first.
+
 ``acquire`` reads the event manifest the build reproduces and the pilot frozen over
 it, which ``load_pilot`` checks and reselects, and refuses otherwise. It states what
 it would send before it opens the client: at most N requests before any retry, one
@@ -89,6 +97,7 @@ from typing import Annotated, NoReturn
 import typer
 from earnings_ingestion.cohort.config import UNIVERSE_DIR
 from earnings_ingestion.cohort.freeze import load_manifest
+from earnings_ingestion.cohort.locators import LocatorError
 from earnings_ingestion.cohort.records import UniverseManifest
 from earnings_ingestion.events.acquire import (
     OVERRIDES_FILE,
@@ -135,11 +144,15 @@ from earnings_ingestion.fetch.client import (
     ProcessLock,
     UnexpectedResponse,
 )
-from earnings_ingestion.fetch.store import ArtifactStore
+from earnings_ingestion.fetch.store import (
+    UNREADABLE_RECORD,
+    ArtifactStore,
+    RetrievalRecordError,
+)
 from earnings_ingestion.sec.client import open_sec_client
 from typer.core import TyperCommand
 
-from earnings_pipeline.paths import raw_store_refusal, runs_refusal, shown
+from earnings_pipeline.paths import error_lines, raw_store_refusal, runs_refusal, shown
 
 events = typer.Typer(
     no_args_is_help=True, help="Stage 5's events: discovery, eligibility, the pilot."
@@ -181,11 +194,14 @@ class Layout:
         return self.repo / self.corpus_dir
 
     def universes(self) -> list[UniverseManifest]:
-        """Every frozen version in ``universe_dir``, oldest first."""
-        found = [
-            load_manifest(path)
-            for path in sorted((self.repo / self.universe_dir).glob("*-v*.json"))
-        ]
+        """Every frozen version in ``universe_dir``, oldest first. A version that does
+        not load is refused, with its path on each line."""
+        found = []
+        for path in sorted((self.repo / self.universe_dir).glob("*-v*.json")):
+            try:
+                found.append(load_manifest(path))
+            except (OSError, ValueError) as error:
+                _fail_each("Refused:", shown(path, self.repo), error)
         if len({m.definition.universe_id for m in found}) > 1:
             _fail(f"Refused: {self.universe_dir} holds more than one universe")
         if not found:
@@ -218,6 +234,14 @@ def main(
 def _fail(message: str) -> NoReturn:
     typer.echo(message, err=True)
     raise typer.Exit(1)
+
+
+def _fail_each(label: str, path: str, error: Exception) -> NoReturn:
+    """Exit 1 with one ``<label> <path>: <line>`` for each line of ``error``, so a
+    validation error's entries each carry the path."""
+    for line in error_lines(error):
+        typer.echo(f"{label} {path}: {line}", err=True)
+    raise typer.Exit(1) from error
 
 
 class _OneFiling(TyperCommand):
@@ -365,6 +389,9 @@ def _counted[T](
                 result = run(sec.fetch)
             finally:
                 sent = sec.throttle.count
+    except RetrievalRecordError as error:
+        typer.echo(f"requests sent: {sent}")  # A rerun meets the same record.
+        _fail(f"Stopped: {error}")
     except STOPS as error:
         typer.echo(f"requests sent: {sent}; {rerun}")
         _fail(f"Stopped: {error}")
@@ -375,14 +402,20 @@ def _counted[T](
 
 
 def _build(layout: Layout) -> tuple[EventBuild, SavedResponses]:
-    saved = SavedResponses(layout.store())
+    """The offline build. Exit 1 with a ``problem:`` line for an unreadable retrieval
+    record, each line of an overrides error, and each problem the build names."""
     try:
-        built = build_events(
-            layout.universes()[-1],
-            saved,
-            load_overrides(layout.corpus() / "overrides.toml"),
-            corpus_id=layout.corpus_id,
-        )
+        saved = SavedResponses(layout.store())
+    except RetrievalRecordError as error:
+        _fail(f"problem: {shown(error.path, layout.repo)}: {UNREADABLE_RECORD}")
+    universe = layout.universes()[-1]
+    path = layout.corpus() / "overrides.toml"
+    try:
+        overrides = load_overrides(path)
+    except (OSError, ValueError) as error:
+        _fail_each("problem:", shown(path, layout.repo), error)
+    try:
+        built = build_events(universe, saved, overrides, corpus_id=layout.corpus_id)
     except EventBuildError as error:
         for problem in error.problems:
             typer.echo(f"problem: {problem}", err=True)
@@ -429,7 +462,9 @@ def freeze_command(context: typer.Context) -> None:
         frozen = freeze_events(built, saved, layout.corpus(), now=datetime.now(UTC))
     except EventFreezeRefused as error:
         _holds(error)
-    except ValueError as error:
+    except LocatorError as error:
+        _fail(f"problem: {error}")
+    except (OSError, ValueError) as error:
         _fail(f"Refused: {error}")
     definition = frozen.manifest.definition
     verb = "froze" if frozen.created else "unchanged:"
@@ -480,6 +515,11 @@ def select_command(context: typer.Context) -> None:
     try:
         pilot = select_pilot(current.manifest, universe)
         frozen = freeze_pilot(pilot, universe, layout.corpus(), now=datetime.now(UTC))
+    except FileExistsError as error:
+        _fail(
+            f"Refused: {error}; another events select froze this pilot first:"
+            " rerun events select"
+        )
     except ValueError as error:
         _fail(f"Refused: {error}")
     manifest = frozen.manifest
