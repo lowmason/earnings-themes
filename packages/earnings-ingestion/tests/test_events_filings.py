@@ -310,6 +310,33 @@ def test_an_older_report_raises_nothing_when_the_latest_has_no_value_either(
     assert finding.finding_id == f"acceptance_time_unknown:{latest.accession}"
 
 
+def test_a_report_accepted_after_the_cutoff_does_not_bound_the_older_ones(
+    saved,
+) -> None:
+    """The slots' guards read visible reports only. When the latest report before the
+    window was accepted after the cutoff, they read the one before it, so that
+    report's missing value still blocks."""
+    older = periodic(60, date(2023, 12, 31), "2024-02-20 16:30:00", written="")
+    late = periodic(70, date(2024, 3, 31), "2026-09-25 16:30:00")
+    inside = periodic(90, date(2024, 9, 30), "2024-11-04 16:30:00")
+    saved.submissions([older, late, inside])
+    saved.index(late)
+    read = saved.read()
+    assert [p.filing.accession for p in read.periodic] == [inside.accession]
+    (finding,) = read.findings
+    assert finding.finding_id == f"acceptance_time_unknown:{older.accession}"
+
+
+def test_a_report_dated_on_the_window_s_start_is_inside_the_window(saved) -> None:
+    """A report dated on the window's start is in the window, so the latest report
+    before the window is the one before it, whose missing value still blocks."""
+    latest = periodic(70, date(2024, 3, 31), "2024-05-02 16:30:00", written="")
+    first = periodic(90, date(2024, 7, 1), "2024-08-05 16:30:00")
+    saved.submissions([latest, first])
+    (finding,) = saved.read().findings
+    assert finding.finding_id == f"acceptance_time_unknown:{latest.accession}"
+
+
 def test_a_visible_report_older_than_the_latest_before_the_window_is_kept(
     saved,
 ) -> None:

@@ -20,7 +20,8 @@ It then places each filing the build reads (plan 7, P7-8):
   is ``acceptance_time_unknown``, which blocks until its index page is saved
   (``earnings-pipeline events discover --filing``). A report older than the
   issuer's latest report before ``start`` raises no finding, since no slot or guard
-  reads it.
+  reads it. That latest report is never one accepted after the cutoff, which the
+  guards do not read.
 - **An Item 2.02 8-K or 8-K/A** is read from its index page, which discovery saved
   for every one that either convention places in the range. One without a value,
   filed on or after ``start``, is ``acceptance_time_unknown`` in the same way. One
@@ -353,12 +354,17 @@ def _periodic(
     cutoff: date,
 ) -> tuple[list[Placed], list[EventFinding]]:
     """The visible reports, and an ``acceptance_time_unknown`` for each report whose
-    visibility is unknown. A report older than ``floor``, the issuer's latest report
-    before ``start``, raises none: the slots and their guards read no report older
-    than that one (``events/slots.py``). ``floor`` is ``start`` when no report
-    precedes it."""
+    visibility is unknown. A report older than ``floor`` raises none. ``floor`` is
+    the issuer's latest report before ``start`` that is visible or unknown, never one
+    accepted after the cutoff: the slots and their guards read visible reports only,
+    and none older than that one (``events/slots.py``). ``floor`` is ``start`` when
+    no such report precedes it."""
     floor = max(
-        (p.filing.report_date for p, _ in reports if p.filing.report_date < start),
+        (
+            p.filing.report_date
+            for p, seen in reports
+            if seen is not False and p.filing.report_date < start
+        ),
         default=start,
     )
     visible = [placed for placed, seen in reports if seen]
