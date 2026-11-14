@@ -242,9 +242,14 @@ These are plan A's first tasks, done before any Stage 5 request.
 - **The cutoff.** Discovery reads only filings accepted on or before 2026-09-22 on the
   Eastern calendar. A later filing is never a slot, a candidate, or a source of labels
   (P-C4).
-- **Older pages.** An older page is read when its own `filingFrom`–`filingTo` range
-  meets `[2024-07-01, 2026-09-22]`. Otherwise it is skipped by those dates, and the
-  skip is recorded (R1.1).
+- **Older pages.** An older page is read unless its `filingTo` is more than seven days
+  before 2024-07-01, or its `filingFrom` is more than seven days after 2026-09-22.
+  These are filing dates. A filing accepted after 17:30 takes the next business
+  day's filing date, so the margin keeps a page that holds a filing accepted inside
+  the range. A skipped page is recorded (R1.1). A page that is read must hold only
+  filing dates before the next newer page's `filingFrom`, or before the recent
+  block's earliest filing date for the newest page. Otherwise it is refused, as a
+  page that SEC cut again. *(owner, plan 26, 2026-11-13.)*
 
 ### Slots (step 1)
 

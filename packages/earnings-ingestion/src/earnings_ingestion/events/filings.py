@@ -1,10 +1,17 @@
 """An issuer's filings, read from saved responses and placed on the Eastern calendar
 (the Stage 5 spec, §Store, client, and readers, and §Acceptance time).
 
-``issuer_filings`` reads the issuer's saved submissions file, and each older page
-whose ``filingFrom``-``filingTo`` range meets ``[start, cutoff]``. A page that states
-no range is read. Every other page is skipped by its dates, and the skip is
-recorded (R1.1).
+``issuer_filings`` reads the issuer's saved submissions file and its older pages. A
+page is skipped by its dates when its ``filingTo`` is more than ``FILING_DATE_SLACK``
+before ``start``, or its ``filingFrom`` is more than that after the cutoff. These are
+filing dates, so the margin keeps a page that holds a filing accepted in the range.
+The skip is recorded (R1.1). A page that states no range is read.
+
+A dated page that is read must hold only filing dates before the next newer page's
+``filingFrom``, or before the recent block's earliest filing date for the newest
+page. Otherwise it is refused, as a page that SEC cut again (plan 26). The count its
+entry states binds a page to the submissions file, and these dates bind it to its
+place among the issuer's files.
 
 It then places each filing the build reads (plan 7, P7-8):
 
@@ -41,12 +48,13 @@ Each missing response's URL is also listed in ``missing``, which discovery fetch
 next. A response that is saved and cannot be used is never missing: discovery does
 not fetch it, and it is refetched by an explicit command (plan 25). Its URL is
 listed in ``unusable``, and its problem ends with that command. For an accession
-listed more than once, that URL is the issuer's submissions file, which the command
-refetches with its older pages.
+listed more than once, or a page whose dates passed its bound, that URL is the
+issuer's submissions file, which the command refetches with its older pages.
 """
 
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from itertools import pairwise
 
 from earnings_ingestion.cohort.locators import CitableArtifact
 from earnings_ingestion.events.acceptance import (
@@ -66,6 +74,7 @@ from earnings_ingestion.events.records import (
 from earnings_ingestion.events.saved import SavedResponses, refetch_remedy
 from earnings_ingestion.sec.data import (
     Filing,
+    OlderPage,
     Registrant,
     SecDataError,
     read_older_page,
@@ -86,6 +95,8 @@ FILING_DATE_SLACK = timedelta(days=7)
 """The margin past a range's bound for a judgment made by filing date. A filing
 accepted after 17:30 takes the next business day's filing date, so its filing date
 can fall after its acceptance date."""
+WITH_OLDER_PAGES = "the submissions file with its older pages"
+"""What the refetch that answers a re-cut of the issuer's files replaces."""
 
 
 @dataclass(frozen=True)
@@ -151,6 +162,11 @@ def index_disagreement(filing: Filing, index: FilingIndex) -> str | None:
     return None
 
 
+def _dated(page: OlderPage) -> bool:
+    """Whether ``page``'s entry states both its ``filingFrom`` and its ``filingTo``."""
+    return page.filing_from is not None and page.filing_to is not None
+
+
 def _unknown(issuer_id: str, filing: Filing, why: str) -> EventFinding:
     return event_finding(
         EventFindingKind.ACCEPTANCE_TIME_UNKNOWN,
@@ -210,10 +226,13 @@ class _Reader:
             return None, [], []
         listed = [(main, registrant.filings)]
         skipped = []
+        read: dict[str, tuple[Filing, ...]] = {}
         for page in registrant.older_pages:
             url = submissions_page_url(page.name)
-            dated = page.filing_from is not None and page.filing_to is not None
-            if dated and (page.filing_to < start or page.filing_from > cutoff):
+            if _dated(page) and (
+                page.filing_to < start - FILING_DATE_SLACK
+                or page.filing_from > cutoff + FILING_DATE_SLACK
+            ):
                 skipped.append(
                     SkippedPage(
                         url=url, filing_from=page.filing_from, filing_to=page.filing_to
@@ -224,19 +243,24 @@ class _Reader:
             if artifact is None:
                 continue
             try:
-                listed.append((artifact, read_older_page(artifact.text.body, page)))
+                filings = read_older_page(artifact.text.body, page)
             except SecDataError as exc:
                 self.refuse(url, f"{url}: {exc}")
-        self.repeats(listed, main.url)
+                continue
+            listed.append((artifact, filings))
+            read[page.pointer] = filings
+        if not self.repeats(listed, main.url):
+            self.shifts(registrant, read, main.url)
         return registrant, listed, skipped
 
     def repeats(
         self, listed: list[tuple[CitableArtifact, tuple[Filing, ...]]], main: str
-    ) -> None:
+    ) -> bool:
         """Refuse each accession the issuer's files list more than once, naming each
         copy's pointer: two copies would make two candidates of one filing. The
         remedy refetches ``main``, the submissions file, with its older pages: a
-        stale older page, after SEC pages the filings again, is the likely cause."""
+        stale older page, after SEC pages the filings again, is the likely cause.
+        Return whether any accession was refused."""
         repeated = repeated_accessions(
             (artifact.url, filings) for artifact, filings in listed
         )
@@ -244,8 +268,54 @@ class _Reader:
             self.refuse(
                 main,
                 f"{accession} is listed {len(where)} times: {', '.join(where)}",
-                "the submissions file with its older pages",
+                WITH_OLDER_PAGES,
             )
+        return bool(repeated)
+
+    def shifts(
+        self,
+        registrant: Registrant,
+        read: dict[str, tuple[Filing, ...]],
+        main: str,
+    ) -> None:
+        """Refuse each dated older page in ``read`` that holds a filing date on or
+        after its bound, as a page that SEC cut again. ``read`` maps each page's entry
+        pointer to its filings.
+
+        The dated pages are ordered by ``filingFrom``. A page's bound is the next
+        newer page's ``filingFrom``, read or skipped. The newest page's bound is the
+        recent block's earliest filing date, and it has none when that block is
+        empty. The remedy is the one ``repeats`` gives. The caller runs this only
+        when ``repeats`` refused nothing: a filing listed twice also puts a page's
+        dates past its bound, and its refusal already names the copies and the same
+        remedy."""
+        dated = sorted(
+            filter(_dated, registrant.older_pages), key=lambda page: page.filing_from
+        )
+        earliest = min((f.filing_date for f in registrant.filings), default=None)
+        for page, newer in pairwise([*dated, None]):
+            filings = read.get(page.pointer)
+            if not filings:
+                continue
+            if newer is not None:
+                bound = newer.filing_from
+                what = (
+                    "the next newer page's filingFrom at"
+                    f" {newer.pointer}/filingFrom in {main}"
+                )
+            elif earliest is not None:
+                bound = earliest
+                what = f"the earliest filing date at /filings/recent in {main}"
+            else:
+                continue
+            latest = max(filing.filing_date for filing in filings)
+            if latest >= bound:
+                self.refuse(
+                    main,
+                    f"{submissions_page_url(page.name)} lists a filing dated"
+                    f" {latest}, not before {bound}, {what}",
+                    WITH_OLDER_PAGES,
+                )
 
     def indexes(
         self, cik: str, filings: list[Filing]

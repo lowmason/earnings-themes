@@ -1356,8 +1356,8 @@ plan 8, P8-11). `events acquire` applies it; no manifest hashes it.
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `url` | string | An older page the build did not read |
-| `filing_from` | date | Its first filing date |
-| `filing_to` | date | Its last. A page is skipped when this range misses `[2024-07-01, 2026-09-22]` |
+| `filing_from` | date | SEC's `filingFrom` |
+| `filing_to` | date | SEC's `filingTo`. It can differ by a day from the page's last filing date. A page is skipped when this is more than seven days before 2024-07-01, or when `filing_from` is more than seven days after 2026-09-22. |
 
 ### `EventCitations`
 
