@@ -1,72 +1,6 @@
 # Deferred items
 
-## browser-rendering-integration — 2026-09-24
-
-- [x] When Stage 1 is ticked complete in
-      `specs/evidence-linked-theme-extraction-roadmap.md`, surface the approved
-      `specs/browser-rendering-integration.md` design before Stage 2 planning.
-      Stage 2 plans only the browser-neutral core contracts and tests; Stage 3
-      owns Selenium capture, rendered-text calibration, DOM/layout extraction,
-      and the diagnostic-first promotion decision; Stage 10 consumes the public
-      renderer and canonical-span artifacts for cited evidence views. Do not add
-      browser automation to Stage 1 or make it a dependency of `earnings-core`
-      or `earnings-themes`. Size: cross-stage planning reminder. Done when the
-      Stage 2 plan incorporates its assigned contract work and leaves explicit
-      handoffs for the Stage 3 brainstorming pass and Stage 10 plan. → done in plan 3 (specs/plans/completed/3-core-evidence-spine.md)
-
-## 2-point-in-time-djia-cohort — 2026-09-22
-- [x] Renumber the two Stage 1 documents for the cohort amendment (plan 2 Task 7,
-      skipped): `specs/release-parser-fidelity.md` still calls acquisition Stage 4
-      and the codebook-and-split stage Stage 5 (lines 121, 164, 474, and the
-      Handoffs table's bare `| 4 |` / `| 5 |` rows at 614-615), and
-      `specs/plans/1-release-parser-fidelity.md` cites Stage 4 three times plus a
-      lowercase `stage 4` column header at line 2988, which also appears in
-      `expirements/parser-fidelity/discover.py:468`. Deferred because Stage 1
-      execution is live on `stage-1-release-parser-fidelity` and edits plan 1 in
-      the main checkout. The forward constraint at
-      `specs/release-parser-fidelity.md:164-166` needs a change of meaning, not
-      just a number: under P-C7 a selected event stays selected, so "leave them out
-      of the pilot" is no longer available, and Stage 6 must instead place any
-      fixture event the deterministic selection includes in the training
-      partition (moot today: no fixture issuer is a DJIA member). The steps are in
-      specs/plans/completed/2-point-in-time-djia-cohort.md, Task 7. Stage 1 keeps
-      writing text in the old numbering (its decision record, V2 notes, and plan
-      1's handoff sections), so the line numbers above will drift: re-derive them
-      then, and run a case-insensitive `stage [45]` / `stage4` sweep over
-      everything Stage 1 added after `6021323`. Size:
-      quick-fix. Done when: Stage 1 execution is paused or its plan is retired,
-      both documents are clean in git status, and the renumbering, including the
-      reworded forward constraint, has landed. → done in plan 1 (`d3df93c`)
-- [x] Rename the `stage4_flags` manifest field to `acquisition_flags` (plan 2
-      Task 7 Steps 3 and 5, skipped): the field has reached code, in
-      `expirements/parser-fidelity/promote_fixtures.py:157`,
-      `expirements/parser-fidelity/test_promote_fixtures.py:106-110`
-      (`test_stage4_flags`), and eight entries of
-      `tests/fixtures/releases/manifest.toml`, as well as both Stage 1 documents,
-      so it must change in documents and code together, which a live Stage 1 run
-      cannot absorb. Size: quick-fix. Done when: Stage 1 execution is complete and
-      the field is renamed in documents, code, test, and manifest in one change,
-      or the user records a decision to keep `stage4_flags`. → done in plan 1 (`d3df93c`)
-- [x] README Stage 1 status is stale on this base (plan 2 whole-plan review,
-      Minor): `README.md:140-141` says the investigation harness and fixture
-      corpus "have not been created yet", but `expirements/parser-fidelity/` and
-      `tests/fixtures/releases/` exist since the Stage 1 commits. Outside plan 2's
-      scope, and the paragraph is the user's. Size: quick-fix. Done when: the
-      README's Stage 1 paragraph describes the harness and fixture corpus as they
-      stand, at the latest when Stage 1 completes. → done in plan 1
-
 ## 1-release-parser-fidelity — 2026-09-25
-- [x] Carry V2's findings into Stage 3: V2's "Residual failures (for Stage 3)"
-      and "Findings for Stage 3" (`docs/verification/V2-parser-fidelity.md`) and
-      ADR 0001's Consequences list what the walker leaves to the canonicalizer:
-      split, merged and header-lost blocks by fixture, body text typed as
-      headings (12 of 313 found body blocks), the eight Known gaps in
-      `expirements/parser-fidelity/walker-rules.md`, W11's and W15's side
-      effects, page numbers kept as `other`, and a script header that lists
-      beautifulsoup4, which the walker never imports. The roadmap's Stage 3 entry
-      consumes only "Stage 1 parser decision and fixtures", so these could be
-      missed. Size: plan. Done when: the Stage 3 spec or plan compensates for or
-      records each of V2's findings for Stage 3. → done in plan 4
 - [ ] Time parsers without their imports before relying on speed (V2, "Notes on
       ADR 0001 after acceptance", "Fast."): the harness's `parse_seconds`
       includes the library import for edgartools, sec-parser and the control,
@@ -96,115 +30,6 @@
       is absent. Size: quick-fix. Revisit if: the lock gate runs again, such as
       to re-check a sec-parser release under ADR 0001.
 
-## 3-core-evidence-spine — 2026-09-25
-- [x] Accept a stored `VerifiedSpan` in `validate_span` (final review, Important
-      #2; the user chose a handoff note and deferred this): `VerifiedSpan` in
-      `packages/earnings-core/src/earnings_core/evidence.py` validates only
-      `start < end`, so a `model_copy(update=...)` or a JSON round trip can
-      carry any `quote_text`. `validate_span` is typed to take a
-      `SpanCandidate`, yet at runtime it already rejects a tampered copy with
-      `quote_text_mismatch`, because both records share `_EvidenceFields`. Plan
-      3's roadmap reconcile tells Stages 7 and 10 to re-run `validate_span` on
-      stored spans at every R6.1 gate, and Stage 7 owns the verification stage
-      (D-20). Fix: type the parameter to accept either record, or add a named
-      re-verification helper, with a test that a round-tripped `VerifiedSpan`
-      re-verifies and a tampered copy is rejected. Size: quick-fix. Done when:
-      that API and its test land, at the latest when Stage 7 first stores
-      `VerifiedSpan`s. → done in plan 11 (specs/plans/completed/11-evidence-selection-and-verification-plan-a.md)
-- [x] Report every crossing in `validate_elements` (final review, Minor;
-      deferred by the user): `_crossings` in
-      `packages/earnings-core/src/earnings_core/structure.py` never pushes an
-      element it has reported, so a later crossing against that element goes
-      unreported. With A=[0,10), B=[5,15) and C=[12,20), B is reported against A
-      but not against C. The set is still refused, but D-8 promises every
-      structural problem at once. Size: quick-fix. Done when: that case reports
-      both crossings, with a test. → done in plan 4
-- [x] Prefer the genuine element in `resolve_pointer` (final review, Minor;
-      deferred by the user): `resolve_pointer` in
-      `packages/earnings-core/src/earnings_core/structure.py` returns
-      `wrong_document` for the first element whose ID matches, while
-      `validate_span`'s `_element` skips elements of another version. Under D-1
-      an unchanged region keeps its `element_id` across versions, so for a
-      mixed-version element list the outcome depends on list order. Size:
-      quick-fix. Done when: `resolve_pointer` resolves the genuine element
-      wherever it sits in the list, with a test that lists the stale element
-      first. → done in plan 11 (specs/plans/completed/11-evidence-selection-and-verification-plan-a.md)
-- [x] Recheck construction-only invariants in `validate_elements` (final review,
-      Minor; deferred by the user): `validate_elements` in
-      `packages/earnings-core/src/earnings_core/structure.py` recomputes hashes
-      and derived IDs (D-7) but not a level on a non-leveled type, table-cell
-      context present exactly on `table_cell` elements, or self-parenting, so a
-      `model_copy`'d cell stripped of its context passes. The `ContractModel`
-      docstring in `packages/earnings-core/src/earnings_core/_model.py` says the
-      validators recheck every stored invariant. Size: quick-fix. Done when:
-      `_own_problems` rechecks all three with tests, or that docstring is
-      narrowed to hashes and derived IDs. → done in plan 4
-- [x] Close D-12's portability gaps in `ArtifactRef.storage_ref` (final review,
-      Minor; deferred by the user): the check in
-      `packages/earnings-core/src/earnings_core/artifacts.py` is a
-      case-sensitive prefix test, so `FILE:///Users/...`, `File:/...`,
-      `C:/Users/...` and `../...` all pass, short of D-12's aim of never
-      publishing a home directory from this public repository. Size: quick-fix.
-      Done when: `storage_ref` refuses a `file:` scheme in any case, a
-      drive-letter path, and a `..` segment, with tests, before Stage 4 persists
-      its first `ArtifactRef`. → done in plan 4
-- [x] Validate `MaskedDocument` itself (final review, Minor; deferred by the
-      user): `MaskedDocument` in
-      `packages/earnings-core/src/earnings_core/masks.py` has no validator, so
-      building one directly bypasses the checks in `apply_masks`: document
-      match, bounds, and one policy version (D-18). Size: quick-fix. Done when:
-      a `model_validator` on `MaskedDocument` enforces those checks and
-      `apply_masks` relies on it, with a test that a directly built bad set is
-      refused, at the latest when Stage 3 first builds `MaskedDocument`s. → done in plan 4
-- [x] Reject, don't raise, on unvalidated offsets (final review, Minor; deferred
-      by the user): given a candidate built by `model_copy` with a float offset,
-      `validate_span` in `packages/earnings-core/src/earnings_core/evidence.py`
-      raises `TypeError` at the slice, and a bool offset whose slice matches
-      raises a `ValidationError` when it builds the `TextSpan`. The checks are
-      meant never to raise on bad evidence (R6.2). `parse_span_candidate`
-      refuses both offsets, so only code that skips it can get there. Size:
-      quick-fix. Done when: `validate_span` returns `malformed_record` for a
-      non-integer or bool offset on an unvalidated candidate, with a test. → done in plan 11 (specs/plans/completed/11-evidence-selection-and-verification-plan-a.md)
-- [x] Give `Rejection` a structured subject (final review, recommendation;
-      deferred by the user): `Rejection` in
-      `packages/earnings-core/src/earnings_core/rejections.py` names what it
-      refused only in its `detail` prose, with no `doc_id`, candidate, or
-      element reference, so Stage 7 must pair each rejection with its candidate
-      to keep R6.2's audit trail. Size: design. Done when: Stage 7's
-      rejection-store design records whether `Rejection` gains structured
-      subject fields (a schema bump with a data-dictionary update) or the store
-      pairs each rejection with its candidate. → done in plan 12 (specs/plans/completed/12-evidence-selection-and-verification-plan-b.md): the store pairs each core `Rejection` with its subject (ES6)
-- [x] Check import boundaries statically as well (final review, recommendation;
-      deferred by the user): the three
-      `packages/*/tests/test_import_boundaries.py` files inspect `sys.modules`
-      after a top-level import, so an import inside a function escapes them.
-      Size: quick-fix. Done when: an AST scan of each package's `src/` refuses
-      sibling-package and browser imports alongside the runtime check, at the
-      latest when Stage 3 adds the `browser-capture` extra to
-      `earnings-ingestion` (B3). → done in plan 5
-
-## 4-structure-aware-canonicalization-plan-a — 2026-09-25
-- [x] Settle the review gate's open page-artifact and mask findings (plan 4,
-      Task 11; the user kept these rules at the gate on 2026-09-25):
-      `docs/verification/walker-1.md` ("The review gate") and
-      `docs/verification/walker-1-report.md` list them. Under `walker-1`, C5 in
-      `packages/earnings-ingestion/src/earnings_ingestion/canonical/compensate.py`
-      types National Health Investors' own headline, "NHI Reports 17.2%
-      Increase in Third Quarter Normalized FFO", as `page_artifact` on all five
-      copies, because the walker typed it a paragraph, so the canonical fixtures
-      Stage 7 receives exclude it from narrative eligibility. C5 also types
-      Becton Dickinson's repeated statement titles. No C rule types the end
-      marks ("# # #", "***", "###") or the running heads that carry a page
-      number ("Ball Corp - N", FMC's "Page N/ ..."). M1-M5 in
-      `canonical/boilerplate.py` leave Becton Dickinson's "1Represents a
-      non-GAAP" footnotes, which the walker typed as paragraphs, and Southwestern
-      Energy's forward-looking-statements continuation paragraph unmasked. A
-      retype changes elements, so it needs `walker-2`; a mask change needs
-      `boilerplate/2`. Styled headings are plan B's pre-registered target, and
-      ADR 0002 decides promotion. Size: plan. Done when: plan B's verification
-      record or ADR 0002 gives each finding a disposition: fixed under a new
-      policy version, a plan B target, or a recorded limitation. → done in plan 5
-
 ## 5-structure-aware-canonicalization — 2026-09-26
 - [ ] Keep the capturing machine's paths out of committed captures (final
       review, Important #2; before the first push the user chose to record it
@@ -218,25 +43,6 @@
       capture policy version, write a fixed placeholder for the scratch prefix.
       Size: quick-fix. Revisit if: the committed captures are regenerated, such
       as for a new pin or capture policy version.
-- [x] Harden the frozen capture adapter (final review, Minor #4). Three defects
-      in `packages/earnings-ingestion/src/earnings_ingestion/browser/selenium_capture.py`:
-      - `driver.current_url`, read after navigation, runs outside `_step`, so a
-        WebDriver error there escapes `capture()` instead of returning a
-        `failed` capture.
-      - `_Interceptor.__init__` reads `http://<debugger address>/json` with
-        `urllib.request.urlopen`, which routes even 127.0.0.1 through an
-        `http_proxy` variable that `no_proxy` does not cover. On such a machine
-        every capture fails at startup; an opener built with `ProxyHandler({})`
-        avoids it.
-      - A failing `Page.getFrameTree` or `Fetch.enable` there leaves the
-        WebSocket open.
-      The file is frozen by `expirements/parser-fidelity/layout1-preregistered.toml`
-      and changes only through `preregister.py amend`, for a crash or an invalid
-      element set. Size: plan. Done when: the next adapter or capture policy
-      version lands all three, with tests. → done in plan 15
-      (`specs/plans/completed/15-evidence-linked-theme-extraction.md`): all three
-      lifecycle/isolation fixes, covering invented tests and two approved frozen
-      adapter amendments landed; no actual capture regeneration is asserted.
 - [ ] Report `browser setup`'s ordinary failures in one line (final review,
       Minor #5): `apps/earnings-pipeline/src/earnings_pipeline/cli.py` catches
       only `ValueError`, so an `httpx.HTTPError`, an `OSError`, or
@@ -244,6 +50,7 @@
       Size: quick-fix. Revisit if: a real install fails with a traceback, or the
       CLI gains a second command.
       → triggered 2026-11-13: The CLI now registers seven command groups (browser, cohort, events, extract, pilot, codebook, gold) in apps/earnings-pipeline/src/earnings_pipeline/cli.py. The second group, cohort, arrived in b9603b1 (2026-09-26) and events in 73e6fbc (2026-09-27). The browser setup handler still catches only ValueError. The item is still open.
+      → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
 - [ ] Three small robustness fixes (final review, Minor #6):
       - `install` in
         `packages/earnings-ingestion/src/earnings_ingestion/browser/install.py`
@@ -257,6 +64,7 @@
       Size: quick-fix. Done when: `install` raises explicitly, the capture script
       drops screenshots before writing, and the store converts to UTC, with a
       test for the script.
+      → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
 - [ ] Separate words split by `<br>` in table cells (final review, Minor #7;
       R3.5's second leg): `walker-1` canonicalizes Becton Dickinson's header
       cells `Foreign<br>Currency<br>Translation`
@@ -269,54 +77,6 @@
       a `walker-2` is planned for another reason.
 
 ## 6-point-in-time-djia-cohort — 2026-09-26
-- [x] Give the universe manifest an operative identity (final review, Important
-      #1; the user corrected the wording and deferred the design): P6-12 said
-      evidence published after the cutoff cannot change a manifest's content, but
-      `content_hash` in
-      `packages/earnings-ingestion/src/earnings_ingestion/cohort/build.py` covers
-      withheld assertions and findings, and the SEC artifacts that identities cite,
-      which `ArtifactStore.latest` picks newest first. So curating a notice
-      published after 2026-09-22, or re-running `earnings-pipeline cohort
-      fetch-sec`, then refreezing, makes a new version in
-      `config/universe/djia/manifests/` whose intervals, mappings, and candidate
-      issuers are unchanged, and Stage 5's manifests would re-version with it.
-      Options: an operative hash over the cutoff-admissible content, SEC artifacts
-      pinned by hash in the curated files, or both; the committed v1 must stay
-      loadable. Size: design. Done when: Stage 5's spec or plan decides what
-      identifies the universe for its manifests, and a test shows that a withheld
-      notice and a re-fetched SEC record leave that identity unchanged. → done in plan 7
-- [x] Hold the SEC and web client locks once per machine (final review, Important
-      #2): `LOCK_PATH` in
-      `packages/earnings-ingestion/src/earnings_ingestion/sec/client.py` and in
-      `packages/earnings-ingestion/src/earnings_ingestion/cohort/web.py` resolves
-      under each checkout's `data/runs/`, so a second worktree or clone takes its
-      own lock, and two checkouts could together exceed the project's 2 requests
-      per second (R1.3). The docstrings and P6-16 say "one per machine";
-      `docs/verification/djia-cohort.md` now says one checkout.
-      `test_one_client_per_machine` cannot catch it, since both of its clients
-      share one `tmp_path`. Fix: put both locks in one machine-wide place, such as
-      the user's cache directory, with a test that two repository roots share one
-      lock. Size: quick-fix. Done when: both locks are machine-wide and tested, and
-      the record says one machine again, before a second checkout or Stage 5's
-      EDGAR adapter sends SEC requests. → done in plan 7
-- [x] Three robustness fixes in the cohort path (final review, Minor; paths under
-      `packages/earnings-ingestion/src/earnings_ingestion/` unless given in full):
-      - `_build` in `apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py`
-        catches only `CohortError`, but a bad override makes `reconstruct`
-        (`cohort/intervals.py`), `resolve` (`cohort/resolution.py`), or
-        `acknowledge` (`cohort/findings.py`) raise `ValueError`, which prints a
-        traceback, not a `problem:` line. `terms_digest` also runs outside any
-        `try` in `cohort_cli.py`'s `terms` and in `cohort/live.py`, so a terms page
-        that `walker-1` cannot read aborts `verify-live` before its record is
-        written.
-      - `read_submissions` in `sec/data.py` lets `KeyError` and `TypeError` escape
-        on a malformed `formerNames` or `filings.files` entry, and reads a string
-        `tickers` as characters, though its docstring promises `SecDataError`.
-      - `retry_after_seconds` in `fetch/client.py` accepts any `str.isdigit()`
-        value, so a non-ASCII digit such as a superscript two reaches `float()`
-        and raises `ValueError` rather than being ignored.
-      Size: quick-fix. Done when: each case has a test, and each ends as a
-      `problem:` line, a `SecDataError`, or an ignored header. → parts 2 and 3 done in plan 7; part 1 restated under plan 7
 - [ ] Four stale claims (final review, Minor; paths under
       `packages/earnings-ingestion/src/earnings_ingestion/` unless given in full):
       - `fetch/robots.py`'s docstring says a response the client gives up on
@@ -333,6 +93,7 @@
         `djia-cohort` record, ADR 0002, and the Stage 3 records.
       Size: quick-fix. Done when: each claim matches the code, or `fetch_page`
       checks the URL's host against its source, with a test.
+      → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
 - [ ] Decide what an override's dates mean (final review, Minor, and Codex's
       review of PR #5): every `Override`
       records `effective_from`, and optionally `effective_to`, and
@@ -388,6 +149,7 @@
       `packages/earnings-ingestion/src/earnings_ingestion/` unless given in
       full. Size: quick-fix. Done when: each case has a test, and each ends as a
       `problem:` line or in `verify-live`'s record.
+      → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
 - [ ] Show the operative hashes in `verify-live` (plan 7, P7-3): plan 7's Task
       16 named companyfacts in the `sec-edgar` entry of
       `docs/source-register.toml`, and a universe manifest's content hash
@@ -402,6 +164,7 @@
       `packages/earnings-ingestion/src/earnings_ingestion/`. Size: quick-fix.
       Done when: `verify-live`'s output and record tell a register-only change
       from a changed fact, with a test.
+      → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
 - [ ] Write `release-id/2` (plan 7's Task 20 review, and its final review):
       `release-id/1` in
       `packages/earnings-ingestion/src/earnings_ingestion/events/release.py`
@@ -523,6 +286,7 @@
       its path; and a leftover evidence file with other bytes gives the named
       refusal while an identical one still completes the freeze; each with a test
       and no traceback.
+      → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
 - [ ] Cite the Item 2.02 text of a release an override names outside the
       candidates (plan 7's final review, Minor): `_event` in `events/evidence.py`
       sets `item_text` only when the event's release is one of `release-id/1`'s
@@ -590,6 +354,7 @@
       releases); a build-level test takes an emptied 10-Q through its saved index
       page to the freeze; and a no-value Item 2.02 8-K filed past the cutoff's
       margin raises no finding.
+      → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
 - [ ] Refuse a repeated acknowledgement (plan 7's final review, Minor):
       `EventOverridesFile._distinct` in `events/records.py` refuses a repeated
       `override_id` and, per P7-14, a second override of one kind for one
@@ -598,16 +363,7 @@
       `packages/earnings-ingestion/src/earnings_ingestion/`.
       Size: quick-fix. Done when: `EventOverridesFile` refuses a `finding_id`
       repeated among acknowledgements, with a test.
-- [x] Bind an evidence record to its manifest when loading (plan 7's final
-      review, Minor): `load_event_evidence` in `events/freeze.py` checks only
-      that the file's name matches its `event_manifest_version`. Nothing
-      compares its `event_manifest_hash` with the `content_hash` of the manifest
-      beside it, so an evidence record from another corpus, or from other
-      content under the same version, would load. Paths are under
-      `packages/earnings-ingestion/src/earnings_ingestion/`.
-      Size: quick-fix. Done when: loading an evidence record checks its
-      `corpus_id` and `event_manifest_hash` against the manifest of its version,
-      with a test. → fixed in PR #6 (Codex round 4, C1)
+      → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
 
 ## PR #6 review (plan 7) — 2026-09-27
 - [ ] Decide what identifies the event manifest when a store is rebuilt (PR #6's
@@ -631,42 +387,6 @@
       when: the decision is recorded, and a test shows that re-citing an override's
       page from other bytes leaves the chosen identity and the pilot's seed
       unchanged.
-- [x] Decide which frozen version is current after a revert (PR #6's review,
-      F4): `freeze_events` in `events/freeze.py` returns an older version when the
-      build's content matches it, but `select_command` in
-      `apps/earnings-pipeline/src/earnings_pipeline/events_cli.py` always reads the
-      highest-numbered event manifest, and prints neither the version nor the hash
-      it read. So after a change is frozen as v2 and then reverted, `events
-      freeze` says "unchanged: v1" while `events select` draws a new pilot from
-      the withdrawn v2. The code follows the spec's §Commands ("the latest frozen
-      event manifest") and P7-18, so this is a gap in the versioning model, shared
-      by every consumer that takes the latest version, plan B's pilot pick among
-      them. The pilot records the event manifest version and hash it read, so the
-      chain can be audited. Paths are under
-      `packages/earnings-ingestion/src/earnings_ingestion/` unless given in full.
-      Size: design. Done when: the rule for the current version after a revert,
-      for event manifests, universes, and pilots, is recorded as an amendment to
-      the spec's §Commands and P7-18; `events select`, and plan B's pilot pick,
-      read the version the current build matches or refuse when a newer one
-      exists, and print the version and hash they read; and a test freezes v1,
-      freezes a changed v2, reverts, and runs select. → done in plan 8
-- [x] Refuse a frozen version that repeats another's content or lacks its
-      evidence (PR #6's review, F22): `event_manifest_version` is not hashed, so a
-      hand-renumbered copy of `events-v1.json` loads beside v1 with the same
-      content hash, and `frozen_event_manifests` in `events/freeze.py` loads a
-      manifest whose `events-v<N>.evidence.json` is missing. In that state `events
-      freeze` names v1 while `events select` binds a new pilot to the copy, which
-      has no evidence record. No code path writes either state, since the freeze
-      writes the evidence first and matches on content. Stage 4's
-      `frozen_manifests` in `cohort/freeze.py` has the same shape (P6-14). Check
-      the evidence file in `frozen_event_manifests`, not in
-      `load_event_manifest`, which the pilot's chain check and a tamper test use.
-      Paths are under `packages/earnings-ingestion/src/earnings_ingestion/`.
-      Size: quick-fix. Done when: `frozen_event_manifests` refuses a manifest
-      whose evidence file is missing; it and `frozen_pilots` in `events/pilot.py`
-      refuse two versions that share a content hash, each with a test; and
-      Stage 4's `frozen_manifests` does the same, or the reason it does not is
-      recorded. → done in plan 8
 - [ ] Bind each evidence citation to its artifact's retrievals (PR #6's review,
       F21; the rest of plan 7's "Bind an evidence record to its manifest when
       loading", which PR #6 closed): `check_evidence` in `events/evidence.py`
@@ -684,24 +404,7 @@
       release citation is its release's index page, unless loading already
       checks it; each with a test, while the real and synthetic v1 records still
       pass.
-- [x] Decide whether loading a pilot re-derives its selection (PR #6's review,
-      F10): `check_chain` in `events/pilot.py` rechecks the hashes, the seed, and
-      eligibility, as the spec's §Pilot selection and plan 7's Task 14 list, but
-      not that `djia-pilot/1` produces the rows. So a hand-edited pilot with its
-      content hash recomputed loads: one with a row swapped for another eligible
-      event, or one naming another policy, another `pilot_id`, or `underfilled`
-      at target 40. Plan B's gate is that the pilot loads and its chain checks.
-      Re-deriving at load time makes a frozen pilot's loading depend on the
-      current selection code, so plan B should choose it deliberately. Do not
-      compare `universe_version`: a universe re-versioned with the same operative
-      hash differs there legitimately. Paths are under
-      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: design. Done
-      when: plan B records the choice, and, if it re-derives, `load_pilot`
-      compares the selection policy version and requires that `select_pilot`
-      over its event manifest and universe reproduce its content hash, with
-      tamper tests (a swapped row, the policy, the `pilot_id`, and
-      `underfilled`), each rehashed and refused, while the real and synthetic v1
-      pilots still load. → done in plan 8
+      → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
 - [ ] Bind older submissions pages to their dates, and pad the page skip (PR #6's
       review, F11 and F24): `read_older_page` in `sec/data.py` binds a page to
       its entry by `filingCount` alone (PR #6's third Codex round), and
@@ -742,63 +445,7 @@
       `filingFrom` the next business day, is read and its filing stays visible;
       the dictionary's `filing_to` row is corrected; and events v1 still rebuilds
       unchanged.
-- [x] Cross-check an index page against its submissions row beyond the
-      accession (PR #6's review, F12): the build and discovery take a filing's
-      form and primary document from its submissions row, and the index page's
-      form and document table, which `sec/filing_index.py` reads, are compared
-      with the row on the accession alone. If SEC's two records disagreed, a
-      page for an 8-K/A listed as an 8-K could become a candidate the rule
-      chooses, and a row whose `primaryDocument` names the EX-99 file, or is
-      empty, would have discovery (`events/discover.py`) fetch an exhibit before
-      the freeze, against EV2, and read as an unread candidate that can freeze as
-      the release. None of v1's 269 candidates disagrees. Slots take the row's
-      report date by design (P7-9), and an unread candidate staying is the spec's
-      rule. Plan B reads each index page's document table for the EX-99 exhibits
-      anyway. Paths are under
-      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: plan. Done
-      when: the index page's form must equal the row's, and the row's primary
-      document, compared by its base name, must be listed in the index typed as
-      the form, each a problem otherwise, checked in the build and in discovery
-      before it fetches, with synthetic cases for both disagreements. → done in plan 8
-- [x] Refuse a redirected response (PR #6's review, F13): the shared client
-      (`fetch/client.py`) follows redirects within SEC's hosts and records
-      `final_url`, but nothing reads it. `SavedResponses` in `events/saved.py`,
-      like Stage 4's `ArtifactStore.latest` in `fetch/store.py`, serves each
-      retrieval under its `request_url`, and `_citations_refused` in
-      `events/build.py` accepts a citation grounded in a redirected record. So a
-      primary document that redirects to another page is read as the
-      candidate's 8-K and cited under the URL requested. None of the 661 records
-      saved behind v1 was redirected; plan B's exhibits, which become canonical
-      text and quotes, raise the stakes. Paths are under
-      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: quick-fix.
-      Done when: a fetch whose `final_url` differs from its `request_url` is
-      refused before it is saved, and `SavedResponses.get` and
-      `_citations_refused` refuse one already saved, by raising, never by
-      skipping it, which would make discovery refetch it on every run, each with
-      a synthetic redirected record; before plan B's first acquisition. → done in plan 8
-- [x] Read a primary document with no Item line as unread (PR #6's review, found
-      with F13): `read_text` in `events/release.py` pairs each Item heading with the
-      one after it through `zip(..., strict=True)`, which raises `ValueError` when
-      the text has no line that begins "Item" and a number at all, so it never
-      returns its `Reading(unread=...)`. Text with some other Item line but no Item
-      2.02 reads as unread, as it should. The module docstring promises that a
-      document with no such heading states nothing. `read_document` does not catch
-      the error, and `identify` wraps only `saved.get`, so it escapes `build_events`
-      in `events/build.py`, which `events build` and `events freeze` print as a
-      traceback, and the documents phase of `discover` in `events/discover.py`,
-      where `discover_command` in
-      `apps/earnings-pipeline/src/earnings_pipeline/events_cli.py` catches it as a
-      `ValueError` and says a rerun fetches only what is missing, and every rerun
-      meets the same stop. A primary document that redirects to a page with no Item
-      line (F13), or one whose Item headings `walker-1` does not start a line with,
-      can reach it through plan A's commands today. v1 does not: the build over the
-      saved responses behind v1 reads each of its candidates without raising. Paths
-      are under `packages/earnings-ingestion/src/earnings_ingestion/` unless given
-      in full. Size: quick-fix. Done when: `read_text` returns `Reading(unread=...)`
-      for text with no Item line, with a unit test in
-      `packages/earnings-ingestion/tests/test_events_release.py`, and `events build`
-      over a synthetic candidate whose primary document has no Item line ends
-      without a traceback. → done in plan 8
+      → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
 - [ ] Cite the index page that places a periodic report (PR #6's review, P5.4):
       after P7-8's `--filing` remedy, `_visible` in `events/filings.py` places a
       periodic report by its saved index page, but `_event` in
@@ -830,6 +477,7 @@
       resolves them and reports each repeat as an `EventBuildError` problem, and
       `events build` over a store with a repeated mismatch row exits 1 with a
       `problem:` line and no traceback, with tests.
+      → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
 - [x] Recover a saved response that is present but unusable (PR #6's review, P2.1
       and P2.2): discovery (`events/discover.py`) fetches only URLs with no
       retrieval record, and `issuer_filings` in `events/filings.py` reports a
@@ -879,89 +527,7 @@
       another issuer's missing primary document and names the companyfacts URL;
       and a vanished companyfacts artifact ends as a handled stop with the count
       printed.
-- [x] Print the request count on every stop, and take an approved count in every
-      live cohort command (PR #6's review, F31 and F35); paths are under
-      `apps/earnings-pipeline/src/earnings_pipeline/`:
-      - `discover_command` in `events_cli.py` reads the count in a `finally` but
-        prints it only when it catches `AccessStop`, `UnexpectedResponse`,
-        `ValueError`, or `RuntimeError`, so an `OSError` from
-        `ArtifactStore.put` (a full disk, permissions), a `FileNotFoundError` for
-        a saved body that is gone, and a Ctrl-C end with a traceback and no
-        count, though each live gate records the count. `cohort_cli.py`'s
-        handlers share the pattern.
-      - `cohort fetch-sec` prints no count when a 403, a block page, or an
-        unexpected response stops it, and `cohort verify-live` never prints one,
-        though plan 6's gate table records the requests sent. Both run under the
-        client's default cap of 500 (P6-16), where `events discover` takes the
-        count the user approved (P7-10); committed config fixes fetch-sec's
-        volume, 44 requests in v1's run.
-      Fix: add `OSError` to the stop tuple, and a separate `except
-      KeyboardInterrupt` that prints the count and re-raises (a bare outer
-      `finally` would print it twice), in both CLIs; give `fetch-sec` and
-      `verify-live` a required `--max-requests` (`terms` sends one request and
-      can keep the default), print their requests sent on every exit, and add
-      the count to the `verify-live` record. Size: quick-fix. Done when: with a
-      monkeypatched fake client, never `open_sec_client`, a `put` raising
-      `OSError` and a deleted companyfacts body each end `events discover` with
-      "Stopped:" and "requests sent: N"; and `fetch-sec` without the flag exits 1
-      before it opens the client, and a stop prints its count; with tests, before
-      the next live cohort run or plan B's first live request. → done in plan 8
-- [x] Check the CLIs' store and corpus paths before anything runs (PR #6's
-      review, F19 and F38): `events_cli.py` and `cohort_cli.py`, under
-      `apps/earnings-pipeline/src/earnings_pipeline/`, resolve only `--repo`.
-      - `--store` accepts any repo-relative directory, and `tests/fixtures/**` is
-        un-ignored, so `events --store tests/fixtures/... discover` would save
-        real SEC responses where `git add -A` publishes them to this public
-        repository, and a later freeze would cite them as `local_only` bytes kept
-        under `data/raw/`. That takes a non-default flag and a commit, and the
-        flag is documented design (P7-18), as Stage 4's is.
-      - With an absolute `--corpus-dir` outside the repo, or a path inside it
-        spelled through a symlinked prefix (`/var` for `/private/var`), `events
-        freeze` and `events select` write their frozen files and then crash on
-        `relative_to` while printing them, and a rerun prints "unchanged:" and
-        crashes again. `cohort_cli.py` has had the same code since Stage 4.
-      Fix: in every command that writes fetched bytes (`events discover`, plan
-      B's `events acquire`, `cohort fetch`, and `cohort fetch-sec`), refuse a
-      store root that does not resolve under `<repo>/data/raw`, in the callback,
-      before any client opens, leaving build, freeze, and select unguarded;
-      resolve paths only for such checks, never the stored root, which would
-      break a symlinked `data/`; and print paths relative to the repo when
-      possible and absolute otherwise. `test_discover_filing_spends_at_most_two_requests`
-      then needs `store=data/raw/events`. Size: quick-fix. Done when: `events
-      --store tests/fixtures/x discover --max-requests 1`, with `open_sec_client`
-      patched to fail, exits 1 with "Refused" and never opens the client, and so
-      do the cohort's fetching commands; and `events freeze` and `events select`
-      with an absolute corpus directory outside the repo exit 0 and print its
-      absolute path; each with a test, before plan B's first acquisition. → done in plan 8
-- [x] Refuse a relative `EARNINGS_LOCK_DIR` (PR #6's review, F29):
-      `machine_lock_dir` in `fetch/client.py` returns the override as given, so a
-      relative value resolves against each process's working directory, and two
-      checkouts would take two SEC locks and could together send 4 requests per
-      second, against the project's 2 per machine (R1.3). Three lines later the
-      same function ignores a relative `XDG_CACHE_HOME`. The variable is a test
-      override (P7-5), which only the test fixtures set, to an absolute
-      directory, so only a hand-made export triggers this. Paths are under
-      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: quick-fix.
-      Done when: a relative value makes `machine_lock_dir` raise `AccessStop`
-      naming the variable, or is ignored as the XDG rule does, with a test using
-      `monkeypatch.setenv(LOCK_DIR_VARIABLE, ".locks")`, before plan B's first
-      live SEC request. → done in plan 8
-- [x] Commit the check that the real frozen records hold no source wording (PR
-      #6's review, F20): the committed P6-3 test in
-      `tests/integration/test_event_fixtures.py` scans only the synthetic
-      corpus's pages. The real v1 records were checked at plan 7's gates with a
-      scratch script whose source is in plan 7, and plan 7's handoff points plan
-      B at it. Plan B's exhibit acquisition is where a reviewer is likeliest to
-      copy wording, into an override's rationale for instance, and the default
-      suite reads only `tests/fixtures/events/`. A 30-character window would flag
-      a generic date phrase in v1's `overrides.toml`, so compare whole strings, or
-      long shingles that allow for facts. Size: quick-fix. Done when: an offline
-      test, skipped when `data/raw/events/sec-edgar/` is absent, compares
-      `config/corpus/*/events-v*.json`, `*.evidence.json`, `pilot-v*.json`, and
-      `overrides.toml` with the saved HTML, text, and exhibit pages; a temporary
-      corpus whose rationale copies 40 characters of a synthetic saved page fails
-      it while the real v1 records pass; and each freeze's gate runs it, since a
-      test that skips without the store does not protect CI. → done in plan 8
+      → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
 - [ ] Refuse a fund filing listed twice in the cohort build (PR #6's review,
       P4.1): `_fund_filings` in `cohort/build.py` joins the fund's recent block
       and its saved older pages without checking for a repeated accession, so
@@ -976,6 +542,7 @@
       Done when: a synthetic fund whose recent block and older page share one
       N-PORT makes the cohort build raise `CohortError` naming that accession and
       each copy's pointer, never deduplicating it, with a test.
+      → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
 - [ ] Decide whether two issuers' events may share one release (PR #6's review
       of its F1 fix): `shared_releases` in `events/build.py` refuses a
       `release_accession` that two rows share anywhere in the corpus, as the
@@ -988,6 +555,7 @@
       after the user's decision. Done when: the user chooses per-issuer or
       corpus-wide, the spec says which, and a synthetic co-registrant 8-K shows
       the chosen behavior in a test.
+      → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
 - [ ] Cite each candidate's qualifying fields and primary document (PR #6's Codex
       round 5, comment 4117725089): the Stage 5 spec's evidence list (§The event
       manifest), which `_event` in `events/evidence.py` follows, cites a candidate
@@ -1109,16 +677,18 @@
       `other` element becomes quotable, using the count the bundle-hardening item
       above records (T6-M1). Code: packages/earnings-themes/src/earnings_themes/anchoring.py.
       Size: plan. Done when: Stage 7's plan lands both, or records why not. → done in plan 11 (specs/plans/completed/11-evidence-selection-and-verification-plan-a.md)
-- [ ] Refuse a committed test-partition gold at validate time (T12-M1):
+- [x] Refuse a committed test-partition gold at validate time (T12-M1):
       `gold validate` never calls `readable()`, so a hand-committed test bundle
       would validate before Stage 14
       (apps/earnings-pipeline/src/earnings_pipeline/gold_cli.py). Size: quick-fix.
       Done when: `gold validate` refuses test gold, with a test, or Stage 14's
       commit relaxes `readable()`.
-- [ ] Hold `codebook freeze --adr` to a repo-relative path under docs/adr/
+      → done 2026-11-13 (/deferred quick fix): `gold validate` refuses committed gold that `readable()` holds back, test or excluded, before its bundle is loaded; test `test_gold_validate_refuses_test_gold_before_reading_its_bundle`.
+- [x] Hold `codebook freeze --adr` to a repo-relative path under docs/adr/
       (T11-M1); v0's committed path is. apps/earnings-pipeline/src/earnings_pipeline/codebook_cli.py.
       Size: quick-fix. Done when: it lands with a test, before codebook v1 is
       frozen.
+      → done 2026-11-13 (/deferred quick fix): `codebook freeze --adr` refuses an absolute path, a path with `..`, and a path outside docs/adr/ before anything is written; test `test_codebook_freeze_takes_adr_only_under_docs_adr`.
 - [x] Watch `fail(f"Refused: {error}")`, which prints an error's raw text at
       apps/earnings-pipeline/src/earnings_pipeline/stage6.py:178,199 and
       pilot_cli.py:69-70,95-96 (T10-M3). Today its inputs are config and state
@@ -1128,7 +698,7 @@
 
 ## 10-harden-the-gold-before-bundle-4 — 2026-10-03
 
-- [ ] Take `codebook freeze`'s drafting aid from the kept draft (plan 10, P10-7;
+- [x] Take `codebook freeze`'s drafting aid from the kept draft (plan 10, P10-7;
       T8-M1's pattern). apps/earnings-pipeline/src/earnings_pipeline/codebook_cli.py
       reads only data/runs/gold/drafts/codebook.working.toml, and
       packages/earnings-themes/src/earnings_themes/codebook.py:319 copies that
@@ -1136,6 +706,7 @@
       date (GS5). Codebook v0 is frozen and approved, so only a later version is
       affected. Size: quick-fix. Done when: `codebook freeze` takes the aid from
       codebook.draft.toml, with a test, before codebook v1 is frozen.
+      → done 2026-11-13 (/deferred quick fix): `codebook freeze` reads data/runs/gold/drafts/codebook.draft.toml and takes its `drafting_aid`, and refuses a missing kept draft; tests `test_codebook_freeze_takes_its_drafting_aid_from_the_kept_draft` and `test_codebook_freeze_refuses_a_missing_kept_draft`.
 - [x] Refuse a kept draft that repeats an ID (plan 10's final review, T2-m1,
       widened; deferred at plan 10's completion gate). In
       packages/earnings-themes/src/earnings_themes/annotation.py, `_Origins.compare`
@@ -1218,7 +789,7 @@
       entries; its docstring has said so since `76fa5a4`. Size: plan. Revisit
       if: a default test needs isolation beyond the scripted runs, or a library
       under test opens a socket another way.
-- [ ] Harden the import scans (plan 12's review's M2-1, M9-3, M2-2, and M2-6;
+- [x] Harden the import scans (plan 12's review's M2-1, M9-3, M2-2, and M2-6;
       deferred by the user).
       packages/earnings-themes/tests/test_import_boundaries.py's
       `extraction_imports` and tests/contracts/test_import_scan.py's themes scans
@@ -1228,6 +799,7 @@
       today. Size: quick-fix. Revisit if: a module under
       packages/earnings-themes/src adopts a relative import.
       → triggered 2026-11-13: Modules under packages/earnings-themes/src now use relative imports: 32 top-level `from .` lines, for example analysis/completion.py lines 13-16 and analysis/store.py line 18. The first came in d338f7c (2026-10-06), so "No source module uses a relative import today" no longer holds. tests/contracts/test_import_scan.py still skips them (`node.level == 0` in `imported` and `local_adapter_imports`). The real boundary risk is low, because a relative import stays inside earnings_themes. The item is still open.
+      → done 2026-11-13 (/deferred quick fix): tests/contracts/test_import_scan.py resolves relative imports against the file's package (`imported`, `local_adapter_imports`), `retrieval_imports` returns each hit's file, and the network scan matches dotted names, adds the standard library's network modules, and requires at least 75 files; test_import_boundaries.py's `pipeline_imports` already resolved relative imports.
 - [ ] Close plan 12's test gaps (its review's M1-2, M1-3, M2-3, M3-5, M4-2, M4-4,
       M5-4, M6-1, M6-2, M6-5, M7-2 to M7-4, M8-7, M8-8, M9-2, M10-2, and M10-3;
       deferred by the user). Under packages/earnings-themes/tests:
@@ -1267,7 +839,7 @@
       Widening the guard to `.py` would sweep in the tests and the guard itself.
       Size: design. Revisit if: a test or synthetic string is ever derived from
       release text.
-- [ ] Let earnings-themes' tests collect without httpx (plan 12's pre-flight F3;
+- [x] Let earnings-themes' tests collect without httpx (plan 12's pre-flight F3;
       deferred by the user). tests/contracts/test_data_dictionary.py and
       packages/earnings-themes/tests/test_extraction_local.py,
       test_extraction_injection.py, and test_extraction_live.py import
@@ -1276,7 +848,8 @@
       `local-model` extra, so a themes-only environment would fail at
       collection. Size: quick-fix. Done when: those modules `importorskip` httpx,
       or a themes-only run is shown to pass.
-- [ ] Keep a refused map key out of a field path (plan 12's review's M8-9;
+      → done 2026-11-13 (/deferred quick fix): test_extraction_local.py and test_extraction_live.py `importorskip` httpx, and the injection test and two tests of coding/test_adapters.py import it inside the test; `test_the_themes_tests_collect_without_httpx` collects packages/earnings-themes/tests with httpx blocked. tests/contracts/test_data_dictionary.py imports earnings-ingestion and earnings-pipeline, which require httpx, so no themes-only run includes it.
+- [x] Keep a refused map key out of a field path (plan 12's review's M8-9;
       deferred by the user).
       packages/earnings-themes/src/earnings_themes/records.py's `describe`,
       Stage 6's frozen code, keeps a dictionary key in the field path when that
@@ -1286,6 +859,7 @@
       release text. Size: quick-fix. Revisit if: a `RunRecord` map key can hold
       model or release text, or Stage 6's freeze lifts.
       → triggered 2026-11-13: Plan 12's freeze list (specs/plans/completed/12-evidence-selection-and-verification-plan-b.md, lines 230-231) names packages/earnings-themes/src/earnings_themes/records.py as a frozen Stage 6 module, yet that file changed later in ee68622 (2026-10-12) and a3b12c4 (2026-10-13). This is a reading of "Stage 6's freeze", not a decision that it lifted. The fix is still open: describe in records.py keeps a map key in the path when the key's value is refused (checked 2026-11-13 with a one-key dict).
+      → done 2026-11-13 (/deferred quick fix): `describe(error, model)` redacts each path part that names no field in the model's tree, and `parse` and `parse_reply` pass their model; test `test_a_map_key_whose_value_is_refused_stays_out_of_the_path`.
 - [ ] Keep the live test's failure output to IDs and counts (plan 12's review's
       M9-4; deferred by the user).
       packages/earnings-themes/tests/test_extraction_live.py's assertions over
@@ -1416,7 +990,7 @@
       that each planned Stage 11 file is found. The user's gate 2 (2026-10-11, 3406ba4):
       7 passed. TOML comments stay unscanned, as for every TOML file that test reads; the
       module docstring says so.
-- [ ] **P16-4 — GS19 review Minors (quick-fix bundle).** From plan 16's task and final
+- [x] **P16-4 — GS19 review Minors (quick-fix bundle).** From plan 16's task and final
       reviews, none blocking: (1) `ledger_problem` in
       packages/earnings-themes/src/earnings_themes/independent.py tests
       `ledger.rows if ledger else ()`, a truthiness test on a model; `ledger is not None`
@@ -1432,6 +1006,7 @@
       its test, so changing it edits a pinned expectation. Size: quick-fix. Done when: each is
       fixed or consciously dropped, with the CLI tests passing. (1) fixed in plan 17:
       `ledger_check` tests `ledger is not None`; items (2)–(6) remain.
+      → done 2026-11-13 (/deferred quick fix): (2) tests for a malformed independent record and for a working copy, anchored file or view closing the pass; (3) and (5) docstrings; (4) a `gold show` test after the ledger row changes; (6) `--independent --check` with no event now asks for the dev bundles, and the pinned `--hard-negatives` text is unchanged.
 - [ ] **P16-5 — Multi-event `gold anchor` and `gold show` write before a later refusal.** The
       guard, like `_open` before it, runs per event inside the loop in
       apps/earnings-pipeline/src/earnings_pipeline/gold_cli.py, so `gold anchor E_train
@@ -1473,7 +1048,7 @@
       half is unexercised (`build_coverage` sorts first). Source: plan 17's task reviews
       and final review. Size: plan. Done when: each is covered or consciously dropped; A8's
       sentinel tests (the spec asks for one per command) may close (1) and (3).
-- [ ] **P17-3 — `build_curated` returns early on a repeat, skipping `validate_curated`.**
+- [x] **P17-3 — `build_curated` returns early on a repeat, skipping `validate_curated`.**
       In packages/earnings-themes/src/earnings_themes/annotation.py, `build_curated`
       returns `repeats + refusals` before it builds the record, so a kept curated draft
       that repeats an ID and also fails another curated check takes two runs to show both,
@@ -1482,7 +1057,8 @@
       committed. The record builds fine when only the kept draft repeats, so the fix is to
       build it and return `repeats + validate_curated(...)`. Size: quick-fix. Done when:
       both reasons print in one run, with a test.
-- [ ] **P17-4 — Plan 17 review Minors (quick-fix bundle).** None blocking: (1)
+      → done 2026-11-13 (/deferred quick fix): `build_curated` returns early only for item refusals, and otherwise returns `repeats + validate_curated(...)`; test `test_a_kept_curated_repeat_is_refused_with_every_curated_check`.
+- [x] **P17-4 — Plan 17 review Minors (quick-fix bundle).** None blocking: (1)
       `pilot_cli.py`'s `coverage_command` passes `run_ids or ()` to `_no_theme`, so if the
       `version == 2` guard were removed it would count nothing instead of failing; narrow
       the type properly instead. (2) When some train or dev bundles have no gold, `pilot
@@ -1501,6 +1077,7 @@
       new wording test's name reads "stage_11_s". Source: plan 17's task and final reviews.
       Size: quick-fix. Done when: each is fixed or consciously dropped, with the scoped
       tests passing. Revisit if: one of those functions is touched again.
+      → done 2026-11-13 (/deferred quick fix): (1) and (3) coverage v2 reads the transitions once and refuses a missing v1 in its own branch; (2) bad committed gold is named beside the missing list, with a test; (4) `_approved` is shared and `ledger_check` binds `rows` once; (5) `duplicates` moved to problems.py for annotation.py and codebook.py; (6) the closure docstring is corrected and a tomlfile plant is pinned as a circular import; (7) the wording test is renamed. Consciously dropped, as the item allows: (4)'s `isinstance` branch, because a `claim/theme` string rendered by the caller sorts differently for IDs that hold `-` or `.`; and a `_PHRASES` guard, because the parametrized `ledger_problem` test reaches all five returns.
 - [x] **P17-5 — Decisions for plan A's remainder (A3, A8).** → done in plan 20 (1) `pilot recount` runs over
       committed gold and refuses no partition, and `pilot coverage --version 2` reads
       train and dev by construction; the spec's sentence after A8's table says "Every
@@ -1520,7 +1097,7 @@
 
 ## 18-feasibility-pilot-and-threshold-calibration-plan-a-slice-2 — 2026-10-12
 
-- [ ] **P18-1 — Say which hashes now cover a support run's cache mode.** Plan 18 added
+- [x] **P18-1 — Say which hashes now cover a support run's cache mode.** Plan 18 added
       `cache_mode` and `stability_run_id` to `SupportRunRecord`, so every digest of that
       record's dump now covers both fields:
       - `support_run_hash` and `_support_content_hash`
@@ -1534,7 +1111,8 @@
       doc-precision note, not a defect. Source: plan 18's Task 4 review. Size: quick-fix.
       Done when: docs/data-dictionary.md's support-record section names the digests that
       cover the two fields, with tests/contracts/test_data_dictionary.py passing.
-- [ ] **P18-2 — The scorer file's pinned-field list is not exhaustive.**
+      → done 2026-11-13 (/deferred quick fix): the support records section's "Fresh mode" paragraph names `support_run_hash`, `_support_content_hash`, the comparisons that read them, and the support stage's `run.json` byte hash.
+- [x] **P18-2 — The scorer file's pinned-field list is not exhaustive.**
       - Where the list appears: the "Stage 11 live runtime" section of
         docs/data-dictionary.md, and the module docstring of
         apps/earnings-pipeline/src/earnings_pipeline/model_runtime.py.
@@ -1548,6 +1126,7 @@
       doc-precision note. Source: plan 18's fix-wave re-review. Size: quick-fix. Done
       when: both places name every condition `_pinned` refuses, or say the list is by
       example.
+      → done 2026-11-13 (/deferred quick fix): both places name every condition `_pinned` refuses: a relative local directory, the four pinned fields, a MiniCheck `input_limit` above 512, a repeated file name, and a missing required file.
 
 ## 19-feasibility-pilot-and-threshold-calibration-plan-a-slice-3 — 2026-10-13
 
@@ -1714,7 +1293,7 @@
       Done when: the owner rules whether those two read-back gates may share one scope,
       and either the exact-count test in `apps/earnings-pipeline/tests/test_pilot_gate_counts.py`
       shows 8 sweeps or the plan records that 12 stays.
-- [ ] Harden decide's memo against a policy that plants values under its private kind
+- [x] Harden decide's memo against a policy that plants values under its private kind
       string (plan 23, ruling N1, final review). A policy that calls
       `scope.once("proposal_inputs", ...)` with decide's private kind string can change and
       restore the memo's dict, so a missing-assessment row gets a wrong `target_id` with no
@@ -1724,6 +1303,7 @@
       (`packages/earnings-themes/src/earnings_themes/coding/decide.py`) and read the
       snapshot at the row. Size: quick-fix. Done when: a test with such a policy shows the
       row's `target_id` equals the value at the start of the call.
+      → done 2026-11-13 (/deferred quick fix): `decide_assignments` copies each missing key's `target_id` before any policy code runs, and the row reads the copy; test `test_a_policy_cannot_redirect_a_missing_rows_target_id` plants and restores the memo and sees the original ID.
 
 ## 24-cheaper-key-check — 2026-11-13
 - [ ] Cut the proposal replay cost (plan 24, D24-2, final review). Proposal replay is the
@@ -1800,3 +1380,4 @@
       `cohort_cli.py`. Size: quick-fix. Done when: each of the three commands prints
       one `quarantined:` line for each distinct path in `store.quarantined`, under a
       test that damages an artifact and saves its URL again.
+      → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
