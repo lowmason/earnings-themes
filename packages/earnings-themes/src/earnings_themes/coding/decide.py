@@ -497,6 +497,13 @@ def decide_assignments(
         # The digests each per-target re-check compares, taken before external code
         # runs. Each key is taken now too, so a later change cannot redirect it.
         outcome_rows = {row.target_id: row for row in support.outcomes}
+        # A missing row's target ID, copied now: the memo's dict is reachable from
+        # a policy that knows its kind, so the row never reads it (plan 23, N1).
+        missing_ids = {
+            key: str(record.target_id)
+            for key, record in current.items()
+            if key not in stored
+        }
         # This call's own copies (``reverify_support_run`` copies on every call).
         # In an outer scope they come from that scope's check, so each is compared
         # with its stored row before its vote.
@@ -587,7 +594,7 @@ def decide_assignments(
             require_target(proposal, proposal_row, key)
             target = stored.get(key)
             if target is None:
-                target_id = current[key].target_id
+                target_id = missing_ids[key]
                 status, reason, quote_ids = "review", "missing_assessment", ()
                 support_status, flags, missing = None, (), ("missing_assessment",)
             else:

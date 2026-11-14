@@ -6,7 +6,6 @@ request body carries ``tools``, and only spans code sliced are stored."""
 
 import json
 
-import httpx
 import pytest
 from earnings_themes.anchoring import Bundle
 from earnings_themes.extraction.adapters import (
@@ -20,7 +19,6 @@ from earnings_themes.extraction.extract import (
     WindowResult,
     extract_window,
 )
-from earnings_themes.extraction.local import LocalAdapter, LocalModelConfig
 from earnings_themes.extraction.prompt import render_messages
 from earnings_themes.extraction.records import (
     ExtractionPolicy,
@@ -152,7 +150,11 @@ def test_an_obeying_reply_is_refused_whole(template, reply, problem) -> None:
 
 def test_no_request_body_carries_tools_when_the_document_asks(template) -> None:
     """Through the local adapter: the server obeys with a tool call, which is
-    refused, and no body the adapter sent carries ``tools`` or ``tool_choice``."""
+    refused, and no body the adapter sent carries ``tools`` or ``tool_choice``.
+    It needs httpx, the local-model extra's, and skips without it."""
+    httpx = pytest.importorskip("httpx", reason="the local-model extra provides httpx")
+    from earnings_themes.extraction.local import LocalAdapter, LocalModelConfig
+
     bodies: list[dict] = []
 
     def server(incoming: httpx.Request) -> httpx.Response:

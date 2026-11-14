@@ -53,15 +53,43 @@ BROWSERS = frozenset({"selenium", "websocket", "playwright", "pyppeteer"})
 ADAPTER = SOURCES["earnings_ingestion"] / "browser" / "selenium_capture.py"
 
 
+def package_of(path: Path) -> list[str]:
+    """The dotted package a file sits in, found by its ``__init__.py`` files."""
+    parts: list[str] = []
+    folder = path.parent
+    while (folder / "__init__.py").is_file():
+        parts.insert(0, folder.name)
+        folder = folder.parent
+    return parts
+
+
+def from_module(path: Path, node: ast.ImportFrom) -> str | None:
+    """The absolute module a ``from`` import names: a relative one is resolved
+    against the file's package (M2-1, M2-2); ``None`` when it climbs out."""
+    if node.level == 0:
+        return node.module
+    package = package_of(path)
+    if node.level - 1 > len(package):
+        return None
+    base = package[: len(package) - (node.level - 1)]
+    return ".".join([*base, *([node.module] if node.module else [])]) or None
+
+
 def imported(path: Path) -> list[tuple[int, str]]:
-    """Every absolute module a file imports, at any depth, with its line."""
+    """Every module a file imports, at any depth, with its line; a relative import
+    is given as the absolute module it resolves to."""
     found: list[tuple[int, str]] = []
     for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"), str(path))):
         if isinstance(node, ast.Import):
             found += [(node.lineno, alias.name) for alias in node.names]
-        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
-            found.append((node.lineno, node.module))
+        elif isinstance(node, ast.ImportFrom) and (module := from_module(path, node)):
+            found.append((node.lineno, module))
     return found
+
+
+def named(module: str, names: frozenset[str]) -> bool:
+    """Whether ``module`` is one of ``names`` or under one, by dotted name."""
+    return any(module == name or module.startswith(f"{name}.") for name in names)
 
 
 def violations(package: str) -> list[str]:
@@ -232,28 +260,97 @@ THEMES_NETWORK = frozenset(
         "llama_index",
         "instructor",
         "outlines",
+        "socket",
+        "ssl",
+        "http.client",
+        "urllib.request",
+        "ftplib",
+        "smtplib",
+        "xmlrpc.client",
     }
 )
-"""HTTP clients, model SDKs, and frameworks: no themes module imports one, but the
-local adapter imports httpx (the Stage 7 spec, §Packaging; ES10, ES15)."""
+"""HTTP clients, model SDKs, frameworks, and the standard library's network modules,
+by dotted name: no themes module imports one, but the local adapter imports httpx
+(the Stage 7 spec, §Packaging; ES10, ES15). ``urllib.parse`` is not a client."""
+THEMES_FILES = 75
+"""A floor on the earnings-themes files the network scan reads, a little below the
+80 there are on 2026-11-13, so a scan that finds no files cannot pass (M2-6)."""
 LOCAL_ADAPTER = SOURCES["earnings_themes"] / "extraction" / "local.py"
 LOCAL_MODULE = "earnings_themes.extraction.local"
 
 
+def network_imports(paths: list[Path]) -> list[tuple[Path, int, str]]:
+    """Each import of ``THEMES_NETWORK`` in ``paths``, at any depth, but the local
+    adapter's of httpx, with its file and line."""
+    return [
+        (path, line, module)
+        for path in paths
+        for line, module in imported(path)
+        if named(module, THEMES_NETWORK)
+        and (path, module.partition(".")[0]) != (LOCAL_ADAPTER, "httpx")
+    ]
+
+
 def themes_network_imports() -> list[str]:
-    """Each import of ``THEMES_NETWORK`` in earnings-themes, at any depth, but the
-    local adapter's of httpx."""
+    """Each network import in earnings-themes, by file and line."""
+    paths = sorted(SOURCES["earnings_themes"].rglob("*.py"))
+    assert len(paths) >= THEMES_FILES, f"scanned {len(paths)} files"
     return [
         f"{path.relative_to(ROOT)}:{line} imports {module}"
-        for path in sorted(SOURCES["earnings_themes"].rglob("*.py"))
-        for line, module in imported(path)
-        if module.partition(".")[0] in THEMES_NETWORK
-        and (path, module.partition(".")[0]) != (LOCAL_ADAPTER, "httpx")
+        for path, line, module in network_imports(paths)
     ]
 
 
 def test_no_themes_module_imports_a_client_sdk_or_framework() -> None:
     assert themes_network_imports() == []
+
+
+def test_the_network_scan_sees_standard_library_clients(tmp_path: Path) -> None:
+    """M2-6: a client is matched by its dotted name, so the standard library's
+    network modules are refused, and ``urllib.parse`` is not."""
+    module = tmp_path / "late.py"
+    module.write_text(
+        "import socket\n"
+        "from http.client import HTTPConnection\n"
+        "import urllib.request\n"
+        "from urllib.parse import urlsplit\n"
+        "import ssl\n",
+        encoding="utf-8",
+    )
+    assert network_imports([module]) == [
+        (module, 1, "socket"),
+        (module, 2, "http.client"),
+        (module, 3, "urllib.request"),
+        (module, 5, "ssl"),
+    ]
+
+
+def test_the_scans_resolve_relative_imports(tmp_path: Path) -> None:
+    """M2-1, M2-2: a relative import is resolved against its file's package, so it
+    is scanned as the absolute import it is."""
+    package = tmp_path / "earnings_themes" / "extraction"
+    package.mkdir(parents=True)
+    (package.parent / "__init__.py").touch()
+    (package / "__init__.py").touch()
+    module = package / "runner.py"
+    module.write_text(
+        "from .local import LocalAdapter\n"
+        "from . import local\n"
+        "from ..extraction.local import LocalAdapter\n",
+        encoding="utf-8",
+    )
+    assert imported(module) == [
+        (1, "earnings_themes.extraction.local"),
+        (2, "earnings_themes.extraction"),
+        (3, "earnings_themes.extraction.local"),
+    ]
+    assert local_adapter_imports([module]) == [
+        (1, "earnings_themes.extraction.local"),
+        (1, "earnings_themes.extraction.local.LocalAdapter"),
+        (2, "earnings_themes.extraction.local"),
+        (3, "earnings_themes.extraction.local"),
+        (3, "earnings_themes.extraction.local.LocalAdapter"),
+    ]
 
 
 def test_only_the_local_adapter_imports_httpx() -> None:
@@ -273,8 +370,10 @@ def local_adapter_imports(paths: list[Path]) -> list[tuple[int, str]]:
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"), str(path))):
             if isinstance(node, ast.Import):
                 names = [alias.name for alias in node.names]
-            elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
-                names = [node.module, *(f"{node.module}.{a.name}" for a in node.names)]
+            elif isinstance(node, ast.ImportFrom) and (
+                module := from_module(path, node)
+            ):
+                names = [module, *(f"{module}.{a.name}" for a in node.names)]
             else:
                 continue
             found += [
@@ -332,9 +431,10 @@ RETRIEVAL = frozenset(
 EXTRACTION = SOURCES["earnings_themes"] / "extraction"
 
 
-def retrieval_imports(paths: list[Path]) -> list[tuple[int, str]]:
+def retrieval_imports(paths: list[Path]) -> list[tuple[Path, int, str]]:
+    """Each retrieval import in ``paths``, with its file and line (M9-3)."""
     return [
-        (line, module)
+        (path, line, module)
         for path in paths
         for line, module in imported(path)
         if module.partition(".")[0] in RETRIEVAL
@@ -359,9 +459,9 @@ def test_the_retrieval_scan_sees_imports_inside_functions(tmp_path: Path) -> Non
         encoding="utf-8",
     )
     assert retrieval_imports([module]) == [
-        (2, "rapidfuzz"),
-        (3, "difflib"),
-        (4, "sentence_transformers.util"),
+        (module, 2, "rapidfuzz"),
+        (module, 3, "difflib"),
+        (module, 4, "sentence_transformers.util"),
     ]
 
 

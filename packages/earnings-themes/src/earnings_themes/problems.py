@@ -6,6 +6,7 @@ A refusal names its subject by ID or field path and gives its reason, which is a
 quote, a claim, or a detail, since a detail may quote a release (GS13).
 """
 
+from collections.abc import Hashable, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -61,3 +62,16 @@ class Refusal:
 
     def __str__(self) -> str:
         return f"{self.subject}: {self.reason}"
+
+
+def duplicates(label: str, ids: Sequence[Hashable]) -> list[Refusal]:
+    """A ``duplicate_id`` refusal for each of ``ids`` that occurs more than once, in
+    sorted order, named ``label`` and the ID. An assignment row, a (claim, theme)
+    pair, reads ``claim/theme``."""
+    return [
+        Refusal(
+            f"{label}{'/'.join(i) if isinstance(i, tuple) else i}",
+            Problem.DUPLICATE_ID,
+        )
+        for i in sorted({i for i in ids if ids.count(i) > 1})
+    ]

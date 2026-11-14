@@ -109,7 +109,7 @@ def test_the_prompts_are_among_the_files_checked() -> None:
     assert set(PROMPTS) <= names
 
 
-def test_the_ledger_and_stage_11_s_records_are_among_the_files_checked(
+def test_the_ledger_and_the_stage_11_records_are_among_the_files_checked(
     tmp_path: Path,
 ) -> None:
     """The ledger (P16-3) and each record Stage 11 commits beside the gold are

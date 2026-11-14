@@ -8,7 +8,8 @@
 
 ``freeze`` reads the user's working copy, ``data/runs/gold/drafts/
 codebook.working.toml``, anchors each example in the training bundles, and prints
-the content hash. It writes nothing until ADR 0003 is named: then it checks that
+the content hash. The drafting aid comes from the kept draft,
+``codebook.draft.toml``, so an edit to the working copy cannot change it (GS5). It writes nothing until ADR 0003 is named: then it checks that
 the ADR cites that hash, and writes ``codebooks/djia-pilot/codebook-v0.toml`` once,
 approved. Before printing the hash, it checks the codebook against every text the
 committed wording guard reads. ``validate`` rechecks the committed version against
@@ -54,6 +55,20 @@ from earnings_pipeline.stage6 import (
 codebook = typer.Typer(no_args_is_help=True, help="Stage 6's codebook v0.")
 codebook.callback()(options)
 WORKING = GOLD_RUNS / "drafts" / "codebook.working.toml"
+DRAFTED = GOLD_RUNS / "drafts" / "codebook.draft.toml"
+ADR_DIR = ("docs", "adr")
+
+
+def _adr(adr: Path) -> Path:
+    """``--adr`` as the approval records it: a file path under docs/adr/, relative
+    to the repository (T11-M1)."""
+    parts = adr.parts
+    if adr.is_absolute() or ".." in parts or parts[:2] != ADR_DIR or len(parts) < 3:
+        fail(
+            f"Refused: --adr {adr} is not a file path under docs/adr/, relative to"
+            " the repository"
+        )
+    return adr
 
 
 def pinned_split(layout: Layout, pinned: Pinned) -> SplitManifest:
@@ -104,12 +119,21 @@ def freeze_command(
     pinned = load_pinned(layout)
     split = pinned_split(layout, pinned)
     bundles = training(layout, pinned, split)
+    kept = layout.repo / DRAFTED
+    if not kept.is_file():
+        fail(
+            f"Refused: {layout.shown(kept)} is not here; the drafting session keeps"
+            " it beside the working copy"
+        )
     try:
+        drafted = load_codebook_draft(kept)
         draft = load_codebook_draft(layout.repo / working)
     except RecordError as error:
         record_error(error)
+    draft = draft.model_copy(update={"drafting_aid": drafted.drafting_aid})
     approval = None
     if adr is not None:
+        adr = _adr(adr)
         if approver is None or approved_on is None:
             fail("Refused: --adr needs --approver and --approved-on")
         try:

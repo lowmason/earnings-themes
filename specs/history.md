@@ -41,3 +41,19 @@ Differences from the design:
 
 Closed earlier deferred items:
 - "Recover a saved response that is present but unusable (PR #6's review, P2.1" (deferred by PR #6 review).
+
+## /deferred — 2026-11-13
+
+Closed deferred items:
+- "Refuse a committed test-partition gold at validate time (T12-M1):" (deferred by 9-pilot-codebook-split-and-gold-set-protocol): `gold validate` refuses gold that `readable()` holds back, before its bundle loads.
+- "Hold `codebook freeze --adr` to a repo-relative path under docs/adr/" (deferred by 9-pilot-codebook-split-and-gold-set-protocol): `--adr` must be a relative path under docs/adr/.
+- "Take `codebook freeze`'s drafting aid from the kept draft (plan 10, P10-7;" (deferred by 10-harden-the-gold-before-bundle-4): `codebook freeze` takes the aid from the kept draft and refuses a missing one.
+- "Harden the import scans (plan 12's review's M2-1, M9-3, M2-2, and M2-6;" (deferred by 12-evidence-selection-and-verification-plan-b): the scans resolve relative imports, name each retrieval hit's file, and match network modules by dotted name over a file floor.
+- "Let earnings-themes' tests collect without httpx (plan 12's pre-flight F3;" (deferred by 12-evidence-selection-and-verification-plan-b): httpx imports are skipped when absent, and a test collects the themes tests with httpx blocked.
+- "Keep a refused map key out of a field path (plan 12's review's M8-9;" (deferred by 12-evidence-selection-and-verification-plan-b): `describe` redacts any path part that names no field of the model.
+- "**P16-4 — GS19 review Minors (quick-fix bundle).** From plan 16's task and final" (deferred by 16-pilot-codebook-split-and-gold-set-protocol): (2)–(6) fixed: four tests, two docstrings, and a no-event refusal that asks for dev bundles.
+- "**P17-3 — `build_curated` returns early on a repeat, skipping `validate_curated`.**" (deferred by 17-feasibility-pilot-and-threshold-calibration-plan-a-slice-1): `build_curated` reports a kept-draft repeat with the record's refusals in one run.
+- "**P17-4 — Plan 17 review Minors (quick-fix bundle).** None blocking: (1)" (deferred by 17-feasibility-pilot-and-threshold-calibration-plan-a-slice-1): (1)–(3), (4b), (4c), (5)–(7) fixed; (4a) and the `_PHRASES` guard dropped as the item allows.
+- "**P18-1 — Say which hashes now cover a support run's cache mode.** Plan 18 added" (deferred by 18-feasibility-pilot-and-threshold-calibration-plan-a-slice-2): the data dictionary names the digests that cover `cache_mode` and `stability_run_id`.
+- "**P18-2 — The scorer file's pinned-field list is not exhaustive.**" (deferred by 18-feasibility-pilot-and-threshold-calibration-plan-a-slice-2): the dictionary and `model_runtime` name every condition `_pinned` refuses.
+- "Harden decide's memo against a policy that plants values under its private kind" (deferred by 23-run-path-performance): a missing row's `target_id` is copied before policy code runs.

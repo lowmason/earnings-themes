@@ -485,6 +485,69 @@ def test_codebook_v0_is_written_only_once_its_adr_cites_it(repo) -> None:
     )
 
 
+def test_codebook_freeze_takes_adr_only_under_docs_adr(repo) -> None:
+    """T11-M1: the approval records ``--adr`` as given, so only a repo-relative path
+    under docs/adr/ is taken; an absolute path, one that climbs out, or one outside
+    docs/adr/ is refused and nothing is written."""
+    assert run(repo, "pilot", "split").exit_code == 0
+    write_drafts(repo, "codebook", the_codebook())
+    content_hash = lines(run(repo, "codebook", "freeze"))[-2].split()[-1]
+    (repo / ADR).parent.mkdir(parents=True)
+    (repo / ADR).write_text(f"Codebook v0 is {content_hash}.\n", encoding="utf-8")
+    (repo / "docs" / "0003.md").write_text(f"{content_hash}\n", encoding="utf-8")
+    approve = ["--approver", "Lowell Mason", "--approved-on", "2026-10-02"]
+    for adr in (
+        str(repo / ADR),
+        f"docs/adr/../{ADR.name}",
+        "docs/0003.md",
+        "docs/adr",
+    ):
+        result = run(repo, "codebook", "freeze", "--adr", adr, *approve)
+        assert result.exit_code == 1, adr
+        assert lines(result)[-1] == (
+            f"Refused: --adr {adr} is not a file path under docs/adr/, relative to"
+            " the repository"
+        )
+    assert not (repo / CODEBOOK).exists()
+
+
+def test_codebook_freeze_takes_its_drafting_aid_from_the_kept_draft(repo) -> None:
+    """P10-7 (T8-M1's pattern, GS5): an edit to the working copy's drafting aid
+    changes neither the recorded model nor its date."""
+    assert run(repo, "pilot", "split").exit_code == 0
+    edited = the_codebook()
+    edited["drafting_aid"] = {
+        "model_id": "edited-model",
+        "drafted_on": date(2026, 1, 1),
+    }
+    write_drafts(repo, "codebook", the_codebook(), edited)
+    content_hash = lines(run(repo, "codebook", "freeze"))[-2].split()[-1]
+    write_drafts(repo, "codebook", the_codebook())
+    assert lines(run(repo, "codebook", "freeze"))[-2].split()[-1] == content_hash
+    (repo / ADR).parent.mkdir(parents=True)
+    (repo / ADR).write_text(f"Codebook v0 is {content_hash}.\n", encoding="utf-8")
+    write_drafts(repo, "codebook", the_codebook(), edited)
+    approve = ["--adr", str(ADR), "--approver", "Lowell Mason"]
+    cited = run(repo, "codebook", "freeze", *approve, "--approved-on", "2026-10-02")
+    assert cited.exit_code == 0, cited.output
+    aid = load_codebook(repo / CODEBOOK).drafting_aid
+    assert (aid.model_id, aid.drafted_on) == (AID["model_id"], AID["drafted_on"])
+
+
+def test_codebook_freeze_refuses_a_missing_kept_draft(repo) -> None:
+    """The drafting aid comes from the kept draft, so a working copy alone is
+    refused before anything is anchored."""
+    assert run(repo, "pilot", "split").exit_code == 0
+    write_drafts(repo, "codebook", the_codebook())
+    (repo / DRAFTS / "codebook.draft.toml").unlink()
+    result = run(repo, "codebook", "freeze")
+    assert result.exit_code == 1
+    assert lines(result)[-1] == (
+        "Refused: data/runs/gold/drafts/codebook.draft.toml is not here; the"
+        " drafting session keeps it beside the working copy"
+    )
+
+
 def test_a_codebook_that_copies_a_training_release_is_refused(repo) -> None:
     assert run(repo, "pilot", "split").exit_code == 0
     copied = the_codebook()
@@ -649,6 +712,34 @@ def test_gold_validate_checks_every_text_the_guard_reads(repo) -> None:
     assert f"refused: {FIRST} claims[0].claim ({other}): source_wording" in lines(
         result
     )
+
+
+def test_gold_validate_refuses_test_gold_before_reading_its_bundle(
+    repo, monkeypatch
+) -> None:
+    """T12-M1, GS18: a test bundle's gold committed by hand before Stage 14 is
+    refused by ``readable``, and its bundle is never loaded. The synthetic split has
+    no test event, so FIRST is read as one once its gold is committed."""
+    frozen(repo)
+    write_drafts(repo, FIRST, gold_draft(), gold_draft(annotator=SIGNED))
+    assert run(repo, "gold", "anchor", FIRST).exit_code == 0
+    lookup = SplitManifest.partition_of
+
+    def partition_of(self: SplitManifest, event_id: str) -> Partition:
+        return Partition.TEST if event_id == FIRST else lookup(self, event_id)
+
+    def unread(*args, **kwargs):
+        raise AssertionError("a test bundle was loaded")
+
+    monkeypatch.setattr(SplitManifest, "partition_of", partition_of)
+    monkeypatch.setattr(gold_cli, "load_bundle", unread)
+    for args in ((), (FIRST,)):
+        result = run(repo, "gold", "validate", *args)
+        assert result.exit_code == 1, result.output
+        assert lines(result) == [
+            f"refused: {FIRST} is a test bundle, which waits for Stage 14 (GS18)",
+            "Refused: 1 problem(s)",
+        ]
 
 
 def test_a_blank_signature_commits_nothing(repo) -> None:
@@ -1015,6 +1106,63 @@ def test_the_independent_pass_needs_check_and_events(repo) -> None:
     ]
 
 
+def test_the_independent_pass_with_no_event_asks_for_events(repo) -> None:
+    """P16-4 (6): with no event and no --hard-negatives, the refusal asks for
+    events rather than naming --hard-negatives."""
+    result = run(repo, "gold", "anchor", "--independent", "--check")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        "Refused: --independent takes events; name the dev bundles to check"
+    ]
+
+
+def test_a_malformed_independent_record_is_named_by_the_check(
+    repo, monkeypatch
+) -> None:
+    """P16-4 (2): a record that does not read is a problem line and a refusal, and
+    nothing is written."""
+    frozen(repo)
+    as_dev(monkeypatch)
+    path = repo / INDEPENDENT_DIR / f"{FIRST_FILE}.toml"
+    path.parent.mkdir(parents=True)
+    path.write_text("quotes = [\n", encoding="utf-8")
+    result = run(repo, "gold", "anchor", FIRST, "--independent", "--check")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        f"problem: {FIRST_FILE}.toml: not TOML at line 2, column 1",
+        f"Refused: {FIRST_FILE}.toml does not read as its record",
+    ]
+    assert not (repo / "data" / "runs" / "gold" / "anchored").exists()
+
+
+@pytest.mark.parametrize(
+    "later",
+    [
+        DRAFTS / f"{FIRST_FILE}.working.toml",
+        Path("data") / "runs" / "gold" / "anchored" / f"{FIRST_FILE}.toml",
+        Path("data") / "runs" / "gold" / "views" / f"{FIRST_FILE}.md",
+    ],
+)
+def test_any_later_file_closes_the_independent_pass(
+    repo, monkeypatch, later: Path
+) -> None:
+    """P16-4 (2), D16-2: a working copy, an anchored file or a view closes the
+    pass as a draft does."""
+    frozen(repo)
+    as_dev(monkeypatch)
+    write_independent(repo, independent_record())
+    (repo / later).parent.mkdir(parents=True, exist_ok=True)
+    (repo / later).write_text("", encoding="utf-8")
+    result = run(repo, "gold", "anchor", FIRST, "--independent", "--check")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        (
+            f"Refused: {FIRST}: {later.as_posix()} exists; the independent pass comes"
+            " before the draft (GS19)"
+        )
+    ]
+
+
 def test_a_missing_independent_record_is_named(repo, monkeypatch) -> None:
     frozen(repo)
     as_dev(monkeypatch)
@@ -1092,6 +1240,31 @@ def test_a_dev_draft_waits_for_its_matching_ledger_row(repo, monkeypatch) -> Non
     assert lines(anchored)[0].startswith(f"{FIRST} (dev): ")
     shown = run(repo, "gold", "show", FIRST)
     assert lines(shown) == [f"view  data/runs/gold/views/{FIRST_FILE}.md"]
+
+
+def test_show_refuses_an_anchored_dev_record_once_its_ledger_row_differs(
+    repo, monkeypatch
+) -> None:
+    """P16-4 (4): the view's guard holds after anchoring, so a ledger row that no
+    longer matches the record stops ``gold show`` and writes no view."""
+    frozen(repo)
+    as_dev(monkeypatch)
+    write_drafts(repo, FIRST, gold_draft())
+    path = write_independent(repo, independent_record())
+    write_ledger(
+        repo, [ledger_row(FIRST, hashlib.sha256(path.read_bytes()).hexdigest())]
+    )
+    assert run(repo, "gold", "anchor", FIRST).exit_code == 0
+    write_ledger(repo, [ledger_row(FIRST, "0" * 64)])
+    result = run(repo, "gold", "show", FIRST)
+    assert result.exit_code == 1
+    assert lines(result) == [
+        (
+            f"Refused: {FIRST} has an independent record that does not match its"
+            " ledger row; the record is never edited (GS19)"
+        )
+    ]
+    assert not (repo / "data" / "runs" / "gold" / "views").exists()
 
 
 def test_a_lost_independent_record_is_reported_never_rewritten(
@@ -1714,6 +1887,47 @@ def test_coverage_v2_counts_no_theme_over_version_1_s_runs(repo) -> None:
     assert again.exit_code == 0, again.output
     assert lines(again)[-2] == "unchanged: coverage v2: 27 documents"
     assert (repo / EVALUATION / "coverage-v2.json").read_bytes() == kept
+
+
+def test_no_theme_takes_the_call_the_pilot_coverage_gate_makes(repo) -> None:
+    """``pilot_reporting.coverage_gate`` calls ``_no_theme(layout, pinned,
+    run_ids)``, and its tests stub the gate out, so this pins that call: it gives
+    the rows coverage v2 froze."""
+    frozen(repo)
+    assert run(repo, "pilot", "coverage").exit_code == 0
+    signed_training(repo, no_theme=FIRST)
+    assert run(repo, "pilot", "coverage", "--version", "2").exit_code == 0
+    layout = Layout(repo, COHORT_MANIFEST, FIXTURE_DIR / "pilot-v1.json", PILOT_HASH)
+    pinned = load_pinned(layout)
+    first = load_coverage(repo / EVALUATION / "coverage-v1.json")
+    second = load_coverage(repo / EVALUATION / "coverage-v2.json")
+    rows = pilot_cli._no_theme(layout, pinned, first.run_ids)
+    assert tuple(rows) == second.no_theme
+
+
+def test_coverage_v2_names_bad_gold_while_other_gold_is_missing(repo) -> None:
+    """P17-4 (2): a bundle with no gold does not hide a problem with gold that is
+    committed; both are named in one run."""
+    frozen(repo)
+    assert run(repo, "pilot", "coverage").exit_code == 0
+    events = signed_training(repo, no_theme=FIRST)
+    missing = next(e for e in events if e != FIRST)
+    (repo / EVALUATION / "gold" / f"{missing.replace(':', '_')}.toml").unlink()
+    path = repo / EVALUATION / "gold" / f"{FIRST_FILE}.toml"
+    record = load_gold(path)
+    other = record.pin.model_copy(update={"pilot_hash": "4" * 64})
+    path.write_text(gold_toml(record.model_copy(update={"pin": other})), "utf-8")
+    result = run(repo, "pilot", "coverage", "--version", "2")
+    assert result.exit_code == 1
+    assert lines(result) == [
+        f"refused: {FIRST} pin: wrong_pin",
+        f"no signed gold  {missing}",
+        (
+            "Refused: 1 train and dev bundle(s) with a parsed document have no"
+            " signed gold; coverage v2 waits for every one (R12.4)"
+        ),
+    ]
+    assert not (repo / EVALUATION / "coverage-v2.json").exists()
 
 
 def test_coverage_v2_refuses_gold_it_may_not_count(repo) -> None:

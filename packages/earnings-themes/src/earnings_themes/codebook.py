@@ -26,7 +26,7 @@ from pydantic import Field, NonNegativeInt, StringConstraints, model_validator
 
 from earnings_themes import tomlfile
 from earnings_themes.anchoring import Bundle, SpanPointer, anchor, check_pointer
-from earnings_themes.problems import Problem, Refusal
+from earnings_themes.problems import Problem, Refusal, duplicates
 from earnings_themes.records import (
     IdPart,
     NonBlank,
@@ -189,10 +189,8 @@ def codebook_hash(codebook: Codebook) -> str:
 
 
 def _structure(themes: Sequence[ThemeDraft | Theme]) -> list[Refusal]:
-    refusals = []
     ids = [theme.theme_id for theme in themes]
-    for theme_id in sorted({i for i in ids if ids.count(i) > 1}):
-        refusals.append(Refusal(f"theme {theme_id}", Problem.DUPLICATE_ID))
+    refusals = duplicates("theme ", ids)
     if UNMATCHED in ids:
         refusals.append(Refusal(f"theme {UNMATCHED}", Problem.DUPLICATE_ID))
     parents = {theme.theme_id: theme.parent_id for theme in themes}

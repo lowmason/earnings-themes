@@ -11,8 +11,9 @@ import platform
 from datetime import UTC, datetime
 from pathlib import Path
 
-import httpx
 import pytest
+
+httpx = pytest.importorskip("httpx", reason="the local-model extra provides httpx")
 from earnings_core import VerifiedSpan, reverify_span
 from earnings_themes.extraction.cache import CachedAdapter, CacheMode
 from earnings_themes.extraction.local import (
