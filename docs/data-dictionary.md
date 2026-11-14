@@ -979,8 +979,8 @@ The opt-in live verification's result (P-VL), saved under `data/runs/cohort/live
 | `build_problems` | tuple of string | Why the rebuild stopped, if it did |
 | `rebuilt_content_hash` | 64 lowercase hex or null | The rebuilt cohort's content hash |
 | `frozen_content_hash` | 64 lowercase hex or null | The latest frozen version's |
-| `rebuilt_operative_hash` | 64 lowercase hex or null | The rebuilt cohort's operative hash, the one Stage 5 keys on; null when the rebuild stopped, and in a record saved before plan 26 kept it |
-| `frozen_operative_hash` | 64 lowercase hex or null | The latest frozen version's operative hash; null when nothing is frozen, and in a record saved before plan 26 kept it |
+| `rebuilt_operative_hash` | 64 lowercase hex or null | The rebuilt cohort's operative hash, which Stage 5 keys on. Null when the rebuild stopped, and in a record saved before plan 26 kept it |
+| `frozen_operative_hash` | 64 lowercase hex or null | The latest frozen version's operative hash. Null when nothing is frozen, and in a record saved before plan 26 kept it |
 | `blocking_finding_ids` | tuple of ID part | Findings that would hold a freeze now |
 | `requests_sent` | non-negative integer or null | The requests both clients sent, each capped at the approved `--max-requests`; null in a record saved before plan 8 kept it |
 
