@@ -213,6 +213,40 @@ def test_the_padded_skip_reads_a_page_starting_seven_days_after_the_cutoff(
     assert read.problems == ()
 
 
+def test_a_page_that_straddles_the_padded_start_is_read(saved) -> None:
+    """The page's ``filingTo``, not its ``filingFrom``, decides the skip at the
+    window's start. A page that begins before the padded start and ends after it is
+    read, and its in-range release is placed."""
+    old = release(20, "2024-05-20 16:05:00", items=("8.01",))
+    inside = release(21, "2024-07-15 16:05:00")
+    recent = release(30, "2024-08-01 16:05:00", items=("8.01",))
+    name = "CIK0009990001-submissions-001.json"
+    saved.submissions([recent], pages=[older_page_entry(name, [old, inside])])
+    saved.page(name, [old, inside])
+    saved.index(inside)
+    read = saved.read()
+    assert read.skipped == ()
+    assert [p.filing.accession for p in read.releases] == [inside.accession]
+    assert read.problems == ()
+
+
+def test_a_page_that_straddles_the_padded_cutoff_is_read(saved) -> None:
+    """The page's ``filingFrom``, not its ``filingTo``, decides the skip at the
+    cutoff. A page that begins the day after the cutoff and ends more than seven days
+    after it is read, and the release accepted on the cutoff's evening is placed."""
+    late = release(96, "2026-09-22 18:00:00", filing_date=date(2026, 9, 23))
+    after = release(98, "2026-10-09 16:05:00", items=("8.01",))
+    recent = release(99, "2026-10-20 16:05:00", items=("8.01",))
+    name = "CIK0009990001-submissions-001.json"
+    saved.submissions([recent], pages=[older_page_entry(name, [late, after])])
+    saved.page(name, [late, after])
+    saved.index(late)
+    read = saved.read()
+    assert read.skipped == ()
+    assert [p.filing.accession for p in read.releases] == [late.accession]
+    assert read.problems == ()
+
+
 def test_a_missing_response_is_a_problem(saved) -> None:
     assert saved.read().problems == (
         f"nothing saved from {submissions_url(CIK)}: run events discover",
