@@ -70,6 +70,9 @@ Each line below has its test, in the task whose code a person would see fail.
 - **D1** (owner, brief, 2026-11-13): No spec and no brainstorming. The 15 selected items are the requirements, in one hardening plan. Applied in: Spec line.
 - **D2** (owner, brief, 2026-11-13): Item L541 takes reading (a): a missing `acceptanceDateTime` has nothing to cross-check. The saved index page's Accepted value places the filing, and its cross-check is null. This is the owner's ruling in the `/deferred` pass. Applied in: Task 5, Task 5 (spec amendment).
 - **D3** (owner, brief, 2026-11-13): Item L979 is per-issuer: two cohort issuers' events may share one co-registrant release. Only two events of one issuer may not. This is the owner's ruling in the `/deferred` pass. Applied in: Task 4, Task 4 (spec amendment).
+- **D4** (owner, 2026-11-13): The seven defaults under "For the owner's review" stand as written. The owner was asked "Accept them as written for the execution session?" and chose "Accept all seven (Recommended)". Applied in: none; no task changes.
+- **D5** (owner, 2026-11-13): The execution session stops after Tasks 1–9, Task 10 Steps 1–2 and the final whole-branch review. The owner chose "Stop and report (Recommended)", whose option read: "Stop after the final review with no ticks, history entry, plan retirement, push or PR. Report the branch, its head SHA and your gate commands. Once you report Steps 3–4 pass, it runs the completion protocol for all 15 items, then the finish." The plan stays live until then, and all 15 items keep their `→ planned` notes. Applied in: Task 10; completion protocol.
+- **D6** (owner, 2026-11-13): The execution session never pushes its branch. The owner was asked "When it stops, may the execution session push its branch to origin (public repo), with no PR?" and chose "No push (Recommended)". The owner checks the head SHA out detached in the main checkout for Task 10 Step 3. Applied in: Task 10.
 
 ---
 
