@@ -221,16 +221,23 @@ REPLY_FAILURES = frozenset(
     {"malformed_reply", "invalid_references", "tool_call_refused"}
 )
 CLASSIFICATION_REPLY_FAILURES = REPLY_FAILURES | {"hierarchy_conflict"}
+# D21-35: a classification may also stop at its frozen request ceiling. Only the
+# classification phase widens; support trials and `missing` codes use REPLY_FAILURES.
+CLASSIFICATION_ACCEPTED = CLASSIFICATION_REPLY_FAILURES | {"requests_exhausted"}
 
 
 def processed(loaded: LoadedPass) -> bool:
-    """D21-31: every input was processed, and any failure is a failed model reply."""
+    """D21-31, D21-35: every input was processed, and any failure is a counted one.
+
+    A counted failure is a failed model reply, or a classification cut at its request
+    ceiling.
+    """
     support = (loaded.primary, loaded.alternative)
     return (
         all(d.outcome == "completed" for d in loaded.sources.stored_run.documents)
         and all(
             c.status == "completed"
-            or (c.status == "incomplete" and c.reason in CLASSIFICATION_REPLY_FAILURES)
+            or (c.status == "incomplete" and c.reason in CLASSIFICATION_ACCEPTED)
             for c in loaded.proposal.classifications
         )
         and all(
