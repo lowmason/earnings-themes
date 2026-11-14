@@ -71,20 +71,13 @@ def test_setup_reports_an_ordinary_failure_in_one_line(monkeypatch, tmp_path, er
     assert result.stderr == f"Failed: {error}\n"
 
 
-def _status_error() -> httpx.HTTPStatusError:
-    request = httpx.Request("GET", "https://example.invalid/chrome.zip")
-    reply = httpx.Response(403, request=request)
-    return httpx.HTTPStatusError("403 Forbidden", request=request, response=reply)
-
-
 @pytest.mark.parametrize(
     "error",
     [
-        _status_error(),
         subprocess.CalledProcessError(1, ["chromedriver", "--version"]),
         FileNotFoundError("chromedriver"),
     ],
-    ids=["http-status", "subprocess-exit", "missing-file"],
+    ids=["subprocess-exit", "missing-file"],
 )
 def test_setup_reports_each_subclass_of_a_setup_failure_in_one_line(
     monkeypatch, tmp_path, error
@@ -98,6 +91,37 @@ def test_setup_reports_each_subclass_of_a_setup_failure_in_one_line(
     assert result.exit_code == 1
     assert result.stderr == f"Failed: {error}\n"
     assert "Refused" not in result.output
+
+
+@pytest.mark.parametrize(
+    ("status", "headers"),
+    [
+        (403, {}),
+        (302, {"location": "https://example.invalid/elsewhere.zip"}),
+    ],
+    ids=["client-error", "redirect"],
+)
+def test_setup_reports_a_real_http_status_error_as_its_first_line(
+    monkeypatch, tmp_path, status, headers
+):
+    """``download`` calls ``raise_for_status``, whose message spans 2 or 3 lines."""
+    request = httpx.Request("GET", "https://example.invalid/chrome.zip")
+    reply = httpx.Response(status, headers=headers, request=request)
+    with pytest.raises(httpx.HTTPStatusError) as raised:
+        reply.raise_for_status()
+    error = raised.value
+    lines = str(error).splitlines()
+    assert len(lines) >= 2
+
+    def fail(pin, cache, fetch):
+        raise error
+
+    monkeypatch.setattr(cli, "load_pin", lambda: load_pin("mac-arm64"))
+    monkeypatch.setattr(cli, "install", fail)
+    result = RUNNER.invoke(cli.app, ["browser", "setup", "--cache", str(tmp_path)])
+    assert result.exit_code == 1
+    assert result.stderr == f"Failed: {lines[0]}\n"
+    assert len(result.stderr.splitlines()) == 1
 
 
 def test_a_refused_archive_keeps_its_refused_line_and_prints_no_failed_line(

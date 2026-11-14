@@ -63,7 +63,8 @@ def setup(
         typer.echo(f"Refused: {error}", err=True)
         raise typer.Exit(1) from error
     except SETUP_FAILURES as error:
-        typer.echo(f"Failed: {error}", err=True)
+        first_line = str(error).partition("\n")[0]
+        typer.echo(f"Failed: {first_line}", err=True)
         raise typer.Exit(1) from error
     typer.echo(f"Chrome for Testing {pin.version} ({pin.platform})")
     typer.echo(f"browser: {binaries.browser}")
