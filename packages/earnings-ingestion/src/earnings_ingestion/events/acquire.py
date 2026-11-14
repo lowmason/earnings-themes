@@ -36,16 +36,19 @@ P8-6 to P8-12).
   other filing's acceptance would change the event's eligibility, each marks a
   ``corpus_error`` for the next corpus version, and nothing is fixed in place (P8-11).
   An override that does not check is a problem, and its document is not attempted.
-- **Problems.** A saved response that cannot be read is a problem naming the
-  command that refetches it, and its document stays in the state the run recorded,
-  to be attempted again once it is refetched. A saved exhibit that cannot be read
-  is refetched only on an explicit, counted request: ``refetch`` names it,
+- **Problems.** A saved response that cannot be read is a problem, and its
+  document stays in the state the run recorded, to be attempted again once the
+  response is replaced. It is refetched only on an explicit, counted request. An
+  exhibit's problem ends with ``exhibit_remedy``: ``refetch`` names it, and
   ``planned_requests`` counts it and refuses any URL that ``unusable_exhibits`` does
-  not list, and its problem ends with ``exhibit_remedy``. A run never fetches an
-  index page or a primary document: ``events discover --refetch`` refetches one
-  (``refetch_remedy``). An override applied under its ID and since edited to name
-  another event or exhibit is a problem too: an applied override is not edited in
-  place.
+  not list. A run never fetches an index page or a primary document. When discovery
+  reads one, its problem names ``events discover --refetch`` (``refetch_remedy``).
+  One of a filing discovery does not read (an override's index page, or the index
+  page or primary document of a filing a ``set_release_filing`` override names) is
+  repaired by hand, though its problem names that command: see "Repairing the
+  store" in ``docs/verification/djia-events.md``. An override applied under its ID
+  and since edited to name another event or exhibit is a problem too: an applied
+  override is not edited in place.
 - **Canonical documents.** Each is written once under its ``doc_id``, which hashes
   its text. One already there that differs only in the Python, lxml, and libxml2
   versions its manifest records, as another environment writes it, is kept; any
