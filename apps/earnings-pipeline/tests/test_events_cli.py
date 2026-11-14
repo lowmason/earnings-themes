@@ -820,21 +820,27 @@ def test_discover_prints_its_count_when_saving_fails(repo, monkeypatch) -> None:
     assert "Stopped: [Errno 28] No space left on device" in result.stderr
 
 
-def test_discover_prints_its_count_when_a_saved_body_is_gone(
+def test_discover_handles_a_vanished_companyfacts_artifact(
     repo, moved, monkeypatch
 ) -> None:
-    """A companyfacts file whose body is gone stops the documents phase with the
-    count, never a traceback (F31)."""
+    """A companyfacts file whose body is gone, with its record kept, no longer stops
+    the documents phase. Its issuer is skipped, and discover ends with its count and
+    a problem line that names the file, never a traceback (item P2.3, F31)."""
     url = "https://data.sec.gov/api/xbrl/companyfacts/CIK0009990001.json"
     artifact = SavedResponses(ArtifactStore(moved, repo)).get(url).artifact
     (repo / artifact.storage_ref).unlink()
     client(monkeypatch, served())
     result = run(repo, "discover", "--max-requests", "5", store=EVENTS_STORE)
-    assert result.exit_code == 1
-    assert result.stdout.splitlines()[-1] == (
-        "requests sent: 0; a rerun fetches only what is missing"
-    )
-    assert "Stopped: no artifact" in result.stderr
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stdout.splitlines()[-1] == "fetched 0; requests sent: 0"
+    assert result.stderr.splitlines() == [
+        (
+            f"problem: {url}: no artifact {artifact.content_sha256} for source"
+            " 'sec-edgar': its retrieval records remain, but its bytes are gone;"
+            f" {refetch_remedy(url)}"
+        )
+    ]
 
 
 UNREADABLE = (
@@ -1989,3 +1995,79 @@ def test_acquire_refetch_interrupted_prints_each_move_before_its_count(
     )
     assert isinstance(result.exception, LookupError)
     assert acquire_lines(result)[-2:] == [quarantined, STOP_TAIL.format(2)]
+
+
+INDEXED = ("0009990001", "0009990001-25-000008")
+"""The filing whose index page is ``INDEX``."""
+DISCOVER_TAIL = "requests sent: {}; a rerun fetches only what is missing"
+
+
+def cut_and_unsaved(repo: Path) -> tuple[str, str]:
+    """Cut ``INDEX``'s file and delete its filing's retrieval records, so the save
+    of its index page needs the cut file's name. Return the line that save prints
+    and the filing's primary document."""
+    quarantined = truncate(repo, INDEX)
+    index, document = unsave(repo, *INDEXED)
+    assert index == INDEX
+    return quarantined, document
+
+
+@pytest.mark.parametrize("stopped", [False, True], ids=["finished", "stopped"])
+@pytest.mark.parametrize(
+    "filing", [(), ("--filing", *INDEXED)], ids=["discover", "filing"]
+)
+def test_discover_prints_each_quarantined_file_once(
+    repo, moved, monkeypatch, filing, stopped
+) -> None:
+    """The save of ``INDEX`` moves its cut file aside. The move prints once, after
+    the count, or before it when the primary document's fetch then stops (plan 26,
+    Review Focus)."""
+    quarantined, document = cut_and_unsaved(repo)
+    statuses = {document: [403, 403]} if stopped else None
+    client(monkeypatch, served(), statuses=statuses)
+    result = run(repo, "discover", *filing, "--max-requests", "5", store=EVENTS_STORE)
+    lines = result.stdout.splitlines()
+    assert lines.count(quarantined) == 1
+    assert [line for line in lines if line.startswith("quarantined:")] == [quarantined]
+    if stopped:
+        assert result.exit_code == 1
+        assert isinstance(result.exception, SystemExit), result.exception
+        # A 403 is retried once. --filing caps itself at 2, so its cap stops the
+        # retry, and plain discover's 403 persists at its third request.
+        assert lines[-2:] == [quarantined, DISCOVER_TAIL.format(2 if filing else 3)]
+        assert result.stderr.startswith("Stopped: ")
+    else:
+        assert result.exit_code == 0, result.output
+        assert lines[-2:] == ["fetched 2; requests sent: 2", quarantined]
+
+
+@pytest.mark.parametrize("failure", ["unreadable record", "unforeseen"])
+def test_discover_prints_each_quarantined_file_before_its_count_on_any_exit(
+    repo, moved, monkeypatch, failure
+) -> None:
+    """After the save of ``INDEX`` moves its cut file aside, a retrieval record turns
+    unreadable, or the next save meets an error no stop names. The move prints
+    before the count on each early exit."""
+    quarantined, _ = cut_and_unsaved(repo)
+    (record, *_) = sorted((moved / SEC_SOURCE_ID / "retrievals").glob("*/*.json"))
+    client(monkeypatch, served())
+    put = ArtifactStore.put
+
+    def then_fail(self, *args, **kwargs):
+        if self.quarantined:
+            unforeseen()
+        saved = put(self, *args, **kwargs)
+        if self.quarantined and failure == "unreadable record":
+            record.write_bytes(b"")
+        return saved
+
+    monkeypatch.setattr(ArtifactStore, "put", then_fail)
+    result = run(repo, "discover", "--max-requests", "5", store=EVENTS_STORE)
+    assert result.exit_code == 1
+    if failure == "unreadable record":
+        assert isinstance(result.exception, SystemExit), result.exception
+        assert result.stdout.splitlines()[-2:] == [quarantined, "requests sent: 1"]
+        assert result.stderr.splitlines() == [f"Stopped: {record}: {UNREADABLE}"]
+    else:
+        assert isinstance(result.exception, LookupError)
+        assert result.stdout.splitlines()[-2:] == [quarantined, DISCOVER_TAIL.format(2)]

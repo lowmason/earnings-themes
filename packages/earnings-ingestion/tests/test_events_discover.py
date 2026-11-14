@@ -811,6 +811,12 @@ def companyfacts_refused(store, layer):
     return url
 
 
+def companyfacts_of_another_cik(store, layer):
+    url = companyfacts_url(ACME.cik)
+    resave(store, url, layer[companyfacts_url(BOREALIS.cik)][0], JSON)
+    return url
+
+
 @pytest.mark.parametrize("damage", [companyfacts_gone, companyfacts_refused])
 def test_an_unusable_companyfacts_file_names_a_remedy_in_the_build(
     universe, layer, tmp_path, damage
@@ -1445,10 +1451,53 @@ def test_read_back_names_an_unusable_companyfacts_file_and_goes_on(
     assert len(read.problems) == 2
 
 
-def companyfacts_of_another_cik(store, layer):
+def test_a_truncated_companyfacts_file_skips_only_its_issuer(
+    universe, layer, tmp_path
+) -> None:
+    """Acme's companyfacts file is cut, and a Corvid candidate's primary document is
+    no longer saved. Acme is read first, so the documents phase goes on past it and
+    fetches Corvid's document, and the read-back names Acme's file once, with its
+    refetch (item P2.3)."""
+    store = populated(universe, layer, tmp_path)
     url = companyfacts_url(ACME.cik)
-    resave(store, url, layer[companyfacts_url(BOREALIS.cik)][0], JSON)
-    return url
+    corvid = f"/edgar/data/{int(CORVID.cik)}/"
+    document = min(u for u in layer if corvid in u and not u.endswith("-index.htm"))
+    sha = SavedResponses(store).get(document).artifact.content_sha256
+    shutil.rmtree(store.root / SEC_SOURCE_ID / "retrievals" / sha)
+    path = stored_at(store, url)
+    path.write_bytes(path.read_bytes()[:64])
+    recorder = Recorder(layer)
+    result, sent, _ = run(universe, recorder, store)
+    assert document in result.fetched
+    assert (recorder.requested, sent) == ([document], 1)
+    (problem,) = [p for p in result.problems if p.startswith(url)]
+    assert problem.endswith(refetch_remedy(url))
+    assert result.problems == [problem]
+    assert result.unusable == [url]
+
+
+@pytest.mark.parametrize(
+    "damage", [companyfacts_gone, companyfacts_refused, companyfacts_of_another_cik]
+)
+def test_the_documents_phase_skips_an_issuer_whose_companyfacts_file_is_unusable(
+    universe, layer, tmp_path, damage
+) -> None:
+    """Its bytes gone, valid bytes the reader refuses, or another CIK's file. An
+    Acme candidate's primary document is no longer saved, and the documents phase
+    reads no slot of Acme's, so it fetches nothing. The read-back names the file
+    once, and nothing of the document, whose issuer it skips too."""
+    store = populated(universe, layer, tmp_path)
+    acme = f"/edgar/data/{int(ACME.cik)}/"
+    document = min(u for u in layer if acme in u and not u.endswith("-index.htm"))
+    sha = SavedResponses(store).get(document).artifact.content_sha256
+    shutil.rmtree(store.root / SEC_SOURCE_ID / "retrievals" / sha)
+    url = damage(store, layer)
+    recorder = Recorder(layer)
+    result, sent, _ = run(universe, recorder, store)
+    assert (recorder.requested, sent, result.fetched) == ([], 0, [])
+    (problem,) = result.problems
+    assert problem.startswith(url) and problem.endswith(refetch_remedy(url))
+    assert result.unusable == [url]
 
 
 @pytest.mark.parametrize(

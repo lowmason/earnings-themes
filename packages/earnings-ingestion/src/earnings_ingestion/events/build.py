@@ -93,10 +93,11 @@ from earnings_ingestion.events.release import (
 from earnings_ingestion.events.saved import (
     SavedResponses,
     cited_remedy,
+    issuer_companyfacts,
     refetch_remedy,
 )
 from earnings_ingestion.events.slots import Slot, issuer_slots
-from earnings_ingestion.sec.companyfacts import CompanyFacts, read_companyfacts
+from earnings_ingestion.sec.companyfacts import CompanyFacts
 from earnings_ingestion.sec.data import SecDataError
 from earnings_ingestion.sec.filing_index import read_filing_index
 from earnings_ingestion.sec.urls import archive_url, companyfacts_url, filing_index_url
@@ -248,27 +249,6 @@ class EventBuild:
                 " the freeze"
             )
         return lines
-
-
-def _companyfacts(
-    saved: SavedResponses, cik: str, problems: list[str]
-) -> CompanyFacts | None:
-    url = companyfacts_url(cik)
-    try:
-        artifact = saved.get(url)
-        if artifact is None:
-            problems.append(f"nothing saved from {url}: run events discover")
-            return None
-        facts = read_companyfacts(artifact.text.body)
-    except (FileNotFoundError, ValueError) as exc:
-        problems.append(f"{url}: {exc}; {refetch_remedy(url)}")
-        return None
-    if facts.cik != cik:
-        problems.append(
-            f"{url} is the companyfacts file of CIK {facts.cik}; {refetch_remedy(url)}"
-        )
-        return None
-    return facts
 
 
 def _named_filing(
@@ -469,8 +449,13 @@ def build_events(
         read[issuer_id] = filings
         problems.extend(filings.problems)
         findings.extend(filings.findings)
-        facts = _companyfacts(saved, cik, problems)
-        if filings.registrant is None or facts is None:
+        facts = issuer_companyfacts(saved, cik)
+        if facts is None:
+            url = companyfacts_url(cik)
+            problems.append(f"nothing saved from {url}: run events discover")
+        elif isinstance(facts, str):
+            problems.append(facts)
+        if filings.registrant is None or not isinstance(facts, CompanyFacts):
             continue
         made, found = issuer_slots(filings, facts, issuer_id, start=start, stop=stop)
         findings.extend(found)

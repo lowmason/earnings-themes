@@ -11,11 +11,14 @@
 - **What a command prints.** A path under the repository prints relative to it, and
   any other path, such as a corpus directory outside it or one spelled through a
   symlinked prefix, prints in full. An error prints as ``error_lines`` splits it, so
-  each line can carry the ``problem:`` prefix.
+  each line can carry the ``problem:`` prefix. A save that moves damaged bytes aside
+  prints ``quarantined_lines``, one line for each file it moved, after the request
+  count and before it on a stop (plan 26).
 """
 
 from pathlib import Path
 
+from earnings_ingestion.fetch.store import ArtifactStore
 from pydantic import ValidationError
 
 RAW = Path("data") / "raw"
@@ -45,6 +48,15 @@ def runs_refusal(repo: Path, runs: Path) -> str | None:
 def shown(path: Path, repo: Path) -> str:
     """``path`` relative to ``repo`` when it lies under it, and in full otherwise."""
     return str(path.relative_to(repo)) if path.is_relative_to(repo) else str(path)
+
+
+def quarantined_lines(store: ArtifactStore, repo: Path) -> list[str]:
+    """One ``quarantined:`` line for each damaged file a save of ``store`` moved into
+    ``quarantine/``, once, in the order moved. Only this process knows of a move, so
+    every exit prints them."""
+    return [
+        f"quarantined: {shown(path, repo)}" for path in dict.fromkeys(store.quarantined)
+    ]
 
 
 def error_lines(error: BaseException) -> list[str]:

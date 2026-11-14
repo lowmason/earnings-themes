@@ -6,7 +6,14 @@ from pathlib import Path
 
 import pytest
 from earnings_ingestion.cohort.config import OverridesFile
-from earnings_pipeline.paths import error_lines, raw_store_refusal, runs_refusal, shown
+from earnings_ingestion.fetch.store import ArtifactStore
+from earnings_pipeline.paths import (
+    error_lines,
+    quarantined_lines,
+    raw_store_refusal,
+    runs_refusal,
+    shown,
+)
 from pydantic import ValidationError
 
 
@@ -29,6 +36,23 @@ def test_a_path_prints_relative_under_the_repo_and_in_full_elsewhere(
     assert shown(tmp_path / "other" / "x.json", repo) == str(
         tmp_path / "other" / "x.json"
     )
+
+
+def test_each_quarantined_file_prints_once_in_the_order_moved(tmp_path) -> None:
+    """A file moved twice prints once, at its first move. One under the repository
+    prints relative to it, and one outside it in full."""
+    repo = tmp_path / "repo"
+    store = ArtifactStore(repo / "data" / "raw" / "events", repo)
+    folder = store.root / "sec-edgar" / "quarantine"
+    first, second = folder / "a" / "x.html", folder / "b" / "y.json"
+    outside = tmp_path / "elsewhere" / "z.html"
+    assert quarantined_lines(store, repo) == []
+    store.quarantined.extend([second, first, second, outside, first])
+    assert quarantined_lines(store, repo) == [
+        "quarantined: data/raw/events/sec-edgar/quarantine/b/y.json",
+        "quarantined: data/raw/events/sec-edgar/quarantine/a/x.html",
+        f"quarantined: {outside}",
+    ]
 
 
 def test_run_outputs_stay_under_data_runs(tmp_path) -> None:

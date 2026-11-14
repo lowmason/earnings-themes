@@ -21,7 +21,9 @@ sent on every exit, a stop, a Ctrl-C, or an error no stop names included (PR #6'
 review, F31; plan 8's final review). ``discover`` exits 1 and names each saved
 submissions file, older page, index page, or primary document the build cannot read,
 which no rerun fetches again, since it is saved, with the ``--refetch`` that
-replaces it.
+replaces it. A save that needs a damaged file's name moves that file into
+``quarantine/``. ``discover`` and ``--filing`` print each file moved so after the
+request count, and before it on every early exit (plan 26).
 
 ``discover --refetch`` states its count before it opens the client: one request for
 each named URL, and for each older page saved beside a named submissions file. It
@@ -152,7 +154,13 @@ from earnings_ingestion.fetch.store import (
 from earnings_ingestion.sec.client import open_sec_client
 from typer.core import TyperCommand
 
-from earnings_pipeline.paths import error_lines, raw_store_refusal, runs_refusal, shown
+from earnings_pipeline.paths import (
+    error_lines,
+    quarantined_lines,
+    raw_store_refusal,
+    runs_refusal,
+    shown,
+)
 
 events = typer.Typer(
     no_args_is_help=True, help="Stage 5's events: discovery, eligibility, the pilot."
@@ -313,16 +321,19 @@ def _discover(
     if budget is None:
         _fail("Refused: pass --max-requests, the request count the user approved")
     typer.echo(f"at most {budget} requests to SEC, through the shared client")
+    store = layout.store()
 
     def discovering(fetch: Fetch) -> Discovery:
         if filing is not None:
-            return discover_filing(
-                universe, *filing, fetch, layout.store(), say=typer.echo
-            )
-        return discover(universe, fetch, layout.store(), say=typer.echo)
+            return discover_filing(universe, *filing, fetch, store, say=typer.echo)
+        return discover(universe, fetch, store, say=typer.echo)
 
-    result, sent = _counted(budget, discovering)
+    def moved() -> None:
+        _quarantined(store, layout.repo)
+
+    result, sent = _counted(budget, discovering, before_count=moved)
     typer.echo(f"fetched {len(result.fetched)}; requests sent: {sent}")
+    moved()
     return result.problems
 
 
@@ -377,11 +388,16 @@ def _saved(refetched: Refetched, repo: Path) -> None:
 
 
 def _counted[T](
-    budget: int, run: Callable[[Fetch], T], *, rerun: str = DISCOVER_RERUN
+    budget: int,
+    run: Callable[[Fetch], T],
+    *,
+    rerun: str = DISCOVER_RERUN,
+    before_count: Callable[[], None] = lambda: None,
 ) -> tuple[T, int]:
     """``run`` with the shared SEC client's fetch, capped at ``budget``: its result
-    and the requests sent. Every exit prints that count, with what a ``rerun`` does;
-    a stop exits 1, and any other error propagates (PR #6's review, F31)."""
+    and the requests sent. Every exit prints that count, with what a ``rerun`` does.
+    A stop exits 1, and any other error propagates (PR #6's review, F31). On every
+    early exit, ``before_count`` runs before the count is printed."""
     sent = 0
     try:
         with open_sec_client(max_requests=budget) as sec:
@@ -390,12 +406,15 @@ def _counted[T](
             finally:
                 sent = sec.throttle.count
     except RetrievalRecordError as error:
+        before_count()
         typer.echo(f"requests sent: {sent}")  # A rerun meets the same record.
         _fail(f"Stopped: {error}")
     except STOPS as error:
+        before_count()
         typer.echo(f"requests sent: {sent}; {rerun}")
         _fail(f"Stopped: {error}")
     except BaseException:
+        before_count()
         typer.echo(f"requests sent: {sent}; {rerun}")
         raise
     return result, sent
@@ -545,10 +564,9 @@ def _closed(url: str, types) -> None:
 
 
 def _quarantined(store: ArtifactStore, repo: Path) -> None:
-    """Each damaged file a save moved into ``quarantine/``, once, in the order moved.
-    Only this process knows of a move, so every exit prints it."""
-    for path in dict.fromkeys(store.quarantined):
-        typer.echo(f"quarantined: {shown(path, repo)}")
+    """Print ``quarantined_lines``: each damaged file a save moved aside, once."""
+    for line in quarantined_lines(store, repo):
+        typer.echo(line)
 
 
 @events.command("acquire")

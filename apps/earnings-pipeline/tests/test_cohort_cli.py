@@ -556,3 +556,96 @@ def test_freeze_prints_a_manifest_outside_the_repo_in_full(
     assert result.exit_code == 0, result.output
     (line,) = [line for line in result.stdout.splitlines() if "-v1.json" in line]
     assert line.startswith(str(outside / "manifests" / "djia-synthetic-v1.json"))
+
+
+TICKERS = "https://www.sec.gov/files/company_tickers.json"
+
+
+def saved_fetches(root: Path) -> dict[str, Fetched]:
+    """Each response saved under ``root``, by URL, as the client returned it."""
+    found = {}
+    for path in sorted(root.glob("*/retrievals/*/*.json")):
+        record = Retrieval.model_validate_json(path.read_text(encoding="utf-8"))
+        (artifact,) = path.parents[2].glob(f"{record.sha256}.*")
+        found[record.request_url] = Fetched(artifact.read_bytes(), record)
+    return found
+
+
+def cut_tickers(repo: Path) -> tuple[dict[str, Fetched], str]:
+    """Move the cohort's artifacts under data/raw, where fetch-sec may save. Cut the
+    tickers file and delete its retrieval records, so its save needs the cut file's
+    name. Return the original responses, and the line the save prints when it moves
+    the cut bytes aside."""
+    (repo / COHORT_STORE).parent.mkdir(parents=True)
+    shutil.move(repo / FIXTURE_DIR / "raw", repo / COHORT_STORE)
+    root = repo / COHORT_STORE
+    fetches = saved_fetches(root)
+    sha = fetches[TICKERS].retrieval.sha256
+    path = root / "sec-edgar" / f"{sha}.json"
+    cut = path.read_bytes()[:10]
+    path.write_bytes(cut)
+    shutil.rmtree(root / "sec-edgar" / "retrievals" / sha)
+    moved = COHORT_STORE / "sec-edgar" / "quarantine" / sha / f"{sha256_hex(cut)}.json"
+    return fetches, f"quarantined: {moved}"
+
+
+def serve(
+    monkeypatch, fetches: dict[str, Fetched], failure: BaseException | None = None
+) -> list[str]:
+    """Replace the CLI's SEC client with one that returns ``fetches``, and raises
+    ``failure`` at its second request; return the URLs it is asked for."""
+    requested: list[str] = []
+
+    class FakeSec:
+        class throttle:
+            count = 0
+
+        def fetch(self, url, types):
+            requested.append(url)
+            FakeSec.throttle.count += 1
+            if failure is not None and len(requested) == 2:
+                raise failure
+            return fetches[url]
+
+    @contextmanager
+    def fake_open(*, max_requests):
+        yield FakeSec()
+
+    monkeypatch.setattr(cohort_cli, "open_sec_client", fake_open)
+    return requested
+
+
+def test_fetch_sec_prints_each_quarantined_file_once(repo, monkeypatch) -> None:
+    """The save of the cut tickers file moves it aside, and the move prints once,
+    after the counts (plan 26)."""
+    fetches, quarantined = cut_tickers(repo)
+    requested = serve(monkeypatch, fetches)
+    result = run(repo, "fetch-sec", "--max-requests", "50", store=COHORT_STORE)
+    assert result.exit_code == 0, result.output
+    assert requested[0] == TICKERS
+    lines = result.stdout.splitlines()
+    assert [line for line in lines if line.startswith("quarantined: ")] == [quarantined]
+    assert lines[-2:] == [f"requests sent: {len(requested)}", quarantined]
+    assert lines[-3].startswith("fetched ")
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [cohort_cli.AccessStop("403 persisted"), LookupError("unforeseen")],
+    ids=["stop", "unforeseen"],
+)
+def test_fetch_sec_stopped_prints_each_quarantined_file_before_its_count(
+    repo, monkeypatch, failure
+) -> None:
+    """The second request fails after the tickers file's save moved its cut bytes
+    aside. The move prints before the count on a stop and on an error no stop
+    names."""
+    fetches, quarantined = cut_tickers(repo)
+    serve(monkeypatch, fetches, failure)
+    result = run(repo, "fetch-sec", "--max-requests", "50", store=COHORT_STORE)
+    assert result.exit_code == 1
+    assert result.stdout.splitlines() == [quarantined, "requests sent: 2"]
+    if isinstance(failure, LookupError):
+        assert result.exception is failure
+    else:
+        assert result.stderr == "Stopped: 403 persisted\n"
