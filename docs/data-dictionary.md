@@ -1274,7 +1274,7 @@ set.
 | `override_id` | ID part | A curated slug |
 | `kind` | `EventOverrideKind` | The decision |
 | `event_id` | ID part or null | The event of `set_release_filing` and `retain_unresolved` |
-| `accession` | accession or null | `set_release_filing`'s filing: an 8-K or 8-K/A of the issuer, accepted, on the Eastern calendar, after the event's period end and by the issuer's next period end (by the cutoff when none is visible), whose index page is saved, and the release of no other event |
+| `accession` | accession or null | `set_release_filing`'s filing: an 8-K or 8-K/A of the issuer, accepted, on the Eastern calendar, after the event's period end and by the issuer's next period end (by the cutoff when none is visible), whose index page is saved, and the release of no other event of the issuer |
 | `reason` | `EventReason` or null | `retain_unresolved`'s reason, one that makes the event `ambiguous` |
 | `finding_id` | ID part or null | `acknowledge`'s finding |
 | `finding_digest` | 64 lowercase hex or null | The digest of the finding as reviewed |
@@ -1288,7 +1288,7 @@ set.
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `schema_version` | `1` | The file's version |
-| `overrides` | tuple of `EventOverride` | Unique `override_id`s, and at most one override of each kind per `event_id` |
+| `overrides` | tuple of `EventOverride` | Unique `override_id`s, at most one override of each kind per `event_id`, and at most one acknowledgement for each `finding_id` |
 
 ### `AcquisitionOverride`
 
