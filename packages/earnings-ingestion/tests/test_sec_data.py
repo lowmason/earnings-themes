@@ -13,6 +13,7 @@ from earnings_ingestion.sec.data import (
     read_older_page,
     read_submissions,
     read_submissions_page,
+    repeated_accessions,
 )
 
 
@@ -223,6 +224,51 @@ def test_an_older_page_must_hold_the_count_its_entry_states() -> None:
         SecDataError, match=r"p\.json's entry at /filings/files/0 states no filingCount"
     ):
         read_older_page(body, entry())
+
+
+def test_repeated_accessions_names_each_copy() -> None:
+    """An accession that two files list is mapped to each copy's pointer and file,
+    in the order read. An accession that one file lists once is not in the mapping."""
+    recent = read_submissions(submissions()).filings
+    page = json.loads(submissions())["filings"]["recent"]
+    older = read_submissions_page(
+        json.dumps({column: rows[:1] for column, rows in page.items()}).encode()
+    )
+    repeated = repeated_accessions(
+        [
+            ("https://example.test/main.json", recent),
+            ("https://example.test/old.json", older),
+        ]
+    )
+    assert repeated == {
+        "0009990001-25-000002": [
+            "at /filings/recent/accessionNumber/0 in https://example.test/main.json",
+            "at /accessionNumber/0 in https://example.test/old.json",
+        ]
+    }
+
+
+def test_repeated_accessions_counts_every_copy_and_ignores_a_unique_one() -> None:
+    """A repeat inside one file counts, a third copy is named in turn, and one-shot
+    input is read once. Files with no repeat give an empty mapping."""
+    page = json.loads(submissions())["filings"]["recent"]
+    block = {column: [*rows, rows[0]] for column, rows in page.items()}
+    twice = read_submissions_page(json.dumps(block).encode())
+    older = read_submissions_page(json.dumps(page).encode())
+    assert repeated_accessions([("main", older)]) == {}
+    assert repeated_accessions([]) == {}
+    repeated = repeated_accessions(iter([("main", iter(twice)), ("old", iter(older))]))
+    assert repeated == {
+        "0009990001-25-000002": [
+            "at /accessionNumber/0 in main",
+            "at /accessionNumber/2 in main",
+            "at /accessionNumber/0 in old",
+        ],
+        "0009990001-24-000001": [
+            "at /accessionNumber/1 in main",
+            "at /accessionNumber/1 in old",
+        ],
+    }
 
 
 def test_the_rendered_view_is_not_the_filed_document() -> None:

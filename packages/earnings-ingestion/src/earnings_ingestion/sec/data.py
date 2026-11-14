@@ -14,6 +14,7 @@ record carries the JSON pointer of the value it came from, so evidence can cite 
 """
 
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date, datetime
 
@@ -300,6 +301,24 @@ def read_older_page(body: bytes, page: OlderPage) -> tuple[Filing, ...]:
             f" {page.filing_count} its entry at {page.pointer} states"
         )
     return filings
+
+
+def repeated_accessions(
+    listed: Iterable[tuple[str, Iterable[Filing]]],
+) -> dict[str, list[str]]:
+    """Each accession that the files list more than once, with each copy's place.
+
+    ``listed`` pairs each file's URL with its filings, in the order read. A copy's
+    place reads ``at <pointer> in <url>``. Two copies of one filing would make two
+    candidates of it, so the callers refuse a repeat and never deduplicate it.
+    """
+    copies: dict[str, list[str]] = {}
+    for url, filings in listed:
+        for filing in filings:
+            copies.setdefault(filing.accession, []).append(
+                f"at {filing.pointer('accessionNumber')} in {url}"
+            )
+    return {accession: where for accession, where in copies.items() if len(where) > 1}
 
 
 def raw_document_name(primary_document: str) -> str:

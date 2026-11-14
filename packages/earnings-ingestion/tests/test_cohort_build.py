@@ -157,6 +157,62 @@ def test_a_fund_page_of_another_count_stops_the_build(repo) -> None:
         build(repo, **OPTIONS)
 
 
+def test_a_fund_filing_in_its_recent_block_and_an_older_page_stops_the_build(
+    repo,
+) -> None:
+    """One N-PORT listed in the fund's recent block and again in an older page would
+    make two filings of one report. The build refuses it, naming each copy's pointer,
+    and never deduplicates it."""
+    store = ArtifactStore(repo / DIRECTORY / "raw", repo)
+    url = submissions_url(FUND_CIK)
+    record = json.loads(store.latest("sec-edgar", url, **SYNTHETIC).body)
+    name = f"CIK{FUND_CIK}-submissions-001.json"
+    record["filings"]["files"] = [{"name": name, "filingCount": 1}]
+    save(store, "sec-edgar", url, json.dumps(record).encode(), "application/json")
+    recent = record["filings"]["recent"]
+    page = {column: rows[1:2] for column, rows in recent.items()}
+    older = submissions_page_url(name)
+    save(store, "sec-edgar", older, json.dumps(page).encode(), "application/json")
+    accession = recent["accessionNumber"][1]
+    with pytest.raises(CohortError) as refused:
+        build(repo, **OPTIONS)
+    assert refused.value.problems == [
+        (
+            f"{accession} is listed 2 times:"
+            f" at /filings/recent/accessionNumber/1 in {url},"
+            f" at /accessionNumber/0 in {older}"
+        )
+    ]
+
+
+def test_a_repeated_fund_filing_stops_the_build_before_any_report_is_read(
+    repo,
+) -> None:
+    """The repeat is the only problem: the build reads no N-PORT after it, so a later
+    filing whose report is not saved adds nothing."""
+    store = ArtifactStore(repo / DIRECTORY / "raw", repo)
+    url = submissions_url(FUND_CIK)
+    record = json.loads(store.latest("sec-edgar", url, **SYNTHETIC).body)
+    name = f"CIK{FUND_CIK}-submissions-001.json"
+    record["filings"]["files"] = [{"name": name, "filingCount": 2}]
+    save(store, "sec-edgar", url, json.dumps(record).encode(), "application/json")
+    recent = record["filings"]["recent"]
+    unsaved = f"{FUND_CIK}-25-000099"
+    page = {column: [rows[1], rows[1]] for column, rows in recent.items()}
+    page["accessionNumber"][1] = unsaved
+    older = submissions_page_url(name)
+    save(store, "sec-edgar", older, json.dumps(page).encode(), "application/json")
+    with pytest.raises(CohortError) as refused:
+        build(repo, **OPTIONS)
+    assert refused.value.problems == [
+        (
+            f"{recent['accessionNumber'][1]} is listed 2 times:"
+            f" at /filings/recent/accessionNumber/1 in {url},"
+            f" at /accessionNumber/0 in {older}"
+        )
+    ]
+
+
 def test_edited_bytes_stop_the_build(repo) -> None:
     page = next((repo / DIRECTORY / "raw" / "synthetic-index").glob("*.html"))
     page.write_bytes(page.read_bytes().replace(b"synthetic", b"edited"))

@@ -63,6 +63,7 @@ from earnings_ingestion.sec.data import (
     SecDataError,
     read_older_page,
     read_submissions,
+    repeated_accessions,
 )
 from earnings_ingestion.sec.filing_index import FilingIndex, read_filing_index
 from earnings_ingestion.sec.urls import (
@@ -225,19 +226,15 @@ class _Reader:
         copy's pointer: two copies would make two candidates of one filing. The
         remedy refetches ``main``, the submissions file, with its older pages: a
         stale older page, after SEC pages the filings again, is the likely cause."""
-        copies: dict[str, list[str]] = {}
-        for artifact, filings in listed:
-            for filing in filings:
-                copies.setdefault(filing.accession, []).append(
-                    f"at {filing.pointer('accessionNumber')} in {artifact.url}"
-                )
-        for accession, where in copies.items():
-            if len(where) > 1:
-                self.refuse(
-                    main,
-                    f"{accession} is listed {len(where)} times: {', '.join(where)}",
-                    "the submissions file with its older pages",
-                )
+        repeated = repeated_accessions(
+            (artifact.url, filings) for artifact, filings in listed
+        )
+        for accession, where in repeated.items():
+            self.refuse(
+                main,
+                f"{accession} is listed {len(where)} times: {', '.join(where)}",
+                "the submissions file with its older pages",
+            )
 
     def indexes(
         self, cik: str, filings: list[Filing]
