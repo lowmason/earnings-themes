@@ -110,6 +110,7 @@
       that to periods that do not overlap. Size: design.
       Done when: the dictionary says the dates are a record only, or the build
       scopes each override by them, with a test.
+      → acknowledged 2026-11-13 (claude/deferred-6fe05c): changes only a new cohort version; cohort v1 is frozen and Stage 15 consumes it unchanged.
 - [ ] Decide whether a fund report's holdings match only names cited by its date
       (Codex's review of PR #5): `match_holdings` in
       `packages/earnings-ingestion/src/earnings_ingestion/cohort/corroboration.py`
@@ -124,6 +125,7 @@
       override dates above, so that names and overrides are scoped alike.
       Size: design. Done when: the decision is recorded, and a test shows whether a
       name cited after a report's date matches that report's holding.
+      → acknowledged 2026-11-13 (claude/deferred-6fe05c): changes only a new cohort version; cohort v1 is frozen and Stage 15 consumes it unchanged.
 - [ ] Let `verify-live` re-read the other hosts after one refuses (final review,
       recommendation; P6-20): `verify_live` in
       `packages/earnings-ingestion/src/earnings_ingestion/cohort/live.py` sends
@@ -135,6 +137,7 @@
       decision on whether AGENTS.md's stop on a persistent 403 covers the run or
       one host. Size: design. Done when: that decision is recorded, and a test
       shows that a refusal on one host leaves the other hosts' checks requested.
+      → acknowledged 2026-11-13 (claude/deferred-6fe05c): verify-live is an owner-run check of the frozen cohort, and no run of it is scheduled.
 
 ## 7-event-discovery-eligibility-and-acquisition-plan-a — 2026-09-27
 - [ ] Report the cohort CLI's override and terms errors as `problem:` lines
@@ -225,6 +228,7 @@
       an event that is not `ambiguous`. `release-id/2` decides both.
       Before it freezes a new events version, the per-candidate citations item
       under PR #6's review lands too.
+      → acknowledged 2026-11-13 (claude/deferred-6fe05c): needed only before a new events version; Stage 15 consumes events v1 unchanged, and no new version is planned.
 - [ ] Report `events freeze`'s citation errors as `problem:` lines (plan 7's
       final review, Minor): `freeze_command` in
       `apps/earnings-pipeline/src/earnings_pipeline/events_cli.py` catches only
@@ -302,6 +306,7 @@
       test.
       The per-candidate citations item under PR #6's review touches the same
       `item_text` code; land the two together.
+      → acknowledged 2026-11-13 (claude/deferred-6fe05c): needed only before a new events version; Stage 15 consumes events v1 unchanged, and no new version is planned.
 - [ ] Bound the periodic reports that can block on acceptance time (plan 7's
       final review, Minor): `issuer_filings` in `events/filings.py` passes every
       periodic report with a `reportDate` to `_visible`, so one whose index page
@@ -387,6 +392,7 @@
       when: the decision is recorded, and a test shows that re-citing an override's
       page from other bytes leaves the chosen identity and the pilot's seed
       unchanged.
+      → acknowledged 2026-11-13 (claude/deferred-6fe05c): needed only before a new events version; Stage 15 consumes events v1 unchanged, and no new version is planned.
 - [ ] Bind each evidence citation to its artifact's retrievals (PR #6's review,
       F21; the rest of plan 7's "Bind an evidence record to its manifest when
       loading", which PR #6 closed): `check_evidence` in `events/evidence.py`
@@ -462,6 +468,7 @@
       documents it; the synthetic evidence fixture is regenerated for its new
       null field; and a synthetic build whose report is placed by a saved index
       page cites that page.
+      → acknowledged 2026-11-13 (claude/deferred-6fe05c): needed only before a new events version; Stage 15 consumes events v1 unchanged, and no new version is planned.
 - [ ] Refuse two findings that share one `finding_id` (PR #6's review, P4.3):
       each copy of a filing row that follows no convention, or has no value,
       emits its own `acceptance_time_mismatch` or `acceptance_time_unknown`
@@ -586,6 +593,7 @@
       co-candidate, an unread candidate, and a passed-over filing. Recording each
       candidate's reading as a fact would reverse P7-15, so that is the user's
       open choice; if adopted, the readings are marked as inferred.
+      → acknowledged 2026-11-13 (claude/deferred-6fe05c): needed only before a new events version; Stage 15 consumes events v1 unchanged, and no new version is planned.
 
 ## 9-pilot-codebook-split-and-gold-set-protocol — 2026-10-03
 
