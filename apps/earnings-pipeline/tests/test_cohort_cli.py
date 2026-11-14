@@ -102,23 +102,32 @@ def test_build_and_freeze_report_a_bad_override_as_a_problem(repo, command) -> N
     assert_one_problem(result, "rejections name no assertion")
 
 
+UNKNOWN_KEY = BAD_OVERRIDE.replace(
+    'kind = "reject_assertion"', 'kind = "reject_assertion"\nbogus_key = 1'
+)
+
+
 @pytest.mark.parametrize(
-    ("override", "last_line"),
+    ("override", "endings"),
     [
+        (UNKNOWN_KEY, ["bogus_key: Extra inputs are not permitted"]),
+        (BAD_OVERRIDE * 2, ["Value error, override_id repeated"]),
         (
-            BAD_OVERRIDE.replace(
-                'kind = "reject_assertion"', 'kind = "reject_assertion"\nbogus_key = 1'
+            UNKNOWN_KEY.replace(
+                'rationale = "Synthetic: this assertion does not exist."', ""
             ),
-            "bogus_key: Extra inputs are not permitted",
+            [
+                "bogus_key: Extra inputs are not permitted",
+                "rationale: Field required",
+            ],
         ),
-        (BAD_OVERRIDE * 2, "Value error, override_id repeated"),
     ],
-    ids=["unknown key", "repeated override_id"],
+    ids=["unknown key", "repeated override_id", "two entries"],
 )
 def test_build_reports_a_validation_error_as_problem_lines(
-    repo, override, last_line
+    repo, override, endings
 ) -> None:
-    """A pydantic error is several lines, and each prints as its own problem."""
+    """A pydantic error is several lines, and each entry prints as its own problem."""
     overrides = repo / FIXTURE_DIR / "overrides.toml"
     overrides.write_text(
         overrides.read_text(encoding="utf-8") + override, encoding="utf-8"
@@ -126,8 +135,9 @@ def test_build_reports_a_validation_error_as_problem_lines(
     result = run(repo, "build")
     assert_one_problem(result)
     lines = result.stderr.splitlines()
-    assert len(lines) == 1
-    assert lines[0].endswith(last_line)
+    assert len(lines) == len(endings)
+    for ending in endings:
+        assert sum(line.endswith(ending) for line in lines) == 1, result.stderr
     assert "For further information" not in result.stderr
     assert "validation error" not in result.stderr
 
