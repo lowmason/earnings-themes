@@ -27,19 +27,20 @@ def seed_case(tmp_path, **kwargs):
     return config.model_copy(update=updates), payload
 
 
-def runtime(config, phases):
+def runtime(config, phases, claims=1):
+    candidates = [
+        {
+            "quote_labels": ["U1"],
+            "claim": "Invented expansion." if n == 0 else f"Invented expansion {n}.",
+        }
+        for n in range(claims)
+    ]
     extractor = ScriptedAdapter(
         lambda request: (
             phases.append("extract"),
             ModelReply(
                 model="scripted",
-                text=json.dumps(
-                    {
-                        "candidates": [
-                            {"quote_labels": ["U1"], "claim": "Invented expansion."}
-                        ]
-                    }
-                ),
+                text=json.dumps({"candidates": candidates}),
             ),
         )[1]
     )
@@ -486,3 +487,53 @@ def test_load_pass_refuses_resealed_proposal_identity_mismatch(tmp_path, identit
     )
     with pytest.raises(WorkflowError, match="input_changed"):
         load_pass(config, record)
+
+
+def test_run_gates_accept_a_classification_cut_at_the_request_ceiling(tmp_path):
+    """D21-35: a document with more claims than its request ceiling still passes."""
+    from earnings_pipeline.pilot_workflow import (
+        _complete,
+        load_pass,
+        make_pass,
+        make_run,
+        processed,
+    )
+
+    config, _ = seed_case(tmp_path, seed=False, review=True)
+    config = config.model_copy(
+        update={
+            "coding_ceilings": config.coding_ceilings.model_copy(
+                update={"requests_per_document": 1}
+            )
+        }
+    )
+    rt = runtime(config, [], claims=3)
+    passed = make_pass(
+        config,
+        rt,
+        rt.scorer,
+        partition=Partition.TRAIN,
+        directory=tmp_path / "data/runs/pilot/train/pass",
+        fresh=None,
+        support_ready=lambda: None,
+        now=lambda: cases.NOW,
+    )
+    loaded = load_pass(config, passed)
+    classifications = loaded.proposal.classifications
+    cut = [c for c in classifications if c.reason == "requests_exhausted"]
+    assert passed.status == "partial"
+    assert [c.status for c in classifications].count("completed") == 1
+    assert len(cut) == 2
+    assert all(c.status == "incomplete" for c in cut)
+    assert not _complete(loaded.sources.stored_run, loaded.proposal)
+    assert processed(loaded)
+    # The Stage 10 gates behind `pilot21 run` accept the partial run.
+    record = make_run(
+        config,
+        loaded,
+        bound_artifact(config, loaded),
+        directory=tmp_path / "data/runs/pilot/train/run",
+        now=lambda: cases.NOW,
+    )
+    assert record.status == "partial"
+    assert processed(loaded)
