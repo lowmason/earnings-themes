@@ -27,19 +27,20 @@ def seed_case(tmp_path, **kwargs):
     return config.model_copy(update=updates), payload
 
 
-def runtime(config, phases):
+def runtime(config, phases, claims=1):
+    candidates = [
+        {
+            "quote_labels": ["U1"],
+            "claim": "Invented expansion." if n == 0 else f"Invented expansion {n}.",
+        }
+        for n in range(claims)
+    ]
     extractor = ScriptedAdapter(
         lambda request: (
             phases.append("extract"),
             ModelReply(
                 model="scripted",
-                text=json.dumps(
-                    {
-                        "candidates": [
-                            {"quote_labels": ["U1"], "claim": "Invented expansion."}
-                        ]
-                    }
-                ),
+                text=json.dumps({"candidates": candidates}),
             ),
         )[1]
     )
@@ -486,3 +487,219 @@ def test_load_pass_refuses_resealed_proposal_identity_mismatch(tmp_path, identit
     )
     with pytest.raises(WorkflowError, match="input_changed"):
         load_pass(config, record)
+
+
+def test_run_gates_accept_a_classification_cut_at_the_request_ceiling(tmp_path):
+    """D21-35: a document with more claims than its request ceiling still passes."""
+    from earnings_pipeline.pilot_workflow import (
+        _complete,
+        load_pass,
+        make_pass,
+        make_run,
+        processed,
+    )
+
+    config, _ = seed_case(tmp_path, seed=False, review=True)
+    config = config.model_copy(
+        update={
+            "coding_ceilings": config.coding_ceilings.model_copy(
+                update={"requests_per_document": 1}
+            )
+        }
+    )
+    rt = runtime(config, [], claims=3)
+    passed = make_pass(
+        config,
+        rt,
+        rt.scorer,
+        partition=Partition.TRAIN,
+        directory=tmp_path / "data/runs/pilot/train/pass",
+        fresh=None,
+        support_ready=lambda: None,
+        now=lambda: cases.NOW,
+    )
+    loaded = load_pass(config, passed)
+    classifications = loaded.proposal.classifications
+    cut = [c for c in classifications if c.reason == "requests_exhausted"]
+    assert passed.status == "partial"
+    assert [c.status for c in classifications].count("completed") == 1
+    assert len(cut) == 2
+    assert all(c.status == "incomplete" for c in cut)
+    assert not _complete(loaded.sources.stored_run, loaded.proposal)
+    assert processed(loaded)
+    # The Stage 10 gates behind `pilot21 run` accept the partial run.
+    record = make_run(
+        config,
+        loaded,
+        bound_artifact(config, loaded),
+        directory=tmp_path / "data/runs/pilot/train/run",
+        now=lambda: cases.NOW,
+    )
+    assert record.status == "partial"
+    assert processed(loaded)
+
+
+def cut_case(tmp_path, *, partition=Partition.TRAIN, fresh=None, claims=3):
+    """An invented pass whose document has more claims than its request ceiling."""
+    from earnings_pipeline.pilot_workflow import load_pass, make_pass
+
+    config, _ = seed_case(tmp_path, seed=False, review=True)
+    config = config.model_copy(
+        update={
+            "coding_ceilings": config.coding_ceilings.model_copy(
+                update={"requests_per_document": 1}
+            )
+        }
+    )
+    rt = runtime(config, [], claims=claims)
+    base = "dev/fresh/s-1" if fresh else f"{partition.value}"
+    record = make_pass(
+        config,
+        rt,
+        rt.scorer,
+        partition=partition,
+        directory=tmp_path / f"data/runs/pilot/{base}/pass"
+        if not fresh
+        else tmp_path / f"data/runs/pilot/{base}",
+        fresh=fresh,
+        support_ready=lambda: None,
+        now=lambda: cases.NOW,
+    )
+    return config, load_pass(config, record)
+
+
+@pytest.mark.parametrize("victim", ["completed", "unrecorded"])
+def test_replay_still_refuses_a_miss_beyond_the_cut_claims(tmp_path, victim):
+    """D21-35 tolerates only the claims the live pass cut, never another cache miss."""
+    from earnings_pipeline.pilot_workflow import make_run
+    from earnings_pipeline.theme_config import WorkflowError
+
+    config, loaded = cut_case(tmp_path)
+    cache = sorted((tmp_path / config.coding_cache).glob("*.json"))
+    assert len(cache) == 1  # only the one classified claim sent a request
+    if victim == "completed":
+        cache[0].unlink()
+        with pytest.raises(WorkflowError, match="replay_miss"):
+            make_run(
+                config,
+                loaded,
+                bound_artifact(config, loaded),
+                directory=tmp_path / "data/runs/pilot/train/run",
+                now=lambda: cases.NOW,
+            )
+    else:
+        # A cut claim the live pass did not record as cut is a plain miss.
+        from dataclasses import replace
+
+        kept = tuple(
+            c
+            for c in loaded.proposal.classifications
+            if c.reason != "requests_exhausted"
+        )
+        proposal = replace(loaded.proposal, classifications=kept)
+        with pytest.raises(WorkflowError, match="replay_miss"):
+            make_run(
+                config,
+                replace(loaded, proposal=proposal),
+                bound_artifact(config, loaded),
+                directory=tmp_path / "data/runs/pilot/train/run",
+                now=lambda: cases.NOW,
+            )
+
+
+@pytest.mark.parametrize(
+    ("classification", "decision", "failed"),
+    [
+        (("replay_miss", "replay_miss"), (), False),
+        (("replay_miss",), (), False),
+        (("replay_miss", "replay_miss", "replay_miss"), (), True),
+        (("replay_miss", "replay_dispatch_forbidden"), (), True),
+        (("replay_miss", "replay_miss"), ("replay_miss",), True),
+        # Both cut claims replay as classified, and a claim that was NOT cut misses.
+        ((None, None, "replay_miss"), (), True),
+    ],
+    ids=(
+        "all_cut",
+        "fewer_than_cut",
+        "extra_miss",
+        "dispatch",
+        "decision_miss",
+        "uncut_miss",
+    ),
+)
+def test_replay_failed_counts_only_the_cut_claims_misses(
+    classification, decision, failed
+):
+    from collections import Counter
+    from types import SimpleNamespace
+
+    from earnings_pipeline.pilot_workflow import _replay_failed
+
+    cut = frozenset({("d", "c1"), ("d", "c2")})
+    rows = tuple(
+        SimpleNamespace(doc_id="d", claim_id=f"c{n}", reason=reason)
+        for n, reason in enumerate(classification, 1)
+    )
+    coding = SimpleNamespace(
+        classifications=rows,
+        record=SimpleNamespace(
+            counts_by_reason=tuple(Counter(r for r in classification if r).items()),
+            counts_by_decision_reason=tuple(Counter(decision).items()),
+        ),
+    )
+    assert _replay_failed(coding, cut) is failed
+
+
+def test_fresh_run_accepts_a_classification_cut_at_the_request_ceiling(tmp_path):
+    """The fresh branch finalizes the live proposal and never replays (D21-35)."""
+    from earnings_pipeline.pilot_workflow import make_run, processed
+    from earnings_themes.coding.store import read_coding_run
+
+    config, loaded = cut_case(tmp_path, partition=Partition.DEV, fresh="s-1")
+    assert loaded.record.status == "partial" and processed(loaded)
+    record = make_run(
+        config,
+        loaded,
+        bound_artifact(config, loaded),
+        directory=tmp_path / "data/runs/pilot/dev/fresh/s-1",
+        now=lambda: cases.NOW,
+    )
+    assert record.fresh == "s-1" and record.status == "partial"
+    coding = read_coding_run(tmp_path / record.coding.directory)
+    assert [c.reason for c in coding.classifications].count("requests_exhausted") == 2
+    assert [d.status for d in coding.decisions] == ["accepted"]
+
+
+def test_run_readers_accept_the_replayed_cut_run(tmp_path):
+    """`load_run`'s deep checks run over a stored replay that holds `replay_miss` rows.
+
+    The replay stores `replay_miss` where the live pass stored `requests_exhausted`.
+    These are the two checks `pilot_reporting.load_run` makes on a stored run.
+    """
+    from earnings_pipeline.pilot_workflow import (
+        bind_policy,
+        make_run,
+        phase_path,
+        stored_directory,
+    )
+    from earnings_themes.coding import validate_proposal_support
+    from earnings_themes.coding.store import read_coding_run, reverify_coding_run
+    from earnings_themes.support import read_support_run
+
+    config, loaded = cut_case(tmp_path)
+    artifact = bound_artifact(config, loaded)
+    record = make_run(
+        config,
+        loaded,
+        artifact,
+        directory=tmp_path / "data/runs/pilot/train/run",
+        now=lambda: cases.NOW,
+    )
+    coding_dir = stored_directory(config, record.coding)
+    primary = read_support_run(phase_path(config, coding_dir.parent / "support"))
+    coding = read_coding_run(coding_dir)
+    assert [c.reason for c in coding.classifications].count("replay_miss") == 2
+    assert tuple(t.target for t in primary.targets) == loaded.proposal.targets
+    validate_proposal_support(loaded.proposal, primary, loaded.sources)
+    policy = bind_policy(config, loaded, artifact, replay=True)
+    reverify_coding_run(coding, loaded.sources, primary, policy)

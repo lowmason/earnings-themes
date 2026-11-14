@@ -102,6 +102,28 @@ def _classification(status, reason):
     }
 
 
+def test_processed_counts_classifications_stopped_at_the_request_ceiling():
+    """D21-35: a classification cut at its request ceiling still leaves a processed pass."""
+    from earnings_pipeline.pilot_workflow import processed
+    from earnings_themes.coding.records import CodingProblem
+
+    cut = (
+        SimpleNamespace(status="completed", reason=None),
+        SimpleNamespace(status="incomplete", reason="requests_exhausted"),
+        SimpleNamespace(status="incomplete", reason=CodingProblem.REQUESTS_EXHAUSTED),
+        SimpleNamespace(status="incomplete", reason="hierarchy_conflict"),
+    )
+    assert processed(_processed_pass(classifications=cut))
+
+
+def test_stability_counts_partial_runs_cut_at_the_request_ceiling():
+    from earnings_pipeline.pilot_reporting import checked_stability
+
+    cut = _classification("incomplete", "requests_exhausted")
+    runs = _fresh_runs(*(_processed_pass(**cut) for _ in range(3)))
+    assert checked_stability(runs, ("e1",), "a" * 64, "b" * 64) == ("r0", "r1", "r2")
+
+
 def _unavailable_signal():
     support = _support()
     support.entailment = (
@@ -117,12 +139,28 @@ def _unavailable_signal():
     (
         {"documents": (SimpleNamespace(outcome="partial"),)},
         _classification("incomplete", "transport_error"),
-        _classification("incomplete", "requests_exhausted"),
+        _classification("incomplete", "tokens_exhausted"),
+        _classification("incomplete", "input_too_long"),
+        _classification("incomplete", "replay_miss"),
         _classification("incomplete", "model_mismatch"),
         _classification("refused", "input_changed"),
         {"targets": ("p1",)},
         {"support": _support(outcome="refused", missing=("input_changed",))},
         {"support": _support(missing=("invalid_references", "input_too_long"))},
+        # D21-35 widens the classification phase only: the support phase stays closed.
+        {"support": _support(missing=("invalid_references", "requests_exhausted"))},
+        {
+            "support": _support(
+                trials=(
+                    *(("available", None),) * 3,
+                    ("unavailable", "requests_exhausted"),
+                )
+            )
+        },
+        {
+            **_classification("incomplete", "requests_exhausted"),
+            "support": _support(missing=("tokens_exhausted",)),
+        },
         {
             "support": _support(
                 trials=(*(("available", None),) * 3, ("unavailable", "transport_error"))
@@ -139,12 +177,17 @@ def _unavailable_signal():
     ids=(
         "document",
         "classification_transport",
-        "classification_ceiling",
+        "classification_tokens",
+        "classification_input",
+        "classification_replay",
         "classification_model",
         "classification_refused",
         "targets",
         "outcome_refused",
         "missing_ceiling",
+        "support_missing_requests",
+        "trial_requests",
+        "classification_requests_with_support_ceiling",
         "trial_transport",
         "trial_model",
         "three_trials",

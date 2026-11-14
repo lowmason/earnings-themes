@@ -396,3 +396,54 @@ def test_assessment_refusal_prints_its_closed_reason(
     assert result.exit_code == 1
     assert f"Refused: assessment: {reason}" in result.output
     assert MARKER not in result.output
+
+
+@pytest.mark.parametrize("fresh", [False, True])
+def test_run_prints_processed_yes_for_a_pass_cut_at_the_request_ceiling(
+    tmp_path, monkeypatch, fresh
+):
+    """D21-35 end to end: only intake, calibration and the live runtime are invented.
+
+    The real baseline, checked_pass, bind_policy, make_run and processed all run, over
+    a document with more claims than its request ceiling.
+    """
+    from types import SimpleNamespace
+
+    from earnings_themes.split import Partition
+
+    workflow = importlib.import_module(
+        "apps.earnings-pipeline.tests.test_pilot_workflow"
+    )
+    module = importlib.import_module("earnings_pipeline.pilot_commands")
+    partition = Partition.DEV
+    config, loaded = workflow.cut_case(tmp_path, partition=partition)
+    current = SimpleNamespace(
+        config=config,
+        local=tmp_path / "data/runs/pilot",
+        partition=partition,
+        settings=SimpleNamespace(
+            alternative_scorer=loaded.alternative.record.scorer_identity
+        ),
+    )
+    calibration = workflow.bound_artifact(config, loaded)
+    rt = workflow.runtime(config, [], claims=3)
+    monkeypatch.setattr(module, "intake", lambda *args: current)
+    monkeypatch.setattr(module, "artifact", lambda selected: calibration)
+    monkeypatch.setattr(
+        module,
+        "live",
+        lambda selected, root: SimpleNamespace(
+            workflow=rt, alternative_scorer=rt.scorer
+        ),
+    )
+    monkeypatch.setattr(module, "support_checkpoint", lambda: None)
+    args = ["pilot", "--repo", str(tmp_path), "run", "--settings", "invented.json"]
+    args += ["--partition", "dev"]
+    if fresh:
+        args += ["--fresh", "invented-fresh", "--models-root", str(tmp_path)]
+    result = CliRunner().invoke(app, args)
+    assert result.exit_code == 0, result.output
+    assert result.output.strip().splitlines()[-1] == (
+        f"partition dev status partial events {len(config.selected_event_ids)} "
+        f"fresh {'invented-fresh' if fresh else 'none'} processed yes"
+    )
