@@ -334,6 +334,33 @@ def test_acquire_refetches_an_unusable_exhibit_and_acquires_its_document(
     assert len(store.quarantined) == 1
 
 
+def test_a_saved_exhibit_whose_bytes_are_gone_is_refetched_only_on_request(
+    frozen, store, tmp_path
+) -> None:
+    """A crash between the quarantine move and the rewrite leaves a retrieval
+    record whose bytes are gone (plan 25's Review Focus). A plain run names the
+    exhibit's remedy and fetches nothing for it, and the refetch then works."""
+    served = Served()
+    first = frozen[2].rows[0].event_id
+    url = pilot_exhibit(frozen, served)
+    save_exhibit(store, served, url)
+    found = SavedResponses(store).get(url)
+    (store.repo / found.artifact.storage_ref).unlink()
+    states = tmp_path / "states"
+    assert unusable_exhibits(*frozen[1:], store, states) == (url,)
+    assert planned_requests(*frozen[1:], store, states) == (26, 27)
+    assert planned_requests(*frozen[1:], store, states, refetch=[url]) == (27, 28)
+    plain = run(frozen, store, served, tmp_path / "plain")
+    (problem,) = plain.problems
+    assert problem.startswith(f"{url}: ")
+    assert problem.endswith(exhibit_remedy(url))
+    assert url not in served.requested
+    result = run(frozen, store, served, tmp_path, refetch=frozenset({url}))
+    assert served.requested.count(url) == 1
+    assert result.problems == ()
+    assert result.states[f"{first}:release"].to_state is P
+
+
 def test_an_exhibit_s_remedy_is_acquire_s_refetch() -> None:
     url = "https://www.sec.gov/Archives/edgar/data/1/000000000125000001/x-ex991.htm"
     assert exhibit_remedy(url) == (
