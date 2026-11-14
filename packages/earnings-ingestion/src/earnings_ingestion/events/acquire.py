@@ -11,14 +11,13 @@ P8-6 to P8-12).
   or ``acquired``. It reads the release filing's saved index page and Item 2.02 text,
   and tries the filing's ``EX-99*`` exhibits in R1.2's order (``exhibit_order``). A
   saved exhibit is read from the store, unless ``refetch`` names it; any other is
-  fetched and saved. The first
-  exhibit's bytes make the document ``acquired``. ``walker-1`` canonicalizes each,
-  and the first that ``release-content/1`` confirms makes it ``parsed``, with its
-  canonical document written under ``canonical_dir``. Otherwise the document is
-  ``unavailable`` with ``not_found`` when no exhibit could be fetched, ``failed``
-  with ``parse_failed`` and the first ``FailureReason`` when one failed to
-  canonicalize, and ``unavailable`` with ``no_confirmed_release`` when each fetched
-  canonicalized and none was confirmed. Every attempt is recorded.
+  fetched and saved. The first exhibit's bytes make the document ``acquired``.
+  ``walker-1`` canonicalizes each, and the first that ``release-content/1`` confirms
+  makes it ``parsed``, with its canonical document written under ``canonical_dir``.
+  Otherwise the document is ``unavailable`` with ``not_found`` when no exhibit could
+  be fetched, ``failed`` with ``parse_failed`` and the first ``FailureReason`` when
+  one failed to canonicalize, and ``unavailable`` with ``no_confirmed_release`` when
+  each fetched canonicalized and none was confirmed. Every attempt is recorded.
 - **Requests.** Only ``fetch`` sends, which ``events acquire`` gives as the shared
   SEC client's (R1.3, D5); acquisition has no throttle of its own. A response the
   client refuses (``UnexpectedResponse``: a status other than 200, an unexpected
