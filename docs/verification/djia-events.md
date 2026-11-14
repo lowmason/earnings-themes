@@ -230,8 +230,8 @@ saved page (F20). Two were the user's design choices:
 - **Loading a pilot selects it again** (F10). `djia-pilot/1` over the pilot's event
   manifest and universe must reproduce its content hash.
 
-Recovering a saved response that is present but unusable (P2.1, P2.2) stays
-deferred; "Repairing the store" below gives the manual repair.
+Plan 25 recovered a saved response that is present but unusable (P2.1 and P2.2, two
+review items from PR #6). "Repairing the store" below gives its commands.
 
 ### The acquisition
 
@@ -293,21 +293,140 @@ No `-m live` test ran. No model was called, and no billable service was used.
 
 ### Repairing the store
 
-Acquisition never fetches a response it has saved, and the store is append-only. So a
-saved exhibit whose bytes are gone or changed, or that a reader refuses, stops its
-document with a `problem:` line that ends "repair the store by hand". Until the
-deferred recovery lands (P2.1, P2.2), the repair moves files out of the store, and
-never deletes one:
+Discovery and acquisition never fetch a response they have saved, and the store is
+append-only. The store keeps each response's bytes in an artifact file, named by the
+SHA-256 of the bytes. It keeps one retrieval record, a small JSON file, for each
+fetch. A saved response can become unusable, which means a reader cannot use it. Its
+`problem:` line then names the command that repairs it. Plan 25 added two counted
+refetch commands for this. A manual route remains for the damage they do not reach.
 
-1. Find the response's retrieval records by its URL:
-   `grep -l '"request_url":"<URL>"' data/raw/events/sec-edgar/retrievals/*/*.json`.
+**Three kinds of damage.** Only the second is quarantined.
+
+- **Bytes gone.** The retrieval record exists, but the artifact file does not. A
+  refetch saves the URL again, and the save writes a file for the bytes it gets.
+- **Bytes changed.** The file no longer hashes to its name. The store meets this when
+  a refetch returns bytes whose hash is that name. It moves the damaged bytes into
+  `quarantine/`, and then writes the file again.
+- **Bytes valid, but a reader refuses them.** An example is an index page for another
+  accession. The store never moves a valid file. A refetch saves a newer retrieval of
+  the URL, and `SavedResponses` reads the newest retrieval of each URL.
+
+**Where damaged bytes go.** The store moves them to
+`<source>/quarantine/<artifact SHA-256>/<damaged bytes' SHA-256><extension>`.
+`<source>` is the artifact's source directory, `<root>/<source_id>`. In the events
+store that is `data/raw/events/sec-edgar`, so the damaged bytes sit under
+`data/raw/events/sec-edgar/quarantine/`. The folder sits inside the source directory
+because `os.link` needs one filesystem. The store links the bytes at the new name
+before it unlinks the old one, so the bytes always have a name. It never deletes
+damaged bytes, and it keeps the same damage once. No reader looks in `quarantine/`.
+
+The store syncs each new file to disk before it links the file into place. It does not
+sync directory entries. A lost entry leaves a missing file, not a damaged one, and that
+is the "bytes gone" case.
+
+**The two refetch commands.** Each takes `--refetch URL` once for each URL.
+
+- `events discover --refetch URL` accepts a saved response that discovery reads and
+  cannot use. That means a submissions file, an older page, a companyfacts file, and
+  the index page or primary document of a filing that discovery reads. A submissions
+  file brings every older page saved for its issuer, because a damaged file cannot
+  list them. It runs no discovery phase, so it fetches nothing that a refetched file
+  now lists.
+- `events acquire --refetch URL` accepts a saved exhibit that a run would try and
+  cannot read. Discovery never fetches an exhibit (EV2, a rule of the Stage 5 spec),
+  so only this command refetches one.
+
+Each command states its count first, and it refuses before it opens the client. It
+refuses a URL that is not unusable: a response that reads, or one that is not saved.
+So a refetch never replaces a usable response under a frozen citation. The refetch
+needs `--max-requests`, the count the user approved. That count is the client's cap,
+and each retry counts against it.
+
+1. Run the command with each `--refetch URL`, and without `--max-requests`. It prints
+   its count, and then it refuses. It sends no request.
+   - `discover` prints `refetch: N requests to SEC, through the shared client`, and
+     then each URL.
+   - `acquire` prints `at most N requests to SEC, through the shared client; M first
+     choices`, and then a `refetch:` line for each URL. Its N counts the whole run:
+     every exhibit that is not saved, and each exhibit that `--refetch` names.
+2. Get the count approved. Run the command again with `--max-requests` set to it.
+3. Read the output. Each `quarantined: PATH` line names a damaged file that the run
+   moved. Each `problem:` line names a saved response that is still unusable, and the
+   command then exits 1.
+4. After `discover --refetch` of a submissions file, run a plain
+   `events discover --max-requests N`. The refetch runs no discovery phase, so the
+   refreshed file may list filings that are not saved. That run needs its own
+   approved count.
+5. On `discover --refetch`, a `changed: URL` line means the URL returned other bytes
+   than any earlier retrieval of it. Run `events build`, and compare its content hash
+   with the frozen one before you rely on the response. `acquire --refetch` prints no
+   `changed:` line, because `events build` never reads an exhibit.
+
+A refetch that returns other bytes saves them under a new name. The damaged file stays
+where it is, and nothing is quarantined. A frozen record that cites the old bytes by
+hash stays broken. The problem line says so.
+
+**A refetch that stops.** A persistent 403, a spent count, or a full disk stops the
+run. Every stop prints a line that begins `requests sent: N`, and then a `Stopped:`
+line. Before them, `discover --refetch` prints the `quarantined:` and `changed:` lines
+for what it saved first. `acquire --refetch` prints its `quarantined:` lines.
+
+**A Ctrl-C.** It prints the `requests sent: N` line too. `acquire --refetch` still
+prints its `quarantined:` lines. `discover --refetch` prints no `quarantined:` or
+`changed:` line. After a Ctrl-C of `discover --refetch`, run `events build`, compare
+its content hash with the frozen one, and look in `quarantine/`.
+
+After any stop or Ctrl-C, each URL that the run saved reads again, and a rerun refuses
+it. A rerun may name only the URLs or exhibits that are still unusable.
+
+**The manual route.** Three kinds of damage have no `--refetch`:
+
+- **(a) A damaged retrieval record.** A record that cannot be read stops every command
+  that reads the store. The error is a validation error that names no file. The URL
+  inside the record is unknown, so no refetch can name it.
+- **(b) The cohort store.** `cohort fetch-sec` fetches each filed N-PORT document once.
+  It stops with a `Stopped:` line when a saved one is gone or changed.
+- **(c) A response of a filing that discovery does not read.** That means an
+  override's index page, and the index page or primary document of a filing that a
+  `set_release_filing` override named, such as a filing without Item 2.02. Their
+  problem lines name `events discover --refetch`, but it refuses them and points here.
+
+The manual repair moves files out of the store and never deletes one. `<source>` is
+the source directory that holds the damaged file. It is `data/raw/events/sec-edgar/`
+for events, and `data/raw/cohort/dia-nport/` for the cohort's N-PORT documents.
+
+1. Find the damaged response's retrieval records by its URL:
+   `grep -l '"request_url":"<URL>"' <source>/retrievals/*/*.json`.
+   For (a), the URL is unknown. A record's name ends with the first 12 hex digits of
+   its own SHA-256, so list each record whose name does not match:
+
+   ```bash
+   for f in <source>/retrievals/*/*.json; do
+     name=${f##*-}
+     [ "$(shasum -a 256 "$f" | cut -c1-12)" = "${name%.json}" ] || echo "$f"
+   done
+   ```
+
 2. Move each record's directory, `retrievals/<sha256>/`, and the artifact it names,
-   `<sha256>.<extension>`, from `data/raw/events/sec-edgar/` to a dated directory
-   under `data/quarantine/`, outside the store.
-3. Rerun `events acquire`. Its stated count now includes that URL, and the rerun is
-   a gate of its own.
+   `<sha256>.<extension>`, from `<source>` to `<source>/quarantine/manual-<date>/`. For
+   (a), move the damaged record file alone. A URL with no record left is unsaved, and a
+   rerun fetches it.
+3. Rerun the command that stopped, at a count the user approved:
+   - For (a), rerun `events discover --max-requests N`, or `events acquire`. Its stated
+     count now includes the URL, and the rerun is a gate of its own.
+   - For (b), run `cohort fetch-sec --max-requests N`.
+   - For (c), run `events discover --filing <cik> <accession>`, with the issuer's
+     10-digit CIK, as the universe manifest spells it. It fetches whichever of the
+     index page and the 8-K document is now unsaved, at most 2 requests. It takes
+     `--max-requests` only to lower that cap.
+4. Run the build, `events build` or `cohort build`, and compare its content hash with
+   the frozen one.
 
 No repair was needed in plan 8's runs.
+
+Plan 25 sent no request. Its approved request count was 0. The first live use of
+`--refetch` is a Stage 15 gate (Stage 15 is the full eight-quarter run). It runs at the
+count that the command states first.
 
 ### Limitations (plan B)
 
