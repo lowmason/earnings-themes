@@ -247,6 +247,8 @@ def _build(layout: Layout) -> CohortBuild:
         for problem in error.problems:
             typer.echo(f"problem: {problem}", err=True)
         raise typer.Exit(1) from error
+    except (OSError, ValueError) as error:
+        _fail(f"problem: {error}")
 
 
 @cohort.command("build")
@@ -318,9 +320,12 @@ def terms_command(
         body = saved.read_bytes()
         try:
             check_media_type(body, media_type)
-            digest = terms_digest(body, media_type)
         except ValueError as error:
             _fail(f"Refused: {error}")
+        try:
+            digest = terms_digest(body, media_type)
+        except ValueError as error:
+            _fail(f"problem: {saved}: {error}")
         typer.echo(f'terms_sha256 = "{digest}"')
         return
     host = urlsplit(url).hostname or ""
@@ -333,7 +338,10 @@ def terms_command(
                 fetched = web.fetch(url, ANY)
     except STOPS as error:
         _fail(f"Stopped: {error}")
-    digest = terms_digest(fetched.body, fetched.retrieval.media_type)
+    try:
+        digest = terms_digest(fetched.body, fetched.retrieval.media_type)
+    except ValueError as error:
+        _fail(f"problem: {url}: {error}")
     typer.echo(f'terms_sha256 = "{digest}"')
 
 
@@ -363,5 +371,9 @@ def verify_live_command(
     typer.echo(
         f"rebuilt {result.rebuilt_content_hash}; frozen {result.frozen_content_hash}"
     )
+    rebuilt, frozen = result.rebuilt_operative_hash, result.frozen_operative_hash
+    if rebuilt is not None and frozen is not None:
+        verdict = "the facts are unchanged" if rebuilt == frozen else "a fact changed"
+        typer.echo(f"operative rebuilt {rebuilt}; frozen {frozen}: {verdict}")
     typer.echo(f"requests sent: {result.requests_sent}")
     typer.echo(f"record: {shown(path, layout.repo)}")

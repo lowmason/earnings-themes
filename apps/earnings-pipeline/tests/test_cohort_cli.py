@@ -2,10 +2,12 @@
 
 import shutil
 from contextlib import contextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 from earnings_core import sha256_hex
+from earnings_ingestion.cohort.records import LiveVerification
 from earnings_ingestion.cohort.synthetic import FIXTURE_DIR, write_synthetic_cohort
 from earnings_ingestion.fetch.client import Fetched
 from earnings_ingestion.fetch.records import Retrieval
@@ -61,6 +63,66 @@ def test_build_fails_while_a_finding_holds_the_freeze(repo) -> None:
     result = run(repo, "build")
     assert result.exit_code == 1
     assert "BLOCKING  identity:eastfield-common  digest " in result.stdout
+
+
+BAD_OVERRIDE = """
+[[overrides]]
+override_id = "reject-no-assertion"
+kind = "reject_assertion"
+membership_assertion_id = "index-2024-10-31:corvid-common:removed"
+rationale = "Synthetic: this assertion does not exist."
+reviewer = "Synthetic Reviewer"
+recorded_on = 2026-09-28
+effective_from = 2024-07-01
+
+[[overrides.citations]]
+source_id = "synthetic-index"
+url = "https://index.example/notices/index-2024-11-01"
+"""
+
+
+def assert_one_problem(result, *fragments: str) -> None:
+    """A refusal that ends as a ``problem:`` line, never as a traceback."""
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    lines = result.stderr.splitlines()
+    assert lines
+    assert all(line.startswith("problem: ") for line in lines), result.stderr
+    for fragment in fragments:
+        assert fragment in result.stderr
+
+
+@pytest.mark.parametrize("command", ["build", "freeze"])
+def test_build_and_freeze_report_a_bad_override_as_a_problem(repo, command) -> None:
+    overrides = repo / FIXTURE_DIR / "overrides.toml"
+    overrides.write_text(
+        overrides.read_text(encoding="utf-8") + BAD_OVERRIDE, encoding="utf-8"
+    )
+    result = run(repo, command)
+    assert_one_problem(result, "rejections name no assertion")
+
+
+def test_build_reports_a_toml_syntax_error_as_a_problem(repo) -> None:
+    overrides = repo / FIXTURE_DIR / "overrides.toml"
+    overrides.write_text(
+        overrides.read_text(encoding="utf-8") + "[[overrides]\n", encoding="utf-8"
+    )
+    assert_one_problem(run(repo, "build"))
+
+
+def test_build_prints_each_problem_of_a_cohort_error_on_its_own_line(repo) -> None:
+    """``CohortError`` is a ``ValueError``, so its handler must come first."""
+    for source in ("synthetic-roster", "synthetic-index"):
+        next((repo / FIXTURE_DIR / "raw" / source).glob("*.html")).unlink()
+    result = run(repo, "build")
+    assert_one_problem(result)
+    assert len(result.stderr.splitlines()) >= 2
+    assert "; " not in result.stderr
+
+
+def test_build_reports_a_missing_curated_file_as_a_problem(repo) -> None:
+    (repo / FIXTURE_DIR / "evidence.toml").unlink()
+    assert_one_problem(run(repo, "build"), "evidence.toml")
 
 
 def test_freeze_names_the_version_that_holds_the_content(repo) -> None:
@@ -199,6 +261,62 @@ def test_verify_live_prints_its_count_on_an_unforeseen_error(repo, monkeypatch) 
     assert result.stdout.splitlines() == ["requests sent: 4"]
 
 
+def live_record(
+    rebuilt: str | None,
+    frozen: str | None,
+    operative_rebuilt: str | None,
+    operative_frozen: str | None,
+) -> LiveVerification:
+    return LiveVerification(
+        checked_at=datetime(2026, 10, 2, 9, 0, tzinfo=UTC),
+        checks=(),
+        build_problems=(),
+        rebuilt_content_hash=rebuilt,
+        frozen_content_hash=frozen,
+        rebuilt_operative_hash=operative_rebuilt,
+        frozen_operative_hash=operative_frozen,
+        blocking_finding_ids=(),
+        requests_sent=0,
+    )
+
+
+A, B, C, D = (sha256_hex(letter.encode()) for letter in "abcd")
+
+
+def verify_live_output(repo, monkeypatch, record: LiveVerification) -> list[str]:
+    def run_live(repo, *, max_requests, sent):
+        return record, repo / "data" / "runs" / "cohort" / "live" / "record.json"
+
+    monkeypatch.setattr(cohort_cli, "run_live", run_live)
+    result = run(repo, "verify-live", "--max-requests", "30")
+    assert result.exit_code == 0, result.output
+    return result.stdout.splitlines()
+
+
+def test_verify_live_tells_a_register_change_from_a_changed_fact(
+    repo, monkeypatch
+) -> None:
+    register_only = verify_live_output(repo, monkeypatch, live_record(A, B, C, C))
+    assert register_only[-4:-2] == [
+        f"rebuilt {A}; frozen {B}",
+        f"operative rebuilt {C}; frozen {C}: the facts are unchanged",
+    ]
+    changed = verify_live_output(repo, monkeypatch, live_record(A, B, C, D))
+    assert changed[-4:-2] == [
+        f"rebuilt {A}; frozen {B}",
+        f"operative rebuilt {C}; frozen {D}: a fact changed",
+    ]
+
+
+@pytest.mark.parametrize("operative", [(None, C), (C, None), (None, None)])
+def test_verify_live_prints_no_operative_line_without_both_hashes(
+    repo, monkeypatch, operative
+) -> None:
+    lines = verify_live_output(repo, monkeypatch, live_record(A, B, *operative))
+    assert f"rebuilt {A}; frozen {B}" in lines
+    assert not any(line.startswith("operative") for line in lines)
+
+
 def test_fetch_saves_pages_through_the_web_client(repo, monkeypatch) -> None:
     body = b"<p>A notice.</p>"
 
@@ -284,6 +402,62 @@ def test_terms_hashes_a_saved_copy_without_a_client(
     refused = run(repo, *terms, "--media-type", "application/pdf")
     assert refused.exit_code == 1
     assert "Refused: application/pdf contradicts the bytes" in refused.stderr
+
+
+def unreadable_terms(*args, **kwargs):
+    raise ValueError("walker-1 found no text")
+
+
+def test_terms_reports_a_saved_page_walker_1_cannot_read_as_a_problem(
+    repo, monkeypatch, tmp_path_factory
+) -> None:
+    saved = tmp_path_factory.mktemp("browser") / "terms.html"
+    saved.write_bytes(b"<html><body><p>Terms of use.</p></body></html>")
+    monkeypatch.setattr(cohort_cli, "terms_digest", unreadable_terms)
+    result = run(repo, "terms", "https://terms.example/terms", "--saved", str(saved))
+    assert result.exit_code == 1
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stderr == f"problem: {saved}: walker-1 found no text\n"
+    assert result.stdout == ""
+
+
+def test_terms_reports_a_fetched_page_walker_1_cannot_read_as_a_problem(
+    repo, monkeypatch
+) -> None:
+    url = "https://terms.example/terms-of-use"
+    body = b"<html><body></body></html>"
+
+    class FakeWeb:
+        def fetch(self, url, types):
+            return Fetched(
+                body=body,
+                retrieval=Retrieval.model_validate(
+                    {
+                        "request_url": url,
+                        "final_url": url,
+                        "retrieved_at": "2026-09-29T10:00:00Z",
+                        "retrieval_method": "http",
+                        "http_status": 200,
+                        "media_type": "text/html",
+                        "content_type": "text/html",
+                        "byte_count": len(body),
+                        "sha256": sha256_hex(body),
+                    },
+                    strict=False,
+                ),
+            )
+
+    @contextmanager
+    def fake_open(hosts):
+        yield FakeWeb()
+
+    monkeypatch.setattr(cohort_cli, "open_web_client", fake_open)
+    monkeypatch.setattr(cohort_cli, "terms_digest", unreadable_terms)
+    result = run(repo, "terms", url)
+    assert result.exit_code == 1
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stderr == f"problem: {url}: walker-1 found no text\n"
+    assert result.stdout == ""
 
 
 @pytest.mark.parametrize(

@@ -4,9 +4,10 @@
   with the SEC client's retries, ``Retry-After`` handling, and stop on a persistent
   403. The User-Agent is the identity in ``SOURCE_IDENTITY``, configured outside Git
   and never recorded.
-- **Registered hosts only.** It reaches only the hosts it is opened for, the hosts of
-  registered sources, and never an SEC host: SEC requests go through the shared SEC
-  client alone (D5).
+- **Named hosts only.** It reaches only the hosts its caller opens it for, and never
+  an SEC host: SEC requests go through the shared SEC client alone (D5).
+  ``cohort fetch`` opens it for the hosts of its URLs. ``fetch_page`` checks that the
+  source is registered, not that a URL's host belongs to that source.
 - **Robots first.** Each page is checked against its site's robots.txt (RFC 9309)
   before it is requested. A disallowed page is refused, never fetched: a person saves
   it in a browser and registers it instead (P §Membership evidence: live acquisition

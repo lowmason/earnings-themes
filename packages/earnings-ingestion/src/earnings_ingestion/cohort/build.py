@@ -36,6 +36,7 @@ from earnings_ingestion.cohort.corroboration import (
     reconcile,
 )
 from earnings_ingestion.cohort.findings import acknowledge, make_finding
+from earnings_ingestion.cohort.identity import operative_hash as manifest_operative_hash
 from earnings_ingestion.cohort.intervals import Statement, count_findings, reconstruct
 from earnings_ingestion.cohort.locators import (
     ArtifactText,
@@ -212,6 +213,11 @@ class CohortBuild:
     @property
     def content_hash(self) -> str:
         return self.manifest(1, EPOCH).definition.content_hash
+
+    @property
+    def operative_hash(self) -> str:
+        """The hash Stage 5 keys on: the facts an event's eligibility reads."""
+        return manifest_operative_hash(self.manifest(1, EPOCH))
 
 
 def build(

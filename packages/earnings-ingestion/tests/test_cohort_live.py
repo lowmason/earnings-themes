@@ -74,8 +74,95 @@ def test_an_unchanged_world_rebuilds_the_frozen_manifest(cohort_repo) -> None:
     assert {check.purpose for check in result.checks} == {"terms", "evidence"}
     assert all(check.retrieval is not None for check in result.checks)
     assert result.rebuilt_content_hash == result.frozen_content_hash
+    assert result.rebuilt_operative_hash == result.frozen_operative_hash
+    assert result.rebuilt_operative_hash is not None
     assert result.blocking_finding_ids == ()
     assert result.build_problems == ()
+
+
+def test_a_register_only_change_keeps_the_operative_hash(cohort_repo) -> None:
+    """The source register's version is in the content hash and no fact is."""
+    register = cohort_repo / FIXTURE_DIR / "source-register.toml"
+    text = register.read_text(encoding="utf-8")
+    assert 'owner = "Synthetic SEC"' in text
+    register.write_text(
+        text.replace('owner = "Synthetic SEC"', 'owner = "Synthetic SEC, renamed"'),
+        encoding="utf-8",
+    )
+    served = pages(cohort_repo)
+    result = verify_live(
+        cohort_repo,
+        fetch_web=fake(served),
+        fetch_sec=fake(served),
+        now=NOW,
+        options=build_options(),
+    )
+    assert result.rebuilt_content_hash != result.frozen_content_hash
+    assert result.rebuilt_operative_hash == result.frozen_operative_hash
+    assert result.rebuilt_operative_hash is not None
+
+
+def test_a_changed_fact_changes_the_operative_hash(cohort_repo) -> None:
+    """An edit to the universe's definition changes a fact, so both hashes move."""
+    universe = cohort_repo / FIXTURE_DIR / "universe.toml"
+    text = universe.read_text(encoding="utf-8")
+    one, two = (f'selection_policy_version = "djia-pilot/{n}"' for n in (1, 2))
+    assert one in text
+    universe.write_text(text.replace(one, two, 1), encoding="utf-8")
+    served = pages(cohort_repo)
+    result = verify_live(
+        cohort_repo,
+        fetch_web=fake(served),
+        fetch_sec=fake(served),
+        now=NOW,
+        options=build_options(),
+    )
+    assert result.rebuilt_content_hash != result.frozen_content_hash
+    assert result.rebuilt_operative_hash != result.frozen_operative_hash
+    assert None not in (result.rebuilt_operative_hash, result.frozen_operative_hash)
+
+
+def test_a_failed_rebuild_has_no_rebuilt_operative_hash(cohort_repo) -> None:
+    served = pages(cohort_repo)
+    page = next((cohort_repo / FIXTURE_DIR / "raw" / "synthetic-roster").glob("*.html"))
+    page.unlink()
+    result = verify_live(
+        cohort_repo,
+        fetch_web=fake(served),
+        fetch_sec=fake(served),
+        now=NOW,
+        options=build_options(),
+    )
+    assert result.build_problems
+    assert result.rebuilt_content_hash is None
+    assert result.rebuilt_operative_hash is None
+    assert result.frozen_operative_hash is not None
+
+
+def test_an_unreadable_terms_page_is_recorded_not_raised(
+    cohort_repo, monkeypatch
+) -> None:
+    def unreadable(body, media_type):
+        raise ValueError("walker-1 found no text")
+
+    monkeypatch.setattr(live, "terms_digest", unreadable)
+    served = pages(cohort_repo)
+    result = verify_live(
+        cohort_repo,
+        fetch_web=fake(served),
+        fetch_sec=fake(served),
+        now=NOW,
+        options=build_options(),
+    )
+    terms = [check for check in result.checks if check.purpose == "terms"]
+    assert terms
+    for check in terms:
+        assert check.outcome == "failed"
+        assert check.detail.startswith("terms page unreadable: ")
+        assert "walker-1 found no text" in check.detail
+        assert check.retrieval is not None
+    evidence = [check for check in result.checks if check.purpose == "evidence"]
+    assert {check.outcome for check in evidence} == {"unchanged"}
 
 
 def test_changes_and_refusals_are_recorded_not_hidden(cohort_repo) -> None:
