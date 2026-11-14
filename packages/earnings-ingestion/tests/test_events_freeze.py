@@ -334,7 +334,13 @@ def with_release(evidence, event_id: str, release):
 
 @pytest.mark.parametrize(
     "tamper",
-    ["another filing", "another filing's page, as a URL", "no citation", "no filing"],
+    [
+        "another filing",
+        "another filing's page, as a URL",
+        "another page of its filing",
+        "no citation",
+        "no filing",
+    ],
 )
 def test_loading_evidence_refuses_a_release_citation_of_another_filing(
     universe, layer, tmp_path, tamper
@@ -356,6 +362,15 @@ def test_loading_evidence_refuses_a_release_citation_of_another_filing(
         url = release_of(evidence, other).url
         changed = with_release(
             evidence, event, release_of(evidence, event).model_copy(update={"url": url})
+        )
+    elif tamper == "another page of its filing":
+        folder = release_of(evidence, event).url.rsplit("/", 1)[0]
+        changed = with_release(
+            evidence,
+            event,
+            release_of(evidence, event).model_copy(
+                update={"url": f"{folder}/primary.htm"}
+            ),
         )
     elif tamper == "no citation":
         changed = with_release(evidence, event, None)

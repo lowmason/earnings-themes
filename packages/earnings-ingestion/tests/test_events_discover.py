@@ -1018,6 +1018,98 @@ def test_check_evidence_refuses_a_file_no_retrieval_supports(field) -> None:
     assert problem == f"files {changed.files[0].url}: {expected}"
 
 
+def test_check_evidence_binds_a_listed_citation_to_its_retrievals() -> None:
+    """A candidate's index page is one of a list, which is checked as a single
+    citation is."""
+    evidence = committed_evidence()
+    event = next(e for e in evidence.events if e.candidates)
+    first = event.candidates[0]
+    other_page = next(
+        e.release.url
+        for e in evidence.events
+        if e.release is not None and e.release.url != first.url
+    )
+    listed = event.model_copy(
+        update={
+            "candidates": (
+                first.model_copy(update={"url": other_page}),
+                *event.candidates[1:],
+            )
+        }
+    )
+    changed = evidence.model_copy(
+        update={"events": tuple(listed if e is event else e for e in evidence.events)}
+    )
+    (problem,) = check_evidence(changed, ArtifactStore(RAW, REPO))
+    assert problem == (
+        f"{event.event_id} candidates:"
+        f" url {other_page} is not where its artifact came from"
+    )
+
+
+def test_a_retrieval_of_the_same_bytes_from_another_url_does_not_support_a_time(
+    tmp_path,
+) -> None:
+    """``retrieved_at`` is when the cited URL was retrieved. The same bytes saved from
+    another URL, at another time, give no support to a citation of this URL."""
+    store = committed_copy(tmp_path)
+    evidence = committed_evidence()
+    event = next(e for e in evidence.events if e.release is not None)
+    release = event.release
+    saved = SavedResponses(store).get(release.url)
+    elsewhere = f"{release.url}?copy"
+    when = release.retrieved_at + timedelta(days=1)
+    save(store, elsewhere, saved.text.body, saved.artifact.media_type, when)
+    changed = evidence.model_copy(
+        update={
+            "events": tuple(
+                e.model_copy(
+                    update={
+                        "release": release.model_copy(update={"retrieved_at": when})
+                    }
+                )
+                if e is event
+                else e
+                for e in evidence.events
+            )
+        }
+    )
+    (problem,) = check_evidence(changed, store)
+    assert problem == (
+        f"{event.event_id} release: retrieved_at {when.isoformat()} matches no"
+        f" retrieval of {release.url}"
+    )
+
+
+def test_a_citation_names_any_retrieval_of_its_url_among_several(tmp_path) -> None:
+    """The same response, saved again later, gives two retrievals of one URL. A record
+    frozen before the second, or after it, names one of them and stays valid."""
+    store = committed_copy(tmp_path)
+    evidence = committed_evidence()
+    event = next(e for e in evidence.events if e.release is not None)
+    release = event.release
+    saved = SavedResponses(store).get(release.url)
+    when = release.retrieved_at + timedelta(days=1)
+    save(store, release.url, saved.text.body, saved.artifact.media_type, when)
+    assert len(store.retrievals(SEC_SOURCE_ID, saved.artifact.content_sha256)) == 2
+    assert check_evidence(evidence, store) == ()
+    changed = evidence.model_copy(
+        update={
+            "events": tuple(
+                e.model_copy(
+                    update={
+                        "release": release.model_copy(update={"retrieved_at": when})
+                    }
+                )
+                if e is event
+                else e
+                for e in evidence.events
+            )
+        }
+    )
+    assert check_evidence(changed, store) == ()
+
+
 def test_evidence_no_saved_retrieval_names_has_no_remedy(tmp_path) -> None:
     store = ArtifactStore(tmp_path / "data" / "raw" / "events", tmp_path)
     manifest = load_event_manifest(REPO / FIXTURE_DIR / "events-v1.json")
