@@ -1,7 +1,7 @@
 """Acquisition, offline: a fake fetch serves the synthetic cohort's SEC records."""
 
 import shutil
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -116,6 +116,30 @@ def test_a_hand_saved_page_records_that_nothing_was_fetched(cohort_repo) -> None
     ).retrievals
     assert retrieval.retrieval_method is RetrievalMethod.SAVED_BY_USER
     assert retrieval.http_status is None
+
+
+def test_a_hand_saved_page_over_changed_bytes_is_quarantined(cohort_repo) -> None:
+    store = ArtifactStore(cohort_repo / RAW, cohort_repo)
+    body = b"<p>Saved in a browser.</p>"
+    saved = {
+        "url": "https://index.example/notices/saved",
+        "media_type": "text/html",
+    }
+    registers = registers_of(cohort_repo)
+    ref = register_saved(
+        store, registers, "synthetic-index", body, **saved, saved_at=NOW
+    )
+    (cohort_repo / ref.storage_ref).write_bytes(body[:10])
+    register_saved(
+        store,
+        registers,
+        "synthetic-index",
+        body,
+        **saved,
+        saved_at=NOW + timedelta(days=1),
+    )
+    assert store.get("synthetic-index", ref.content_sha256, **SYNTHETIC).body == body
+    assert len(store.quarantined) == 1
 
 
 def test_a_page_is_saved_only_for_a_registered_source(cohort_repo) -> None:

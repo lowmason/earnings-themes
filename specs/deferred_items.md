@@ -830,7 +830,7 @@
       resolves them and reports each repeat as an `EventBuildError` problem, and
       `events build` over a store with a repeated mismatch row exits 1 with a
       `problem:` line and no traceback, with tests.
-- [ ] Recover a saved response that is present but unusable (PR #6's review, P2.1
+- [x] Recover a saved response that is present but unusable (PR #6's review, P2.1
       and P2.2): discovery (`events/discover.py`) fetches only URLs with no
       retrieval record, and `issuer_filings` in `events/filings.py` reports a
       file whose bytes are gone or changed, or that a reader refuses, as a
@@ -855,6 +855,9 @@
       link; each problem line names a remedy that works; and a test truncates a
       fixture index page, runs the opt-in refetch over a fake fetch, sees exactly
       that URL fetched, and rebuilds the synthetic events v1 content hash.
+      → planned 2026-11-13: specs/plans/25-recover-unusable-saved-responses.md
+      → done 2026-11-13 (plan 25): the primary document of a filing that `release-id/1`
+      passes over stays a manual repair → item: 25-recover-unusable-saved-responses — 2026-11-13
 - [ ] Read companyfacts in discovery through the problem-collecting reader (PR
       #6's review, P2.3): in the documents phase of `discover` in
       `events/discover.py`, the saved read of each issuer's companyfacts and
@@ -1735,3 +1738,65 @@
       those calls, `resolve_target`'s counts per claim are pinned by a test, and a new
       projection shows the proposal replay term lower, with every record and hash
       unchanged.
+
+## 25-recover-unusable-saved-responses — 2026-11-13
+- [ ] Let `cohort fetch-sec` refetch an unusable saved N-PORT document (plan 25's
+      scope check): `fetch_sec` in `cohort/acquire.py` decides a filing is kept
+      with `store.latest`, which raises when the newest artifact is gone or
+      changed. `cohort fetch-sec` then stops with `Stopped: no artifact …` and no
+      remedy. Plan 25's quarantine already covers its writes. Cohort v1 is frozen
+      and Stage 15 consumes it unchanged, so nobody rebuilds the cohort store
+      until a new cohort version. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/` and
+      `apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py`. Size: quick-fix.
+      Revisit if: `cohort fetch-sec` stops on a saved N-PORT document that is gone
+      or changed.
+- [ ] Name a damaged retrieval record instead of stopping every reader (plan 25's
+      scope check): `SavedResponses.__init__` (`events/saved.py`) and
+      `ArtifactStore.retrievals` and `latest` (`fetch/store.py`) read
+      each record with `Retrieval.model_validate_json` and no handler, so a
+      truncated record raises a validation error out of every command, with no
+      file named. A record's name carries the first 12 hex digits of its bytes'
+      SHA-256, so damage is detectable, but the URL inside an unreadable record is
+      unknown, so a refetch cannot be named for it. `run_refetch` (`events/recover.py`)
+      also reads `read_back` outside its own guard, so a stop there after a save
+      prints no `quarantined:` or `changed:` line. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Plan 25's sync makes new
+      damage unlikely, and the manual repair in `docs/verification/djia-events.md`
+      still covers old damage. Size: design. Revisit if: any `events` or `cohort`
+      command stops with a validation error on a file under `retrievals/`.
+- [ ] Let `events discover --refetch` reach the primary document of a filing that
+      `release-id/1` passes over (plan 25's final review): `read_back`
+      (`events/discover.py`) lists the unusable responses of each issuer's listings,
+      each listed filing's index page, each candidate's primary document, and
+      companyfacts. `identify` (`events/release.py`) reads a primary document only
+      for an in-range 8-K whose index page lists Item 2.02 and an EX-99* exhibit.
+      A `set_release_filing` override can name an 8-K/A, or an 8-K without them, and
+      cites its primary document. If that file is damaged, `citations_refused`
+      (`events/build.py`) prints a problem that names `events discover --refetch`,
+      and `plan_refetch` (`events/recover.py`) refuses the URL and points to the
+      manual route in `docs/verification/djia-events.md`, "Repairing the store", (c).
+      Three smaller cases share that refusal or its wording. An index page listed
+      only on an out-of-range older page gets the same refusal, and neither
+      `discover` nor `discover --filing` saves it. `acquire --refetch`'s refusal
+      (`events/acquire.py`, `_refusal`) says that an index page or a primary document
+      is refetched by `discover --refetch`, which is too broad for a passed-over
+      primary document. A cited exhibit's `cited_remedy` names `discover --refetch`,
+      which then points to `acquire --refetch`, and a build that cannot read the
+      exhibit cannot run `acquire`, though no committed override or evidence record
+      cites an exhibit today. Size: plan. Done when: a test truncates a primary
+      document that a `set_release_filing` override cites for an 8-K/A, sees
+      `discover --refetch` accept and repair it, and rebuilds the frozen content
+      hash, and each `refetch_remedy` and `cited_remedy` line names a command that
+      accepts its URL.
+- [ ] Print a `quarantined:` line when a plain save moves damaged bytes aside (plan
+      25's final review, declined): `events discover`, `events discover --filing`
+      and `cohort fetch-sec` save through `ArtifactStore.put`, which quarantines a
+      damaged artifact when a save needs its name. Only `discover --refetch` and
+      `acquire --refetch` print the moved paths, so after a plain save the damaged
+      bytes sit under `<root>/<source_id>/quarantine/` with no report. The bytes are
+      kept, and nothing valid is moved. Paths are under
+      `apps/earnings-pipeline/src/earnings_pipeline/events_cli.py` and
+      `cohort_cli.py`. Size: quick-fix. Done when: each of the three commands prints
+      one `quarantined:` line for each distinct path in `store.quarantined`, under a
+      test that damages an artifact and saves its URL again.

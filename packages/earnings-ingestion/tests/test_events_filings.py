@@ -7,7 +7,7 @@ import pytest
 from earnings_ingestion.events.acceptance import Convention
 from earnings_ingestion.events.filings import IssuerFilings, issuer_filings
 from earnings_ingestion.events.records import EventFindingKind, SkippedPage
-from earnings_ingestion.events.saved import SavedResponses
+from earnings_ingestion.events.saved import SavedResponses, refetch_remedy
 from earnings_ingestion.events.synthetic import (
     HTML,
     JSON,
@@ -265,7 +265,7 @@ def test_an_index_page_of_another_filing_is_a_problem(saved) -> None:
     save(saved.store, filing_index_url(CIK, filing.accession), body, HTML, RETRIEVED)
     url = filing_index_url(CIK, filing.accession)
     assert saved.read().problems == (
-        f"{url} is the index page of 0009990001-24-000030",
+        f"{url} is the index page of 0009990001-24-000030; {refetch_remedy(url)}",
     )
 
 
@@ -279,7 +279,9 @@ def test_an_index_page_of_another_form_is_a_problem(saved) -> None:
     url = filing_index_url(CIK, filing.accession)
     save(saved.store, url, body, HTML, RETRIEVED)
     read = saved.read()
-    assert read.problems == (f"{url}: its form is 8-K/A, but its row's is 8-K",)
+    assert read.problems == (
+        f"{url}: its form is 8-K/A, but its row's is 8-K; {refetch_remedy(url)}",
+    )
     assert read.releases == ()
 
 
@@ -298,7 +300,7 @@ def test_a_row_whose_primary_document_the_index_does_not_type_as_its_form(
     assert read.problems == (
         (
             f"{url}: it lists no {named or '(none)'} typed 8-K, its row's primary"
-            " document"
+            f" document; {refetch_remedy(url)}"
         ),
     )
     assert read.releases == ()
@@ -315,7 +317,10 @@ def test_a_submissions_file_of_another_registrant_is_a_problem(saved) -> None:
     found = saved.read()
     assert (found.registrant, found.releases, found.periodic) == (None, (), ())
     assert found.problems == (
-        f"{submissions_url(CIK)} is the submissions file of CIK 0009990002",
+        (
+            f"{submissions_url(CIK)} is the submissions file of CIK 0009990002;"
+            f" {refetch_remedy(submissions_url(CIK))}"
+        ),
     )
 
 
@@ -331,7 +336,8 @@ def test_an_older_page_of_another_count_is_a_problem(saved) -> None:
     assert found.problems == (
         (
             f"{submissions_page_url(name)}: {name}'s filing count, 2, is not the 1"
-            " its entry at /filings/files/0 states"
+            " its entry at /filings/files/0 states;"
+            f" {refetch_remedy(submissions_page_url(name))}"
         ),
     )
 
@@ -345,11 +351,14 @@ def test_a_filing_listed_in_two_files_is_a_problem(saved) -> None:
     saved.submissions([filing], pages=[older_page_entry(name, [filing])])
     saved.page(name, [filing])
     saved.index(filing)
+    remedy = refetch_remedy(
+        submissions_url(CIK), "the submissions file with its older pages"
+    )
     assert saved.read().problems == (
         (
             f"{filing.accession} is listed 2 times:"
             f" at /filings/recent/accessionNumber/0 in {submissions_url(CIK)},"
-            f" at /accessionNumber/0 in {submissions_page_url(name)}"
+            f" at /accessionNumber/0 in {submissions_page_url(name)}; {remedy}"
         ),
     )
 
@@ -357,11 +366,15 @@ def test_a_filing_listed_in_two_files_is_a_problem(saved) -> None:
 def test_a_filing_listed_twice_in_one_block_is_a_problem(saved) -> None:
     report = periodic(40, date(2024, 9, 30), "2024-11-04 16:30:00")
     saved.submissions([report, report])
+    remedy = refetch_remedy(
+        submissions_url(CIK), "the submissions file with its older pages"
+    )
     assert saved.read().problems == (
         (
             f"{report.accession} is listed 2 times:"
             f" at /filings/recent/accessionNumber/0 in {submissions_url(CIK)},"
-            f" at /filings/recent/accessionNumber/1 in {submissions_url(CIK)}"
+            f" at /filings/recent/accessionNumber/1 in {submissions_url(CIK)};"
+            f" {remedy}"
         ),
     )
 

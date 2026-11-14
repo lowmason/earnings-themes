@@ -28,8 +28,14 @@ no review can settle it, so the build stops and lists it. So is an accession tha
 the issuer's files list more than once, in one block or two: it is refused,
 never deduplicated, and the problem names each copy's pointer. The check is per
 issuer, since one filing, such as a schedule one registrant files about another, can
-be listed under both. Each missing response's URL is also listed in ``missing``,
-which discovery fetches next.
+be listed under both.
+
+Each missing response's URL is also listed in ``missing``, which discovery fetches
+next. A response that is saved and cannot be used is never missing: discovery does
+not fetch it, and it is refetched by an explicit command (plan 25). Its URL is
+listed in ``unusable``, and its problem ends with that command. For an accession
+listed more than once, that URL is the issuer's submissions file, which the command
+refetches with its older pages.
 """
 
 from dataclasses import dataclass
@@ -50,7 +56,7 @@ from earnings_ingestion.events.records import (
     SkippedPage,
     event_finding,
 )
-from earnings_ingestion.events.saved import SavedResponses
+from earnings_ingestion.events.saved import SavedResponses, refetch_remedy
 from earnings_ingestion.sec.data import (
     Filing,
     Registrant,
@@ -110,6 +116,8 @@ class IssuerFilings:
     problems: tuple[str, ...]
     missing: tuple[str, ...]
     """The URLs of responses the build reads that are not saved."""
+    unusable: tuple[str, ...]
+    """The URLs of responses the build reads that are saved and cannot be used."""
 
 
 def index_disagreement(filing: Filing, index: FilingIndex) -> str | None:
@@ -147,12 +155,20 @@ class _Reader:
         self.saved = saved
         self.problems: list[str] = []
         self.missing: list[str] = []
+        self.unusable: list[str] = []
+
+    def refuse(self, url: str, problem: str, what: str = "it") -> None:
+        """Keep ``problem`` with the refetch of ``url``, which is saved and cannot be
+        used."""
+        self.problems.append(f"{problem}; {refetch_remedy(url, what)}")
+        if url not in self.unusable:
+            self.unusable.append(url)
 
     def get(self, url: str) -> CitableArtifact | None:
         try:
             artifact = self.saved.get(url)
         except (FileNotFoundError, ValueError) as exc:
-            self.problems.append(f"{url}: {exc}")
+            self.refuse(url, f"{url}: {exc}")
             return None
         if artifact is None:
             self.problems.append(f"nothing saved from {url}: run events discover")
@@ -173,11 +189,11 @@ class _Reader:
         try:
             registrant = read_submissions(main.text.body)
         except SecDataError as exc:
-            self.problems.append(f"{main.url}: {exc}")
+            self.refuse(main.url, f"{main.url}: {exc}")
             return None, [], []
         if registrant.cik != cik:
-            self.problems.append(
-                f"{main.url} is the submissions file of CIK {registrant.cik}"
+            self.refuse(
+                main.url, f"{main.url} is the submissions file of CIK {registrant.cik}"
             )
             return None, [], []
         listed = [(main, registrant.filings)]
@@ -198,13 +214,17 @@ class _Reader:
             try:
                 listed.append((artifact, read_older_page(artifact.text.body, page)))
             except SecDataError as exc:
-                self.problems.append(f"{url}: {exc}")
-        self.repeats(listed)
+                self.refuse(url, f"{url}: {exc}")
+        self.repeats(listed, main.url)
         return registrant, listed, skipped
 
-    def repeats(self, listed: list[tuple[CitableArtifact, tuple[Filing, ...]]]) -> None:
+    def repeats(
+        self, listed: list[tuple[CitableArtifact, tuple[Filing, ...]]], main: str
+    ) -> None:
         """Refuse each accession the issuer's files list more than once, naming each
-        copy's pointer: two copies would make two candidates of one filing."""
+        copy's pointer: two copies would make two candidates of one filing. The
+        remedy refetches ``main``, the submissions file, with its older pages: a
+        stale older page, after SEC pages the filings again, is the likely cause."""
         copies: dict[str, list[str]] = {}
         for artifact, filings in listed:
             for filing in filings:
@@ -213,8 +233,10 @@ class _Reader:
                 )
         for accession, where in copies.items():
             if len(where) > 1:
-                self.problems.append(
-                    f"{accession} is listed {len(where)} times: {', '.join(where)}"
+                self.refuse(
+                    main,
+                    f"{accession} is listed {len(where)} times: {', '.join(where)}",
+                    "the submissions file with its older pages",
                 )
 
     def indexes(
@@ -233,13 +255,13 @@ class _Reader:
                 index = read_filing_index(artifact.text.body)
                 instant = accepted_instant(index.accepted)
             except (SecDataError, AcceptanceTimeError) as exc:
-                self.problems.append(f"{url}: {exc}")
+                self.refuse(url, f"{url}: {exc}")
                 continue
             if index.accession != filing.accession:
-                self.problems.append(f"{url} is the index page of {index.accession}")
+                self.refuse(url, f"{url} is the index page of {index.accession}")
                 continue
             if (why := index_disagreement(filing, index)) is not None:
-                self.problems.append(f"{url}: {why}")
+                self.refuse(url, f"{url}: {why}")
                 continue
             found[filing.accession] = (index, artifact, instant)
         return found
@@ -314,6 +336,7 @@ def issuer_filings(
         findings=tuple(sorted(findings, key=lambda f: f.finding_id)),
         problems=tuple(reader.problems),
         missing=tuple(reader.missing),
+        unusable=tuple(reader.unusable),
     )
 
 

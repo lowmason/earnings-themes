@@ -10,27 +10,36 @@ from pathlib import Path
 
 import httpx
 import pytest
+from earnings_core import sha256_hex
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
+from earnings_ingestion.events.acquire import exhibit_remedy
 from earnings_ingestion.events.fixture import COHORT_MANIFEST, FIXTURE_DIR
-from earnings_ingestion.events.freeze import serialize
+from earnings_ingestion.events.freeze import load_event_manifest, serialize
 from earnings_ingestion.events.layer import (
     CORVID,
     DYNAMO,
+    EASTFIELD,
+    OLDER_PAGES,
     REPORTS,
     RETRIEVED,
     exhibit_bodies,
     filings,
 )
 from earnings_ingestion.events.records import PilotManifest, pilot_content_hash
-from earnings_ingestion.events.saved import SavedResponses
+from earnings_ingestion.events.saved import SavedResponses, refetch_remedy
 from earnings_ingestion.events.state_table import read_runs
 from earnings_ingestion.events.states import DocumentState
 from earnings_ingestion.events.synthetic import SyntheticStore, save, submissions_file
+from earnings_ingestion.fetch import store as store_module
 from earnings_ingestion.fetch.client import ProcessLock
 from earnings_ingestion.fetch.records import Retrieval
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec import client as sec_client
-from earnings_ingestion.sec.urls import filing_index_url, submissions_url
+from earnings_ingestion.sec.urls import (
+    filing_index_url,
+    submissions_page_url,
+    submissions_url,
+)
 from earnings_pipeline import cli, events_cli
 from typer.testing import CliRunner
 
@@ -245,16 +254,28 @@ def client(
     responses: dict[str, tuple[bytes, str]],
     status: int = 200,
     moved: str | None = None,
+    requested: list[str] | None = None,
+    statuses: dict[str, list[int]] | None = None,
 ):
     """Replace the CLI's client with the shared client over a serving transport,
-    which redirects any URL ending in ``moved``."""
+    which redirects any URL ending in ``moved``, answers a URL in ``statuses`` with
+    each of its statuses in turn and then with ``status``, as it answers any other,
+    and appends each URL it is asked for to ``requested``."""
     budgets: list[int] = []
+    pending = {url: list(codes) for url, codes in (statuses or {}).items()}
 
     def handle(request: httpx.Request) -> httpx.Response:
-        if moved is not None and str(request.url).endswith(moved):
+        url = str(request.url)
+        if requested is not None:
+            requested.append(url)
+        if moved is not None and url.endswith(moved):
             return httpx.Response(301, headers={"Location": f"{request.url}-moved"})
-        body, media_type = responses.get(str(request.url), (b"", "text/plain"))
-        code = status if str(request.url) in responses else 404
+        body, media_type = responses.get(url, (b"", "text/plain"))
+        code = status
+        if pending.get(url):
+            code = pending[url].pop(0)
+        if url not in responses:
+            code = 404
         return httpx.Response(code, content=body, headers={"content-type": media_type})
 
     @contextmanager
@@ -331,7 +352,8 @@ def test_discover_names_a_saved_response_it_cannot_read_and_fails(
     assert result.stderr.splitlines() == [
         (
             f"problem: {url}: no artifact {artifact.content_sha256} for source"
-            " 'sec-edgar': its retrieval records remain, but its bytes are gone"
+            " 'sec-edgar': its retrieval records remain, but its bytes are gone;"
+            f" {refetch_remedy(url)}"
         )
     ]
 
@@ -792,3 +814,810 @@ def test_acquire_refuses_a_path_git_would_keep(
     assert result.exit_code == 1
     assert budgets == []
     assert refusal in result.stderr
+
+
+INDEX = (
+    "https://www.sec.gov/Archives/edgar/data/9990001/000999000125000008/"
+    "0009990001-25-000008-index.htm"
+)
+"""Acme's index page, which an override of the corpus cites."""
+EASTFIELD_MAIN = submissions_url(EASTFIELD.cik)
+EASTFIELD_PAGE = submissions_page_url(OLDER_PAGES[EASTFIELD][0][0])
+"""Eastfield's one saved older page, which a refetch of its main file brings."""
+UNSAVED_PAGE = submissions_page_url("CIK0009990006-submissions-002.json")
+"""Eastfield's older page whose dates miss the range, which discovery never saves."""
+REFETCH = "refetch: {} requests to SEC, through the shared client"
+RERUN = "requests sent: {}; a rerun may name only the URLs that are still unusable"
+"""A stopped refetch's count. A rerun that names a URL it saved is refused, since that
+URL now reads; discover's own tail, that a rerun fetches only what is missing, would
+mislead."""
+
+
+def truncate(repo: Path, url: str) -> str:
+    """Cut ``url``'s saved artifact to its first 10 bytes; return the line a refetch
+    of its earlier bytes prints when it moves the cut bytes aside."""
+    saved = SavedResponses(ArtifactStore(repo / EVENTS_STORE, repo)).get(url)
+    sha = saved.artifact.content_sha256
+    path = repo / saved.artifact.storage_ref
+    cut = path.read_bytes()[:10]
+    path.write_bytes(cut)
+    moved = EVENTS_STORE / SEC_SOURCE_ID / "quarantine" / sha
+    return f"quarantined: {moved / f'{sha256_hex(cut)}{path.suffix}'}"
+
+
+def changed(url: str) -> str:
+    return (
+        f"changed: {url} returned other bytes than its earlier retrieval; run events"
+        " build and compare its content hash with the frozen version's before"
+        " relying on it"
+    )
+
+
+def other_bytes(url: str) -> dict[str, tuple[bytes, str]]:
+    """``url`` served with other valid bytes than any it was saved with."""
+    body, media_type = served()[url]
+    return {url: (body + b"\n", media_type)}
+
+
+def test_refetch_mends_a_truncated_index_page_and_rebuilds_the_frozen_hash(
+    repo, moved, monkeypatch
+) -> None:
+    quarantined = truncate(repo, INDEX)
+    built = run(repo, "build", store=EVENTS_STORE)
+    assert built.exit_code == 1
+    problems = [
+        line for line in built.stderr.splitlines() if line.startswith("problem: ")
+    ]
+    assert problems
+    assert all(line.endswith(refetch_remedy(INDEX)) for line in problems)
+    requested: list[str] = []
+    budgets = client(monkeypatch, served(), requested=requested)
+    result = run(repo, "discover", "--refetch", INDEX, store=EVENTS_STORE)
+    assert result.exit_code == 1
+    assert result.stdout.splitlines() == [REFETCH.format(1), f"  {INDEX}"]
+    assert budgets == []
+    assert result.stderr == (
+        "Refused: pass --max-requests, the request count the user approved\n"
+    )
+    result = run(
+        repo, "discover", "--refetch", INDEX, "--max-requests", "1", store=EVENTS_STORE
+    )
+    assert result.exit_code == 0, result.output
+    assert budgets == [1]
+    assert requested == [INDEX]
+    assert result.stdout.splitlines() == [
+        REFETCH.format(1),
+        f"  {INDEX}",
+        "refetched 1; requests sent: 1",
+        quarantined,
+    ]
+    assert quarantined.startswith("quarantined: data/raw/events/sec-edgar/quarantine/")
+    rebuilt = run(repo, "build", store=EVENTS_STORE)
+    assert rebuilt.exit_code == 0, rebuilt.output
+    frozen = load_event_manifest(REPO / FIXTURE_DIR / "events-v1.json")
+    assert rebuilt.stdout.splitlines()[-1] == (
+        f"32 events, 27 eligible, content {frozen.definition.content_hash}"
+    )
+
+
+def test_refetch_adds_a_submissions_files_older_pages_to_its_stated_count(
+    repo, moved, monkeypatch
+) -> None:
+    truncate(repo, EASTFIELD_MAIN)
+    budgets = client(monkeypatch, served())
+    result = run(
+        repo,
+        "discover",
+        "--refetch",
+        EASTFIELD_MAIN,
+        "--max-requests",
+        "1",
+        store=EVENTS_STORE,
+    )
+    assert result.exit_code == 1
+    assert result.stdout.splitlines() == [
+        REFETCH.format(2),
+        f"  {EASTFIELD_MAIN}",
+        f"  {EASTFIELD_PAGE}",
+    ]
+    assert budgets == []
+    assert result.stderr == (
+        "Refused: --max-requests 1 is below the 2 requests to refetch\n"
+    )
+
+
+def saved_exhibit(repo: Path) -> str:
+    """A saved exhibit, its bytes cut: only events acquire refetches it (EV2)."""
+    saved = SavedResponses(ArtifactStore(repo / EVENTS_STORE, repo))
+    url = next(url for url in sorted(exhibit_bodies()) if url in saved)
+    truncate(repo, url)
+    return url
+
+
+@pytest.mark.parametrize(
+    ("named", "refusal"),
+    [
+        pytest.param(
+            lambda repo: submissions_url("0009990001"),
+            "is not among the responses discovery cannot use",
+            id="usable",
+        ),
+        pytest.param(lambda repo: UNSAVED_PAGE, "nothing saved from ", id="unsaved"),
+        pytest.param(saved_exhibit, "events acquire --refetch", id="exhibit"),
+    ],
+)
+def test_refetch_refuses_what_is_not_unusable(
+    repo, moved, monkeypatch, named, refusal
+) -> None:
+    """Each is refused before the count is stated, so before --max-requests is
+    asked for, and before any client opens."""
+    url = named(repo)
+    budgets = client(monkeypatch, served())
+    result = run(repo, "discover", "--refetch", url, store=EVENTS_STORE)
+    assert result.exit_code == 1
+    assert budgets == []
+    assert result.stdout == ""
+    assert result.stderr.startswith("Refused: ")
+    assert url in result.stderr and refusal in result.stderr
+
+
+def test_refetch_refuses_filing_beside_it(repo, moved, monkeypatch) -> None:
+    """Refused first, before the named URL, which reads, is refused itself."""
+    budgets = client(monkeypatch, served())
+    result = run(
+        repo,
+        "discover",
+        "--refetch",
+        submissions_url("0009990001"),
+        "--filing",
+        *FILED,
+        store=EVENTS_STORE,
+    )
+    assert result.exit_code == 1
+    assert budgets == []
+    assert result.stdout == ""
+    assert result.stderr == "Refused: pass --refetch or --filing, not both\n"
+
+
+def test_refetch_stops_on_a_persistent_403_and_prints_its_count(
+    repo, moved, monkeypatch
+) -> None:
+    """The approved count is the cap, above the stated count: the retry of a 403
+    counts against it."""
+    truncate(repo, INDEX)
+    requested: list[str] = []
+    budgets = client(monkeypatch, served(), status=403, requested=requested)
+    result = run(
+        repo, "discover", "--refetch", INDEX, "--max-requests", "2", store=EVENTS_STORE
+    )
+    assert result.exit_code == 1
+    assert budgets == [2]
+    assert requested == [INDEX, INDEX]
+    assert result.stdout.splitlines() == [
+        REFETCH.format(1),
+        f"  {INDEX}",
+        RERUN.format(2),
+    ]
+    assert result.stderr == (
+        f"Stopped: 403 persisted for {INDEX}; stopping without changing identity\n"
+    )
+    assert not (moved / SEC_SOURCE_ID / "quarantine").exists()
+
+
+def test_refetch_reports_other_bytes(repo, moved, monkeypatch) -> None:
+    """Other bytes are a new artifact: nothing is moved, and the build may read
+    other bytes than it froze."""
+    truncate(repo, INDEX)
+    budgets = client(monkeypatch, {**served(), **other_bytes(INDEX)})
+    result = run(
+        repo, "discover", "--refetch", INDEX, "--max-requests", "1", store=EVENTS_STORE
+    )
+    assert result.exit_code == 0, result.output
+    assert budgets == [1]
+    assert result.stdout.splitlines() == [
+        REFETCH.format(1),
+        f"  {INDEX}",
+        "refetched 1; requests sent: 1",
+        changed(INDEX),
+    ]
+
+
+def test_refetch_prints_each_url_that_returned_other_bytes(
+    repo, moved, monkeypatch
+) -> None:
+    """Eastfield's main file and the older page it brings both come back other:
+    one changed line for each, in the plan's order."""
+    truncate(repo, EASTFIELD_MAIN)
+    responses = {
+        **served(),
+        **other_bytes(EASTFIELD_MAIN),
+        **other_bytes(EASTFIELD_PAGE),
+    }
+    budgets = client(monkeypatch, responses)
+    result = run(
+        repo,
+        "discover",
+        "--refetch",
+        EASTFIELD_MAIN,
+        "--max-requests",
+        "2",
+        store=EVENTS_STORE,
+    )
+    assert result.exit_code == 0, result.output
+    assert budgets == [2]
+    assert result.stdout.splitlines() == [
+        REFETCH.format(2),
+        f"  {EASTFIELD_MAIN}",
+        f"  {EASTFIELD_PAGE}",
+        "refetched 2; requests sent: 2",
+        changed(EASTFIELD_MAIN),
+        changed(EASTFIELD_PAGE),
+    ]
+
+
+def test_refetch_prints_each_move_and_then_each_change(
+    repo, moved, monkeypatch
+) -> None:
+    """Eastfield's main file and its older page come back as they were saved, so
+    each cut file is moved aside; Acme's index page comes back other."""
+    moves = [truncate(repo, url) for url in (EASTFIELD_MAIN, EASTFIELD_PAGE, INDEX)]
+    budgets = client(monkeypatch, {**served(), **other_bytes(INDEX)})
+    result = run(
+        repo,
+        "discover",
+        "--refetch",
+        EASTFIELD_MAIN,
+        "--refetch",
+        INDEX,
+        "--max-requests",
+        "3",
+        store=EVENTS_STORE,
+    )
+    assert result.exit_code == 0, result.output
+    assert budgets == [3]
+    assert result.stdout.splitlines() == [
+        REFETCH.format(3),
+        f"  {EASTFIELD_MAIN}",
+        f"  {EASTFIELD_PAGE}",
+        f"  {INDEX}",
+        "refetched 3; requests sent: 3",
+        *moves[:2],
+        changed(INDEX),
+    ]
+
+
+def test_refetch_fails_on_what_it_did_not_mend(repo, moved, monkeypatch) -> None:
+    """Eastfield's main file is cut too, but not named: the read-back after the
+    refetch still names it."""
+    truncate(repo, EASTFIELD_MAIN)
+    quarantined = truncate(repo, INDEX)
+    client(monkeypatch, served())
+    result = run(
+        repo, "discover", "--refetch", INDEX, "--max-requests", "1", store=EVENTS_STORE
+    )
+    assert result.exit_code == 1
+    assert result.stdout.splitlines()[-2:] == [
+        "refetched 1; requests sent: 1",
+        quarantined,
+    ]
+    (problem,) = result.stderr.splitlines()
+    assert problem.startswith(f"problem: {EASTFIELD_MAIN}: ")
+    assert problem.endswith(
+        f" no longer hashes to its name; {refetch_remedy(EASTFIELD_MAIN)}"
+    )
+
+
+@pytest.mark.parametrize("returned", ["other bytes", "the same bytes"])
+def test_refetch_stopped_partway_prints_what_it_saved(
+    repo, moved, monkeypatch, returned
+) -> None:
+    """Eastfield's main file is saved before its older page meets a persistent 403.
+    What the save changed, or moved aside, is printed before the stop, since a
+    rerun cannot tell it: the saved file then reads, and is refused as usable."""
+    quarantined = truncate(repo, EASTFIELD_MAIN)
+    responses = served()
+    if returned == "other bytes":
+        responses |= other_bytes(EASTFIELD_MAIN)
+        saved = changed(EASTFIELD_MAIN)
+    else:
+        saved = quarantined
+    requested: list[str] = []
+    budgets = client(
+        monkeypatch,
+        responses,
+        requested=requested,
+        statuses={EASTFIELD_PAGE: [403, 403]},
+    )
+    result = run(
+        repo,
+        "discover",
+        "--refetch",
+        EASTFIELD_MAIN,
+        "--max-requests",
+        "3",
+        store=EVENTS_STORE,
+    )
+    assert result.exit_code == 1
+    assert budgets == [3]
+    assert requested == [EASTFIELD_MAIN, EASTFIELD_PAGE, EASTFIELD_PAGE]
+    stopped = (
+        f"Stopped: 403 persisted for {EASTFIELD_PAGE}; stopping without changing"
+        " identity"
+    )
+    assert result.stdout.splitlines() == [
+        REFETCH.format(2),
+        f"  {EASTFIELD_MAIN}",
+        f"  {EASTFIELD_PAGE}",
+        saved,
+        RERUN.format(3),
+    ]
+    assert result.stderr == f"{stopped}\n"
+    assert result.output.splitlines()[-3:] == [saved, RERUN.format(3), stopped]
+
+
+def test_refetch_stopped_at_its_first_url_prints_nothing_saved(
+    repo, moved, monkeypatch
+) -> None:
+    truncate(repo, EASTFIELD_MAIN)
+    requested: list[str] = []
+    budgets = client(
+        monkeypatch,
+        served(),
+        requested=requested,
+        statuses={EASTFIELD_MAIN: [403, 403]},
+    )
+    result = run(
+        repo,
+        "discover",
+        "--refetch",
+        EASTFIELD_MAIN,
+        "--max-requests",
+        "3",
+        store=EVENTS_STORE,
+    )
+    assert result.exit_code == 1
+    assert budgets == [3]
+    assert requested == [EASTFIELD_MAIN, EASTFIELD_MAIN]
+    assert result.stdout.splitlines() == [
+        REFETCH.format(2),
+        f"  {EASTFIELD_MAIN}",
+        f"  {EASTFIELD_PAGE}",
+        RERUN.format(2),
+    ]
+    assert result.stderr == (
+        f"Stopped: 403 persisted for {EASTFIELD_MAIN}; stopping without changing"
+        " identity\n"
+    )
+
+
+def test_refetch_prints_its_count_on_an_unforeseen_error(
+    repo, moved, monkeypatch
+) -> None:
+    truncate(repo, INDEX)
+    client(monkeypatch, served())
+    monkeypatch.setattr(ArtifactStore, "put", unforeseen)
+    result = run(
+        repo, "discover", "--refetch", INDEX, "--max-requests", "1", store=EVENTS_STORE
+    )
+    assert isinstance(result.exception, LookupError)
+    assert result.stdout.splitlines()[-1] == RERUN.format(1)
+
+
+def test_refetch_names_every_url_it_refuses(repo, moved, monkeypatch) -> None:
+    usable = submissions_url("0009990001")
+    budgets = client(monkeypatch, served())
+    result = run(
+        repo,
+        "discover",
+        "--refetch",
+        usable,
+        "--refetch",
+        UNSAVED_PAGE,
+        "--max-requests",
+        "5",
+        store=EVENTS_STORE,
+    )
+    assert result.exit_code == 1
+    assert budgets == []
+    assert result.stdout == ""
+    first, second = result.stderr.splitlines()
+    assert first.startswith(f"Refused: {usable} is not among the responses")
+    assert second.startswith(f"nothing saved from {UNSAVED_PAGE}: ")
+
+
+def test_refetch_counts_a_retry_against_its_cap(repo, moved, monkeypatch) -> None:
+    """One 403, then the page: the retry fits the approved cap, above the stated
+    count, and the count sent is not the count refetched."""
+    quarantined = truncate(repo, INDEX)
+    requested: list[str] = []
+    budgets = client(
+        monkeypatch, served(), requested=requested, statuses={INDEX: [403]}
+    )
+    result = run(
+        repo, "discover", "--refetch", INDEX, "--max-requests", "2", store=EVENTS_STORE
+    )
+    assert result.exit_code == 0, result.output
+    assert budgets == [2]
+    assert requested == [INDEX, INDEX]
+    assert result.stdout.splitlines() == [
+        REFETCH.format(1),
+        f"  {INDEX}",
+        "refetched 1; requests sent: 2",
+        quarantined,
+    ]
+
+
+def test_refetch_stopped_partway_prints_each_move_and_then_each_change(
+    repo, moved, monkeypatch
+) -> None:
+    """Eastfield's main file comes back as it was saved, so its cut file is moved
+    aside, and its older page comes back other; Acme's index page then meets a
+    persistent 403."""
+    quarantined = truncate(repo, EASTFIELD_MAIN)
+    truncate(repo, INDEX)
+    budgets = client(
+        monkeypatch,
+        {**served(), **other_bytes(EASTFIELD_PAGE)},
+        statuses={INDEX: [403, 403]},
+    )
+    result = run(
+        repo,
+        "discover",
+        "--refetch",
+        EASTFIELD_MAIN,
+        "--refetch",
+        INDEX,
+        "--max-requests",
+        "4",
+        store=EVENTS_STORE,
+    )
+    assert result.exit_code == 1
+    assert budgets == [4]
+    assert result.stdout.splitlines()[4:] == [
+        quarantined,
+        changed(EASTFIELD_PAGE),
+        RERUN.format(4),
+    ]
+    assert result.stderr.startswith(f"Stopped: 403 persisted for {INDEX}; ")
+
+
+def full_disk(*args, **kwargs):
+    raise OSError(28, "No space left on device")
+
+
+def ctrl_c(*args, **kwargs):
+    raise KeyboardInterrupt
+
+
+def test_refetch_prints_its_count_when_saving_fails(repo, moved, monkeypatch) -> None:
+    """A stop that is not a 403 is stopped as discover stops it, with its count."""
+    truncate(repo, INDEX)
+    client(monkeypatch, served())
+    monkeypatch.setattr(ArtifactStore, "put", full_disk)
+    result = run(
+        repo, "discover", "--refetch", INDEX, "--max-requests", "1", store=EVENTS_STORE
+    )
+    assert result.exit_code == 1
+    assert result.stdout.splitlines()[-1] == RERUN.format(1)
+    assert result.stderr == "Stopped: [Errno 28] No space left on device\n"
+
+
+def test_refetch_prints_its_count_on_ctrl_c(repo, moved, monkeypatch) -> None:
+    truncate(repo, INDEX)
+    client(monkeypatch, served())
+    monkeypatch.setattr(ArtifactStore, "put", ctrl_c)
+    result = run(
+        repo, "discover", "--refetch", INDEX, "--max-requests", "1", store=EVENTS_STORE
+    )
+    assert result.exit_code == 130
+    assert result.stdout.splitlines()[-1] == RERUN.format(1)
+
+
+STOP_TAIL = "requests sent: {}; a rerun attempts what is left"
+REFETCH_STOP_TAIL = (
+    f"{STOP_TAIL}, and --refetch may name only the exhibits that are still unusable"
+)
+"""A stopped acquire's count with --refetch. A rerun that names an exhibit the run
+saved is refused, since that exhibit now reads."""
+STOPPED = "Stopped: 403 persisted for {}; stopping without changing identity\n"
+
+
+def pilot_exhibit(position: int = 0) -> str:
+    """The one exhibit of the release filing of the pilot's event at ``position``,
+    found as the acquire tests find it. A run reaches the first pilot row's first, so
+    a later candidate behind a confirmed exhibit never hides it."""
+    pilot = PilotManifest.model_validate_json(
+        (REPO / FIXTURE_DIR / "pilot-v1.json").read_bytes()
+    )
+    events = load_event_manifest(REPO / FIXTURE_DIR / "events-v1.json")
+    event_id = pilot.rows[position].event_id
+    row = next(row for row in events.rows if row.event_id == event_id)
+    folder = row.release_accession.replace("-", "")
+    return next(url for url in exhibit_bodies() if f"/{folder}/" in url)
+
+
+def test_acquire_refetch_states_its_count_first_and_fetches_the_exhibit(
+    repo, moved, monkeypatch
+) -> None:
+    url = pilot_exhibit()
+    quarantined = truncate(repo, url)
+    requested: list[str] = []
+    budgets = client(monkeypatch, {**served(), **exhibit_bodies()}, requested=requested)
+    result = run(repo, "acquire", "--refetch", url, store=EVENTS_STORE)
+    assert result.exit_code == 1
+    lines = acquire_lines(result)
+    assert lines[4].startswith("at most 2 requests to SEC, through the shared client;")
+    assert lines[5:] == [f"refetch: {url}"]
+    assert result.stderr == (
+        "Refused: pass --max-requests, the request count the user approved\n"
+    )
+    assert budgets == []
+    result = run(
+        repo, "acquire", "--refetch", url, "--max-requests", "2", store=EVENTS_STORE
+    )
+    assert result.exit_code == 0, result.output
+    assert budgets == [2]
+    assert requested.count(url) == 1
+    lines = acquire_lines(result)
+    assert lines[4:6] == [
+        "at most 2 requests to SEC, through the shared client; 2 first choices",
+        f"refetch: {url}",
+    ]
+    assert lines[6] == "  1  cik-0009990003:2026-03-31:release  parsed"
+    assert lines[-3] == "fetched 1; requests sent: 2"
+    assert lines[-2].startswith("data/runs/events/states/acquire-")
+    assert lines[-1] == quarantined
+
+
+def test_acquire_without_a_refetch_names_the_remedy_and_fetches_nothing_for_it(
+    repo, moved, monkeypatch
+) -> None:
+    url = pilot_exhibit()
+    truncate(repo, url)
+    requested: list[str] = []
+    budgets = client(monkeypatch, {**served(), **exhibit_bodies()}, requested=requested)
+    result = run(repo, "acquire", "--max-requests", "1", store=EVENTS_STORE)
+    assert result.exit_code == 1
+    assert budgets == [1]
+    lines = acquire_lines(result)
+    assert lines[4] == (
+        "at most 1 requests to SEC, through the shared client; 1 first choices"
+    )
+    assert not any(line.startswith(("refetch:", "quarantined:")) for line in lines)
+    (problem,) = result.stderr.splitlines()
+    assert problem.startswith(f"problem: {url}: ")
+    assert problem.endswith(exhibit_remedy(url))
+    assert url not in requested
+
+
+def unsaved_exhibit(moved: Path) -> str:
+    """The first pilot row's exhibit, with every saved exhibit forgotten."""
+    forget_exhibits(moved)
+    return pilot_exhibit()
+
+
+@pytest.mark.parametrize(
+    ("named", "refusal"),
+    [
+        pytest.param(
+            lambda moved: pilot_exhibit(),
+            " is not a saved exhibit that a run would try and cannot read",
+            id="usable",
+        ),
+        pytest.param(unsaved_exhibit, "nothing saved from ", id="unsaved"),
+        pytest.param(
+            lambda moved: INDEX,
+            "refetched by earnings-pipeline events discover --refetch",
+            id="index",
+        ),
+    ],
+)
+def test_acquire_refetch_refuses_a_usable_exhibit_before_the_client_opens(
+    repo, moved, monkeypatch, named, refusal
+) -> None:
+    """Each is refused before the count is stated, and before any client opens."""
+    url = named(moved)
+    budgets = client(monkeypatch, {**served(), **exhibit_bodies()})
+    result = run(
+        repo, "acquire", "--refetch", url, "--max-requests", "5", store=EVENTS_STORE
+    )
+    assert result.exit_code == 1
+    assert budgets == []
+    assert not any(
+        line.startswith(("at most", "refetch:")) for line in acquire_lines(result)
+    )
+    assert result.stderr.startswith("Refused: ")
+    assert url in result.stderr and refusal in result.stderr
+
+
+@pytest.mark.parametrize("refetching", [True, False], ids=["refetch", "plain"])
+def test_acquire_stopped_says_what_a_rerun_may_name(
+    repo, moved, monkeypatch, refetching
+) -> None:
+    """The first pilot row's exhibit meets a persistent 403: cut and named by
+    --refetch, or not saved. With --refetch, a rerun that names it again once it
+    reads is refused, so the tail says so; without, the tail is acquire's own."""
+    url = pilot_exhibit()
+    if refetching:
+        truncate(repo, url)
+        named, tail = ["--refetch", url], REFETCH_STOP_TAIL
+    else:
+        forget_exhibits(moved)
+        named, tail = [], STOP_TAIL
+    requested: list[str] = []
+    budgets = client(
+        monkeypatch,
+        {**served(), **exhibit_bodies()},
+        status=403,
+        requested=requested,
+    )
+    result = run(repo, "acquire", *named, "--max-requests", "2", store=EVENTS_STORE)
+    assert result.exit_code == 1
+    assert budgets == [2]
+    assert requested == [url, url]
+    assert acquire_lines(result)[-1] == tail.format(2)
+    assert result.stderr == STOPPED.format(url)
+
+
+def test_acquire_refetch_keeps_acquire_s_tail_on_an_unforeseen_error(
+    repo, moved, monkeypatch
+) -> None:
+    """Only a stop names what --refetch may name; any other error keeps acquire's
+    own tail."""
+    url = pilot_exhibit()
+    truncate(repo, url)
+    client(monkeypatch, {**served(), **exhibit_bodies()})
+    monkeypatch.setattr(ArtifactStore, "put", unforeseen)
+    result = run(
+        repo, "acquire", "--refetch", url, "--max-requests", "2", store=EVENTS_STORE
+    )
+    assert isinstance(result.exception, LookupError)
+    assert acquire_lines(result)[-1] == STOP_TAIL.format(1)
+
+
+def test_acquire_prints_each_quarantined_file_once(repo, moved, monkeypatch) -> None:
+    """The same damage twice in one run. The first and second pilot rows' exhibits
+    are cut and refetched, and the second is served with the first's bytes. The
+    first's file is cut again, to the same bytes, before each save, so both saves
+    move the same bytes to the same place."""
+    first, second = pilot_exhibit(0), pilot_exhibit(1)
+    found = SavedResponses(ArtifactStore(moved, repo)).get(first)
+    sha, path = found.artifact.content_sha256, repo / found.artifact.storage_ref
+    quarantined = truncate(repo, first)
+    cut = path.read_bytes()
+    truncate(repo, second)
+    responses = {**served(), **exhibit_bodies()}
+    responses[second] = responses[first]
+    client(monkeypatch, responses)
+    put = ArtifactStore.put
+
+    def cut_again(self, source_id, body, *args, **kwargs):
+        if sha256_hex(body) == sha:
+            path.write_bytes(cut)
+        return put(self, source_id, body, *args, **kwargs)
+
+    monkeypatch.setattr(ArtifactStore, "put", cut_again)
+    result = run(
+        repo,
+        "acquire",
+        "--refetch",
+        first,
+        "--refetch",
+        second,
+        "--max-requests",
+        "3",
+        store=EVENTS_STORE,
+    )
+    moves = [line for line in acquire_lines(result) if line.startswith("quarantined:")]
+    assert moves == [quarantined]
+
+
+def test_acquire_refetch_names_each_exhibit_once_in_the_order_given(
+    repo, moved, monkeypatch
+) -> None:
+    """The first three pilot rows' exhibits, named out of the order a run reaches
+    them and out of sorted order, one twice: one refetch line for each, in the order
+    named, and each move after the run, in the order the run made it."""
+    first, second, third = (pilot_exhibit(position) for position in range(3))
+    moves = [truncate(repo, url) for url in (first, second, third)]
+    budgets = client(monkeypatch, {**served(), **exhibit_bodies()})
+    named = [
+        arg for url in (second, third, first, second) for arg in ("--refetch", url)
+    ]
+    result = run(repo, "acquire", *named, "--max-requests", "4", store=EVENTS_STORE)
+    assert result.exit_code == 0, result.output
+    assert budgets == [4]
+    lines = acquire_lines(result)
+    assert lines[4:8] == [
+        "at most 4 requests to SEC, through the shared client; 4 first choices",
+        f"refetch: {second}",
+        f"refetch: {third}",
+        f"refetch: {first}",
+    ]
+    assert lines[8] == "  1  cik-0009990003:2026-03-31:release  parsed"
+    assert lines[-3:] == moves
+
+
+def test_acquire_refetch_stopped_partway_prints_each_move_before_its_count(
+    repo, moved, monkeypatch
+) -> None:
+    """The first pilot row's exhibit is saved again, its cut file moved aside, before
+    the second's meets a persistent 403. The move is printed before the count, which
+    stays last: no later run could tell it."""
+    first, second = pilot_exhibit(0), pilot_exhibit(1)
+    quarantined = truncate(repo, first)
+    truncate(repo, second)
+    requested: list[str] = []
+    budgets = client(
+        monkeypatch,
+        {**served(), **exhibit_bodies()},
+        requested=requested,
+        statuses={second: [403, 403]},
+    )
+    result = run(
+        repo,
+        "acquire",
+        "--refetch",
+        first,
+        "--refetch",
+        second,
+        "--max-requests",
+        "3",
+        store=EVENTS_STORE,
+    )
+    assert result.exit_code == 1
+    assert budgets == [3]
+    assert requested == [first, second, second]
+    assert acquire_lines(result)[-2:] == [quarantined, REFETCH_STOP_TAIL.format(3)]
+    assert result.stderr == STOPPED.format(second)
+
+
+def test_acquire_refetch_stopped_between_the_move_and_the_save_prints_the_move(
+    repo, moved, monkeypatch
+) -> None:
+    """A full disk after the cut file is moved aside and before the exhibit is saved
+    again: the exhibit's file has left its place, and the output says where it went
+    (plan 25, Review Focus)."""
+    url = pilot_exhibit()
+    quarantined = truncate(repo, url)
+    client(monkeypatch, {**served(), **exhibit_bodies()})
+    monkeypatch.setattr(store_module, "write_new", full_disk)
+    result = run(
+        repo, "acquire", "--refetch", url, "--max-requests", "2", store=EVENTS_STORE
+    )
+    assert result.exit_code == 1
+    assert acquire_lines(result)[-2:] == [quarantined, REFETCH_STOP_TAIL.format(1)]
+    assert result.stderr == "Stopped: [Errno 28] No space left on device\n"
+
+
+def test_acquire_refetch_interrupted_prints_each_move_before_its_count(
+    repo, moved, monkeypatch
+) -> None:
+    """The first pilot row's exhibit is saved again, its cut file moved aside, and
+    the second's save meets an error no stop names. The move is printed before the
+    count, whose tail is acquire's own."""
+    first, second = pilot_exhibit(0), pilot_exhibit(1)
+    quarantined = truncate(repo, first)
+    truncate(repo, second)
+    client(monkeypatch, {**served(), **exhibit_bodies()})
+    put = ArtifactStore.put
+
+    def once(self, *args, **kwargs):
+        if self.quarantined:
+            unforeseen()
+        return put(self, *args, **kwargs)
+
+    monkeypatch.setattr(ArtifactStore, "put", once)
+    result = run(
+        repo,
+        "acquire",
+        "--refetch",
+        first,
+        "--refetch",
+        second,
+        "--max-requests",
+        "3",
+        store=EVENTS_STORE,
+    )
+    assert isinstance(result.exception, LookupError)
+    assert acquire_lines(result)[-2:] == [quarantined, STOP_TAIL.format(2)]

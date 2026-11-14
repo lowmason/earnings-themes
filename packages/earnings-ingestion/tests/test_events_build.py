@@ -38,7 +38,7 @@ from earnings_ingestion.events.records import (
     EventStatus,
     IdentificationMethod,
 )
-from earnings_ingestion.events.saved import SavedResponses
+from earnings_ingestion.events.saved import SavedResponses, refetch_remedy
 from earnings_ingestion.events.synthetic import (
     JSON,
     SyntheticFiling,
@@ -588,7 +588,7 @@ def test_a_redirected_record_is_refused_where_it_is_read(universe, tmp_path) -> 
     problems = refused(universe, layer)
     assert (
         f"{page}: it was redirected to {page}.moved, and a redirected response is"
-        " never read"
+        f" never read; {refetch_remedy(page)}"
     ) in problems
 
 
@@ -694,7 +694,7 @@ def test_a_companyfacts_file_of_another_registrant_stops_the_build(
     body = companyfacts_file(BOREALIS.cik, BOREALIS.name, [])
     save(layer.store, url, body, JSON, RETRIEVED.replace(day=29))
     assert refused(universe, layer) == (
-        f"{url} is the companyfacts file of CIK {BOREALIS.cik}",
+        f"{url} is the companyfacts file of CIK {BOREALIS.cik}; {refetch_remedy(url)}",
     )
 
 

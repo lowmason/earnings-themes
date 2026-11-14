@@ -14,21 +14,34 @@ resumes where a stopped run left off. Each phase reads what the one before saved
 
 So discovery fetches exactly what the build reads, and never an exhibit (EV2).
 
-Last, it reads back what it saved as the build does: each issuer's submissions
-file, older pages, and index pages, and each candidate's primary document. A saved
-response among them that the build cannot read, because its bytes are gone or changed
-or it is not the response its URL names, is never fetched again, since it is saved.
-``Discovery.problems`` names each one, and ``events discover`` exits 1. The read-back
-does not check a companyfacts file's CIK, which the build refuses, and it reads a
-companyfacts file outside any handler, as phase 3 does; ``discover_filing`` reads
-nothing back.
+Last, ``read_back`` reads back what it saved as the build does: each issuer's
+submissions file, older pages, index pages, and companyfacts file, and each
+candidate's primary document. A saved response among them that the build cannot
+read, because its bytes are gone or changed or it is not the response its URL names,
+is not fetched by discovery, since it is saved. ``Discovery.problems`` names each one
+with the command that refetches it, ``Discovery.unusable`` lists its URL once, and
+``events discover`` exits 1. The read-back reads a companyfacts file in a guard of
+its own: one that cannot be read, or that states another CIK, is unusable, and its
+issuer's candidates are not read. Phase 3 still reads a companyfacts file outside
+any handler (item P2.3). ``discover_filing`` reads nothing back.
+
+``events.recover`` replaces the responses ``unusable`` lists (plan 25).
+``plan_refetch`` accepts only those URLs, and adds a submissions file's saved older
+pages. ``run_refetch`` fetches exactly the plan's URLs, saves each as discovery
+does, as a newer retrieval that the readers then read, and reads back again. It runs
+no discovery phase. A fetch or a save that fails stops it with
+``RefetchInterrupted``, which holds what it saved before. A page that the readers
+reach only through an unusable file is read, and classified, once that file is
+refetched.
 
 ``discover_filing`` saves one filing's index page, and an 8-K's or 8-K/A's primary
 document. It is the remedy for an ``acceptance_time_unknown`` finding, and for a
 ``set_release_filing`` that names a filing discovery did not read. It reads the
 index page before it fetches the document, and fetches nothing more when the page
-describes another filing than the issuer's submissions row does (F12), which
-``Discovery.problems`` then names.
+cannot be used or describes another filing than the issuer's submissions row does
+(F12), which ``Discovery.problems`` then names with the command that refetches it.
+When the issuer's saved files do not list the filing, and one of them cannot be
+used, it fetches nothing and names that command.
 """
 
 from collections.abc import Callable, Iterable
@@ -42,16 +55,17 @@ from earnings_ingestion.events.filings import (
     issuer_filings,
 )
 from earnings_ingestion.events.release import identify
-from earnings_ingestion.events.saved import SavedResponses
+from earnings_ingestion.events.saved import SavedResponses, refetch_remedy
 from earnings_ingestion.events.slots import issuer_slots
 from earnings_ingestion.fetch.responses import Fetched
 from earnings_ingestion.fetch.store import ArtifactStore
-from earnings_ingestion.sec.companyfacts import read_companyfacts
+from earnings_ingestion.sec.companyfacts import CompanyFacts, read_companyfacts
 from earnings_ingestion.sec.filing_index import read_filing_index
 from earnings_ingestion.sec.urls import (
     archive_url,
     companyfacts_url,
     filing_index_url,
+    submissions_page_url,
     submissions_url,
 )
 
@@ -62,6 +76,8 @@ DOCUMENT = frozenset({"text/html", "text/plain"})
 """A primary document may be plain text; ``release-id/1`` then reports it unread."""
 NOT_SAVED = "nothing saved from "
 """How the readers begin a problem that discovery answers by fetching."""
+SUBMISSIONS = submissions_page_url("")
+"""How the URL of every submissions file and older page begins."""
 
 
 @dataclass
@@ -72,6 +88,30 @@ class Discovery:
     problems: list[str] = field(default_factory=list)
     """Each saved response the build cannot read: its bytes are gone or changed, or
     it is not the response its URL names. It is saved, so no rerun fetches it again."""
+    unusable: list[str] = field(default_factory=list)
+    """The URL of each saved response that ``read_back`` finds cannot be used, once,
+    which ``events.recover.run_refetch`` replaces."""
+
+
+@dataclass(frozen=True)
+class ReadBack:
+    """What the build would refuse among the saved responses."""
+
+    problems: tuple[str, ...]
+    unusable: tuple[str, ...]
+    """The URL of each saved response the readers cannot use, once, in the order
+    read."""
+
+
+def save_fetched(store: ArtifactStore, fetched: Fetched) -> None:
+    """Save a fetched response under ``sec-edgar``, cited with SEC's rights."""
+    store.put(
+        SEC_SOURCE_ID,
+        fetched.body,
+        fetched.retrieval,
+        rights_status=SEC_RIGHTS.rights_status,
+        rights_basis=SEC_RIGHTS.rights_basis,
+    )
 
 
 class _Run:
@@ -89,16 +129,15 @@ class _Run:
         for url, types in todo.items():
             if url in self.result.fetched:
                 raise RuntimeError(f"{url} was fetched, and is still missing")
-            fetched = self.fetch(url, types)
-            self.store.put(
-                SEC_SOURCE_ID,
-                fetched.body,
-                fetched.retrieval,
-                rights_status=SEC_RIGHTS.rights_status,
-                rights_basis=SEC_RIGHTS.rights_basis,
-            )
+            save_fetched(self.store, self.fetch(url, types))
             self.result.fetched.append(url)
         return len(todo)
+
+
+def _candidates(universe: UniverseManifest) -> list[tuple[str, str]]:
+    """Each candidate issuer's ID and CIK, in ID order."""
+    ciks = {issuer.issuer_id: issuer.cik for issuer in universe.issuers}
+    return [(i, ciks[i]) for i in sorted(universe.candidate_issuer_ids)]
 
 
 def discover(
@@ -113,8 +152,7 @@ def discover(
     definition = universe.definition
     start, stop = definition.period_end_start, definition.period_end_stop
     cutoff = definition.public_information_cutoff
-    ciks = {issuer.issuer_id: issuer.cik for issuer in universe.issuers}
-    issuers = [(i, ciks[i]) for i in sorted(universe.candidate_issuer_ids)]
+    issuers = _candidates(universe)
     run = _Run(fetch, store, say)
 
     run.phase(
@@ -159,37 +197,59 @@ def discover(
                 url = archive_url(cik, filing.accession, filing.primary_document)
                 documents.append((url, DOCUMENT))
     run.phase("primary documents", documents)
-    run.result.problems.extend(_unreadable(SavedResponses(store), issuers, universe))
+    read = read_back(universe, SavedResponses(store))
+    run.result.problems.extend(read.problems)
+    run.result.unusable.extend(read.unusable)
     return run.result
 
 
-def _unreadable(
-    saved: SavedResponses, issuers: list[tuple[str, str]], universe: UniverseManifest
-) -> list[str]:
+def read_back(universe: UniverseManifest, saved: SavedResponses) -> ReadBack:
     """What the build would refuse among the saved responses, read as the build reads
-    them: each issuer's problems but what is not saved, which discovery fetches, and
-    each problem with a candidate's primary document."""
+    them: each issuer's problems but what is not saved, which discovery fetches, each
+    problem with its companyfacts file, and each problem with a candidate's primary
+    document. An issuer whose companyfacts file cannot be used has no candidates
+    read."""
     definition = universe.definition
     start, stop = definition.period_end_start, definition.period_end_stop
     cutoff = definition.public_information_cutoff
-    problems = []
-    for issuer_id, cik in issuers:
+    problems: list[str] = []
+    unusable: list[str] = []
+    for issuer_id, cik in _candidates(universe):
         filings = issuer_filings(saved, cik, issuer_id, start=start, cutoff=cutoff)
         problems.extend(p for p in filings.problems if not p.startswith(NOT_SAVED))
-        facts = saved.get(companyfacts_url(cik))
+        unusable.extend(filings.unusable)
+        facts = _companyfacts(saved, cik, problems, unusable)
         if filings.registrant is None or facts is None:
             continue
-        made, _ = issuer_slots(
-            filings,
-            read_companyfacts(facts.text.body),
-            issuer_id,
-            start=start,
-            stop=stop,
-        )
+        made, _ = issuer_slots(filings, facts, issuer_id, start=start, stop=stop)
         for slot in made:
             found = identify(slot, filings.releases, saved, cutoff=cutoff)
             problems.extend(found.problems)
-    return problems
+            unusable.extend(found.unusable)
+    return ReadBack(problems=tuple(problems), unusable=tuple(dict.fromkeys(unusable)))
+
+
+def _companyfacts(
+    saved: SavedResponses, cik: str, problems: list[str], unusable: list[str]
+) -> CompanyFacts | None:
+    """The issuer's saved companyfacts file, read in a guard of its own. ``None`` when
+    nothing is saved, which discovery fetches; ``None``, with a problem and its URL
+    unusable, when it cannot be read or states another CIK."""
+    url = companyfacts_url(cik)
+    try:
+        artifact = saved.get(url)
+        if artifact is None:
+            return None
+        facts = read_companyfacts(artifact.text.body)
+    except (FileNotFoundError, ValueError) as exc:
+        problem = f"{url}: {exc}"
+    else:
+        if facts.cik == cik:
+            return facts
+        problem = f"{url} is the companyfacts file of CIK {facts.cik}"
+    problems.append(f"{problem}; {refetch_remedy(url)}")
+    unusable.append(url)
+    return None
 
 
 def discover_filing(
@@ -220,8 +280,13 @@ def discover_filing(
         f for file in filings.files for f in file.filings if f.accession == accession
     ]
     if not listed:
+        unread = [url for url in filings.unusable if url.startswith(SUBMISSIONS)]
+        why = "".join(
+            f", and {url} cannot be used; {refetch_remedy(url)}" for url in unread
+        )
         raise ValueError(
-            f"the saved filings of CIK {cik} list no {accession}: run events discover"
+            f"the saved filings of CIK {cik} list no {accession}"
+            f"{why or ': run events discover'}"
         )
     filing = listed[0]
     index = filing_index_url(cik, accession)
@@ -232,14 +297,14 @@ def discover_filing(
     try:
         page = read_filing_index(SavedResponses(store).get(index).text.body)
     except (FileNotFoundError, ValueError) as exc:
-        run.result.problems.append(f"{index}: {exc}")
+        run.result.problems.append(f"{index}: {exc}; {refetch_remedy(index)}")
         return run.result
     if page.accession != accession:
         why = f"it is the index page of {page.accession}"
     else:
         why = index_disagreement(filing, page)
     if why is not None:
-        run.result.problems.append(f"{index}: {why}")
+        run.result.problems.append(f"{index}: {why}; {refetch_remedy(index)}")
         return run.result
     document = archive_url(cik, accession, filing.primary_document)
     run.phase(f"{filing.form} {accession}'s document", [(document, DOCUMENT)])

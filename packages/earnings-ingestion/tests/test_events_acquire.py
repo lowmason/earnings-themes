@@ -3,6 +3,7 @@ committed synthetic event manifest and pilot, with a fetch that serves the layer
 exhibits and counts each request."""
 
 import json
+import re
 import shutil
 from collections import Counter
 from datetime import UTC, date, datetime
@@ -17,8 +18,10 @@ from earnings_ingestion.events import acquire as acquire_module
 from earnings_ingestion.events.acquire import (
     EXHIBIT_TYPES,
     acquire,
+    exhibit_remedy,
     load_acquisition_overrides,
     planned_requests,
+    unusable_exhibits,
 )
 from earnings_ingestion.events.build import build_events, load_overrides
 from earnings_ingestion.events.fixture import (
@@ -38,7 +41,7 @@ from earnings_ingestion.events.records import (
     AcquisitionOverride,
     AcquisitionOverridesFile,
 )
-from earnings_ingestion.events.saved import SavedResponses
+from earnings_ingestion.events.saved import SavedResponses, refetch_remedy
 from earnings_ingestion.events.state_table import read_runs, write_run
 from earnings_ingestion.events.states import (
     AttemptOutcome,
@@ -51,7 +54,7 @@ from earnings_ingestion.fetch.client import AccessStop, Fetched, UnexpectedRespo
 from earnings_ingestion.fetch.records import Retrieval, RetrievalMethod
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.filing_index import read_filing_index
-from earnings_ingestion.sec.urls import filing_index_url
+from earnings_ingestion.sec.urls import archive_url, filing_index_url
 
 REPO = Path(__file__).resolve().parents[3]
 FETCHED = datetime(2026, 9, 29, 15, 0, tzinfo=UTC)
@@ -114,7 +117,15 @@ def store(tmp_path) -> ArtifactStore:
     return write_layer(tmp_path / "data" / "raw" / "events", tmp_path).store
 
 
-def run(frozen, store, fetch, tmp_path, run_id: str = "acquire-1", overrides=()):
+def run(
+    frozen,
+    store,
+    fetch,
+    tmp_path,
+    run_id: str = "acquire-1",
+    overrides=(),
+    refetch=(),
+):
     universe, events, pilot = frozen
     return acquire(
         events,
@@ -127,6 +138,7 @@ def run(frozen, store, fetch, tmp_path, run_id: str = "acquire-1", overrides=())
         canonical_dir=tmp_path / "canonical",
         run_id=run_id,
         now=lambda: NOW,
+        refetch=refetch,
     )
 
 
@@ -226,8 +238,8 @@ def test_a_persistent_403_stops_the_run_and_leaves_the_rest_expected(
     assert not set(served.requested) & set(stopped.requested)
 
 
-def save_unreadable(store, served: Served, url: str) -> None:
-    """Save the exhibit at ``url``, then change its saved bytes."""
+def save_exhibit(store, served: Served, url: str) -> str:
+    """Save the exhibit at ``url`` as a run saves it; return its SHA-256."""
     fetched = served(url, EXHIBIT_TYPES)
     store.put(
         SEC_SOURCE_ID,
@@ -236,9 +248,30 @@ def save_unreadable(store, served: Served, url: str) -> None:
         rights_status=SEC_RIGHTS.rights_status,
         rights_basis=SEC_RIGHTS.rights_basis,
     )
-    saved_path = next((store.root / "sec-edgar").glob(f"{fetched.retrieval.sha256}.*"))
-    saved_path.write_bytes(b"changed")
     served.requested.clear()
+    return fetched.retrieval.sha256
+
+
+def save_unreadable(store, served: Served, url: str) -> None:
+    """Save the exhibit at ``url``, then change its saved bytes."""
+    sha = save_exhibit(store, served, url)
+    saved_path = next((store.root / "sec-edgar").glob(f"{sha}.*"))
+    saved_path.write_bytes(b"changed")
+
+
+def change_saved(store, url: str) -> None:
+    """Change the saved bytes of ``url``'s newest response."""
+    found = SavedResponses(store).get(url)
+    (store.repo / found.artifact.storage_ref).write_bytes(b"changed")
+
+
+def pilot_exhibit(frozen, served: Served, position: int = 0) -> str:
+    """An exhibit of the release filing of the pilot's event at ``position``: for
+    each of the first three, the filing's one candidate."""
+    event_id = frozen[2].rows[position].event_id
+    row = next(row for row in frozen[1].rows if row.event_id == event_id)
+    folder = row.release_accession.replace("-", "")
+    return next(url for url in served.bodies if f"/{folder}/" in url)
 
 
 def test_a_saved_exhibit_that_cannot_be_read_is_a_problem_never_fetched_again(
@@ -253,9 +286,152 @@ def test_a_saved_exhibit_that_cannot_be_read_is_a_problem_never_fetched_again(
     result = run(frozen, store, served, tmp_path)
     (problem,) = result.problems
     assert problem.startswith(f"{url}: ")
-    assert "repair the store by hand" in problem
+    assert problem.endswith(exhibit_remedy(url))
     assert url not in served.requested
     assert result.states[f"{first}:release"].to_state is E
+
+
+def test_unusable_exhibits_names_a_saved_pending_exhibit_that_cannot_be_read(
+    frozen, store, tmp_path
+) -> None:
+    served = Served()
+    url = pilot_exhibit(frozen, served)
+    states = tmp_path / "states"
+    assert unusable_exhibits(*frozen[1:], store, states) == ()
+    save_unreadable(store, served, url)
+    assert unusable_exhibits(*frozen[1:], store, states) == (url,)
+
+
+def test_planned_requests_counts_a_refetch_and_refuses_what_is_not_unusable(
+    frozen, store, tmp_path
+) -> None:
+    """The damaged exhibit is its document's one candidate, so its refetch is a
+    first choice too."""
+    served = Served()
+    url = pilot_exhibit(frozen, served)
+    save_unreadable(store, served, url)
+    states = tmp_path / "states"
+    assert planned_requests(*frozen[1:], store, states) == (26, 27)
+    assert planned_requests(*frozen[1:], store, states, refetch=[url]) == (27, 28)
+    usable, unsaved = pilot_exhibit(frozen, served, 1), pilot_exhibit(frozen, served, 2)
+    save_exhibit(store, served, usable)
+    for named in (usable, unsaved):
+        with pytest.raises(ValueError, match=re.escape(named)):
+            planned_requests(*frozen[1:], store, states, refetch=[url, named])
+
+
+def test_acquire_refetches_an_unusable_exhibit_and_acquires_its_document(
+    frozen, store, tmp_path
+) -> None:
+    served = Served()
+    first = frozen[2].rows[0].event_id
+    url = pilot_exhibit(frozen, served)
+    save_unreadable(store, served, url)
+    result = run(frozen, store, served, tmp_path, refetch=frozenset({url}))
+    assert served.requested.count(url) == 1
+    assert result.problems == ()
+    assert result.states[f"{first}:release"].to_state is P
+    assert len(store.quarantined) == 1
+
+
+def test_a_saved_exhibit_whose_bytes_are_gone_is_refetched_only_on_request(
+    frozen, store, tmp_path
+) -> None:
+    """A crash between the quarantine move and the rewrite leaves a retrieval
+    record whose bytes are gone (plan 25's Review Focus). A plain run names the
+    exhibit's remedy and fetches nothing for it, and the refetch then works."""
+    served = Served()
+    first = frozen[2].rows[0].event_id
+    url = pilot_exhibit(frozen, served)
+    save_exhibit(store, served, url)
+    found = SavedResponses(store).get(url)
+    (store.repo / found.artifact.storage_ref).unlink()
+    states = tmp_path / "states"
+    assert unusable_exhibits(*frozen[1:], store, states) == (url,)
+    assert planned_requests(*frozen[1:], store, states) == (26, 27)
+    assert planned_requests(*frozen[1:], store, states, refetch=[url]) == (27, 28)
+    plain = run(frozen, store, served, tmp_path / "plain")
+    (problem,) = plain.problems
+    assert problem.startswith(f"{url}: ")
+    assert problem.endswith(exhibit_remedy(url))
+    assert url not in served.requested
+    result = run(frozen, store, served, tmp_path, refetch=frozenset({url}))
+    assert served.requested.count(url) == 1
+    assert result.problems == ()
+    assert result.states[f"{first}:release"].to_state is P
+
+
+def test_an_exhibit_s_remedy_is_acquire_s_refetch() -> None:
+    url = "https://www.sec.gov/Archives/edgar/data/1/000000000125000001/x-ex991.htm"
+    assert exhibit_remedy(url) == (
+        f"refetch it: earnings-pipeline events acquire --refetch {url}"
+    )
+
+
+def test_a_refetch_of_a_later_candidate_counts_no_first_choice(
+    frozen, store, tmp_path
+) -> None:
+    """Acme's first exhibit is saved and reads, and its second cannot be read. Only
+    the second is listed, its refetch is not a first choice, and the run reads the
+    first from the store and fetches the second once."""
+    served = Served()
+    usable = next(u for u in served.bodies if u.endswith("acme-20250925-ex991.htm"))
+    later = next(u for u in served.bodies if u.endswith("acme-20250925-ex992.htm"))
+    save_exhibit(store, served, usable)
+    save_unreadable(store, served, later)
+    states = tmp_path / "states"
+    assert unusable_exhibits(*frozen[1:], store, states) == (later,)
+    assert planned_requests(*frozen[1:], store, states) == (26, 26)
+    assert planned_requests(*frozen[1:], store, states, refetch=[later]) == (26, 27)
+    result = run(frozen, store, served, tmp_path, refetch=frozenset({later}))
+    assert served.requested.count(later) == 1
+    assert usable not in served.requested
+    acme = result.states[f"{ACME_Q3}:release"]
+    assert (acme.to_state, acme.exhibit) == (P, "acme-20250925-ex992.htm")
+
+
+def test_a_parsed_document_s_unusable_exhibit_is_not_one_a_run_would_try(
+    frozen, store, tmp_path
+) -> None:
+    run(frozen, store, Served(), tmp_path)
+    url = pilot_exhibit(frozen, Served())
+    change_saved(store, url)
+    states = tmp_path / "states"
+    assert unusable_exhibits(*frozen[1:], store, states) == ()
+    with pytest.raises(ValueError, match=re.escape(url)):
+        planned_requests(*frozen[1:], store, states, refetch=[url])
+
+
+@pytest.mark.parametrize("page", ["index page", "primary document"])
+def test_an_unusable_filing_page_names_discover_s_refetch_and_is_never_fetched(
+    frozen, store, tmp_path, page
+) -> None:
+    """Acquisition never fetches an index page or a primary document, and refuses
+    to refetch one."""
+    first = frozen[2].rows[0].event_id
+    row = next(row for row in frozen[1].rows if row.event_id == first)
+    url = filing_index_url(row.cik, row.release_accession)
+    if page == "primary document":
+        index = read_filing_index(SavedResponses(store).get(url).text.body)
+        primary = next(d for d in index.documents if d.doc_type == index.form)
+        url = archive_url(row.cik, row.release_accession, primary.filename)
+    change_saved(store, url)
+    states = tmp_path / "states"
+    with pytest.raises(ValueError, match="events discover --refetch"):
+        planned_requests(*frozen[1:], store, states, refetch=[url])
+    served = Served()
+    result = run(frozen, store, served, tmp_path)
+    (problem,) = result.problems
+    assert problem.startswith(f"{url}: ")
+    assert problem.endswith(refetch_remedy(url))
+    assert url not in served.requested
+    assert result.states[f"{first}:release"].to_state is E
+
+
+def test_the_module_says_an_unusable_exhibit_is_refetched_only_on_request() -> None:
+    said = " ".join(acquire_module.__doc__.split())
+    assert "refetched only on an explicit, counted request" in said
+    assert "never fetched again" not in said
 
 
 ACME_Q3 = "cik-0009990001:2025-08-31"
@@ -548,6 +724,103 @@ def test_an_override_that_does_not_check_is_a_problem(
     assert any(problem in found for found in result.problems), result.problems
     if "event_id" not in change:
         assert result.states[f"{EASTFIELD_Q1}:release"].override_id is None
+
+
+def test_an_overrides_unusable_index_page_keeps_its_tag_and_names_a_remedy(
+    frozen, store, tmp_path
+) -> None:
+    """The store refuses the page's changed bytes with a plain ``ValueError``. The
+    problem still names the override, and its remedy is the page's refetch, since
+    acquisition never fetches an index page."""
+    accession = accession_of("0009990001", "2025-03-11 08:00:00")
+    override = document_override(
+        store,
+        "0009990001",
+        accession,
+        "acme-20250311-ex991.htm",
+        "cik-0009990001:2025-02-28",
+    )
+    url = filing_index_url("0009990001", accession)
+    change_saved(store, url)
+    served = Served()
+    result = run(frozen, store, served, tmp_path, overrides=(override,))
+    (problem,) = [
+        p for p in result.problems if p.startswith(f"{override.override_id}: ")
+    ]
+    assert problem.endswith(refetch_remedy(url))
+    assert url not in served.requested
+    assert not [u for u in served.requested if u.endswith(override.exhibit)]
+
+
+ACME_Q1 = "cik-0009990001:2025-02-28"
+EARLIER = "2025-03-11 08:00:00"
+"""Acme's 8-K that an override names for its release for 2025-02-28."""
+
+
+def test_an_overrides_index_page_whose_bytes_are_gone_keeps_its_tag(
+    frozen, store, tmp_path
+) -> None:
+    accession = accession_of("0009990001", EARLIER)
+    override = document_override(
+        store, "0009990001", accession, "acme-20250311-ex991.htm", ACME_Q1
+    )
+    url = filing_index_url("0009990001", accession)
+    found = SavedResponses(store).get(url)
+    (store.repo / found.artifact.storage_ref).unlink()
+    result = run(frozen, store, Served(), tmp_path, overrides=(override,))
+    (problem,) = [
+        p for p in result.problems if p.startswith(f"{override.override_id}: ")
+    ]
+    assert problem.endswith(refetch_remedy(url))
+
+
+def test_an_overrides_unsaved_index_page_names_discover_filing_and_no_refetch(
+    frozen, store, tmp_path
+) -> None:
+    late = accession_of("0009990006", LATE)
+    override = document_override(
+        store, "0009990006", late, "efb-20260717-ex991.htm", EASTFIELD_Q1
+    )
+    absent = "0009990006-26-000099"
+    changed = override.model_copy(update={"accession": absent})
+    result = run(frozen, store, Served(), tmp_path, overrides=(changed,))
+    url = filing_index_url("0009990006", absent)
+    assert (
+        f"{override.override_id}: {url} is not saved: run events discover --filing"
+        f" 0009990006 {absent}"
+    ) in result.problems
+
+
+def test_an_overrides_unusable_exhibit_is_refetched_only_on_request(
+    frozen, store, tmp_path
+) -> None:
+    """The override's exhibit, which no candidate is, is listed only under the
+    override. Without a refetch the run names its remedy and fetches nothing for
+    it; with one, it is fetched once and the override applies."""
+    accession = accession_of("0009990001", EARLIER)
+    override = document_override(
+        store, "0009990001", accession, "acme-20250311-ex991.htm", ACME_Q1
+    )
+    file = AcquisitionOverridesFile(schema_version=1, overrides=(override,))
+    served = Served()
+    url = next(u for u in served.bodies if u.endswith(override.exhibit))
+    save_unreadable(store, served, url)
+    states = tmp_path / "states"
+    assert unusable_exhibits(*frozen[1:], store, states) == ()
+    assert unusable_exhibits(*frozen[1:], store, states, file) == (url,)
+    assert planned_requests(*frozen[1:], store, states, file) == (26, 27)
+    assert planned_requests(*frozen[1:], store, states, file, refetch=[url]) == (
+        27,
+        28,
+    )
+    plain = run(frozen, store, served, tmp_path / "plain", overrides=(override,))
+    assert [p for p in plain.problems if p.endswith(exhibit_remedy(url))]
+    assert url not in served.requested
+    result = run(frozen, store, served, tmp_path, overrides=(override,), refetch=[url])
+    assert served.requested.count(url) == 1
+    assert result.problems == ()
+    state = result.states[f"{ACME_Q1}:release"]
+    assert (state.to_state, state.override_id) == (P, override.override_id)
 
 
 def test_an_override_of_a_parsed_document_is_a_problem(frozen, store, tmp_path) -> None:

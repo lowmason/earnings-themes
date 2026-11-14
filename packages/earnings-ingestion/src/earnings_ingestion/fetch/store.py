@@ -2,10 +2,18 @@
 
 Each source has a directory, named by its register ``source_id``. An artifact's bytes
 are stored once, named by their SHA-256, with one ``Retrieval`` record for each time
-they were fetched or registered, named by its time and its own hash. Every write goes to a temporary file and is
-hard-linked into place, which fails rather than replace an existing file: writing the
-same bytes again is a no-op, and different bytes raise ``FileExistsError`` (the capture
-store's rule, plan 5). Reprocessing reads these files and never fetches (A §410).
+they were fetched or registered, named by its time and its own hash. Every write goes
+to a temporary file and is hard-linked into place, which fails rather than replace an
+existing file: writing the same bytes again is a no-op, and different bytes raise
+``FileExistsError`` (the capture store's rule, plan 5). Reprocessing reads these files
+and never fetches (A §410).
+
+An artifact's name is the hash of its bytes, so different bytes at that name are
+damage, not a conflict. ``put`` moves them aside, to
+``<source_id>/quarantine/<artifact's SHA-256>/<their SHA-256><ext>``, and then writes
+the artifact again; damaged bytes are never deleted, and valid ones are never moved.
+The quarantine folder is in the source directory because ``os.link`` needs one
+filesystem. No reader looks in it.
 """
 
 import os
@@ -45,6 +53,7 @@ class ArtifactStore:
     def __init__(self, root: Path, repo: Path) -> None:
         self.root = root
         self.repo = repo
+        self.quarantined: list[Path] = []
 
     def put(
         self,
@@ -59,12 +68,37 @@ class ArtifactStore:
         if retrieval.sha256 != sha256_hex(body) or retrieval.byte_count != len(body):
             raise ValueError("the retrieval record describes other bytes")
         path = self._artifact_path(source_id, retrieval.sha256, retrieval.media_type)
+        self.quarantine(source_id, retrieval.sha256, retrieval.media_type)
         write_new(path, body)
         data = retrieval.model_dump_json().encode("utf-8")
         stamp = retrieval.retrieved_at.strftime("%Y%m%dT%H%M%S%fZ")
         name = f"{stamp}-{sha256_hex(data)[:12]}.json"
         write_new(self._retrieval_dir(source_id, retrieval.sha256) / name, data)
         return self._ref(path, body, retrieval, rights_status, rights_basis)
+
+    def quarantine(self, source_id: str, sha256: str, media_type: str) -> Path | None:
+        """Move the artifact's bytes aside if they no longer hash to ``sha256``, and
+        return where they went; ``None`` if the file is absent or its bytes are valid.
+
+        The move links the file at its new name before it unlinks the old one, so the
+        bytes always have a name, and it never replaces a file. Its new name is the
+        hash of the damaged bytes, so the same damage twice is kept once."""
+        path = self._artifact_path(source_id, sha256, media_type)
+        if not path.exists():
+            return None
+        damaged = path.read_bytes()
+        if sha256_hex(damaged) == sha256:
+            return None
+        folder = self.root / source_id / "quarantine" / sha256
+        target = folder / f"{sha256_hex(damaged)}{path.suffix}"
+        folder.mkdir(parents=True, exist_ok=True)
+        try:
+            os.link(path, target)
+        except FileExistsError:
+            pass  # The same bytes are already there: the name is their hash.
+        os.unlink(path)
+        self.quarantined.append(target)
+        return target
 
     def retrievals(self, source_id: str, sha256: str) -> tuple[Retrieval, ...]:
         """Every retrieval of the artifact, oldest first; empty if none is stored."""
@@ -164,7 +198,10 @@ class ArtifactStore:
 
 def write_new(path: Path, data: bytes) -> None:
     """Write ``data`` to a new file at ``path``, atomically; the same bytes again are
-    a no-op, and other bytes raise ``FileExistsError``."""
+    a no-op, and other bytes raise ``FileExistsError``. The file is synced to disk
+    before it is linked, so a crash cannot leave a linked file with no data. The
+    directory entry is not synced: a lost entry leaves a missing file, not a damaged
+    one."""
     if path.exists():
         if path.read_bytes() == data:
             return
@@ -174,6 +211,8 @@ def write_new(path: Path, data: bytes) -> None:
     try:
         with os.fdopen(handle, "wb") as out:
             out.write(data)
+            out.flush()
+            os.fsync(out.fileno())
         os.link(temporary, path)
     finally:
         os.unlink(temporary)

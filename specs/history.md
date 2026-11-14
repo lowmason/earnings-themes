@@ -26,3 +26,18 @@ Differences from the design:
 - Deviation (Task 2): the memo key holds the fragment name (D24-4), and `_light_material` also requires the top-level lists to be empty and each later marker to occur once (D24-5). Source: plan, Task 2.
 - Deviation (Task 3): `_check_material` takes `kind`, `RecursionError` joins the fallback list, and a test-only conftest shim keeps two existing cost tests unchanged (D24-6). Source: plan, Task 3.
 - Deferred: 1 item. Source: specs/deferred_items.md, § 24-cheaper-key-check.
+
+## 25-recover-unusable-saved-responses — 2026-11-13
+Plan: specs/plans/completed/25-recover-unusable-saved-responses.md · Spec: none
+
+Differences from the design:
+- Ruling: the owner's 'ship as planned, file it' decision covers the whole class 'responses that belong to a filing discovery does not read': an override's index page (acquisition or event override) and the index page/primary document of a set_release_filing-named filing without Item 2.02 — the manual-repair pointer in plan_refetch's refusal, Task 8's manual cases and the third deferred item name the whole class — the 'remedy that works' clause stays unmet for it; owner told in the final report.
+- Ruling (final review): the class in the ruling above was too wide. `read_back` reads the index page of every listed filing, so `discover --refetch` reaches an override's index page. The unreached class is the primary document of a filing that `release-id/1` passes over (an 8-K/A, or an 8-K whose index page lists no Item 2.02 or no EX-99* exhibit). The refusal text, the `events.acquire` docstring and "Repairing the store" say so (commits 2c8dd9d, 4251137), and the third deferred item names only that class.
+- Deviation (Task 4): `run_refetch` raises `RefetchInterrupted` (an `Exception` that carries `.partial` and has the original error as `__cause__`) on a mid-plan failure, so Task 5's CLI prints the partial `changed:` and `quarantined:` lines before the stop. The refusal for a saved URL that discovery does not read also names the manual repair in "Repairing the store". Source: plan, Task 4.
+- Deviation (Task 5): a stopped refetch ends with its own tail, not discover's tail. Source: plan, Task 5.
+- Deviation (Task 7): `acquire --refetch` prints each `quarantined:` line on every exit, a stop and Ctrl-C included, and has no `changed:` line. Source: plan, Task 7.
+- Deviation (Task 8): the manual repair's step 2 moves only the record files that step 1 found, and the artifact only if its bytes are damaged, not the whole `retrievals/<sha256>/` directory. Source: plan, Task 8.
+- Deferred: 4 items. Source: specs/deferred_items.md, § 25-recover-unusable-saved-responses.
+
+Closed earlier deferred items:
+- "Recover a saved response that is present but unusable (PR #6's review, P2.1" (deferred by PR #6 review).

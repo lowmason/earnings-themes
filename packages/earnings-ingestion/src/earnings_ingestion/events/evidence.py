@@ -17,6 +17,8 @@ it and nothing else. It holds URLs, hashes, and locators, never source text (P6-
 ``check_evidence`` verifies every citation again against a store.
 """
 
+from functools import cache
+
 from earnings_ingestion.cohort.locators import ArtifactText, LocatorError
 from earnings_ingestion.cohort.records import Citation
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
@@ -28,7 +30,7 @@ from earnings_ingestion.events.records import (
     EventManifest,
     FileEvidence,
 )
-from earnings_ingestion.events.saved import SavedResponses
+from earnings_ingestion.events.saved import SavedResponses, cited_remedy
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.data import Filing
 from earnings_ingestion.sec.urls import companyfacts_url
@@ -144,8 +146,10 @@ def _citations(events: EventCitations) -> list[tuple[str, Citation]]:
 
 def check_evidence(evidence: EventEvidence, store: ArtifactStore) -> tuple[str, ...]:
     """Every citation, and every file read, checked against ``store``'s saved bytes;
-    the problems found, or none."""
+    the problems found, or none. An artifact whose bytes are gone or changed is named
+    with ``cited_remedy``'s remedy, which reads the store's records only then."""
     problems = []
+    saved = cache(lambda: SavedResponses(store))
 
     def read(sha256: str) -> ArtifactText | None:
         try:
@@ -156,7 +160,8 @@ def check_evidence(evidence: EventEvidence, store: ArtifactStore) -> tuple[str, 
                 rights_basis=SEC_RIGHTS.rights_basis,
             )
         except (FileNotFoundError, ValueError) as exc:
-            problems.append(str(exc))
+            remedy = cited_remedy(saved(), sha256)
+            problems.append(f"{exc}; {remedy}" if remedy else str(exc))
             return None
         return ArtifactText(stored.body, stored.ref.media_type)
 

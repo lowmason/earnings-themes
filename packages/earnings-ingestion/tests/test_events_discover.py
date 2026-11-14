@@ -5,44 +5,95 @@ committed synthetic event layer, so no request leaves the process. Discovery mus
 request exactly the responses the build reads, each once, and never an exhibit.
 """
 
+import json
 import re
 import shutil
-from dataclasses import replace
-from datetime import timedelta
+from dataclasses import FrozenInstanceError, replace
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import httpx
 import pytest
+from earnings_core import sha256_hex
 from earnings_ingestion.cohort.freeze import load_manifest
+from earnings_ingestion.cohort.records import (
+    EvidenceLocator,
+    LocatorKind,
+    OverrideCitation,
+)
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
-from earnings_ingestion.events.build import build_events, load_overrides
-from earnings_ingestion.events.discover import discover, discover_filing
+from earnings_ingestion.events.build import (
+    EventBuildError,
+    _named_filing,
+    build_events,
+    citations_refused,
+    load_overrides,
+)
+from earnings_ingestion.events.discover import (
+    ReadBack,
+    discover,
+    discover_filing,
+    read_back,
+)
+from earnings_ingestion.events.evidence import check_evidence
 from earnings_ingestion.events.filings import issuer_filings
 from earnings_ingestion.events.fixture import (
     COHORT_MANIFEST,
     FIXTURE_DIR,
     SYNTHETIC_CORPUS,
 )
-from earnings_ingestion.events.freeze import load_event_manifest
+from earnings_ingestion.events.freeze import load_event_evidence, load_event_manifest
 from earnings_ingestion.events.layer import (
     ACME,
     BOREALIS,
     CORVID,
     DYNAMO,
+    EASTFIELD,
+    OLDER_PAGES,
+    RETRIEVED,
+    Registrant,
     Release,
     exhibit_bodies,
     filings,
 )
-from earnings_ingestion.events.saved import SavedResponses
-from earnings_ingestion.events.synthetic import eight_k, index_page, save
-from earnings_ingestion.fetch.client import UnexpectedResponse
+from earnings_ingestion.events.recover import (
+    Refetched,
+    RefetchInterrupted,
+    RefetchPlan,
+    expected_types,
+    plan_refetch,
+    run_refetch,
+)
+from earnings_ingestion.events.release import identify
+from earnings_ingestion.events.saved import (
+    SavedResponses,
+    cited_remedy,
+    refetch_remedy,
+)
+from earnings_ingestion.events.slots import issuer_slots
+from earnings_ingestion.events.synthetic import (
+    HTML,
+    JSON,
+    SyntheticFiling,
+    eight_k,
+    index_page,
+    older_page_entry,
+    retrieval_of,
+    save,
+    submissions_file,
+)
+from earnings_ingestion.fetch.client import AccessStop, UnexpectedResponse
 from earnings_ingestion.fetch.records import Retrieval
+from earnings_ingestion.fetch.responses import Fetched
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.client import open_sec_client
+from earnings_ingestion.sec.companyfacts import read_companyfacts
 from earnings_ingestion.sec.filing_index import read_filing_index
 from earnings_ingestion.sec.urls import (
     archive_url,
+    companyfacts_url,
     filing_index_url,
+    submissions_page_url,
     submissions_url,
 )
 
@@ -207,10 +258,17 @@ def test_discovery_names_each_saved_response_the_build_cannot_read(
     assert (recorder.requested, sent, result.fetched) == ([], 0, [])
     no_bytes = "for source 'sec-edgar': its retrieval records remain, but its bytes"
     assert result.problems == [
-        f"{submissions}: no artifact {gone[submissions]} {no_bytes} are gone",
-        f"{index}: the index page states no Accepted",
-        f"{document}: no artifact {gone[document]} {no_bytes} are gone",
+        (
+            f"{submissions}: no artifact {gone[submissions]} {no_bytes} are gone;"
+            f" {refetch_remedy(submissions)}"
+        ),
+        f"{index}: the index page states no Accepted; {refetch_remedy(index)}",
+        (
+            f"{document}: no artifact {gone[document]} {no_bytes} are gone;"
+            f" {refetch_remedy(document)}"
+        ),
     ]
+    assert result.unusable == [submissions, index, document]
 
 
 def test_discover_filing_saves_one_filing_and_an_8ks_document(
@@ -275,7 +333,9 @@ def test_discover_filing_checks_the_index_page_before_it_fetches_the_document(
         filing=(DYNAMO.cik, filing.accession),
     )
     assert recorder.requested == [index]
-    assert result.problems == [f"{index}: its form is 8-K/A, but its row's is 8-K"]
+    assert result.problems == [
+        f"{index}: its form is 8-K/A, but its row's is 8-K; {refetch_remedy(index)}"
+    ]
 
 
 def test_issuer_filings_lists_what_the_build_reads_and_lacks(tmp_path) -> None:
@@ -300,6 +360,647 @@ def test_issuer_filings_lists_what_the_build_reads_and_lacks(tmp_path) -> None:
         ).definition.public_information_cutoff,
     )
     assert (full.missing, full.problems) == ((), ())
+
+
+ACME_RELEASE = "0009990001-25-000008"
+"""Acme's release of 2025-03-20, whose index page an override of the corpus cites."""
+EASTFIELD_PAGE = submissions_page_url(OLDER_PAGES[EASTFIELD][0][0])
+"""Eastfield's older page whose dates meet the range, so the build reads it."""
+
+
+def populated(universe, layer, repo: Path) -> ArtifactStore:
+    """A store under ``repo`` that discovery filled from the synthetic layer."""
+    store = ArtifactStore(repo / "data" / "raw" / "events", repo)
+    run(universe, Recorder(layer), store)
+    return store
+
+
+def stored_at(store: ArtifactStore, url: str) -> Path:
+    """The file that holds the newest response saved from ``url``."""
+    return store.repo / SavedResponses(store).get(url).artifact.storage_ref
+
+
+def resave(store: ArtifactStore, url: str, body: bytes, media_type: str) -> None:
+    """Save ``body`` as a newer retrieval of ``url``, which the readers then read."""
+    later = SavedResponses(store).get(url).retrieved_at + timedelta(seconds=1)
+    save(store, url, body, media_type, later)
+
+
+def read_issuer(universe, store: ArtifactStore, registrant: Registrant):
+    definition = universe.definition
+    return issuer_filings(
+        SavedResponses(store),
+        registrant.cik,
+        f"cik-{registrant.cik}",
+        start=definition.period_end_start,
+        cutoff=definition.public_information_cutoff,
+    )
+
+
+def acme_filing(accepted: str) -> SyntheticFiling:
+    ((filing, _),) = [(f, e) for f, e in filings(ACME) if f.accepted == accepted]
+    return filing
+
+
+def bytes_gone(store, layer):
+    url = submissions_url(ACME.cik)
+    stored_at(store, url).unlink()
+    return ACME, url, refetch_remedy(url)
+
+
+def bytes_changed(store, layer):
+    url = filing_index_url(ACME.cik, ACME_RELEASE)
+    stored_at(store, url).write_bytes(b"<html><body>damaged</body></html>")
+    return ACME, url, refetch_remedy(url)
+
+
+def index_bytes_gone(store, layer):
+    url = filing_index_url(ACME.cik, ACME_RELEASE)
+    stored_at(store, url).unlink()
+    return ACME, url, refetch_remedy(url)
+
+
+def redirected_record(store, layer):
+    url = EASTFIELD_PAGE
+    saved = SavedResponses(store).get(url)
+    later = saved.retrieved_at + timedelta(seconds=1)
+    record = retrieval_of(url, saved.text.body, JSON, later).model_copy(
+        update={"final_url": f"{url}.moved"}
+    )
+    store.put(
+        SEC_SOURCE_ID,
+        saved.text.body,
+        record,
+        rights_status=SEC_RIGHTS.rights_status,
+        rights_basis=SEC_RIGHTS.rights_basis,
+    )
+    return EASTFIELD, url, refetch_remedy(url)
+
+
+def wrong_shape_submissions(store, layer):
+    url = submissions_url(ACME.cik)
+    resave(store, url, b"{}", JSON)
+    return ACME, url, refetch_remedy(url)
+
+
+def another_ciks_submissions(store, layer):
+    url = submissions_url(ACME.cik)
+    resave(store, url, layer[submissions_url(BOREALIS.cik)][0], JSON)
+    return ACME, url, refetch_remedy(url)
+
+
+def wrong_shape_older_page(store, layer):
+    url = EASTFIELD_PAGE
+    resave(store, url, b"{}", JSON)
+    return EASTFIELD, url, refetch_remedy(url)
+
+
+def received_for_accepted(store, layer):
+    url = filing_index_url(ACME.cik, ACME_RELEASE)
+    resave(store, url, layer[url][0].replace(b">Accepted<", b">Received<"), HTML)
+    return ACME, url, refetch_remedy(url)
+
+
+def another_accessions_index_page(store, layer):
+    url = filing_index_url(ACME.cik, ACME_RELEASE)
+    resave(store, url, index_page(ACME.cik, acme_filing("2025-03-11 08:00:00")), HTML)
+    return ACME, url, refetch_remedy(url)
+
+
+def an_index_page_of_another_form(store, layer):
+    url = filing_index_url(ACME.cik, ACME_RELEASE)
+    filing = replace(acme_filing("2025-03-20 16:05:00"), form="8-K/A")
+    resave(store, url, index_page(ACME.cik, filing), HTML)
+    return ACME, url, refetch_remedy(url)
+
+
+def listed_in_the_main_file_and_an_older_page(store, layer):
+    """Eastfield's submissions file, as the layer writes it, with one filing of its
+    older page that the build reads listed again among its recent filings."""
+    url = submissions_url(EASTFIELD.cik)
+    listed = [filing for filing, _ in filings(EASTFIELD)]
+    entries, paged = [], []
+    for name, since, until in OLDER_PAGES[EASTFIELD]:
+        inside = [f for f in listed if since <= f.accepted[:10] < until]
+        entries.append(older_page_entry(name, inside))
+        paged.append(inside)
+    recent = [f for f in listed if not any(f in inside for inside in paged)]
+    body = submissions_file(
+        EASTFIELD.cik,
+        EASTFIELD.name,
+        [*recent, paged[0][0]],
+        convention=EASTFIELD.convention,
+        older_pages=entries,
+    )
+    resave(store, url, body, JSON)
+    return (
+        EASTFIELD,
+        url,
+        refetch_remedy(url, "the submissions file with its older pages"),
+    )
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [
+        bytes_gone,
+        bytes_changed,
+        redirected_record,
+        wrong_shape_submissions,
+        another_ciks_submissions,
+        wrong_shape_older_page,
+        received_for_accepted,
+        another_accessions_index_page,
+        an_index_page_of_another_form,
+        listed_in_the_main_file_and_an_older_page,
+    ],
+)
+def test_each_damaged_response_is_unusable_never_missing(
+    universe, layer, tmp_path, damage
+) -> None:
+    """A saved response the readers cannot use is unusable, by URL, and its problem
+    names the refetch that replaces it; it is never missing, which discovery fetches."""
+    store = populated(universe, layer, tmp_path)
+    registrant, url, remedy = damage(store, layer)
+    read = read_issuer(universe, store, registrant)
+    assert read.unusable == (url,)
+    assert url not in read.missing
+    assert len([problem for problem in read.problems if problem.endswith(remedy)]) == 1
+
+
+def test_a_missing_response_is_missing_never_unusable(universe, tmp_path) -> None:
+    store = ArtifactStore(tmp_path / "data" / "raw" / "events", tmp_path)
+    url = submissions_url(ACME.cik)
+    read = read_issuer(universe, store, ACME)
+    assert read.unusable == ()
+    assert url in read.missing
+    assert read.problems == (f"nothing saved from {url}: run events discover",)
+
+
+def identification(universe, store: ArtifactStore, registrant: Registrant, event: str):
+    """``release-id/1``'s reading of one event's slot, read from ``store``."""
+    definition = universe.definition
+    saved = SavedResponses(store)
+    read = read_issuer(universe, store, registrant)
+    facts = read_companyfacts(saved.get(companyfacts_url(registrant.cik)).text.body)
+    made, _ = issuer_slots(
+        read,
+        facts,
+        f"cik-{registrant.cik}",
+        start=definition.period_end_start,
+        stop=definition.period_end_stop,
+    )
+    (slot,) = [slot for slot in made if slot.event_id == event]
+    return identify(
+        slot, read.releases, saved, cutoff=definition.public_information_cutoff
+    )
+
+
+def test_a_primary_document_that_cannot_be_read_is_unusable(
+    universe, layer, tmp_path
+) -> None:
+    """A plain-text document reads as ``unread``, a legitimate state; a document
+    whose bytes changed is unusable, and named once."""
+    store = populated(universe, layer, tmp_path)
+    filing = acme_filing("2024-09-26 16:05:00")
+    url = archive_url(ACME.cik, filing.accession, filing.primary_document)
+    event = "cik-0009990001:2024-08-31"
+    resave(store, url, b"Acme Industrial Corp posted its results.\n", "text/plain")
+    plain = identification(universe, store, ACME, event)
+    assert (plain.unusable, plain.problems) == ((), ())
+    assert plain.candidates[0].reading.unread == "it is text/plain, not HTML"
+    path = stored_at(store, url)
+    path.write_bytes(b"damaged")
+    damaged = identification(universe, store, ACME, event)
+    assert damaged.unusable == (url,)
+    assert damaged.problems == (
+        f"{url}: {path} no longer hashes to its name; {refetch_remedy(url)}",
+    )
+
+
+def test_a_damaged_companyfacts_file_names_a_remedy_in_the_build(
+    universe, layer, tmp_path
+) -> None:
+    store = populated(universe, layer, tmp_path)
+    url = companyfacts_url(ACME.cik)
+    stored_at(store, url).write_bytes(b"{}")
+    with pytest.raises(EventBuildError) as caught:
+        build_events(
+            universe,
+            SavedResponses(store),
+            load_overrides(REPO / FIXTURE_DIR / "overrides.toml"),
+            corpus_id=SYNTHETIC_CORPUS,
+        )
+    (problem,) = [p for p in caught.value.problems if p.startswith(url)]
+    assert problem.endswith(refetch_remedy(url))
+
+
+def test_a_cited_artifact_that_cannot_be_read_names_a_remedy_that_works(
+    universe, layer, tmp_path
+) -> None:
+    """A cited artifact is read by its hash. While it is its URL's newest response,
+    a refetch restores it. Once the URL is saved again with other bytes, a refetch
+    restores those, never the bytes the citation names."""
+    store = populated(universe, layer, tmp_path)
+    overrides = load_overrides(REPO / FIXTURE_DIR / "overrides.toml").overrides
+    (override,) = [o for o in overrides if o.override_id == "release-acme-2025-02-28"]
+    (citation,) = override.citations
+    url = filing_index_url(ACME.cik, ACME_RELEASE)
+    assert citation.url == url
+    folder = archive_url(ACME.cik, ACME_RELEASE, "")
+    path = stored_at(store, url)
+    good = path.read_bytes()
+    path.write_bytes(b"<html><body>damaged</body></html>")
+    damaged = f"release-acme-2025-02-28: {path} no longer hashes to its name"
+    assert citations_refused(override, SavedResponses(store), folder) == [
+        f"{damaged}; {refetch_remedy(url)}"
+    ]
+    manifest = load_event_manifest(REPO / FIXTURE_DIR / "events-v1.json")
+    evidence = load_event_evidence(
+        REPO / FIXTURE_DIR / "events-v1.evidence.json", manifest
+    )
+    problems = check_evidence(evidence, store)
+    assert problems
+    assert set(problems) == {
+        f"{path} no longer hashes to its name; {refetch_remedy(url)}"
+    }
+    path.write_bytes(good)
+    resave(store, url, good + b"\n", HTML)
+    path.write_bytes(b"<html><body>damaged</body></html>")
+    (line,) = citations_refused(override, SavedResponses(store), folder)
+    assert line.startswith(f"{damaged}; ")
+    assert "a refetch cannot restore" in line
+    assert "--refetch" not in line
+
+
+def test_discover_filing_names_the_unusable_file_it_cannot_list(
+    universe, layer, tmp_path
+) -> None:
+    """``--filing`` cannot fetch a saved submissions file, so for one it cannot
+    read it names the refetch, never "run events discover"."""
+    store = populated(universe, layer, tmp_path)
+    url = submissions_url(ACME.cik)
+    stored_at(store, url).write_bytes(b"{}")
+    recorder = Recorder(layer)
+    with pytest.raises(ValueError) as caught:
+        run(universe, recorder, store, filing=(ACME.cik, ACME_RELEASE))
+    assert str(caught.value).endswith(refetch_remedy(url))
+    assert recorder.requested == []
+
+
+def test_the_refetch_remedy_names_the_command_and_the_url() -> None:
+    url = submissions_url(ACME.cik)
+    command = f"earnings-pipeline events discover --refetch {url}"
+    assert refetch_remedy(url) == f"refetch it: {command}"
+    assert refetch_remedy(url, "the submissions file with its older pages") == (
+        f"refetch the submissions file with its older pages: {command}"
+    )
+
+
+def test_saved_responses_list_urls_by_prefix_and_every_hash_of_a_url(
+    tmp_path,
+) -> None:
+    store = ArtifactStore(tmp_path / "data" / "raw" / "events", tmp_path)
+    page = submissions_page_url("CIK0009990001-submissions-001.json")
+    main, facts = submissions_url(ACME.cik), companyfacts_url(ACME.cik)
+    for number, url in enumerate([page, facts, main]):
+        save(store, url, b"{}", JSON, RETRIEVED + timedelta(seconds=number))
+    save(store, main, b'{"saved": "again"}', JSON, RETRIEVED + timedelta(days=1))
+    saved = SavedResponses(store)
+    assert saved.urls() == (facts, page, main)
+    assert saved.urls(submissions_page_url("CIK0009990001")) == (page, main)
+    assert saved.hashes(main) == {sha256_hex(b"{}"), sha256_hex(b'{"saved": "again"}')}
+    assert saved.hashes(facts) == {sha256_hex(b"{}")}
+    assert saved.hashes(submissions_url(BOREALIS.cik)) == frozenset()
+
+
+def test_cited_remedy_names_the_url_whose_newest_response_the_artifact_is(
+    tmp_path,
+) -> None:
+    """An artifact saved from two URLs is restored by the one whose newest response
+    it still is; one whose URLs were all saved again cannot be restored."""
+    store = ArtifactStore(tmp_path / "data" / "raw" / "events", tmp_path)
+    first, second, third = (f"<p>{n}</p>".encode() for n in ("a", "b", "c"))
+    index = filing_index_url(ACME.cik, ACME_RELEASE)
+    copy = archive_url(ACME.cik, ACME_RELEASE, "copy.htm")
+    save(store, index, first, HTML, RETRIEVED)
+    save(store, index, second, HTML, RETRIEVED + timedelta(seconds=1))
+    save(store, copy, first, HTML, RETRIEVED)
+    other = archive_url(ACME.cik, ACME_RELEASE, "other.htm")
+    save(store, other, third, HTML, RETRIEVED)
+    save(store, other, second, HTML, RETRIEVED + timedelta(seconds=1))
+    saved = SavedResponses(store)
+    assert cited_remedy(saved, sha256_hex(first)) == refetch_remedy(copy)
+    assert cited_remedy(saved, sha256_hex(second)) == refetch_remedy(index)
+    assert cited_remedy(saved, sha256_hex(third)) == (
+        f"{other} was saved again with other bytes, so a refetch cannot restore a"
+        " citation that names these bytes by hash"
+    )
+    assert cited_remedy(saved, "0" * 64) == ""
+
+
+def an_accepted_time_daylight_saving_repeats(store, layer):
+    url = filing_index_url(ACME.cik, ACME_RELEASE)
+    body = layer[url][0].replace(b">2025-03-20 16:05:00<", b">2024-11-03 01:30:00<")
+    resave(store, url, body, HTML)
+    return ACME, url, refetch_remedy(url)
+
+
+def an_index_page_without_its_rows_document(store, layer):
+    url = filing_index_url(ACME.cik, ACME_RELEASE)
+    filing = replace(acme_filing("2025-03-20 16:05:00"), primary_document="x.htm")
+    resave(store, url, index_page(ACME.cik, filing), HTML)
+    return ACME, url, refetch_remedy(url)
+
+
+def listed_twice_in_the_main_file(store, layer):
+    url = submissions_url(ACME.cik)
+    listed = [filing for filing, _ in filings(ACME)]
+    body = submissions_file(
+        ACME.cik, ACME.name, [*listed, listed[3]], convention=ACME.convention
+    )
+    resave(store, url, body, JSON)
+    return ACME, url, refetch_remedy(url, "the submissions file with its older pages")
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [
+        an_accepted_time_daylight_saving_repeats,
+        an_index_page_without_its_rows_document,
+        listed_twice_in_the_main_file,
+    ],
+)
+def test_other_damaged_responses_are_unusable_never_missing(
+    universe, layer, tmp_path, damage
+) -> None:
+    store = populated(universe, layer, tmp_path)
+    registrant, url, remedy = damage(store, layer)
+    read = read_issuer(universe, store, registrant)
+    assert (read.unusable, read.missing) == ((url,), ())
+    (problem,) = read.problems
+    assert problem.endswith(remedy)
+
+
+def test_an_unusable_file_is_listed_once_for_all_its_problems(
+    universe, layer, tmp_path
+) -> None:
+    store = populated(universe, layer, tmp_path)
+    url = submissions_url(ACME.cik)
+    listed = [filing for filing, _ in filings(ACME)]
+    body = submissions_file(
+        ACME.cik, ACME.name, [*listed, *listed[3:5]], convention=ACME.convention
+    )
+    resave(store, url, body, JSON)
+    read = read_issuer(universe, store, ACME)
+    assert read.unusable == (url,)
+    remedy = refetch_remedy(url, "the submissions file with its older pages")
+    assert [problem.endswith(remedy) for problem in read.problems] == [True, True]
+
+
+def test_a_missing_primary_document_is_missing_never_unusable(
+    universe, layer, tmp_path, monkeypatch
+) -> None:
+    store = populated(universe, layer, tmp_path)
+    filing = acme_filing("2024-09-26 16:05:00")
+    url = archive_url(ACME.cik, filing.accession, filing.primary_document)
+    get = SavedResponses.get
+    monkeypatch.setattr(
+        SavedResponses, "get", lambda self, u: None if u == url else get(self, u)
+    )
+    found = identification(universe, store, ACME, "cik-0009990001:2024-08-31")
+    assert found.unusable == ()
+    assert found.problems == (f"nothing saved from {url}: run events discover",)
+
+
+def test_a_companyfacts_file_of_another_cik_names_a_remedy_in_the_build(
+    universe, layer, tmp_path
+) -> None:
+    store = populated(universe, layer, tmp_path)
+    url = companyfacts_url(ACME.cik)
+    resave(store, url, layer[companyfacts_url(BOREALIS.cik)][0], JSON)
+    with pytest.raises(EventBuildError) as caught:
+        build_events(
+            universe,
+            SavedResponses(store),
+            load_overrides(REPO / FIXTURE_DIR / "overrides.toml"),
+            corpus_id=SYNTHETIC_CORPUS,
+        )
+    assert caught.value.problems == (
+        f"{url} is the companyfacts file of CIK {BOREALIS.cik}; {refetch_remedy(url)}",
+    )
+
+
+def companyfacts_gone(store, layer):
+    url = companyfacts_url(ACME.cik)
+    stored_at(store, url).unlink()
+    return url
+
+
+def companyfacts_refused(store, layer):
+    url = companyfacts_url(ACME.cik)
+    resave(store, url, b"{}", JSON)
+    return url
+
+
+@pytest.mark.parametrize("damage", [companyfacts_gone, companyfacts_refused])
+def test_an_unusable_companyfacts_file_names_a_remedy_in_the_build(
+    universe, layer, tmp_path, damage
+) -> None:
+    """Its bytes gone, or valid bytes the reader refuses."""
+    store = populated(universe, layer, tmp_path)
+    url = damage(store, layer)
+    with pytest.raises(EventBuildError) as caught:
+        build_events(
+            universe,
+            SavedResponses(store),
+            load_overrides(REPO / FIXTURE_DIR / "overrides.toml"),
+            corpus_id=SYNTHETIC_CORPUS,
+        )
+    (problem,) = caught.value.problems
+    assert problem.startswith(f"{url}: ") and problem.endswith(refetch_remedy(url))
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [
+        bytes_changed,
+        index_bytes_gone,
+        received_for_accepted,
+        an_accepted_time_daylight_saving_repeats,
+        another_accessions_index_page,
+        an_index_page_of_another_form,
+    ],
+)
+def test_an_override_s_unusable_index_page_names_a_remedy(
+    universe, layer, tmp_path, damage
+) -> None:
+    """The build reads an override's filing only once its first stage has read every
+    saved index page, so this reads one that stage did not."""
+    store = populated(universe, layer, tmp_path)
+    definition = universe.definition
+    read = read_issuer(universe, store, ACME)
+    facts = SavedResponses(store).get(companyfacts_url(ACME.cik)).text.body
+    made, _ = issuer_slots(
+        read,
+        read_companyfacts(facts),
+        f"cik-{ACME.cik}",
+        start=definition.period_end_start,
+        stop=definition.period_end_stop,
+    )
+    (slot,) = [slot for slot in made if slot.event_id == "cik-0009990001:2025-02-28"]
+    _, url, remedy = damage(store, layer)
+    placed, why = _named_filing(
+        read,
+        SavedResponses(store),
+        ACME_RELEASE,
+        slot,
+        definition.public_information_cutoff,
+    )
+    assert placed is None
+    assert why.startswith(url) and why.endswith(remedy)
+
+
+def test_a_citation_a_refetch_cannot_mend_names_no_refetch(
+    universe, layer, tmp_path
+) -> None:
+    """A stale locator over valid bytes, and an artifact no saved retrieval names."""
+    store = populated(universe, layer, tmp_path)
+    overrides = load_overrides(REPO / FIXTURE_DIR / "overrides.toml").overrides
+    (override,) = [o for o in overrides if o.override_id == "release-acme-2025-02-28"]
+    (citation,) = override.citations
+    stale = citation.model_copy(
+        update={
+            "locator": citation.locator.model_copy(update={"cited_sha256": "0" * 64})
+        }
+    )
+    unknown = citation.model_copy(update={"artifact_sha256": "0" * 64})
+    folder = archive_url(ACME.cik, ACME_RELEASE, "")
+    saved = SavedResponses(store)
+    refused = [
+        citations_refused(
+            override.model_copy(update={"citations": (c,)}), saved, folder
+        )
+        for c in (stale, unknown)
+    ]
+    unknown_line = (
+        f"release-acme-2025-02-28: no artifact {'0' * 64} for source 'sec-edgar'"
+        f" under {store.root}"
+    )
+    assert refused == [
+        ["release-acme-2025-02-28: the cited content no longer hashes to cited_sha256"],
+        [unknown_line],
+    ]
+
+
+def test_a_cited_artifact_whose_bytes_are_gone_names_a_remedy(
+    universe, layer, tmp_path
+) -> None:
+    """Its retrieval records remain, so it was saved: a refetch restores it."""
+    store = populated(universe, layer, tmp_path)
+    overrides = load_overrides(REPO / FIXTURE_DIR / "overrides.toml").overrides
+    (override,) = [o for o in overrides if o.override_id == "release-acme-2025-02-28"]
+    (citation,) = override.citations
+    _, url, remedy = index_bytes_gone(store, layer)
+    assert citation.url == url
+    gone = (
+        f"no artifact {citation.artifact_sha256} for source 'sec-edgar': its"
+        f" retrieval records remain, but its bytes are gone; {remedy}"
+    )
+    folder = archive_url(ACME.cik, ACME_RELEASE, "")
+    assert citations_refused(override, SavedResponses(store), folder) == [
+        f"release-acme-2025-02-28: {gone}"
+    ]
+    manifest = load_event_manifest(REPO / FIXTURE_DIR / "events-v1.json")
+    evidence = load_event_evidence(
+        REPO / FIXTURE_DIR / "events-v1.evidence.json", manifest
+    )
+    problems = check_evidence(evidence, store)
+    assert problems
+    assert set(problems) == {gone}
+
+
+def test_a_locator_that_raises_a_plain_value_error_is_refused(
+    universe, layer, tmp_path
+) -> None:
+    """A pointer token that ``str.isdigit`` accepts and ``int`` refuses, a
+    superscript two, raises a plain ``ValueError``. The citation is refused, as one
+    whose locator no longer verifies, with no remedy: its saved bytes are valid."""
+    store = populated(universe, layer, tmp_path)
+    overrides = load_overrides(REPO / FIXTURE_DIR / "overrides.toml").overrides
+    (override,) = [o for o in overrides if o.override_id == "release-acme-2025-02-28"]
+    url = submissions_url(ACME.cik)
+    token = "\N{SUPERSCRIPT TWO}"
+    citation = OverrideCitation(
+        source_id=SEC_SOURCE_ID,
+        url=url,
+        artifact_sha256=SavedResponses(store).get(url).artifact.content_sha256,
+        locator=EvidenceLocator(
+            kind=LocatorKind.JSON_POINTER,
+            pointer=f"/filings/recent/accessionNumber/{token}",
+            cited_sha256="0" * 64,
+        ),
+    )
+    cited = override.model_copy(update={"citations": (citation,)})
+    assert citations_refused(cited, SavedResponses(store), None) == [
+        f"release-acme-2025-02-28: invalid literal for int() with base 10: '{token}'"
+    ]
+
+
+def test_evidence_no_saved_retrieval_names_has_no_remedy(tmp_path) -> None:
+    store = ArtifactStore(tmp_path / "data" / "raw" / "events", tmp_path)
+    manifest = load_event_manifest(REPO / FIXTURE_DIR / "events-v1.json")
+    evidence = load_event_evidence(
+        REPO / FIXTURE_DIR / "events-v1.evidence.json", manifest
+    )
+    problems = check_evidence(evidence, store)
+    under = re.escape(str(store.root))
+    assert problems
+    assert all(
+        re.fullmatch(
+            f"no artifact [0-9a-f]{{64}} for source 'sec-edgar' under {under}", p
+        )
+        for p in problems
+    )
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [
+        bytes_changed,
+        index_bytes_gone,
+        received_for_accepted,
+        another_accessions_index_page,
+    ],
+)
+def test_discover_filing_names_an_unusable_index_page_and_fetches_nothing(
+    universe, layer, tmp_path, damage
+) -> None:
+    store = populated(universe, layer, tmp_path)
+    _, url, remedy = damage(store, layer)
+    recorder = Recorder(layer)
+    result, sent, _ = run(universe, recorder, store, filing=(ACME.cik, ACME_RELEASE))
+    (problem,) = result.problems
+    assert problem.startswith(f"{url}: ") and problem.endswith(remedy)
+    assert (recorder.requested, sent) == ([], 0)
+
+
+def test_discover_filing_names_only_an_unusable_file_that_lists_filings(
+    universe, layer, tmp_path
+) -> None:
+    """An unusable older page may hold the filing; an unusable index page lists
+    none, so a filing no file lists still needs discovery."""
+    store = populated(universe, layer, tmp_path)
+    bytes_changed(store, layer)
+    with pytest.raises(ValueError) as caught:
+        run(universe, Recorder(layer), store, filing=(ACME.cik, "0009990001-99-000001"))
+    assert str(caught.value).endswith(": run events discover")
+    stored_at(store, EASTFIELD_PAGE).write_bytes(b"{}")
+    _, since, until = OLDER_PAGES[EASTFIELD][0]
+    (paged, *_) = [f for f, _ in filings(EASTFIELD) if since <= f.accepted[:10] < until]
+    with pytest.raises(ValueError) as caught:
+        run(universe, Recorder(layer), store, filing=(EASTFIELD.cik, paged.accession))
+    assert str(caught.value).endswith(refetch_remedy(EASTFIELD_PAGE))
 
 
 def test_stage_5_has_no_client_or_throttle_of_its_own() -> None:
@@ -333,3 +1034,523 @@ def test_a_response_saved_under_another_url_stops_discovery(
 
         with pytest.raises(RuntimeError, match="was fetched, and is still missing"):
             discover(universe, astray, store)
+
+
+def refetch(universe, store: ArtifactStore, plan: RefetchPlan, recorder: Recorder):
+    """``run_refetch`` through the shared SEC client, capped at the plan's count. Its
+    clock reads a minute ahead, so each refetched response is newer than any save a
+    damage helper made, which is a second after the newest."""
+    with open_sec_client(
+        environ=IDENTITY,
+        transport=recorder.transport(),
+        sleep=lambda seconds: None,
+        max_requests=plan.count,
+        now=lambda: datetime.now(UTC) + timedelta(minutes=1),
+    ) as sec:
+        return run_refetch(universe, plan, sec.fetch, store)
+
+
+def refused_as_usable(url: str) -> str:
+    return (
+        f"{url} is not among the responses discovery cannot use, and a refetch"
+        " replaces only those; an exhibit is refetched by earnings-pipeline events"
+        " acquire --refetch, a page behind an unusable submissions file is"
+        " classified once that file is refetched, and a response of a filing that"
+        " discovery does not read (the primary document of a filing that"
+        " release-id/1 passes over: an 8-K/A, or an 8-K whose index page lists no"
+        " Item 2.02 or no EX-99* exhibit) is repaired by hand: see"
+        ' "Repairing the store" in'
+        " docs/verification/djia-events.md"
+    )
+
+
+MANUAL_REPAIR = ('"Repairing the store"', "docs/verification/djia-events.md")
+"""What a refusal of a saved URL names for the manual repair."""
+
+
+def refused_as_unsaved(url: str) -> str:
+    return (
+        f"nothing saved from {url}: events discover fetches a missing response, and"
+        " events acquire a missing exhibit"
+    )
+
+
+UNSAVED_PAGE = submissions_page_url("CIK0009990006-submissions-002.json")
+"""Eastfield's older page whose dates miss the range: no reader reads it, and
+discovery never saves it."""
+
+
+def test_a_refetch_plan_names_only_unusable_responses(
+    universe, layer, tmp_path
+) -> None:
+    store = populated(universe, layer, tmp_path)
+    usable = submissions_url(ACME.cik)
+    assert UNSAVED_PAGE not in SavedResponses(store)
+    with pytest.raises(ValueError) as caught:
+        plan_refetch(universe, store, [])
+    assert str(caught.value) == "name at least one saved response to refetch"
+    with pytest.raises(ValueError) as caught:
+        plan_refetch(universe, store, [usable])
+    assert str(caught.value) == refused_as_usable(usable)
+    assert "replaces only those" in str(caught.value)
+    assert "events acquire --refetch" in str(caught.value)
+    assert all(name in str(caught.value) for name in MANUAL_REPAIR)
+    with pytest.raises(ValueError) as caught:
+        plan_refetch(universe, store, [UNSAVED_PAGE])
+    assert str(caught.value) == refused_as_unsaved(UNSAVED_PAGE)
+    assert not any(name in str(caught.value) for name in MANUAL_REPAIR)
+
+
+def test_a_refetch_plan_refuses_each_name_once_and_plans_nothing(
+    universe, layer, tmp_path
+) -> None:
+    """A page behind an unusable submissions file is not read, so it is refused
+    until that file is refetched; a usable name among refused ones plans nothing."""
+    store = populated(universe, layer, tmp_path)
+    main = submissions_url(EASTFIELD.cik)
+    stored_at(store, main).write_bytes(b"{}")
+    named = [UNSAVED_PAGE, EASTFIELD_PAGE, main, UNSAVED_PAGE, EASTFIELD_PAGE]
+    with pytest.raises(ValueError) as caught:
+        plan_refetch(universe, store, named)
+    assert str(caught.value) == "\n".join(
+        [refused_as_unsaved(UNSAVED_PAGE), refused_as_usable(EASTFIELD_PAGE)]
+    )
+
+
+def test_a_refetch_plan_adds_a_submissions_files_saved_older_pages(
+    universe, layer, tmp_path
+) -> None:
+    store = populated(universe, layer, tmp_path)
+    main = submissions_url(EASTFIELD.cik)
+    main_path, page_path = stored_at(store, main), stored_at(store, EASTFIELD_PAGE)
+    main_path.write_bytes(b"{}")
+    plan = plan_refetch(universe, store, [main])
+    assert plan.urls == (main, EASTFIELD_PAGE)
+    assert plan.count == 2
+    main_path.write_bytes(layer[main][0])
+    page_path.write_bytes(b"{}")
+    plan = plan_refetch(universe, store, [EASTFIELD_PAGE])
+    assert plan.urls == (EASTFIELD_PAGE,)
+    assert plan.count == 1
+
+
+def test_a_refetch_plan_lists_each_url_once_in_the_order_named(
+    universe, layer, tmp_path
+) -> None:
+    """Eastfield's submissions file lists a recent filing twice, so it is unusable
+    and its older page is still read; that page's bytes changed. An older page is
+    added by its URL, sorted, whether or not a reader reads it."""
+    store = populated(universe, layer, tmp_path)
+    main = submissions_url(EASTFIELD.cik)
+    save(store, UNSAVED_PAGE, b"{}", JSON, RETRIEVED)
+    data = json.loads(layer[main][0])
+    for column in data["filings"]["recent"].values():
+        column.append(column[0])
+    resave(store, main, json.dumps(data).encode(), JSON)
+    stored_at(store, EASTFIELD_PAGE).write_bytes(b"{}")
+    assert read_back(universe, SavedResponses(store)).unusable == (
+        EASTFIELD_PAGE,
+        main,
+    )
+    plan = plan_refetch(universe, store, [main, EASTFIELD_PAGE, main])
+    assert plan.urls == (main, EASTFIELD_PAGE, UNSAVED_PAGE)
+    assert plan.count == 3
+
+
+DAMAGED = b"<html><body>damaged</body></html>"
+"""The bytes ``bytes_changed`` writes over an index page."""
+
+
+@pytest.mark.parametrize(
+    ("damage", "moved"),
+    [(bytes_gone, None), (bytes_changed, DAMAGED), (received_for_accepted, None)],
+)
+def test_a_refetch_fetches_exactly_its_plan_and_mends_each_case(
+    universe, layer, tmp_path, damage, moved
+) -> None:
+    """Bytes gone are written fresh; bytes changed are moved aside first; a valid
+    response the reader refuses stays, and the newer retrieval wins. Each refetch
+    brings back the original bytes, which an earlier retrieval matches."""
+    store = populated(universe, layer, tmp_path)
+    _, url, _ = damage(store, layer)
+    plan = plan_refetch(universe, store, [url])
+    recorder = Recorder(layer)
+    result = refetch(universe, store, plan, recorder)
+    assert recorder.requested == [url]
+    assert result.problems == ()
+    assert (result.fetched, result.changed) == ((url,), ())
+    built = build_events(
+        universe,
+        SavedResponses(store),
+        load_overrides(REPO / FIXTURE_DIR / "overrides.toml"),
+        corpus_id=SYNTHETIC_CORPUS,
+    )
+    committed = load_event_manifest(REPO / FIXTURE_DIR / "events-v1.json")
+    assert built.content_hash == committed.definition.content_hash
+    if moved is None:
+        assert result.quarantined == ()
+    else:
+        (path,) = result.quarantined
+        assert path.is_file() and path.read_bytes() == moved
+        assert path.parent.parent == store.root / SEC_SOURCE_ID / "quarantine"
+
+
+def test_a_refetch_that_returns_other_bytes_is_reported_changed(
+    universe, layer, tmp_path
+) -> None:
+    """New bytes are a new artifact: the damaged file at the old name is left where
+    it is, and nothing is moved."""
+    store = populated(universe, layer, tmp_path)
+    _, url, _ = bytes_changed(store, layer)
+    recorder = Recorder({url: (layer[url][0] + b"\n", HTML)})
+    result = refetch(universe, store, plan_refetch(universe, store, [url]), recorder)
+    assert recorder.requested == [url]
+    assert result.changed == (url,)
+    assert (result.fetched, result.quarantined, result.problems) == ((url,), (), ())
+
+
+def test_a_refetch_that_still_cannot_be_used_reports_the_problem(
+    universe, layer, tmp_path
+) -> None:
+    store = populated(universe, layer, tmp_path)
+    _, url, _ = received_for_accepted(store, layer)
+    wrong = SavedResponses(store).get(url).text.body
+    recorder = Recorder({url: (wrong, HTML)})
+    result = refetch(universe, store, plan_refetch(universe, store, [url]), recorder)
+    assert result.fetched == (url,)
+    assert [p for p in result.problems if p.endswith(refetch_remedy(url))] == [
+        f"{url}: the index page states no Accepted; {refetch_remedy(url)}"
+    ]
+    assert result.changed == ()
+
+
+def test_a_refetch_reports_only_what_it_moved_and_each_path_once(
+    universe, layer, tmp_path
+) -> None:
+    """The store kept an earlier move; damage that recurs, the same bytes again, is
+    moved to the same path twice."""
+    store = populated(universe, layer, tmp_path)
+    borealis = f"/edgar/data/{int(BOREALIS.cik)}/"
+    earlier = min(u for u in layer if borealis in u and u.endswith("-index.htm"))
+    stored_at(store, earlier).write_bytes(b"earlier")
+    store.quarantine(SEC_SOURCE_ID, sha256_hex(layer[earlier][0]), HTML)
+    assert len(store.quarantined) == 1
+    url = filing_index_url(ACME.cik, ACME_RELEASE)
+    path = stored_at(store, url)
+    recorder = Recorder(layer)
+    with open_sec_client(
+        environ=IDENTITY,
+        transport=recorder.transport(),
+        sleep=lambda seconds: None,
+        now=lambda: datetime.now(UTC) + timedelta(minutes=1),
+    ) as sec:
+
+        def damaging(wanted: str, types: frozenset[str]):
+            path.write_bytes(DAMAGED)
+            return sec.fetch(wanted, types)
+
+        result = run_refetch(universe, RefetchPlan((url, url)), damaging, store)
+    folder = store.root / SEC_SOURCE_ID / "quarantine" / sha256_hex(layer[url][0])
+    assert len(store.quarantined) == 3
+    assert result.quarantined == (folder / f"{sha256_hex(DAMAGED)}.html",)
+    assert result.fetched == (url, url)
+    (problem,) = result.problems
+    assert problem.startswith(f"{earlier}: ") and "bytes are gone" in problem
+
+
+def test_expected_types_follow_the_url() -> None:
+    assert expected_types(companyfacts_url(ACME.cik)) == {"application/json"}
+    assert expected_types(EASTFIELD_PAGE) == {"application/json"}
+    assert expected_types(filing_index_url(ACME.cik, ACME_RELEASE)) == {"text/html"}
+    document = archive_url(ACME.cik, ACME_RELEASE, "acme-8k.htm")
+    assert expected_types(document) == {"text/html", "text/plain"}
+
+
+def test_read_back_names_an_unusable_companyfacts_file_and_goes_on(
+    universe, layer, tmp_path
+) -> None:
+    """Acme is read first; Corvid's candidate's primary document is read only once
+    its companyfacts file has made its slots, so the read went on."""
+    store = populated(universe, layer, tmp_path)
+    url = companyfacts_url(ACME.cik)
+    corvid = f"/edgar/data/{int(CORVID.cik)}/"
+    document = min(u for u in layer if corvid in u and not u.endswith("-index.htm"))
+    stored_at(store, document).unlink()
+    path = stored_at(store, url)
+    path.write_bytes(path.read_bytes()[:64])
+    read = read_back(universe, SavedResponses(store))
+    assert read.unusable == (url, document)
+    assert (
+        f"{url}: {path} no longer hashes to its name; {refetch_remedy(url)}"
+        in read.problems
+    )
+    assert len(read.problems) == 2
+
+
+def companyfacts_of_another_cik(store, layer):
+    url = companyfacts_url(ACME.cik)
+    resave(store, url, layer[companyfacts_url(BOREALIS.cik)][0], JSON)
+    return url
+
+
+@pytest.mark.parametrize(
+    "damage", [companyfacts_gone, companyfacts_refused, companyfacts_of_another_cik]
+)
+def test_read_back_names_each_unusable_companyfacts_file(
+    universe, layer, tmp_path, damage
+) -> None:
+    """Its bytes gone, valid bytes the reader refuses, or another CIK's file; a
+    missing one is fetched by discovery, and named by nothing here."""
+    store = populated(universe, layer, tmp_path)
+    url = damage(store, layer)
+    read = read_back(universe, SavedResponses(store))
+    assert read.unusable == (url,)
+    (problem,) = read.problems
+    assert problem.startswith(url) and problem.endswith(refetch_remedy(url))
+    if damage is companyfacts_of_another_cik:
+        assert problem == (
+            f"{url} is the companyfacts file of CIK {BOREALIS.cik};"
+            f" {refetch_remedy(url)}"
+        )
+
+
+def test_read_back_passes_over_a_missing_companyfacts_file(
+    universe, layer, tmp_path, monkeypatch
+) -> None:
+    store = populated(universe, layer, tmp_path)
+    url = companyfacts_url(ACME.cik)
+    get = SavedResponses.get
+    monkeypatch.setattr(
+        SavedResponses, "get", lambda self, u: None if u == url else get(self, u)
+    )
+    read = read_back(universe, SavedResponses(store))
+    assert (read.unusable, read.problems) == ((), ())
+
+
+def test_read_back_names_a_companyfacts_file_beside_an_unusable_submissions_file(
+    universe, layer, tmp_path
+) -> None:
+    """Both are named at once, so one refetch can replace both."""
+    store = populated(universe, layer, tmp_path)
+    facts = companyfacts_url(ACME.cik)
+    stored_at(store, facts).write_bytes(b"{}")
+    _, submissions, _ = bytes_gone(store, layer)
+    read = read_back(universe, SavedResponses(store))
+    assert read.unusable == (submissions, facts)
+    first, second = read.problems
+    assert first.endswith(refetch_remedy(submissions))
+    assert second.endswith(refetch_remedy(facts))
+
+
+def test_a_refetch_runs_no_discovery_phase(universe, layer, tmp_path) -> None:
+    """Dynamo's companyfacts file is missing, which a discovery phase would fetch."""
+    store = populated(universe, layer, tmp_path)
+    missing = companyfacts_url(DYNAMO.cik)
+    sha = SavedResponses(store).get(missing).artifact.content_sha256
+    shutil.rmtree(store.root / SEC_SOURCE_ID / "retrievals" / sha)
+    assert missing not in SavedResponses(store)
+    _, url, _ = bytes_changed(store, layer)
+    recorder = Recorder(layer)
+    result = refetch(universe, store, plan_refetch(universe, store, [url]), recorder)
+    assert recorder.requested == [url]
+    assert missing not in SavedResponses(store)
+    assert (result.fetched, result.problems) == ((url,), ())
+
+
+@pytest.mark.parametrize(
+    "record",
+    [ReadBack((), ()), RefetchPlan(()), Refetched((), (), (), ())],
+    ids=["ReadBack", "RefetchPlan", "Refetched"],
+)
+def test_a_read_back_and_a_refetch_are_frozen(record) -> None:
+    with pytest.raises(FrozenInstanceError):
+        record.problems = ("added",)
+
+
+def test_read_back_names_an_unusable_url_once_when_a_release_is_listed_twice(
+    universe, layer, tmp_path
+) -> None:
+    """A repeat refuses the submissions file but keeps both copies, so the release's
+    document is read twice; its URL is unusable once."""
+    store = populated(universe, layer, tmp_path)
+    filing = acme_filing("2024-09-26 16:05:00")
+    document = archive_url(ACME.cik, filing.accession, filing.primary_document)
+    main = submissions_url(ACME.cik)
+    listed = [f for f, _ in filings(ACME)]
+    body = submissions_file(
+        ACME.cik, ACME.name, [*listed, filing], convention=ACME.convention
+    )
+    resave(store, main, body, JSON)
+    stored_at(store, document).write_bytes(b"damaged")
+    read = read_back(universe, SavedResponses(store))
+    assert read.unusable == (main, document)
+
+
+def test_a_refetch_plan_refuses_a_damaged_response_discovery_does_not_read(
+    universe, layer, tmp_path
+) -> None:
+    """An exhibit, which only acquisition refetches (EV2), and a page behind an
+    unusable submissions file: each is saved and its bytes changed, but neither is
+    among the responses discovery cannot use."""
+    store = populated(universe, layer, tmp_path)
+    exhibit, (body, media_type) = min(exhibit_bodies().items())
+    save(store, exhibit, body, media_type, RETRIEVED)
+    main = submissions_url(EASTFIELD.cik)
+    paths = [stored_at(store, url) for url in (exhibit, EASTFIELD_PAGE, main)]
+    for path in paths:
+        path.write_bytes(path.read_bytes()[:16])
+    for url in (exhibit, EASTFIELD_PAGE):
+        with pytest.raises(ValueError, match="no longer hashes"):
+            SavedResponses(store).get(url)
+        with pytest.raises(ValueError) as caught:
+            plan_refetch(universe, store, [url])
+        assert str(caught.value) == refused_as_usable(url)
+        assert "events acquire --refetch" in str(caught.value)
+        assert "classified once that file is refetched" in str(caught.value)
+        assert all(name in str(caught.value) for name in MANUAL_REPAIR)
+
+
+def test_a_refetch_plan_names_the_manual_repair_for_a_filing_no_listing_reads(
+    universe, layer, tmp_path
+) -> None:
+    """Saved, and its bytes changed, but read by no reader of discovery: the index
+    page of a filing listed only on Eastfield's older page whose dates miss the
+    range, and the primary document of Dynamo's Item 7.01 8-K, which no slot reads.
+    The refusal names the manual repair."""
+    store = populated(universe, layer, tmp_path)
+    _, since, until = OLDER_PAGES[EASTFIELD][1]
+    (skipped, *_) = [
+        f for f, _ in filings(EASTFIELD) if since <= f.accepted[:10] < until
+    ]
+    index = filing_index_url(EASTFIELD.cik, skipped.accession)
+    save(store, index, index_page(EASTFIELD.cik, skipped), HTML, RETRIEVED)
+    (other,) = [
+        f for f, e in filings(DYNAMO) if isinstance(e, Release) and "7.01" in e.items
+    ]
+    document = archive_url(DYNAMO.cik, other.accession, other.primary_document)
+    body = eight_k(DYNAMO.name, [("7.01", ("An invented investor presentation.",))])
+    save(store, document, body, HTML, RETRIEVED)
+    for url in (index, document):
+        path = stored_at(store, url)
+        path.write_bytes(path.read_bytes()[:16])
+    unusable = read_back(universe, SavedResponses(store)).unusable
+    for url in (index, document):
+        assert url not in unusable
+        with pytest.raises(ValueError) as caught:
+            plan_refetch(universe, store, [url])
+        assert str(caught.value) == refused_as_usable(url)
+        assert all(name in str(caught.value) for name in MANUAL_REPAIR)
+
+
+def interrupted(universe, store: ArtifactStore, responses, fetch_through):
+    """``run_refetch`` of Acme's release index page, then a Borealis index page,
+    through ``fetch_through(sec.fetch)``; the ``RefetchInterrupted`` it raises."""
+    first = filing_index_url(ACME.cik, ACME_RELEASE)
+    borealis = f"/edgar/data/{int(BOREALIS.cik)}/"
+    second = min(u for u in responses if borealis in u and u.endswith("-index.htm"))
+    recorder = Recorder(responses)
+    with (
+        open_sec_client(
+            environ=IDENTITY,
+            transport=recorder.transport(),
+            sleep=lambda seconds: None,
+            now=lambda: datetime.now(UTC) + timedelta(minutes=1),
+        ) as sec,
+        pytest.raises(RefetchInterrupted) as caught,
+    ):
+        run_refetch(
+            universe,
+            RefetchPlan((first, second)),
+            fetch_through(sec.fetch, first, second),
+            store,
+        )
+    return caught.value, recorder
+
+
+UNEXPECTED = UnexpectedResponse("an invented unexpected response")
+"""What the shared client raises for a response it must not keep."""
+PERSISTENT_403 = AccessStop(
+    "403 persisted for the invented second URL; stopping without changing identity"
+)
+"""What the shared client raises for a persistent 403: an ``AccessStop``, never an
+``UnexpectedResponse``. It raises the same class for spent retries, a block page and
+a spent budget."""
+
+
+def stop_at(where: str, failure: Exception):
+    def through(fetch, first, second):
+        def stopping(url: str, types: frozenset[str]):
+            if url == {"first": first, "second": second}[where]:
+                raise failure
+            return fetch(url, types)
+
+        return stopping
+
+    return through
+
+
+def mismatched(fetch, first, second):
+    """Each response's body no longer matches its retrieval record: the save fails."""
+
+    def fetching(url: str, types: frozenset[str]):
+        response = fetch(url, types)
+        return Fetched(body=response.body + b"!", retrieval=response.retrieval)
+
+    return fetching
+
+
+@pytest.mark.parametrize(
+    "failure", [UNEXPECTED, PERSISTENT_403], ids=["unexpected", "persistent 403"]
+)
+@pytest.mark.parametrize(
+    ("damaged", "suffix"),
+    [(False, b"\n"), (True, b"")],
+    ids=["other bytes", "bytes changed"],
+)
+def test_a_refetch_stopped_partway_reports_what_it_saved(
+    universe, layer, tmp_path, damaged, suffix, failure
+) -> None:
+    """The first URL is saved before the second fails: what it changed, and where
+    it moved damaged bytes, survive in the interruption, for no rerun can tell."""
+    store = populated(universe, layer, tmp_path)
+    first = filing_index_url(ACME.cik, ACME_RELEASE)
+    if damaged:
+        stored_at(store, first).write_bytes(DAMAGED)
+    served = layer[first][0] + suffix
+    stopped, recorder = interrupted(
+        universe, store, {**layer, first: (served, HTML)}, stop_at("second", failure)
+    )
+    assert stopped.__cause__ is failure
+    assert recorder.requested == [first]
+    assert stopped.partial.fetched == (first,)
+    assert stopped.partial.problems == ()
+    assert SavedResponses(store).get(first).text.body == served
+    assert str(stopped) == "the refetch stopped after it saved 1 URL(s)"
+    if damaged:
+        folder = store.root / SEC_SOURCE_ID / "quarantine" / sha256_hex(served)
+        assert stopped.partial.changed == ()
+        assert stopped.partial.quarantined == (folder / f"{sha256_hex(DAMAGED)}.html",)
+    else:
+        assert stopped.partial.changed == (first,)
+        assert stopped.partial.quarantined == ()
+
+
+@pytest.mark.parametrize(
+    "through", [stop_at("first", UNEXPECTED), mismatched], ids=["fetch", "save"]
+)
+def test_a_refetch_stopped_at_its_first_url_saved_nothing(
+    universe, layer, tmp_path, through
+) -> None:
+    """A failed fetch, or a failed save, stops the refetch at its first URL."""
+    store = populated(universe, layer, tmp_path)
+    first = filing_index_url(ACME.cik, ACME_RELEASE)
+    stopped, recorder = interrupted(universe, store, layer, through)
+    assert stopped.partial == Refetched((), (), (), ())
+    assert str(stopped) == "the refetch stopped after it saved 0 URL(s)"
+    if through is mismatched:
+        assert recorder.requested == [first]
+        assert isinstance(stopped.__cause__, ValueError)
+        assert str(stopped.__cause__) == "the retrieval record describes other bytes"
+    else:
+        assert recorder.requested == []
+        assert stopped.__cause__ is UNEXPECTED

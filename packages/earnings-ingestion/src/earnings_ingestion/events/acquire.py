@@ -10,14 +10,14 @@ P8-6 to P8-12).
 - **Attempts.** It then attempts each document whose current state is ``expected``
   or ``acquired``. It reads the release filing's saved index page and Item 2.02 text,
   and tries the filing's ``EX-99*`` exhibits in R1.2's order (``exhibit_order``). A
-  saved exhibit is read from the store; any other is fetched and saved. The first
-  exhibit's bytes make the document ``acquired``. ``walker-1`` canonicalizes each,
-  and the first that ``release-content/1`` confirms makes it ``parsed``, with its
-  canonical document written under ``canonical_dir``. Otherwise the document is
-  ``unavailable`` with ``not_found`` when no exhibit could be fetched, ``failed``
-  with ``parse_failed`` and the first ``FailureReason`` when one failed to
-  canonicalize, and ``unavailable`` with ``no_confirmed_release`` when each fetched
-  canonicalized and none was confirmed. Every attempt is recorded.
+  saved exhibit is read from the store, unless ``refetch`` names it; any other is
+  fetched and saved. The first exhibit's bytes make the document ``acquired``.
+  ``walker-1`` canonicalizes each, and the first that ``release-content/1`` confirms
+  makes it ``parsed``, with its canonical document written under ``canonical_dir``.
+  Otherwise the document is ``unavailable`` with ``not_found`` when no exhibit could
+  be fetched, ``failed`` with ``parse_failed`` and the first ``FailureReason`` when
+  one failed to canonicalize, and ``unavailable`` with ``no_confirmed_release`` when
+  each fetched canonicalized and none was confirmed. Every attempt is recorded.
 - **Requests.** Only ``fetch`` sends, which ``events acquire`` gives as the shared
   SEC client's (R1.3, D5); acquisition has no throttle of its own. A response the
   client refuses (``UnexpectedResponse``: a status other than 200, an unexpected
@@ -36,11 +36,19 @@ P8-6 to P8-12).
   other filing's acceptance would change the event's eligibility, each marks a
   ``corpus_error`` for the next corpus version, and nothing is fixed in place (P8-11).
   An override that does not check is a problem, and its document is not attempted.
-- **Problems.** A saved response that cannot be read is a problem naming its repair;
-  it is never fetched again, and its document stays in the state the run recorded,
-  to be attempted again once the store is repaired. An override applied under its
-  ID and since edited to name another event or exhibit is a problem too: an applied
-  override is not edited in place.
+- **Problems.** A saved response that cannot be read is a problem, and its
+  document stays in the state the run recorded, to be attempted again once the
+  response is replaced. It is refetched only on an explicit, counted request. An
+  exhibit's problem ends with ``exhibit_remedy``: ``refetch`` names it, and
+  ``planned_requests`` counts it and refuses any URL that ``unusable_exhibits`` does
+  not list. A run never fetches an index page or a primary document. When discovery
+  reads one, its problem names ``events discover --refetch`` (``refetch_remedy``).
+  One of a filing discovery does not read (the primary document of a filing that
+  ``release-id/1`` passes over: an 8-K/A, or an 8-K whose index page lists no Item
+  2.02 or no ``EX-99*`` exhibit) is repaired by hand, though its problem names that
+  command: see "Repairing the store" in ``docs/verification/djia-events.md``. An
+  override applied under its ID and since edited to name another event or exhibit
+  is a problem too: an applied override is not edited in place.
 - **Canonical documents.** Each is written once under its ``doc_id``, which hashes
   its text. One already there that differs only in the Python, lxml, and libxml2
   versions its manifest records, as another environment writes it, is kept; any
@@ -50,7 +58,7 @@ P8-6 to P8-12).
 """
 
 import json
-from collections.abc import Callable, Collection, Iterable
+from collections.abc import Callable, Collection, Iterable, Iterator
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -83,7 +91,7 @@ from earnings_ingestion.events.records import (
     PilotManifest,
 )
 from earnings_ingestion.events.release import read_document
-from earnings_ingestion.events.saved import SavedResponses
+from earnings_ingestion.events.saved import SavedResponses, refetch_remedy
 from earnings_ingestion.events.state_table import read_runs, write_run
 from earnings_ingestion.events.states import (
     AttemptOutcome,
@@ -111,14 +119,15 @@ OVERRIDDEN = ATTEMPTED | {DocumentState.UNAVAILABLE, DocumentState.FAILED}
 OVERRIDES_FILE = "acquisition-overrides.toml"
 ENVIRONMENT = ("python_version", "lxml_version", "libxml2_version")
 """The manifest fields another environment writes differently for the same text."""
-REPAIR = (
-    "repair the store by hand: a saved response is never fetched again (PR #6's"
-    " review, P2.1)"
-)
 
 
 def document_id(event_id: str) -> str:
     return f"{event_id}:release"
+
+
+def exhibit_remedy(url: str) -> str:
+    """The command that replaces ``url``'s saved exhibit, which cannot be read."""
+    return f"refetch it: earnings-pipeline events acquire --refetch {url}"
 
 
 def load_acquisition_overrides(path: Path) -> AcquisitionOverridesFile:
@@ -159,7 +168,7 @@ def _filing(saved: SavedResponses, row: EventRow) -> _Filing:
         artifact = saved.get(url)
         index = None if artifact is None else read_filing_index(artifact.text.body)
     except (FileNotFoundError, SecDataError, ValueError) as exc:
-        raise ValueError(f"{url}: {exc}; {REPAIR}") from exc
+        raise ValueError(f"{url}: {exc}; {refetch_remedy(url)}") from exc
     if index is None:
         raise ValueError(f"{url} is not saved: run events discover")
     primary = [d for d in index.documents if d.doc_type == index.form]
@@ -169,7 +178,7 @@ def _filing(saved: SavedResponses, row: EventRow) -> _Filing:
         try:
             found = saved.get(document)
         except (FileNotFoundError, ValueError) as exc:
-            raise ValueError(f"{document}: {exc}; {REPAIR}") from exc
+            raise ValueError(f"{document}: {exc}; {refetch_remedy(document)}") from exc
         reading = None if found is None else read_document(found)
         if reading is not None and reading.sections:
             body, _ = found.text.canonical
@@ -231,33 +240,28 @@ def _applications(transitions: Iterable[StateRecord]) -> dict[str, Target]:
     return latest
 
 
-def planned_requests(
+def _tried(
     events: EventManifest,
     pilot: PilotManifest,
-    store: ArtifactStore,
+    saved: SavedResponses,
     states_dir: Path,
-    overrides: AcquisitionOverridesFile | None = None,
-) -> tuple[int, int]:
-    """What a run would fetch: the first choices not saved, and every candidate not
-    saved, over the documents it would attempt, an override's document counting as
-    both. The second is the most it sends before any retry: a retry after a 429 or
-    a server error adds one, within the approved count, the client's cap."""
-    saved = SavedResponses(store)
+    overrides: AcquisitionOverridesFile | None,
+) -> Iterator[tuple[str, ...]]:
+    """The exhibits a run would try for each document it would attempt, first choice
+    first; an override's document tries its one exhibit. A document whose filing's
+    pages cannot be read is left out: the run reports it."""
     rows = {row.event_id: row for row in events.rows}
     recorded = read_runs(states_dir)
     current = current_states(recorded, pilot.definition.content_hash)
     applications = _applications(recorded)
     named = {} if overrides is None else {o.event_id: o for o in overrides.overrides}
-    first = most = 0
     for pilot_row in pilot.rows:
         row = rows[pilot_row.event_id]
         override = named.get(row.event_id)
         applied = None if override is None else applications.get(override.override_id)
         pending = _pending(current.get(document_id(row.event_id)), override, applied)
         if pending == "override":
-            url = archive_url(row.cik, override.accession, override.exhibit)
-            if url not in saved:
-                first, most = first + 1, most + 1
+            yield (archive_url(row.cik, override.accession, override.exhibit),)
             continue
         if pending != "attempt":
             continue
@@ -265,13 +269,80 @@ def planned_requests(
             candidates = _filing(saved, row).candidates
         except ValueError:
             continue
-        urls = [
+        yield tuple(
             archive_url(row.cik, row.release_accession, c.document.filename)
             for c in candidates
-        ]
-        missing = [url for url in urls if url not in saved]
-        most += len(missing)
-        if urls and urls[0] in missing:
+        )
+
+
+def _unreadable(saved: SavedResponses, url: str) -> bool:
+    """Whether ``url`` is saved and its saved response cannot be read."""
+    if url not in saved:
+        return False
+    try:
+        saved.get(url)
+    except (FileNotFoundError, ValueError):
+        return True
+    return False
+
+
+def unusable_exhibits(
+    events: EventManifest,
+    pilot: PilotManifest,
+    store: ArtifactStore,
+    states_dir: Path,
+    overrides: AcquisitionOverridesFile | None = None,
+) -> tuple[str, ...]:
+    """The saved exhibits that a run would try and cannot read, each once, in the
+    order a run reaches them: what ``refetch`` may name."""
+    saved = SavedResponses(store)
+    tried = _tried(events, pilot, saved, states_dir, overrides)
+    return tuple(
+        dict.fromkeys(url for urls in tried for url in urls if _unreadable(saved, url))
+    )
+
+
+def _refusal(url: str, saved: SavedResponses) -> str:
+    if url not in saved:
+        return f"nothing saved from {url}: a run fetches an exhibit that is not saved"
+    return (
+        f"{url} is not a saved exhibit that a run would try and cannot read, and a"
+        " refetch replaces only those; an index page or a primary document is"
+        " refetched by earnings-pipeline events discover --refetch"
+    )
+
+
+def planned_requests(
+    events: EventManifest,
+    pilot: PilotManifest,
+    store: ArtifactStore,
+    states_dir: Path,
+    overrides: AcquisitionOverridesFile | None = None,
+    refetch: Collection[str] = (),
+) -> tuple[int, int]:
+    """What a run would fetch: the first choices to fetch, and every candidate to
+    fetch, over the documents it would attempt, an override's document counting as
+    both. An exhibit is fetched when it is not saved, or when ``refetch`` names it.
+    The second is the most it sends before any retry: a retry after a 429 or a
+    server error adds one, within the approved count, the client's cap.
+
+    ``refetch`` names only exhibits that ``unusable_exhibits`` lists; ``ValueError``
+    names each other URL, one to a line, before anything is counted."""
+    saved = SavedResponses(store)
+    documents = list(_tried(events, pilot, saved, states_dir, overrides))
+    tried = {url for urls in documents for url in urls}
+    refused = [
+        _refusal(url, saved)
+        for url in sorted(set(refetch))
+        if url not in tried or not _unreadable(saved, url)
+    ]
+    if refused:
+        raise ValueError("\n".join(refused))
+    first = most = 0
+    for urls in documents:
+        fetched = [url for url in urls if url not in saved or url in refetch]
+        most += len(fetched)
+        if urls and urls[0] in fetched:
             first += 1
     return first, most
 
@@ -321,13 +392,15 @@ def _exhibit(
     fetch: Fetch,
     url: str,
     fetched: list[str],
+    refetch: Collection[str],
 ) -> CitableArtifact:
-    """The exhibit at ``url``, read from the store, or fetched and saved."""
-    if url in saved:
+    """The exhibit at ``url``, read from the store, or fetched and saved when it is
+    not saved or ``refetch`` names it."""
+    if url in saved and url not in refetch:
         try:
             artifact = saved.get(url)
         except (FileNotFoundError, ValueError) as exc:
-            raise _Unusable(f"{url}: {exc}; {REPAIR}") from exc
+            raise _Unusable(f"{url}: {exc}; {exhibit_remedy(url)}") from exc
         assert artifact is not None
         return artifact
     got = fetch(url, EXHIBIT_TYPES)
@@ -383,6 +456,7 @@ def _attempt(
     fetch: Fetch,
     canonical_dir: Path,
     fetched: list[str],
+    refetch: Collection[str],
 ) -> StateTransition:
     attempts: list[ExhibitAttempt] = []
     failure = None
@@ -396,7 +470,7 @@ def _attempt(
             "choice": candidate.choice,
         }
         try:
-            artifact = _exhibit(saved, store, fetch, url, fetched)
+            artifact = _exhibit(saved, store, fetch, url, fetched, refetch)
         except UnexpectedResponse as refused:
             attempts.append(
                 ExhibitAttempt(
@@ -530,20 +604,21 @@ def _named(
     universe: UniverseManifest,
 ) -> _Named:
     """The override's filing, from its saved index page; raises ``ValueError``,
-    naming the override, when the page is not saved or does not check."""
+    naming the override, when the page is not saved or does not check, and the
+    page's refetch when it cannot be read."""
     tag = override.override_id
     url = filing_index_url(row.cik, override.accession)
     try:
         artifact = saved.get(url)
-        if artifact is None:
-            raise ValueError(
-                f"{tag}: {url} is not saved: run events discover --filing"
-                f" {row.cik} {override.accession}"
-            )
-        index = read_filing_index(artifact.text.body)
-        instant = accepted_instant(index.accepted)
-    except (FileNotFoundError, SecDataError, AcceptanceTimeError) as exc:
-        raise ValueError(f"{tag}: {url}: {exc}") from exc
+        index = None if artifact is None else read_filing_index(artifact.text.body)
+        instant = None if index is None else accepted_instant(index.accepted)
+    except (FileNotFoundError, SecDataError, AcceptanceTimeError, ValueError) as exc:
+        raise ValueError(f"{tag}: {url}: {exc}; {refetch_remedy(url)}") from exc
+    if index is None or instant is None:
+        raise ValueError(
+            f"{tag}: {url} is not saved: run events discover --filing"
+            f" {row.cik} {override.accession}"
+        )
     if index.accession != override.accession:
         raise ValueError(f"{tag}: {url} is the index page of {index.accession}")
     if override.exhibit not in {document.filename for document in index.documents}:
@@ -568,12 +643,13 @@ def _apply(
     fetch: Fetch,
     canonical_dir: Path,
     fetched: list[str],
+    refetch: Collection[str],
 ) -> StateTransition:
     """Take the override's document as the release, once it canonicalizes."""
     (document,) = [d for d in named.index.documents if d.filename == override.exhibit]
     url = archive_url(row.cik, override.accession, override.exhibit)
     try:
-        artifact = _exhibit(saved, store, fetch, url, fetched)
+        artifact = _exhibit(saved, store, fetch, url, fetched, refetch)
     except UnexpectedResponse as refused:
         raise ValueError(f"{override.override_id}: {refused}") from refused
     marks = {"override_id": override.override_id, "corpus_error": named.corpus_error}
@@ -644,9 +720,11 @@ def acquire(
     canonical_dir: Path,
     run_id: str,
     now: Callable[[], datetime] = lambda: datetime.now(UTC),
+    refetch: Collection[str] = (),
 ) -> Acquisition:
     """Acquire the release of each pilot event of ``pilot``, which must be frozen
-    over ``events``; ``universe`` is the one ``events`` read."""
+    over ``events``; ``universe`` is the one ``events`` read. Each exhibit that
+    ``refetch`` names is fetched again, as ``planned_requests`` counted it."""
     definition, read = pilot.definition, events.definition
     if (definition.event_manifest_version, definition.eligible_event_manifest_hash) != (
         read.event_manifest_version,
@@ -719,6 +797,7 @@ def acquire(
                         fetch,
                         canonical_dir,
                         fetched,
+                        refetch,
                     )
                 except (_Unusable, ValueError) as problem:
                     problems.append(str(problem))
@@ -737,6 +816,7 @@ def acquire(
                     fetch,
                     canonical_dir,
                     fetched,
+                    refetch,
                 )
             except (_Unusable, ValueError) as problem:
                 problems.append(str(problem))

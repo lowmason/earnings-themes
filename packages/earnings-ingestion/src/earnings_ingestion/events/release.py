@@ -50,7 +50,7 @@ from earnings_ingestion.cohort.locators import CitableArtifact, LocatorError
 from earnings_ingestion.cohort.records import Citation
 from earnings_ingestion.events.filings import RESULTS_ITEM, Placed
 from earnings_ingestion.events.records import EventReason, IdentificationMethod
-from earnings_ingestion.events.saved import SavedResponses
+from earnings_ingestion.events.saved import SavedResponses, refetch_remedy
 from earnings_ingestion.events.slots import Slot
 from earnings_ingestion.sec.companyfacts import FiscalLabels
 from earnings_ingestion.sec.urls import archive_url
@@ -292,6 +292,9 @@ class Identification:
     """``no_release_filing`` or ``several_release_filings`` when no release filing is
     identified."""
     problems: tuple[str, ...]
+    unusable: tuple[str, ...]
+    """The URLs of candidates' primary documents that are saved and cannot be used,
+    each named in ``problems`` with the command that refetches it."""
 
 
 def _passed_over(placed: Placed) -> str | None:
@@ -312,7 +315,7 @@ def identify(
         (p for p in releases if slot.period_end < p.accepted_on <= last),
         key=lambda p: (p.instant, p.filing.accession),
     )
-    candidates, amendments, passed_over, problems = [], [], [], []
+    candidates, amendments, passed_over, problems, unusable = [], [], [], [], []
     for placed in in_range:
         if placed.filing.form != "8-K":
             amendments.append(placed)
@@ -325,7 +328,8 @@ def identify(
         try:
             document = saved.get(url)
         except (FileNotFoundError, ValueError) as exc:
-            problems.append(f"{url}: {exc}")
+            problems.append(f"{url}: {exc}; {refetch_remedy(url)}")
+            unusable.append(url)
             document = None
         if document is None:
             if not problems or not problems[-1].startswith(url):
@@ -364,4 +368,5 @@ def identify(
         method=method,
         reason=reason,
         problems=tuple(problems),
+        unusable=tuple(unusable),
     )
