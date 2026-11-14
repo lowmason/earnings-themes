@@ -687,6 +687,27 @@ def test_older_pages_whose_dates_end_the_day_before_their_bounds_are_read(
     assert read.problems == ()
 
 
+def test_an_older_page_s_dates_need_not_match_its_entry_s_range(saved) -> None:
+    """Only the bound binds a page's dates (plan 26, owner default 5). The page's
+    last filing, on the Friday before a long weekend, is two days before its
+    ``filingTo``, and its first is a day after its ``filingFrom``."""
+    first = release(50, "2025-02-04 16:05:00", items=("8.01",))
+    last = release(51, "2025-02-14 16:05:00", items=("8.01",))
+    recent = release(60, "2025-02-18 16:05:00", items=("8.01",))
+    entry = older_page_entry(NEWER, [first, last]) | {
+        "filingFrom": "2025-02-03",
+        "filingTo": "2025-02-16",
+    }
+    saved.submissions([recent], pages=[entry])
+    saved.page(NEWER, [first, last])
+    read = saved.read()
+    assert [file.artifact.url for file in read.files] == [
+        submissions_url(CIK),
+        submissions_page_url(NEWER),
+    ]
+    assert read.problems == ()
+
+
 def test_the_newest_retrieval_of_each_url_is_read(saved) -> None:
     first = [release(29, "2024-10-24 16:05:12")]
     saved.submissions(first)
