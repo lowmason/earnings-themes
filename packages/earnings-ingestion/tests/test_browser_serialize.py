@@ -6,7 +6,12 @@ from pathlib import Path
 
 from earnings_core import ArtifactRef, RightsStatus
 from earnings_ingestion.browser.metadata import parse_metadata
-from earnings_ingestion.browser.records import RenderedCapture
+from earnings_ingestion.browser.records import (
+    BlockedRequest,
+    CaptureReason,
+    CaptureStatus,
+    RenderedCapture,
+)
 from earnings_ingestion.browser.serialize import (
     fixture_capture_json,
     from_capture_json,
@@ -64,6 +69,46 @@ def test_a_fixture_capture_drops_its_screenshots(make_capture: Make) -> None:
     assert kept.screenshots == ()
     assert kept == capture.model_copy(update={"screenshots": ()})
     assert capture.screenshots == (tile,)
+
+
+def test_a_fixture_capture_keeps_everything_but_its_screenshots(
+    make_capture: Make,
+) -> None:
+    tiles = tuple(
+        ArtifactRef.for_bytes(
+            f"tile {number}".encode(),
+            media_type="image/png",
+            storage_ref=f"data/runs/browser-capture/screenshots/{number}.png",
+            rights_status=RightsStatus.LOCAL_ONLY,
+            rights_basis="a rendering of a saved filing, kept local under data/runs/",
+        )
+        for number in (1, 2)
+    )
+    blocked = (
+        BlockedRequest(
+            url="https://example.invalid/site.css",
+            resource_type="Stylesheet",
+            required=True,
+        ),
+    )
+    changes = {
+        "status": CaptureStatus.PARTIAL,
+        "reason": CaptureReason.BLOCKED_REQUIRED_RESOURCE,
+        "detail": "a stylesheet was blocked",
+        "blocked_requests": blocked,
+    }
+    capture = make_capture(screenshots=tiles, **changes)
+    expected = make_capture(**changes)
+    assert fixture_capture_json(capture) == to_capture_json(expected)
+    assert from_capture_json(fixture_capture_json(capture)).blocked_requests == blocked
+
+
+def test_a_capture_without_screenshots_has_the_same_fixture_text_either_way(
+    make_capture: Make,
+) -> None:
+    capture = make_capture()
+    assert capture.screenshots == ()
+    assert fixture_capture_json(capture) == to_capture_json(capture)
 
 
 def test_the_capture_script_writes_through_fixture_capture_json() -> None:

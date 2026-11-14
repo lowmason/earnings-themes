@@ -1,10 +1,12 @@
 """The command line's browser setup, with the install replaced: no download here."""
 
+import ast
 import subprocess
 from pathlib import Path
 
 import httpx
 import pytest
+from earnings_ingestion.browser import install as install_module
 from earnings_ingestion.browser.install import Binaries, load_pin
 from earnings_pipeline import cli
 from typer.testing import CliRunner
@@ -67,3 +69,63 @@ def test_setup_reports_an_ordinary_failure_in_one_line(monkeypatch, tmp_path, er
     assert result.exit_code == 1
     assert isinstance(result.exception, SystemExit)
     assert result.stderr == f"Failed: {error}\n"
+
+
+def _status_error() -> httpx.HTTPStatusError:
+    request = httpx.Request("GET", "https://example.invalid/chrome.zip")
+    reply = httpx.Response(403, request=request)
+    return httpx.HTTPStatusError("403 Forbidden", request=request, response=reply)
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        _status_error(),
+        subprocess.CalledProcessError(1, ["chromedriver", "--version"]),
+        FileNotFoundError("chromedriver"),
+    ],
+    ids=["http-status", "subprocess-exit", "missing-file"],
+)
+def test_setup_reports_each_subclass_of_a_setup_failure_in_one_line(
+    monkeypatch, tmp_path, error
+):
+    def fail(pin, cache, fetch):
+        raise error
+
+    monkeypatch.setattr(cli, "load_pin", lambda: load_pin("mac-arm64"))
+    monkeypatch.setattr(cli, "install", fail)
+    result = RUNNER.invoke(cli.app, ["browser", "setup", "--cache", str(tmp_path)])
+    assert result.exit_code == 1
+    assert result.stderr == f"Failed: {error}\n"
+    assert "Refused" not in result.output
+
+
+def test_a_refused_archive_keeps_its_refused_line_and_prints_no_failed_line(
+    monkeypatch, tmp_path
+):
+    def refuse(pin, cache, fetch):
+        raise ValueError("chromedriver reports '153.0.0.0', not 154.0.8037.57")
+
+    monkeypatch.setattr(cli, "load_pin", lambda: load_pin("mac-arm64"))
+    monkeypatch.setattr(cli, "install", refuse)
+    result = RUNNER.invoke(cli.app, ["browser", "setup", "--cache", str(tmp_path)])
+    assert result.exit_code == 1
+    assert result.stderr == (
+        "Refused: chromedriver reports '153.0.0.0', not 154.0.8037.57\n"
+    )
+
+
+def test_the_cli_reaches_the_setup_failures_through_ingestion_not_httpx() -> None:
+    tree = ast.parse(Path(cli.__file__).read_text(encoding="utf-8"))
+    imported = {
+        alias.name.partition(".")[0]
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Import)
+        for alias in node.names
+    } | {
+        node.module.partition(".")[0]
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ImportFrom) and node.module
+    }
+    assert "httpx" not in imported
+    assert cli.SETUP_FAILURES is install_module.SETUP_FAILURES

@@ -6,12 +6,15 @@ print a version, so every path runs offline in milliseconds.
 
 import hashlib
 import stat
+import subprocess
 import zipfile
 from pathlib import Path
 
+import httpx
 import pytest
 from earnings_ingestion.browser import install as install_module
 from earnings_ingestion.browser.install import (
+    SETUP_FAILURES,
     Archive,
     Pin,
     install,
@@ -124,6 +127,35 @@ def test_install_raises_when_the_cache_holds_no_pin_afterwards(
     monkeypatch.setattr(install_module, "installed", lambda cache, pin: None)
     with pytest.raises(RuntimeError, match="holds no installed"):
         install(pin, tmp_path / "cache", fetch)
+
+
+def test_the_missing_pin_error_names_the_cache_and_the_version(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pin, zips = pinned(tmp_path)
+
+    def fetch(archive: Archive, path: Path) -> None:
+        path.write_bytes(zips[archive.name].read_bytes())
+
+    cache = tmp_path / "cache"
+    monkeypatch.setattr(install_module, "installed", lambda cache, pin: None)
+    with pytest.raises(RuntimeError) as raised:
+        install(pin, cache, fetch)
+    assert str(raised.value) == (
+        f"{cache} holds no installed 154.0.8037.57 after the install"
+    )
+
+
+def test_the_setup_failures_cover_each_ordinary_install_failure() -> None:
+    assert isinstance(SETUP_FAILURES, tuple)
+    for error in (
+        OSError("No space left on device"),
+        httpx.ConnectError("no route to host"),
+        subprocess.TimeoutExpired(["chrome", "--version"], 60),
+        RuntimeError("the cache holds no installed pin after the install"),
+    ):
+        assert isinstance(error, SETUP_FAILURES)
+    assert not isinstance(ValueError("chrome: got 3 bytes"), SETUP_FAILURES)
 
 
 def test_an_archive_that_is_not_the_pinned_one_is_refused(tmp_path: Path) -> None:
