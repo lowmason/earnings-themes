@@ -512,13 +512,32 @@ def test_two_issuers_may_each_choose_the_release_they_share() -> None:
     assert shared_releases(rows, chosen) == []
 
 
+def test_shared_releases_are_listed_by_accession() -> None:
+    """Each refusal is listed by its filing's accession, so one issuer's order never
+    depends on another's."""
+    rows = [
+        SimpleNamespace(event_id=event_id, issuer_id=issuer, release_accession=release)
+        for event_id, issuer, release in [
+            ("cik-0000000004:2025-03-31", "cik-0000000004", "0000000004-25-000001"),
+            ("cik-0000000004:2025-06-30", "cik-0000000004", "0000000004-25-000001"),
+            ("cik-0000000005:2025-03-31", "cik-0000000005", "0000000003-25-000009"),
+            ("cik-0000000005:2025-06-30", "cik-0000000005", "0000000003-25-000009"),
+        ]
+    ]
+    refused = [line.split(" would")[0] for line in shared_releases(rows, {})]
+    assert refused == [
+        "release-id/1: 0000000003-25-000009",
+        "release-id/1: 0000000004-25-000001",
+    ]
+
+
 def test_each_repeated_finding_id_is_named_with_its_issuers() -> None:
     findings = [
         SimpleNamespace(finding_id=finding_id, issuer_id=issuer)
         for finding_id, issuer in [
+            ("acceptance_time_unknown:0000000009-25-000003", "cik-0000000007"),
             ("acceptance_time_mismatch:0000000009-25-000002", "cik-0000000008"),
             ("acceptance_time_mismatch:0000000009-25-000001", "cik-0000000008"),
-            ("acceptance_time_unknown:0000000009-25-000003", "cik-0000000007"),
             ("acceptance_time_mismatch:0000000009-25-000002", "cik-0000000002"),
             ("acceptance_time_mismatch:0000000009-25-000002", "cik-0000000005"),
             ("acceptance_time_unknown:0000000009-25-000003", "cik-0000000001"),
