@@ -1,6 +1,7 @@
 """Phase-by-phase passes and frozen-policy runs. No pass or fresh run changes state."""
 
 import json
+from collections import Counter
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, replace
 from datetime import datetime
@@ -515,9 +516,23 @@ def bind_policy(
         raise
 
 
+def _cut_claims(loaded: LoadedPass) -> frozenset[tuple[str, str]]:
+    """D21-35: the claims the live pass stopped at its request ceiling.
+
+    A cut claim sent no request, so no cache entry exists and a replay reports it as
+    `replay_miss`. Only these claims may replay that way.
+    """
+    return frozenset(
+        (c.doc_id, c.claim_id)
+        for c in loaded.proposal.classifications
+        if c.status == "incomplete" and c.reason == "requests_exhausted"
+    )
+
+
 def verify_replay_cache(config: WorkflowConfig, loaded: LoadedPass) -> None:
     """Exercise every primary replay request before publication or state changes."""
     check_cache_paths(config, None)
+    cut = _cut_claims(loaded)
     runtime = replay_runtime(config)
     proposal = propose_run(
         config.coding_run_id,
@@ -531,6 +546,8 @@ def verify_replay_cache(config: WorkflowConfig, loaded: LoadedPass) -> None:
         software=config.software,
     )
     for row in proposal.classifications:
+        if row.reason == "replay_miss" and (row.doc_id, row.claim_id) in cut:
+            continue
         if row.reason in {"replay_miss", "replay_dispatch_forbidden"}:
             raise WorkflowError("replay_miss")
         if row.reason in {
@@ -564,6 +581,24 @@ def verify_replay_cache(config: WorkflowConfig, loaded: LoadedPass) -> None:
                 "malformed_record",
             }:
                 raise WorkflowError(row.reason)
+
+
+def _replay_failed(coding, cut: frozenset[tuple[str, str]]) -> bool:
+    """Whether a replayed coding run holds a miss beyond the cut claims' own."""
+    tolerated = sum(
+        1
+        for row in coding.classifications
+        if row.reason == "replay_miss" and (row.doc_id, row.claim_id) in cut
+    )
+    counted = Counter()
+    for reason, count in (
+        *coding.record.counts_by_reason,
+        *coding.record.counts_by_decision_reason,
+    ):
+        counted[reason] += count
+    return (
+        counted["replay_dispatch_forbidden"] > 0 or counted["replay_miss"] > tolerated
+    )
 
 
 def make_run(
@@ -612,13 +647,8 @@ def make_run(
             raise WorkflowError(result.reason or "processing_failed")
     coding = read_coding_run(coding_dir)
     # Cache misses can be represented as refused/incomplete stage rows; none is a successful replay.
-    if fresh is None and any(
-        reason in {"replay_miss", "replay_dispatch_forbidden"}
-        for reason, _ in (
-            *coding.record.counts_by_reason,
-            *coding.record.counts_by_decision_reason,
-        )
-    ):
+    # D21-35: except the `replay_miss` of a claim the live pass cut at its request ceiling.
+    if fresh is None and _replay_failed(coding, _cut_claims(loaded)):
         raise WorkflowError("replay_miss")
     pass_path = (
         confined_path(
