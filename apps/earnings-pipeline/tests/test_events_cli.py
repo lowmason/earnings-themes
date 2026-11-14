@@ -1509,3 +1509,29 @@ def test_acquire_prints_each_quarantined_file_once(repo, moved, monkeypatch) -> 
     )
     moves = [line for line in acquire_lines(result) if line.startswith("quarantined:")]
     assert moves == [quarantined]
+
+
+def test_acquire_refetch_names_each_exhibit_once_in_the_order_given(
+    repo, moved, monkeypatch
+) -> None:
+    """The first three pilot rows' exhibits, named out of the order a run reaches
+    them and out of sorted order, one twice: one refetch line for each, in the order
+    named, and each move after the run, in the order the run made it."""
+    first, second, third = (pilot_exhibit(position) for position in range(3))
+    moves = [truncate(repo, url) for url in (first, second, third)]
+    budgets = client(monkeypatch, {**served(), **exhibit_bodies()})
+    named = [
+        arg for url in (second, third, first, second) for arg in ("--refetch", url)
+    ]
+    result = run(repo, "acquire", *named, "--max-requests", "4", store=EVENTS_STORE)
+    assert result.exit_code == 0, result.output
+    assert budgets == [4]
+    lines = acquire_lines(result)
+    assert lines[4:8] == [
+        "at most 4 requests to SEC, through the shared client; 4 first choices",
+        f"refetch: {second}",
+        f"refetch: {third}",
+        f"refetch: {first}",
+    ]
+    assert lines[8] == "  1  cik-0009990003:2026-03-31:release  parsed"
+    assert lines[-3:] == moves
