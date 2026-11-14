@@ -859,7 +859,7 @@
       release text. Size: quick-fix. Revisit if: a `RunRecord` map key can hold
       model or release text, or Stage 6's freeze lifts.
       → triggered 2026-11-13: Plan 12's freeze list (specs/plans/completed/12-evidence-selection-and-verification-plan-b.md, lines 230-231) names packages/earnings-themes/src/earnings_themes/records.py as a frozen Stage 6 module, yet that file changed later in ee68622 (2026-10-12) and a3b12c4 (2026-10-13). This is a reading of "Stage 6's freeze", not a decision that it lifted. The fix is still open: describe in records.py keeps a map key in the path when the key's value is refused (checked 2026-11-13 with a one-key dict).
-      → done 2026-11-13 (/deferred quick fix): `describe(error, model)` redacts each path part that names no field in the model's tree, and `parse` and `parse_reply` pass their model; test `test_a_map_key_whose_value_is_refused_stays_out_of_the_path`.
+      → done 2026-11-13 (/deferred quick fix): `describe(error, model)` redacts each path part that names no field in the model's tree, and `parse` passes its model (`parse_reply` does not: `Reply` holds no dict, and its problems are resend feedback inside the extraction cache key); test `test_a_map_key_whose_value_is_refused_stays_out_of_the_path`.
 - [ ] Keep the live test's failure output to IDs and counts (plan 12's review's
       M9-4; deferred by the user).
       packages/earnings-themes/tests/test_extraction_live.py's assertions over

@@ -1889,6 +1889,22 @@ def test_coverage_v2_counts_no_theme_over_version_1_s_runs(repo) -> None:
     assert (repo / EVALUATION / "coverage-v2.json").read_bytes() == kept
 
 
+def test_no_theme_takes_the_call_the_pilot_coverage_gate_makes(repo) -> None:
+    """``pilot_reporting.coverage_gate`` calls ``_no_theme(layout, pinned,
+    run_ids)``, and its tests stub the gate out, so this pins that call: it gives
+    the rows coverage v2 froze."""
+    frozen(repo)
+    assert run(repo, "pilot", "coverage").exit_code == 0
+    signed_training(repo, no_theme=FIRST)
+    assert run(repo, "pilot", "coverage", "--version", "2").exit_code == 0
+    layout = Layout(repo, COHORT_MANIFEST, FIXTURE_DIR / "pilot-v1.json", PILOT_HASH)
+    pinned = load_pinned(layout)
+    first = load_coverage(repo / EVALUATION / "coverage-v1.json")
+    second = load_coverage(repo / EVALUATION / "coverage-v2.json")
+    rows = pilot_cli._no_theme(layout, pinned, first.run_ids)
+    assert tuple(rows) == second.no_theme
+
+
 def test_coverage_v2_names_bad_gold_while_other_gold_is_missing(repo) -> None:
     """P17-4 (2): a bundle with no gold does not hide a problem with gold that is
     committed; both are named in one run."""

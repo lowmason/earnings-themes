@@ -112,13 +112,16 @@ Version = Annotated[
 def _no_theme(
     layout: Layout,
     pinned: Pinned,
-    moves: Sequence[StateTransition],
     run_ids: tuple[str, ...],
+    moves: Sequence[StateTransition] | None = None,
 ) -> list[NoThemeCount]:
     """Train's and dev's no-theme rows over the bundles with a parsed document
     under ``run_ids``. Each bundle needs committed gold whose pin, split, partition,
     codebook, signature, and ``no_theme`` hold, read without its document (R12.4).
-    A problem with committed gold is named even while other gold is missing."""
+    A problem with committed gold is named even while other gold is missing.
+    ``moves`` are the state transitions, read here when the caller has none."""
+    if moves is None:
+        moves = transitions(layout)
     under = [t for t in moves if t.run_id in run_ids]
     parsed = parsed_documents(under, pinned.pin.pilot_hash)
     split = pinned_split(layout, pinned)
@@ -191,7 +194,7 @@ def coverage_command(context: typer.Context, version: Version = 1) -> None:
                 f"Refused: {layout.shown(first)} is not frozen; coverage v2 reads its"
                 " runs: run pilot coverage"
             )
-        no_theme = _no_theme(layout, pinned, moves, run_ids)
+        no_theme = _no_theme(layout, pinned, run_ids, moves)
     try:
         report = build_coverage(
             pinned.pilot,

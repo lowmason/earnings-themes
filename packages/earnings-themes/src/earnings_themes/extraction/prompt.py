@@ -125,7 +125,7 @@ def parse_reply(text: str) -> Reply | tuple[str, ...]:
     try:
         return Reply.model_validate_json(text)
     except ValidationError as error:
-        return describe(error, Reply)
+        return describe(error)
 
 
 def unusable_feedback(problems: Sequence[str]) -> str:
