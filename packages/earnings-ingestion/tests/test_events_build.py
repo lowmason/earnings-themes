@@ -2,6 +2,7 @@
 P7-15 and P7-16), over the synthetic event layer and Stage 4's synthetic cohort.
 """
 
+from dataclasses import replace
 from datetime import UTC, date, datetime
 from pathlib import Path
 from types import SimpleNamespace
@@ -17,6 +18,7 @@ from earnings_ingestion.events.build import (
     EventBuildError,
     build_events,
     release_refusal,
+    repeated_finding_ids,
     shared_releases,
 )
 from earnings_ingestion.events.layer import (
@@ -46,6 +48,7 @@ from earnings_ingestion.events.synthetic import (
     SyntheticFiling,
     SyntheticStore,
     companyfacts_file,
+    eight_k,
     save,
     submissions_file,
 )
@@ -492,6 +495,48 @@ def test_only_one_issuer_s_events_may_not_share_a_release() -> None:
     assert shared_releases([*rows, *one_issuer], {}) == [f"release-id/1: {shared}"]
 
 
+def test_two_issuers_may_each_choose_the_release_they_share() -> None:
+    """The refusal is per issuer, so an override that names a co-registrant's 8-K for
+    each of two issuers' events is no more refused than the rule's own pick."""
+    rows = [
+        SimpleNamespace(event_id=event_id, issuer_id=issuer, release_accession=shared)
+        for event_id, issuer, shared in [
+            ("cik-0000000001:2025-03-31", "cik-0000000001", "0000000001-25-000001"),
+            ("cik-0000000002:2025-03-31", "cik-0000000002", "0000000001-25-000001"),
+        ]
+    ]
+    chosen = {
+        row.event_id: (SimpleNamespace(override_id=f"set-{n}"), None)
+        for n, row in enumerate(rows)
+    }
+    assert shared_releases(rows, chosen) == []
+
+
+def test_each_repeated_finding_id_is_named_with_its_issuers() -> None:
+    findings = [
+        SimpleNamespace(finding_id=finding_id, issuer_id=issuer)
+        for finding_id, issuer in [
+            ("acceptance_time_mismatch:0000000009-25-000002", "cik-0000000008"),
+            ("acceptance_time_mismatch:0000000009-25-000001", "cik-0000000008"),
+            ("acceptance_time_unknown:0000000009-25-000003", "cik-0000000007"),
+            ("acceptance_time_mismatch:0000000009-25-000002", "cik-0000000002"),
+            ("acceptance_time_mismatch:0000000009-25-000002", "cik-0000000005"),
+            ("acceptance_time_unknown:0000000009-25-000003", "cik-0000000001"),
+        ]
+    ]
+    assert repeated_finding_ids(findings) == [
+        (
+            "acceptance_time_mismatch:0000000009-25-000002: 3 findings share this ID,"
+            " under cik-0000000002, cik-0000000005, cik-0000000008"
+        ),
+        (
+            "acceptance_time_unknown:0000000009-25-000003: 2 findings share this ID,"
+            " under cik-0000000001, cik-0000000007"
+        ),
+    ]
+    assert repeated_finding_ids(findings[:3]) == []
+
+
 def test_a_set_release_filing_must_cite_the_filing_verifiably(universe, layer) -> None:
     good = choose(layer, ACME_SET, ACME, "2025-03-20 16:05:00")
     (citation,) = good.citations
@@ -725,6 +770,42 @@ def test_a_co_registrant_8k_is_each_issuer_s_release(universe, tmp_path) -> None
     second = rows["cik-0009990003:2025-03-31"]
     assert first.issuer_id != second.issuer_id
     assert first.release_accession == second.release_accession == shared.accession
+
+
+def test_a_repeated_finding_id_stops_the_build_before_overrides_resolve(
+    universe, tmp_path
+) -> None:
+    """Dynamo's 8-K of 2026-07-21, written with an acceptanceDateTime that follows
+    neither convention, is also listed under Corvid, so two findings share one ID.
+    The build reports the repeat alone, before it reads any override, so a refused
+    override waits for the next build."""
+    layer = write_layer(tmp_path / "data" / "raw" / "events", tmp_path)
+    saved = SavedResponses(layer.store)
+    mismatch = accession(DYNAMO, "2026-07-21 06:45:00")
+    (listed,) = [f for f, _ in filings(DYNAMO) if f.accession == mismatch]
+    shared = replace(listed, written="2026-07-21T12:00:00.000Z")
+    later = RETRIEVED.replace(day=29)
+    for registrant in (DYNAMO, CORVID):
+        kept = [f for f, _ in filings(registrant) if f.accession != mismatch]
+        body = submissions_file(
+            registrant.cik,
+            registrant.name,
+            [*kept, shared],
+            convention=registrant.convention,
+        )
+        save(layer.store, submissions_url(registrant.cik), body, JSON, later)
+    index = filing_index_url(CORVID.cik, mismatch)
+    page = saved.get(filing_index_url(DYNAMO.cik, mismatch)).text.body
+    layer.put(index, page, HTML)
+    document = eight_k(CORVID.name, [("2.02", ("Corvid announced.",))])
+    layer.document(CORVID.cik, shared, document)
+    nothing = retain("keep", "cik-0009990001:2024-09-30", EventReason.NO_RELEASE_FILING)
+    assert refused(universe, layer, nothing) == (
+        (
+            f"acceptance_time_mismatch:{mismatch}: 2 findings share this ID,"
+            " under cik-0009990003, cik-0009990005"
+        ),
+    )
 
 
 def test_a_companyfacts_file_of_another_registrant_stops_the_build(
