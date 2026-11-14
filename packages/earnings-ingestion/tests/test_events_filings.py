@@ -297,6 +297,37 @@ def test_the_latest_report_before_the_window_with_no_value_still_blocks(
     assert finding.kind is EventFindingKind.ACCEPTANCE_TIME_UNKNOWN
 
 
+def test_an_older_report_raises_nothing_when_the_latest_has_no_value_either(
+    saved,
+) -> None:
+    """The latest report before the window bounds the rest whether or not its own
+    side of the cutoff is known: it blocks, and the older report does not."""
+    older = periodic(60, date(2023, 12, 31), "2024-02-20 16:30:00", written="")
+    latest = periodic(70, date(2024, 3, 31), "2024-05-02 16:30:00", written="")
+    inside = periodic(90, date(2024, 9, 30), "2024-11-04 16:30:00")
+    saved.submissions([older, latest, inside])
+    (finding,) = saved.read().findings
+    assert finding.finding_id == f"acceptance_time_unknown:{latest.accession}"
+
+
+def test_a_visible_report_older_than_the_latest_before_the_window_is_kept(
+    saved,
+) -> None:
+    """Only a report whose side of the cutoff is unknown is passed over below the
+    latest report before the window: a visible one is placed as before."""
+    older = periodic(60, date(2023, 12, 31), "2024-02-20 16:30:00")
+    latest = periodic(70, date(2024, 3, 31), "2024-05-02 16:30:00")
+    inside = periodic(90, date(2024, 9, 30), "2024-11-04 16:30:00")
+    saved.submissions([older, latest, inside])
+    read = saved.read()
+    assert [p.filing.accession for p in read.periodic] == [
+        older.accession,
+        latest.accession,
+        inside.accession,
+    ]
+    assert read.findings == ()
+
+
 def test_the_latest_report_before_the_window_is_the_issuer_s_not_its_file_s(
     saved,
 ) -> None:
