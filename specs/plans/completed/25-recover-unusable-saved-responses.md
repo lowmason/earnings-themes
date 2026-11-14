@@ -1,5 +1,9 @@
 # Recover Unusable Saved Responses Implementation Plan
 
+**Status: COMPLETE (2026-11-13)** — executed via subagent-driven-development; deferred items in specs/deferred_items.md
+
+Outcome: all eight tasks and the owner-approved follow-up landed. The five targeted test files pass (228 tests) and Ruff is clean at the last commit. The final whole-branch review (Opus) found one Important text defect, fixed in `2c8dd9d` and `4251137`. One part of "each problem line names a remedy that works" stays unmet: the primary document of a filing that `release-id/1` passes over still needs the manual repair (third item filed below). The Codex seat did not run. The root suite is the owner's gate and was not run by an agent.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** An operator can recover a saved SEC response that is present but unusable, through an explicit, counted, opt-in refetch, and the append-only store only ever moves damaged bytes aside.
@@ -142,7 +146,7 @@ uv run --locked ruff check packages apps tests && uv run --locked ruff format --
 - Consumes: none.
 - Produces: `write_new(path: Path, data: bytes) -> None`, same signature and same no-op/`FileExistsError` rules. Callers (`freeze`, `state_table`, `pilot`, `ArtifactStore.put`) change in no way.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```python
 def test_a_file_is_synced_before_it_is_linked(tmp_path, monkeypatch) -> None:
@@ -157,16 +161,16 @@ def test_a_failed_sync_leaves_nothing_at_the_path(tmp_path, monkeypatch) -> None
     assert list(tmp_path.iterdir()) == []
 ```
 
-- [ ] **Step 2: Run to verify they fail**
+- [x] **Step 2: Run to verify they fail**
 
 Run: `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_fetch_store.py -m "not live and not browser" -q`
 Expected: the first test FAILS with `calls == ['link']`.
 
-- [ ] **Step 3: Implement.** In `write_new`, call `out.flush()` and `os.fsync(out.fileno())` inside the `with` block, before `os.link`. The existing `finally: os.unlink(temporary)` already cleans up. Sync the file only. A lost directory entry leaves a missing artifact, which is the "bytes gone" case and is recoverable.
+- [x] **Step 3: Implement.** In `write_new`, call `out.flush()` and `os.fsync(out.fileno())` inside the `with` block, before `os.link`. The existing `finally: os.unlink(temporary)` already cleans up. Sync the file only. A lost directory entry leaves a missing artifact, which is the "bytes gone" case and is recoverable.
 
-- [ ] **Step 4: Run to verify they pass.** Same command; expected: all pass. Run Ruff.
+- [x] **Step 4: Run to verify they pass.** Same command; expected: all pass. Run Ruff.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/earnings-ingestion/src/earnings_ingestion/fetch/store.py packages/earnings-ingestion/tests/test_fetch_store.py
@@ -183,7 +187,7 @@ git commit -m "feat(store): sync a new file before it is linked"
 - Consumes: Task 1's `write_new`.
 - Produces: `ArtifactStore.quarantine(self, source_id: str, sha256: str, media_type: str) -> Path | None` and `ArtifactStore.quarantined: list[Path]` (every path this object moved, oldest first). `ArtifactStore.put` calls `quarantine` before it writes the artifact. `write_new` is unchanged: a frozen manifest or state file that differs is still a real conflict.
 
-- [ ] **Step 1: Write the failing tests** in `test_fetch_store.py`, with `store_in`, `retrieval`, `BODY`, `RIGHTS`, `WHEN`:
+- [x] **Step 1: Write the failing tests** in `test_fetch_store.py`, with `store_in`, `retrieval`, `BODY`, `RIGHTS`, `WHEN`:
   - `test_changed_bytes_are_moved_aside_by_a_rewrite_never_deleted`: put, then `path.write_bytes(BODY[:5])`, then put again with `retrieval(when=WHEN + timedelta(days=1))`. Assert `store.get(...)` returns `BODY`. Assert the damaged bytes sit at `path.parent / "quarantine" / sha256_hex(BODY) / f"{sha256_hex(BODY[:5])}.html"` and `read_bytes() == BODY[:5]`. Assert `store.quarantined == [that path]` and two retrievals.
   - `test_bytes_that_are_gone_need_no_quarantine`: unlink the artifact, put again. `store.quarantined == []`, no `quarantine` folder, `get` works.
   - `test_valid_bytes_are_never_moved_or_replaced`: put twice. The artifact's `st_ino` is unchanged and `store.quarantined == []`.
@@ -193,18 +197,18 @@ git commit -m "feat(store): sync a new file before it is linked"
   
   In `test_cohort_acquire.py`, `test_a_hand_saved_page_over_changed_bytes_is_quarantined`: `register_saved` a page (`NOW`), truncate `cohort_repo / ref.storage_ref`, `register_saved` the same bytes with `saved_at=NOW + timedelta(days=1)`. No error, `store.get(...)` returns the body, `len(store.quarantined) == 1`. This is the `cohort/acquire.py` clause.
 
-- [ ] **Step 2: Run to verify they fail.** Same command with both files. Expected: the changed-bytes tests FAIL with `FileExistsError: ...holds other bytes`.
+- [x] **Step 2: Run to verify they fail.** Same command with both files. Expected: the changed-bytes tests FAIL with `FileExistsError: ...holds other bytes`.
 
-- [ ] **Step 3: Implement `quarantine` and the `put` call.**
+- [x] **Step 3: Implement `quarantine` and the `put` call.**
   - Compute the artifact path with `_artifact_path`. Return `None` if it does not exist, or if its bytes hash to `sha256`.
   - Otherwise name the target `root / source_id / "quarantine" / sha256 / f"{sha256_hex(damaged)}{path.suffix}"` and create its folder.
   - Rename with `os.link(path, target)`, then `os.unlink(path)`. Never `os.rename`, which would replace a file. A `FileExistsError` from the link means the same bytes are already there (the name is their hash), so go on to the unlink.
   - Append the target to `self.quarantined` and return it. Set `self.quarantined = []` in `__init__`.
   - Update the module docstring: different bytes at an artifact's name are damage, `put` moves them aside and writes the artifact again, and the folder is in the source directory because `os.link` needs one filesystem.
 
-- [ ] **Step 4: Run to verify they pass,** then Ruff.
+- [x] **Step 4: Run to verify they pass,** then Ruff.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/earnings-ingestion/src/earnings_ingestion/fetch/store.py packages/earnings-ingestion/tests/test_fetch_store.py packages/earnings-ingestion/tests/test_cohort_acquire.py
@@ -225,7 +229,7 @@ git commit -m "feat(store): quarantine changed artifact bytes instead of refusin
   - `SavedResponses.urls(self, prefix: str = "") -> tuple[str, ...]`, sorted, and `SavedResponses.hashes(self, url: str) -> frozenset[str]`, the SHA-256 of every retrieval ever saved from `url`. `SavedResponses.__init__` already reads every record, so it keeps both indexes.
   - `IssuerFilings.unusable: tuple[str, ...]` and `Identification.unusable: tuple[str, ...]`: URLs that are saved and cannot be used, never in `missing`.
 
-- [ ] **Step 1: Write the failing tests** in `test_events_discover.py` (reuse `universe`, `layer`, `run`, `Recorder`, `save` from `events.synthetic`, and the `issuer_filings(...)` call shown by `test_issuer_filings_lists_what_the_build_reads_and_lacks`). Populate a store with `run(universe, Recorder(layer), store)`, damage one file, and read the issuer back.
+- [x] **Step 1: Write the failing tests** in `test_events_discover.py` (reuse `universe`, `layer`, `run`, `Recorder`, `save` from `events.synthetic`, and the `issuer_filings(...)` call shown by `test_issuer_filings_lists_what_the_build_reads_and_lacks`). Populate a store with `run(universe, Recorder(layer), store)`, damage one file, and read the issuer back.
   - `test_each_damaged_response_is_unusable_never_missing`, parametrized: bytes gone (unlink); bytes changed (`write_bytes`); redirected record (`put` a record whose `final_url` differs); wrong-shape submissions (`save` `b"{}"`); another CIK's submissions bytes; wrong-shape older page (Eastfield `-001`); an index page stating "Received" for "Accepted"; another accession's index page; an index page that disagrees with its row (another form); one accession listed in the main file and in an older page. `events.synthetic.index_page`, `submissions_file` and `older_page_entry` build such pages. Each asserts the URL is in `filings.unusable` and not in `filings.missing`, and that exactly one problem for it ends with `refetch_remedy(url)` (for the duplicate, `refetch_remedy(main_url, "the submissions file with its older pages")`).
   - `test_a_missing_response_is_missing_never_unusable`: an empty store. `unusable == ()`, the submissions URL is in `missing`, and the problem is `f"nothing saved from {url}: run events discover"`.
   - `test_a_primary_document_that_cannot_be_read_is_unusable`: bytes changed gives `identification.unusable == (url,)`. A saved plain-text document with no Item line gives `unusable == ()`.
@@ -234,13 +238,13 @@ git commit -m "feat(store): quarantine changed artifact bytes instead of refusin
   - `test_discover_filing_names_the_unusable_file_it_cannot_list`: with Acme's submissions bytes changed, `discover_filing(universe, cik, accession, ...)` raises `ValueError` ending with `refetch_remedy(submissions_url(cik))`, and requests nothing.
   - **Expected edits, not regressions.** These tests quote old problem lines. Add the remedy suffix and change nothing else: `test_discovery_names_each_saved_response_the_build_cannot_read` (all three lines) and, in the app tests, `test_discover_names_a_saved_response_it_cannot_read_and_fails`. Both keep their invariant: plain `discover` sends 0 requests for an unusable response.
 
-- [ ] **Step 2: Run to verify they fail** (`pytest` on both test files). Expected: attribute errors on `unusable` and on `refetch_remedy`.
+- [x] **Step 2: Run to verify they fail** (`pytest` on both test files). Expected: attribute errors on `unusable` and on `refetch_remedy`.
 
-- [ ] **Step 3: Implement.** Follow the "Problem producers" table row by row. `_Reader` gains `self.unusable: list[str]` beside `missing`. In `identify`, add the URL to `unusable` where it already catches `(FileNotFoundError, ValueError)`, and keep the existing guard that avoids a second "nothing saved" line. `repeats` receives the main file's URL for its remedy. `_companyfacts`, `_named_filing`, `citations_refused`, `check_evidence` (which builds its `SavedResponses` only on the failure path) and `discover_filing` change their text only. `acquire._named` is Task 6's. Update the module docstrings of `filings.py` and `discover.py`: a saved response that cannot be read is "refetched by an explicit command", no longer "never fetched again".
+- [x] **Step 3: Implement.** Follow the "Problem producers" table row by row. `_Reader` gains `self.unusable: list[str]` beside `missing`. In `identify`, add the URL to `unusable` where it already catches `(FileNotFoundError, ValueError)`, and keep the existing guard that avoids a second "nothing saved" line. `repeats` receives the main file's URL for its remedy. `_companyfacts`, `_named_filing`, `citations_refused`, `check_evidence` (which builds its `SavedResponses` only on the failure path) and `discover_filing` change their text only. `acquire._named` is Task 6's. Update the module docstrings of `filings.py` and `discover.py`: a saved response that cannot be read is "refetched by an explicit command", no longer "never fetched again".
 
-- [ ] **Step 4: Run to verify they pass,** then Ruff.
+- [x] **Step 4: Run to verify they pass,** then Ruff.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/earnings-ingestion/src packages/earnings-ingestion/tests apps/earnings-pipeline/tests/test_events_cli.py
@@ -267,7 +271,7 @@ git commit -m "feat(events): tell an unusable saved response from a missing one"
   - `plan_refetch(universe: UniverseManifest, store: ArtifactStore, named: Sequence[str]) -> RefetchPlan`, raising `ValueError`.
   - `run_refetch(universe: UniverseManifest, plan: RefetchPlan, fetch: Fetch, store: ArtifactStore) -> Refetched`.
 
-- [ ] **Step 1: Write the failing tests** in `test_events_discover.py`:
+- [x] **Step 1: Write the failing tests** in `test_events_discover.py`:
   - `test_a_refetch_plan_names_only_unusable_responses`: an empty name list, a usable URL, and an unsaved URL each raise `ValueError`. The usable one's message says refetching replaces only responses discovery cannot use, and that an exhibit is refetched by `events acquire --refetch`.
   - `test_a_refetch_plan_adds_a_submissions_files_saved_older_pages`: with Eastfield's submissions file damaged, `plan_refetch(...).urls == (main_url, older_page_url)` and `count == 2`. With only the older page damaged and named, `urls == (older_page_url,)`.
   - `test_a_refetch_fetches_exactly_its_plan_and_mends_each_case`, parametrized over bytes gone, bytes changed, and wrong shape (an index page stating "Received"). After `run_refetch(...)` over a `Recorder(layer)`: `recorder.requested == [url]` and `result.problems == ()`. `build_events(...)` reproduces `load_event_manifest(REPO / FIXTURE_DIR / "events-v1.json").definition.content_hash` (read from the file, never typed as a literal). For bytes changed, `result.quarantined` has one existing path holding the damaged bytes. For bytes gone, it is empty.
@@ -275,16 +279,18 @@ git commit -m "feat(events): tell an unusable saved response from a missing one"
   - `test_a_refetch_that_still_cannot_be_used_reports_the_problem`: the `Recorder` serves the same wrong-shape bytes. `fetched == (url,)` and one problem ends with `refetch_remedy(url)`.
   - `test_read_back_names_an_unusable_companyfacts_file_and_goes_on`: truncate Acme's companyfacts file. `read_back` returns without raising, its `unusable` holds that URL, and the other issuers are still read.
 
-- [ ] **Step 2: Run to verify they fail.** Expected: `ImportError` on `events.recover`.
+- [x] **Step 2: Run to verify they fail.** Expected: `ImportError` on `events.recover`.
 
-- [ ] **Step 3: Implement.**
+- [x] **Step 3: Implement.**
   - `plan_refetch` builds `SavedResponses(store)` and `read_back(...).unusable` once, and refuses each name that is not saved or not in that set. The refusal for a saved URL says it is not among the responses discovery cannot use, that an exhibit is refetched by `events acquire --refetch`, and that a page behind an unusable submissions file is classified once that file is refetched. It expands a name that equals some issuer's `submissions_url(cik)` with `saved.urls(prefix=submissions_page_url(f"CIK{pad_cik(cik)}-submissions-"))`, in sorted order, without repeats. It deduplicates names and keeps their order.
   - `run_refetch` records each URL's earlier hashes with `saved.hashes(url)` before it fetches. Then, for each planned URL, it calls `fetch(url, expected_types(url))` and `store.put(SEC_SOURCE_ID, ..., rights_status=SEC_RIGHTS.rights_status, rights_basis=SEC_RIGHTS.rights_basis)`. A URL whose new sha is not among its earlier hashes goes into `changed`. Last, it runs `read_back` on a fresh `SavedResponses` and returns its `problems`. It runs no discovery phase.
   - Rewrite `discover`'s module docstring to say what `unusable` and `run_refetch` do.
 
-- [ ] **Step 4: Run to verify they pass,** then Ruff.
+> Deviation: `run_refetch` raises `RefetchInterrupted` (an `Exception` that carries `.partial` and has the original error as `__cause__`) on a mid-plan failure, so Task 5's CLI prints the partial `changed:` and `quarantined:` lines before the stop (task review). The refusal for a saved URL that discovery does not read also names the manual repair in "Repairing the store" (owner decision, commit `1f7fec1`).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 4: Run to verify they pass,** then Ruff.
+
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/earnings-ingestion/src packages/earnings-ingestion/tests/test_events_discover.py
@@ -307,7 +313,7 @@ git commit -m "feat(events): plan and run a refetch of unusable discovery respon
   5. Open the client with `max_requests=max_requests` (the cap) and run `run_refetch`, through the same stop handling and "requests sent" line as `discover`. Do not copy that block. A repeated `--refetch` is allowed: Typer collects every value, so `_OneFiling` is not needed for it.
   6. Print `refetched {n}; requests sent: {sent}`, then `quarantined: <path>` for each moved file (`shown(path, repo)`), then `changed: {url} returned other bytes than its earlier retrieval; run events build and compare its content hash with the frozen version's before relying on it`, then each `problem:` on stderr. Exit 1 if any problem.
 
-- [ ] **Step 1: Write the failing tests.** In the existing `client(...)` helper add `requested: list[str] | None = None`, appended to by its handler. Use the `repo` and `moved` fixtures and `EVENTS_STORE`.
+- [x] **Step 1: Write the failing tests.** In the existing `client(...)` helper add `requested: list[str] | None = None`, appended to by its handler. Use the `repo` and `moved` fixtures and `EVENTS_STORE`.
   - `test_refetch_mends_a_truncated_index_page_and_rebuilds_the_frozen_hash` (the item's test). Truncate (not delete) the artifact of Acme's index page `https://www.sec.gov/Archives/edgar/data/9990001/000999000125000008/0009990001-25-000008-index.htm` to its first 10 bytes. An override of the corpus cites this page, so the hash rebuild below also proves the citation is restored. Then `run(repo, "build", store=EVENTS_STORE)` exits 1, and every `problem:` line on stderr ends with `refetch_remedy(url)`, not just the line for that URL. Run `run(repo, "discover", "--refetch", url, store=EVENTS_STORE)` with no count: exit 1, stdout lines `["refetch: 1 requests to SEC, through the shared client", f"  {url}"]`, `budgets == []`, and stderr `Refused: pass --max-requests...`. Run again with `--max-requests 1`: exit 0, `budgets == [1]`, `requested == [url]`, stdout ends `refetched 1; requests sent: 1` then one `quarantined: data/raw/events/sec-edgar/quarantine/...` line. Finally `run(repo, "build", store=EVENTS_STORE)` exits 0, and its last line is `f"32 events, 27 eligible, content {hash}"` with `hash` read from `load_event_manifest(REPO / FIXTURE_DIR / "events-v1.json")`.
   - `test_refetch_adds_a_submissions_files_older_pages_to_its_stated_count`: Eastfield's main file truncated gives `refetch: 2 requests ...` with both URLs, and `--max-requests 1` is refused before the client opens (`budgets == []`).
   - `test_refetch_refuses_what_is_not_unusable`: a usable URL, an unsaved URL, and a damaged exhibit (EV2) each exit 1 with `Refused`, and `budgets == []`. The exhibit's message names `events acquire --refetch`.
@@ -315,13 +321,15 @@ git commit -m "feat(events): plan and run a refetch of unusable discovery respon
   - `test_refetch_stops_on_a_persistent_403_and_prints_its_count`: `client(..., status=403)` gives "Stopped:" on stderr and `requests sent:` on stdout.
   - `test_refetch_reports_other_bytes`: the client serves different valid bytes. Stdout holds a `changed: <url> returned other bytes...` line.
 
-- [ ] **Step 2: Run to verify they fail.** Expected: Typer error `No such option: --refetch`.
+- [x] **Step 2: Run to verify they fail.** Expected: Typer error `No such option: --refetch`.
 
-- [ ] **Step 3: Implement** as specified above. Update the module docstring: `--refetch` states its count first, needs `--max-requests`, replaces only unusable responses, and a plain `events discover` fetches what a refreshed file now lists.
+- [x] **Step 3: Implement** as specified above. Update the module docstring: `--refetch` states its count first, needs `--max-requests`, replaces only unusable responses, and a plain `events discover` fetches what a refreshed file now lists.
 
-- [ ] **Step 4: Run to verify they pass,** then Ruff.
+> Deviation: a stopped refetch ends with its own tail, "requests sent: N; a rerun may name only the URLs that are still unusable", not discover's tail.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 4: Run to verify they pass,** then Ruff.
+
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/earnings-pipeline/src/earnings_pipeline/events_cli.py apps/earnings-pipeline/tests/test_events_cli.py
@@ -343,20 +351,20 @@ git commit -m "feat(events-cli): refetch an unusable saved response, counted fir
   - `acquire(..., refetch: Collection[str] = ())`.
   - `REPAIR` is removed. `_filing` and `_named` use `refetch_remedy(url)`, because acquisition never fetches an index page or a primary document, and `_named` also catches a plain `ValueError`. `_exhibit` uses `exhibit_remedy(url)`.
 
-- [ ] **Step 1: Write the failing tests.** Extend the module's `run` helper with `refetch=()`. Reuse `save_unreadable`, `Served`, `frozen`, `store`.
+- [x] **Step 1: Write the failing tests.** Extend the module's `run` helper with `refetch=()`. Reuse `save_unreadable`, `Served`, `frozen`, `store`.
   - Edit `test_a_saved_exhibit_that_cannot_be_read_is_a_problem_never_fetched_again`: replace the `"repair the store by hand"` assertion with `problem.endswith(exhibit_remedy(url))`. Keep the rest.
   - `test_an_overrides_unusable_index_page_keeps_its_tag_and_names_a_remedy`: an acquisition override whose filing's saved index page has changed bytes gives a problem that starts with the override ID and ends with `refetch_remedy(url)`, and fetches nothing for that page.
   - `test_unusable_exhibits_names_a_saved_pending_exhibit_that_cannot_be_read`: `(url,)` after `save_unreadable`, and `()` without damage.
   - `test_planned_requests_counts_a_refetch_and_refuses_what_is_not_unusable`: `most` rises by 1 with the damaged URL as `refetch`. A usable saved exhibit and an unsaved one raise `ValueError`.
   - `test_acquire_refetches_an_unusable_exhibit_and_acquires_its_document`: with `refetch=frozenset({url})`, `served.requested.count(url) == 1`, `result.problems == ()`, the first pilot event's document is `parsed`, and `len(store.quarantined) == 1`.
 
-- [ ] **Step 2: Run to verify they fail.** Expected: `ImportError` on `exhibit_remedy`.
+- [x] **Step 2: Run to verify they fail.** Expected: `ImportError` on `exhibit_remedy`.
 
-- [ ] **Step 3: Implement.** Share one walk over the pending documents between `planned_requests` and `unusable_exhibits`. In `_exhibit`, the saved-read branch becomes `if url in saved and url not in refetch`. Update the module docstring's Problems bullet: a saved exhibit that cannot be read is refetched only on an explicit, counted request.
+- [x] **Step 3: Implement.** Share one walk over the pending documents between `planned_requests` and `unusable_exhibits`. In `_exhibit`, the saved-read branch becomes `if url in saved and url not in refetch`. Update the module docstring's Problems bullet: a saved exhibit that cannot be read is refetched only on an explicit, counted request.
 
-- [ ] **Step 4: Run to verify they pass,** then Ruff.
+- [x] **Step 4: Run to verify they pass,** then Ruff.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/earnings-ingestion/src/earnings_ingestion/events/acquire.py packages/earnings-ingestion/tests/test_events_acquire.py
@@ -373,18 +381,20 @@ git commit -m "feat(events): refetch an unusable saved exhibit in acquire"
 - Consumes: `planned_requests(..., refetch=...)`, `acquire(..., refetch=...)`, `ArtifactStore.quarantined`.
 - Produces: `acquire_command(..., refetch: Annotated[list[str] | None, typer.Option(help=...)] = None)`. The existing `Refused:` path already catches the planner's `ValueError` before the client opens. Print one `refetch: <url>` line after the count line. Pass `refetch=frozenset(refetch or ())` in `options`. Keep one `ArtifactStore` object, so its `quarantined` can print `quarantined: <path>` after the run.
 
-- [ ] **Step 1: Write the failing tests** (`repo`, `moved`, `exhibit_bodies`, and `client(monkeypatch, {**served(), **exhibit_bodies()}, requested=...)`). In each test, on a fresh `moved` store, truncate the saved artifact of the exhibit that `test_a_saved_exhibit_that_cannot_be_read_is_a_problem_never_fetched_again` damages: the first pilot row's. That test proves a run reaches it. A later candidate behind a confirmed first exhibit would never be fetched, and the assertions below would fail. A small helper in `test_events_cli.py` finds its URL the way that test does (`exhibit_bodies()` keys inside the folder of the first pilot row's `release_accession`). Do not run a plain `acquire` first: it would take the one exhibit SEC never served to a terminal state, and the base count would fall from 1 to 0.
+- [x] **Step 1: Write the failing tests** (`repo`, `moved`, `exhibit_bodies`, and `client(monkeypatch, {**served(), **exhibit_bodies()}, requested=...)`). In each test, on a fresh `moved` store, truncate the saved artifact of the exhibit that `test_a_saved_exhibit_that_cannot_be_read_is_a_problem_never_fetched_again` damages: the first pilot row's. That test proves a run reaches it. A later candidate behind a confirmed first exhibit would never be fetched, and the assertions below would fail. A small helper in `test_events_cli.py` finds its URL the way that test does (`exhibit_bodies()` keys inside the folder of the first pilot row's `release_accession`). Do not run a plain `acquire` first: it would take the one exhibit SEC never served to a terminal state, and the base count would fall from 1 to 0.
   - `test_acquire_refetch_states_its_count_first_and_fetches_the_exhibit`: `acquire --refetch <url>` with no count exits 1. Stdout line 4 starts `at most 2 requests to SEC, through the shared client;`, a `refetch: {url}` line follows, stderr says `Refused: pass --max-requests`, and `budgets == []`. With `--max-requests 2`: exit 0, `budgets == [2]`, `requested.count(url) == 1`, and a `quarantined:` line is printed.
   - `test_acquire_without_a_refetch_names_the_remedy_and_fetches_nothing_for_it`: `acquire --max-requests 1` exits 1 with a `problem:` line ending in `exhibit_remedy(url)`, and `url` is not in `requested`.
   - `test_acquire_refetch_refuses_a_usable_exhibit_before_the_client_opens`: `Refused`, `budgets == []`.
 
-- [ ] **Step 2: Run to verify they fail.** Expected: `No such option: --refetch`.
+- [x] **Step 2: Run to verify they fail.** Expected: `No such option: --refetch`.
 
-- [ ] **Step 3: Implement** as specified. Update the module docstring.
+- [x] **Step 3: Implement** as specified. Update the module docstring.
 
-- [ ] **Step 4: Run to verify they pass,** then Ruff.
+> Deviation: `acquire --refetch` prints each `quarantined:` line on every exit, a stop and Ctrl-C included, before its tail. It has no `changed:` line, which the plan assigns to `discover`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 4: Run to verify they pass,** then Ruff.
+
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/earnings-pipeline/src/earnings_pipeline/events_cli.py apps/earnings-pipeline/tests/test_events_cli.py
@@ -400,22 +410,26 @@ git commit -m "feat(events-cli): refetch an unusable saved exhibit in acquire, c
 - Consumes: Tasks 1 to 7.
 - Produces: no code.
 
-- [ ] **Step 1: Rewrite "Repairing the store"** (the section after "The requests (plan B)"). Keep the sentence "No repair was needed in plan 8's runs." as history. The new text states:
+- [x] **Step 1: Rewrite "Repairing the store"** (the section after "The requests (plan B)"). Keep the sentence "No repair was needed in plan 8's runs." as history. The new text states:
   - the three cases and which is quarantined;
   - the two commands, each with its count-first gate (run without `--max-requests` to read the count, then rerun with the approved count);
   - that quarantined bytes sit under `<root>/sec-edgar/quarantine/` and are never deleted;
   - that a refetch returning other bytes prints `changed:`, and the operator compares `events build`'s content hash with the frozen one;
   - the manual route that remains for what this plan does not cover: a damaged retrieval record, and the cohort store (`cohort fetch-sec`). It keeps the existing three steps, with the quarantine folder inside the source directory.
-- [ ] **Step 2: Replace the sentence** that begins `Recovering a saved response that is present but unusable (P2.1, P2.2) stays` (above "The acquisition") with one that says plan 25 recovered it, and points to "Repairing the store".
-- [ ] **Step 3: Run the agent-safe checks:** `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_fetch_store.py packages/earnings-ingestion/tests/test_cohort_acquire.py packages/earnings-ingestion/tests/test_events_discover.py packages/earnings-ingestion/tests/test_events_acquire.py apps/earnings-pipeline/tests/test_events_cli.py -m "not live and not browser" -q`, then `uv run --locked ruff check packages apps tests` and `uv run --locked ruff format --check packages apps tests`. Expected: all pass.
-- [ ] **Step 4: Commit**
+> Deviation: the manual repair's step 2 moves only the record files that step 1 found, and the artifact only if its bytes are damaged, not the whole `retrievals/<sha256>/` directory. A valid artifact may serve another URL or a frozen citation. The final review narrowed manual case (c) to the primary document of a filing that `release-id/1` passes over: `--refetch` reaches the index page of every listed filing.
+
+- [x] **Step 2: Replace the sentence** that begins `Recovering a saved response that is present but unusable (P2.1, P2.2) stays` (above "The acquisition") with one that says plan 25 recovered it, and points to "Repairing the store".
+- [x] **Step 3: Run the agent-safe checks:** `uv run --locked --all-packages pytest packages/earnings-ingestion/tests/test_fetch_store.py packages/earnings-ingestion/tests/test_cohort_acquire.py packages/earnings-ingestion/tests/test_events_discover.py packages/earnings-ingestion/tests/test_events_acquire.py apps/earnings-pipeline/tests/test_events_cli.py -m "not live and not browser" -q`, then `uv run --locked ruff check packages apps tests` and `uv run --locked ruff format --check packages apps tests`. Expected: all pass.
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/verification/djia-events.md
 git commit -m "docs(verification): record the recovery of unusable saved responses"
 ```
 
-- [ ] **Step 5: Hand the gates to the owner.** The agent does not run these. The owner runs the root suite in their own terminal and records its counts in the PR:
+- [x] **Step 5: Hand the gates to the owner.** The agent does not run these. The owner runs the root suite in their own terminal and records its counts in the PR:
+
+> Handed to the owner in the completion report. The agent ran only the five targeted files and Ruff, never the root suite.
 
 ```bash
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser"
@@ -440,6 +454,7 @@ These two items follow the deferred-item schema. The Plan Completion Protocol ap
       `apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py`. Size: quick-fix.
       Revisit if: `cohort fetch-sec` stops on a saved N-PORT document that is gone
       or changed.
+      → item: 25-recover-unusable-saved-responses — 2026-11-13
 - [ ] Name a damaged retrieval record instead of stopping every reader (plan 25's
       scope check): `SavedResponses.__init__` (`events/saved.py`) and
       `ArtifactStore.retrievals` and `latest` (`fetch/store.py`) read
@@ -452,3 +467,6 @@ These two items follow the deferred-item schema. The Plan Completion Protocol ap
       unlikely, and the manual repair in `docs/verification/djia-events.md` still
       covers old damage. Size: design. Revisit if: any `events` or `cohort` command
       stops with a validation error on a file under `retrievals/`.
+      → item: 25-recover-unusable-saved-responses — 2026-11-13
+
+The final review added two more items, filed under the same section: the primary document of a passed-over filing, and a `quarantined:` line for plain saves. → item: 25-recover-unusable-saved-responses — 2026-11-13
