@@ -659,3 +659,38 @@ def test_fresh_run_accepts_a_classification_cut_at_the_request_ceiling(tmp_path)
     coding = read_coding_run(tmp_path / record.coding.directory)
     assert [c.reason for c in coding.classifications].count("requests_exhausted") == 2
     assert [d.status for d in coding.decisions] == ["accepted"]
+
+
+def test_run_readers_accept_the_replayed_cut_run(tmp_path):
+    """`load_run`'s deep checks run over a stored replay that holds `replay_miss` rows.
+
+    The replay stores `replay_miss` where the live pass stored `requests_exhausted`.
+    These are the two checks `pilot_reporting.load_run` makes on a stored run.
+    """
+    from earnings_pipeline.pilot_workflow import (
+        bind_policy,
+        make_run,
+        phase_path,
+        stored_directory,
+    )
+    from earnings_themes.coding import validate_proposal_support
+    from earnings_themes.coding.store import read_coding_run, reverify_coding_run
+    from earnings_themes.support import read_support_run
+
+    config, loaded = cut_case(tmp_path)
+    artifact = bound_artifact(config, loaded)
+    record = make_run(
+        config,
+        loaded,
+        artifact,
+        directory=tmp_path / "data/runs/pilot/train/run",
+        now=lambda: cases.NOW,
+    )
+    coding_dir = stored_directory(config, record.coding)
+    primary = read_support_run(phase_path(config, coding_dir.parent / "support"))
+    coding = read_coding_run(coding_dir)
+    assert [c.reason for c in coding.classifications].count("replay_miss") == 2
+    assert tuple(t.target for t in primary.targets) == loaded.proposal.targets
+    validate_proposal_support(loaded.proposal, primary, loaded.sources)
+    policy = bind_policy(config, loaded, artifact, replay=True)
+    reverify_coding_run(coding, loaded.sources, primary, policy)
