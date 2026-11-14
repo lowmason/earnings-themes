@@ -442,8 +442,12 @@ N-PORT documents.
      `cohort register SOURCE_ID FILE --url URL` saves a page that a person saved in a
      browser. `docs/membership-source-register.toml` says which route each source
      takes. It fetches `wikipedia-djia`, and a person saves `spdji-announcements`
-     notices. Then `cohort build` names what is still unsaved, as
-     `nothing saved from <url> for <source>`.
+     notices. Then run `cohort build`. For `sec-edgar` and `dia-nport`, it names each
+     URL that is still unsaved, as `nothing saved from <url> for <source>`. It reads
+     `wikipedia-djia` and `spdji-announcements` pages by hash. For those, it prints
+     `no artifact <sha256> for source '<source>' under <root>`, which names no URL.
+     The URL to pass is the `url` beside that `artifact_sha256` in
+     `config/universe/djia/evidence.toml` or `overrides.toml`.
    - For (b), run `cohort fetch-sec --max-requests N`. It fetches the ticker list,
      every submissions file, and the fund's older pages again, so N is larger than one
      document. The user approves N. The command states no count first.
