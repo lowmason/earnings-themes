@@ -9,6 +9,7 @@ select and freeze its pilot (plan 7, P7-18), and acquire the pilot's releases (p
     earnings-pipeline events freeze
     earnings-pipeline events select
     earnings-pipeline events acquire --max-requests N    # the shared SEC client
+    earnings-pipeline events acquire --refetch URL --max-requests N    # count first
 
 Only ``discover`` uses the network, through the shared SEC client. It states its
 request budget before it sends anything, and each phase's count before that phase,
@@ -39,16 +40,26 @@ what a refreshed file now lists (plan 25).
 ``acquire`` reads the event manifest the build reproduces and the pilot frozen over
 it, which ``load_pilot`` checks and reselects, and refuses otherwise. It states what
 it would send before it opens the client: at most N requests before any retry, one
-per exhibit not saved, and how many are first choices. With nothing to fetch the client stays
-closed; otherwise ``--max-requests``, the count the user approved, is required and is
-the client's cap. A retry after a 429 or a server error counts against it: a run the
-cap stops keeps what it recorded, and a rerun at a newly approved count takes up the
-rest. The client refuses a redirect before following it, so a redirect costs one
-request. It
-holds a lock on ``--runs-dir`` while it counts and acquires, so two runs never record
-at once. It prints each pilot document's state, and its request count on every exit.
-It writes its run under ``--runs-dir``, and exits 1 on a problem (plan 8's final
-review).
+per exhibit not saved or named by ``--refetch``, and how many are first choices.
+With nothing to fetch the client stays closed; otherwise ``--max-requests``, the
+count the user approved, is required and is the client's cap. A retry after a 429 or
+a server error counts against it: a run the cap stops keeps what it recorded, and a
+rerun at a newly approved count takes up the rest. The client refuses a redirect
+before following it, so a redirect costs one request. It holds a lock on
+``--runs-dir`` while it counts and acquires, so two runs never record at once. It
+prints each pilot document's state, and its request count on every exit. It writes
+its run under ``--runs-dir``, and exits 1 on a problem (plan 8's final review). A
+saved exhibit it cannot read is a problem that names its ``--refetch``, since no
+rerun fetches it again.
+
+``acquire --refetch`` names a saved exhibit that a run would try and cannot read, to
+fetch it again; repeat it for each. The count includes each, and a ``refetch:`` line
+after the count names each, before ``--max-requests`` is asked for. Any other URL is
+refused before the client opens: a usable or unsaved exhibit, or an index page or
+primary document, which ``discover --refetch`` replaces (EV2). After the run,
+``acquire`` prints each damaged file a save moved into ``quarantine/``. A stop says
+that a rerun may name only the exhibits that are still unusable, since a saved one
+now reads and is refused (plan 25).
 
 ``discover`` and ``acquire`` refuse a ``--store`` that does not resolve under
 ``data/raw``, and ``acquire`` a ``--runs-dir`` outside ``data/runs``, before any
@@ -141,6 +152,12 @@ DISCOVER_RERUN = "a rerun fetches only what is missing"
 REFETCH_RERUN = "a rerun may name only the URLs that are still unusable"
 """After a stopped refetch: a rerun that names a URL it saved is refused, since that
 URL now reads."""
+ACQUIRE_RERUN = "a rerun attempts what is left"
+ACQUIRE_REFETCH_RERUN = (
+    f"{ACQUIRE_RERUN}, and --refetch may name only the exhibits that are still unusable"
+)
+"""After a stopped ``acquire --refetch``: a rerun that names an exhibit it saved is
+refused, since that exhibit now reads."""
 RUNS_DIR = Path("data") / "runs" / "events"
 ACQUIRE_LOCK = ".acquire.lock"
 """In ``--runs-dir``: every ``acquire`` run holds it while it counts and records."""
@@ -494,6 +511,13 @@ def acquire_command(
     runs_dir: Annotated[
         Path, typer.Option(help="Where the state table and canonical documents go.")
     ] = RUNS_DIR,
+    refetch: Annotated[
+        list[str] | None,
+        typer.Option(
+            help="URL: a saved exhibit a run would try and cannot read, to fetch"
+            " again; repeat for each."
+        ),
+    ] = None,
 ) -> None:
     """Acquire the current pilot's release documents through the shared SEC client,
     and record each one's processing state."""
@@ -510,22 +534,26 @@ def acquire_command(
     typer.echo(f"pilot {definition.pilot_id} v{definition.pilot_version}")
     typer.echo(f"{shown(pilot.path, layout.repo)}  {definition.content_hash}")
     runs = layout.repo / runs_dir
-    arguments = (current.manifest, pilot.manifest, universe, layout.store())
+    store = layout.store()
+    arguments = (current.manifest, pilot.manifest, universe, store)
     options = {
         "overrides": overrides,
         "states_dir": runs / "states",
         "canonical_dir": runs / "canonical",
         "run_id": f"acquire-{datetime.now(UTC):%Y%m%dT%H%M%S%fZ}",
+        "refetch": frozenset(refetch or ()),
     }
+    rerun = ACQUIRE_REFETCH_RERUN if refetch else ACQUIRE_RERUN
     with ExitStack() as held:
         try:
             held.enter_context(ProcessLock(runs / ACQUIRE_LOCK))
             first, most = planned_requests(
                 current.manifest,
                 pilot.manifest,
-                layout.store(),
+                store,
                 runs / "states",
                 overrides,
+                refetch=options["refetch"],
             )
         except (AccessStop, ValueError) as error:
             _fail(f"Refused: {error}")
@@ -536,6 +564,8 @@ def acquire_command(
                 f"at most {most} requests to SEC, through the shared client;"
                 f" {first} first choices"
             )
+            for url in dict.fromkeys(refetch or ()):
+                typer.echo(f"refetch: {url}")
             if max_requests is None:
                 _fail(
                     "Refused: pass --max-requests, the request count the user approved"
@@ -551,10 +581,10 @@ def acquire_command(
                     finally:
                         sent = sec.throttle.count
         except STOPS as error:
-            typer.echo(f"requests sent: {sent}; a rerun attempts what is left")
+            typer.echo(f"requests sent: {sent}; {rerun}")
             _fail(f"Stopped: {error}")
         except BaseException:
-            typer.echo(f"requests sent: {sent}; a rerun attempts what is left")
+            typer.echo(f"requests sent: {sent}; {ACQUIRE_RERUN}")
             raise
     for row in pilot.manifest.rows:
         state = result.states[f"{row.event_id}:release"]
@@ -568,6 +598,8 @@ def acquire_command(
     typer.echo(f"fetched {len(result.fetched)}; requests sent: {sent}")
     if result.path is not None:
         typer.echo(shown(result.path, layout.repo))
+    for path in dict.fromkeys(store.quarantined):
+        typer.echo(f"quarantined: {shown(path, layout.repo)}")
     for problem in result.problems:
         typer.echo(f"problem: {problem}", err=True)
     if result.problems:

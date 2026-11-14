@@ -12,6 +12,7 @@ import httpx
 import pytest
 from earnings_core import sha256_hex
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
+from earnings_ingestion.events.acquire import exhibit_remedy
 from earnings_ingestion.events.fixture import COHORT_MANIFEST, FIXTURE_DIR
 from earnings_ingestion.events.freeze import load_event_manifest, serialize
 from earnings_ingestion.events.layer import (
@@ -1309,3 +1310,202 @@ def test_refetch_prints_its_count_on_ctrl_c(repo, moved, monkeypatch) -> None:
     )
     assert result.exit_code == 130
     assert result.stdout.splitlines()[-1] == RERUN.format(1)
+
+
+STOP_TAIL = "requests sent: {}; a rerun attempts what is left"
+REFETCH_STOP_TAIL = (
+    f"{STOP_TAIL}, and --refetch may name only the exhibits that are still unusable"
+)
+"""A stopped acquire's count with --refetch. A rerun that names an exhibit the run
+saved is refused, since that exhibit now reads."""
+STOPPED = "Stopped: 403 persisted for {}; stopping without changing identity\n"
+
+
+def pilot_exhibit(position: int = 0) -> str:
+    """The one exhibit of the release filing of the pilot's event at ``position``,
+    found as the acquire tests find it. A run reaches the first pilot row's first, so
+    a later candidate behind a confirmed exhibit never hides it."""
+    pilot = PilotManifest.model_validate_json(
+        (REPO / FIXTURE_DIR / "pilot-v1.json").read_bytes()
+    )
+    events = load_event_manifest(REPO / FIXTURE_DIR / "events-v1.json")
+    event_id = pilot.rows[position].event_id
+    row = next(row for row in events.rows if row.event_id == event_id)
+    folder = row.release_accession.replace("-", "")
+    return next(url for url in exhibit_bodies() if f"/{folder}/" in url)
+
+
+def test_acquire_refetch_states_its_count_first_and_fetches_the_exhibit(
+    repo, moved, monkeypatch
+) -> None:
+    url = pilot_exhibit()
+    quarantined = truncate(repo, url)
+    requested: list[str] = []
+    budgets = client(monkeypatch, {**served(), **exhibit_bodies()}, requested=requested)
+    result = run(repo, "acquire", "--refetch", url, store=EVENTS_STORE)
+    assert result.exit_code == 1
+    lines = acquire_lines(result)
+    assert lines[4].startswith("at most 2 requests to SEC, through the shared client;")
+    assert lines[5:] == [f"refetch: {url}"]
+    assert result.stderr == (
+        "Refused: pass --max-requests, the request count the user approved\n"
+    )
+    assert budgets == []
+    result = run(
+        repo, "acquire", "--refetch", url, "--max-requests", "2", store=EVENTS_STORE
+    )
+    assert result.exit_code == 0, result.output
+    assert budgets == [2]
+    assert requested.count(url) == 1
+    lines = acquire_lines(result)
+    assert lines[4:6] == [
+        "at most 2 requests to SEC, through the shared client; 2 first choices",
+        f"refetch: {url}",
+    ]
+    assert lines[6] == "  1  cik-0009990003:2026-03-31:release  parsed"
+    assert lines[-3] == "fetched 1; requests sent: 2"
+    assert lines[-2].startswith("data/runs/events/states/acquire-")
+    assert lines[-1] == quarantined
+
+
+def test_acquire_without_a_refetch_names_the_remedy_and_fetches_nothing_for_it(
+    repo, moved, monkeypatch
+) -> None:
+    url = pilot_exhibit()
+    truncate(repo, url)
+    requested: list[str] = []
+    budgets = client(monkeypatch, {**served(), **exhibit_bodies()}, requested=requested)
+    result = run(repo, "acquire", "--max-requests", "1", store=EVENTS_STORE)
+    assert result.exit_code == 1
+    assert budgets == [1]
+    lines = acquire_lines(result)
+    assert lines[4] == (
+        "at most 1 requests to SEC, through the shared client; 1 first choices"
+    )
+    assert not any(line.startswith(("refetch:", "quarantined:")) for line in lines)
+    (problem,) = result.stderr.splitlines()
+    assert problem.startswith(f"problem: {url}: ")
+    assert problem.endswith(exhibit_remedy(url))
+    assert url not in requested
+
+
+def unsaved_exhibit(moved: Path) -> str:
+    """The first pilot row's exhibit, with every saved exhibit forgotten."""
+    forget_exhibits(moved)
+    return pilot_exhibit()
+
+
+@pytest.mark.parametrize(
+    ("named", "refusal"),
+    [
+        pytest.param(
+            lambda moved: pilot_exhibit(),
+            " is not a saved exhibit that a run would try and cannot read",
+            id="usable",
+        ),
+        pytest.param(unsaved_exhibit, "nothing saved from ", id="unsaved"),
+        pytest.param(
+            lambda moved: INDEX,
+            "refetched by earnings-pipeline events discover --refetch",
+            id="index",
+        ),
+    ],
+)
+def test_acquire_refetch_refuses_a_usable_exhibit_before_the_client_opens(
+    repo, moved, monkeypatch, named, refusal
+) -> None:
+    """Each is refused before the count is stated, and before any client opens."""
+    url = named(moved)
+    budgets = client(monkeypatch, {**served(), **exhibit_bodies()})
+    result = run(
+        repo, "acquire", "--refetch", url, "--max-requests", "5", store=EVENTS_STORE
+    )
+    assert result.exit_code == 1
+    assert budgets == []
+    assert not any(
+        line.startswith(("at most", "refetch:")) for line in acquire_lines(result)
+    )
+    assert result.stderr.startswith("Refused: ")
+    assert url in result.stderr and refusal in result.stderr
+
+
+@pytest.mark.parametrize("refetching", [True, False], ids=["refetch", "plain"])
+def test_acquire_stopped_says_what_a_rerun_may_name(
+    repo, moved, monkeypatch, refetching
+) -> None:
+    """The first pilot row's exhibit meets a persistent 403: cut and named by
+    --refetch, or not saved. With --refetch, a rerun that names it again once it
+    reads is refused, so the tail says so; without, the tail is acquire's own."""
+    url = pilot_exhibit()
+    if refetching:
+        truncate(repo, url)
+        named, tail = ["--refetch", url], REFETCH_STOP_TAIL
+    else:
+        forget_exhibits(moved)
+        named, tail = [], STOP_TAIL
+    requested: list[str] = []
+    budgets = client(
+        monkeypatch,
+        {**served(), **exhibit_bodies()},
+        status=403,
+        requested=requested,
+    )
+    result = run(repo, "acquire", *named, "--max-requests", "2", store=EVENTS_STORE)
+    assert result.exit_code == 1
+    assert budgets == [2]
+    assert requested == [url, url]
+    assert acquire_lines(result)[-1] == tail.format(2)
+    assert result.stderr == STOPPED.format(url)
+
+
+def test_acquire_refetch_keeps_acquire_s_tail_on_an_unforeseen_error(
+    repo, moved, monkeypatch
+) -> None:
+    """Only a stop names what --refetch may name; any other error keeps acquire's
+    own tail."""
+    url = pilot_exhibit()
+    truncate(repo, url)
+    client(monkeypatch, {**served(), **exhibit_bodies()})
+    monkeypatch.setattr(ArtifactStore, "put", unforeseen)
+    result = run(
+        repo, "acquire", "--refetch", url, "--max-requests", "2", store=EVENTS_STORE
+    )
+    assert isinstance(result.exception, LookupError)
+    assert acquire_lines(result)[-1] == STOP_TAIL.format(1)
+
+
+def test_acquire_prints_each_quarantined_file_once(repo, moved, monkeypatch) -> None:
+    """The same damage twice in one run. The first and second pilot rows' exhibits
+    are cut and refetched, and the second is served with the first's bytes. The
+    first's file is cut again, to the same bytes, before each save, so both saves
+    move the same bytes to the same place."""
+    first, second = pilot_exhibit(0), pilot_exhibit(1)
+    found = SavedResponses(ArtifactStore(moved, repo)).get(first)
+    sha, path = found.artifact.content_sha256, repo / found.artifact.storage_ref
+    quarantined = truncate(repo, first)
+    cut = path.read_bytes()
+    truncate(repo, second)
+    responses = {**served(), **exhibit_bodies()}
+    responses[second] = responses[first]
+    client(monkeypatch, responses)
+    put = ArtifactStore.put
+
+    def cut_again(self, source_id, body, *args, **kwargs):
+        if sha256_hex(body) == sha:
+            path.write_bytes(cut)
+        return put(self, source_id, body, *args, **kwargs)
+
+    monkeypatch.setattr(ArtifactStore, "put", cut_again)
+    result = run(
+        repo,
+        "acquire",
+        "--refetch",
+        first,
+        "--refetch",
+        second,
+        "--max-requests",
+        "3",
+        store=EVENTS_STORE,
+    )
+    moves = [line for line in acquire_lines(result) if line.startswith("quarantined:")]
+    assert moves == [quarantined]
