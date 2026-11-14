@@ -2,6 +2,7 @@
 
 import json
 from dataclasses import replace
+from typing import ClassVar
 
 import pytest
 from earnings_core import (
@@ -213,6 +214,52 @@ def test_missing_assessment_is_visible_review(assessed_case, tmp_path):
     assert row.missing == ("missing_assessment",)
     assert row.supporting_quote_ids == ()
     assert result.proposals.novelty == ()
+
+
+def test_a_policy_cannot_redirect_a_missing_rows_target_id(assessed_case, tmp_path):
+    """Plan 23's ruling N1: a policy that knows decide's private memo kind plants a
+    changed record before the row is written and restores it before the final
+    check. The row keeps the ``target_id`` it had at the start of the call."""
+    from earnings_themes.scope import once
+
+    case = make_assessed_case(
+        assessed_case.proposals, assessed_case.sources, tmp_path / "omitted", targets=()
+    )
+
+    class PlantingPolicy(FixturePolicy):
+        """Plants on its reference's first read, and restores on its third, the
+        final check's, which runs in a fresh scope."""
+
+        reads: ClassVar[int] = 0
+        memo: ClassVar[dict | None] = None
+        kept: ClassVar[dict] = {}
+
+        @property
+        def reference(self):
+            type(self).reads += 1
+            if self.reads == 1:
+                memo = once("proposal_inputs", (case.proposals, case.sources), dict)
+                type(self).memo, type(self).kept = memo, dict(memo)
+                for key, record in memo.items():
+                    memo[key] = record.model_copy(update={"target_id": "planted"})
+            elif self.reads == 3 and self.memo is not None:
+                self.memo.update(self.kept)
+            return self._reference
+
+        @reference.setter
+        def reference(self, value):
+            self._reference = value
+
+    policy = PlantingPolicy(case.proposals, case.support)
+    expected = make_assessed_case(
+        assessed_case.proposals, assessed_case.sources, tmp_path / "plain", targets=()
+    ).decide(FixturePolicy(case.proposals, case.support))
+    result = case.decide(policy)
+    assert PlantingPolicy.reads >= 3
+    assert [row.target_id for row in result.decisions] == [
+        row.target_id for row in expected.decisions
+    ]
+    assert "planted" not in [row.target_id for row in result.decisions]
 
 
 @pytest.mark.parametrize(

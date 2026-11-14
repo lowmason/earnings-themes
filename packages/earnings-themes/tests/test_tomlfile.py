@@ -87,6 +87,31 @@ def test_a_file_that_is_not_toml_is_refused_by_position_only(tmp_path) -> None:
     assert all(problem.startswith("items.<key>.[key].") for problem in union_problems)
 
 
+def test_a_map_key_whose_value_is_refused_stays_out_of_the_path() -> None:
+    """Plan 12's M8-9: a dict key is redacted when its value is refused, as when
+    the key itself is, so a corrupted record cannot echo it; field names, list
+    indexes and the nested model's fields stay."""
+
+    class Counted(Part):
+        count: int
+
+    class WithCounts(Part):
+        documents: dict[str, Counted]
+        rows: list[Counted]
+
+    data = {
+        "documents": {"a synthetic key with spaces": {"count": "x"}},
+        "rows": [{"count": "y"}],
+    }
+    with pytest.raises(RecordError) as refused:
+        parse(data, WithCounts, "run.json")
+    assert "a synthetic key with spaces" not in str(refused.value)
+    assert [p.split(":")[0] for p in refused.value.problems] == [
+        "documents.<key>.count",
+        "rows.0.count",
+    ]
+
+
 def test_a_missing_file_is_refused_by_name(tmp_path) -> None:
     with pytest.raises(RecordError) as caught:
         read(tmp_path / "codebook.working.toml")

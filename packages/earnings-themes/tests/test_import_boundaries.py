@@ -19,6 +19,7 @@ import sys
 from pathlib import Path
 
 import earnings_themes
+import pytest
 
 HTTP_CLIENTS = {"httpx", "requests", "aiohttp", "urllib3"}
 MODEL_SDKS = {
@@ -244,6 +245,26 @@ def test_pipeline_scan_detects_planted_application_import(tmp_path: Path) -> Non
     assert pipeline_imports(module) == ["earnings_pipeline.cli", "earnings_pipeline"]
 
 
+def test_the_themes_tests_collect_without_httpx() -> None:
+    """Plan 12's F3: httpx is the ``local-model`` extra's, so a themes-only
+    environment may lack it. Every themes test module still collects, with httpx
+    blocked in a fresh process; the ones that need it skip."""
+    tests = Path(__file__).resolve().parent
+    code = (
+        "import sys; sys.modules['httpx'] = None; import pytest;"
+        f" raise SystemExit(pytest.main(['--collect-only', '-q', {str(tests)!r}]))"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=tests.parents[2],
+    )
+    assert result.returncode == 0, result.stdout[-2000:]
+    assert "error" not in result.stdout.splitlines()[-1]
+
+
 def test_drafting_closure_has_no_pipeline_modules() -> None:
     modules = [f"earnings_themes.{n.removesuffix('.py')}" for n in DRAFTING]
     assert forbidden_pipeline(modules_loaded_by(modules)) == []
@@ -258,8 +279,10 @@ def test_the_drafting_modules_import_nothing_from_the_independent_ledger() -> No
 
 
 def test_the_drafting_closure_does_not_load_the_independent_ledger() -> None:
-    """The fresh-process leg catches an indirect import, through ``records`` or
-    ``tomlfile``, that a scan of one file misses."""
+    """The fresh-process leg catches an indirect import, through a module the
+    drafting modules import, that a scan of one file misses. A plant in ``gold`` is
+    caught here; a plant in ``tomlfile`` is a circular import that fails before it
+    loads anything (the probe below pins that crash)."""
     modules = [f"earnings_themes.{n.removesuffix('.py')}" for n in DRAFTING]
     assert INDEPENDENT not in modules_loaded_by(modules)
 
@@ -339,6 +362,24 @@ def test_fresh_process_guard_detects_planted_transitive_independent(
     assert DRAFTING[0] == "gold.py", "the plant relies on gold being imported first"
     modules = [f"earnings_themes.{n.removesuffix('.py')}" for n in DRAFTING]
     assert INDEPENDENT in modules_loaded_by(modules, cwd=tmp_path)
+
+
+def test_a_planted_independent_import_in_tomlfile_fails_as_a_circular_import(
+    tmp_path: Path,
+) -> None:
+    """P17-4 (6): ``independent`` imports ``annotation``, which imports
+    ``tomlfile``, so a plant there cannot load ``independent`` quietly: the fresh
+    process stops on the partly initialized module."""
+    import shutil
+
+    package = tmp_path / "earnings_themes"
+    shutil.copytree(SOURCE, package, ignore=shutil.ignore_patterns("__pycache__"))
+    with (package / "tomlfile.py").open("a", encoding="utf-8") as stream:
+        stream.write("\nfrom earnings_themes.independent import ledger_problem\n")
+    modules = [f"earnings_themes.{n.removesuffix('.py')}" for n in DRAFTING]
+    with pytest.raises(subprocess.CalledProcessError) as failed:
+        modules_loaded_by(modules, cwd=tmp_path)
+    assert "partially initialized module" in failed.value.stderr
 
 
 def test_fresh_process_guard_detects_planted_transitive_support(tmp_path: Path) -> None:

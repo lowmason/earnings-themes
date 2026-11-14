@@ -49,7 +49,7 @@ from earnings_themes.gold import (
     gold_toml,
     no_theme_of,
 )
-from earnings_themes.problems import Problem, Refusal
+from earnings_themes.problems import Problem, Refusal, duplicates
 from earnings_themes.records import IdPart, NonBlank, Part, Pin, parse
 from earnings_themes.split import Partition, SplitManifest
 from earnings_themes.wording import labelled_strings, shared
@@ -201,19 +201,6 @@ def _by_row(item: AssignmentDraft) -> Hashable:
     return (item.claim_id, item.theme_id)
 
 
-def _duplicates(label: str, ids: Sequence[Hashable]) -> list[Refusal]:
-    """A refusal for each of ``ids`` that occurs more than once, in sorted order,
-    named ``label`` and the ID. An assignment row, a (claim, theme) pair, reads
-    ``claim/theme``."""
-    return [
-        Refusal(
-            f"{label}{'/'.join(i) if isinstance(i, tuple) else i}",
-            Problem.DUPLICATE_ID,
-        )
-        for i in sorted({i for i in ids if ids.count(i) > 1})
-    ]
-
-
 def _repeats(
     draft: GoldDraft | IndependentRecord | FixtureDraft, prefix: str
 ) -> list[Refusal]:
@@ -224,15 +211,15 @@ def _repeats(
     claims = (*getattr(draft, "claims", ()), *draft.hard_negatives)
     rows = [(a.claim_id, a.theme_id) for a in getattr(draft, "assignments", ())]
     return [
-        *_duplicates(f"{prefix}quote ", [q.quote_id for q in draft.quotes]),
-        *_duplicates(f"{prefix}claim ", [c.claim_id for c in claims]),
-        *_duplicates(f"{prefix}assignment ", rows),
+        *duplicates(f"{prefix}quote ", [q.quote_id for q in draft.quotes]),
+        *duplicates(f"{prefix}claim ", [c.claim_id for c in claims]),
+        *duplicates(f"{prefix}assignment ", rows),
     ]
 
 
 def _curated_repeats(drafted: CuratedDraft) -> list[Refusal]:
     """Each fixture the kept curated draft repeats, and each ID a fixture repeats."""
-    refusals = _duplicates("draft ", [d.fixture_id for d in drafted.documents])
+    refusals = duplicates("draft ", [d.fixture_id for d in drafted.documents])
     for document in drafted.documents:
         refusals += _repeats(document, f"draft {document.fixture_id} ")
     return list(dict.fromkeys(refusals))
@@ -348,8 +335,8 @@ def check_independent(
     refused first, as ``validate_gold`` refuses it (P16-2(a))."""
     if record.event_id != bundle.name:
         return [Refusal("event_id", Problem.UNKNOWN_DOCUMENT)]
-    if codebook.status is not CodebookStatus.APPROVED:
-        return [Refusal("codebook", Problem.CODEBOOK_NOT_APPROVED)]
+    if unapproved := _approved(codebook):
+        return unapproved
     made, refusals = _items(record, record, bundle, _Origins(), "")
     if refusals:
         return refusals
@@ -403,7 +390,7 @@ def _ids(
     quote_ids = [q.quote_id for q in quotes]
     claim_ids = [c.claim_id for c in (*claims, *negatives)]
     for name, ids in (("quote", quote_ids), ("claim", claim_ids)):
-        refusals += _duplicates(f"{prefix}{name} ", ids)
+        refusals += duplicates(f"{prefix}{name} ", ids)
     for claim in (*claims, *negatives):
         for quote_id in claim.quote_ids:
             if quote_id not in quote_ids:
@@ -413,7 +400,7 @@ def _ids(
     for quote_id in dict.fromkeys(quote_ids):
         if quote_id not in cited:
             refusals.append(Refusal(f"{prefix}quote {quote_id}", Problem.UNREFERENCED))
-    refusals += _duplicates(
+    refusals += duplicates(
         "assignment ", [(a.claim_id, a.theme_id) for a in assignments]
     )
     plain = {c.claim_id for c in claims}
@@ -477,12 +464,16 @@ def _wording(record: BaseModel, bundles: Mapping[str, Bundle]) -> list[Refusal]:
     ]
 
 
-def _codebook(ref: CodebookRef, codebook: Codebook) -> list[Refusal]:
-    if ref != _codebook_ref(codebook):
-        return [Refusal("codebook", Problem.WRONG_CODEBOOK)]
+def _approved(codebook: Codebook) -> list[Refusal]:
     if codebook.status is not CodebookStatus.APPROVED:
         return [Refusal("codebook", Problem.CODEBOOK_NOT_APPROVED)]
     return []
+
+
+def _codebook(ref: CodebookRef, codebook: Codebook) -> list[Refusal]:
+    if ref != _codebook_ref(codebook):
+        return [Refusal("codebook", Problem.WRONG_CODEBOOK)]
+    return _approved(codebook)
 
 
 def _standing(
@@ -658,7 +649,7 @@ def build_curated(
     for fixture_id, gone in before.items():
         if fixture_id not in kept:
             origins.rejected += len(gone.quotes) + len(gone.hard_negatives)
-    if repeats or refusals:
+    if refusals:
         return repeats + refusals
     record = HardNegativeSet(
         pin=pin,
@@ -668,7 +659,7 @@ def build_curated(
         codebook=_codebook_ref(codebook),
         documents=tuple(documents),
     )
-    refusals = validate_curated(
+    refusals = repeats + validate_curated(
         record, bundles=bundles, pin=pin, codebook=codebook, require_signature=False
     )
     return refusals or record
@@ -694,7 +685,7 @@ def validate_curated(
     kinds = {n.negative_kind for d in record.documents for n in d.hard_negatives}
     if kinds != set(NegativeKind):
         refusals.append(Refusal("hard_negatives", Problem.NEGATIVE_KINDS))
-    refusals += _duplicates("", [d.fixture_id for d in record.documents])
+    refusals += duplicates("", [d.fixture_id for d in record.documents])
     items: list[BaseModel] = []
     for document in record.documents:
         prefix = f"{document.fixture_id} "

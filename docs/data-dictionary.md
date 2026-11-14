@@ -2918,7 +2918,13 @@ unchanged. A support key binds the extraction run's whole record, which now also
 names its cache mode, so a key's value for a given run differs from before plan 18;
 no support cache predates it. A run stored before plan 18 has no `cache_mode`:
 `parse_support` refuses its record as `malformed_record`, so `read_support_run` raises
-`storage_corrupt`; none was committed (D18-4).
+`storage_corrupt`; none was committed (D18-4). Every digest of the record's dump
+covers both fields: `support_run_hash` and `_support_content_hash`
+(`earnings_themes.coding.decide`), the comparisons that read them
+(`decide_assignments`, `coding.assignments`, `coding.store` and
+`analysis.consume`), and the byte hash of the support stage's `run.json` that the
+theme workflow binds (`earnings_pipeline.theme_workflow`). So two runs that differ
+only in `cache_mode` or `stability_run_id` have different hashes (P18-1).
 
 `parse_support(data, model)` converts validation failures to the fixed
 `SupportError("malformed_record")`, suppressing source-bearing exception chaining.
@@ -6342,9 +6348,13 @@ reads the manifest and the chat models' files and checks the panel against Stage
 family rules first (`invalid_panel`). It then reads and parses the scorers' files,
 confines every model directory to the models root and checks every base URL, before
 any model file is hashed or loaded: a file that does not read, a directory outside
-the models root, a scorer's file with a wrong pinned field (the revision, runtime
-versions, encoding version or label mapping, through `parse_support`) and a base URL
-that is not on this machine are each `malformed_record`. So a typo is found before
+the models root, a scorer's file that `LocalScorerConfig._pinned` refuses (through
+`parse_support`) and a base URL that is not on this machine are each
+`malformed_record`. `_pinned` refuses each of these: a relative local directory; a
+wrong revision, runtime versions, encoding version or label mapping; a MiniCheck
+`input_limit` above 512; a file list that repeats a name; and a file list that lacks
+a required file (`config.json`, `tokenizer_config.json`, `tokenizer.json`, and
+MiniCheck's `pytorch_model.bin` or DeBERTa's `model.safetensors`) (P18-2). So a typo is found before
 multi-gigabyte weights are hashed. Last, it hashes every chat model's weights and
 tokenizer files and loads each tokenizer, and each scorer checks its kind, its own
 files and its installed runtime (`model_mismatch`). A relative `models_root` is

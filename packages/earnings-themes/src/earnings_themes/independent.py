@@ -93,8 +93,8 @@ def ledger_check(
     refused whether or not the record exists; one row and no record is a lost
     record, reported and never rewritten; one row and a record that does not hash to
     it is a changed record."""
-    rows = ledger.rows if ledger is not None else ()
-    rows = [r for r in rows if r.event_id == event_id]
+    every = ledger.rows if ledger is not None else ()
+    rows = [r for r in every if r.event_id == event_id]
     if not rows:
         if record is None:
             return Problem.NO_INDEPENDENT_RECORD

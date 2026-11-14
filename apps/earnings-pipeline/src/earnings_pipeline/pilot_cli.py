@@ -21,6 +21,7 @@ field. It reads each file's document, prints only IDs and counts, and writes not
 (GS5, GS13).
 """
 
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Annotated
 
@@ -32,6 +33,7 @@ from earnings_ingestion.events.coverage import (
     parsed_documents,
 )
 from earnings_ingestion.events.freeze import serialize
+from earnings_ingestion.events.states import StateTransition
 from earnings_themes.annotation import check_countable, load_gold_draft, recount
 from earnings_themes.codebook import Codebook
 from earnings_themes.gold import Gold, load_gold
@@ -108,12 +110,16 @@ Version = Annotated[
 
 
 def _no_theme(
-    layout: Layout, pinned: Pinned, run_ids: tuple[str, ...]
+    layout: Layout,
+    pinned: Pinned,
+    moves: Sequence[StateTransition],
+    run_ids: tuple[str, ...],
 ) -> list[NoThemeCount]:
     """Train's and dev's no-theme rows over the bundles with a parsed document
     under ``run_ids``. Each bundle needs committed gold whose pin, split, partition,
-    codebook, signature, and ``no_theme`` hold, read without its document (R12.4)."""
-    under = [t for t in transitions(layout) if t.run_id in run_ids]
+    codebook, signature, and ``no_theme`` hold, read without its document (R12.4).
+    A problem with committed gold is named even while other gold is missing."""
+    under = [t for t in moves if t.run_id in run_ids]
     parsed = parsed_documents(under, pinned.pin.pilot_hash)
     split = pinned_split(layout, pinned)
     codebook = pinned_codebook(layout)
@@ -149,9 +155,11 @@ def _no_theme(
                 partition=partition.value, bundles=len(events), no_theme=sum(flags)
             )
         )
-    for event_id in unsigned:
-        typer.echo(f"no signed gold  {event_id}", err=True)
     if unsigned:
+        for refusal in refusals:
+            typer.echo(f"refused: {refusal}", err=True)
+        for event_id in unsigned:
+            typer.echo(f"no signed gold  {event_id}", err=True)
         fail(
             f"Refused: {len(unsigned)} train and dev bundle(s) with a parsed document"
             " have no signed gold; coverage v2 waits for every one (R12.4)"
@@ -171,21 +179,24 @@ def coverage_command(context: typer.Context, version: Version = 1) -> None:
         fail("Refused: coverage has versions 1 and 2")
     pinned = load_pinned(layout)
     first = pinned.coverage_file(1)
-    if version == 2 and not first.is_file():
-        fail(
-            f"Refused: {layout.shown(first)} is not frozen; coverage v2 reads its"
-            " runs: run pilot coverage"
-        )
     try:
         run_ids = load_coverage(first).run_ids if first.is_file() else None
     except ValueError as error:
         fail(f"Refused: pilot_record: {type(error).__name__}")
-    no_theme = _no_theme(layout, pinned, run_ids or ()) if version == 2 else []
+    moves = transitions(layout)
+    no_theme: list[NoThemeCount] = []
+    if version == 2:
+        if run_ids is None:
+            fail(
+                f"Refused: {layout.shown(first)} is not frozen; coverage v2 reads its"
+                " runs: run pilot coverage"
+            )
+        no_theme = _no_theme(layout, pinned, moves, run_ids)
     try:
         report = build_coverage(
             pinned.pilot,
             pinned.coverage_pin,
-            transitions(layout),
+            moves,
             run_ids=run_ids,
             version=version,
             no_theme=no_theme,

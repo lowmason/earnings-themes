@@ -158,8 +158,10 @@ def _drafts(layout: Layout, name: str, check: bool) -> tuple[Path, Path]:
 
 def _guard(layout: Layout, pinned: Pinned, split: SplitManifest, event_id: str) -> None:
     """GS19: a dev bundle's draft is neither anchored nor shown until the user's
-    independent record exists and matches its ledger row. Only a dev bundle reads
-    the ledger or the record, so train and test are unchanged."""
+    independent record exists and matches its ledger row. The guard reads the
+    ledger on disk, not the committed ledger: committing the row first is the
+    procedure (GS19), not a check. Only a dev bundle reads the ledger or the record,
+    so train and test are unchanged."""
     if split.partition_of(event_id) is not Partition.DEV:
         return
     ledger = read_ledger(pinned)
@@ -346,15 +348,19 @@ def anchor_command(
     ] = False,
     independent: Independent = False,
 ) -> None:
-    """Anchor each working copy; commit the record once it is signed."""
+    """Anchor each working copy; commit the record once it is signed. With
+    --independent --check, check the user's independent record of each dev bundle
+    instead, and write nothing (GS19)."""
     layout: Layout = context.obj
     if independent and not check:
         fail(
             "Refused: --independent checks the user's record and writes nothing;"
             " add --check"
         )
-    if independent and (hard_negatives or not event_ids):
+    if independent and hard_negatives:
         fail("Refused: --independent takes events, not --hard-negatives")
+    if independent and not event_ids:
+        fail("Refused: --independent takes events; name the dev bundles to check")
     if not event_ids and not hard_negatives:
         fail("Refused: name the events to anchor, or --hard-negatives")
     codebook = pinned_codebook(layout)
@@ -477,6 +483,14 @@ def _validate_event(
     record: Gold,
 ) -> int:
     split = pinned_split(layout, pinned)
+    try:
+        partition = split.partition_of(record.event_id)
+    except KeyError:
+        partition = None
+    frozen = (layout.repo / CODEBOOK_FILE).is_file()
+    if partition is not None and (reason := readable(partition, frozen)) is not None:
+        typer.echo(f"refused: {record.event_id} {reason}", err=True)
+        return 1
     bundle = load_bundle(layout, doc_ids, record.event_id)
     refusals = validate_gold(
         record, bundle=bundle, pin=pinned.pin, split=split, codebook=codebook

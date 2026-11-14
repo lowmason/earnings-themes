@@ -16,6 +16,7 @@ from earnings_themes.annotation import (
     validate_curated,
     validate_gold,
 )
+from earnings_themes.codebook import CodebookStatus
 from earnings_themes.gold import (
     Gold,
     HardNegativeSet,
@@ -444,6 +445,24 @@ def test_a_kept_curated_draft_that_repeats_a_fixture_or_an_id_is_refused(
     inner = good.model_copy(update={"documents": (twice, *good.documents[1:])})
     refusals = build_curated(inner, good, bundles=fixtures, pin=PIN, codebook=codebook)
     assert refusals == [Refusal(f"draft {first.fixture_id} quote q1", "duplicate_id")]
+
+
+def test_a_kept_curated_repeat_is_refused_with_every_curated_check(
+    fixtures, codebook
+) -> None:
+    """P17-3, D17-2: a kept draft's repeat is collected with every other refusal,
+    so a curated set that also fails a record check shows both in one run."""
+    good = curated(fixtures)
+    first = good.documents[0]
+    repeated = good.model_copy(update={"documents": (*good.documents, first)})
+    unapproved = codebook.model_copy(update={"status": CodebookStatus.DRAFT})
+    refusals = build_curated(
+        repeated, good, bundles=fixtures, pin=PIN, codebook=unapproved
+    )
+    assert refusals == [
+        Refusal(f"draft {first.fixture_id}", "duplicate_id"),
+        Refusal("codebook", "codebook_not_approved"),
+    ]
 
 
 def rebuilt(committed: bytes, bundles, codebook, drafted: dict, working: dict):

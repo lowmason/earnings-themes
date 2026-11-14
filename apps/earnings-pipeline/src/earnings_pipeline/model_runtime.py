@@ -12,9 +12,11 @@ Stage 11 spec, A2; plan 18).
   - Then the scorers' files are read and parsed, every model directory is confined
     to the models root, and every base URL is checked, before any model file is
     hashed or loaded. A file that does not read, a directory outside the models
-    root, a scorer's file with a wrong pinned field (the revision, runtime versions,
-    encoding version or label mapping, through ``parse_support``) and a base URL
-    that is not on this machine are each ``malformed_record``.
+    root, a scorer's file that ``LocalScorerConfig._pinned`` refuses (through
+    ``parse_support``: a relative local directory; a wrong revision, runtime
+    versions, encoding version or label mapping; a MiniCheck ``input_limit`` above
+    512; a repeated file name; or a missing required file) and a base URL that is
+    not on this machine are each ``malformed_record``.
   - Last, every chat model's weights and tokenizer files are hashed against its
     file and its tokenizer loads, and each scorer checks its kind, its own files and
     its installed runtime (``model_mismatch``).

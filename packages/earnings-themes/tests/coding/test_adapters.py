@@ -4,13 +4,11 @@ import json
 import traceback
 from datetime import date
 
-import httpx
 import pytest
 from earnings_themes.coding.adapters import CodingTransportError, ScriptedClassifier
 from earnings_themes.coding.local import ClassifierBinding
 from earnings_themes.coding.records import CodingError
 from earnings_themes.extraction.adapters import AdapterError, ModelReply, Usage
-from earnings_themes.extraction.local import LocalAdapter, LocalModelConfig
 from earnings_themes.extraction.records import AdapterIdentity, ExtractionProblem
 from earnings_themes.support.records import FileHash, WeightLicense
 
@@ -56,6 +54,15 @@ def local_identity(identity):
             ),
         }
     )
+
+
+def local_extra():
+    """httpx and the local adapter, the local-model extra's; a test that needs them
+    skips without them (plan 12's F3)."""
+    httpx = pytest.importorskip("httpx", reason="the local-model extra provides httpx")
+    from earnings_themes.extraction import local
+
+    return httpx, local
 
 
 def local_transport(identity):
@@ -401,6 +408,7 @@ def test_local_binding_uses_complete_multifile_weights_manifest(classifier_ident
 def test_supplied_local_adapter_keeps_request_loopback_and_tool_free(
     coding_request, classifier_identity, no_network, response_kind
 ):
+    httpx, local = local_extra()
     identity = local_identity(classifier_identity)
     observed = []
 
@@ -438,8 +446,8 @@ def test_supplied_local_adapter_keeps_request_loopback_and_tool_free(
             },
         )
 
-    adapter = LocalAdapter(
-        LocalModelConfig(
+    adapter = local.LocalAdapter(
+        local.LocalModelConfig(
             base_url="http://127.0.0.1:8080/v1",
             model_id=identity.runtime.model_id,
             weights_sha256="a" * 64,
@@ -477,10 +485,11 @@ def test_supplied_local_adapter_keeps_request_loopback_and_tool_free(
 def test_supplied_local_adapter_refuses_nonlocal_or_invalid_endpoints(
     classifier_identity, url
 ):
+    _, local = local_extra()
     identity = local_identity(classifier_identity)
     with pytest.raises(ValueError):
-        LocalAdapter(
-            LocalModelConfig(
+        local.LocalAdapter(
+            local.LocalModelConfig(
                 base_url=url,
                 model_id=identity.runtime.model_id,
                 weights_sha256="a" * 64,

@@ -7,8 +7,9 @@ import json
 import socket
 from pathlib import Path
 
-import httpx
 import pytest
+
+httpx = pytest.importorskip("httpx", reason="the local-model extra provides httpx")
 from earnings_themes.extraction.adapters import (
     AdapterError,
     Message,

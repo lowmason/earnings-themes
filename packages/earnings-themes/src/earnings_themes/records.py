@@ -13,8 +13,9 @@
 """
 
 import json
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Annotated, Any, Literal, Protocol, Self
+from typing import Annotated, Any, Literal, Protocol, Self, get_args
 
 from earnings_core import canonical_json, digest
 from earnings_core.documents import IdPart
@@ -85,10 +86,39 @@ def record_json(record: BaseModel) -> bytes:
     return f"{text}\n".encode()
 
 
-def describe(error: ValidationError) -> tuple[str, ...]:
+def _models(annotation: object) -> Iterator[type[BaseModel]]:
+    """Every model class an annotation names, at any depth."""
+    if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+        yield annotation
+    for arg in get_args(annotation):
+        yield from _models(arg)
+
+
+def field_names(model: type[BaseModel]) -> frozenset[str]:
+    """Every field name in ``model`` and the models its fields name, at any depth."""
+    names: set[str] = set()
+    seen: set[type[BaseModel]] = set()
+    stack = [model]
+    while stack:
+        current = stack.pop()
+        if current in seen:
+            continue
+        seen.add(current)
+        for name, field in current.model_fields.items():
+            names.add(name)
+            stack.extend(_models(field.annotation))
+    return frozenset(names)
+
+
+def describe(
+    error: ValidationError, model: type[BaseModel] | None = None
+) -> tuple[str, ...]:
     """Each problem as its field path and message, without the input; an unknown or
-    a refused dict key is redacted as ``<key>``.
+    a refused dict key is redacted as ``<key>``. Given ``model``, a dict key whose
+    value is refused is redacted too: a path part that names no field of ``model``'s
+    tree is a key (plan 12's M8-9).
     """
+    known = field_names(model) if model is not None else None
     problems = []
     for item in error.errors(include_input=False, include_url=False):
         loc = list(item["loc"])
@@ -97,6 +127,13 @@ def describe(error: ValidationError) -> tuple[str, ...]:
         for i in range(1, len(loc)):
             if loc[i] == "[key]":
                 loc[i - 1] = "<key>"
+        if known is not None:
+            loc = [
+                "<key>"
+                if isinstance(part, str) and part not in known | {"[key]", "<key>"}
+                else part
+                for part in loc
+            ]
         path = ".".join(str(part) for part in loc) or "record"
         problems.append(f"{path}: {item['msg']}")
     return tuple(problems)
@@ -139,7 +176,7 @@ def parse[M: BaseModel](data: object, model: type[M], name: str) -> M:
     try:
         return model.model_validate_json(canonical_json(data))
     except ValidationError as error:
-        raise RecordError(name, describe(error)) from None
+        raise RecordError(name, describe(error, model)) from None
 
 
 __all__ = [
