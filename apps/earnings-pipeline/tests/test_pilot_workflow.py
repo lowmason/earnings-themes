@@ -615,8 +615,17 @@ def test_replay_still_refuses_a_miss_beyond_the_cut_claims(tmp_path, victim):
         (("replay_miss", "replay_miss", "replay_miss"), (), True),
         (("replay_miss", "replay_dispatch_forbidden"), (), True),
         (("replay_miss", "replay_miss"), ("replay_miss",), True),
+        # Both cut claims replay as classified, and a claim that was NOT cut misses.
+        ((None, None, "replay_miss"), (), True),
     ],
-    ids=("all_cut", "fewer_than_cut", "extra_miss", "dispatch", "decision_miss"),
+    ids=(
+        "all_cut",
+        "fewer_than_cut",
+        "extra_miss",
+        "dispatch",
+        "decision_miss",
+        "uncut_miss",
+    ),
 )
 def test_replay_failed_counts_only_the_cut_claims_misses(
     classification, decision, failed
@@ -634,7 +643,7 @@ def test_replay_failed_counts_only_the_cut_claims_misses(
     coding = SimpleNamespace(
         classifications=rows,
         record=SimpleNamespace(
-            counts_by_reason=tuple(Counter(classification).items()),
+            counts_by_reason=tuple(Counter(r for r in classification if r).items()),
             counts_by_decision_reason=tuple(Counter(decision).items()),
         ),
     )
