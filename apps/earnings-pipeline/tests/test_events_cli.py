@@ -150,22 +150,29 @@ def test_build_names_each_blocking_finding_s_own_remedy(repo) -> None:
     ) in lines
 
 
-def test_build_refuses_a_finding_id_two_issuers_share(repo) -> None:
-    """A filing row that follows no convention makes a finding whose ID names the
-    accession alone. Dynamo's 8-K of 2026-07-21 is also listed under Corvid, with its
-    index page and primary document saved under Corvid's CIK, so two findings share
-    one ID. The build reports it as a problem, and prints no traceback."""
-    mismatch = "0009990005-26-000018"
+MISMATCH = "0009990005-26-000018"
+REPEATED = (
+    f"acceptance_time_mismatch:{MISMATCH}: 2 findings share this ID,"
+    " under cik-0009990003, cik-0009990005"
+)
+
+
+def list_dynamo_8k_under_corvid(repo: Path, *, document: bool) -> None:
+    """List Dynamo's 8-K of 2026-07-21 under Corvid too, written with an
+    ``acceptanceDateTime`` that follows neither convention, so each issuer makes an
+    ``acceptance_time_mismatch`` finding under one ID. Corvid's copy gets the index
+    page. It gets a primary document too when ``document``, which Corvid's slot for
+    2026-06-30 reads as a candidate."""
     (shared,) = [
         replace(filing, written="2026-07-21T12:00:00.000Z")
         for filing, _ in filings(DYNAMO)
-        if filing.accession == mismatch
+        if filing.accession == MISMATCH
     ]
     store = ArtifactStore(repo / FIXTURE_DIR / "raw", repo)
     later = RETRIEVED + timedelta(days=1)
     for registrant in (DYNAMO, CORVID):
         listed = [
-            filing for filing, _ in filings(registrant) if filing.accession != mismatch
+            filing for filing, _ in filings(registrant) if filing.accession != MISMATCH
         ]
         body = submissions_file(
             registrant.cik,
@@ -174,31 +181,36 @@ def test_build_refuses_a_finding_id_two_issuers_share(repo) -> None:
             convention=registrant.convention,
         )
         save(store, submissions_url(registrant.cik), body, "application/json", later)
-    page = SavedResponses(store).get(filing_index_url(DYNAMO.cik, mismatch))
-    save(
-        store,
-        filing_index_url(CORVID.cik, mismatch),
-        page.text.body,
-        "text/html",
-        later,
-    )
-    released = ("Corvid Systems Inc announced its results.",)
-    save(
-        store,
-        archive_url(CORVID.cik, mismatch, shared.primary_document),
-        eight_k(CORVID.name, [("2.02", released)], signed=shared.filing_date),
-        "text/html",
-        later,
-    )
+    page = SavedResponses(store).get(filing_index_url(DYNAMO.cik, MISMATCH))
+    index = filing_index_url(CORVID.cik, MISMATCH)
+    save(store, index, page.text.body, "text/html", later)
+    if document:
+        released = ("Corvid Systems Inc announced its results.",)
+        body = eight_k(CORVID.name, [("2.02", released)], signed=shared.filing_date)
+        url = archive_url(CORVID.cik, MISMATCH, shared.primary_document)
+        save(store, url, body, "text/html", later)
+
+
+def test_build_refuses_a_finding_id_two_issuers_share(repo) -> None:
+    """Corvid's copy of Dynamo's 8-K has no primary document saved, so the build also
+    reports that. It reports the repeated ID, as a problem, and exits."""
+    list_dynamo_8k_under_corvid(repo, document=False)
     result = run(repo, "build")
     assert result.exit_code == 1, result.output
     assert isinstance(result.exception, SystemExit), result.exception
-    assert result.stderr.splitlines() == [
-        (
-            f"problem: acceptance_time_mismatch:{mismatch}: 2 findings share this ID,"
-            " under cik-0009990003, cik-0009990005"
-        )
-    ]
+    assert f"problem: {REPEATED}" in result.stderr.splitlines()
+
+
+def test_build_prints_a_repeated_finding_id_as_a_problem_not_a_traceback(
+    repo,
+) -> None:
+    """With nothing else missing, the repeated ID is the build's only problem. Before
+    the check, ``EventManifest`` refused it after the build, with a pydantic error."""
+    list_dynamo_8k_under_corvid(repo, document=True)
+    result = run(repo, "build")
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stderr.splitlines() == [f"problem: {REPEATED}"]
 
 
 def test_freeze_names_the_version_that_holds_the_content(repo) -> None:
