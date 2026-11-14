@@ -381,44 +381,78 @@ it. A rerun may name only the URLs or exhibits that are still unusable.
 
 **The manual route.** Three kinds of damage have no `--refetch`:
 
-- **(a) A damaged retrieval record.** A record that cannot be read stops every command
-  that reads the store. The error is a validation error that names no file. The URL
-  inside the record is unknown, so no refetch can name it.
+- **(a) A damaged retrieval record.** A record that cannot be read stops each command
+  that reads it, with a validation error that names no file. The events store stops
+  with that error. In the cohort store, `cohort build` prints it as a `problem:` line.
+  The URL inside the record is unknown, so no refetch can name it.
 - **(b) The cohort store.** `cohort fetch-sec` fetches each filed N-PORT document once.
-  It stops with a `Stopped:` line when a saved one is gone or changed.
+  It stops with a `Stopped:` line when a saved one is gone or changed. The line names
+  the artifact's SHA-256 and no URL.
 - **(c) A response of a filing that discovery does not read.** That means an
   override's index page, and the index page or primary document of a filing that a
   `set_release_filing` override named, such as a filing without Item 2.02. Their
   problem lines name `events discover --refetch`, but it refuses them and points here.
 
-The manual repair moves files out of the store and never deletes one. `<source>` is
-the source directory that holds the damaged file. It is `data/raw/events/sec-edgar/`
-for events, and `data/raw/cohort/dia-nport/` for the cohort's N-PORT documents.
+The manual repair moves damaged files out of the store, and never deletes one. A
+damaged retrieval record moves. An artifact moves only if its bytes are damaged. A
+valid artifact stays where it is, even when other URLs share it.
 
-1. Find the damaged response's retrieval records by its URL:
-   `grep -l '"request_url":"<URL>"' <source>/retrievals/*/*.json`.
-   For (a), the URL is unknown. A record's name ends with the first 12 hex digits of
-   its own SHA-256, so list each record whose name does not match:
+`<source>` is a source directory of the store. The events store has one,
+`data/raw/events/sec-edgar/`. The cohort store has one for each source, such as
+`data/raw/cohort/sec-edgar/` and `data/raw/cohort/dia-nport/`, which holds the fund's
+N-PORT documents.
 
-   ```bash
-   for f in <source>/retrievals/*/*.json; do
-     name=${f##*-}
-     [ "$(shasum -a 256 "$f" | cut -c1-12)" = "${name%.json}" ] || echo "$f"
-   done
-   ```
+1. Find the damaged files.
+   - For (c), list the response's retrieval records by its URL:
+     `grep -l '"request_url":"<URL>"' <source>/retrievals/*/*.json`.
+   - For (a), the URL is unknown. A record's name ends with the first 12 hex digits of
+     its own SHA-256. Set `<store>` to `data/raw/events` or `data/raw/cohort`, the
+     store whose command stopped. This lists each record whose name does not match:
 
-2. Move each record's directory, `retrievals/<sha256>/`, and the artifact it names,
-   `<sha256>.<extension>`, from `<source>` to `<source>/quarantine/manual-<date>/`. For
-   (a), move the damaged record file alone. A URL with no record left is unsaved, and a
-   rerun fetches it.
+     ```bash
+     for f in <store>/*/retrievals/*/*.json; do
+       name=${f##*-}
+       [ "$(shasum -a 256 "$f" | cut -c1-12)" = "${name%.json}" ] || echo "$f"
+     done
+     ```
+
+   - For (b), the `Stopped:` line names the artifact's SHA-256, `<sha256>`. The line
+     is `no artifact <sha256> for source 'dia-nport': its retrieval records remain, but
+     its bytes are gone`, or `<path>/<sha256>.xml no longer hashes to its name`. The
+     records are the files in `<source>/retrievals/<sha256>/`.
+   - To tell whether an artifact is damaged, run
+     `shasum -a 256 <source>/<sha256>.<extension>`. A different digest means damaged
+     bytes. A missing file means the bytes are gone.
+2. Move the record files that step 1 found from `<source>/retrievals/<sha256>/` to
+   `<source>/quarantine/manual-<date>/`. Leave the directory's other records in place.
+   For (a), move the damaged record file alone. Move the artifact
+   `<sha256>.<extension>` there too, only if its bytes no longer hash to its name. A
+   missing artifact needs no move. A URL with no record left is unsaved, and a rerun
+   fetches it.
 3. Rerun the command that stopped, at a count the user approved:
-   - For (a), rerun `events discover --max-requests N`, or `events acquire`. Its stated
-     count now includes the URL, and the rerun is a gate of its own.
-   - For (b), run `cohort fetch-sec --max-requests N`.
+   - For (a) in the events store, run `events build`. Each
+     `nothing saved from <URL>: run events discover` line names a URL that a rerun
+     fetches. Plain `events discover` prints only the cap you give it, and then it
+     sends. The user approves N from those lines, and then you run
+     `events discover --max-requests N`. `events acquire` does state its count first.
+     For an exhibit, rerun it, and its stated count now includes the URL.
+   - For (a) in the cohort store, rerun the command that saves the source of the
+     moved record. `cohort fetch-sec --max-requests N` saves `sec-edgar` and
+     `dia-nport`. `cohort fetch SOURCE_ID URL` fetches a page of a registered source.
+     `cohort register SOURCE_ID FILE --url URL` saves a page that a person saved in a
+     browser. `docs/membership-source-register.toml` says which route each source
+     takes. It fetches `wikipedia-djia`, and a person saves `spdji-announcements`
+     notices. Then `cohort build` names what is still unsaved, as
+     `nothing saved from <url> for <source>`.
+   - For (b), run `cohort fetch-sec --max-requests N`. It fetches the ticker list,
+     every submissions file, and the fund's older pages again, so N is larger than one
+     document. The user approves N. The command states no count first.
    - For (c), run `events discover --filing <cik> <accession>`, with the issuer's
-     10-digit CIK, as the universe manifest spells it. It fetches whichever of the
-     index page and the 8-K document is now unsaved, at most 2 requests. It takes
-     `--max-requests` only to lower that cap.
+     10-digit CIK, as the universe manifest spells it. `<accession>` is the dashed
+     form, `<10 digits>-<2 digits>-<6 digits>`. The command has no dry run, unlike
+     `--refetch`. It sends as soon as it runs, so the user approves its 2 requests
+     first. It fetches whichever of the index page and the 8-K document is now
+     unsaved. It takes `--max-requests` only to lower that cap.
 4. Run the build, `events build` or `cohort build`, and compare its content hash with
    the frozen one.
 
