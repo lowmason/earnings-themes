@@ -392,7 +392,7 @@ it. A rerun may name only the URLs or exhibits that are still unusable.
 - **(c) The primary document of a filing that discovery does not read.**
   `release-id/1` reads a primary document only for an 8-K whose index page lists Item
   2.02 and an EX-99* exhibit. A `set_release_filing` override can name another filing:
-  an 8-K/A, or an 8-K without them. The override cites its primary document. If that
+  an 8-K/A, or an 8-K that lacks either one. The override cites its primary document. If that
   file is damaged, the problem line names `events discover --refetch`, but `--refetch`
   refuses it and points here. An index page is not in this class. Discovery reads the
   index page of every filing in the files that it reads, and `--refetch` replaces a
