@@ -123,6 +123,22 @@ def test_an_unreadable_retrieval_record_is_named(tmp_path) -> None:
         assert named.value.path == record
 
 
+def test_a_truncated_retrieval_record_is_named(tmp_path) -> None:
+    """A record cut off partway, as a full disk or a crash can leave it, is named by
+    each reader, as an empty one is."""
+    store, record = damaged_record(tmp_path, b'{"request_url": "https://www.sec.gov/')
+    url = "https://press.example.org/a"
+    readers = [
+        lambda: store.retrievals(SEC_SOURCE_ID, sha256_hex(BODY)),
+        lambda: store.latest(SEC_SOURCE_ID, url, **RIGHTS),
+        lambda: SavedResponses(store),
+    ]
+    for read in readers:
+        with pytest.raises(RetrievalRecordError) as named:
+            read()
+        assert named.value.path == record
+
+
 def test_a_retrieval_record_that_is_not_utf_8_is_named(tmp_path) -> None:
     """A decoding error is a ``ValueError`` too, and names the record as a validation
     error does, with the repair beside it."""
