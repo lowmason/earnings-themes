@@ -60,7 +60,7 @@ from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.client import open_sec_client
 from earnings_ingestion.sec.urls import is_sec_host
 
-from earnings_pipeline.paths import raw_store_refusal, shown
+from earnings_pipeline.paths import error_lines, raw_store_refusal, shown
 
 cohort = typer.Typer(no_args_is_help=True, help="Stage 4's point-in-time DJIA cohort.")
 FETCHING = frozenset({"fetch", "fetch-sec"})
@@ -248,7 +248,9 @@ def _build(layout: Layout) -> CohortBuild:
             typer.echo(f"problem: {problem}", err=True)
         raise typer.Exit(1) from error
     except (OSError, ValueError) as error:
-        _fail(f"problem: {error}")
+        for line in error_lines(error):
+            typer.echo(f"problem: {line}", err=True)
+        raise typer.Exit(1) from error
 
 
 @cohort.command("build")
