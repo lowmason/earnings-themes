@@ -13,15 +13,19 @@ import pytest
 from earnings_core import sha256_hex
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
 from earnings_ingestion.events.acquire import exhibit_remedy
+from earnings_ingestion.events.filings import issuer_filings
 from earnings_ingestion.events.fixture import COHORT_MANIFEST, FIXTURE_DIR
 from earnings_ingestion.events.freeze import load_event_manifest, serialize
 from earnings_ingestion.events.layer import (
+    ACME,
     CORVID,
+    CUTOFF,
     DYNAMO,
     EASTFIELD,
     OLDER_PAGES,
     REPORTS,
     RETRIEVED,
+    START,
     exhibit_bodies,
     filings,
 )
@@ -32,6 +36,7 @@ from earnings_ingestion.events.states import DocumentState
 from earnings_ingestion.events.synthetic import (
     SyntheticStore,
     eight_k,
+    index_page,
     save,
     submissions_file,
 )
@@ -122,19 +127,35 @@ def test_build_names_each_blocking_finding_s_own_remedy(repo) -> None:
     """Only a period_gap or no_slots is acknowledged. An acceptance_time_unknown
     needs its filing's index page; an acceptance_time_mismatch has no remedy here.
     Dynamo's 10-Q of 2026-04-03 loses its acceptanceDateTime, and its 8-K of
-    2026-07-21, whose index page is saved, gets one that follows neither convention."""
+    2026-07-21, whose index page is saved, gets one that follows neither convention.
+    Acme's 8-K of 2025-06-26 is written in true UTC, so Acme's file follows both
+    conventions and establishes none. Acme's 10-Q of 2026-08-31 gets a value that
+    falls on the cutoff in true UTC and on the next day in Eastern digits."""
     unknown, mismatch = "0009990005-26-000017", "0009990005-26-000018"
-    written = {unknown: "", mismatch: "2026-07-21T12:00:00.000Z"}
-    listed = [
-        replace(filing, written=written.get(filing.accession))
-        for filing, _ in filings(DYNAMO)
-    ]
-    body = submissions_file(
-        DYNAMO.cik, DYNAMO.name, listed, convention=DYNAMO.convention
-    )
+    utc, late = "0009990001-25-000010", "0009990001-26-000021"
+    written = {
+        unknown: "",
+        mismatch: "2026-07-21T12:00:00.000Z",
+        utc: "2025-06-26T20:05:00.000Z",
+        late: "2026-09-23T01:30:00.000Z",
+    }
     store = ArtifactStore(repo / FIXTURE_DIR / "raw", repo)
     later = RETRIEVED + timedelta(days=1)
-    save(store, submissions_url(DYNAMO.cik), body, "application/json", later)
+    for registrant in (DYNAMO, ACME):
+        listed = [
+            replace(filing, written=written.get(filing.accession))
+            for filing, _ in filings(registrant)
+        ]
+        body = submissions_file(
+            registrant.cik, registrant.name, listed, convention=registrant.convention
+        )
+        save(store, submissions_url(registrant.cik), body, "application/json", later)
+    acme = issuer_filings(
+        SavedResponses(store), ACME.cik, "cik-0009990001", start=START, cutoff=CUTOFF
+    )
+    (file,) = acme.files
+    assert late in [filing.accession for filing in file.filings]
+    assert file.survey.convention is None
     (repo / FIXTURE_DIR / "overrides.toml").unlink()
     result = run(repo, "build")
     assert result.exit_code == 1, result.output
@@ -146,8 +167,40 @@ def test_build_names_each_blocking_finding_s_own_remedy(repo) -> None:
         f" {DYNAMO.cik} {unknown}"
     ) in lines
     assert (
+        f"acceptance_time_unknown:{late}: run events discover --filing"
+        f" {ACME.cik} {late}"
+    ) in lines
+    assert (
         f"acceptance_time_mismatch:{mismatch}: no override or discover run answers it"
     ) in lines
+
+
+def test_an_emptied_10q_with_its_index_page_saved_still_freezes(repo) -> None:
+    """Review Focus (plan 26, D2): a row with no acceptanceDateTime has nothing to
+    cross-check. Dynamo's 10-Q of 2026-04-03 loses its value, and its index page is
+    saved, so the page places it, and the build and the freeze reproduce v1."""
+    emptied = "0009990005-26-000017"
+    listed = [
+        replace(filing, written="" if filing.accession == emptied else None)
+        for filing, _ in filings(DYNAMO)
+    ]
+    (report,) = [filing for filing in listed if filing.accession == emptied]
+    store = ArtifactStore(repo / FIXTURE_DIR / "raw", repo)
+    later = RETRIEVED + timedelta(days=1)
+    body = submissions_file(
+        DYNAMO.cik, DYNAMO.name, listed, convention=DYNAMO.convention
+    )
+    save(store, submissions_url(DYNAMO.cik), body, "application/json", later)
+    page = index_page(DYNAMO.cik, report)
+    save(store, filing_index_url(DYNAMO.cik, emptied), page, "text/html", later)
+    result = run(repo, "build")
+    assert result.exit_code == 0, result.output
+    assert result.stdout.splitlines()[-1] == (
+        f"32 events, 27 eligible, content {EVENTS_HASH}"
+    )
+    result = run(repo, "freeze")
+    assert result.exit_code == 0, result.output
+    assert result.stdout.splitlines()[0] == "unchanged: djia-synthetic v1"
 
 
 MISMATCH = "0009990005-26-000018"

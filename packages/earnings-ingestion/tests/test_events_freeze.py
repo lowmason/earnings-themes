@@ -3,6 +3,7 @@ P6-14), over the synthetic event layer and Stage 4's synthetic cohort.
 """
 
 import shutil
+from dataclasses import replace
 from datetime import UTC, date, datetime
 from pathlib import Path
 
@@ -23,6 +24,7 @@ from earnings_ingestion.events.freeze import (
 from earnings_ingestion.events.layer import (
     ACME,
     CORVID,
+    DYNAMO,
     REPORTS,
     filings,
     review,
@@ -154,6 +156,37 @@ def test_a_reviewed_build_freezes_with_evidence_that_verifies(
     none = events["cik-0009990005:2025-06-27"]
     assert (none.release, none.item_text, none.cross_check) == (None, None, None)
     assert events["cik-0009990002:2024-09-30"].amendments[0].url.endswith("-index.htm")
+
+
+def test_a_row_with_no_value_is_cited_without_one(universe, layer) -> None:
+    """Under reading (a) (plan 26, D2), a row with no acceptanceDateTime has nothing
+    to cross-check. Dynamo's 10-Q of 2026-04-03, whose index page is saved, and the
+    8-K of 2026-04-28 that releases it lose their values: the slot cites the 10-Q's
+    row without one, and the release has no cross-check. Every other row keeps its
+    value, and its citation."""
+    report, release = "0009990005-26-000017", "0009990005-26-000016"
+    listed = [
+        replace(filing, written="" if filing.accession in (report, release) else None)
+        for filing, _ in filings(DYNAMO)
+    ]
+    again = SyntheticStore(layer.store.root, layer.store.repo, LATER)
+    again.submissions(DYNAMO.cik, DYNAMO.name, listed, convention=DYNAMO.convention)
+    (emptied,) = [filing for filing in listed if filing.accession == report]
+    again.index(DYNAMO.cik, emptied)
+    built = reviewed(universe, again)
+    assert not built.holds_freeze
+    evidence = evidence_of(built, built.manifest(1, NOW), SavedResponses(again.store))
+    events = {cited.event_id: cited for cited in evidence.events}
+    slot = events["cik-0009990005:2026-04-03"]
+    columns = [loc.pointer.split("/")[-2] for loc in slot.periodic_row.locators]
+    assert columns == ["accessionNumber", "form", "reportDate"]
+    assert slot.release is not None
+    assert slot.cross_check is None
+    kept = events["cik-0009990005:2025-12-31"]
+    columns = [loc.pointer.split("/")[-2] for loc in kept.periodic_row.locators]
+    assert columns == ["accessionNumber", "form", "reportDate", "acceptanceDateTime"]
+    assert kept.cross_check is not None
+    assert check_evidence(evidence, again.store) == ()
 
 
 def test_identical_content_is_the_same_version(universe, layer, tmp_path) -> None:

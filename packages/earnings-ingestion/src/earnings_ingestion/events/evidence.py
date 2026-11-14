@@ -9,6 +9,9 @@ manifest; EV11).
 - the release filing's index page at its Accepted value, and its Item 2.02 text;
 - the release's submissions row at ``acceptanceDateTime``, its cross-check.
 
+A row with no ``acceptanceDateTime`` has nothing to cross-check (plan 26, D2): the
+periodic report's row is cited without it, and the release has no cross-check.
+
 It also records each submissions file and older page the build read, with its
 convention, and each older page skipped by its dates. Every citation carries its
 ``retrieved_at``. The record lies outside the manifest's hash, so a re-fetch changes
@@ -54,7 +57,10 @@ LIMITATIONS = (
 
 
 def _row(file: SavedFile, filing: Filing, *columns: str) -> Citation:
-    """A submissions row's values, by JSON pointer."""
+    """A submissions row's values, by JSON pointer. A row with no value cites no
+    ``acceptanceDateTime``."""
+    if filing.accepted_at is None:
+        columns = tuple(c for c in columns if c != "acceptanceDateTime")
     text = file.artifact.text
     return file.artifact.cite(*(text.pointer(filing.pointer(c)) for c in columns))
 
@@ -94,7 +100,7 @@ def _event(detail: EventDetail, saved: SavedResponses) -> EventCitations:
         item_text=item_text,
         cross_check=(
             None
-            if release is None
+            if release is None or release.filing.accepted_at is None
             else _row(release.file, release.filing, "acceptanceDateTime")
         ),
     )

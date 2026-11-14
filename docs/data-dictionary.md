@@ -1213,8 +1213,8 @@ The first of `eligibility/1`'s checks that applies decides (S §Eligibility).
 | `period_gap` | An in-window period end may be missing; blocking until acknowledged |
 | `no_slots` | A candidate issuer has no slot; blocking until acknowledged |
 | `fiscal_labels_unknown` | Companyfacts gives the periodic report no agreeing `fy` and `fp`, where a blank `fp` or an `fy` below 1 states none; not blocking |
-| `acceptance_time_mismatch` | A cross-checked `acceptanceDateTime` follows neither convention; blocking |
-| `acceptance_time_unknown` | A filing's side of the cutoff or range turns on a convention its file does not establish, or on a missing value; blocking until its index page is saved (P7-8) |
+| `acceptance_time_mismatch` | A cross-checked `acceptanceDateTime` with a value follows neither convention; blocking |
+| `acceptance_time_unknown` | A filing's side of the cutoff or range turns on a convention its file does not establish, or on a missing value; blocking until its index page is saved (P7-8). An original periodic report older than the issuer's latest report before the window raises none. An Item 2.02 8-K with no value raises one only when it is filed from the window's start to seven days after the cutoff |
 
 ### `EventOverrideKind`
 
@@ -1349,7 +1349,7 @@ plan 8, P8-11). `events acquire` applies it; no manifest hashes it.
 | `sha256` | 64 lowercase hex | Its bytes' hash |
 | `retrieved_at` | UTC datetime | When they were retrieved |
 | `convention` | `Convention` or null | The convention its cross-checked rows share; null when none was cross-checked, or they follow both |
-| `rows_cross_checked` | int ≥ 0 | Its rows whose index page is saved |
+| `rows_cross_checked` | int ≥ 0 | Its rows with a value and a saved index page |
 
 ### `SkippedPage`
 
@@ -1373,7 +1373,7 @@ primary document through `walker-1`'s text, and a JSON file by pointer.
 | `amendments` | tuple of `Citation` | Each 8-K/A in the slot's range, at its Accepted value: recorded, never chosen by the rule |
 | `release` | `Citation` or null | The release filing's index page, at its Accepted value |
 | `item_text` | `Citation` or null | The release's Item 2.02 text; null when its primary document is not saved or states none |
-| `cross_check` | `Citation` or null | The release's submissions row, at `acceptanceDateTime` |
+| `cross_check` | `Citation` or null | The release's submissions row, at `acceptanceDateTime`, or null when the row has no value |
 
 ### `EventEvidence`
 

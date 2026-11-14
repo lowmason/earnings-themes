@@ -243,6 +243,9 @@ def test_a_release_either_convention_places_in_range_needs_its_index_page(
 
 
 def test_a_missing_value_is_unknown_unless_filed_before_the_range(saved) -> None:
+    """Under reading (a) (plan 26, D2), a row with no value has nothing to
+    cross-check: once each unknown filing's index page is saved, the page places it,
+    and nothing is found."""
     report = periodic(80, date(2026, 6, 30), "2026-08-05 16:00:00", written="")
     unplaced = release(20, "2025-01-28 07:00:00", written="")
     early = release(5, "2024-05-01 16:05:00", written="")
@@ -255,6 +258,85 @@ def test_a_missing_value_is_unknown_unless_filed_before_the_range(saved) -> None
     assert read.findings[1].detail == (
         f"10-Q {report.accession}, filed 2026-08-05: no acceptanceDateTime"
     )
+    saved.index(report)
+    saved.index(unplaced)
+    read = saved.read()
+    assert read.findings == ()
+    assert report.accession in [p.filing.accession for p in read.periodic]
+    assert unplaced.accession in [p.filing.accession for p in read.releases]
+
+
+def test_an_old_periodic_report_with_no_value_raises_nothing(saved, tmp_path) -> None:
+    """No slot or guard reads a report older than the issuer's latest one before the
+    window, so its missing value holds nothing, and the reports read are the same as
+    without it."""
+    old = periodic(60, date(2023, 12, 31), "2024-02-20 16:30:00", written="")
+    latest = periodic(70, date(2024, 3, 31), "2024-05-02 16:30:00")
+    inside = periodic(90, date(2024, 9, 30), "2024-11-04 16:30:00")
+    saved.submissions([old, latest, inside])
+    read = saved.read()
+    assert read.findings == ()
+    without = Saved(tmp_path / "data" / "raw" / "without", tmp_path, RETRIEVED)
+    without.submissions([latest, inside])
+    assert [p.filing.accession for p in read.periodic] == [
+        p.filing.accession for p in without.read().periodic
+    ]
+
+
+def test_the_latest_report_before_the_window_with_no_value_still_blocks(
+    saved,
+) -> None:
+    """The slots' guards pair the latest report before the window with the first
+    in-window report, so its missing value still blocks."""
+    older = periodic(60, date(2023, 12, 31), "2024-02-20 16:30:00")
+    latest = periodic(70, date(2024, 3, 31), "2024-05-02 16:30:00", written="")
+    inside = periodic(90, date(2024, 9, 30), "2024-11-04 16:30:00")
+    saved.submissions([older, latest, inside])
+    (finding,) = saved.read().findings
+    assert finding.finding_id == f"acceptance_time_unknown:{latest.accession}"
+    assert finding.kind is EventFindingKind.ACCEPTANCE_TIME_UNKNOWN
+
+
+def test_the_latest_report_before_the_window_is_the_issuer_s_not_its_file_s(
+    saved,
+) -> None:
+    """An older page that states no range is read. The report it holds is older than
+    the latest report before the window, which the submissions file holds, so its
+    missing value holds nothing."""
+    old = periodic(60, date(2023, 12, 31), "2024-02-20 16:30:00", written="")
+    latest = periodic(70, date(2024, 3, 31), "2024-05-02 16:30:00")
+    inside = periodic(90, date(2024, 9, 30), "2024-11-04 16:30:00")
+    name = "CIK0009990001-submissions-001.json"
+    saved.submissions([latest, inside], pages=[{"name": name, "filingCount": 1}])
+    saved.page(name, [old])
+    read = saved.read()
+    assert [file.artifact.url for file in read.files] == [
+        submissions_url(CIK),
+        submissions_page_url(name),
+    ]
+    assert (read.findings, read.problems) == ((), ())
+
+
+def test_a_no_value_release_past_the_cutoff_margin_raises_nothing(saved) -> None:
+    """A filing accepted after 17:30 takes the next business day's filing date, so a
+    release with no value blocks only when filed by seven days after the cutoff."""
+    past = release(95, "2026-09-30 07:00:00", written="", filing_date=date(2026, 9, 30))
+    margin = release(
+        94, "2026-09-29 07:00:00", written="", filing_date=date(2026, 9, 29)
+    )
+    saved.submissions([past, margin])
+    (finding,) = saved.read().findings
+    assert finding.finding_id == f"acceptance_time_unknown:{margin.accession}"
+
+
+def test_a_no_value_release_filed_on_the_window_s_start_is_unknown(saved) -> None:
+    """The window's start is inside the 8-K trigger's range, and the day before it
+    is not."""
+    first = release(30, "2024-07-01 07:00:00", written="")
+    before = release(25, "2024-06-30 07:00:00", written="")
+    saved.submissions([first, before])
+    (finding,) = saved.read().findings
+    assert finding.finding_id == f"acceptance_time_unknown:{first.accession}"
 
 
 def test_an_index_page_of_another_filing_is_a_problem(saved) -> None:

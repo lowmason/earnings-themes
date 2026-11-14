@@ -331,6 +331,15 @@ These are plan A's first tasks, done before any Stage 5 request.
   - Anything else is a blocking `acceptance_time_mismatch` finding, so a changed
     format stops the build instead of being guessed at.
   - The reader never infers a file's convention from its dates.
+  - A row with no value has nothing to cross-check. When the filing's index page is
+    saved, the page's Accepted value places the filing, and its cross-check is null:
+    no finding, and the evidence record cites no `acceptanceDateTime`. Without the
+    page, the row is `acceptance_time_unknown` until `events discover --filing`
+    saves it (P7-8). An original periodic report older than the issuer's latest
+    report before the window raises no `acceptance_time_unknown`, since no slot or
+    guard reads it. An Item 2.02 8-K with no value raises one only when it is filed
+    from the window's start to seven days after the cutoff. *(owner, plan 26,
+    2026-11-13: reading (a), the owner's ruling in the `/deferred` pass.)*
 - **First publication.** `first_publication_time` equals `filing_acceptance_time`, and
   `first_publication_source_id` is `sec-edgar` (EV9). The evidence record states the
   upper-bound limitation.

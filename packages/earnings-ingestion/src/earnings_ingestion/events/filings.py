@@ -10,16 +10,22 @@ It then places each filing the build reads (plan 7, P7-8):
 
 - **With its index page saved**, a filing takes the page's Accepted value as its
   acceptance time, and its submissions row is cross-checked against it. A row that
-  follows neither convention is a blocking ``acceptance_time_mismatch``.
+  follows neither convention is a blocking ``acceptance_time_mismatch``. A row with
+  no value has nothing to cross-check, so the page alone places the filing (plan 26,
+  D2).
 - **An original periodic report** without its index page is placed by its file's
   convention, which the file's cross-checked rows establish, or by both conventions
   when they establish none. It is visible when it was accepted by the cutoff. When
   the two readings fall on either side of the cutoff, or the row has no value, it
   is ``acceptance_time_unknown``, which blocks until its index page is saved
-  (``earnings-pipeline events discover --filing``).
+  (``earnings-pipeline events discover --filing``). A report older than the
+  issuer's latest report before ``start`` raises no finding, since no slot or guard
+  reads it.
 - **An Item 2.02 8-K or 8-K/A** is read from its index page, which discovery saved
   for every one that either convention places in the range. One without a value,
-  filed on or after ``start``, is ``acceptance_time_unknown`` in the same way.
+  filed on or after ``start``, is ``acceptance_time_unknown`` in the same way. One
+  filed more than ``FILING_DATE_SLACK`` after the cutoff raises none, since it was
+  accepted after the cutoff and can never be an event.
 
 A saved response that is missing, unreadable, or for another accession is a
 problem, and so is an index page whose form is not its submissions row's, or that
@@ -39,7 +45,7 @@ refetches with its older pages.
 """
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from earnings_ingestion.cohort.locators import CitableArtifact
 from earnings_ingestion.events.acceptance import (
@@ -75,6 +81,10 @@ from earnings_ingestion.sec.urls import (
 PERIODIC_FORMS = frozenset({"10-Q", "10-K", "10-QT", "10-KT"})
 RELEASE_FORMS = frozenset({"8-K", "8-K/A"})
 RESULTS_ITEM = "2.02"
+FILING_DATE_SLACK = timedelta(days=7)
+"""The margin past a range's bound for a judgment made by filing date. A filing
+accepted after 17:30 takes the next business day's filing date, so its filing date
+can fall after its acceptance date."""
 
 
 @dataclass(frozen=True)
@@ -283,33 +293,29 @@ def issuer_filings(
         checked = survey(artifact.url, filings, instants)
         files.append(SavedFile(artifact=artifact, filings=filings, survey=checked))
         for check in checked.mismatches:
-            written = "no value" if check.written is None else check.written.isoformat()
             findings.append(
                 event_finding(
                     EventFindingKind.ACCEPTANCE_TIME_MISMATCH,
                     check.accession,
-                    f"{artifact.url} gives {written} for {check.accession}, whose"
-                    f" index page says {indexes[check.accession][0].accepted} Eastern",
+                    f"{artifact.url} gives {check.written.isoformat()} for"
+                    f" {check.accession}, whose index page says"
+                    f" {indexes[check.accession][0].accepted} Eastern",
                     issuer_id=issuer_id,
                 )
             )
-    periodic, releases = [], []
+    releases, reports = [], []
     for file in files:
         for filing in file.filings:
             found = indexes.get(filing.accession)
             placed = Placed(filing, file, *found) if found else Placed(filing, file)
             if filing.form in PERIODIC_FORMS and filing.report_date is not None:
-                visible = _visible(placed, file.survey, cutoff)
-                if visible is None:
-                    findings.append(_unknown(issuer_id, filing, _why(filing, cutoff)))
-                elif visible:
-                    periodic.append(placed)
+                reports.append((placed, _visible(placed, file.survey, cutoff)))
             elif filing.form in RELEASE_FORMS and RESULTS_ITEM in filing.items:
                 if found is not None:
                     if start <= placed.accepted_on <= cutoff:
                         releases.append(placed)
                 elif filing.accepted_at is None:
-                    if filing.filing_date >= start:
+                    if start <= filing.filing_date <= cutoff + FILING_DATE_SLACK:
                         findings.append(
                             _unknown(issuer_id, filing, "no acceptanceDateTime")
                         )
@@ -323,6 +329,8 @@ def issuer_filings(
                             f"nothing saved from {url}: run events discover"
                         )
                         reader.missing.append(url)
+    periodic, unknown = _periodic(reports, issuer_id, start=start, cutoff=cutoff)
+    findings.extend(unknown)
     return IssuerFilings(
         cik=cik,
         registrant=registrant,
@@ -335,6 +343,31 @@ def issuer_filings(
         missing=tuple(reader.missing),
         unusable=tuple(reader.unusable),
     )
+
+
+def _periodic(
+    reports: list[tuple[Placed, bool | None]],
+    issuer_id: str,
+    *,
+    start: date,
+    cutoff: date,
+) -> tuple[list[Placed], list[EventFinding]]:
+    """The visible reports, and an ``acceptance_time_unknown`` for each report whose
+    visibility is unknown. A report older than ``floor``, the issuer's latest report
+    before ``start``, raises none: the slots and their guards read no report older
+    than that one (``events/slots.py``). ``floor`` is ``start`` when no report
+    precedes it."""
+    floor = max(
+        (p.filing.report_date for p, _ in reports if p.filing.report_date < start),
+        default=start,
+    )
+    visible = [placed for placed, seen in reports if seen]
+    unknown = [
+        _unknown(issuer_id, placed.filing, _why(placed.filing, cutoff))
+        for placed, seen in reports
+        if seen is None and placed.filing.report_date >= floor
+    ]
+    return visible, unknown
 
 
 def _visible(placed: Placed, checked: FileSurvey, cutoff: date) -> bool | None:
