@@ -1,11 +1,16 @@
 """The live verification's logic, offline: fake fetches stand in for the clients."""
 
+import json
+import shutil
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from types import SimpleNamespace
 
 from earnings_core import RightsStatus, sha256_hex
 from earnings_ingestion.cohort import live
+from earnings_ingestion.cohort.build import build
+from earnings_ingestion.cohort.freeze import freeze, frozen_manifests
+from earnings_ingestion.cohort.identity import operative_hash
 from earnings_ingestion.cohort.live import verify_live
 from earnings_ingestion.cohort.records import LiveVerification
 from earnings_ingestion.cohort.synthetic import FIXTURE_DIR, build_options
@@ -120,6 +125,66 @@ def test_a_changed_fact_changes_the_operative_hash(cohort_repo) -> None:
     assert result.rebuilt_content_hash != result.frozen_content_hash
     assert result.rebuilt_operative_hash != result.frozen_operative_hash
     assert None not in (result.rebuilt_operative_hash, result.frozen_operative_hash)
+
+
+def test_the_operative_hash_is_compared_with_the_latest_frozen_version(
+    cohort_repo,
+) -> None:
+    """After a fact changes and v2 is frozen, v1's hash is no longer the frozen one."""
+    universe = cohort_repo / FIXTURE_DIR / "universe.toml"
+    text = universe.read_text(encoding="utf-8")
+    one, two = (f'selection_policy_version = "djia-pilot/{n}"' for n in (1, 2))
+    universe.write_text(text.replace(one, two, 1), encoding="utf-8")
+    manifests = cohort_repo / FIXTURE_DIR / "manifests"
+    frozen = freeze(build(cohort_repo, **build_options()), manifests, now=NOW)
+    assert frozen.created
+    first, second = frozen_manifests(manifests, frozen.manifest.definition.universe_id)
+    assert operative_hash(first) != operative_hash(second)
+    served = pages(cohort_repo)
+    result = verify_live(
+        cohort_repo,
+        fetch_web=fake(served),
+        fetch_sec=fake(served),
+        now=NOW,
+        options=build_options(),
+    )
+    assert result.frozen_content_hash == second.definition.content_hash
+    assert result.frozen_operative_hash == operative_hash(second)
+    assert result.rebuilt_operative_hash == result.frozen_operative_hash
+
+
+def test_a_cohort_with_no_frozen_version_has_no_frozen_operative_hash(
+    cohort_repo,
+) -> None:
+    shutil.rmtree(cohort_repo / FIXTURE_DIR / "manifests")
+    served = pages(cohort_repo)
+    result = verify_live(
+        cohort_repo,
+        fetch_web=fake(served),
+        fetch_sec=fake(served),
+        now=NOW,
+        options=build_options(),
+    )
+    assert result.frozen_content_hash is None
+    assert result.frozen_operative_hash is None
+    assert result.rebuilt_operative_hash is not None
+
+
+def test_a_record_saved_before_the_operative_hashes_still_loads() -> None:
+    record = LiveVerification(
+        checked_at=NOW,
+        checks=(),
+        build_problems=(),
+        rebuilt_content_hash=sha256_hex(b"a"),
+        frozen_content_hash=sha256_hex(b"b"),
+        blocking_finding_ids=(),
+        requests_sent=3,
+    )
+    saved = json.loads(record.model_dump_json())
+    del saved["rebuilt_operative_hash"], saved["frozen_operative_hash"]
+    loaded = LiveVerification.model_validate_json(json.dumps(saved))
+    assert (loaded.rebuilt_operative_hash, loaded.frozen_operative_hash) == (None, None)
+    assert loaded.requests_sent == 3
 
 
 def test_a_failed_rebuild_has_no_rebuilt_operative_hash(cohort_repo) -> None:

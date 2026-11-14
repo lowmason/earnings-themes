@@ -421,13 +421,19 @@ def test_terms_reports_a_saved_page_walker_1_cannot_read_as_a_problem(
     assert result.stdout == ""
 
 
+@pytest.mark.parametrize(
+    ("url", "client"),
+    [
+        ("https://terms.example/terms-of-use", "open_web_client"),
+        ("https://www.sec.gov/privacy", "open_sec_client"),
+    ],
+)
 def test_terms_reports_a_fetched_page_walker_1_cannot_read_as_a_problem(
-    repo, monkeypatch
+    repo, monkeypatch, url, client
 ) -> None:
-    url = "https://terms.example/terms-of-use"
     body = b"<html><body></body></html>"
 
-    class FakeWeb:
+    class FakeClient:
         def fetch(self, url, types):
             return Fetched(
                 body=body,
@@ -448,10 +454,10 @@ def test_terms_reports_a_fetched_page_walker_1_cannot_read_as_a_problem(
             )
 
     @contextmanager
-    def fake_open(hosts):
-        yield FakeWeb()
+    def fake_open(*args, **kwargs):
+        yield FakeClient()
 
-    monkeypatch.setattr(cohort_cli, "open_web_client", fake_open)
+    monkeypatch.setattr(cohort_cli, client, fake_open)
     monkeypatch.setattr(cohort_cli, "terms_digest", unreadable_terms)
     result = run(repo, "terms", url)
     assert result.exit_code == 1
