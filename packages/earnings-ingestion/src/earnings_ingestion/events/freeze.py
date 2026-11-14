@@ -241,13 +241,19 @@ def freeze_events(
     manifest = build.manifest(version, now)
     evidence = serialize(evidence_of(build, manifest, saved))
     target = evidence_path(directory, version)
-    # A freeze stopped between its writes can leave this version's evidence alone.
-    # Its manifest is absent, since ``existing`` lists every manifest in the folder.
-    if target.exists() and target.read_bytes() != evidence:
-        raise LeftoverEvidence(target, manifest_path(directory, version))
+    manifest_file = manifest_path(directory, version)
+    # A freeze stopped between its writes can leave this version's evidence alone. A
+    # freeze that ran beside this one can have written both files since ``existing``
+    # was read: ``write_new`` then refuses its evidence, which is no leftover.
+    if (
+        target.exists()
+        and not manifest_file.exists()
+        and target.read_bytes() != evidence
+    ):
+        raise LeftoverEvidence(target, manifest_file)
     directory.mkdir(parents=True, exist_ok=True)
     write_new(target, evidence)
-    write_new(manifest_path(directory, version), serialize(manifest))
+    write_new(manifest_file, serialize(manifest))
     return FrozenEvents(
         manifest=manifest,
         path=manifest_path(directory, version),

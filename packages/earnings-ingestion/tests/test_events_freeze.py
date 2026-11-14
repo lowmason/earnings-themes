@@ -274,6 +274,26 @@ def test_a_leftover_evidence_file_with_other_bytes_is_refused(
     assert not (directory / "events-v2.json").exists()
 
 
+def test_an_evidence_file_beside_its_manifest_is_never_called_a_leftover(
+    universe, layer, tmp_path, monkeypatch
+) -> None:
+    """Two freezes race: the other wrote v1's evidence and manifest after this one
+    listed the folder. The evidence is not a leftover, so the write refuses it, and
+    nothing says to delete it."""
+    directory = tmp_path / "corpus"
+    before = reviewed(universe, layer)
+    first = freeze(before, layer, directory)
+    kept = first.evidence_path.read_bytes()
+    again = SyntheticStore(layer.store.root, layer.store.repo, LATER)
+    again.companyfacts(CORVID.cik, CORVID.name, corvid_facts(agreeing=True))
+    monkeypatch.setattr(
+        "earnings_ingestion.events.freeze.frozen_event_manifests", lambda folder: []
+    )
+    with pytest.raises(FileExistsError, match="holds other bytes"):
+        freeze(build(universe, again, before.overrides), again, directory)
+    assert first.evidence_path.read_bytes() == kept
+
+
 def test_a_leftover_evidence_file_with_the_same_bytes_completes(
     universe, layer, tmp_path
 ) -> None:
