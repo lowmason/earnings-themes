@@ -30,6 +30,7 @@ from earnings_ingestion.events.saved import SavedResponses, refetch_remedy
 from earnings_ingestion.events.state_table import read_runs
 from earnings_ingestion.events.states import DocumentState
 from earnings_ingestion.events.synthetic import SyntheticStore, save, submissions_file
+from earnings_ingestion.fetch import store as store_module
 from earnings_ingestion.fetch.client import ProcessLock
 from earnings_ingestion.fetch.records import Retrieval
 from earnings_ingestion.fetch.store import ArtifactStore
@@ -1535,3 +1536,88 @@ def test_acquire_refetch_names_each_exhibit_once_in_the_order_given(
     ]
     assert lines[8] == "  1  cik-0009990003:2026-03-31:release  parsed"
     assert lines[-3:] == moves
+
+
+def test_acquire_refetch_stopped_partway_prints_each_move_before_its_count(
+    repo, moved, monkeypatch
+) -> None:
+    """The first pilot row's exhibit is saved again, its cut file moved aside, before
+    the second's meets a persistent 403. The move is printed before the count, which
+    stays last: no later run could tell it."""
+    first, second = pilot_exhibit(0), pilot_exhibit(1)
+    quarantined = truncate(repo, first)
+    truncate(repo, second)
+    requested: list[str] = []
+    budgets = client(
+        monkeypatch,
+        {**served(), **exhibit_bodies()},
+        requested=requested,
+        statuses={second: [403, 403]},
+    )
+    result = run(
+        repo,
+        "acquire",
+        "--refetch",
+        first,
+        "--refetch",
+        second,
+        "--max-requests",
+        "3",
+        store=EVENTS_STORE,
+    )
+    assert result.exit_code == 1
+    assert budgets == [3]
+    assert requested == [first, second, second]
+    assert acquire_lines(result)[-2:] == [quarantined, REFETCH_STOP_TAIL.format(3)]
+    assert result.stderr == STOPPED.format(second)
+
+
+def test_acquire_refetch_stopped_between_the_move_and_the_save_prints_the_move(
+    repo, moved, monkeypatch
+) -> None:
+    """A full disk after the cut file is moved aside and before the exhibit is saved
+    again: the exhibit's file has left its place, and the output says where it went
+    (plan 25, Review Focus)."""
+    url = pilot_exhibit()
+    quarantined = truncate(repo, url)
+    client(monkeypatch, {**served(), **exhibit_bodies()})
+    monkeypatch.setattr(store_module, "write_new", full_disk)
+    result = run(
+        repo, "acquire", "--refetch", url, "--max-requests", "2", store=EVENTS_STORE
+    )
+    assert result.exit_code == 1
+    assert acquire_lines(result)[-2:] == [quarantined, REFETCH_STOP_TAIL.format(1)]
+    assert result.stderr == "Stopped: [Errno 28] No space left on device\n"
+
+
+def test_acquire_refetch_interrupted_prints_each_move_before_its_count(
+    repo, moved, monkeypatch
+) -> None:
+    """The first pilot row's exhibit is saved again, its cut file moved aside, and
+    the second's save meets an error no stop names. The move is printed before the
+    count, whose tail is acquire's own."""
+    first, second = pilot_exhibit(0), pilot_exhibit(1)
+    quarantined = truncate(repo, first)
+    truncate(repo, second)
+    client(monkeypatch, {**served(), **exhibit_bodies()})
+    put = ArtifactStore.put
+
+    def once(self, *args, **kwargs):
+        if self.quarantined:
+            unforeseen()
+        return put(self, *args, **kwargs)
+
+    monkeypatch.setattr(ArtifactStore, "put", once)
+    result = run(
+        repo,
+        "acquire",
+        "--refetch",
+        first,
+        "--refetch",
+        second,
+        "--max-requests",
+        "3",
+        store=EVENTS_STORE,
+    )
+    assert isinstance(result.exception, LookupError)
+    assert acquire_lines(result)[-2:] == [quarantined, STOP_TAIL.format(2)]

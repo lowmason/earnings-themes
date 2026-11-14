@@ -59,9 +59,10 @@ refused before the client opens: a usable or unsaved exhibit, or an index page o
 primary document, which ``discover --refetch`` replaces when discovery reads it
 (EV2); a response of a filing that discovery does not read is repaired by hand
 (``docs/verification/djia-events.md``, "Repairing the store"). After the run,
-``acquire`` prints each damaged file a save moved into ``quarantine/``. A stop says
-that a rerun may name only the exhibits that are still unusable, since a saved one
-now reads and is refused (plan 25).
+``acquire`` prints each damaged file a save moved into ``quarantine/``; a stop or an
+interrupt prints them before its request count. A stop says that a rerun may name
+only the exhibits that are still unusable, since a saved one now reads and is
+refused (plan 25).
 
 ``discover`` and ``acquire`` refuse a ``--store`` that does not resolve under
 ``data/raw``, and ``acquire`` a ``--runs-dir`` outside ``data/runs``, before any
@@ -503,6 +504,13 @@ def _closed(url: str, types) -> None:
     raise AccessStop(f"{url} was to be fetched, though nothing was counted to fetch")
 
 
+def _quarantined(store: ArtifactStore, repo: Path) -> None:
+    """Each damaged file a save moved into ``quarantine/``, once, in the order moved.
+    Only this process knows of a move, so every exit prints it."""
+    for path in dict.fromkeys(store.quarantined):
+        typer.echo(f"quarantined: {shown(path, repo)}")
+
+
 @events.command("acquire")
 def acquire_command(
     context: typer.Context,
@@ -583,9 +591,11 @@ def acquire_command(
                     finally:
                         sent = sec.throttle.count
         except STOPS as error:
+            _quarantined(store, layout.repo)
             typer.echo(f"requests sent: {sent}; {rerun}")
             _fail(f"Stopped: {error}")
         except BaseException:
+            _quarantined(store, layout.repo)
             typer.echo(f"requests sent: {sent}; {ACQUIRE_RERUN}")
             raise
     for row in pilot.manifest.rows:
@@ -600,8 +610,7 @@ def acquire_command(
     typer.echo(f"fetched {len(result.fetched)}; requests sent: {sent}")
     if result.path is not None:
         typer.echo(shown(result.path, layout.repo))
-    for path in dict.fromkeys(store.quarantined):
-        typer.echo(f"quarantined: {shown(path, layout.repo)}")
+    _quarantined(store, layout.repo)
     for problem in result.problems:
         typer.echo(f"problem: {problem}", err=True)
     if result.problems:
