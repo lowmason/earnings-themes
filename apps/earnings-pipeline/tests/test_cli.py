@@ -1,7 +1,10 @@
 """The command line's browser setup, with the install replaced: no download here."""
 
+import subprocess
 from pathlib import Path
 
+import httpx
+import pytest
 from earnings_ingestion.browser.install import Binaries, load_pin
 from earnings_pipeline import cli
 from typer.testing import CliRunner
@@ -43,3 +46,24 @@ def test_setup_reports_a_refused_archive(monkeypatch, tmp_path: Path) -> None:
     result = RUNNER.invoke(cli.app, ["browser", "setup", "--cache", str(tmp_path)])
     assert result.exit_code == 1
     assert "Refused: chrome: got 3 bytes" in result.output
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        httpx.ConnectError("no route to host"),
+        OSError("No space left on device"),
+        subprocess.TimeoutExpired(["chrome", "--version"], 60),
+        RuntimeError("the cache holds no installed pin after the install"),
+    ],
+)
+def test_setup_reports_an_ordinary_failure_in_one_line(monkeypatch, tmp_path, error):
+    def fail(pin, cache, fetch):
+        raise error
+
+    monkeypatch.setattr(cli, "load_pin", lambda: load_pin("mac-arm64"))
+    monkeypatch.setattr(cli, "install", fail)
+    result = RUNNER.invoke(cli.app, ["browser", "setup", "--cache", str(tmp_path)])
+    assert result.exit_code == 1
+    assert isinstance(result.exception, SystemExit)
+    assert result.stderr == f"Failed: {error}\n"

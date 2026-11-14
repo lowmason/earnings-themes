@@ -18,6 +18,7 @@ from typing import Annotated
 
 import typer
 from earnings_ingestion.browser.install import (
+    SETUP_FAILURES,
     default_cache,
     download,
     install,
@@ -60,6 +61,9 @@ def setup(
         binaries = install(pin, cache or default_cache(), download)
     except ValueError as error:
         typer.echo(f"Refused: {error}", err=True)
+        raise typer.Exit(1) from error
+    except SETUP_FAILURES as error:
+        typer.echo(f"Failed: {error}", err=True)
         raise typer.Exit(1) from error
     typer.echo(f"Chrome for Testing {pin.version} ({pin.platform})")
     typer.echo(f"browser: {binaries.browser}")

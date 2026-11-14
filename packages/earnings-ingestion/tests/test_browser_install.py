@@ -10,6 +10,7 @@ import zipfile
 from pathlib import Path
 
 import pytest
+from earnings_ingestion.browser import install as install_module
 from earnings_ingestion.browser.install import (
     Archive,
     Pin,
@@ -110,6 +111,19 @@ def test_install_checks_extracts_and_finds_the_binaries(tmp_path: Path) -> None:
     assert link.is_symlink() and link.readlink() == Path("MacOS")
     assert install(pin, cache, fetch) == binaries
     assert fetched == ["chrome", "chromedriver"]
+
+
+def test_install_raises_when_the_cache_holds_no_pin_afterwards(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pin, zips = pinned(tmp_path)
+
+    def fetch(archive: Archive, path: Path) -> None:
+        path.write_bytes(zips[archive.name].read_bytes())
+
+    monkeypatch.setattr(install_module, "installed", lambda cache, pin: None)
+    with pytest.raises(RuntimeError, match="holds no installed"):
+        install(pin, tmp_path / "cache", fetch)
 
 
 def test_an_archive_that_is_not_the_pinned_one_is_refused(tmp_path: Path) -> None:

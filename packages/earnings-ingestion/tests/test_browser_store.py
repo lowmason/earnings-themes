@@ -1,5 +1,6 @@
 """Captures on disk: atomic, never overwritten, and reused only by an exact key."""
 
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -59,6 +60,16 @@ def test_a_failed_capture_is_kept_but_never_reused(tmp_path: Path) -> None:
     path = store.put(record)
     assert path.parent == store.root / "failures" / record.cache_key
     assert store.reuse(record.cache_key) is None
+
+
+def test_a_failure_file_is_stamped_in_utc(tmp_path: Path) -> None:
+    store = store_in(tmp_path)
+    five_hours_ahead = timezone(timedelta(hours=5))
+    record = failed().model_copy(
+        update={"captured_at": datetime(2026, 1, 2, 3, 4, 5, tzinfo=five_hours_ahead)}
+    )
+    path = store.put(record)
+    assert path.name == "20260101T220405000000Z.json"
 
 
 def test_a_usable_capture_is_reused_by_its_key(tmp_path: Path) -> None:
