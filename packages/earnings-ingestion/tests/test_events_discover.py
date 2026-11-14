@@ -1054,9 +1054,17 @@ def refused_as_usable(url: str) -> str:
     return (
         f"{url} is not among the responses discovery cannot use, and a refetch"
         " replaces only those; an exhibit is refetched by earnings-pipeline events"
-        " acquire --refetch, and a page behind an unusable submissions file is"
-        " classified once that file is refetched"
+        " acquire --refetch, a page behind an unusable submissions file is"
+        " classified once that file is refetched, and a response of a filing that"
+        " discovery does not read (an override's index page, or the index page or"
+        " primary document of a filing that a set_release_filing override named) is"
+        ' repaired by hand: see "Repairing the store" in'
+        " docs/verification/djia-events.md"
     )
+
+
+MANUAL_REPAIR = ('"Repairing the store"', "docs/verification/djia-events.md")
+"""What a refusal of a saved URL names for the manual repair."""
 
 
 def refused_as_unsaved(url: str) -> str:
@@ -1085,9 +1093,11 @@ def test_a_refetch_plan_names_only_unusable_responses(
     assert str(caught.value) == refused_as_usable(usable)
     assert "replaces only those" in str(caught.value)
     assert "events acquire --refetch" in str(caught.value)
+    assert all(name in str(caught.value) for name in MANUAL_REPAIR)
     with pytest.raises(ValueError) as caught:
         plan_refetch(universe, store, [UNSAVED_PAGE])
     assert str(caught.value) == refused_as_unsaved(UNSAVED_PAGE)
+    assert not any(name in str(caught.value) for name in MANUAL_REPAIR)
 
 
 def test_a_refetch_plan_refuses_each_name_once_and_plans_nothing(
@@ -1394,8 +1404,41 @@ def test_a_refetch_plan_refuses_a_damaged_response_discovery_does_not_read(
         with pytest.raises(ValueError) as caught:
             plan_refetch(universe, store, [url])
         assert str(caught.value) == refused_as_usable(url)
-    assert "events acquire --refetch" in refused_as_usable(exhibit)
-    assert "classified once that file is refetched" in refused_as_usable(EASTFIELD_PAGE)
+        assert "events acquire --refetch" in str(caught.value)
+        assert "classified once that file is refetched" in str(caught.value)
+        assert all(name in str(caught.value) for name in MANUAL_REPAIR)
+
+
+def test_a_refetch_plan_names_the_manual_repair_for_a_filing_no_listing_reads(
+    universe, layer, tmp_path
+) -> None:
+    """Saved, and its bytes changed, but read by no reader of discovery: the index
+    page of a filing listed only on Eastfield's older page whose dates miss the
+    range, and the primary document of Dynamo's Item 7.01 8-K, which no slot reads.
+    The refusal names the manual repair."""
+    store = populated(universe, layer, tmp_path)
+    _, since, until = OLDER_PAGES[EASTFIELD][1]
+    (skipped, *_) = [
+        f for f, _ in filings(EASTFIELD) if since <= f.accepted[:10] < until
+    ]
+    index = filing_index_url(EASTFIELD.cik, skipped.accession)
+    save(store, index, index_page(EASTFIELD.cik, skipped), HTML, RETRIEVED)
+    (other,) = [
+        f for f, e in filings(DYNAMO) if isinstance(e, Release) and "7.01" in e.items
+    ]
+    document = archive_url(DYNAMO.cik, other.accession, other.primary_document)
+    body = eight_k(DYNAMO.name, [("7.01", ("An invented investor presentation.",))])
+    save(store, document, body, HTML, RETRIEVED)
+    for url in (index, document):
+        path = stored_at(store, url)
+        path.write_bytes(path.read_bytes()[:16])
+    unusable = read_back(universe, SavedResponses(store)).unusable
+    for url in (index, document):
+        assert url not in unusable
+        with pytest.raises(ValueError) as caught:
+            plan_refetch(universe, store, [url])
+        assert str(caught.value) == refused_as_usable(url)
+        assert all(name in str(caught.value) for name in MANUAL_REPAIR)
 
 
 def interrupted(universe, store: ArtifactStore, responses, fetch_through):

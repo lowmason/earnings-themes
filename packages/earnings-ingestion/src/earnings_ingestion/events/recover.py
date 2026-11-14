@@ -8,9 +8,11 @@ then reads.
 ``plan_refetch`` accepts only URLs that ``read_back`` finds unusable, so a refetch
 never replaces a usable response under a frozen citation. It refuses an empty list,
 a URL that is not saved, and a saved URL that is not unusable: an exhibit, which
-``events acquire --refetch`` refetches, a response that reads, or a page behind an
+``events acquire --refetch`` refetches, a response that reads, a page behind an
 unusable submissions file, which is read, and classified, once that file is
-refetched. A submissions file brings each older page saved for its issuer, matched
+refetched, or a response of a filing that discovery does not read, which is repaired
+by hand ("Repairing the store" in ``docs/verification/djia-events.md``). A
+submissions file brings each older page saved for its issuer, matched
 by URL, since a damaged file cannot list them.
 
 ``run_refetch`` fetches exactly the plan's URLs through ``fetch``, the shared SEC
@@ -92,8 +94,12 @@ def _refusal(url: str, saved: SavedResponses) -> str:
     return (
         f"{url} is not among the responses discovery cannot use, and a refetch"
         " replaces only those; an exhibit is refetched by earnings-pipeline events"
-        " acquire --refetch, and a page behind an unusable submissions file is"
-        " classified once that file is refetched"
+        " acquire --refetch, a page behind an unusable submissions file is"
+        " classified once that file is refetched, and a response of a filing that"
+        " discovery does not read (an override's index page, or the index page or"
+        " primary document of a filing that a set_release_filing override named) is"
+        ' repaired by hand: see "Repairing the store" in'
+        " docs/verification/djia-events.md"
     )
 
 
