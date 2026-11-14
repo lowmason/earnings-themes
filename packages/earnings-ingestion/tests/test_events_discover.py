@@ -958,64 +958,59 @@ def committed_evidence():
     return load_event_evidence(REPO / FIXTURE_DIR / "events-v1.evidence.json", manifest)
 
 
-@pytest.mark.parametrize("field", ["url", "source_id", "retrieved_at"])
-def test_check_evidence_refuses_a_citation_no_retrieval_supports(field) -> None:
-    """The store holds the cited bytes, and the citation is still wrong: it names
-    a URL, a source, or a retrieval time that no saved retrieval of those bytes
-    gives (PR #6's review, F21)."""
+@pytest.mark.parametrize(
+    ("target", "field"),
+    [
+        ("release", "url"),
+        ("release", "source_id"),
+        ("release", "retrieved_at"),
+        ("file", "url"),
+        ("file", "retrieved_at"),
+    ],
+)
+def test_check_evidence_refuses_a_citation_no_retrieval_supports(target, field) -> None:
+    """The store holds the cited bytes, and the citation or file is still wrong: it
+    names a URL, a source, or a retrieval time that no saved retrieval of those
+    bytes gives (PR #6's review, F21). A file has no source."""
     evidence = committed_evidence()
     event = next(e for e in evidence.events if e.release is not None)
-    release = event.release
-    other_page = next(
-        e.release.url
-        for e in evidence.events
-        if e.release is not None and e.release.url != release.url
+    cited = event.release if target == "release" else evidence.files[0]
+    other_page = (
+        next(
+            e.release.url
+            for e in evidence.events
+            if e.release is not None and e.release.url != cited.url
+        )
+        if target == "release"
+        else evidence.files[1].url
     )
-    later = release.retrieved_at + timedelta(days=1)
+    later = cited.retrieved_at + timedelta(days=1)
     new, expected = {
         "url": (other_page, f"url {other_page} is not where its artifact came from"),
         "source_id": ("other-source", "source_id 'other-source' is not 'sec-edgar'"),
         "retrieved_at": (
             later,
-            f"retrieved_at {later.isoformat()} matches no retrieval of {release.url}",
+            f"retrieved_at {later.isoformat()} matches no retrieval of {cited.url}",
         ),
     }[field]
-    changed = evidence.model_copy(
-        update={
-            "events": tuple(
-                e.model_copy(
-                    update={"release": release.model_copy(update={field: new})}
+    changed_cited = cited.model_copy(update={field: new})
+    if target == "release":
+        changed = evidence.model_copy(
+            update={
+                "events": tuple(
+                    e.model_copy(update={"release": changed_cited}) if e is event else e
+                    for e in evidence.events
                 )
-                if e is event
-                else e
-                for e in evidence.events
-            )
-        }
-    )
+            }
+        )
+        where = f"{event.event_id} release"
+    else:
+        changed = evidence.model_copy(
+            update={"files": (changed_cited, *evidence.files[1:])}
+        )
+        where = f"files {changed_cited.url}"
     (problem,) = check_evidence(changed, ArtifactStore(RAW, REPO))
-    assert problem == f"{event.event_id} release: {expected}"
-
-
-@pytest.mark.parametrize("field", ["url", "retrieved_at"])
-def test_check_evidence_refuses_a_file_no_retrieval_supports(field) -> None:
-    evidence = committed_evidence()
-    file = evidence.files[0]
-    later = file.retrieved_at + timedelta(days=1)
-    other_page = evidence.files[1].url
-    new, expected = {
-        "url": (other_page, f"url {other_page} is not where its artifact came from"),
-        "retrieved_at": (
-            later,
-            f"retrieved_at {later.isoformat()} matches no retrieval of {file.url}",
-        ),
-    }[field]
-    changed = evidence.model_copy(
-        update={
-            "files": (file.model_copy(update={field: new}), *evidence.files[1:]),
-        }
-    )
-    (problem,) = check_evidence(changed, ArtifactStore(RAW, REPO))
-    assert problem == f"files {changed.files[0].url}: {expected}"
+    assert problem == f"{where}: {expected}"
 
 
 def test_check_evidence_binds_a_listed_citation_to_its_retrievals() -> None:
