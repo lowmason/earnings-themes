@@ -408,10 +408,12 @@ These are plan A's first tasks, done before any Stage 5 request.
     no override: the event keeps what the rule gives it. When that is `ambiguous`,
     `retain_unresolved` can keep it; when the rule takes another filing in range, no
     override corrects it (the `release-id/2` item in `specs/deferred_items.md`).
-  - No two events share a release. A filing that would be the release of two events,
-    whether an override or the rule names it for each, is refused. Within one issuer
-    the ranges never meet, so only a filing two issuers list, such as a
-    co-registrant's 8-K, can be shared.
+  - No two events of one issuer share a release. A filing that would be the release
+    of two of one issuer's events, whether an override or the rule names it for each,
+    is refused. Within one issuer the ranges never meet, so the refusal guards an
+    invariant. A filing that two issuers list, such as a co-registrant's 8-K, may be
+    the release of one event of each. *(owner, plan 26, 2026-11-13: the owner's
+    ruling in the `/deferred` pass.)*
   - *Amended 2026-09-27, by the user's decisions after the PR #6 review and its
     combined review:* the bullets above replace plan 7 Task 12's "no P or P′ bound
     applies". A named filing must now lie in the range the rule reads, `(P, P′]`.

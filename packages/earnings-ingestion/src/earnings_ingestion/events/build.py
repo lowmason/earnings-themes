@@ -15,8 +15,9 @@ applies the overrides:
   time and the method ``override``, and its eligibility is decided again, with any
   outcome. A release accepted after P' has no override: the event keeps what the rule
   gives it, which ``retain_unresolved`` can keep when it is ``ambiguous`` (the
-  ``release-id/2`` item in specs/deferred_items.md). No two events share a release (S
-  §Review overrides, amended 2026-09-27).
+  ``release-id/2`` item in specs/deferred_items.md). No two events of one issuer share
+  a release, though two issuers may share a co-registrant's (S §Review overrides, plan
+  26).
 - ``retain_unresolved`` keeps an event that is ``ambiguous`` with the override's
   reason. It is judged after any ``set_release_filing`` of the same event.
 - ``acknowledge`` answers a ``period_gap`` or ``no_slots`` finding whose digest it
@@ -404,18 +405,19 @@ def citations_refused(
 def shared_releases(
     rows: Sequence[EventRow], sets: dict[str, tuple[EventOverride, Placed]]
 ) -> list[str]:
-    """A refusal for each filing that two rows take as their release, naming the
-    ``set_release_filing`` overrides that chose it, or else ``release-id/1``. Within
-    one issuer every release lies in its own event's range ``(P, P']``, by the rule
-    or an override, and those ranges never meet; so only a filing that two issuers
-    list, such as a co-registrant's 8-K, can be shared, and the rule can share it
-    without any override (see specs/deferred_items.md)."""
-    events: dict[str, list[str]] = {}
+    """A refusal for each filing that two rows of one issuer take as their release,
+    naming the ``set_release_filing`` overrides that chose it, or else
+    ``release-id/1``. Within one issuer every release lies in its own event's range
+    ``(P, P']``, by the rule or an override, and those ranges never meet, so the
+    refusal guards an invariant. Two issuers may share a release, such as a
+    co-registrant's 8-K, and each issuer's event takes it (plan 26, D3)."""
+    events: dict[tuple[str, str], list[str]] = {}
     for row in rows:
         if row.release_accession is not None:
-            events.setdefault(row.release_accession, []).append(row.event_id)
+            key = (row.release_accession, row.issuer_id)
+            events.setdefault(key, []).append(row.event_id)
     refused = []
-    for accession, sharing in sorted(events.items()):
+    for (accession, _), sharing in sorted(events.items()):
         if len(sharing) < 2:
             continue
         named = sorted(sharing)
@@ -425,6 +427,22 @@ def shared_releases(
             f" release of {' and '.join(named)}"
         )
     return refused
+
+
+def repeated_finding_ids(findings: Sequence[EventFinding]) -> list[str]:
+    """A problem for each ``finding_id`` that two findings share. A finding's ID names
+    its kind and subject, never its issuer, so a filing that two issuers list makes
+    two findings under one ID. Findings are never merged: the manifest holds one
+    finding for each ID."""
+    owners: dict[str, list[str]] = {}
+    for finding in findings:
+        owners.setdefault(finding.finding_id, []).append(str(finding.issuer_id))
+    return [
+        f"{finding_id}: {len(issuers)} findings share this ID, under"
+        f" {', '.join(sorted(issuers))}"
+        for finding_id, issuers in sorted(owners.items())
+        if len(issuers) > 1
+    ]
 
 
 def build_events(
@@ -459,6 +477,7 @@ def build_events(
             identification = identify(slot, filings.releases, saved, cutoff=cutoff)
             problems.extend(identification.problems)
             slots.append((slot, identification))
+    problems.extend(repeated_finding_ids(findings))
     if problems:
         raise EventBuildError(problems)
 

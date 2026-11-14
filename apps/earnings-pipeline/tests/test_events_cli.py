@@ -29,13 +29,19 @@ from earnings_ingestion.events.records import PilotManifest, pilot_content_hash
 from earnings_ingestion.events.saved import SavedResponses, refetch_remedy
 from earnings_ingestion.events.state_table import read_runs
 from earnings_ingestion.events.states import DocumentState
-from earnings_ingestion.events.synthetic import SyntheticStore, save, submissions_file
+from earnings_ingestion.events.synthetic import (
+    SyntheticStore,
+    eight_k,
+    save,
+    submissions_file,
+)
 from earnings_ingestion.fetch import store as store_module
 from earnings_ingestion.fetch.client import ProcessLock
 from earnings_ingestion.fetch.records import Retrieval
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec import client as sec_client
 from earnings_ingestion.sec.urls import (
+    archive_url,
     filing_index_url,
     submissions_page_url,
     submissions_url,
@@ -142,6 +148,57 @@ def test_build_names_each_blocking_finding_s_own_remedy(repo) -> None:
     assert (
         f"acceptance_time_mismatch:{mismatch}: no override or discover run answers it"
     ) in lines
+
+
+def test_build_refuses_a_finding_id_two_issuers_share(repo) -> None:
+    """A filing row that follows no convention makes a finding whose ID names the
+    accession alone. Dynamo's 8-K of 2026-07-21 is also listed under Corvid, with its
+    index page and primary document saved under Corvid's CIK, so two findings share
+    one ID. The build reports it as a problem, and prints no traceback."""
+    mismatch = "0009990005-26-000018"
+    (shared,) = [
+        replace(filing, written="2026-07-21T12:00:00.000Z")
+        for filing, _ in filings(DYNAMO)
+        if filing.accession == mismatch
+    ]
+    store = ArtifactStore(repo / FIXTURE_DIR / "raw", repo)
+    later = RETRIEVED + timedelta(days=1)
+    for registrant in (DYNAMO, CORVID):
+        listed = [
+            filing for filing, _ in filings(registrant) if filing.accession != mismatch
+        ]
+        body = submissions_file(
+            registrant.cik,
+            registrant.name,
+            [*listed, shared],
+            convention=registrant.convention,
+        )
+        save(store, submissions_url(registrant.cik), body, "application/json", later)
+    page = SavedResponses(store).get(filing_index_url(DYNAMO.cik, mismatch))
+    save(
+        store,
+        filing_index_url(CORVID.cik, mismatch),
+        page.text.body,
+        "text/html",
+        later,
+    )
+    released = ("Corvid Systems Inc announced its results.",)
+    save(
+        store,
+        archive_url(CORVID.cik, mismatch, shared.primary_document),
+        eight_k(CORVID.name, [("2.02", released)], signed=shared.filing_date),
+        "text/html",
+        later,
+    )
+    result = run(repo, "build")
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stderr.splitlines() == [
+        (
+            f"problem: acceptance_time_mismatch:{mismatch}: 2 findings share this ID,"
+            " under cik-0009990003, cik-0009990005"
+        )
+    ]
 
 
 def test_freeze_names_the_version_that_holds_the_content(repo) -> None:

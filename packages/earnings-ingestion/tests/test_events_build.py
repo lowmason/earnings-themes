@@ -22,6 +22,7 @@ from earnings_ingestion.events.build import (
 from earnings_ingestion.events.layer import (
     ACME,
     BOREALIS,
+    CORVID,
     DYNAMO,
     RETRIEVED,
     Registrant,
@@ -40,6 +41,7 @@ from earnings_ingestion.events.records import (
 )
 from earnings_ingestion.events.saved import SavedResponses, refetch_remedy
 from earnings_ingestion.events.synthetic import (
+    HTML,
     JSON,
     SyntheticFiling,
     SyntheticStore,
@@ -452,30 +454,42 @@ def test_with_no_next_period_end_the_range_runs_to_the_cutoff() -> None:
     )
 
 
-def test_two_events_never_share_a_release() -> None:
-    """Within one issuer each release lies in its own event's range, so only a filing
-    that two issuers list, such as a co-registrant's 8-K, can be two events' release.
-    It is refused whether the rule or an override names it."""
+def test_only_one_issuer_s_events_may_not_share_a_release() -> None:
+    """Within one issuer each release lies in its own event's range, so two of one
+    issuer's events never share a release, whether the rule or an override names it.
+    Two issuers may share a co-registrant's 8-K (plan 26, D3)."""
     rows = [
-        SimpleNamespace(event_id=event_id, release_accession=release)
-        for event_id, release in [
-            ("cik-0000000001:2025-03-31", "0000000001-25-000001"),
-            ("cik-0000000002:2025-03-31", "0000000001-25-000001"),
-            ("cik-0000000003:2025-03-31", None),
+        SimpleNamespace(event_id=event_id, issuer_id=issuer, release_accession=release)
+        for event_id, issuer, release in [
+            ("cik-0000000001:2025-03-31", "cik-0000000001", "0000000001-25-000001"),
+            ("cik-0000000002:2025-03-31", "cik-0000000002", "0000000001-25-000001"),
+            ("cik-0000000003:2025-03-31", "cik-0000000003", None),
+        ]
+    ]
+    assert shared_releases(rows, {}) == []
+    one_issuer = [
+        SimpleNamespace(
+            event_id=event_id, issuer_id="cik-0000000004", release_accession=r
+        )
+        for event_id, r in [
             ("cik-0000000004:2025-03-31", "0000000004-25-000001"),
+            ("cik-0000000004:2025-06-30", "0000000004-25-000001"),
+            ("cik-0000000004:2025-09-30", None),
+            ("cik-0000000004:2025-12-31", "0000000004-25-000002"),
         ]
     ]
     shared = (
-        "0000000001-25-000001 would be the release of cik-0000000001:2025-03-31 and"
-        " cik-0000000002:2025-03-31"
+        "0000000004-25-000001 would be the release of cik-0000000004:2025-03-31 and"
+        " cik-0000000004:2025-06-30"
     )
-    assert shared_releases(rows, {}) == [f"release-id/1: {shared}"]
-    chosen = {"cik-0000000002:2025-03-31": (SimpleNamespace(override_id="set-b"), None)}
-    assert shared_releases(rows, chosen) == [f"set-b: {shared}"]
+    assert shared_releases(one_issuer, {}) == [f"release-id/1: {shared}"]
+    chosen = {"cik-0000000004:2025-06-30": (SimpleNamespace(override_id="set-b"), None)}
+    assert shared_releases(one_issuer, chosen) == [f"set-b: {shared}"]
     both = chosen | {
-        "cik-0000000001:2025-03-31": (SimpleNamespace(override_id="set-a"), None)
+        "cik-0000000004:2025-03-31": (SimpleNamespace(override_id="set-a"), None)
     }
-    assert shared_releases(rows, both) == [f"set-a, set-b: {shared}"]
+    assert shared_releases(one_issuer, both) == [f"set-a, set-b: {shared}"]
+    assert shared_releases([*rows, *one_issuer], {}) == [f"release-id/1: {shared}"]
 
 
 def test_a_set_release_filing_must_cite_the_filing_verifiably(universe, layer) -> None:
@@ -682,6 +696,35 @@ def test_a_filing_two_issuers_list_changes_nothing(universe, tmp_path) -> None:
     resave_submissions(layer, ACME, schedule)
     resave_submissions(layer, BOREALIS, schedule)
     assert run(universe, layer).content_hash == before
+
+
+def test_a_co_registrant_8k_is_each_issuer_s_release(universe, tmp_path) -> None:
+    """Borealis and Corvid both report the quarter ending 2025-03-31. Corvid's
+    listing names Borealis' release for it, as two registrants name a co-registrant's
+    8-K, with the same index page and primary document saved under each CIK. Each
+    issuer's event takes that filing as its release, and the build raises nothing
+    (plan 26, D3)."""
+    layer = write_layer(tmp_path / "data" / "raw" / "events", tmp_path)
+    saved = SavedResponses(layer.store)
+    (shared,) = [f for f, _ in filings(BOREALIS) if f.accepted == "2025-04-24 07:00:00"]
+    own = accession(CORVID, "2025-04-30 16:05:00")
+    listed = [f for f, _ in filings(CORVID) if f.accession != own]
+    body = submissions_file(
+        CORVID.cik, CORVID.name, [*listed, shared], convention=CORVID.convention
+    )
+    save(
+        layer.store, submissions_url(CORVID.cik), body, JSON, RETRIEVED.replace(day=29)
+    )
+    for url_of in (
+        lambda cik: filing_index_url(cik, shared.accession),
+        lambda cik: archive_url(cik, shared.accession, shared.primary_document),
+    ):
+        layer.put(url_of(CORVID.cik), saved.get(url_of(BOREALIS.cik)).text.body, HTML)
+    rows = {row.event_id: row for row in run(universe, layer).rows}
+    first = rows["cik-0009990002:2025-03-31"]
+    second = rows["cik-0009990003:2025-03-31"]
+    assert first.issuer_id != second.issuer_id
+    assert first.release_accession == second.release_accession == shared.accession
 
 
 def test_a_companyfacts_file_of_another_registrant_stops_the_build(

@@ -265,6 +265,27 @@ def test_an_overrides_file_holds_one_override_of_each_kind_per_event() -> None:
         EventOverridesFile(schema_version=1, overrides=(retain, twice))
 
 
+def test_two_acknowledgements_of_one_finding_are_refused() -> None:
+    """Two acknowledgements with distinct override IDs of one finding would both be
+    listed as its resolvers, so the file is refused."""
+    finding = "period_gap:cik-0009990006:2025-03-31:2025-09-30"
+    first, second = (
+        EventOverride(
+            override_id=override_id,
+            kind=EventOverrideKind.ACKNOWLEDGE,
+            finding_id=finding,
+            finding_digest="0" * 64,
+            **SIGNED,
+        )
+        for override_id in ("gap-first", "gap-second")
+    )
+    EventOverridesFile(schema_version=1, overrides=(first,))
+    with pytest.raises(
+        ValidationError, match="finding_id repeated among acknowledgements"
+    ):
+        EventOverridesFile(schema_version=1, overrides=(first, second))
+
+
 def manifest(**changes: object) -> EventManifest:
     definition = {
         "corpus_id": "djia-synthetic",
