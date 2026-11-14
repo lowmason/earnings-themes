@@ -56,7 +56,9 @@ rerun fetches it again.
 fetch it again; repeat it for each. The count includes each, and a ``refetch:`` line
 after the count names each, before ``--max-requests`` is asked for. Any other URL is
 refused before the client opens: a usable or unsaved exhibit, or an index page or
-primary document, which ``discover --refetch`` replaces (EV2). After the run,
+primary document, which ``discover --refetch`` replaces when discovery reads it
+(EV2); a response of a filing that discovery does not read is repaired by hand
+(``docs/verification/djia-events.md``, "Repairing the store"). After the run,
 ``acquire`` prints each damaged file a save moved into ``quarantine/``. A stop says
 that a rerun may name only the exhibits that are still unusable, since a saved one
 now reads and is refused (plan 25).
