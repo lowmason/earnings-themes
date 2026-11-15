@@ -1,13 +1,19 @@
 """CLI help uses no input, model, browser, or protected command."""
 
+import re
+
 from earnings_pipeline.cli import app
 from typer.testing import CliRunner
+
+# Typer forces a styled terminal when GITHUB_ACTIONS, FORCE_COLOR or PY_COLORS is
+# set, and Rich then styles "-" and "-config" as separate segments.
+ANSI_STYLE = re.compile(r"\x1b\[[0-9;]*m")
 
 
 def test_extract_help_is_registered():
     result = CliRunner().invoke(app, ["extract", "run", "--help"])
     assert result.exit_code == 0
-    assert "--config" in result.output
+    assert "--config" in ANSI_STYLE.sub("", result.output)
 
 
 import importlib
