@@ -25,6 +25,15 @@ def to_capture_json(capture: RenderedCapture) -> str:
     return "\n".join(lines) + "\n"
 
 
+def fixture_capture_json(capture: RenderedCapture) -> str:
+    """``capture`` in the fixture format, without its screenshots.
+
+    A committed fixture holds no screenshot reference, because a screenshot stays
+    local under ``data/runs/``.
+    """
+    return to_capture_json(capture.model_copy(update={"screenshots": ()}))
+
+
 def from_capture_json(text: str) -> RenderedCapture:
     """The capture a fixture file holds; its validators recheck both hashes."""
     data = json.loads(text)

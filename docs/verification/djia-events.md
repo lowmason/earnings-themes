@@ -383,9 +383,9 @@ it. A rerun may name only the URLs or exhibits that are still unusable.
 **The manual route.** Three kinds of damage have no `--refetch`:
 
 - **(a) A damaged retrieval record.** A record that cannot be read stops each command
-  that reads it, with a validation error that names no file. The events store stops
-  with that error. In the cohort store, `cohort build` prints it as a `problem:` line.
-  The URL inside the record is unknown, so no refetch can name it.
+  that reads it. Since plan 26, the line that stops the command names the record's
+  path, and the repair stays manual. The URL inside the record is unknown, so no
+  refetch can name it.
 - **(b) The cohort store.** `cohort fetch-sec` fetches each filed N-PORT document once.
   It stops with a `Stopped:` line when a saved one is gone or changed. The line names
   the artifact's SHA-256 and no URL.

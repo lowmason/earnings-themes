@@ -1,5 +1,6 @@
 """Captures on disk: atomic, never overwritten, and reused only by an exact key."""
 
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -59,6 +60,37 @@ def test_a_failed_capture_is_kept_but_never_reused(tmp_path: Path) -> None:
     path = store.put(record)
     assert path.parent == store.root / "failures" / record.cache_key
     assert store.reuse(record.cache_key) is None
+
+
+def test_a_failure_file_is_stamped_in_utc(tmp_path: Path) -> None:
+    store = store_in(tmp_path)
+    five_hours_ahead = timezone(timedelta(hours=5))
+    record = failed().model_copy(
+        update={"captured_at": datetime(2026, 1, 2, 3, 4, 5, tzinfo=five_hours_ahead)}
+    )
+    path = store.put(record)
+    assert path.name == "20260101T220405000000Z.json"
+
+
+@pytest.mark.parametrize(
+    ("captured_at", "name"),
+    [
+        (
+            datetime(2026, 9, 26, 12, 0, 0, 123456, tzinfo=UTC),
+            "20260926T120000123456Z.json",
+        ),
+        (
+            datetime(2026, 12, 31, 22, 30, tzinfo=timezone(timedelta(hours=-5))),
+            "20270101T033000000000Z.json",
+        ),
+    ],
+    ids=["utc-keeps-its-microseconds", "behind-utc-rolls-the-date-forward"],
+)
+def test_a_failure_file_stamp_is_the_utc_instant(
+    tmp_path: Path, captured_at: datetime, name: str
+) -> None:
+    record = failed().model_copy(update={"captured_at": captured_at})
+    assert store_in(tmp_path).put(record).name == name
 
 
 def test_a_usable_capture_is_reused_by_its_key(tmp_path: Path) -> None:

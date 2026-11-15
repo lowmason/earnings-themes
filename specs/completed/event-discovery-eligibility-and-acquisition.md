@@ -242,9 +242,14 @@ These are plan A's first tasks, done before any Stage 5 request.
 - **The cutoff.** Discovery reads only filings accepted on or before 2026-09-22 on the
   Eastern calendar. A later filing is never a slot, a candidate, or a source of labels
   (P-C4).
-- **Older pages.** An older page is read when its own `filingFrom`–`filingTo` range
-  meets `[2024-07-01, 2026-09-22]`. Otherwise it is skipped by those dates, and the
-  skip is recorded (R1.1).
+- **Older pages.** An older page is read unless its `filingTo` is more than seven days
+  before 2024-07-01, or its `filingFrom` is more than seven days after 2026-09-22.
+  These are filing dates. A filing accepted after 17:30 takes the next business
+  day's filing date, so the margin keeps a page that holds a filing accepted inside
+  the range. A skipped page is recorded (R1.1). A page that is read must hold only
+  filing dates before the next newer page's `filingFrom`, or before the recent
+  block's earliest filing date for the newest page. Otherwise it is refused, as a
+  page that SEC cut again. *(owner, plan 26, 2026-11-13.)*
 
 ### Slots (step 1)
 
@@ -331,6 +336,15 @@ These are plan A's first tasks, done before any Stage 5 request.
   - Anything else is a blocking `acceptance_time_mismatch` finding, so a changed
     format stops the build instead of being guessed at.
   - The reader never infers a file's convention from its dates.
+  - A row with no value has nothing to cross-check. When the filing's index page is
+    saved, the page's Accepted value places the filing, and its cross-check is null:
+    no finding, and the evidence record cites no `acceptanceDateTime`. Without the
+    page, the row is `acceptance_time_unknown` until `events discover --filing`
+    saves it (P7-8). An original periodic report older than the issuer's latest
+    report before the window raises no `acceptance_time_unknown`, since no slot or
+    guard reads it. An Item 2.02 8-K with no value raises one only when it is filed
+    from the window's start to seven days after the cutoff. *(owner, plan 26,
+    2026-11-13: reading (a), the owner's ruling in the `/deferred` pass.)*
 - **First publication.** `first_publication_time` equals `filing_acceptance_time`, and
   `first_publication_source_id` is `sec-edgar` (EV9). The evidence record states the
   upper-bound limitation.
@@ -408,10 +422,12 @@ These are plan A's first tasks, done before any Stage 5 request.
     no override: the event keeps what the rule gives it. When that is `ambiguous`,
     `retain_unresolved` can keep it; when the rule takes another filing in range, no
     override corrects it (the `release-id/2` item in `specs/deferred_items.md`).
-  - No two events share a release. A filing that would be the release of two events,
-    whether an override or the rule names it for each, is refused. Within one issuer
-    the ranges never meet, so only a filing two issuers list, such as a
-    co-registrant's 8-K, can be shared.
+  - No two events of one issuer share a release. A filing that would be the release
+    of two of one issuer's events, whether an override or the rule names it for each,
+    is refused. Within one issuer the ranges never meet, so the refusal guards an
+    invariant. A filing that two issuers list, such as a co-registrant's 8-K, may be
+    the release of one event of each. *(owner, plan 26, 2026-11-13: the owner's
+    ruling in the `/deferred` pass.)*
   - *Amended 2026-09-27, by the user's decisions after the PR #6 review and its
     combined review:* the bullets above replace plan 7 Task 12's "no P or P′ bound
     applies". A named filing must now lie in the range the rule reads, `(P, P′]`.

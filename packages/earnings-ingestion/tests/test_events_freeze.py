@@ -3,6 +3,7 @@ P6-14), over the synthetic event layer and Stage 4's synthetic cohort.
 """
 
 import shutil
+from dataclasses import replace
 from datetime import UTC, date, datetime
 from pathlib import Path
 
@@ -13,6 +14,7 @@ from earnings_ingestion.events.build import EventBuild, build_events
 from earnings_ingestion.events.evidence import check_evidence, evidence_of
 from earnings_ingestion.events.freeze import (
     EventFreezeRefused,
+    LeftoverEvidence,
     current_events,
     freeze_events,
     frozen_event_manifests,
@@ -23,6 +25,7 @@ from earnings_ingestion.events.freeze import (
 from earnings_ingestion.events.layer import (
     ACME,
     CORVID,
+    DYNAMO,
     REPORTS,
     filings,
     review,
@@ -156,6 +159,37 @@ def test_a_reviewed_build_freezes_with_evidence_that_verifies(
     assert events["cik-0009990002:2024-09-30"].amendments[0].url.endswith("-index.htm")
 
 
+def test_a_row_with_no_value_is_cited_without_one(universe, layer) -> None:
+    """Under reading (a) (plan 26, D2), a row with no acceptanceDateTime has nothing
+    to cross-check. Dynamo's 10-Q of 2026-04-03, whose index page is saved, and the
+    8-K of 2026-04-28 that releases it lose their values: the slot cites the 10-Q's
+    row without one, and the release has no cross-check. Every other row keeps its
+    value, and its citation."""
+    report, release = "0009990005-26-000017", "0009990005-26-000016"
+    listed = [
+        replace(filing, written="" if filing.accession in (report, release) else None)
+        for filing, _ in filings(DYNAMO)
+    ]
+    again = SyntheticStore(layer.store.root, layer.store.repo, LATER)
+    again.submissions(DYNAMO.cik, DYNAMO.name, listed, convention=DYNAMO.convention)
+    (emptied,) = [filing for filing in listed if filing.accession == report]
+    again.index(DYNAMO.cik, emptied)
+    built = reviewed(universe, again)
+    assert not built.holds_freeze
+    evidence = evidence_of(built, built.manifest(1, NOW), SavedResponses(again.store))
+    events = {cited.event_id: cited for cited in evidence.events}
+    slot = events["cik-0009990005:2026-04-03"]
+    columns = [loc.pointer.split("/")[-2] for loc in slot.periodic_row.locators]
+    assert columns == ["accessionNumber", "form", "reportDate"]
+    assert slot.release is not None
+    assert slot.cross_check is None
+    kept = events["cik-0009990005:2025-12-31"]
+    columns = [loc.pointer.split("/")[-2] for loc in kept.periodic_row.locators]
+    assert columns == ["accessionNumber", "form", "reportDate", "acceptanceDateTime"]
+    assert kept.cross_check is not None
+    assert check_evidence(evidence, again.store) == ()
+
+
 def test_identical_content_is_the_same_version(universe, layer, tmp_path) -> None:
     built = reviewed(universe, layer)
     first = freeze(built, layer, tmp_path / "corpus")
@@ -214,6 +248,68 @@ def test_a_changed_fact_writes_the_next_version(universe, layer, tmp_path) -> No
     corvid = rows["cik-0009990003:2025-06-30"]
     assert (corvid.reported_fiscal_year, corvid.reported_fiscal_quarter) == (2025, "Q2")
     assert load_event_manifest(first.path) == first.manifest
+
+
+def test_a_leftover_evidence_file_with_other_bytes_is_refused(
+    universe, layer, tmp_path
+) -> None:
+    """A freeze that stopped between its two writes left ``events-v2.evidence.json``
+    alone, and the facts changed since: the freeze names the file and never
+    overwrites it."""
+    directory = tmp_path / "corpus"
+    before = reviewed(universe, layer)
+    freeze(before, layer, directory)
+    again = SyntheticStore(layer.store.root, layer.store.repo, LATER)
+    again.companyfacts(CORVID.cik, CORVID.name, corvid_facts(agreeing=True))
+    leftover = directory / "events-v2.evidence.json"
+    leftover.write_bytes(b"{}\n")
+    with pytest.raises(LeftoverEvidence, match="delete it") as refused:
+        freeze(build(universe, again, before.overrides), again, directory)
+    assert refused.value.path == leftover
+    assert str(refused.value) == (
+        f"{leftover} exists without events-v2.json and holds other bytes: delete it,"
+        " then freeze again"
+    )
+    assert leftover.read_bytes() == b"{}\n"
+    assert not (directory / "events-v2.json").exists()
+
+
+def test_an_evidence_file_beside_its_manifest_is_never_called_a_leftover(
+    universe, layer, tmp_path, monkeypatch
+) -> None:
+    """Two freezes race: the other wrote v1's evidence and manifest after this one
+    listed the folder. The evidence is not a leftover, so the write refuses it, and
+    nothing says to delete it."""
+    directory = tmp_path / "corpus"
+    before = reviewed(universe, layer)
+    first = freeze(before, layer, directory)
+    kept = first.evidence_path.read_bytes()
+    again = SyntheticStore(layer.store.root, layer.store.repo, LATER)
+    again.companyfacts(CORVID.cik, CORVID.name, corvid_facts(agreeing=True))
+    monkeypatch.setattr(
+        "earnings_ingestion.events.freeze.frozen_event_manifests", lambda folder: []
+    )
+    with pytest.raises(FileExistsError, match="holds other bytes"):
+        freeze(build(universe, again, before.overrides), again, directory)
+    assert first.evidence_path.read_bytes() == kept
+
+
+def test_a_leftover_evidence_file_with_the_same_bytes_completes(
+    universe, layer, tmp_path
+) -> None:
+    """The leftover holds the bytes this freeze would write: the freeze completes, and
+    keeps the file."""
+    built = reviewed(universe, layer)
+    first = freeze(built, layer, tmp_path / "elsewhere")
+    directory = tmp_path / "corpus"
+    directory.mkdir()
+    leftover = directory / first.evidence_path.name
+    shutil.copy(first.evidence_path, leftover)
+    inode = leftover.stat().st_ino
+    frozen = freeze(built, layer, directory)
+    assert frozen.created
+    assert frozen.path.read_bytes() == first.path.read_bytes()
+    assert (frozen.evidence_path, leftover.stat().st_ino) == (leftover, inode)
 
 
 def test_loading_rechecks_the_hash_and_the_name(universe, layer, tmp_path) -> None:
@@ -284,6 +380,72 @@ def test_loading_evidence_binds_it_to_its_manifest(
         path.write_bytes(serialize(evidence.model_copy(update=update)))
     with pytest.raises(ValueError, match=message):
         load_event_evidence(path, frozen.manifest)
+
+
+def release_of(evidence, event_id: str):
+    return next(e.release for e in evidence.events if e.event_id == event_id)
+
+
+def with_release(evidence, event_id: str, release):
+    """``evidence``, with ``event_id``'s release citation replaced by ``release``."""
+    events = tuple(
+        e.model_copy(update={"release": release}) if e.event_id == event_id else e
+        for e in evidence.events
+    )
+    return evidence.model_copy(update={"events": events})
+
+
+@pytest.mark.parametrize(
+    "tamper",
+    [
+        "another filing",
+        "another filing's page, as a URL",
+        "another page of its filing",
+        "no citation",
+        "no filing",
+    ],
+)
+def test_loading_evidence_refuses_a_release_citation_of_another_filing(
+    universe, layer, tmp_path, tamper
+) -> None:
+    """Each row's release citation is its release's index page. A row with no
+    ``release_accession`` has no release citation, and one with an accession has
+    one (plan 26, Task 7)."""
+    frozen = freeze(reviewed(universe, layer), layer, tmp_path / "corpus")
+    evidence = load_event_evidence(frozen.evidence_path, frozen.manifest)
+    rows = {row.event_id: row for row in frozen.manifest.rows}
+    released = [i for i, row in rows.items() if row.release_accession is not None]
+    unreleased = [i for i, row in rows.items() if row.release_accession is None]
+    assert released and unreleased
+    event, other = released[0], released[1]
+    assert release_of(evidence, event).url != release_of(evidence, other).url
+    if tamper == "another filing":
+        changed = with_release(evidence, event, release_of(evidence, other))
+    elif tamper == "another filing's page, as a URL":
+        url = release_of(evidence, other).url
+        changed = with_release(
+            evidence, event, release_of(evidence, event).model_copy(update={"url": url})
+        )
+    elif tamper == "another page of its filing":
+        folder = release_of(evidence, event).url.rsplit("/", 1)[0]
+        changed = with_release(
+            evidence,
+            event,
+            release_of(evidence, event).model_copy(
+                update={"url": f"{folder}/primary.htm"}
+            ),
+        )
+    elif tamper == "no citation":
+        changed = with_release(evidence, event, None)
+    else:
+        event = unreleased[0]
+        assert release_of(evidence, event) is None
+        changed = with_release(evidence, event, release_of(evidence, other))
+    path = tmp_path / "events-v1.evidence.json"
+    path.write_bytes(serialize(changed))
+    with pytest.raises(ValueError, match=event):
+        load_event_evidence(path, frozen.manifest)
+    assert load_event_evidence(frozen.evidence_path, frozen.manifest) == evidence
 
 
 def test_a_changed_interval_or_policy_changes_the_hash_and_a_version_alone_does_not(

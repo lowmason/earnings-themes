@@ -8,6 +8,8 @@
   conventions, one per file (the spec's Finding 1): the true UTC instant, or the
   instant's Eastern wall-clock digits followed by ``Z``. ``convention_of`` names the
   one a row uses, and ``None`` is a mismatch, which blocks.
+- A row with no value has nothing to cross-check, so ``survey`` leaves it out, and
+  it is never a mismatch (plan 26, D2).
 - A file's convention is the one its cross-checked rows share (``survey``). It is
   never inferred from the file's dates.
 - Every date judgment uses the Eastern calendar date (``eastern_date``).
@@ -83,7 +85,8 @@ class CrossCheck:
     """A submissions row checked against its filing's index page."""
 
     accession: str
-    written: datetime | None
+    written: datetime
+    """The row's ``acceptanceDateTime``. A row with no value is never cross-checked."""
     instant: datetime
     convention: Convention | None
     pointer: str
@@ -119,7 +122,8 @@ class FileSurvey:
 def survey(
     name: str, filings: Iterable[Filing], instants: Mapping[str, datetime]
 ) -> FileSurvey:
-    """Cross-check each of a file's filings whose index page gives an instant."""
+    """Cross-check each of a file's filings that has a value and whose index page
+    gives an instant."""
     return FileSurvey(
         name=name,
         checks=tuple(
@@ -133,6 +137,6 @@ def survey(
                 pointer=filing.pointer("acceptanceDateTime"),
             )
             for filing in filings
-            if filing.accession in instants
+            if filing.accepted_at is not None and filing.accession in instants
         ),
     )

@@ -27,6 +27,15 @@ import tomllib
 
 MANIFEST = "chrome-for-testing.toml"
 CACHE_VARIABLE = "EARNINGS_BROWSER_CACHE"
+SETUP_FAILURES: tuple[type[BaseException], ...] = (
+    OSError,
+    httpx.HTTPError,
+    subprocess.SubprocessError,
+    RuntimeError,
+)
+"""The ordinary failures of ``install``: network, disk, a subprocess, and a finished
+install that the cache does not show. The setup command reports each in one line. A
+``ValueError`` is a refusal, which it reports on its own."""
 
 
 @dataclass(frozen=True)
@@ -127,7 +136,9 @@ def install(pin: Pin, cache: Path, fetch: Fetch) -> Binaries:
     """Download, check, and extract both archives; return the installed binaries.
 
     Raises ``ValueError`` when an archive's size or hash is not the manifest's, or an
-    extracted executable does not report the pinned version.
+    extracted executable does not report the pinned version. Raises ``RuntimeError``
+    when the cache holds no installed pin after the install. A network, disk, or
+    subprocess failure raises one of ``SETUP_FAILURES``.
     """
     done = installed(cache, pin)
     if done is not None:
@@ -157,7 +168,10 @@ def install(pin: Pin, cache: Path, fetch: Fetch) -> Binaries:
             shutil.rmtree(target)
         os.rename(staging, target)
     done = installed(cache, pin)
-    assert done is not None
+    if done is None:
+        raise RuntimeError(
+            f"{cache} holds no installed {pin.version} after the install"
+        )
     return done
 
 

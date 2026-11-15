@@ -22,7 +22,7 @@ from earnings_ingestion.browser import ISOLATED_1, CaptureStatus, CaptureStore
 from earnings_ingestion.browser import capture_once as capture_stored
 from earnings_ingestion.browser.install import installed
 from earnings_ingestion.browser.selenium_capture import SeleniumRenderer
-from earnings_ingestion.browser.serialize import to_capture_json
+from earnings_ingestion.browser.serialize import fixture_capture_json
 
 REPO = Path(__file__).resolve().parents[2]
 BROWSER = REPO / "tests" / "fixtures" / "browser"
@@ -58,7 +58,7 @@ def capture_one(renderer: SeleniumRenderer, source: Path, name: str) -> bool:
         )
         return False
     target = BROWSER / f"{name}.capture.json"
-    target.write_text(to_capture_json(capture), encoding="utf-8", newline="\n")
+    target.write_text(fixture_capture_json(capture), encoding="utf-8", newline="\n")
     print(f"wrote {target.relative_to(REPO)} ({capture.status.value})")
     return True
 

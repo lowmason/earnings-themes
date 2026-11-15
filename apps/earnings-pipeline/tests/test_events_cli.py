@@ -3,6 +3,7 @@ runs the shared SEC client over a transport that serves the corpus's saved
 responses, so no request leaves the process."""
 
 import shutil
+from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import replace
 from datetime import timedelta
@@ -11,17 +12,26 @@ from pathlib import Path
 import httpx
 import pytest
 from earnings_core import sha256_hex
+from earnings_ingestion.cohort.locators import LocatorError
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
 from earnings_ingestion.events.acquire import exhibit_remedy
+from earnings_ingestion.events.filings import issuer_filings
 from earnings_ingestion.events.fixture import COHORT_MANIFEST, FIXTURE_DIR
-from earnings_ingestion.events.freeze import load_event_manifest, serialize
+from earnings_ingestion.events.freeze import (
+    LeftoverEvidence,
+    load_event_manifest,
+    serialize,
+)
 from earnings_ingestion.events.layer import (
+    ACME,
     CORVID,
+    CUTOFF,
     DYNAMO,
     EASTFIELD,
     OLDER_PAGES,
     REPORTS,
     RETRIEVED,
+    START,
     exhibit_bodies,
     filings,
 )
@@ -29,13 +39,20 @@ from earnings_ingestion.events.records import PilotManifest, pilot_content_hash
 from earnings_ingestion.events.saved import SavedResponses, refetch_remedy
 from earnings_ingestion.events.state_table import read_runs
 from earnings_ingestion.events.states import DocumentState
-from earnings_ingestion.events.synthetic import SyntheticStore, save, submissions_file
+from earnings_ingestion.events.synthetic import (
+    SyntheticStore,
+    eight_k,
+    index_page,
+    save,
+    submissions_file,
+)
 from earnings_ingestion.fetch import store as store_module
 from earnings_ingestion.fetch.client import ProcessLock
 from earnings_ingestion.fetch.records import Retrieval
 from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec import client as sec_client
 from earnings_ingestion.sec.urls import (
+    archive_url,
     filing_index_url,
     submissions_page_url,
     submissions_url,
@@ -116,19 +133,35 @@ def test_build_names_each_blocking_finding_s_own_remedy(repo) -> None:
     """Only a period_gap or no_slots is acknowledged. An acceptance_time_unknown
     needs its filing's index page; an acceptance_time_mismatch has no remedy here.
     Dynamo's 10-Q of 2026-04-03 loses its acceptanceDateTime, and its 8-K of
-    2026-07-21, whose index page is saved, gets one that follows neither convention."""
+    2026-07-21, whose index page is saved, gets one that follows neither convention.
+    Acme's 8-K of 2025-06-26 is written in true UTC, so Acme's file follows both
+    conventions and establishes none. Acme's 10-Q of 2026-08-31 gets a value that
+    falls on the cutoff in true UTC and on the next day in Eastern digits."""
     unknown, mismatch = "0009990005-26-000017", "0009990005-26-000018"
-    written = {unknown: "", mismatch: "2026-07-21T12:00:00.000Z"}
-    listed = [
-        replace(filing, written=written.get(filing.accession))
-        for filing, _ in filings(DYNAMO)
-    ]
-    body = submissions_file(
-        DYNAMO.cik, DYNAMO.name, listed, convention=DYNAMO.convention
-    )
+    utc, late = "0009990001-25-000010", "0009990001-26-000021"
+    written = {
+        unknown: "",
+        mismatch: "2026-07-21T12:00:00.000Z",
+        utc: "2025-06-26T20:05:00.000Z",
+        late: "2026-09-23T01:30:00.000Z",
+    }
     store = ArtifactStore(repo / FIXTURE_DIR / "raw", repo)
     later = RETRIEVED + timedelta(days=1)
-    save(store, submissions_url(DYNAMO.cik), body, "application/json", later)
+    for registrant in (DYNAMO, ACME):
+        listed = [
+            replace(filing, written=written.get(filing.accession))
+            for filing, _ in filings(registrant)
+        ]
+        body = submissions_file(
+            registrant.cik, registrant.name, listed, convention=registrant.convention
+        )
+        save(store, submissions_url(registrant.cik), body, "application/json", later)
+    acme = issuer_filings(
+        SavedResponses(store), ACME.cik, "cik-0009990001", start=START, cutoff=CUTOFF
+    )
+    (file,) = acme.files
+    assert late in [filing.accession for filing in file.filings]
+    assert file.survey.convention is None
     (repo / FIXTURE_DIR / "overrides.toml").unlink()
     result = run(repo, "build")
     assert result.exit_code == 1, result.output
@@ -140,8 +173,209 @@ def test_build_names_each_blocking_finding_s_own_remedy(repo) -> None:
         f" {DYNAMO.cik} {unknown}"
     ) in lines
     assert (
+        f"acceptance_time_unknown:{late}: run events discover --filing"
+        f" {ACME.cik} {late}"
+    ) in lines
+    assert (
         f"acceptance_time_mismatch:{mismatch}: no override or discover run answers it"
     ) in lines
+
+
+def test_an_emptied_10q_with_its_index_page_saved_still_freezes(repo) -> None:
+    """Review Focus (plan 26, D2): a row with no acceptanceDateTime has nothing to
+    cross-check. Dynamo's 10-Q of 2026-04-03 loses its value, and its index page is
+    saved, so the page places it, and the build and the freeze reproduce v1."""
+    emptied = "0009990005-26-000017"
+    listed = [
+        replace(filing, written="" if filing.accession == emptied else None)
+        for filing, _ in filings(DYNAMO)
+    ]
+    (report,) = [filing for filing in listed if filing.accession == emptied]
+    store = ArtifactStore(repo / FIXTURE_DIR / "raw", repo)
+    later = RETRIEVED + timedelta(days=1)
+    body = submissions_file(
+        DYNAMO.cik, DYNAMO.name, listed, convention=DYNAMO.convention
+    )
+    save(store, submissions_url(DYNAMO.cik), body, "application/json", later)
+    page = index_page(DYNAMO.cik, report)
+    save(store, filing_index_url(DYNAMO.cik, emptied), page, "text/html", later)
+    result = run(repo, "build")
+    assert result.exit_code == 0, result.output
+    assert result.stdout.splitlines()[-1] == (
+        f"32 events, 27 eligible, content {EVENTS_HASH}"
+    )
+    result = run(repo, "freeze")
+    assert result.exit_code == 0, result.output
+    assert result.stdout.splitlines()[0] == "unchanged: djia-synthetic v1"
+
+
+MISMATCH = "0009990005-26-000018"
+REPEATED = (
+    f"acceptance_time_mismatch:{MISMATCH}: 2 findings share this ID,"
+    " under cik-0009990003, cik-0009990005"
+)
+
+
+def list_dynamo_8k_under_corvid(repo: Path, *, document: bool) -> None:
+    """List Dynamo's 8-K of 2026-07-21 under Corvid too, written with an
+    ``acceptanceDateTime`` that follows neither convention, so each issuer makes an
+    ``acceptance_time_mismatch`` finding under one ID. Corvid's copy gets the index
+    page. It gets a primary document too when ``document``, which Corvid's slot for
+    2026-06-30 reads as a candidate."""
+    (shared,) = [
+        replace(filing, written="2026-07-21T12:00:00.000Z")
+        for filing, _ in filings(DYNAMO)
+        if filing.accession == MISMATCH
+    ]
+    store = ArtifactStore(repo / FIXTURE_DIR / "raw", repo)
+    later = RETRIEVED + timedelta(days=1)
+    for registrant in (DYNAMO, CORVID):
+        listed = [
+            filing for filing, _ in filings(registrant) if filing.accession != MISMATCH
+        ]
+        body = submissions_file(
+            registrant.cik,
+            registrant.name,
+            [*listed, shared],
+            convention=registrant.convention,
+        )
+        save(store, submissions_url(registrant.cik), body, "application/json", later)
+    page = SavedResponses(store).get(filing_index_url(DYNAMO.cik, MISMATCH))
+    index = filing_index_url(CORVID.cik, MISMATCH)
+    save(store, index, page.text.body, "text/html", later)
+    if document:
+        released = ("Corvid Systems Inc announced its results.",)
+        body = eight_k(CORVID.name, [("2.02", released)], signed=shared.filing_date)
+        url = archive_url(CORVID.cik, MISMATCH, shared.primary_document)
+        save(store, url, body, "text/html", later)
+
+
+def test_build_refuses_a_finding_id_two_issuers_share(repo) -> None:
+    """Corvid's copy of Dynamo's 8-K has no primary document saved, so the build also
+    reports that. It reports the repeated ID, as a problem, and exits."""
+    list_dynamo_8k_under_corvid(repo, document=False)
+    result = run(repo, "build")
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert f"problem: {REPEATED}" in result.stderr.splitlines()
+
+
+def test_build_prints_a_repeated_finding_id_as_a_problem_not_a_traceback(
+    repo,
+) -> None:
+    """With nothing else missing, the repeated ID is the build's only problem. Before
+    the check, ``EventManifest`` refused it after the build, with a pydantic error."""
+    list_dynamo_8k_under_corvid(repo, document=True)
+    result = run(repo, "build")
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stderr.splitlines() == [f"problem: {REPEATED}"]
+
+
+OVERRIDES_PROBLEM = "problem: tests/fixtures/events/overrides.toml: "
+SECOND_OF_ONE_KIND = """
+[[overrides]]
+override_id = "keep-borealis-again"
+kind = "retain_unresolved"
+event_id = "cik-0009990002:2024-09-30"
+reason = "same_day_transition"
+rationale = "A second retain_unresolved override of one event."
+reviewer = "Synthetic Reviewer"
+recorded_on = 2026-09-28
+"""
+
+
+def named_lines(result, prefix: str) -> list[str]:
+    """``result``'s stderr lines, each checked to start with ``prefix`` and to hold
+    no line of a pydantic error's own text."""
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    lines = result.stderr.splitlines()
+    assert lines
+    assert all(line.startswith(prefix) for line in lines), lines
+    assert not any("For further information" in line for line in lines), lines
+    return lines
+
+
+@pytest.mark.parametrize("command", ["build", "freeze"])
+@pytest.mark.parametrize(
+    ("edit", "said"),
+    [
+        (
+            lambda text: text.replace(
+                'override_id = "gap-corvid"', 'override_id = "gap-borealis"', 1
+            ),
+            "override_id repeated: ['gap-borealis']",
+        ),
+        (
+            lambda text: text + SECOND_OF_ONE_KIND,
+            (
+                "event_id repeated in one kind:"
+                " ['cik-0009990002:2024-09-30 (retain_unresolved)']"
+            ),
+        ),
+        (
+            lambda text: text.replace("schema_version = 1", "schema_version = ", 1),
+            "(at line 2, column",
+        ),
+    ],
+    ids=["repeated-override-id", "second-of-one-kind", "toml-syntax"],
+)
+def test_an_overrides_error_ends_with_a_problem_line(repo, command, edit, said) -> None:
+    path = repo / FIXTURE_DIR / "overrides.toml"
+    path.write_text(edit(path.read_text(encoding="utf-8")), encoding="utf-8")
+    lines = named_lines(run(repo, command), OVERRIDES_PROBLEM)
+    assert any(said in line for line in lines), lines
+
+
+def test_an_overrides_error_of_two_entries_prints_a_problem_line_for_each(
+    repo,
+) -> None:
+    """A validation error with two entries prints two lines, each with the path."""
+    path = repo / FIXTURE_DIR / "overrides.toml"
+    text = path.read_text(encoding="utf-8")
+    for override_id in ("gap-borealis", "gap-corvid"):
+        text = text.replace(
+            f'override_id = "{override_id}"',
+            f'override_id = "{override_id}"\nunexpected = 1',
+            1,
+        )
+    path.write_text(text, encoding="utf-8")
+    lines = named_lines(run(repo, "build"), OVERRIDES_PROBLEM)
+    assert len(lines) == 2, lines
+
+
+@pytest.mark.parametrize(
+    ("named", "label"),
+    [
+        (FIXTURE_DIR / "overrides.toml", "problem:"),
+        (UNIVERSES / "djia-synthetic-v1.json", "Refused:"),
+    ],
+    ids=["overrides", "universe"],
+)
+def test_a_file_that_cannot_be_read_is_named(repo, named, label) -> None:
+    """A read error is an ``OSError``, not a ``ValueError``, and is named too."""
+    path = repo / named
+    path.unlink()
+    path.mkdir()
+    lines = named_lines(run(repo, "build"), f"{label} {named}: ")
+    assert len(lines) == 1, lines
+    assert "Is a directory" in lines[0], lines
+
+
+def test_an_error_inside_the_build_is_never_named_as_the_overrides_file(
+    repo, monkeypatch
+) -> None:
+    """Only the overrides file's load is wrapped: a ``LocatorError`` the build raises
+    is a ``ValueError`` too, and no line blames the overrides file for it."""
+
+    def uncited(*args, **kwargs):
+        raise LocatorError("'Acme Industrial' is not in the walker-1 text")
+
+    monkeypatch.setattr(events_cli, "build_events", uncited)
+    result = run(repo, "build")
+    assert isinstance(result.exception, LocatorError), result.exception
+    assert "overrides.toml" not in result.stderr
 
 
 def test_freeze_names_the_version_that_holds_the_content(repo) -> None:
@@ -227,6 +461,73 @@ def test_select_reads_the_version_the_build_reproduces(repo) -> None:
         "unchanged: djia-synthetic-pilot v1: 27 of target 27, underfilled",
         f"tests/fixtures/events/pilot-v1.json  {PILOT_HASH}",
     ]
+
+
+def test_freeze_reports_a_citation_error_as_a_problem(repo, monkeypatch) -> None:
+    """The evidence record cites a value the saved page's text does not hold."""
+
+    def uncited(*args, **kwargs):
+        raise LocatorError("'Acme Industrial' is not in the walker-1 text")
+
+    monkeypatch.setattr(events_cli, "freeze_events", uncited)
+    result = run(repo, "freeze")
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stderr.splitlines() == [
+        "problem: 'Acme Industrial' is not in the walker-1 text"
+    ]
+
+
+def test_freeze_reports_a_leftover_evidence_file_as_a_refusal(
+    repo, monkeypatch
+) -> None:
+    corpus = repo / FIXTURE_DIR
+    leftover = LeftoverEvidence(
+        corpus / "events-v2.evidence.json", corpus / "events-v2.json"
+    )
+
+    def left(*args, **kwargs):
+        raise leftover
+
+    monkeypatch.setattr(events_cli, "freeze_events", left)
+    result = run(repo, "freeze")
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stderr.splitlines() == [f"Refused: {leftover}"]
+    assert "delete it" in result.stderr
+
+
+def test_freeze_refuses_a_write_that_fails(repo, monkeypatch) -> None:
+    """A failed write is an ``OSError``, not a ``ValueError``, and is refused too."""
+
+    def full(*args, **kwargs):
+        raise OSError(28, "No space left on device")
+
+    monkeypatch.setattr(events_cli, "freeze_events", full)
+    result = run(repo, "freeze")
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stderr.splitlines() == ["Refused: [Errno 28] No space left on device"]
+
+
+def test_select_says_to_rerun_when_another_select_froze_first(
+    repo, monkeypatch
+) -> None:
+    """Two selects raced, and the other wrote ``pilot-v2.json`` first."""
+    pilot = repo / FIXTURE_DIR / "pilot-v2.json"
+
+    def raced(*args, **kwargs):
+        raise FileExistsError(f"{pilot} holds other bytes")
+
+    monkeypatch.setattr(events_cli, "freeze_pilot", raced)
+    result = run(repo, "select")
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stderr.endswith("rerun events select\n")
+    assert result.stderr == (
+        f"Refused: {pilot} holds other bytes; another events select froze this pilot"
+        " first: rerun events select\n"
+    )
 
 
 def served() -> dict[str, tuple[bytes, str]]:
@@ -519,21 +820,94 @@ def test_discover_prints_its_count_when_saving_fails(repo, monkeypatch) -> None:
     assert "Stopped: [Errno 28] No space left on device" in result.stderr
 
 
-def test_discover_prints_its_count_when_a_saved_body_is_gone(
+def test_discover_handles_a_vanished_companyfacts_artifact(
     repo, moved, monkeypatch
 ) -> None:
-    """A companyfacts file whose body is gone stops the documents phase with the
-    count, never a traceback (F31)."""
+    """A companyfacts file whose body is gone, with its record kept, no longer stops
+    the documents phase. Its issuer is skipped, and discover ends with its count and
+    a problem line that names the file, never a traceback (item P2.3, F31)."""
     url = "https://data.sec.gov/api/xbrl/companyfacts/CIK0009990001.json"
     artifact = SavedResponses(ArtifactStore(moved, repo)).get(url).artifact
     (repo / artifact.storage_ref).unlink()
     client(monkeypatch, served())
     result = run(repo, "discover", "--max-requests", "5", store=EVENTS_STORE)
-    assert result.exit_code == 1
-    assert result.stdout.splitlines()[-1] == (
-        "requests sent: 0; a rerun fetches only what is missing"
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stdout.splitlines()[-1] == "fetched 0; requests sent: 0"
+    assert result.stderr.splitlines() == [
+        (
+            f"problem: {url}: no artifact {artifact.content_sha256} for source"
+            " 'sec-edgar': its retrieval records remain, but its bytes are gone;"
+            f" {refetch_remedy(url)}"
+        )
+    ]
+
+
+UNREADABLE = (
+    "unreadable retrieval record; repair it by hand"
+    ' (docs/verification/djia-events.md, "Repairing the store")'
+)
+
+
+def test_an_empty_retrieval_record_is_named(repo, moved, monkeypatch) -> None:
+    """Build names the record and its manual repair. Discover stops on it with its
+    count and gives no rerun advice, since a rerun meets the same record."""
+    (record, *_) = sorted((moved / SEC_SOURCE_ID / "retrievals").glob("*/*.json"))
+    record.write_bytes(b"")
+    built = run(repo, "build", store=EVENTS_STORE)
+    assert built.exit_code == 1, built.output
+    assert isinstance(built.exception, SystemExit), built.exception
+    assert built.stderr.splitlines() == [
+        f"problem: {record.relative_to(repo)}: {UNREADABLE}"
+    ]
+    assert built.stderr.startswith("problem: data/raw/events/sec-edgar/retrievals/")
+    client(monkeypatch, served())
+    result = run(repo, "discover", "--max-requests", "5", store=EVENTS_STORE)
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stdout.splitlines()[-1] == "requests sent: 0"
+    assert result.stderr.splitlines() == [f"Stopped: {record}: {UNREADABLE}"]
+    output = result.stdout + result.stderr
+    assert "a rerun fetches only what is missing" not in output
+
+
+def tamper_universe(repo: Path, change: Callable[[str], str]) -> str:
+    """Apply ``change`` to the copy's universe manifest; return the refusal's
+    prefix, which names the manifest's path."""
+    path = repo / UNIVERSES / "djia-synthetic-v1.json"
+    path.write_text(change(path.read_text(encoding="utf-8")), encoding="utf-8")
+    return f"Refused: {path.relative_to(repo)}: "
+
+
+def test_build_refuses_a_tampered_universe_manifest(repo, monkeypatch) -> None:
+    """One fact changed, so the manifest no longer hashes to its content_hash. Build
+    and discover refuse it, discover before any client opens."""
+    prefix = tamper_universe(
+        repo,
+        lambda text: text.replace(
+            '"announcement_date": "2024-10-31"', '"announcement_date": "2024-10-30"', 1
+        ),
     )
-    assert "Stopped: no artifact" in result.stderr
+    built = run(repo, "build")
+    assert built.exit_code == 1, built.output
+    assert isinstance(built.exception, SystemExit), built.exception
+    assert built.stderr.startswith(prefix)
+    assert "does not hash to its content_hash" in built.stderr
+    budgets = client(monkeypatch, served())
+    result = run(repo, "discover", "--max-requests", "5", store=EVENTS_STORE)
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stderr.startswith(prefix)
+    assert budgets == []
+
+
+def test_a_universe_manifest_that_does_not_validate_is_refused_line_by_line(
+    repo,
+) -> None:
+    """Each entry of its validation error is one line, and each names the path."""
+    prefix = tamper_universe(repo, lambda text: "{}")
+    lines = named_lines(run(repo, "build"), prefix)
+    assert len(lines) > 1, lines
 
 
 def test_discover_prints_its_count_on_ctrl_c(repo, monkeypatch) -> None:
@@ -1621,3 +1995,79 @@ def test_acquire_refetch_interrupted_prints_each_move_before_its_count(
     )
     assert isinstance(result.exception, LookupError)
     assert acquire_lines(result)[-2:] == [quarantined, STOP_TAIL.format(2)]
+
+
+INDEXED = ("0009990001", "0009990001-25-000008")
+"""The filing whose index page is ``INDEX``."""
+DISCOVER_TAIL = "requests sent: {}; a rerun fetches only what is missing"
+
+
+def cut_and_unsaved(repo: Path) -> tuple[str, str]:
+    """Cut ``INDEX``'s file and delete its filing's retrieval records, so the save
+    of its index page needs the cut file's name. Return the line that save prints
+    and the filing's primary document."""
+    quarantined = truncate(repo, INDEX)
+    index, document = unsave(repo, *INDEXED)
+    assert index == INDEX
+    return quarantined, document
+
+
+@pytest.mark.parametrize("stopped", [False, True], ids=["finished", "stopped"])
+@pytest.mark.parametrize(
+    "filing", [(), ("--filing", *INDEXED)], ids=["discover", "filing"]
+)
+def test_discover_prints_each_quarantined_file_once(
+    repo, moved, monkeypatch, filing, stopped
+) -> None:
+    """The save of ``INDEX`` moves its cut file aside. The move prints once, after
+    the count, or before it when the primary document's fetch then stops (plan 26,
+    Review Focus)."""
+    quarantined, document = cut_and_unsaved(repo)
+    statuses = {document: [403, 403]} if stopped else None
+    client(monkeypatch, served(), statuses=statuses)
+    result = run(repo, "discover", *filing, "--max-requests", "5", store=EVENTS_STORE)
+    lines = result.stdout.splitlines()
+    assert lines.count(quarantined) == 1
+    assert [line for line in lines if line.startswith("quarantined:")] == [quarantined]
+    if stopped:
+        assert result.exit_code == 1
+        assert isinstance(result.exception, SystemExit), result.exception
+        # A 403 is retried once. --filing caps itself at 2, so its cap stops the
+        # retry, and plain discover's 403 persists at its third request.
+        assert lines[-2:] == [quarantined, DISCOVER_TAIL.format(2 if filing else 3)]
+        assert result.stderr.startswith("Stopped: ")
+    else:
+        assert result.exit_code == 0, result.output
+        assert lines[-2:] == ["fetched 2; requests sent: 2", quarantined]
+
+
+@pytest.mark.parametrize("failure", ["unreadable record", "unforeseen"])
+def test_discover_prints_each_quarantined_file_before_its_count_on_any_exit(
+    repo, moved, monkeypatch, failure
+) -> None:
+    """After the save of ``INDEX`` moves its cut file aside, a retrieval record turns
+    unreadable, or the next save meets an error no stop names. The move prints
+    before the count on each early exit."""
+    quarantined, _ = cut_and_unsaved(repo)
+    (record, *_) = sorted((moved / SEC_SOURCE_ID / "retrievals").glob("*/*.json"))
+    client(monkeypatch, served())
+    put = ArtifactStore.put
+
+    def then_fail(self, *args, **kwargs):
+        if self.quarantined:
+            unforeseen()
+        saved = put(self, *args, **kwargs)
+        if self.quarantined and failure == "unreadable record":
+            record.write_bytes(b"")
+        return saved
+
+    monkeypatch.setattr(ArtifactStore, "put", then_fail)
+    result = run(repo, "discover", "--max-requests", "5", store=EVENTS_STORE)
+    assert result.exit_code == 1
+    if failure == "unreadable record":
+        assert isinstance(result.exception, SystemExit), result.exception
+        assert result.stdout.splitlines()[-2:] == [quarantined, "requests sent: 1"]
+        assert result.stderr.splitlines() == [f"Stopped: {record}: {UNREADABLE}"]
+    else:
+        assert isinstance(result.exception, LookupError)
+        assert result.stdout.splitlines()[-2:] == [quarantined, DISCOVER_TAIL.format(2)]

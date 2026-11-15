@@ -16,6 +16,9 @@ artifacts alone. ``cite`` prints the TOML to commit on stdout and the cited text
 on stderr only, so no source wording is pasted into a committed file by accident.
 ``fetch-sec`` and ``verify-live`` need ``--max-requests``, the count the user
 approved, and print the requests they sent on every exit (PR #6's review, F35).
+A save that needs a damaged file's name moves that file into ``quarantine/``.
+``fetch-sec`` prints each file moved so after its counts, and before its request count
+on a stop (plan 26).
 ``fetch`` and ``fetch-sec`` refuse a ``--store`` that does not resolve under
 ``data/raw``, before any client opens, and every command prints a path outside the
 repository in full (``earnings_pipeline.paths``). ``freeze`` refuses a revert, a build
@@ -60,7 +63,12 @@ from earnings_ingestion.fetch.store import ArtifactStore
 from earnings_ingestion.sec.client import open_sec_client
 from earnings_ingestion.sec.urls import is_sec_host
 
-from earnings_pipeline.paths import raw_store_refusal, shown
+from earnings_pipeline.paths import (
+    error_lines,
+    quarantined_lines,
+    raw_store_refusal,
+    shown,
+)
 
 cohort = typer.Typer(no_args_is_help=True, help="Stage 4's point-in-time DJIA cohort.")
 FETCHING = frozenset({"fetch", "fetch-sec"})
@@ -181,23 +189,30 @@ def fetch_sec_command(
     if max_requests is None:
         _fail("Refused: pass --max-requests, the request count the user approved")
     config = load_cohort_config(layout.repo / layout.config_dir)
+    store = layout.store()
+
+    def moved() -> None:
+        for line in quarantined_lines(store, layout.repo):
+            typer.echo(line)
+
     sent = 0
     try:
         with open_sec_client(max_requests=max_requests) as sec:
             try:
-                result = fetch_sec(
-                    sec.fetch, layout.store(), layout.registers(), config
-                )
+                result = fetch_sec(sec.fetch, store, layout.registers(), config)
             finally:
                 sent = sec.throttle.count
     except STOPS as error:
+        moved()
         typer.echo(f"requests sent: {sent}")
         _fail(f"Stopped: {error}")
     except BaseException:
+        moved()
         typer.echo(f"requests sent: {sent}")
         raise
     typer.echo(f"fetched {len(result.fetched)}, already saved {len(result.kept)}")
     typer.echo(f"requests sent: {sent}")
+    moved()
 
 
 @cohort.command("cite")
@@ -246,6 +261,10 @@ def _build(layout: Layout) -> CohortBuild:
     except CohortError as error:
         for problem in error.problems:
             typer.echo(f"problem: {problem}", err=True)
+        raise typer.Exit(1) from error
+    except (OSError, ValueError) as error:
+        for line in error_lines(error):
+            typer.echo(f"problem: {line}", err=True)
         raise typer.Exit(1) from error
 
 
@@ -318,9 +337,12 @@ def terms_command(
         body = saved.read_bytes()
         try:
             check_media_type(body, media_type)
-            digest = terms_digest(body, media_type)
         except ValueError as error:
             _fail(f"Refused: {error}")
+        try:
+            digest = terms_digest(body, media_type)
+        except ValueError as error:
+            _fail(f"problem: {saved}: {error}")
         typer.echo(f'terms_sha256 = "{digest}"')
         return
     host = urlsplit(url).hostname or ""
@@ -333,7 +355,10 @@ def terms_command(
                 fetched = web.fetch(url, ANY)
     except STOPS as error:
         _fail(f"Stopped: {error}")
-    digest = terms_digest(fetched.body, fetched.retrieval.media_type)
+    try:
+        digest = terms_digest(fetched.body, fetched.retrieval.media_type)
+    except ValueError as error:
+        _fail(f"problem: {url}: {error}")
     typer.echo(f'terms_sha256 = "{digest}"')
 
 
@@ -363,5 +388,9 @@ def verify_live_command(
     typer.echo(
         f"rebuilt {result.rebuilt_content_hash}; frozen {result.frozen_content_hash}"
     )
+    rebuilt, frozen = result.rebuilt_operative_hash, result.frozen_operative_hash
+    if rebuilt is not None and frozen is not None:
+        verdict = "the facts are unchanged" if rebuilt == frozen else "a fact changed"
+        typer.echo(f"operative rebuilt {rebuilt}; frozen {frozen}: {verdict}")
     typer.echo(f"requests sent: {result.requests_sent}")
     typer.echo(f"record: {shown(path, layout.repo)}")

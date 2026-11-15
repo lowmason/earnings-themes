@@ -7,9 +7,11 @@ Live acquisition must not bypass robots restrictions. The gate reads the rules o
 - ``*`` matches any run of characters, and a trailing ``$`` anchors the end;
 - rules match the URL's path and query, compared as written.
 
-A robots.txt answering 404 or 410 allows everything. Any other failure disallows
-everything, which is stricter than RFC 9309: a 401 or another 4xx, or a response the
-client gives up on. A 403 that persists stops the client itself (A §404).
+A robots.txt answering 404 or 410 allows everything. Any other response that the
+client returns disallows everything, which is stricter than RFC 9309: a 401 or another
+4xx. A response that the client gives up on raises ``AccessStop`` out of ``verdict``.
+That covers a 403 that persists (A §404), repeated 429 or 5xx answers, and a transport
+error that persists.
 CPython's ``urllib.robotparser`` is not used, because it applies the first matching
 rule and knows no wildcards.
 """

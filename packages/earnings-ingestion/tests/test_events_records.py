@@ -265,6 +265,73 @@ def test_an_overrides_file_holds_one_override_of_each_kind_per_event() -> None:
         EventOverridesFile(schema_version=1, overrides=(retain, twice))
 
 
+def test_two_acknowledgements_of_one_finding_are_refused() -> None:
+    """Two acknowledgements with distinct override IDs of one finding would both be
+    listed as its resolvers, so the file is refused."""
+    finding = "period_gap:cik-0009990006:2025-03-31:2025-09-30"
+    first, second = (
+        EventOverride(
+            override_id=override_id,
+            kind=EventOverrideKind.ACKNOWLEDGE,
+            finding_id=finding,
+            finding_digest="0" * 64,
+            **SIGNED,
+        )
+        for override_id in ("gap-first", "gap-second")
+    )
+    EventOverridesFile(schema_version=1, overrides=(first,))
+    with pytest.raises(
+        ValidationError, match="finding_id repeated among acknowledgements"
+    ):
+        EventOverridesFile(schema_version=1, overrides=(first, second))
+
+
+def test_each_repeated_finding_is_named_and_other_acknowledgements_pass() -> None:
+    """The refusal names every finding that two acknowledgements answer, sorted. A
+    file whose acknowledgements answer different findings, beside overrides that
+    answer no finding, is accepted."""
+    first = "period_gap:cik-0009990006:2025-03-31:2025-09-30"
+    second = "period_gap:cik-0009990003:2024-07-01:2024-12-31"
+
+    def acknowledges(override_id: str, finding_id: str) -> EventOverride:
+        return EventOverride(
+            override_id=override_id,
+            kind=EventOverrideKind.ACKNOWLEDGE,
+            finding_id=finding_id,
+            finding_digest="0" * 64,
+            **SIGNED,
+        )
+
+    retain = EventOverride(
+        override_id="keep",
+        kind=EventOverrideKind.RETAIN_UNRESOLVED,
+        event_id="cik-0009990005:2025-06-27",
+        reason=EventReason.SAME_DAY_TRANSITION,
+        **SIGNED,
+    )
+    chosen = EventOverride(
+        override_id="choose",
+        kind=EventOverrideKind.SET_RELEASE_FILING,
+        event_id="cik-0009990005:2025-06-27",
+        accession="0009990005-25-000031",
+        citations=(CITATION,),
+        **SIGNED,
+    )
+    distinct = (acknowledges("gap-a", first), acknowledges("gap-b", second))
+    EventOverridesFile(schema_version=1, overrides=(*distinct, retain, chosen))
+    twice = (
+        *distinct,
+        acknowledges("gap-c", first),
+        acknowledges("gap-d", second),
+        acknowledges("gap-e", second),
+        retain,
+        chosen,
+    )
+    with pytest.raises(ValidationError) as raised:
+        EventOverridesFile(schema_version=1, overrides=twice)
+    assert f"acknowledgements: ['{second}', '{first}']" in str(raised.value)
+
+
 def manifest(**changes: object) -> EventManifest:
     definition = {
         "corpus_id": "djia-synthetic",

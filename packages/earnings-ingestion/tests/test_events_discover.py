@@ -375,6 +375,14 @@ def populated(universe, layer, repo: Path) -> ArtifactStore:
     return store
 
 
+def committed_copy(repo: Path) -> ArtifactStore:
+    """A copy of the committed synthetic store under ``repo``. The committed evidence
+    cites its retrievals, which a store that discovery filled does not have, since
+    its retrievals carry the time of that run."""
+    root = Path(shutil.copytree(RAW, repo / "data" / "raw" / "events"))
+    return ArtifactStore(root, repo)
+
+
 def stored_at(store: ArtifactStore, url: str) -> Path:
     """The file that holds the newest response saved from ``url``."""
     return store.repo / SavedResponses(store).get(url).artifact.storage_ref
@@ -596,12 +604,12 @@ def test_a_damaged_companyfacts_file_names_a_remedy_in_the_build(
 
 
 def test_a_cited_artifact_that_cannot_be_read_names_a_remedy_that_works(
-    universe, layer, tmp_path
+    tmp_path,
 ) -> None:
     """A cited artifact is read by its hash. While it is its URL's newest response,
     a refetch restores it. Once the URL is saved again with other bytes, a refetch
     restores those, never the bytes the citation names."""
-    store = populated(universe, layer, tmp_path)
+    store = committed_copy(tmp_path)
     overrides = load_overrides(REPO / FIXTURE_DIR / "overrides.toml").overrides
     (override,) = [o for o in overrides if o.override_id == "release-acme-2025-02-28"]
     (citation,) = override.citations
@@ -803,6 +811,12 @@ def companyfacts_refused(store, layer):
     return url
 
 
+def companyfacts_of_another_cik(store, layer):
+    url = companyfacts_url(ACME.cik)
+    resave(store, url, layer[companyfacts_url(BOREALIS.cik)][0], JSON)
+    return url
+
+
 @pytest.mark.parametrize("damage", [companyfacts_gone, companyfacts_refused])
 def test_an_unusable_companyfacts_file_names_a_remedy_in_the_build(
     universe, layer, tmp_path, damage
@@ -893,11 +907,9 @@ def test_a_citation_a_refetch_cannot_mend_names_no_refetch(
     ]
 
 
-def test_a_cited_artifact_whose_bytes_are_gone_names_a_remedy(
-    universe, layer, tmp_path
-) -> None:
+def test_a_cited_artifact_whose_bytes_are_gone_names_a_remedy(tmp_path) -> None:
     """Its retrieval records remain, so it was saved: a refetch restores it."""
-    store = populated(universe, layer, tmp_path)
+    store = committed_copy(tmp_path)
     overrides = load_overrides(REPO / FIXTURE_DIR / "overrides.toml").overrides
     (override,) = [o for o in overrides if o.override_id == "release-acme-2025-02-28"]
     (citation,) = override.citations
@@ -945,6 +957,158 @@ def test_a_locator_that_raises_a_plain_value_error_is_refused(
     assert citations_refused(cited, SavedResponses(store), None) == [
         f"release-acme-2025-02-28: invalid literal for int() with base 10: '{token}'"
     ]
+
+
+def committed_evidence():
+    manifest = load_event_manifest(REPO / FIXTURE_DIR / "events-v1.json")
+    return load_event_evidence(REPO / FIXTURE_DIR / "events-v1.evidence.json", manifest)
+
+
+@pytest.mark.parametrize(
+    ("target", "field"),
+    [
+        ("release", "url"),
+        ("release", "source_id"),
+        ("release", "retrieved_at"),
+        ("file", "url"),
+        ("file", "retrieved_at"),
+    ],
+)
+def test_check_evidence_refuses_a_citation_no_retrieval_supports(target, field) -> None:
+    """The store holds the cited bytes, and the citation or file is still wrong: it
+    names a URL, a source, or a retrieval time that no saved retrieval of those
+    bytes gives (PR #6's review, F21). A file has no source."""
+    evidence = committed_evidence()
+    event = next(e for e in evidence.events if e.release is not None)
+    cited = event.release if target == "release" else evidence.files[0]
+    other_page = (
+        next(
+            e.release.url
+            for e in evidence.events
+            if e.release is not None and e.release.url != cited.url
+        )
+        if target == "release"
+        else evidence.files[1].url
+    )
+    later = cited.retrieved_at + timedelta(days=1)
+    new, expected = {
+        "url": (other_page, f"url {other_page} is not where its artifact came from"),
+        "source_id": ("other-source", "source_id 'other-source' is not 'sec-edgar'"),
+        "retrieved_at": (
+            later,
+            f"retrieved_at {later.isoformat()} matches no retrieval of {cited.url}",
+        ),
+    }[field]
+    changed_cited = cited.model_copy(update={field: new})
+    if target == "release":
+        changed = evidence.model_copy(
+            update={
+                "events": tuple(
+                    e.model_copy(update={"release": changed_cited}) if e is event else e
+                    for e in evidence.events
+                )
+            }
+        )
+        where = f"{event.event_id} release"
+    else:
+        changed = evidence.model_copy(
+            update={"files": (changed_cited, *evidence.files[1:])}
+        )
+        where = f"files {changed_cited.url}"
+    (problem,) = check_evidence(changed, ArtifactStore(RAW, REPO))
+    assert problem == f"{where}: {expected}"
+
+
+def test_check_evidence_binds_a_listed_citation_to_its_retrievals() -> None:
+    """A candidate's index page is one of a list, which is checked as a single
+    citation is."""
+    evidence = committed_evidence()
+    event = next(e for e in evidence.events if e.candidates)
+    first = event.candidates[0]
+    other_page = next(
+        e.release.url
+        for e in evidence.events
+        if e.release is not None and e.release.url != first.url
+    )
+    listed = event.model_copy(
+        update={
+            "candidates": (
+                first.model_copy(update={"url": other_page}),
+                *event.candidates[1:],
+            )
+        }
+    )
+    changed = evidence.model_copy(
+        update={"events": tuple(listed if e is event else e for e in evidence.events)}
+    )
+    (problem,) = check_evidence(changed, ArtifactStore(RAW, REPO))
+    assert problem == (
+        f"{event.event_id} candidates:"
+        f" url {other_page} is not where its artifact came from"
+    )
+
+
+def test_a_retrieval_of_the_same_bytes_from_another_url_does_not_support_a_time(
+    tmp_path,
+) -> None:
+    """``retrieved_at`` is when the cited URL was retrieved. The same bytes saved from
+    another URL, at another time, give no support to a citation of this URL."""
+    store = committed_copy(tmp_path)
+    evidence = committed_evidence()
+    event = next(e for e in evidence.events if e.release is not None)
+    release = event.release
+    saved = SavedResponses(store).get(release.url)
+    elsewhere = f"{release.url}?copy"
+    when = release.retrieved_at + timedelta(days=1)
+    save(store, elsewhere, saved.text.body, saved.artifact.media_type, when)
+    changed = evidence.model_copy(
+        update={
+            "events": tuple(
+                e.model_copy(
+                    update={
+                        "release": release.model_copy(update={"retrieved_at": when})
+                    }
+                )
+                if e is event
+                else e
+                for e in evidence.events
+            )
+        }
+    )
+    (problem,) = check_evidence(changed, store)
+    assert problem == (
+        f"{event.event_id} release: retrieved_at {when.isoformat()} matches no"
+        f" retrieval of {release.url}"
+    )
+
+
+def test_a_citation_names_any_retrieval_of_its_url_among_several(tmp_path) -> None:
+    """The same response, saved again later, gives two retrievals of one URL. A record
+    frozen before the second, or after it, names one of them and stays valid."""
+    store = committed_copy(tmp_path)
+    evidence = committed_evidence()
+    event = next(e for e in evidence.events if e.release is not None)
+    release = event.release
+    saved = SavedResponses(store).get(release.url)
+    when = release.retrieved_at + timedelta(days=1)
+    save(store, release.url, saved.text.body, saved.artifact.media_type, when)
+    assert len(store.retrievals(SEC_SOURCE_ID, saved.artifact.content_sha256)) == 2
+    assert check_evidence(evidence, store) == ()
+    changed = evidence.model_copy(
+        update={
+            "events": tuple(
+                e.model_copy(
+                    update={
+                        "release": release.model_copy(update={"retrieved_at": when})
+                    }
+                )
+                if e is event
+                else e
+                for e in evidence.events
+            )
+        }
+    )
+    assert check_evidence(changed, store) == ()
 
 
 def test_evidence_no_saved_retrieval_names_has_no_remedy(tmp_path) -> None:
@@ -1287,10 +1451,53 @@ def test_read_back_names_an_unusable_companyfacts_file_and_goes_on(
     assert len(read.problems) == 2
 
 
-def companyfacts_of_another_cik(store, layer):
+def test_a_truncated_companyfacts_file_skips_only_its_issuer(
+    universe, layer, tmp_path
+) -> None:
+    """Acme's companyfacts file is cut, and a Corvid candidate's primary document is
+    no longer saved. Acme is read first, so the documents phase goes on past it and
+    fetches Corvid's document, and the read-back names Acme's file once, with its
+    refetch (item P2.3)."""
+    store = populated(universe, layer, tmp_path)
     url = companyfacts_url(ACME.cik)
-    resave(store, url, layer[companyfacts_url(BOREALIS.cik)][0], JSON)
-    return url
+    corvid = f"/edgar/data/{int(CORVID.cik)}/"
+    document = min(u for u in layer if corvid in u and not u.endswith("-index.htm"))
+    sha = SavedResponses(store).get(document).artifact.content_sha256
+    shutil.rmtree(store.root / SEC_SOURCE_ID / "retrievals" / sha)
+    path = stored_at(store, url)
+    path.write_bytes(path.read_bytes()[:64])
+    recorder = Recorder(layer)
+    result, sent, _ = run(universe, recorder, store)
+    assert document in result.fetched
+    assert (recorder.requested, sent) == ([document], 1)
+    (problem,) = [p for p in result.problems if p.startswith(url)]
+    assert problem.endswith(refetch_remedy(url))
+    assert result.problems == [problem]
+    assert result.unusable == [url]
+
+
+@pytest.mark.parametrize(
+    "damage", [companyfacts_gone, companyfacts_refused, companyfacts_of_another_cik]
+)
+def test_the_documents_phase_skips_an_issuer_whose_companyfacts_file_is_unusable(
+    universe, layer, tmp_path, damage
+) -> None:
+    """Its bytes gone, valid bytes the reader refuses, or another CIK's file. An
+    Acme candidate's primary document is no longer saved, and the documents phase
+    reads no slot of Acme's, so it fetches nothing. The read-back names the file
+    once, and nothing of the document, whose issuer it skips too."""
+    store = populated(universe, layer, tmp_path)
+    acme = f"/edgar/data/{int(ACME.cik)}/"
+    document = min(u for u in layer if acme in u and not u.endswith("-index.htm"))
+    sha = SavedResponses(store).get(document).artifact.content_sha256
+    shutil.rmtree(store.root / SEC_SOURCE_ID / "retrievals" / sha)
+    url = damage(store, layer)
+    recorder = Recorder(layer)
+    result, sent, _ = run(universe, recorder, store)
+    assert (recorder.requested, sent, result.fetched) == ([], 0, [])
+    (problem,) = result.problems
+    assert problem.startswith(url) and problem.endswith(refetch_remedy(url))
+    assert result.unusable == [url]
 
 
 @pytest.mark.parametrize(

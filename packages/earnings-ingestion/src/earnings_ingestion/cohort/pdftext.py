@@ -3,7 +3,7 @@
 S&P Dow Jones Indices publishes its index notices as PDFs, and a citation needs text
 to point into. Given a PDF's bytes, the policy:
 
-1. reads them with pypdf 6.19.0, holding pypdf's logger below ERROR for the call;
+1. reads them with pypdf 6.19.0, holding pypdf's logger at ERROR for the call;
 2. takes each page's plain-mode text, in page order;
 3. normalizes the text to NFC, never NFKC;
 4. collapses each line's whitespace runs to one space and strips its ends, dropping
@@ -39,7 +39,7 @@ class PdfTextError(ValueError):
 
 
 def _pages(body: bytes) -> list[str]:
-    """Each page's plain-mode text, with pypdf's logger held below ERROR."""
+    """Each page's plain-mode text, with pypdf's logger held at ERROR."""
     logger = logging.getLogger("pypdf")
     level = logger.level
     logger.setLevel(logging.ERROR)

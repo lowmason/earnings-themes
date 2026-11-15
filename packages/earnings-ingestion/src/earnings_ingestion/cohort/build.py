@@ -36,6 +36,7 @@ from earnings_ingestion.cohort.corroboration import (
     reconcile,
 )
 from earnings_ingestion.cohort.findings import acknowledge, make_finding
+from earnings_ingestion.cohort.identity import operative_hash as manifest_operative_hash
 from earnings_ingestion.cohort.intervals import Statement, count_findings, reconstruct
 from earnings_ingestion.cohort.locators import (
     ArtifactText,
@@ -82,6 +83,7 @@ from earnings_ingestion.sec.data import (
     read_nport_holdings,
     read_older_page,
     read_submissions,
+    repeated_accessions,
 )
 from earnings_ingestion.sec.urls import (
     COMPANY_TICKERS_URL,
@@ -212,6 +214,11 @@ class CohortBuild:
     @property
     def content_hash(self) -> str:
         return self.manifest(1, EPOCH).definition.content_hash
+
+    @property
+    def operative_hash(self) -> str:
+        """The hash Stage 5 keys on: the facts an event's eligibility reads."""
+        return manifest_operative_hash(self.manifest(1, EPOCH))
 
 
 def build(
@@ -483,16 +490,24 @@ class _Builder:
                     f"{url} is the submissions file of CIK {registrant.cik}"
                 )
                 return []
-            filings = list(registrant.filings)
+            listed = [(url, registrant.filings)]
             for page in registrant.older_pages:
-                older = self._latest(SEC_SOURCE_ID, submissions_page_url(page.name))
+                page_url = submissions_page_url(page.name)
+                older = self._latest(SEC_SOURCE_ID, page_url)
                 if older is not None:
-                    filings.extend(read_older_page(older.body, page))
+                    listed.append((page_url, read_older_page(older.body, page)))
         except (SecDataError, ValueError) as exc:
             self.problems.append(f"{url}: {exc}")
             return []
+        repeated = repeated_accessions(listed)
+        for accession, where in repeated.items():
+            self.problems.append(
+                f"{accession} is listed {len(where)} times: {', '.join(where)}"
+            )
+        if repeated:
+            return []
         funds = []
-        for filing in filings:
+        for filing in (filing for _, filings in listed for filing in filings):
             if filing.form not in proxy.forms or filing.report_date is None:
                 continue
             if not (

@@ -7,8 +7,14 @@ from pathlib import Path
 
 import pytest
 from earnings_core import RightsStatus, sha256_hex
+from earnings_ingestion.cohort.register import SEC_SOURCE_ID
+from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.fetch.records import Retrieval, RetrievalMethod
-from earnings_ingestion.fetch.store import ArtifactStore, write_new
+from earnings_ingestion.fetch.store import (
+    ArtifactStore,
+    RetrievalRecordError,
+    write_new,
+)
 from pydantic import ValidationError
 
 BODY = b"<p>An announcement.</p>"
@@ -91,6 +97,60 @@ def test_the_latest_retrieval_of_a_url_names_its_artifact(tmp_path) -> None:
     assert latest.body == newer
     assert store.latest("press", "https://press.example.org/b", **RIGHTS) is None
     assert store.latest("other", "https://press.example.org/a", **RIGHTS) is None
+
+
+def damaged_record(tmp_path: Path, damage: bytes) -> tuple[ArtifactStore, Path]:
+    """A ``sec-edgar`` artifact whose one retrieval record now holds ``damage``."""
+    store = store_in(tmp_path)
+    store.put(SEC_SOURCE_ID, BODY, retrieval(), **RIGHTS)
+    folder = store.root / SEC_SOURCE_ID / "retrievals" / sha256_hex(BODY)
+    (record,) = folder.glob("*.json")
+    record.write_bytes(damage)
+    return store, record
+
+
+def test_an_unreadable_retrieval_record_is_named(tmp_path) -> None:
+    store, record = damaged_record(tmp_path, b"")
+    url = "https://press.example.org/a"
+    readers = [
+        lambda: store.retrievals(SEC_SOURCE_ID, sha256_hex(BODY)),
+        lambda: store.latest(SEC_SOURCE_ID, url, **RIGHTS),
+        lambda: SavedResponses(store),
+    ]
+    for read in readers:
+        with pytest.raises(RetrievalRecordError) as named:
+            read()
+        assert named.value.path == record
+
+
+def test_a_truncated_retrieval_record_is_named(tmp_path) -> None:
+    """A record cut off partway, as a full disk or a crash can leave it, is named by
+    each reader, as an empty one is."""
+    store, record = damaged_record(tmp_path, b'{"request_url": "https://www.sec.gov/')
+    url = "https://press.example.org/a"
+    readers = [
+        lambda: store.retrievals(SEC_SOURCE_ID, sha256_hex(BODY)),
+        lambda: store.latest(SEC_SOURCE_ID, url, **RIGHTS),
+        lambda: SavedResponses(store),
+    ]
+    for read in readers:
+        with pytest.raises(RetrievalRecordError) as named:
+            read()
+        assert named.value.path == record
+
+
+def test_a_retrieval_record_that_is_not_utf_8_is_named(tmp_path) -> None:
+    """A decoding error is a ``ValueError`` too, and names the record as a validation
+    error does, with the repair beside it."""
+    store, record = damaged_record(tmp_path, b"\xff")
+    with pytest.raises(RetrievalRecordError) as named:
+        store.retrievals(SEC_SOURCE_ID, sha256_hex(BODY))
+    assert named.value.path == record
+    assert isinstance(named.value.__cause__, UnicodeDecodeError)
+    assert str(named.value) == (
+        f"{record}: unreadable retrieval record; repair it by hand"
+        ' (docs/verification/djia-events.md, "Repairing the store")'
+    )
 
 
 def test_a_written_file_is_never_replaced(tmp_path) -> None:

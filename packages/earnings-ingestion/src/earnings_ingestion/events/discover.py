@@ -20,10 +20,11 @@ candidate's primary document. A saved response among them that the build cannot
 read, because its bytes are gone or changed or it is not the response its URL names,
 is not fetched by discovery, since it is saved. ``Discovery.problems`` names each one
 with the command that refetches it, ``Discovery.unusable`` lists its URL once, and
-``events discover`` exits 1. The read-back reads a companyfacts file in a guard of
-its own: one that cannot be read, or that states another CIK, is unusable, and its
-issuer's candidates are not read. Phase 3 still reads a companyfacts file outside
-any handler (item P2.3). ``discover_filing`` reads nothing back.
+``events discover`` exits 1. Phase 3 and the read-back read a companyfacts file
+through ``issuer_companyfacts``, the build's guarded read with its CIK check (item
+P2.3). One that cannot be read, or that states another CIK, is unusable, and its
+issuer's candidates are not read. Phase 3 skips that issuer and records no problem,
+since the read-back names the file after it. ``discover_filing`` reads nothing back.
 
 ``events.recover`` replaces the responses ``unusable`` lists (plan 25).
 ``plan_refetch`` accepts only those URLs, and adds a submissions file's saved older
@@ -55,11 +56,15 @@ from earnings_ingestion.events.filings import (
     issuer_filings,
 )
 from earnings_ingestion.events.release import identify
-from earnings_ingestion.events.saved import SavedResponses, refetch_remedy
+from earnings_ingestion.events.saved import (
+    SavedResponses,
+    issuer_companyfacts,
+    refetch_remedy,
+)
 from earnings_ingestion.events.slots import issuer_slots
 from earnings_ingestion.fetch.responses import Fetched
 from earnings_ingestion.fetch.store import ArtifactStore
-from earnings_ingestion.sec.companyfacts import CompanyFacts, read_companyfacts
+from earnings_ingestion.sec.companyfacts import CompanyFacts
 from earnings_ingestion.sec.filing_index import read_filing_index
 from earnings_ingestion.sec.urls import (
     archive_url,
@@ -180,16 +185,10 @@ def discover(
     documents = []
     for issuer_id, cik in issuers:
         filings = issuer_filings(saved, cik, issuer_id, start=start, cutoff=cutoff)
-        facts = saved.get(companyfacts_url(cik))
-        if filings.registrant is None or facts is None:
+        facts = issuer_companyfacts(saved, cik)
+        if filings.registrant is None or not isinstance(facts, CompanyFacts):
             continue
-        made, _ = issuer_slots(
-            filings,
-            read_companyfacts(facts.text.body),
-            issuer_id,
-            start=start,
-            stop=stop,
-        )
+        made, _ = issuer_slots(filings, facts, issuer_id, start=start, stop=stop)
         for slot in made:
             found = identify(slot, filings.releases, saved, cutoff=cutoff)
             for candidate in found.candidates:
@@ -218,8 +217,11 @@ def read_back(universe: UniverseManifest, saved: SavedResponses) -> ReadBack:
         filings = issuer_filings(saved, cik, issuer_id, start=start, cutoff=cutoff)
         problems.extend(p for p in filings.problems if not p.startswith(NOT_SAVED))
         unusable.extend(filings.unusable)
-        facts = _companyfacts(saved, cik, problems, unusable)
-        if filings.registrant is None or facts is None:
+        facts = issuer_companyfacts(saved, cik)
+        if isinstance(facts, str):
+            problems.append(facts)
+            unusable.append(companyfacts_url(cik))
+        if filings.registrant is None or not isinstance(facts, CompanyFacts):
             continue
         made, _ = issuer_slots(filings, facts, issuer_id, start=start, stop=stop)
         for slot in made:
@@ -227,29 +229,6 @@ def read_back(universe: UniverseManifest, saved: SavedResponses) -> ReadBack:
             problems.extend(found.problems)
             unusable.extend(found.unusable)
     return ReadBack(problems=tuple(problems), unusable=tuple(dict.fromkeys(unusable)))
-
-
-def _companyfacts(
-    saved: SavedResponses, cik: str, problems: list[str], unusable: list[str]
-) -> CompanyFacts | None:
-    """The issuer's saved companyfacts file, read in a guard of its own. ``None`` when
-    nothing is saved, which discovery fetches; ``None``, with a problem and its URL
-    unusable, when it cannot be read or states another CIK."""
-    url = companyfacts_url(cik)
-    try:
-        artifact = saved.get(url)
-        if artifact is None:
-            return None
-        facts = read_companyfacts(artifact.text.body)
-    except (FileNotFoundError, ValueError) as exc:
-        problem = f"{url}: {exc}"
-    else:
-        if facts.cik == cik:
-            return facts
-        problem = f"{url} is the companyfacts file of CIK {facts.cik}"
-    problems.append(f"{problem}; {refetch_remedy(url)}")
-    unusable.append(url)
-    return None
 
 
 def discover_filing(

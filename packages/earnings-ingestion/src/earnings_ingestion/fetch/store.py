@@ -14,6 +14,9 @@ damage, not a conflict. ``put`` moves them aside, to
 the artifact again; damaged bytes are never deleted, and valid ones are never moved.
 The quarantine folder is in the source directory because ``os.link`` needs one
 filesystem. No reader looks in it.
+
+A reader that meets a retrieval record it cannot read raises ``RetrievalRecordError``,
+which names the record. The reader stops there, and the repair is manual.
 """
 
 import os
@@ -36,6 +39,20 @@ EXTENSIONS = {
 }
 _SOURCE_ID = re.compile(SOURCE_ID_PATTERN)
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
+UNREADABLE_RECORD = (
+    "unreadable retrieval record; repair it by hand"
+    ' (docs/verification/djia-events.md, "Repairing the store")'
+)
+"""What a command prints after the path of a retrieval record it cannot read."""
+
+
+class RetrievalRecordError(ValueError):
+    """A retrieval record that cannot be read or validated. The message names its
+    path and the manual repair, since the URL inside it is unknown."""
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        super().__init__(f"{path}: {UNREADABLE_RECORD}")
 
 
 @dataclass(frozen=True)
@@ -105,10 +122,7 @@ class ArtifactStore:
         folder = self._retrieval_dir(source_id, sha256)
         if not folder.is_dir():
             return ()
-        records = [
-            Retrieval.model_validate_json(path.read_text(encoding="utf-8"))
-            for path in folder.glob("*.json")
-        ]
+        records = [read_retrieval(path) for path in folder.glob("*.json")]
         return tuple(sorted(records, key=lambda record: record.retrieved_at))
 
     def get(
@@ -149,10 +163,7 @@ class ArtifactStore:
         """The artifact most recently retrieved from ``url``, or ``None``."""
         self._check(source_id, "0" * 64)
         folder = self.root / source_id / "retrievals"
-        records = [
-            Retrieval.model_validate_json(path.read_text(encoding="utf-8"))
-            for path in sorted(folder.glob("*/*.json"))
-        ]
+        records = [read_retrieval(path) for path in sorted(folder.glob("*/*.json"))]
         matching = [record for record in records if record.request_url == url]
         if not matching:
             return None
@@ -194,6 +205,15 @@ class ArtifactStore:
             raise ValueError(f"source_id {source_id!r} is not a register slug")
         if not _SHA256.match(sha256):
             raise ValueError(f"{sha256!r} is not a SHA-256 digest")
+
+
+def read_retrieval(path: Path) -> Retrieval:
+    """The retrieval record at ``path``. ``RetrievalRecordError`` names the record when
+    its bytes are not UTF-8 or do not validate."""
+    try:
+        return Retrieval.model_validate_json(path.read_text(encoding="utf-8"))
+    except ValueError as error:
+        raise RetrievalRecordError(path) from error
 
 
 def write_new(path: Path, data: bytes) -> None:

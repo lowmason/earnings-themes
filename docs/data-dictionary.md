@@ -979,6 +979,8 @@ The opt-in live verification's result (P-VL), saved under `data/runs/cohort/live
 | `build_problems` | tuple of string | Why the rebuild stopped, if it did |
 | `rebuilt_content_hash` | 64 lowercase hex or null | The rebuilt cohort's content hash |
 | `frozen_content_hash` | 64 lowercase hex or null | The latest frozen version's |
+| `rebuilt_operative_hash` | 64 lowercase hex or null | The rebuilt cohort's operative hash, which Stage 5 keys on. Null when the rebuild stopped, and in a record saved before plan 26 kept it |
+| `frozen_operative_hash` | 64 lowercase hex or null | The latest frozen version's operative hash. Null when nothing is frozen, and in a record saved before plan 26 kept it |
 | `blocking_finding_ids` | tuple of ID part | Findings that would hold a freeze now |
 | `requests_sent` | non-negative integer or null | The requests both clients sent, each capped at the approved `--max-requests`; null in a record saved before plan 8 kept it |
 
@@ -1211,8 +1213,8 @@ The first of `eligibility/1`'s checks that applies decides (S §Eligibility).
 | `period_gap` | An in-window period end may be missing; blocking until acknowledged |
 | `no_slots` | A candidate issuer has no slot; blocking until acknowledged |
 | `fiscal_labels_unknown` | Companyfacts gives the periodic report no agreeing `fy` and `fp`, where a blank `fp` or an `fy` below 1 states none; not blocking |
-| `acceptance_time_mismatch` | A cross-checked `acceptanceDateTime` follows neither convention; blocking |
-| `acceptance_time_unknown` | A filing's side of the cutoff or range turns on a convention its file does not establish, or on a missing value; blocking until its index page is saved (P7-8) |
+| `acceptance_time_mismatch` | A cross-checked `acceptanceDateTime` with a value follows neither convention; blocking |
+| `acceptance_time_unknown` | A filing's side of the cutoff or range turns on a convention its file does not establish, or on a missing value; blocking until its index page is saved (P7-8). An original periodic report older than the issuer's latest report before the window raises none. An Item 2.02 8-K with no value raises one only when it is filed from the window's start to seven days after the cutoff |
 
 ### `EventOverrideKind`
 
@@ -1272,7 +1274,7 @@ set.
 | `override_id` | ID part | A curated slug |
 | `kind` | `EventOverrideKind` | The decision |
 | `event_id` | ID part or null | The event of `set_release_filing` and `retain_unresolved` |
-| `accession` | accession or null | `set_release_filing`'s filing: an 8-K or 8-K/A of the issuer, accepted, on the Eastern calendar, after the event's period end and by the issuer's next period end (by the cutoff when none is visible), whose index page is saved, and the release of no other event |
+| `accession` | accession or null | `set_release_filing`'s filing: an 8-K or 8-K/A of the issuer, accepted, on the Eastern calendar, after the event's period end and by the issuer's next period end (by the cutoff when none is visible), whose index page is saved, and the release of no other event of the issuer |
 | `reason` | `EventReason` or null | `retain_unresolved`'s reason, one that makes the event `ambiguous` |
 | `finding_id` | ID part or null | `acknowledge`'s finding |
 | `finding_digest` | 64 lowercase hex or null | The digest of the finding as reviewed |
@@ -1286,7 +1288,7 @@ set.
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `schema_version` | `1` | The file's version |
-| `overrides` | tuple of `EventOverride` | Unique `override_id`s, and at most one override of each kind per `event_id` |
+| `overrides` | tuple of `EventOverride` | Unique `override_id`s, at most one override of each kind per `event_id`, and at most one acknowledgement for each `finding_id` |
 
 ### `AcquisitionOverride`
 
@@ -1347,15 +1349,15 @@ plan 8, P8-11). `events acquire` applies it; no manifest hashes it.
 | `sha256` | 64 lowercase hex | Its bytes' hash |
 | `retrieved_at` | UTC datetime | When they were retrieved |
 | `convention` | `Convention` or null | The convention its cross-checked rows share; null when none was cross-checked, or they follow both |
-| `rows_cross_checked` | int ≥ 0 | Its rows whose index page is saved |
+| `rows_cross_checked` | int ≥ 0 | Its rows with a value and a saved index page |
 
 ### `SkippedPage`
 
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `url` | string | An older page the build did not read |
-| `filing_from` | date | Its first filing date |
-| `filing_to` | date | Its last. A page is skipped when this range misses `[2024-07-01, 2026-09-22]` |
+| `filing_from` | date | SEC's `filingFrom` |
+| `filing_to` | date | SEC's `filingTo`. It can differ by a day from the page's last filing date. A page is skipped when this is more than seven days before 2024-07-01, or when `filing_from` is more than seven days after 2026-09-22. |
 
 ### `EventCitations`
 
@@ -1371,7 +1373,7 @@ primary document through `walker-1`'s text, and a JSON file by pointer.
 | `amendments` | tuple of `Citation` | Each 8-K/A in the slot's range, at its Accepted value: recorded, never chosen by the rule |
 | `release` | `Citation` or null | The release filing's index page, at its Accepted value |
 | `item_text` | `Citation` or null | The release's Item 2.02 text; null when its primary document is not saved or states none |
-| `cross_check` | `Citation` or null | The release's submissions row, at `acceptanceDateTime` |
+| `cross_check` | `Citation` or null | The release's submissions row, at `acceptanceDateTime`, or null when the row has no value |
 
 ### `EventEvidence`
 

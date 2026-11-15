@@ -118,10 +118,22 @@ def test_a_file_s_convention_is_the_one_its_cross_checked_rows_share() -> None:
 
 
 def test_a_mismatch_is_named_and_leaves_the_convention_to_the_other_rows() -> None:
-    rows = [filing(0, "2024-10-24T16:05:12.000Z"), filing(1, None)]
+    rows = [
+        filing(0, "2024-10-24T16:05:12.000Z"),
+        filing(1, "2025-01-28T13:00:03.000Z"),
+    ]
     checked = survey("CIK0009990001.json", rows, INSTANTS)
     assert checked.convention is Convention.EASTERN_DIGITS
     assert [check.accession for check in checked.mismatches] == ["0009990001-24-000011"]
+
+
+def test_a_row_without_a_value_has_nothing_to_cross_check() -> None:
+    """Reading (a) (plan 26, D2): the index page places the filing, and its row is
+    left out of the file's cross-checks."""
+    rows = [filing(0, "2024-10-24T16:05:12.000Z"), filing(1, None)]
+    checked = survey("CIK0009990001.json", rows, INSTANTS)
+    assert [check.accession for check in checked.checks] == ["0009990001-24-000010"]
+    assert (checked.convention, checked.mismatches) == (Convention.EASTERN_DIGITS, ())
 
 
 def test_a_file_using_both_conventions_has_none() -> None:

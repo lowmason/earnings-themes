@@ -21,7 +21,9 @@ sent on every exit, a stop, a Ctrl-C, or an error no stop names included (PR #6'
 review, F31; plan 8's final review). ``discover`` exits 1 and names each saved
 submissions file, older page, index page, or primary document the build cannot read,
 which no rerun fetches again, since it is saved, with the ``--refetch`` that
-replaces it.
+replaces it. A save that needs a damaged file's name moves that file into
+``quarantine/``. ``discover`` and ``--filing`` print each file moved so after the
+request count, and before it on every early exit (plan 26).
 
 ``discover --refetch`` states its count before it opens the client: one request for
 each named URL, and for each older page saved beside a named submissions file. It
@@ -36,6 +38,14 @@ what a refreshed file now lists (plan 25).
 
 ``build``, ``freeze``, and ``select`` read committed files and saved responses alone.
 ``build`` exits 1 while anything holds the freeze.
+
+Each load failure ends with a line that names it (plan 26). An overrides file that
+does not load gives a ``problem: <path>:`` line for each of its errors. An unreadable
+retrieval record gives ``problem: <path>:`` with its manual repair, and ``discover``
+stops on it with no rerun advice. A universe manifest that does not load is
+refused with its path on each line. ``freeze`` prints a citation error as a
+``problem:`` line and any other refusal as ``Refused:``. ``select`` says to rerun
+when another ``select`` froze the pilot first.
 
 ``acquire`` reads the event manifest the build reproduces and the pilot frozen over
 it, which ``load_pilot`` checks and reselects, and refuses otherwise. It states what
@@ -89,6 +99,7 @@ from typing import Annotated, NoReturn
 import typer
 from earnings_ingestion.cohort.config import UNIVERSE_DIR
 from earnings_ingestion.cohort.freeze import load_manifest
+from earnings_ingestion.cohort.locators import LocatorError
 from earnings_ingestion.cohort.records import UniverseManifest
 from earnings_ingestion.events.acquire import (
     OVERRIDES_FILE,
@@ -135,11 +146,21 @@ from earnings_ingestion.fetch.client import (
     ProcessLock,
     UnexpectedResponse,
 )
-from earnings_ingestion.fetch.store import ArtifactStore
+from earnings_ingestion.fetch.store import (
+    UNREADABLE_RECORD,
+    ArtifactStore,
+    RetrievalRecordError,
+)
 from earnings_ingestion.sec.client import open_sec_client
 from typer.core import TyperCommand
 
-from earnings_pipeline.paths import raw_store_refusal, runs_refusal, shown
+from earnings_pipeline.paths import (
+    error_lines,
+    quarantined_lines,
+    raw_store_refusal,
+    runs_refusal,
+    shown,
+)
 
 events = typer.Typer(
     no_args_is_help=True, help="Stage 5's events: discovery, eligibility, the pilot."
@@ -181,11 +202,14 @@ class Layout:
         return self.repo / self.corpus_dir
 
     def universes(self) -> list[UniverseManifest]:
-        """Every frozen version in ``universe_dir``, oldest first."""
-        found = [
-            load_manifest(path)
-            for path in sorted((self.repo / self.universe_dir).glob("*-v*.json"))
-        ]
+        """Every frozen version in ``universe_dir``, oldest first. A version that does
+        not load is refused, with its path on each line."""
+        found = []
+        for path in sorted((self.repo / self.universe_dir).glob("*-v*.json")):
+            try:
+                found.append(load_manifest(path))
+            except (OSError, ValueError) as error:
+                _fail_each("Refused:", shown(path, self.repo), error)
         if len({m.definition.universe_id for m in found}) > 1:
             _fail(f"Refused: {self.universe_dir} holds more than one universe")
         if not found:
@@ -218,6 +242,14 @@ def main(
 def _fail(message: str) -> NoReturn:
     typer.echo(message, err=True)
     raise typer.Exit(1)
+
+
+def _fail_each(label: str, path: str, error: Exception) -> NoReturn:
+    """Exit 1 with one ``<label> <path>: <line>`` for each line of ``error``, so a
+    validation error's entries each carry the path."""
+    for line in error_lines(error):
+        typer.echo(f"{label} {path}: {line}", err=True)
+    raise typer.Exit(1) from error
 
 
 class _OneFiling(TyperCommand):
@@ -289,16 +321,19 @@ def _discover(
     if budget is None:
         _fail("Refused: pass --max-requests, the request count the user approved")
     typer.echo(f"at most {budget} requests to SEC, through the shared client")
+    store = layout.store()
 
     def discovering(fetch: Fetch) -> Discovery:
         if filing is not None:
-            return discover_filing(
-                universe, *filing, fetch, layout.store(), say=typer.echo
-            )
-        return discover(universe, fetch, layout.store(), say=typer.echo)
+            return discover_filing(universe, *filing, fetch, store, say=typer.echo)
+        return discover(universe, fetch, store, say=typer.echo)
 
-    result, sent = _counted(budget, discovering)
+    def moved() -> None:
+        _quarantined(store, layout.repo)
+
+    result, sent = _counted(budget, discovering, before_count=moved)
     typer.echo(f"fetched {len(result.fetched)}; requests sent: {sent}")
+    moved()
     return result.problems
 
 
@@ -353,11 +388,16 @@ def _saved(refetched: Refetched, repo: Path) -> None:
 
 
 def _counted[T](
-    budget: int, run: Callable[[Fetch], T], *, rerun: str = DISCOVER_RERUN
+    budget: int,
+    run: Callable[[Fetch], T],
+    *,
+    rerun: str = DISCOVER_RERUN,
+    before_count: Callable[[], None] = lambda: None,
 ) -> tuple[T, int]:
     """``run`` with the shared SEC client's fetch, capped at ``budget``: its result
-    and the requests sent. Every exit prints that count, with what a ``rerun`` does;
-    a stop exits 1, and any other error propagates (PR #6's review, F31)."""
+    and the requests sent. Every exit prints that count, with what a ``rerun`` does.
+    A stop exits 1, and any other error propagates (PR #6's review, F31). On every
+    early exit, ``before_count`` runs before the count is printed."""
     sent = 0
     try:
         with open_sec_client(max_requests=budget) as sec:
@@ -365,24 +405,36 @@ def _counted[T](
                 result = run(sec.fetch)
             finally:
                 sent = sec.throttle.count
+    except RetrievalRecordError as error:
+        before_count()
+        typer.echo(f"requests sent: {sent}")  # A rerun meets the same record.
+        _fail(f"Stopped: {error}")
     except STOPS as error:
+        before_count()
         typer.echo(f"requests sent: {sent}; {rerun}")
         _fail(f"Stopped: {error}")
     except BaseException:
+        before_count()
         typer.echo(f"requests sent: {sent}; {rerun}")
         raise
     return result, sent
 
 
 def _build(layout: Layout) -> tuple[EventBuild, SavedResponses]:
-    saved = SavedResponses(layout.store())
+    """The offline build. Exit 1 with a ``problem:`` line for an unreadable retrieval
+    record, each line of an overrides error, and each problem the build names."""
     try:
-        built = build_events(
-            layout.universes()[-1],
-            saved,
-            load_overrides(layout.corpus() / "overrides.toml"),
-            corpus_id=layout.corpus_id,
-        )
+        saved = SavedResponses(layout.store())
+    except RetrievalRecordError as error:
+        _fail(f"problem: {shown(error.path, layout.repo)}: {UNREADABLE_RECORD}")
+    universe = layout.universes()[-1]
+    path = layout.corpus() / "overrides.toml"
+    try:
+        overrides = load_overrides(path)
+    except (OSError, ValueError) as error:
+        _fail_each("problem:", shown(path, layout.repo), error)
+    try:
+        built = build_events(universe, saved, overrides, corpus_id=layout.corpus_id)
     except EventBuildError as error:
         for problem in error.problems:
             typer.echo(f"problem: {problem}", err=True)
@@ -429,7 +481,9 @@ def freeze_command(context: typer.Context) -> None:
         frozen = freeze_events(built, saved, layout.corpus(), now=datetime.now(UTC))
     except EventFreezeRefused as error:
         _holds(error)
-    except ValueError as error:
+    except LocatorError as error:
+        _fail(f"problem: {error}")
+    except (OSError, ValueError) as error:
         _fail(f"Refused: {error}")
     definition = frozen.manifest.definition
     verb = "froze" if frozen.created else "unchanged:"
@@ -480,6 +534,11 @@ def select_command(context: typer.Context) -> None:
     try:
         pilot = select_pilot(current.manifest, universe)
         frozen = freeze_pilot(pilot, universe, layout.corpus(), now=datetime.now(UTC))
+    except FileExistsError as error:
+        _fail(
+            f"Refused: {error}; another events select froze this pilot first:"
+            " rerun events select"
+        )
     except ValueError as error:
         _fail(f"Refused: {error}")
     manifest = frozen.manifest
@@ -505,10 +564,9 @@ def _closed(url: str, types) -> None:
 
 
 def _quarantined(store: ArtifactStore, repo: Path) -> None:
-    """Each damaged file a save moved into ``quarantine/``, once, in the order moved.
-    Only this process knows of a move, so every exit prints it."""
-    for path in dict.fromkeys(store.quarantined):
-        typer.echo(f"quarantined: {shown(path, repo)}")
+    """Print ``quarantined_lines``: each damaged file a save moved aside, once."""
+    for line in quarantined_lines(store, repo):
+        typer.echo(line)
 
 
 @events.command("acquire")

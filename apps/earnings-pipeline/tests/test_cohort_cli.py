@@ -2,10 +2,12 @@
 
 import shutil
 from contextlib import contextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 from earnings_core import sha256_hex
+from earnings_ingestion.cohort.records import LiveVerification
 from earnings_ingestion.cohort.synthetic import FIXTURE_DIR, write_synthetic_cohort
 from earnings_ingestion.fetch.client import Fetched
 from earnings_ingestion.fetch.records import Retrieval
@@ -61,6 +63,106 @@ def test_build_fails_while_a_finding_holds_the_freeze(repo) -> None:
     result = run(repo, "build")
     assert result.exit_code == 1
     assert "BLOCKING  identity:eastfield-common  digest " in result.stdout
+
+
+BAD_OVERRIDE = """
+[[overrides]]
+override_id = "reject-no-assertion"
+kind = "reject_assertion"
+membership_assertion_id = "index-2024-10-31:corvid-common:removed"
+rationale = "Synthetic: this assertion does not exist."
+reviewer = "Synthetic Reviewer"
+recorded_on = 2026-09-28
+effective_from = 2024-07-01
+
+[[overrides.citations]]
+source_id = "synthetic-index"
+url = "https://index.example/notices/index-2024-11-01"
+"""
+
+
+def assert_one_problem(result, *fragments: str) -> None:
+    """A refusal that ends as a ``problem:`` line, never as a traceback."""
+    assert result.exit_code == 1, result.output
+    assert isinstance(result.exception, SystemExit), result.exception
+    lines = result.stderr.splitlines()
+    assert lines
+    assert all(line.startswith("problem: ") for line in lines), result.stderr
+    for fragment in fragments:
+        assert fragment in result.stderr
+
+
+@pytest.mark.parametrize("command", ["build", "freeze"])
+def test_build_and_freeze_report_a_bad_override_as_a_problem(repo, command) -> None:
+    overrides = repo / FIXTURE_DIR / "overrides.toml"
+    overrides.write_text(
+        overrides.read_text(encoding="utf-8") + BAD_OVERRIDE, encoding="utf-8"
+    )
+    result = run(repo, command)
+    assert_one_problem(result, "rejections name no assertion")
+
+
+UNKNOWN_KEY = BAD_OVERRIDE.replace(
+    'kind = "reject_assertion"', 'kind = "reject_assertion"\nbogus_key = 1'
+)
+
+
+@pytest.mark.parametrize(
+    ("override", "endings"),
+    [
+        (UNKNOWN_KEY, ["bogus_key: Extra inputs are not permitted"]),
+        (BAD_OVERRIDE * 2, ["Value error, override_id repeated"]),
+        (
+            UNKNOWN_KEY.replace(
+                'rationale = "Synthetic: this assertion does not exist."', ""
+            ),
+            [
+                "bogus_key: Extra inputs are not permitted",
+                "rationale: Field required",
+            ],
+        ),
+    ],
+    ids=["unknown key", "repeated override_id", "two entries"],
+)
+def test_build_reports_a_validation_error_as_problem_lines(
+    repo, override, endings
+) -> None:
+    """A pydantic error is several lines, and each entry prints as its own problem."""
+    overrides = repo / FIXTURE_DIR / "overrides.toml"
+    overrides.write_text(
+        overrides.read_text(encoding="utf-8") + override, encoding="utf-8"
+    )
+    result = run(repo, "build")
+    assert_one_problem(result)
+    lines = result.stderr.splitlines()
+    assert len(lines) == len(endings)
+    for ending in endings:
+        assert sum(line.endswith(ending) for line in lines) == 1, result.stderr
+    assert "For further information" not in result.stderr
+    assert "validation error" not in result.stderr
+
+
+def test_build_reports_a_toml_syntax_error_as_a_problem(repo) -> None:
+    overrides = repo / FIXTURE_DIR / "overrides.toml"
+    overrides.write_text(
+        overrides.read_text(encoding="utf-8") + "[[overrides]\n", encoding="utf-8"
+    )
+    assert_one_problem(run(repo, "build"))
+
+
+def test_build_prints_each_problem_of_a_cohort_error_on_its_own_line(repo) -> None:
+    """``CohortError`` is a ``ValueError``, so its handler must come first."""
+    for source in ("synthetic-roster", "synthetic-index"):
+        next((repo / FIXTURE_DIR / "raw" / source).glob("*.html")).unlink()
+    result = run(repo, "build")
+    assert_one_problem(result)
+    assert len(result.stderr.splitlines()) >= 2
+    assert "; " not in result.stderr
+
+
+def test_build_reports_a_missing_curated_file_as_a_problem(repo) -> None:
+    (repo / FIXTURE_DIR / "evidence.toml").unlink()
+    assert_one_problem(run(repo, "build"), "evidence.toml")
 
 
 def test_freeze_names_the_version_that_holds_the_content(repo) -> None:
@@ -199,6 +301,62 @@ def test_verify_live_prints_its_count_on_an_unforeseen_error(repo, monkeypatch) 
     assert result.stdout.splitlines() == ["requests sent: 4"]
 
 
+def live_record(
+    rebuilt: str | None,
+    frozen: str | None,
+    operative_rebuilt: str | None,
+    operative_frozen: str | None,
+) -> LiveVerification:
+    return LiveVerification(
+        checked_at=datetime(2026, 10, 2, 9, 0, tzinfo=UTC),
+        checks=(),
+        build_problems=(),
+        rebuilt_content_hash=rebuilt,
+        frozen_content_hash=frozen,
+        rebuilt_operative_hash=operative_rebuilt,
+        frozen_operative_hash=operative_frozen,
+        blocking_finding_ids=(),
+        requests_sent=0,
+    )
+
+
+A, B, C, D = (sha256_hex(letter.encode()) for letter in "abcd")
+
+
+def verify_live_output(repo, monkeypatch, record: LiveVerification) -> list[str]:
+    def run_live(repo, *, max_requests, sent):
+        return record, repo / "data" / "runs" / "cohort" / "live" / "record.json"
+
+    monkeypatch.setattr(cohort_cli, "run_live", run_live)
+    result = run(repo, "verify-live", "--max-requests", "30")
+    assert result.exit_code == 0, result.output
+    return result.stdout.splitlines()
+
+
+def test_verify_live_tells_a_register_change_from_a_changed_fact(
+    repo, monkeypatch
+) -> None:
+    register_only = verify_live_output(repo, monkeypatch, live_record(A, B, C, C))
+    assert register_only[-4:-2] == [
+        f"rebuilt {A}; frozen {B}",
+        f"operative rebuilt {C}; frozen {C}: the facts are unchanged",
+    ]
+    changed = verify_live_output(repo, monkeypatch, live_record(A, B, C, D))
+    assert changed[-4:-2] == [
+        f"rebuilt {A}; frozen {B}",
+        f"operative rebuilt {C}; frozen {D}: a fact changed",
+    ]
+
+
+@pytest.mark.parametrize("operative", [(None, C), (C, None), (None, None)])
+def test_verify_live_prints_no_operative_line_without_both_hashes(
+    repo, monkeypatch, operative
+) -> None:
+    lines = verify_live_output(repo, monkeypatch, live_record(A, B, *operative))
+    assert f"rebuilt {A}; frozen {B}" in lines
+    assert not any(line.startswith("operative") for line in lines)
+
+
 def test_fetch_saves_pages_through_the_web_client(repo, monkeypatch) -> None:
     body = b"<p>A notice.</p>"
 
@@ -286,6 +444,68 @@ def test_terms_hashes_a_saved_copy_without_a_client(
     assert "Refused: application/pdf contradicts the bytes" in refused.stderr
 
 
+def unreadable_terms(*args, **kwargs):
+    raise ValueError("walker-1 found no text")
+
+
+def test_terms_reports_a_saved_page_walker_1_cannot_read_as_a_problem(
+    repo, monkeypatch, tmp_path_factory
+) -> None:
+    saved = tmp_path_factory.mktemp("browser") / "terms.html"
+    saved.write_bytes(b"<html><body><p>Terms of use.</p></body></html>")
+    monkeypatch.setattr(cohort_cli, "terms_digest", unreadable_terms)
+    result = run(repo, "terms", "https://terms.example/terms", "--saved", str(saved))
+    assert result.exit_code == 1
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stderr == f"problem: {saved}: walker-1 found no text\n"
+    assert result.stdout == ""
+
+
+@pytest.mark.parametrize(
+    ("url", "client"),
+    [
+        ("https://terms.example/terms-of-use", "open_web_client"),
+        ("https://www.sec.gov/privacy", "open_sec_client"),
+    ],
+)
+def test_terms_reports_a_fetched_page_walker_1_cannot_read_as_a_problem(
+    repo, monkeypatch, url, client
+) -> None:
+    body = b"<html><body></body></html>"
+
+    class FakeClient:
+        def fetch(self, url, types):
+            return Fetched(
+                body=body,
+                retrieval=Retrieval.model_validate(
+                    {
+                        "request_url": url,
+                        "final_url": url,
+                        "retrieved_at": "2026-09-29T10:00:00Z",
+                        "retrieval_method": "http",
+                        "http_status": 200,
+                        "media_type": "text/html",
+                        "content_type": "text/html",
+                        "byte_count": len(body),
+                        "sha256": sha256_hex(body),
+                    },
+                    strict=False,
+                ),
+            )
+
+    @contextmanager
+    def fake_open(*args, **kwargs):
+        yield FakeClient()
+
+    monkeypatch.setattr(cohort_cli, client, fake_open)
+    monkeypatch.setattr(cohort_cli, "terms_digest", unreadable_terms)
+    result = run(repo, "terms", url)
+    assert result.exit_code == 1
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.stderr == f"problem: {url}: walker-1 found no text\n"
+    assert result.stdout == ""
+
+
 @pytest.mark.parametrize(
     "command",
     [["fetch-sec"], ["fetch", "synthetic-index", "https://index.example/notices/n"]],
@@ -336,3 +556,96 @@ def test_freeze_prints_a_manifest_outside_the_repo_in_full(
     assert result.exit_code == 0, result.output
     (line,) = [line for line in result.stdout.splitlines() if "-v1.json" in line]
     assert line.startswith(str(outside / "manifests" / "djia-synthetic-v1.json"))
+
+
+TICKERS = "https://www.sec.gov/files/company_tickers.json"
+
+
+def saved_fetches(root: Path) -> dict[str, Fetched]:
+    """Each response saved under ``root``, by URL, as the client returned it."""
+    found = {}
+    for path in sorted(root.glob("*/retrievals/*/*.json")):
+        record = Retrieval.model_validate_json(path.read_text(encoding="utf-8"))
+        (artifact,) = path.parents[2].glob(f"{record.sha256}.*")
+        found[record.request_url] = Fetched(artifact.read_bytes(), record)
+    return found
+
+
+def cut_tickers(repo: Path) -> tuple[dict[str, Fetched], str]:
+    """Move the cohort's artifacts under data/raw, where fetch-sec may save. Cut the
+    tickers file and delete its retrieval records, so its save needs the cut file's
+    name. Return the original responses, and the line the save prints when it moves
+    the cut bytes aside."""
+    (repo / COHORT_STORE).parent.mkdir(parents=True)
+    shutil.move(repo / FIXTURE_DIR / "raw", repo / COHORT_STORE)
+    root = repo / COHORT_STORE
+    fetches = saved_fetches(root)
+    sha = fetches[TICKERS].retrieval.sha256
+    path = root / "sec-edgar" / f"{sha}.json"
+    cut = path.read_bytes()[:10]
+    path.write_bytes(cut)
+    shutil.rmtree(root / "sec-edgar" / "retrievals" / sha)
+    moved = COHORT_STORE / "sec-edgar" / "quarantine" / sha / f"{sha256_hex(cut)}.json"
+    return fetches, f"quarantined: {moved}"
+
+
+def serve(
+    monkeypatch, fetches: dict[str, Fetched], failure: BaseException | None = None
+) -> list[str]:
+    """Replace the CLI's SEC client with one that returns ``fetches``, and raises
+    ``failure`` at its second request; return the URLs it is asked for."""
+    requested: list[str] = []
+
+    class FakeSec:
+        class throttle:
+            count = 0
+
+        def fetch(self, url, types):
+            requested.append(url)
+            FakeSec.throttle.count += 1
+            if failure is not None and len(requested) == 2:
+                raise failure
+            return fetches[url]
+
+    @contextmanager
+    def fake_open(*, max_requests):
+        yield FakeSec()
+
+    monkeypatch.setattr(cohort_cli, "open_sec_client", fake_open)
+    return requested
+
+
+def test_fetch_sec_prints_each_quarantined_file_once(repo, monkeypatch) -> None:
+    """The save of the cut tickers file moves it aside, and the move prints once,
+    after the counts (plan 26)."""
+    fetches, quarantined = cut_tickers(repo)
+    requested = serve(monkeypatch, fetches)
+    result = run(repo, "fetch-sec", "--max-requests", "50", store=COHORT_STORE)
+    assert result.exit_code == 0, result.output
+    assert requested[0] == TICKERS
+    lines = result.stdout.splitlines()
+    assert [line for line in lines if line.startswith("quarantined: ")] == [quarantined]
+    assert lines[-2:] == [f"requests sent: {len(requested)}", quarantined]
+    assert lines[-3].startswith("fetched ")
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [cohort_cli.AccessStop("403 persisted"), LookupError("unforeseen")],
+    ids=["stop", "unforeseen"],
+)
+def test_fetch_sec_stopped_prints_each_quarantined_file_before_its_count(
+    repo, monkeypatch, failure
+) -> None:
+    """The second request fails after the tickers file's save moved its cut bytes
+    aside. The move prints before the count on a stop and on an error no stop
+    names."""
+    fetches, quarantined = cut_tickers(repo)
+    serve(monkeypatch, fetches, failure)
+    result = run(repo, "fetch-sec", "--max-requests", "50", store=COHORT_STORE)
+    assert result.exit_code == 1
+    assert result.stdout.splitlines() == [quarantined, "requests sent: 2"]
+    if isinstance(failure, LookupError):
+        assert result.exception is failure
+    else:
+        assert result.stderr == "Stopped: 403 persisted\n"

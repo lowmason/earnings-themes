@@ -71,7 +71,8 @@ class SourceRole(StrEnum):
 
 class LocatorKind(StrEnum):
     TEXT_SPAN = "text_span"
-    """Half-open code-point offsets into an HTML artifact's canonical text."""
+    """Half-open code-point offsets into an HTML artifact's ``walker-1`` text or a
+    PDF's ``pdftext-1`` text."""
     JSON_POINTER = "json_pointer"
     """An RFC 6901 pointer into a JSON artifact."""
 
@@ -531,6 +532,12 @@ class LiveVerification(IngestionRecord):
     build_problems: tuple[str, ...]
     rebuilt_content_hash: Sha256Hex | None
     frozen_content_hash: Sha256Hex | None
+    rebuilt_operative_hash: Sha256Hex | None = None
+    """The rebuilt cohort's operative hash; ``None`` when the rebuild stopped, and in
+    a record saved before it was kept."""
+    frozen_operative_hash: Sha256Hex | None = None
+    """The latest frozen version's operative hash; ``None`` when nothing is frozen,
+    and in a record saved before it was kept."""
     blocking_finding_ids: tuple[IdPart, ...]
     requests_sent: NonNegativeInt | None = None
     """What both clients sent; ``None`` in a record saved before it was kept."""

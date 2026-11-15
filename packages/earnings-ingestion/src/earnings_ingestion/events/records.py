@@ -316,6 +316,13 @@ class EventOverridesFile(_Part):
         repeated = [f"{event} ({kind})" for (event, kind), n in events.items() if n > 1]
         if repeated:
             raise ValueError(f"event_id repeated in one kind: {sorted(repeated)}")
+        findings = Counter(
+            override.finding_id
+            for override in self.overrides
+            if override.kind is EventOverrideKind.ACKNOWLEDGE
+        )
+        if repeated := sorted(name for name, n in findings.items() if n > 1):
+            raise ValueError(f"finding_id repeated among acknowledgements: {repeated}")
         return self
 
 

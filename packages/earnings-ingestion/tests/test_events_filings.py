@@ -140,6 +140,113 @@ def test_older_pages_in_range_are_read_and_the_rest_skipped_by_their_dates(
     assert read.problems == ()
 
 
+def test_an_older_page_that_starts_after_the_cutoff_is_read(saved) -> None:
+    """A filing accepted after 17:30 takes the next business day's filing date. So a
+    page whose ``filingFrom`` is the day after the cutoff can hold a filing accepted
+    on the cutoff's evening. The padded skip reads the page, and the filing stays
+    visible. The recent block starts the day after the page ends."""
+    late = release(96, "2026-09-22 18:00:00", filing_date=date(2026, 9, 23))
+    newest = release(97, "2026-09-24 16:05:00", items=("8.01",))
+    name = "CIK0009990001-submissions-001.json"
+    entry = older_page_entry(name, [late])
+    assert (entry["filingFrom"], entry["filingTo"]) == ("2026-09-23", "2026-09-23")
+    saved.submissions([newest], pages=[entry])
+    saved.page(name, [late])
+    read = saved.read()
+    assert submissions_page_url(name) not in [page.url for page in read.skipped]
+    saved.index(late)
+    read = saved.read()
+    assert [p.filing.accession for p in read.releases] == [late.accession]
+    assert (read.findings, read.problems) == ((), ())
+
+
+def test_the_padded_skip_reads_a_page_ending_seven_days_before_the_start(
+    saved,
+) -> None:
+    edge = release(31, "2024-06-24 16:05:00", items=("8.01",))
+    past = release(30, "2024-06-23 16:05:00", items=("8.01",))
+    read_name = "CIK0009990001-submissions-001.json"
+    skip_name = "CIK0009990001-submissions-002.json"
+    pages = [older_page_entry(read_name, [edge]), older_page_entry(skip_name, [past])]
+    saved.submissions([], pages=pages)
+    saved.page(read_name, [edge])
+    read = saved.read()
+    assert [file.artifact.url for file in read.files] == [
+        submissions_url(CIK),
+        submissions_page_url(read_name),
+    ]
+    assert read.skipped == (
+        SkippedPage(
+            url=submissions_page_url(skip_name),
+            filing_from=date(2024, 6, 23),
+            filing_to=date(2024, 6, 23),
+        ),
+    )
+    assert read.problems == ()
+
+
+def test_the_padded_skip_reads_a_page_starting_seven_days_after_the_cutoff(
+    saved,
+) -> None:
+    """A page is skipped only when its ``filingFrom`` is more than seven days after
+    the cutoff. The skipped page still bounds the page below it, whose dates end
+    before the skipped page's ``filingFrom``."""
+    past = release(98, "2026-09-30 07:00:00", items=("8.01",))
+    edge = release(97, "2026-09-29 07:00:00", items=("8.01",))
+    skip_name = "CIK0009990001-submissions-001.json"
+    read_name = "CIK0009990001-submissions-002.json"
+    pages = [older_page_entry(skip_name, [past]), older_page_entry(read_name, [edge])]
+    saved.submissions([], pages=pages)
+    saved.page(read_name, [edge])
+    read = saved.read()
+    assert [file.artifact.url for file in read.files] == [
+        submissions_url(CIK),
+        submissions_page_url(read_name),
+    ]
+    assert read.skipped == (
+        SkippedPage(
+            url=submissions_page_url(skip_name),
+            filing_from=date(2026, 9, 30),
+            filing_to=date(2026, 9, 30),
+        ),
+    )
+    assert read.problems == ()
+
+
+def test_a_page_that_straddles_the_padded_start_is_read(saved) -> None:
+    """The page's ``filingTo``, not its ``filingFrom``, decides the skip at the
+    window's start. A page that begins before the padded start and ends after it is
+    read, and its in-range release is placed."""
+    old = release(20, "2024-05-20 16:05:00", items=("8.01",))
+    inside = release(21, "2024-07-15 16:05:00")
+    recent = release(30, "2024-08-01 16:05:00", items=("8.01",))
+    name = "CIK0009990001-submissions-001.json"
+    saved.submissions([recent], pages=[older_page_entry(name, [old, inside])])
+    saved.page(name, [old, inside])
+    saved.index(inside)
+    read = saved.read()
+    assert read.skipped == ()
+    assert [p.filing.accession for p in read.releases] == [inside.accession]
+    assert read.problems == ()
+
+
+def test_a_page_that_straddles_the_padded_cutoff_is_read(saved) -> None:
+    """The page's ``filingFrom``, not its ``filingTo``, decides the skip at the
+    cutoff. A page that begins the day after the cutoff and ends more than seven days
+    after it is read, and the release accepted on the cutoff's evening is placed."""
+    late = release(96, "2026-09-22 18:00:00", filing_date=date(2026, 9, 23))
+    after = release(98, "2026-10-09 16:05:00", items=("8.01",))
+    recent = release(99, "2026-10-20 16:05:00", items=("8.01",))
+    name = "CIK0009990001-submissions-001.json"
+    saved.submissions([recent], pages=[older_page_entry(name, [late, after])])
+    saved.page(name, [late, after])
+    saved.index(late)
+    read = saved.read()
+    assert read.skipped == ()
+    assert [p.filing.accession for p in read.releases] == [late.accession]
+    assert read.problems == ()
+
+
 def test_a_missing_response_is_a_problem(saved) -> None:
     assert saved.read().problems == (
         f"nothing saved from {submissions_url(CIK)}: run events discover",
@@ -243,6 +350,9 @@ def test_a_release_either_convention_places_in_range_needs_its_index_page(
 
 
 def test_a_missing_value_is_unknown_unless_filed_before_the_range(saved) -> None:
+    """Under reading (a) (plan 26, D2), a row with no value has nothing to
+    cross-check: once each unknown filing's index page is saved, the page places it,
+    and nothing is found."""
     report = periodic(80, date(2026, 6, 30), "2026-08-05 16:00:00", written="")
     unplaced = release(20, "2025-01-28 07:00:00", written="")
     early = release(5, "2024-05-01 16:05:00", written="")
@@ -255,6 +365,143 @@ def test_a_missing_value_is_unknown_unless_filed_before_the_range(saved) -> None
     assert read.findings[1].detail == (
         f"10-Q {report.accession}, filed 2026-08-05: no acceptanceDateTime"
     )
+    saved.index(report)
+    saved.index(unplaced)
+    read = saved.read()
+    assert read.findings == ()
+    assert report.accession in [p.filing.accession for p in read.periodic]
+    assert unplaced.accession in [p.filing.accession for p in read.releases]
+
+
+def test_an_old_periodic_report_with_no_value_raises_nothing(saved, tmp_path) -> None:
+    """No slot or guard reads a report older than the issuer's latest one before the
+    window, so its missing value holds nothing, and the reports read are the same as
+    without it."""
+    old = periodic(60, date(2023, 12, 31), "2024-02-20 16:30:00", written="")
+    latest = periodic(70, date(2024, 3, 31), "2024-05-02 16:30:00")
+    inside = periodic(90, date(2024, 9, 30), "2024-11-04 16:30:00")
+    saved.submissions([old, latest, inside])
+    read = saved.read()
+    assert read.findings == ()
+    without = Saved(tmp_path / "data" / "raw" / "without", tmp_path, RETRIEVED)
+    without.submissions([latest, inside])
+    assert [p.filing.accession for p in read.periodic] == [
+        p.filing.accession for p in without.read().periodic
+    ]
+
+
+def test_the_latest_report_before_the_window_with_no_value_still_blocks(
+    saved,
+) -> None:
+    """The slots' guards pair the latest report before the window with the first
+    in-window report, so its missing value still blocks."""
+    older = periodic(60, date(2023, 12, 31), "2024-02-20 16:30:00")
+    latest = periodic(70, date(2024, 3, 31), "2024-05-02 16:30:00", written="")
+    inside = periodic(90, date(2024, 9, 30), "2024-11-04 16:30:00")
+    saved.submissions([older, latest, inside])
+    (finding,) = saved.read().findings
+    assert finding.finding_id == f"acceptance_time_unknown:{latest.accession}"
+    assert finding.kind is EventFindingKind.ACCEPTANCE_TIME_UNKNOWN
+
+
+def test_an_older_report_raises_nothing_when_the_latest_has_no_value_either(
+    saved,
+) -> None:
+    """The latest report before the window bounds the rest whether or not its own
+    side of the cutoff is known: it blocks, and the older report does not."""
+    older = periodic(60, date(2023, 12, 31), "2024-02-20 16:30:00", written="")
+    latest = periodic(70, date(2024, 3, 31), "2024-05-02 16:30:00", written="")
+    inside = periodic(90, date(2024, 9, 30), "2024-11-04 16:30:00")
+    saved.submissions([older, latest, inside])
+    (finding,) = saved.read().findings
+    assert finding.finding_id == f"acceptance_time_unknown:{latest.accession}"
+
+
+def test_a_report_accepted_after_the_cutoff_does_not_bound_the_older_ones(
+    saved,
+) -> None:
+    """The slots' guards read visible reports only. When the latest report before the
+    window was accepted after the cutoff, they read the one before it, so that
+    report's missing value still blocks."""
+    older = periodic(60, date(2023, 12, 31), "2024-02-20 16:30:00", written="")
+    late = periodic(70, date(2024, 3, 31), "2026-09-25 16:30:00")
+    inside = periodic(90, date(2024, 9, 30), "2024-11-04 16:30:00")
+    saved.submissions([older, late, inside])
+    saved.index(late)
+    read = saved.read()
+    assert [p.filing.accession for p in read.periodic] == [inside.accession]
+    (finding,) = read.findings
+    assert finding.finding_id == f"acceptance_time_unknown:{older.accession}"
+
+
+def test_a_report_dated_on_the_window_s_start_is_inside_the_window(saved) -> None:
+    """A report dated on the window's start is in the window, so the latest report
+    before the window is the one before it, whose missing value still blocks."""
+    latest = periodic(70, date(2024, 3, 31), "2024-05-02 16:30:00", written="")
+    first = periodic(90, date(2024, 7, 1), "2024-08-05 16:30:00")
+    saved.submissions([latest, first])
+    (finding,) = saved.read().findings
+    assert finding.finding_id == f"acceptance_time_unknown:{latest.accession}"
+
+
+def test_a_visible_report_older_than_the_latest_before_the_window_is_kept(
+    saved,
+) -> None:
+    """Only a report whose side of the cutoff is unknown is passed over below the
+    latest report before the window: a visible one is placed as before."""
+    older = periodic(60, date(2023, 12, 31), "2024-02-20 16:30:00")
+    latest = periodic(70, date(2024, 3, 31), "2024-05-02 16:30:00")
+    inside = periodic(90, date(2024, 9, 30), "2024-11-04 16:30:00")
+    saved.submissions([older, latest, inside])
+    read = saved.read()
+    assert [p.filing.accession for p in read.periodic] == [
+        older.accession,
+        latest.accession,
+        inside.accession,
+    ]
+    assert read.findings == ()
+
+
+def test_the_latest_report_before_the_window_is_the_issuer_s_not_its_file_s(
+    saved,
+) -> None:
+    """An older page that states no range is read. The report it holds is older than
+    the latest report before the window, which the submissions file holds, so its
+    missing value holds nothing."""
+    old = periodic(60, date(2023, 12, 31), "2024-02-20 16:30:00", written="")
+    latest = periodic(70, date(2024, 3, 31), "2024-05-02 16:30:00")
+    inside = periodic(90, date(2024, 9, 30), "2024-11-04 16:30:00")
+    name = "CIK0009990001-submissions-001.json"
+    saved.submissions([latest, inside], pages=[{"name": name, "filingCount": 1}])
+    saved.page(name, [old])
+    read = saved.read()
+    assert [file.artifact.url for file in read.files] == [
+        submissions_url(CIK),
+        submissions_page_url(name),
+    ]
+    assert (read.findings, read.problems) == ((), ())
+
+
+def test_a_no_value_release_past_the_cutoff_margin_raises_nothing(saved) -> None:
+    """A filing accepted after 17:30 takes the next business day's filing date, so a
+    release with no value blocks only when filed by seven days after the cutoff."""
+    past = release(95, "2026-09-30 07:00:00", written="", filing_date=date(2026, 9, 30))
+    margin = release(
+        94, "2026-09-29 07:00:00", written="", filing_date=date(2026, 9, 29)
+    )
+    saved.submissions([past, margin])
+    (finding,) = saved.read().findings
+    assert finding.finding_id == f"acceptance_time_unknown:{margin.accession}"
+
+
+def test_a_no_value_release_filed_on_the_window_s_start_is_unknown(saved) -> None:
+    """The window's start is inside the 8-K trigger's range, and the day before it
+    is not."""
+    first = release(30, "2024-07-01 07:00:00", written="")
+    before = release(25, "2024-06-30 07:00:00", written="")
+    saved.submissions([first, before])
+    (finding,) = saved.read().findings
+    assert finding.finding_id == f"acceptance_time_unknown:{first.accession}"
 
 
 def test_an_index_page_of_another_filing_is_a_problem(saved) -> None:
@@ -377,6 +624,122 @@ def test_a_filing_listed_twice_in_one_block_is_a_problem(saved) -> None:
             f" {remedy}"
         ),
     )
+
+
+NEWER = "CIK0009990001-submissions-001.json"
+OLDER = "CIK0009990001-submissions-002.json"
+
+
+def test_an_older_page_with_shifted_dates_is_refused(saved, tmp_path) -> None:
+    """The count binds an older page to its entry, and its dates bind it to its
+    place. A page with the right count that holds a filing date on or after the next
+    newer page's ``filingFrom``, or the recent block's earliest filing date, is one
+    that SEC cut again."""
+    remedy = refetch_remedy(
+        submissions_url(CIK), "the submissions file with its older pages"
+    )
+    first = periodic(50, date(2024, 12, 31), "2025-02-04 16:30:00")
+    second = periodic(51, date(2025, 3, 31), "2025-05-01 16:30:00")
+    early = periodic(40, date(2024, 6, 30), "2024-08-05 16:30:00")
+    late = periodic(41, date(2024, 9, 30), "2024-11-04 16:30:00")
+    recent = periodic(60, date(2025, 6, 30), "2025-08-05 16:30:00")
+    pages = [
+        older_page_entry(NEWER, [first, second]),
+        older_page_entry(OLDER, [early, late]),
+    ]
+    saved.submissions([recent], pages=pages)
+    saved.page(NEWER, [first, second])
+    saved.page(OLDER, [replace(early, filing_date=first.filing_date), late])
+    read = saved.read()
+    assert read.problems == (
+        (
+            f"{submissions_page_url(OLDER)} lists a filing dated 2025-02-04, not"
+            " before 2025-02-04, the next newer page's filingFrom at"
+            f" /filings/files/0/filingFrom in {submissions_url(CIK)}; {remedy}"
+        ),
+    )
+    assert read.unusable == (submissions_url(CIK),)
+
+    newest = Saved(tmp_path / "data" / "raw" / "newest", tmp_path, RETRIEVED)
+    later = periodic(61, date(2025, 9, 30), "2025-11-04 16:30:00")
+    newest.submissions([recent, later], pages=[older_page_entry(NEWER, [first])])
+    newest.page(NEWER, [replace(first, filing_date=recent.filing_date)])
+    read = newest.read()
+    assert read.problems == (
+        (
+            f"{submissions_page_url(NEWER)} lists a filing dated 2025-08-05, not"
+            " before 2025-08-05, the earliest filing date at /filings/recent in"
+            f" {submissions_url(CIK)}; {remedy}"
+        ),
+    )
+    assert read.unusable == (submissions_url(CIK),)
+
+
+def test_a_skipped_newer_page_still_bounds_the_page_below_it(saved) -> None:
+    """A page skipped for starting more than seven days after the cutoff is still the
+    next newer page of the page below it."""
+    past = release(98, "2026-09-30 07:00:00", items=("8.01",))
+    edge = release(97, "2026-09-29 07:00:00", items=("8.01",))
+    pages = [older_page_entry(NEWER, [past]), older_page_entry(OLDER, [edge])]
+    saved.submissions([], pages=pages)
+    saved.page(OLDER, [replace(edge, filing_date=past.filing_date)])
+    remedy = refetch_remedy(
+        submissions_url(CIK), "the submissions file with its older pages"
+    )
+    assert saved.read().problems == (
+        (
+            f"{submissions_page_url(OLDER)} lists a filing dated 2026-09-30, not"
+            " before 2026-09-30, the next newer page's filingFrom at"
+            f" /filings/files/0/filingFrom in {submissions_url(CIK)}; {remedy}"
+        ),
+    )
+
+
+def test_older_pages_whose_dates_end_the_day_before_their_bounds_are_read(
+    saved,
+) -> None:
+    """Each bound is strict, so a page whose latest filing date is the day before its
+    bound is read. The pages are ordered by their ``filingFrom``, whatever order the
+    submissions file lists them in."""
+    early = release(40, "2025-02-03 16:05:00", items=("8.01",))
+    first = release(50, "2025-02-04 16:05:00", items=("8.01",))
+    last = release(51, "2025-04-30 16:05:00", items=("8.01",))
+    recent = release(60, "2025-05-01 16:05:00", items=("8.01",))
+    pages = [
+        older_page_entry(OLDER, [early]),
+        older_page_entry(NEWER, [first, last]),
+    ]
+    saved.submissions([recent], pages=pages)
+    saved.page(OLDER, [early])
+    saved.page(NEWER, [first, last])
+    read = saved.read()
+    assert [file.artifact.url for file in read.files] == [
+        submissions_url(CIK),
+        submissions_page_url(OLDER),
+        submissions_page_url(NEWER),
+    ]
+    assert read.problems == ()
+
+
+def test_an_older_page_s_dates_need_not_match_its_entry_s_range(saved) -> None:
+    """Only the bound binds a page's dates (plan 26, owner default 5). The page's
+    last filing, on the Friday before a long weekend, is two days before its
+    ``filingTo``, and its first is a day after its ``filingFrom``."""
+    first = release(50, "2025-02-04 16:05:00", items=("8.01",))
+    last = release(51, "2025-02-14 16:05:00", items=("8.01",))
+    recent = release(60, "2025-02-18 16:05:00", items=("8.01",))
+    entry = older_page_entry(NEWER, [first, last]) | {
+        "filingFrom": "2025-02-03",
+        "filingTo": "2025-02-16",
+    }
+    saved.submissions([recent], pages=[entry])
+    saved.page(NEWER, [first, last])
+    read = saved.read()
+    assert [file.artifact.url for file in read.files] == [
+        submissions_url(CIK),
+        submissions_page_url(NEWER),
+    ]
+    assert read.problems == ()
 
 
 def test_the_newest_retrieval_of_each_url_is_read(saved) -> None:

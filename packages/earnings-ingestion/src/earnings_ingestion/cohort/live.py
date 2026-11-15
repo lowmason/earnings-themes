@@ -30,6 +30,7 @@ from earnings_ingestion.cohort.acquire import HTML, PDF, terms_digest
 from earnings_ingestion.cohort.build import COHORT_STORE, CohortError, build
 from earnings_ingestion.cohort.config import UNIVERSE_DIR, load_cohort_config
 from earnings_ingestion.cohort.freeze import frozen_manifests
+from earnings_ingestion.cohort.identity import operative_hash
 from earnings_ingestion.cohort.records import LiveCheck, LiveVerification
 from earnings_ingestion.cohort.register import (
     MEMBERSHIP_REGISTER,
@@ -106,13 +107,17 @@ def verify_live(
             outcome, detail, retrieval = "failed", str(exc), None
         else:
             retrieval = fetched.retrieval
-            found = (
-                terms_digest(fetched.body, retrieval.media_type)
-                if purpose == "terms"
-                else retrieval.sha256
-            )
-            outcome = "unchanged" if found == expected else "changed"
-            detail = f"{purpose} hash {found}; recorded {expected}"
+            try:
+                found = (
+                    terms_digest(fetched.body, retrieval.media_type)
+                    if purpose == "terms"
+                    else retrieval.sha256
+                )
+            except ValueError as exc:
+                outcome, detail = "failed", f"terms page unreadable: {exc}"
+            else:
+                outcome = "unchanged" if found == expected else "changed"
+                detail = f"{purpose} hash {found}; recorded {expected}"
         checks.append(
             LiveCheck(
                 source_id=source_id,
@@ -129,12 +134,13 @@ def verify_live(
         repo / options["config_dir"] / "manifests", config.universe.universe_id
     )
     frozen = manifests[-1].definition.content_hash if manifests else None
+    frozen_operative = operative_hash(manifests[-1]) if manifests else None
     try:
         rebuilt = build(repo, **options)
     except CohortError as exc:
-        problems, content, blocking = tuple(exc.problems), None, ()
+        problems, content, operative, blocking = tuple(exc.problems), None, None, ()
     else:
-        problems, content = (), rebuilt.content_hash
+        problems, content, operative = (), rebuilt.content_hash, rebuilt.operative_hash
         blocking = tuple(f.finding_id for f in rebuilt.report.blocking)
     return LiveVerification(
         checked_at=now,
@@ -142,6 +148,8 @@ def verify_live(
         build_problems=problems,
         rebuilt_content_hash=content,
         frozen_content_hash=frozen,
+        rebuilt_operative_hash=operative,
+        frozen_operative_hash=frozen_operative,
         blocking_finding_ids=blocking,
     )
 

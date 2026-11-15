@@ -13,6 +13,7 @@ and different bytes raise ``FileExistsError``.
 
 import os
 import tempfile
+from datetime import UTC
 from pathlib import Path
 
 from earnings_core import ArtifactRef, RightsStatus, sha256_hex
@@ -43,7 +44,7 @@ class CaptureStore:
         if capture.status in USABLE:
             path = self.root / "captures" / f"{capture.cache_key}.json"
         else:
-            stamp = capture.captured_at.strftime("%Y%m%dT%H%M%S%fZ")
+            stamp = capture.captured_at.astimezone(UTC).strftime("%Y%m%dT%H%M%S%fZ")
             path = self.root / "failures" / capture.cache_key / f"{stamp}.json"
         _write_new(path, capture.model_dump_json().encode("utf-8"))
         return path

@@ -43,7 +43,7 @@
       capture policy version, write a fixed placeholder for the scratch prefix.
       Size: quick-fix. Revisit if: the committed captures are regenerated, such
       as for a new pin or capture policy version.
-- [ ] Report `browser setup`'s ordinary failures in one line (final review,
+- [x] Report `browser setup`'s ordinary failures in one line (final review,
       Minor #5): `apps/earnings-pipeline/src/earnings_pipeline/cli.py` catches
       only `ValueError`, so an `httpx.HTTPError`, an `OSError`, or
       `subprocess.TimeoutExpired` from `reported_version` prints a traceback.
@@ -51,7 +51,8 @@
       CLI gains a second command.
       → triggered 2026-11-13: The CLI now registers seven command groups (browser, cohort, events, extract, pilot, codebook, gold) in apps/earnings-pipeline/src/earnings_pipeline/cli.py. The second group, cohort, arrived in b9603b1 (2026-09-26) and events in 73e6fbc (2026-09-27). The browser setup handler still catches only ValueError. The item is still open.
       → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
-- [ ] Three small robustness fixes (final review, Minor #6):
+      → done 2026-11-14 (plan 26): `browser setup` prints one `Failed:` line for an `OSError`, an `httpx.HTTPError`, a `subprocess.SubprocessError` or a `RuntimeError`.
+- [x] Three small robustness fixes (final review, Minor #6):
       - `install` in
         `packages/earnings-ingestion/src/earnings_ingestion/browser/install.py`
         ends with `assert done is not None`, which `-O` strips.
@@ -65,6 +66,7 @@
       drops screenshots before writing, and the store converts to UTC, with a
       test for the script.
       → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
+      → done 2026-11-14 (plan 26): `install` raises a `RuntimeError`, the capture script writes fixtures without screenshots, and the store stamps UTC, with a test for the script.
 - [ ] Separate words split by `<br>` in table cells (final review, Minor #7;
       R3.5's second leg): `walker-1` canonicalizes Becton Dickinson's header
       cells `Foreign<br>Currency<br>Translation`
@@ -77,7 +79,7 @@
       a `walker-2` is planned for another reason.
 
 ## 6-point-in-time-djia-cohort — 2026-09-26
-- [ ] Four stale claims (final review, Minor; paths under
+- [x] Four stale claims (final review, Minor; paths under
       `packages/earnings-ingestion/src/earnings_ingestion/` unless given in full):
       - `fetch/robots.py`'s docstring says a response the client gives up on
         disallows everything, but `client.get` raises `AccessStop`, which
@@ -94,6 +96,7 @@
       Size: quick-fix. Done when: each claim matches the code, or `fetch_page`
       checks the URL's host against its source, with a test.
       → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
+      → done 2026-11-14 (plan 26): the four docstrings and the README's `docs/` row match the code.
 - [ ] Decide what an override's dates mean (final review, Minor, and Codex's
       review of PR #5): every `Override`
       records `effective_from`, and optionally `effective_to`, and
@@ -140,7 +143,7 @@
       → acknowledged 2026-11-13 (claude/deferred-6fe05c): verify-live is an owner-run check of the frozen cohort, and no run of it is scheduled.
 
 ## 7-event-discovery-eligibility-and-acquisition-plan-a — 2026-09-27
-- [ ] Report the cohort CLI's override and terms errors as `problem:` lines
+- [x] Report the cohort CLI's override and terms errors as `problem:` lines
       (plan 6's "Three robustness fixes", part 1, restated by plan 7): `_build`
       in `apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py` catches
       only `CohortError`, but a bad override makes `reconstruct`
@@ -153,7 +156,8 @@
       full. Size: quick-fix. Done when: each case has a test, and each ends as a
       `problem:` line or in `verify-live`'s record.
       → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
-- [ ] Show the operative hashes in `verify-live` (plan 7, P7-3): plan 7's Task
+      → done 2026-11-14 (plan 26): `_build` prints a `problem:` line for each override error, and `terms` and `verify-live` record an unreadable terms page. A bad override can still escape `verify-live`, and `terms --saved` still raises on a missing file → item: 26-harden-ingestion-error-reporting-and-refusals — 2026-11-14
+- [x] Show the operative hashes in `verify-live` (plan 7, P7-3): plan 7's Task
       16 named companyfacts in the `sec-edgar` entry of
       `docs/source-register.toml`, and a universe manifest's content hash
       covers that entry through `source_register_version`. So a rebuild of
@@ -168,6 +172,7 @@
       Done when: `verify-live`'s output and record tell a register-only change
       from a changed fact, with a test.
       → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
+      → done 2026-11-14 (plan 26): `verify-live` prints and records `rebuilt_operative_hash` and `frozen_operative_hash` beside the content hashes.
 - [ ] Write `release-id/2` (plan 7's Task 20 review, and its final review):
       `release-id/1` in
       `packages/earnings-ingestion/src/earnings_ingestion/events/release.py`
@@ -229,7 +234,7 @@
       Before it freezes a new events version, the per-candidate citations item
       under PR #6's review lands too.
       → acknowledged 2026-11-13 (claude/deferred-6fe05c): needed only before a new events version; Stage 15 consumes events v1 unchanged, and no new version is planned.
-- [ ] Report `events freeze`'s citation errors as `problem:` lines (plan 7's
+- [x] Report `events freeze`'s citation errors as `problem:` lines (plan 7's
       final review, Minor): `freeze_command` in
       `apps/earnings-pipeline/src/earnings_pipeline/events_cli.py` catches only
       `EventFreezeRefused`, but `freeze_events` (`events/freeze.py`) builds the
@@ -291,6 +296,7 @@
       refusal while an identical one still completes the freeze; each with a test
       and no traceback.
       → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
+      → done 2026-11-14 (plan 26): each listed case ends as a `problem:` or `Refused:` line with no traceback, and a leftover evidence file with other bytes gets a named refusal. An `OSError` in `events select`'s `_current` still prints a traceback → item: 26-harden-ingestion-error-reporting-and-refusals — 2026-11-14
 - [ ] Cite the Item 2.02 text of a release an override names outside the
       candidates (plan 7's final review, Minor): `_event` in `events/evidence.py`
       sets `item_text` only when the event's release is one of `release-id/1`'s
@@ -307,7 +313,7 @@
       The per-candidate citations item under PR #6's review touches the same
       `item_text` code; land the two together.
       → acknowledged 2026-11-13 (claude/deferred-6fe05c): needed only before a new events version; Stage 15 consumes events v1 unchanged, and no new version is planned.
-- [ ] Bound the periodic reports that can block on acceptance time (plan 7's
+- [x] Bound the periodic reports that can block on acceptance time (plan 7's
       final review, Minor): `issuer_filings` in `events/filings.py` passes every
       periodic report with a `reportDate` to `_visible`, so one whose index page
       is not saved and whose `acceptanceDateTime` is empty becomes an
@@ -360,7 +366,8 @@
       page to the freeze; and a no-value Item 2.02 8-K filed past the cutoff's
       margin raises no finding.
       → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
-- [ ] Refuse a repeated acknowledgement (plan 7's final review, Minor):
+      → done 2026-11-14 (plan 26): the owner chose reading (a), which the Stage 5 spec records at EV10. A report older than the issuer's floor raises nothing, and the 8-K trigger ends seven days after the cutoff. A no-value periodic report filed later than that still blocks → item: 26-harden-ingestion-error-reporting-and-refusals — 2026-11-14
+- [x] Refuse a repeated acknowledgement (plan 7's final review, Minor):
       `EventOverridesFile._distinct` in `events/records.py` refuses a repeated
       `override_id` and, per P7-14, a second override of one kind for one
       `event_id`, but an `acknowledge` override names a `finding_id`, not an
@@ -369,6 +376,7 @@
       Size: quick-fix. Done when: `EventOverridesFile` refuses a `finding_id`
       repeated among acknowledgements, with a test.
       → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
+      → done 2026-11-14 (plan 26): `EventOverridesFile` refuses a `finding_id` repeated among acknowledgements.
 
 ## PR #6 review (plan 7) — 2026-09-27
 - [ ] Decide what identifies the event manifest when a store is rebuilt (PR #6's
@@ -393,7 +401,7 @@
       page from other bytes leaves the chosen identity and the pilot's seed
       unchanged.
       → acknowledged 2026-11-13 (claude/deferred-6fe05c): needed only before a new events version; Stage 15 consumes events v1 unchanged, and no new version is planned.
-- [ ] Bind each evidence citation to its artifact's retrievals (PR #6's review,
+- [x] Bind each evidence citation to its artifact's retrievals (PR #6's review,
       F21; the rest of plan 7's "Bind an evidence record to its manifest when
       loading", which PR #6 closed): `check_evidence` in `events/evidence.py`
       verifies each citation's bytes and locator only, so a record passes with a
@@ -411,7 +419,8 @@
       checks it; each with a test, while the real and synthetic v1 records still
       pass.
       → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
-- [ ] Bind older submissions pages to their dates, and pad the page skip (PR #6's
+      → done 2026-11-14 (plan 26): `check_evidence` binds each citation's URL, `source_id` and `retrieved_at` to the cited URL's own retrievals, and `load_event_evidence` binds each release citation to its index page.
+- [x] Bind older submissions pages to their dates, and pad the page skip (PR #6's
       review, F11 and F24): `read_older_page` in `sec/data.py` binds a page to
       its entry by `filingCount` alone (PR #6's third Codex round), and
       `issuer_filings` in `events/filings.py` skips a page whose `filingTo` is
@@ -452,6 +461,7 @@
       the dictionary's `filing_to` row is corrected; and events v1 still rebuilds
       unchanged.
       → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
+      → done 2026-11-14 (plan 26): a page with shifted dates is refused, the page skip is padded by seven days, and the spec bullet and the dictionary rows are amended. The owner's real-store run shows that events v1 rebuilds unchanged.
 - [ ] Cite the index page that places a periodic report (PR #6's review, P5.4):
       after P7-8's `--filing` remedy, `_visible` in `events/filings.py` places a
       periodic report by its saved index page, but `_event` in
@@ -469,7 +479,7 @@
       null field; and a synthetic build whose report is placed by a saved index
       page cites that page.
       → acknowledged 2026-11-13 (claude/deferred-6fe05c): needed only before a new events version; Stage 15 consumes events v1 unchanged, and no new version is planned.
-- [ ] Refuse two findings that share one `finding_id` (PR #6's review, P4.3):
+- [x] Refuse two findings that share one `finding_id` (PR #6's review, P4.3):
       each copy of a filing row that follows no convention, or has no value,
       emits its own `acceptance_time_mismatch` or `acceptance_time_unknown`
       finding under one ID, and `EventManifest` refuses the repeated ID with a
@@ -485,6 +495,7 @@
       `events build` over a store with a repeated mismatch row exits 1 with a
       `problem:` line and no traceback, with tests.
       → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
+      → done 2026-11-14 (plan 26): `build_events` reports each repeated finding ID as an `EventBuildError` problem, and `events build` prints it with no traceback. A co-registrant's repeat hides the `--filing` remedy → item: 26-harden-ingestion-error-reporting-and-refusals — 2026-11-14
 - [x] Recover a saved response that is present but unusable (PR #6's review, P2.1
       and P2.2): discovery (`events/discover.py`) fetches only URLs with no
       retrieval record, and `issuer_filings` in `events/filings.py` reports a
@@ -513,7 +524,7 @@
       → planned 2026-11-13: specs/plans/25-recover-unusable-saved-responses.md
       → done 2026-11-13 (plan 25): the primary document of a filing that `release-id/1`
       passes over stays a manual repair → item: 25-recover-unusable-saved-responses — 2026-11-13
-- [ ] Read companyfacts in discovery through the problem-collecting reader (PR
+- [x] Read companyfacts in discovery through the problem-collecting reader (PR
       #6's review, P2.3): in the documents phase of `discover` in
       `events/discover.py`, the saved read of each issuer's companyfacts and
       `read_companyfacts` run outside the reader that collects problems, so one
@@ -535,7 +546,8 @@
       and a vanished companyfacts artifact ends as a handled stop with the count
       printed.
       → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
-- [ ] Refuse a fund filing listed twice in the cohort build (PR #6's review,
+      → done 2026-11-14 (plan 26): discovery reads companyfacts through `issuer_companyfacts` with its CIK check, skips that issuer, and reports it after the documents phase.
+- [x] Refuse a fund filing listed twice in the cohort build (PR #6's review,
       P4.1): `_fund_filings` in `cohort/build.py` joins the fund's recent block
       and its saved older pages without checking for a repeated accession, so
       `current_filings` in `cohort/corroboration.py` emits a non-blocking finding
@@ -550,7 +562,8 @@
       N-PORT makes the cohort build raise `CohortError` naming that accession and
       each copy's pointer, never deduplicating it, with a test.
       → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
-- [ ] Decide whether two issuers' events may share one release (PR #6's review
+      → done 2026-11-14 (plan 26): the cohort build raises `CohortError` for each repeated accession, naming each copy's pointer.
+- [x] Decide whether two issuers' events may share one release (PR #6's review
       of its F1 fix): `shared_releases` in `events/build.py` refuses a
       `release_accession` that two rows share anywhere in the corpus, as the
       Stage 5 spec says ("No two events share a release"). A co-registrant 8-K
@@ -563,6 +576,7 @@
       corpus-wide, the spec says which, and a synthetic co-registrant 8-K shows
       the chosen behavior in a test.
       → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
+      → done 2026-11-14 (plan 26): the owner chose per-issuer (D3). `shared_releases` keys on the release and the issuer, and the Stage 5 spec says so. The theme config still refuses two sources with one `doc_id` → item: 26-harden-ingestion-error-reporting-and-refusals — 2026-11-14
 - [ ] Cite each candidate's qualifying fields and primary document (PR #6's Codex
       round 5, comment 4117725089): the Stage 5 spec's evidence list (§The event
       manifest), which `_event` in `events/evidence.py` follows, cites a candidate
@@ -1377,7 +1391,7 @@
       `discover --refetch` accept and repair it, and rebuilds the frozen content
       hash, and each `refetch_remedy` and `cited_remedy` line names a command that
       accepts its URL.
-- [ ] Print a `quarantined:` line when a plain save moves damaged bytes aside (plan
+- [x] Print a `quarantined:` line when a plain save moves damaged bytes aside (plan
       25's final review, declined): `events discover`, `events discover --filing`
       and `cohort fetch-sec` save through `ArtifactStore.put`, which quarantines a
       damaged artifact when a save needs its name. Only `discover --refetch` and
@@ -1389,3 +1403,80 @@
       one `quarantined:` line for each distinct path in `store.quarantined`, under a
       test that damages an artifact and saves its URL again.
       → planned 2026-11-13: specs/plans/26-harden-ingestion-error-reporting-and-refusals.md
+      → done 2026-11-14 (plan 26): the three commands print one `quarantined:` line for each distinct path. `cohort fetch` prints none → item: 26-harden-ingestion-error-reporting-and-refusals — 2026-11-14
+
+## 26-harden-ingestion-error-reporting-and-refusals — 2026-11-14
+- [ ] `cohort verify-live` lets a bad override's `ValueError` escape (plan 26's
+      Task 2 review, declined): `verify_live` in `cohort/live.py` rebuilds the
+      cohort after its fetches, and a bad override makes `reconstruct`,
+      `resolve` or `acknowledge` raise a `ValueError`. The error escapes after the
+      run has spent its requests, so no record is saved. `cohort build` refuses
+      the same override first, with a `problem:` line. Plan 26 scoped
+      `verify-live` to the terms guard and the operative hashes. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/` and in
+      `apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py`. Size:
+      quick-fix. Done when: a bad override ends `verify-live` with a `problem:`
+      line or in its record, with no traceback, with a test.
+- [ ] `cohort terms --saved` with a missing file prints a traceback (plan 26's
+      Task 2 review, declined): `terms` in
+      `apps/earnings-pipeline/src/earnings_pipeline/cohort_cli.py` reads the
+      saved file outside any handler, so a missing file raises
+      `FileNotFoundError`. The case is older than plan 26, and plan 26's item did
+      not name it. Size: quick-fix. Done when: a missing or unreadable file ends
+      `cohort terms --saved` with a `problem:` line and exit 1, with a test.
+- [ ] A co-registrant's repeated finding ID hides the `--filing` remedy (plan 26's
+      Task 4 concern 3 and review, declined): under the owner's D3, a
+      co-registrant 8-K may be two cohort issuers' release. An acceptance-time
+      finding on it is emitted once for each issuer, under one `finding_id`, and
+      findings are never deduplicated (plan 26, Task 4). So the repeat refusal in
+      `build_events` (`events/build.py`) stops the build with the repeat line,
+      not the `events discover --filing` hint that the finding names. No two v1
+      issuers are co-registrants. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: quick-fix.
+      Done when: a synthetic co-registrant 8-K with no saved index page ends
+      `events build` with a problem line that names the `--filing` remedy, with a
+      test.
+- [ ] `events select` prints a traceback for an `OSError` in `_current` (plan
+      26's Task 8 concern 6): plan 26 moved `select_command`'s loads inside its
+      handler (`apps/earnings-pipeline/src/earnings_pipeline/events_cli.py`), but
+      `_current` reads a frozen event manifest under its own handler, which does
+      not catch `OSError`. So an unreadable frozen manifest prints a traceback.
+      Size: quick-fix. Done when: an unreadable frozen event manifest ends
+      `events select` with a `Refused:` line that names its path, with a test.
+- [ ] `cohort fetch` prints no `quarantined:` line (plan 26's Task 9 review,
+      declined): plan 26 made `events discover`, `events discover --filing` and
+      `cohort fetch-sec` print one `quarantined:` line for each path that
+      `ArtifactStore.put` moves aside (`quarantined_lines` in
+      `apps/earnings-pipeline/src/earnings_pipeline/paths.py`). `cohort fetch`
+      (`fetch_command` in `cohort_cli.py`) also saves through the store, through
+      `cohort/acquire.py`, and prints none. Plan 25's item named only the three
+      commands. Size: quick-fix. Done when: `cohort fetch` prints one
+      `quarantined:` line for each distinct path in `store.quarantined`, under a
+      test that damages a saved artifact and fetches its URL again.
+- [ ] A no-value periodic report filed more than seven days after the cutoff
+      still blocks (plan 26's final review, declined): under reading (a) (plan
+      26, Task 5), a periodic report with no `acceptanceDateTime` and no saved
+      index page raises a blocking `acceptance_time_unknown` in `_periodic`
+      (`events/filings.py`), unless it is older than the issuer's floor. A report
+      filed more than seven days after the cutoff can never be visible, but it
+      holds the freeze until `events discover --filing` saves its page. The
+      Item 2.02 8-K trigger already ends at `FILING_DATE_SLACK` past the cutoff.
+      No v1 row has an empty value. The carried item "Cite the index page that
+      places a periodic report" (`PR #6 review (plan 7)`) covers how such a
+      report's page is cited. Paths are under
+      `packages/earnings-ingestion/src/earnings_ingestion/`. Size: quick-fix.
+      Done when: a no-value periodic report filed more than seven days after the
+      cutoff raises no finding and changes no slot, with a test.
+- [ ] Decide how a shared release reaches the theme config (plan 26's final
+      review, both seats, declined): the owner's D3 (plan 26, 2026-11-13) lets two
+      cohort issuers' events share one co-registrant release, and owner default 6
+      says each firm-quarter then counts that document's quotes. But both events
+      then carry one `doc_id`, and `WorkflowConfig._selections` in
+      `apps/earnings-pipeline/src/earnings_pipeline/theme_config.py` refuses two
+      sources that share a `doc_id` as `malformed_record`. Plan 26 changed only
+      the build and the spec (default 6), so acquisition and the theme workflow
+      over a shared release are untested. No two v1 issuers are co-registrants.
+      Size: design. Done when: the owner decides whether a shared release is one
+      source or one for each event, a spec or ADR records it, and a synthetic
+      co-registrant release goes from acquisition through the theme config in a
+      test.

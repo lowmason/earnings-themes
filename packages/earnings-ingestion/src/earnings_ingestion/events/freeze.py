@@ -8,7 +8,10 @@
   content is the next version.
 - ``events-v<N>.evidence.json`` is written first and ``events-v<N>.json`` second, each
   to a temporary file linked into place: a manifest never appears without its
-  evidence, and neither is ever replaced.
+  evidence, and neither is ever replaced. A freeze that stops between the two writes
+  leaves the evidence alone. A later freeze with the same evidence completes, and one
+  with other evidence is refused with ``LeftoverEvidence``, which says to delete the
+  file (plan 26).
 - A directory holds one corpus's versions: freezing refuses a build of another, and
   loading refuses a directory that holds two. Listing them also refuses two versions
   of one content, and a manifest whose evidence record is missing (PR #6's review,
@@ -21,7 +24,8 @@
   ``events acquire`` read it, never the highest-numbered version.
 - Loading reads the committed JSON alone and rechecks the content hash and the name.
   An evidence record loads only with its manifest: the same ``corpus_id``, version,
-  and content hash, and one citation per row, in the rows' order.
+  and content hash, and one citation per row, in the rows' order. Each row's release
+  citation is its release's index page, and a row with no release has none (plan 26).
 """
 
 import json
@@ -41,6 +45,7 @@ from earnings_ingestion.events.records import (
 )
 from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.fetch.store import write_new
+from earnings_ingestion.sec.urls import filing_index_url
 
 
 class EventFreezeRefused(ValueError):
@@ -56,6 +61,18 @@ class EventFreezeRefused(ValueError):
             ]
         )
         super().__init__("; ".join(self.reasons))
+
+
+class LeftoverEvidence(ValueError):
+    """An evidence record that a freeze left without its manifest, and that holds
+    other bytes than this freeze's evidence. The freeze never overwrites it."""
+
+    def __init__(self, path: Path, manifest: Path) -> None:
+        self.path = path
+        super().__init__(
+            f"{path} exists without {manifest.name} and holds other bytes: delete it,"
+            " then freeze again"
+        )
 
 
 @dataclass(frozen=True)
@@ -96,7 +113,9 @@ def load_event_manifest(path: Path) -> EventManifest:
 def load_event_evidence(path: Path, manifest: EventManifest) -> EventEvidence:
     """A committed evidence record, refused if its name disagrees, or unless it is
     ``manifest``'s: the same ``corpus_id``, version, and content hash, and one
-    citation per row, in the rows' order."""
+    citation per row, in the rows' order. A row's release citation must be its
+    release filing's index page, and a row with no release filing has no release
+    citation."""
     evidence = EventEvidence.model_validate_json(path.read_bytes())
     if path.name != evidence_path(path.parent, evidence.event_manifest_version).name:
         raise ValueError(f"{path} holds version {evidence.event_manifest_version}")
@@ -121,6 +140,19 @@ def load_event_evidence(path: Path, manifest: EventManifest) -> EventEvidence:
         raise ValueError(
             f"{path}: the event_ids of its events are not the manifest's rows, in order"
         )
+    for row, citations in zip(manifest.rows, evidence.events, strict=True):
+        expected = (
+            None
+            if row.release_accession is None
+            else filing_index_url(row.cik, row.release_accession)
+        )
+        found = None if citations.release is None else citations.release.url
+        if found != expected:
+            raise ValueError(
+                f"{path}: {row.event_id}: its release citation is"
+                f" {found or 'absent'}, not {expected or 'absent'}, its release"
+                " filing's index page"
+            )
     return evidence
 
 
@@ -198,7 +230,8 @@ def freeze_events(
     build: EventBuild, saved: SavedResponses, directory: Path, *, now: datetime
 ) -> FrozenEvents:
     """Freeze ``build`` into ``directory``, or return the version that holds it.
-    Refused if ``directory`` holds another corpus."""
+    Refused if ``directory`` holds another corpus. ``LeftoverEvidence`` refuses an
+    evidence record that a stopped freeze left with other bytes."""
     existing = _versions(build, directory)
     if (held := _holding(build, directory, existing)) is not None:
         return held
@@ -206,10 +239,21 @@ def freeze_events(
         (m.definition.event_manifest_version for m in existing), default=0
     )
     manifest = build.manifest(version, now)
-    evidence = evidence_of(build, manifest, saved)
+    evidence = serialize(evidence_of(build, manifest, saved))
+    target = evidence_path(directory, version)
+    manifest_file = manifest_path(directory, version)
+    # A freeze stopped between its writes can leave this version's evidence alone. A
+    # freeze that ran beside this one can have written both files since ``existing``
+    # was read: ``write_new`` then refuses its evidence, which is no leftover.
+    if (
+        target.exists()
+        and not manifest_file.exists()
+        and target.read_bytes() != evidence
+    ):
+        raise LeftoverEvidence(target, manifest_file)
     directory.mkdir(parents=True, exist_ok=True)
-    write_new(evidence_path(directory, version), serialize(evidence))
-    write_new(manifest_path(directory, version), serialize(manifest))
+    write_new(target, evidence)
+    write_new(manifest_file, serialize(manifest))
     return FrozenEvents(
         manifest=manifest,
         path=manifest_path(directory, version),

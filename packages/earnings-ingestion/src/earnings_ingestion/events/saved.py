@@ -18,12 +18,17 @@ A saved response that cannot be used is replaced only by an explicit refetch, a
 newer retrieval of its URL (plan 25). ``refetch_remedy`` names that command, and
 ``cited_remedy`` names it for an artifact cited by its hash, when a refetch can
 restore it.
+
+``issuer_companyfacts`` reads an issuer's saved companyfacts file in a guard, with its
+CIK check. The build and discovery both read it so (item P2.3).
 """
 
 from earnings_ingestion.cohort.locators import ArtifactText, CitableArtifact
 from earnings_ingestion.cohort.register import SEC_RIGHTS, SEC_SOURCE_ID
 from earnings_ingestion.fetch.records import Retrieval
-from earnings_ingestion.fetch.store import ArtifactStore
+from earnings_ingestion.fetch.store import ArtifactStore, read_retrieval
+from earnings_ingestion.sec.companyfacts import CompanyFacts, read_companyfacts
+from earnings_ingestion.sec.urls import companyfacts_url
 
 
 def refetch_remedy(url: str, what: str = "it") -> str:
@@ -40,7 +45,7 @@ class SavedResponses:
         hashes: dict[str, set[str]] = {}
         folder = store.root / SEC_SOURCE_ID / "retrievals"
         for path in sorted(folder.glob("*/*.json")):
-            record = Retrieval.model_validate_json(path.read_text(encoding="utf-8"))
+            record = read_retrieval(path)
             hashes.setdefault(record.request_url, set()).add(record.sha256)
             known = newest.get(record.request_url)
             if known is None or (record.retrieved_at, record.sha256) > (
@@ -112,3 +117,22 @@ def cited_remedy(saved: SavedResponses, sha256: str) -> str:
         f"{named[0]} was saved again with other bytes, so a refetch cannot restore"
         " a citation that names these bytes by hash"
     )
+
+
+def issuer_companyfacts(saved: SavedResponses, cik: str) -> CompanyFacts | str | None:
+    """The companyfacts file saved for ``cik``, read in a guard. ``None`` when nothing
+    is saved. A problem line that ends with the refetch when the file cannot be read
+    or states another CIK."""
+    url = companyfacts_url(cik)
+    try:
+        artifact = saved.get(url)
+        if artifact is None:
+            return None
+        facts = read_companyfacts(artifact.text.body)
+    except (FileNotFoundError, ValueError) as exc:
+        return f"{url}: {exc}; {refetch_remedy(url)}"
+    if facts.cik != cik:
+        return (
+            f"{url} is the companyfacts file of CIK {facts.cik}; {refetch_remedy(url)}"
+        )
+    return facts
