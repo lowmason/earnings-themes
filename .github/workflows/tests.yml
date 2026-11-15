@@ -1,0 +1,94 @@
+name: CI Tests
+
+# The default checks from CLAUDE.md "Commands": Ruff, the root suite, and the Stage 1
+# parser-fidelity harness, which the root testpaths leave out and which needs pytest's
+# prepend import mode. The runner has no data/ directory and no secrets, so tests that
+# need local data skip, and `-m "not live and not browser"` deselects every test that
+# sends a live request or drives a browser. These jobs do not replace the human gates
+# in README "Development checks".
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+# A new push to a pull request cancels its older run; every push to main runs in full.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  ruff:
+    name: "Ruff"
+    # Pinned: ubuntu-latest moved to 26.04, where setup-python has no 3.14.0
+    # build, and 3.14.0 must match .python-version (2026-11-09).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14.0"
+
+      - name: Install package and dependencies
+        run: |
+          python -m pip install uv
+          uv sync --locked --all-packages
+
+      - name: Ruff check
+        run: uv run --locked ruff check .
+
+      - name: Ruff format check
+        run: uv run --locked ruff format --check .
+
+  harness:
+    name: "Stage 1 harness"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # Full history, so no check meets a shallow clone
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14.0"
+
+      - name: Install package and dependencies
+        run: |
+          python -m pip install uv
+          uv sync --locked --all-packages
+
+      - name: Run the harness
+        run: >-
+          uv run --locked --all-packages pytest expirements/parser-fidelity
+          --import-mode=prepend -m "not live and not browser" -q -rs
+
+  suite:
+    name: "Root suite"
+    runs-on: ubuntu-24.04
+    # About 18 minutes on the owner's machine (2026-11-14); a runner may be slower.
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # Full history, so no check meets a shallow clone
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14.0"
+
+      - name: Install package and dependencies
+        run: |
+          python -m pip install uv
+          uv sync --locked --all-packages
+
+      - name: Run the root suite
+        run: >-
+          uv run --locked --all-packages pytest packages apps tests
+          -m "not live and not browser" -rs --durations=25

@@ -355,9 +355,14 @@ and the separate [V5 protocol](https://github.com/lowmason/earnings-themes/blob/
 Pytest uses importlib handling, strict configuration, `live`/`browser` markers and a
 `pythonpath` of the repository root, so the documented root command and a single test
 file both collect under the `pytest` console script. Default tests make no network or
-billable calls. No type checker is configured. The only CI workflow builds and deploys
-the documentation site (see [Documentation](#documentation)); it runs no tests. The
-Stage 1 harness retains its separate historical command above.
+billable calls. No type checker is configured. Two CI workflows run on each pull
+request and on each push to `main`. The
+[tests workflow](https://github.com/lowmason/earnings-themes/blob/main/.github/workflows/tests.yml)
+runs Ruff, the documented root command and the Stage 1 harness command. Its runner
+has no `data/` directory and no secrets, so tests that need local data skip. It does
+not replace the human gates above. The docs workflow builds and deploys the
+documentation site (see [Documentation](#documentation)). The Stage 1 harness retains
+its separate historical command above.
 
 ### Offline replay extraction
 
