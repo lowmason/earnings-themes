@@ -5,6 +5,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from earnings_core import ArtifactRef, RightsStatus
+from earnings_ingestion.browser.fixture import fixture_capture_json
 from earnings_ingestion.browser.metadata import parse_metadata
 from earnings_ingestion.browser.records import (
     BlockedRequest,
@@ -12,11 +13,7 @@ from earnings_ingestion.browser.records import (
     CaptureStatus,
     RenderedCapture,
 )
-from earnings_ingestion.browser.serialize import (
-    fixture_capture_json,
-    from_capture_json,
-    to_capture_json,
-)
+from earnings_ingestion.browser.serialize import from_capture_json, to_capture_json
 
 CAPTURE_SCRIPT = (
     Path(__file__).resolve().parents[3]

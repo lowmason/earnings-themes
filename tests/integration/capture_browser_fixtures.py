@@ -20,9 +20,9 @@ from pathlib import Path
 
 from earnings_ingestion.browser import ISOLATED_1, CaptureStatus, CaptureStore
 from earnings_ingestion.browser import capture_once as capture_stored
+from earnings_ingestion.browser.fixture import fixture_capture_json
 from earnings_ingestion.browser.install import installed
 from earnings_ingestion.browser.selenium_capture import SeleniumRenderer
-from earnings_ingestion.browser.serialize import fixture_capture_json
 
 REPO = Path(__file__).resolve().parents[2]
 BROWSER = REPO / "tests" / "fixtures" / "browser"
