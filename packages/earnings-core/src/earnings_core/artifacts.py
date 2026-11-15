@@ -27,7 +27,7 @@ class RightsStatus(StrEnum):
     """What may be done with an artifact's content (A §58, A §242, R2.1).
 
     Record unclear rights as ``LOCAL_ONLY``: they keep an artifact local and restrict
-    its export (specs/point-in-time-djia-cohort.md, §Failure handling).
+    its export (specs/completed/point-in-time-djia-cohort.md, §Failure handling).
     """
 
     REDISTRIBUTABLE = "redistributable"

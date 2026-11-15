@@ -14,7 +14,7 @@ event manifest and the 40-event pilot manifest. Only then does it acquire the
 pilot's releases.
 
 It closes R1.1, R1.2, R1.4, R1.5 and R14.5 of
-`specs/evidence-linked-theme-extraction.md`. Of `specs/point-in-time-djia-cohort.md`
+`specs/evidence-linked-theme-extraction.md`. Of `specs/completed/point-in-time-djia-cohort.md`
 it closes P-C2 (the event join), P-C5, P-C7 (the freeze-before-outcomes half), P-A5,
 P-VF's period-window, eligibility-reason and selection cases, and P-VI. It keeps that
 spec's Stage 5 contracts and its six-step order, and it defines `djia-pilot/1`, the

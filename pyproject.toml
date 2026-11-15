@@ -41,7 +41,7 @@ docs = [
 [tool.ruff]
 # Ruff governs Python source only. Ruff >=0.16 formats Python code blocks embedded
 # in Markdown; this repo's Markdown is documentation and quoted third-party review
-# material (specs/earning-themes-review-*.md, docs/*.md) that CLAUDE.md requires be
+# material (specs/completed/earning-themes-review-*.md, docs/*.md) that CLAUDE.md requires be
 # preserved verbatim. Formatting those blocks would rewrite supplied text.
 extend-exclude = ["*.md"]
 
