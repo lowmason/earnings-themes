@@ -21,6 +21,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# The job names "Ruff", "Stage 1 harness" and "Root suite" are required checks on
+# main (ruleset "Require CI Tests on main", Settings > Rules, no bypass). A required
+# check matches a job name, not this workflow's name. If you rename or remove one of
+# these jobs, its check never reports and every pull request stays blocked, this
+# change's own pull request too. Update the ruleset before you merge such a change.
 jobs:
   ruff:
     name: "Ruff"
