@@ -207,3 +207,29 @@ All historical measured numbers and Stage 3 capture/report bytes are retained;
 no parser-fidelity remeasurement was performed. As with the first amendment, the
 comparison is disclosed as post-hoc under the frozen protocol. Native/manual V5
 observations remain pending.
+
+
+## Report header regeneration and the `serialize.py` revert (2026-11-15)
+
+Two harness tests failed on `main` at `6cb57c9`. The default suite does not collect
+`expirements/`, so no gate ran them.
+
+- **The report header.** The two 2026-10-07 amendments added `[[changes]]` entries to
+  `layout1-preregistered.toml`, but `layout-1-comparison.md` kept its 2026-09-26
+  bytes. `layout1_report.py` renders those entries into the report header, so
+  `test_layout1_report_current.py` failed from `56225bd` on.
+  - **The regeneration.** With the user's approval, `layout1_report.py` regenerated
+    the report on 2026-11-15. Only the header changed: the fix count went from 0 to 2,
+    and the two dated fix lines were added. Every table and metric is identical.
+  - **Its standing.** The Stage 10 sections above say that the report bytes remained
+    unchanged. That statement was true until this regeneration.
+- **`browser/serialize.py`.** Plan 26 (`ba44b06`) added `fixture_capture_json` to this
+  frozen file and recorded no fix, so `preregister.py verify` failed.
+  - **What held.** The change only added a function. The comparison reads only
+    `from_capture_json`, which did not change, and the committed captures did not
+    change.
+  - **The correction.** With the user's approval, `serialize.py` went back to its
+    frozen bytes, `00dbe4c480c6d0492e11613b45e0adb6f90e47b5e8207e43ceeac7c7dbb4c616`.
+    `fixture_capture_json` moved, unchanged, to the unfrozen `browser/fixture.py`.
+  - **Its standing.** This is not an amendment. Every frozen file matches its
+    recorded hash, and the record has no new entry.
