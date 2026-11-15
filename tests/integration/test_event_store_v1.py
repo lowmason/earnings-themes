@@ -5,8 +5,9 @@ machine holds: the test skips without it, so each gate runs it and reads "passed
 the live gate's count (plan 8, P8-12): the pilot's 40 release filings list 56
 ``EX-99*`` exhibits, and R1.2's order puts one first in each. That count holds until
 the first acquisition saves its exhibits, so the test then skips. Once the live run
-is saved, offline replay over the store reproduces each document's state (the Stage 5
-spec, §Verification (plan B), item 6).
+is saved, offline replay over the store reproduces each document's acquisition state
+(the Stage 5 spec, §Verification (plan B), item 6). The theme workflow appends schema-2
+processing records to the same state table later, and the replay test leaves them out.
 
 Two more tests read the saved store (plan 26, Task 10): the store rebuilds events v1
 to its frozen content hash with nothing holding the freeze, and every citation in v1's
@@ -38,7 +39,11 @@ from earnings_ingestion.events.freeze import load_event_evidence, load_event_man
 from earnings_ingestion.events.pilot import load_pilot
 from earnings_ingestion.events.saved import SavedResponses
 from earnings_ingestion.events.state_table import read_runs
-from earnings_ingestion.events.states import StateTransition, current_states
+from earnings_ingestion.events.states import (
+    ProcessingTransition,
+    StateTransition,
+    current_states,
+)
 from earnings_ingestion.fetch.responses import UnexpectedResponse
 from earnings_ingestion.fetch.store import ArtifactStore
 
@@ -83,14 +88,20 @@ def facts(state: StateTransition) -> tuple:
 
 
 def test_offline_replay_reproduces_the_live_acquisition(tmp_path) -> None:
-    """Each pilot document's state, replayed from the saved store with every
-    exhibit never saved refused as SEC refused it, is the state the live runs left."""
+    """Each pilot document's acquisition state, replayed from the saved store with
+    every exhibit never saved refused as SEC refused it, is the state the live runs
+    left. The schema-2 processing records that a later stage appends are left out."""
     if not any(STATES.glob("*.parquet")):
         pytest.skip("no acquisition run is saved here: the live gate runs this test")
     universe = load_manifest(UNIVERSE)
     events = load_event_manifest(CORPUS / "events-v1.json")
     pilot = load_pilot(CORPUS / "pilot-v1.json", universe)
-    live = current_states(read_runs(STATES), pilot.definition.content_hash)
+    acquisition_records = [
+        record
+        for record in read_runs(STATES)
+        if not isinstance(record, ProcessingTransition)
+    ]
+    live = current_states(acquisition_records, pilot.definition.content_hash)
 
     def unsaved(url: str, types) -> None:
         raise UnexpectedResponse(f"{url} is not saved")
