@@ -226,7 +226,10 @@ The build writes under `packages/earnings-core/great-docs/`, which `.gitignore` 
 `[tool.numpydoc_validation]` in `packages/earnings-core/pyproject.toml` requires
 PR01, RT01 and GL08 on public objects. `.github/workflows/docs.yml` builds on every pull
 request and publishes to Pages only from `main`, so a skipped "Publish Docs" on a PR is
-expected.
+expected. `.github/workflows/tests.yml` runs Ruff, the root suite and the Stage 1 harness
+(the Commands above, with `-m "not live and not browser"`) on every pull request and on
+`main`. Its runner has no `data/` and no secrets, so data-dependent tests skip there, and
+it does not replace the human gates.
 
 `packages/earnings-core/README.md` is a symlink to the root `README.md`, which is the
 site's homepage. Keep the README valid on GitHub and the site: no GitHub alerts
