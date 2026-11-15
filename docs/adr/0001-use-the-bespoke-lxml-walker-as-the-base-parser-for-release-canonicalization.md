@@ -8,7 +8,7 @@
 
 ## Context
 
-What was known on 2026-09-25, when Stage 1 (`specs/release-parser-fidelity.md`)
+What was known on 2026-09-25, when Stage 1 (`specs/completed/release-parser-fidelity.md`)
 finished its second measurement:
 
 - **The open question.** R4.1 of `specs/evidence-linked-theme-extraction.md` leaves the

@@ -191,7 +191,7 @@ needs all 28 train and dev gold files signed and committed. Stages 12–16 remai
 open. The live roadmap remains authoritative.
 
 The roadmap was amended on 2026-09-22 by
-[the point-in-time DJIA cohort specification](https://github.com/lowmason/earnings-themes/blob/main/specs/point-in-time-djia-cohort.md).
+[the point-in-time DJIA cohort specification](https://github.com/lowmason/earnings-themes/blob/main/specs/completed/point-in-time-djia-cohort.md).
 It inserts **Stage 4: point-in-time DJIA cohort** before any document is
 acquired, moves the 40-event feasibility pilot into **Stage 5** as a
 deterministic selection frozen before any acquisition or parse outcome is known,
@@ -269,9 +269,9 @@ Key planning documents:
   — the system requirements and verification criteria.
 - [Implementation roadmap](https://github.com/lowmason/earnings-themes/blob/main/specs/evidence-linked-theme-extraction-roadmap.md)
   — staged delivery, dependencies, and exit conditions.
-- [Stage 1 parser-fidelity specification](https://github.com/lowmason/earnings-themes/blob/main/specs/release-parser-fidelity.md)
+- [Stage 1 parser-fidelity specification](https://github.com/lowmason/earnings-themes/blob/main/specs/completed/release-parser-fidelity.md)
   — Stage 1's scope and measurement design.
-- [Point-in-time DJIA cohort specification](https://github.com/lowmason/earnings-themes/blob/main/specs/point-in-time-djia-cohort.md)
+- [Point-in-time DJIA cohort specification](https://github.com/lowmason/earnings-themes/blob/main/specs/completed/point-in-time-djia-cohort.md)
   — the firm universe, event corpus, and deterministic pilot selection; the
   stage specification for roadmap Stages 4 and 15, and binding on Stage 5's
   event-eligibility and pilot-selection design.

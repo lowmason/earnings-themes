@@ -2,7 +2,7 @@
 
 ## 2-point-in-time-djia-cohort — 2026-09-22
 - [x] Renumber the two Stage 1 documents for the cohort amendment (plan 2 Task 7,
-      skipped): `specs/release-parser-fidelity.md` still calls acquisition Stage 4
+      skipped): `specs/completed/release-parser-fidelity.md` still calls acquisition Stage 4
       and the codebook-and-split stage Stage 5 (lines 121, 164, 474, and the
       Handoffs table's bare `| 4 |` / `| 5 |` rows at 614-615), and
       `specs/plans/1-release-parser-fidelity.md` cites Stage 4 three times plus a
@@ -10,7 +10,7 @@
       `expirements/parser-fidelity/discover.py:468`. Deferred because Stage 1
       execution is live on `stage-1-release-parser-fidelity` and edits plan 1 in
       the main checkout. The forward constraint at
-      `specs/release-parser-fidelity.md:164-166` needs a change of meaning, not
+      `specs/completed/release-parser-fidelity.md:164-166` needs a change of meaning, not
       just a number: under P-C7 a selected event stays selected, so "leave them out
       of the pilot" is no longer available, and Stage 6 must instead place any
       fixture event the deterministic selection includes in the training
@@ -45,7 +45,7 @@
 
 - [x] When Stage 1 is ticked complete in
       `specs/evidence-linked-theme-extraction-roadmap.md`, surface the approved
-      `specs/browser-rendering-integration.md` design before Stage 2 planning.
+      `specs/completed/browser-rendering-integration.md` design before Stage 2 planning.
       Stage 2 plans only the browser-neutral core contracts and tests; Stage 3
       owns Selenium capture, rendered-text calibration, DOM/layout extraction,
       and the diagnostic-first promotion decision; Stage 10 consumes the public

@@ -168,7 +168,7 @@ declaration:
 ## For Stage 5
 
 Stage 5 is the roadmap's "Event discovery, eligibility, and acquisition". It was Stage 4
-before the point-in-time DJIA cohort amendment (`specs/point-in-time-djia-cohort.md`)
+before the point-in-time DJIA cohort amendment (`specs/completed/point-in-time-djia-cohort.md`)
 renumbered the stages.
 
 These paths return a foreign dataframe:

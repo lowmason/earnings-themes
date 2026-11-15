@@ -5,7 +5,7 @@ Status amended 2026-09-22.
 
 **Superseded on the required-path question** by
 `specs/evidence-linked-theme-extraction.md` R14.3, which declined to adopt Jev in
-the required path. Superseded further by `specs/jev-integration-spec.md` wherever
+the required path. Superseded further by `specs/completed/jev-integration-spec.md` wherever
 the two disagree about the optional integration, including retry ownership; the
 "Question and codebook design" section below overlaps R9 of the superseding spec,
 which governs. `AGENTS.md` remains the repository-wide authority.

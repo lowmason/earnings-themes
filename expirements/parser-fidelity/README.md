@@ -3,7 +3,7 @@
 This harness measures which HTML parser yields faithful typed structural elements on
 real earnings releases (V2), records what edgartools 5.58.0 returns (V1), and keeps
 the fixture corpus in `tests/fixtures/releases/` checkable. The spec is
-`specs/release-parser-fidelity.md`, and the plan is
+`specs/completed/release-parser-fidelity.md`, and the plan is
 `specs/plans/completed/1-release-parser-fidelity.md`.
 
 No package imports anything here. Scripts that declare dependencies are PEP 723 scripts

@@ -19,7 +19,7 @@ or reproduce any requirement here.
 
 This spec synthesizes `AGENTS.md` (the repository's binding working instructions)
 and `docs/earnings-themes.md` (the supplied source note) with three independent
-external reviews commissioned by `specs/earning-themes-prompt.md`.
+external reviews commissioned by `specs/completed/earning-themes-prompt.md`.
 
 **Locator scheme.** No decoupled methodology description exists for this system,
 so the described method is the repository's own binding text: **`A §n`** cites
@@ -29,9 +29,9 @@ headings are numbered inconsistently:
 
 | Locator | File | Standing |
 | --- | --- | --- |
-| **RC** | `specs/earning-themes-review-claude.md` | Read the source files. Separates independently-evaluated results from vendor claims; strongest on rights, licensing, and verification dates. |
-| **RX** | `specs/earning-themes-review-chtgpt.md` | **Reports that the source files were not retrievable in its session.** Not citable for what `AGENTS.md` or the source notes say; its ranking math and ablation design are the most rigorous of the three. |
-| **RG** | `specs/earning-themes-review-gemini.md` | Most implementation-specific, least evidence-backed. Several load-bearing claims asserted without task evidence. |
+| **RC** | `specs/completed/earning-themes-review-claude.md` | Read the source files. Separates independently-evaluated results from vendor claims; strongest on rights, licensing, and verification dates. |
+| **RX** | `specs/completed/earning-themes-review-chtgpt.md` | **Reports that the source files were not retrievable in its session.** Not citable for what `AGENTS.md` or the source notes say; its ranking math and ablation design are the most rigorous of the three. |
+| **RG** | `specs/completed/earning-themes-review-gemini.md` | Most implementation-specific, least evidence-backed. Several load-bearing claims asserted without task evidence. |
 
 **Adjudication status.** None of the three reviews was adjudicated. All are
 independent first passes with no interactive push-back, so there are no
@@ -50,10 +50,10 @@ on these three points, this spec governs:
 | `A §563` | Boilerplate "tag these spans and exclude them from headline prevalence." | **Mechanism supplied** by R3.4 — overlay masks that never mutate canonical text. |
 
 **This spec supersedes** `AGENTS-jev-addendum.md` and
-`specs/jev-integration-spec.md` on the required-path question only (R14.3). Those
+`specs/completed/jev-integration-spec.md` on the required-path question only (R14.3). Those
 documents remain as proposals for an optional, separately-authorized layer.
 
-**This spec is amended by** `specs/point-in-time-djia-cohort.md`. That
+**This spec is amended by** `specs/completed/point-in-time-djia-cohort.md`. That
 specification defines the firm universe and event corpus this one consumes: a
 versioned, point-in-time DJIA cohort frozen before any document is acquired; a
 40-event feasibility pilot selected deterministically from frozen event metadata
@@ -523,7 +523,7 @@ cannot extract spans or generate text, so it cannot satisfy R5 or R7; and that i
 published accuracy is measured as agreement with other models rather than against
 ground truth. It remains available only as an optional, separately authorized
 verification layer benchmarked against R8.2. This supersedes
-`AGENTS-jev-addendum.md` and `specs/jev-integration-spec.md` on the required-path
+`AGENTS-jev-addendum.md` and `specs/completed/jev-integration-spec.md` on the required-path
 question *(RC §6)*.
 
 **R14.4** Keep the production dependency set minimal. A workflow framework is
@@ -614,7 +614,7 @@ bullet here.
   from a document (`A §445`). `AGENTS.md` governs them unchanged. **In scope by
   amendment:** point-in-time index membership and the
   security-to-issuer-to-CIK resolution the cohort depends on, per
-  `specs/point-in-time-djia-cohort.md`. That carve-out is narrow — GICS, SIC, and
+  `specs/completed/point-in-time-djia-cohort.md`. That carve-out is narrow — GICS, SIC, and
   NAICS never alter cohort eligibility, and no enrichment dataset becomes a
   dependency of theme extraction.
 - **Numeric acceptance gates** — R13.1, deferred to V6 by user decision.
@@ -633,7 +633,7 @@ this spec is one earnings release passing through acquisition, canonicalization,
 pointer evidence, deterministic verification, support assessment, an explicitly
 approved small codebook, and a typed analytical export with source-linked quotes.
 
-**Cohort before corpus.** `specs/point-in-time-djia-cohort.md` places a frozen,
+**Cohort before corpus.** `specs/completed/point-in-time-djia-cohort.md` places a frozen,
 point-in-time cohort before corpus acquisition, and freezes the eligible-event
 and pilot manifests before any acquisition, parse, retention, or theme outcome is
 known. Do not begin corpus acquisition until those artifacts can be frozen: a

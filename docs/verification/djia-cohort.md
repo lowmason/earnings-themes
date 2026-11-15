@@ -1,7 +1,7 @@
 # The point-in-time DJIA cohort: verification record
 
 This record verifies roadmap Stage 4, the point-in-time DJIA cohort, which
-`specs/point-in-time-djia-cohort.md` specifies. Plan 6
+`specs/completed/point-in-time-djia-cohort.md` specifies. Plan 6
 (`specs/plans/completed/6-point-in-time-djia-cohort.md`) built it.
 
 ## What was verified

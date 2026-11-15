@@ -18,7 +18,7 @@ from code.
 
 It closes R9.2, R9.7, R12.1, R12.3, R12.4 (as observed coverage, D4) and R12.5 (D4)
 of `specs/evidence-linked-theme-extraction.md`, and records R12.6's limitation (D2).
-It keeps P-C5 and P-C7 of `specs/point-in-time-djia-cohort.md`: no step here can
+It keeps P-C5 and P-C7 of `specs/completed/point-in-time-djia-cohort.md`: no step here can
 change a pilot row.
 
 Locators:
@@ -29,7 +29,7 @@ Locators:
 - **`EVn`** are the Stage 5 spec's decisions
   (`specs/completed/event-discovery-eligibility-and-acquisition.md`), and **`P8-n`**
   are plan 8's (`specs/plans/completed/8-event-discovery-eligibility-and-acquisition-plan-b.md`).
-- **F9** is the Stage 1 spec's gold-drafting decision (`specs/release-parser-fidelity.md`).
+- **F9** is the Stage 1 spec's gold-drafting decision (`specs/completed/release-parser-fidelity.md`).
 - **F20** and **F27** are PR #6's review items (`specs/deferred_items.md`,
   `PR #6 review (plan 7)`). F20's check is `tests/integration/test_corpus_quotes.py`.
 - **Pilot v1** is `config/corpus/djia-2024q3-2026q2/pilot-v1.json`, and **events v1**

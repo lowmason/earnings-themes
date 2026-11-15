@@ -12,14 +12,14 @@ typed elements, quarantined tables, and boilerplate masks, on the parser ADR 000
 selected. It closes R3.1, R3.5, R4.1, R4.2 and R4.3 of
 `specs/evidence-linked-theme-extraction.md`, and V9's normalization and
 sentence-splitting cases. It also carries out the Stage 3 sections of
-`specs/browser-rendering-integration.md` (B1–B5, B7–B9).
+`specs/completed/browser-rendering-integration.md` (B1–B5, B7–B9).
 
 Locators:
 - **`A §n`** is `AGENTS.md`.
 - **`Rn` and `Vn`** are the theme spec's requirements and verifications.
 - **`Bn`** are the browser spec's decisions.
 - **`D-n`** are plan 3's decisions (`specs/plans/completed/3-core-evidence-spine.md`).
-- **`Fn`** are the Stage 1 spec's decisions (`specs/release-parser-fidelity.md`).
+- **`Fn`** are the Stage 1 spec's decisions (`specs/completed/release-parser-fidelity.md`).
 - **`W0`–`W16`** are the walker's rules (`expirements/parser-fidelity/walker-rules.md`).
 - **V2** is `docs/verification/V2-parser-fidelity.md`.
 - **ADR 0001** is

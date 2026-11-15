@@ -166,7 +166,7 @@ The annotator reads every fixture closely. Stage 6 must therefore place any fixt
 event that the pilot selection includes in the training partition (R12.3). Leaving
 it out of the pilot is not available: the cohort amendment freezes the pilot
 selection before acquisition, and a selected event stays selected
-(`specs/point-in-time-djia-cohort.md`, C7 and Failure handling). The manifest's
+(`specs/completed/point-in-time-djia-cohort.md`, C7 and Failure handling). The manifest's
 `pilot_split` field records this; its value `train_or_exclude` means training if
 the selection includes the event, and outside the pilot otherwise.
 
