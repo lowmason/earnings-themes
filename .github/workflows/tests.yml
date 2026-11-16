@@ -77,9 +77,10 @@ jobs:
   suite:
     name: "Root suite"
     runs-on: ubuntu-24.04
-    # Serial, about 17 minutes on this runner (2026-11-15). -n auto spreads the tests
-    # over every vCPU with pytest-xdist; on the owner's machine it cut 554 s to about
-    # 72 s (2026-11-16). Worker summaries omit the deselected count.
+    # Serial, about 17 minutes on this runner (2026-11-15). pytest-xdist spreads the
+    # tests over workers. -n auto counts physical cores, because psutil is in the lock:
+    # here that gave 2 workers and 676 s (PR #58, 2026-11-16). -n logical counts all
+    # 4 vCPUs. Worker summaries omit the deselected count.
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v6
@@ -98,4 +99,4 @@ jobs:
       - name: Run the root suite
         run: >-
           uv run --locked --all-packages pytest packages apps tests
-          -m "not live and not browser" -n auto -rs --durations=25
+          -m "not live and not browser" -n logical -rs --durations=25
