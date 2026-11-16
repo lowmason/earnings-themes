@@ -189,11 +189,11 @@ non-package members too. Only the absence of `[project]` removes the root from t
 Application CLI entry points belong in `apps/earnings-pipeline`, never in the root.
 
 Verified working from a clean state at the root commit; lock and sync counts refreshed on
-2026-10-19 after PR #27 added the `docs` group, via `uv lock --check` and `uv sync` (uv 0.13.1):
+2026-11-16 after PR #58 added `pytest-xdist` to the dev group, via `uv lock --check` and `uv sync` (uv 0.13.1):
 
 ```
-$ uv lock                              # Resolved 244 packages
-$ uv sync --locked --all-packages      # 148 packages incl. earnings-{core,ingestion,pipeline,themes}; dev and docs groups synced by default (41 with --no-group docs)
+$ uv lock                              # Resolved 246 packages
+$ uv sync --locked --all-packages      # 150 packages incl. earnings-{core,ingestion,pipeline,themes}; dev and docs groups synced by default (43 with --no-group docs)
 $ uv run --locked python -c "import earnings_themes; print(earnings_themes.__file__)"
 .../packages/earnings-themes/src/earnings_themes/__init__.py
 ```
@@ -205,6 +205,9 @@ uv sync --locked --all-packages --group dev
 uv run --locked ruff check .
 uv run --locked ruff format --check .
 uv run --locked --all-packages pytest packages apps tests -m "not live and not browser"
+# the same suite in parallel, one pytest-xdist worker per physical core
+# (73 s rather than 554 s on the owner's machine; the summary omits "deselected"):
+uv run --locked --all-packages pytest packages apps tests -m "not live and not browser" -n auto
 # single test:
 uv run --locked --all-packages pytest path/to/test_x.py::test_name -m "not live and not browser"
 # browser checks, opt-in, once `earnings-pipeline browser setup` has run:
@@ -212,7 +215,7 @@ uv run --locked --all-packages --extra browser-capture pytest packages apps test
 ```
 
 Verified: `uv lock` and `uv sync --locked --all-packages`. Configured: a root
-`[dependency-groups] dev` (pytest, pytest-asyncio, pytest-cov, ruff), a `docs` group
+`[dependency-groups] dev` (pytest, pytest-asyncio, pytest-cov, pytest-xdist, ruff), a `docs` group
 (`great-docs>=0.17.0,<0.18`, `numpydoc>=1.11`), `[tool.uv] default-groups = ["dev",
 "docs"]`, so a plain `uv sync` installs both, and
 `[tool.ruff] extend-exclude = ["*.md"]`, which keeps Ruff from reformatting code blocks in the
@@ -223,7 +226,7 @@ default; and
 `addopts`: pytest's default traceback prints a failing frame's arguments, which in
 Stage 6's local legs may hold pilot text (GS13); pass `--tb=long` only on a named
 test that reads no pilot text. The frozen Stage 1 harness still needs
-`--import-mode=prepend`, which its own command passes. `pythonpath = ["."]` (added after Stage 10) puts the repository root on `sys.path`: the `pytest` console script adds neither it nor the working directory and importlib mode never does, yet the Stage 10 tests import the root-level `tools`, `apps`, `packages` and `tests` by dotted name, which otherwise resolve only when an earlier-collected module registered them, so the documented command aborted at collection on `tools`.
+`--import-mode=prepend`, which its own command passes. Parallel runs are opt-in (PR #58): `-n` never goes in `addopts`, because `tools/stage10_checks.py` starts pytest with `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1`, where `-n` is an unrecognized argument. `-n auto` counts physical cores, because psutil is in the lock, and CI passes `-n logical` because its 4 vCPUs are 2 physical cores (PR #59). Predict a parallel run's counts as passed + skipped = selected. The main checkout's data-reading tests have not yet run in parallel, so pair the first parallel gate there with a serial one. `pythonpath = ["."]` (added after Stage 10) puts the repository root on `sys.path`: the `pytest` console script adds neither it nor the working directory and importlib mode never does, yet the Stage 10 tests import the root-level `tools`, `apps`, `packages` and `tests` by dotted name, which otherwise resolve only when an earlier-collected module registered them, so the documented command aborted at collection on `tools`.
 Environment: uv 0.12.15, Python 3.14.0 (uv-managed; Homebrew's `python3` is 3.14.7),
 `requires-python = ">=3.14"`. `.python-version` pins 3.14.0 exactly: the canonical
 fixtures record the Python version, so any other interpreter fails
@@ -247,7 +250,7 @@ The build writes under `packages/earnings-core/great-docs/`, which `.gitignore` 
 PR01, RT01 and GL08 on public objects. `.github/workflows/docs.yml` builds on every pull
 request and publishes to Pages only from `main`, so a skipped "Publish Docs" on a PR is
 expected. `.github/workflows/tests.yml` runs Ruff, the root suite and the Stage 1 harness
-(the Commands above, with `-m "not live and not browser"`) on every pull request and on
+(the Commands above, with `-m "not live and not browser"`; the root suite also with `-n logical`) on every pull request and on
 `main`. Its runner has no `data/` and no secrets, so data-dependent tests skip there, and
 it does not replace the human gates.
 
