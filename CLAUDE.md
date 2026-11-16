@@ -11,8 +11,9 @@ current analytical gates, coverage/prevalence and cited publication on permitted
 synthetic/invented fixtures. Stage 10 technical reviews, native/manual V5 and human
 completion gates are observed on 2026-10-08. Completion documentation awaits scoped
 review; the branch merged on 2026-10-08 (PR #14). Stage 11 is in progress: plan A is
-complete and plan B has completed B1 and B2 (see Current state). No pilot extraction or
-calibration is claimed. The binding specifications and live roadmap govern completion.
+complete and plan B has completed B1 to B5 (see Current state). The train pass, train
+labels and train calibration have run; no pilot metric, report or V6 record is claimed.
+The binding specifications and live roadmap govern completion.
 Not all of it is binding.
 
 | File | Status |
@@ -33,7 +34,7 @@ Not all of it is binding.
 
 **Deliberately unresolved — do not silently pick one** (AGENTS.md §"Source basis and unresolved choices"): the production provider/model, the final theme taxonomy, and non-exactness quality thresholds. Record these in config or a decision record; do not invent agreement. The fourth such choice, an approved inference budget, is now recorded by `specs/evidence-linked-theme-extraction.md` R14.2: **$100, for the optional hosted-ceiling ablation only**, not prompt-optimizer compiles or any other billable call. The required path needs no billable inference: R14.1 limits it to open-weight, self-hosted models, which narrows the model choice without making it.
 
-## Current state: Stages 1–10 complete; Stage 11 plan B through B2, B3 blocked on O6
+## Current state: Stages 1–10 complete; Stage 11 plan B through B5, B6 in progress
 
 Stage 11's plan A machinery is complete (plans 17–20): fresh caches and runtime
 assembly; pure evaluation, labels and calibration; and counts-only pilot commands.
@@ -49,15 +50,35 @@ execution, and its Status line and Decisions (D21-*) are the authority:
 - B2 is complete (PR #26): O3/O4 retain the shipped conventions (D21-20, D21-21),
   O5's values are D21-23, and
   `evaluation/djia-2024q3-2026q2/pilot-v1/preregistration-v1.toml` was frozen alone
-  at `53ba190`. B2 step 4's selections (D21-24) are a specification; the owner's local
-  input waits for O6.
-- B3 onward is blocked on owner gate O6: all 28 train/dev gold files signed,
-  committed and valid, and all 8 dev records matching committed ledger rows. On
-  2026-10-19, 3 gold files are on `main` and no dev ledger exists.
+  at `53ba190`. B2 step 4's selections (D21-24) are a specification; B3 step 1
+  prepared the owner's inputs and settings on 2026-10-31.
+- Owner gate O6 is met (2026-10-31, D21-26): all 28 train/dev gold files are signed
+  and on `main` at `66d4e55` (PRs #30, #31), and the 8 dev ledger rows were committed
+  alone at `1439ff0` before any dev draft.
+- B3 is complete (2026-11-11): the train pass, rerun after D21-27/D21-28 (PR #33),
+  exited `status partial`, and D21-29 accepts it as the frozen train baseline
+  (checkpoint PR #35). D21-30 (store validation; the current dev settings stay) and
+  D21-31 (a partial pass or run whose only failures are closed reply-validation
+  codes counts as processed) merged in PR #36.
+- B4 is complete (2026-11-11): Codex made the 70 train support labels under the
+  owner's override (D21-32, train only), 63 are usable, and they were committed alone
+  at `b0b6005`. The 24 dev labels stay the owner's unaided answers.
+- B5 is complete (2026-11-12): `calibrate` ended `no_candidate`, a valid all-review
+  finding. Only 1 of 1,170 train targets is `assessed`, so no cutoff reaches the
+  recall floor 0.4 and no policy binds. `calibration-v1.json` was committed alone at
+  `0801704`, and D21-33 adds `no_candidate` tests (PR #40).
+- B6 is in progress. D21-34 paused it until plans 23 and 24, the run-path
+  performance correction, merged (PR #41). The dev pass started on 2026-11-14, with
+  the main checkout at `712f7c5`. D21-35 counts a classification stopped at its
+  128-request ceiling as processed, and D21-36 lets the dev baseline replay accept
+  `replay_miss` for exactly those cut claims (PRs #47 to #49). Owner gate O7 stays
+  open until its checkpoint.
 
-No pilot pass, run, metric or V6 record exists, and Stage 11 remains unticked.
-`docs/verification/pilot-v1-feasibility.md` records B1/B2's safe evidence. See
-`specs/feasibility-pilot-and-threshold-calibration.md` and plan 20's retired handoff.
+No pilot metric, report or V6 record exists, and Stage 11 remains unticked. Plan
+21's Status line still says plans 23 and 24 await merge; they merged in PR #41.
+`docs/verification/pilot-v1-feasibility.md` records the safe evidence through B5 and
+plans 23/24. See `specs/feasibility-pilot-and-threshold-calibration.md` and plan
+20's retired handoff.
 
 Stage 1 of the roadmap (release parser fidelity, `specs/completed/release-parser-fidelity.md`) is done:
 
@@ -102,7 +123,7 @@ Stage 6 (the pilot codebook, split, and gold-set protocol; plan 9, `specs/comple
 - `packages/earnings-themes/src/earnings_themes/` holds the `issuer-time/1` split (`split.py`), the codebook contract (`codebook.py`), the gold contract, its anchor, and its validator (`gold.py`, `anchoring.py`, `annotation.py`), F20's wording guard (`wording.py`), and the local views (`view.py`); it imports only `earnings-core`. `earnings-ingestion`'s `events/coverage.py` holds the D4 coverage report, and `canonical/serialize.py`'s `from_fixture_json` reads a canonical document back.
 - `evaluation/djia-2024q3-2026q2/pilot-v1/` holds the frozen split (20 train, 8 dev, 7 test, and 5 excluded), the coverage report, the two drafting briefs, and the signed gold, one file per event, named with the event's colon as an underscore (P9-3). `codebooks/djia-pilot/codebook-v0.toml` is codebook v0, with 22 themes, approved in ADR 0003; it is the pilot codebook, not the final taxonomy. `tests/fixtures/gold/hard-negatives.toml` holds the curated hard negatives, over Stage 1's fixtures.
 - Committed Stage 6 files hold IDs, offsets, labels, hashes, and the user's words, never release text (GS3); `tests/integration/test_stage6_wording.py` holds them to that. The session that runs the commands never opens pilot text (GS13), and a refusal names its item and reason only.
-- The gold is drafted by Claude Opus 5.5 in fresh sessions the user starts with a committed brief, then verified, read for omissions, and signed by the user (GS4, GS5). Three train bundles are signed. The other 17 train bundles follow plan 9's Task 19. The 8 dev bundles first get the user's independent pass, whose hash is committed before drafting (GS19, amended 2026-10-11; its check and guard landed in plan 16: `gold anchor <event> --independent --check`, and `gold anchor` and `gold show` refuse a dev draft until the record matches its ledger row); pilot order's #2 and #4 are dev. The 7 test bundles wait for Stage 14 (GS18). `docs/verification/pilot-v1-gold-set.md` records the stage.
+- The gold is drafted by Claude Opus 5.5 in fresh sessions the user starts with a committed brief, then verified, read for omissions, and signed by the user (GS4, GS5). All 20 train and 8 dev bundles are signed (O6, 2026-10-31). Each dev bundle first got the user's independent pass, whose hash is committed before drafting (GS19, amended 2026-10-11; its check and guard landed in plan 16: `gold anchor <event> --independent --check`, and `gold anchor` and `gold show` refuse a dev draft until the record matches its ledger row); pilot order's #2 and #4 are dev. The 7 test bundles wait for Stage 14 (GS18). `docs/verification/pilot-v1-gold-set.md` records the stage.
 
 Stage 7 (evidence selection and verification; plans 11 and 12, `specs/completed/evidence-selection-and-verification.md`) is done. Plan A (plan 11) settled core and anchoring:
 
@@ -115,7 +136,7 @@ Plan B (plan 12) built the extractor, `earnings_themes.extraction`:
 - A unit is a leaf narrative element, in P9-19's order (ES12). Units pack by block into windows of at most 4000 characters, and the model sees labels `U1`…`Un` only: Stage 1's fixtures hold 797 units in 37 windows. `extract_window` renders `prompts/extraction/pointer-1.md`, which the caller reads (ES17), sends at most 2 attempts through a `ModelAdapter`, and keeps a candidate only if every label verifies (ES20). `extract_run` gates each document with `bundle_problems`, under explicit ceilings (ES21).
 - `write_run` verifies every quote again before it writes `run.json` and one Parquet file per record kind; `read_run` reads a run back. Each core `Rejection` is paired with its subject (ES6), and a refusal prints as its reason and IDs.
 - `ScriptedAdapter` serves the tests, and `CachedAdapter` keys each reply by R14.6's 21 components, with replay. `LocalAdapter`, behind the `local-model` extra, is the only themes module that imports httpx, and reaches only a loopback OpenAI-compatible server. ADR 0004 records the live test's local model, and `config/models/local-model.toml` its endpoint. The production model stays open.
-- Stage 10 now supplies the replay-only `earnings-pipeline extract run --config PATH` command. No pilot document has been extracted. The historical Stage 7 live test remains a separately authorized, explicitly selected node.
+- Stage 10 now supplies the replay-only `earnings-pipeline extract run --config PATH` command. Stage 11's train and dev passes are the first pilot extraction (plan 21). The historical Stage 7 live test remains a separately authorized, explicitly selected node.
 
 Stage 8 exposes semantic-support signals without conferring acceptance; Stage 9
 exposes fixed-codebook coding and explicit assignment decisions. Stage 10's command
