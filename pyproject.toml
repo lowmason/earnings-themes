@@ -29,6 +29,11 @@ dev = [
     "pytest",
     "pytest-asyncio",
     "pytest-cov",
+    # Opt-in parallel runs: `-n auto` on the command line, never in addopts below.
+    # tools/stage10_checks.py starts pytest with PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 and
+    # loads only its own plugins, so xdist never loads there and an -n in addopts
+    # would be an unrecognized argument on every Stage 10 route.
+    "pytest-xdist",
     "ruff",
 ]
 # The documentation site (great-docs.yml). great-docs stays inside its 0.17 minor:

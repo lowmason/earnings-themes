@@ -459,9 +459,14 @@ file both collect under the `pytest` console script. Default tests make no netwo
 billable calls. No type checker is configured. Two CI workflows run on each pull
 request and on each push to `main`. The
 [tests workflow](https://github.com/lowmason/earnings-themes/blob/main/.github/workflows/tests.yml)
-runs Ruff, the documented root command and the Stage 1 harness command. Its runner
+runs Ruff, the documented root command with `-n auto`, and the Stage 1 harness command. Its runner
 has no `data/` directory and no secrets, so tests that need local data skip. It does
-not replace the human gates above. The docs workflow builds and deploys the
+not replace the human gates above. `-n auto` runs the tests in parallel with
+pytest-xdist, one worker for each CPU. On 2026-11-16, in a worktree without `data/`, it
+ran the same tests as the serial root command, in 73 s rather than 554 s. Tests that
+read local data have not yet run in parallel. Its summary line leaves out the
+deselected count. The Stage 10 runner turns off plugin autoloading, so do not add `-n`
+to `addopts`. The docs workflow builds and deploys the
 documentation site (see [Documentation](#documentation)). The Stage 1 harness retains
 its separate historical command above.
 
