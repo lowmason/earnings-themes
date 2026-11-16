@@ -4,67 +4,24 @@
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://lowmason.github.io/earnings-themes/)
 
-earnings-themes is evidence-linked research infrastructure for company data and
-earnings themes. It verifies every quote as an exact span of versioned canonical
-text, and it codes themes against a frozen, versioned codebook.
+earnings-themes is an ongoing research project about what large US companies say
+in their quarterly earnings releases. It builds evidence-linked research
+infrastructure for company data and earnings themes. It verifies every quote as an
+exact span of versioned canonical text, and it codes themes against a frozen,
+versioned codebook.
 
-**Project status (2026-10-19): Stages 1–10 are complete. Stage 11, the feasibility pilot and threshold calibration, is in progress.**
-The workspace implements acquisition, canonical evidence, extraction, support
-assessment and coding libraries. Stage 10 adds an offline replay command,
-coverage-aware analytical tables and cited reports, verified on permitted
-synthetic/invented fixtures.
+**Research status (2026-11-15): work in progress.** This is a research project, not
+a finished tool or dataset. The pipeline is built and tested on synthetic fixtures.
+A feasibility pilot on 40 real earnings events is under way. No theme dataset and
+no research finding about earnings themes is published yet. Interfaces, schemas and
+results can change.
 
-[Stage 11](https://github.com/lowmason/earnings-themes/blob/main/specs/feasibility-pilot-and-threshold-calibration.md)
-has two plans. Plan A (plans 17–20) is complete and merged. It built the
-evaluation, label, calibration and pilot-command code without pilot text or a model.
-[Plan B](https://github.com/lowmason/earnings-themes/blob/main/specs/plans/21-feasibility-pilot-and-threshold-calibration-plan-b.md)
-(plan 21) runs the pilot in the maintainer's own terminal. Its step B1, the
-baseline-model selection and fixture smoke test, is complete and recorded in
-[ADR 0006](https://github.com/lowmason/earnings-themes/blob/main/docs/adr/0006-select-the-pilot-baseline-models.md).
-Its step B2, the method choices, is complete, and the preregistration is frozen
-in a commit of its own.
+## Research aims
 
-Step B3, the first pass over pilot documents, waits for owner gate O6. O6 needs
-all 28 train and dev gold files signed and committed, with a ledger row for each
-of the 8 dev events. On 2026-10-19, 3 of the 28 gold files are on `main`. No pilot document has been extracted, no pilot metric
-exists and no research theme dataset is published. The
-[feasibility verification record](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/pilot-v1-feasibility.md)
-has the details.
-
-## Stage 8 support library (completed 2026-10-05)
-
-Stage 8 is complete. The actual pinned MiniCheck primary smoke passed under
-process-wide network denial on invented text, the user’s full root default suite
-and both Stage 6 wording gates passed, and the final whole-branch review cleared
-its findings. The [verification record](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/semantic-support.md)
-records the observed checks, runtime identity and limits.
-
-`earnings_themes.support` exposes `Target`, `SupportSources`, `ResolvedInput`,
-`resolve_target`, `assess_target`, `assess_run`, `write_support_run`,
-`read_support_run`, `reverify_support_run`, and the pure `auc_roc` and
-`accepted_claim_precision` metrics with their typed inputs/reports. Callers supply
-saved extraction records, canonical bundles, a frozen approved codebook, explicit
-claim–theme targets, model identities, prompts, ceilings, and a cache. Exact spans
-are reverified before scoring, publication, and downstream consumption. Results
-retain raw per-quote/joint scores, four independent judge trials, usage, and
-`refused`/`incomplete`/`flagged`/`assessed` processing outcomes. An `assessed`
-outcome confers no accepted assignment.
-
-Concrete local scorer adapters live in `earnings_themes.support.nli`, behind the
-optional `support-nli` extra; ordinary imports need no model runtime or weights.
-[ADR 0005](https://github.com/lowmason/earnings-themes/blob/main/docs/adr/0005-adopt-local-minicheck-for-support-signals.md) records the
-pinned MiniCheck primary, explicit DeBERTa alternative, external configuration,
-local-file and rights requirements, and the passed network-denied primary smoke.
-
-Stage 8 did not run the alternative’s real-checkpoint smoke. Stage 11’s step B1
-later loaded both pinned scorers in its fixture-only smoke test, as
-[ADR 0006](https://github.com/lowmason/earnings-themes/blob/main/docs/adr/0006-select-the-pilot-baseline-models.md)
-records. Stage 9 supplies assignment decisions, and Stage 10 composes them in the
-replay application command with coverage mapping. Stage 11’s plan A built the
-expert-label, calibration and fresh-call stability code. Its plan B has not yet
-run that code on pilot documents. No pilot accuracy or stability result exists.
-
-## Purpose
+The project asks which themes companies raise in their earnings releases. It also
+asks how those themes differ across firms, fiscal periods, document types and
+speaker roles. Each answer must trace back to the exact source words that support
+it.
 
 This monorepo is being built around two connected research capabilities:
 
@@ -79,6 +36,111 @@ This monorepo is being built around two connected research capabilities:
 The tracks share contracts and provenance, but they remain independently
 testable. Theme extraction can begin from a saved earnings release without first
 completing the broader company-enrichment dataset.
+
+The first corpus is the Dow Jones Industrial Average (DJIA), resolved point in
+time, over the eight calendar quarters from 2024Q3 to 2026Q2. The project measures
+feasibility before it runs the full corpus:
+
+- Run the pipeline on a 40-event pilot. Compare its output with the gold, the
+  answer key that the maintainer verifies and signs for each event.
+- Choose the production model, the final theme taxonomy and the quality
+  thresholds by measurement, not by assumption.
+- Evaluate the selected configuration once, on held-out events.
+- Keep the required path free of paid services. It uses open-weight models on
+  local hardware.
+
+## Research status
+
+### What has been done
+
+**Stages 1–10 of the 16-stage roadmap are complete.** They built and tested the
+pipeline:
+
+- **Sources and parsing (Stages 1–3).** An investigation compared three HTML
+  parsers on eight release fixtures and chose a bespoke lxml walker. The core
+  package defines canonical documents, exact spans and the checks on them. The
+  canonicalizer turns a saved release into hashed, versioned text with typed
+  elements.
+- **Corpus (Stages 4–5).** The point-in-time DJIA cohort is frozen. The frozen
+  event manifest holds 263 earnings events from SEC filing metadata. Of these, 239
+  are eligible: the issuer was a DJIA member when SEC accepted the filing. A fixed
+  rule chose the 40-event pilot before any release was acquired. Stage 5 then
+  acquired the pilot's releases from SEC EDGAR and recorded each one's processing
+  state.
+- **Pilot protocol (Stage 6).** The pilot is split by issuer and time into 20
+  train, 8 dev and 7 test events, with 5 excluded. Codebook v0 has 22 themes, drawn
+  from the train events only
+  ([ADR 0003](https://github.com/lowmason/earnings-themes/blob/main/docs/adr/0003-adopt-codebook-v0-as-the-pilot-codebook.md)).
+- **Theme pipeline (Stages 7–10).** The extractor, support assessment, deductive
+  coding and coverage-aware reports are built. Stage 10 joins them in an offline
+  replay command. These stages were verified on synthetic and invented fixtures
+  only.
+
+**Stage 11, the feasibility pilot and threshold calibration, is in progress.** It
+runs the pipeline on real pilot documents in the maintainer's own terminal. Its
+[specification](https://github.com/lowmason/earnings-themes/blob/main/specs/feasibility-pilot-and-threshold-calibration.md)
+has two plans. Plan A built the evaluation, label and calibration code without
+pilot text or a model, and it is complete.
+[Plan B](https://github.com/lowmason/earnings-themes/blob/main/specs/plans/21-feasibility-pilot-and-threshold-calibration-plan-b.md)
+runs the pilot. So far:
+
+- The baseline models are chosen, and all run locally
+  ([ADR 0006](https://github.com/lowmason/earnings-themes/blob/main/docs/adr/0006-select-the-pilot-baseline-models.md)).
+  Gemma 4 31B-it extracts claims and classifies them against the codebook.
+  Qwen2.5-14B-Instruct and Mistral-Nemo-Instruct-2407 judge support. MiniCheck
+  and DeBERTa score support.
+- The method choices are preregistered. They were frozen in a commit of their own
+  before any pilot run.
+- The gold for all 28 train and dev events is signed and committed (2026-10-31).
+  The 7 test events have no gold yet, by design.
+- The first pass over the 20 train events ended `partial`. Some model replies
+  failed validation twice, so 9 of 1,171 classifications and 64 of 1,170 support
+  targets stayed incomplete. The maintainer accepted the pass as the train
+  baseline (2026-11-11).
+- Support assessment cleared almost no targets. Of the 1,170 claim–theme targets,
+  1 was `assessed`: every signal was present and no judge objected. 1,105 were
+  `flagged`: a judge objected or was unsure, or the judges' answers differed. 64
+  were `incomplete`, and none was `refused`.
+- 70 train support labels are committed, and 63 of them are usable (2026-11-11). A
+  hosted model, Codex, wrote these labels under the maintainer's override, and no
+  human reviewed them. So the train agreement figures compare the judges with a
+  model, not with a person.
+- The train calibration ended `no_candidate` (2026-11-12). No support cutoff
+  reached the preregistered recall floor of 0.4. So the baseline selects no
+  assignment policy, and every theme assignment stays in human review. This is a
+  feasibility finding, not an error.
+- The pass over the 8 dev events started on 2026-11-14, under the frozen baseline.
+  This step also collects the maintainer's 24 unaided dev labels, and it is in
+  progress.
+
+The
+[feasibility verification record](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/pilot-v1-feasibility.md)
+and plan B's decision log record each step.
+
+### What has not been done yet
+
+- **The rest of Stage 11.** The dev runs and the maintainer's 24 unaided dev
+  labels are not complete. Fresh-call stability is not measured. It is how much the
+  results change when every model call runs again with no cache. No pilot
+  metric, pilot report or V6 record exists. The V6 record will set the quality
+  gates for later stages.
+- **No theme dataset.** No theme assignment is accepted, and no research result
+  about earnings themes is published.
+- **Stages 12–16 are still open:**
+  - Stage 12: an inductive and hybrid codebook, discovered from train evidence
+    only.
+  - Stage 13: earnings-call transcripts with speaker roles, only if a lawfully
+    usable source exists.
+  - Stage 14: a comparison of configurations, then one held-out evaluation on the
+    7 test events. Their gold is drafted only after the configuration is frozen.
+  - Stage 15: the full run over every eligible DJIA event in the eight quarters.
+  - Stage 16 (optional): a hosted-model quality ceiling, within a $100 budget.
+- **Most company enrichment.** The cohort resolves each security to an issuer and
+  its SEC CIK. Industry, employment, subsidiaries and locations are not built.
+- **Some choices are deliberately open.** The production model, the final theme
+  taxonomy and the quality thresholds beyond exactness are not chosen. Measurement
+  must decide them.
+- **A project license.** See [License and source rights](#license-and-source-rights).
 
 ## Research workflow
 
@@ -149,7 +211,7 @@ claim; support is assessed separately.
 | --- | --- | --- |
 | `packages/earnings-core/` | Shared contracts, identifiers, hashes, provenance, and pure span helpers | Stage 2 contracts and exactness checks (schema v2) |
 | `packages/earnings-ingestion/` | Source adapters, raw snapshots, deterministic parsing, canonicalization, and entity resolution | Stage 3's canonicalizer and browser diagnostic path; Stage 4's artifact store, shared SEC client, and point-in-time DJIA cohort; Stage 5's event discovery, eligibility, and pilot selection; Stage 6's coverage report |
-| `packages/earnings-themes/` | Quote-claim extraction, exact-span verification, support assessment, codebooks, and evaluation | Stages 6–9 contracts, extractor, support and coding; Stage 10 current analytical gates and fourteen typed tables |
+| `packages/earnings-themes/` | Quote-claim extraction, exact-span verification, support assessment, codebooks, and evaluation | Stages 6–9 contracts, extractor, support and coding; Stage 10 current analytical gates and fourteen typed tables; Stage 11 evaluation, labels and calibration (`earnings_themes.evaluation`) |
 | `apps/earnings-pipeline/` | Thin application layer for configuration, stage coordination, checkpoints, and reporting | `earnings-pipeline browser setup`, and the `earnings-pipeline cohort`, `events`, `pilot`, `codebook`, and `gold` commands, plus `extract run --config PATH` for explicit offline replay |
 | `docs/` | Source notes and, as the project develops, methodology, source registers, verification reports, and decisions | Source notes, the release and membership source registers, verification records V1 and V2 and those of Stages 3 to 11, ADRs 0001 to 0006, and the data dictionary |
 | `specs/` | Binding and exploratory system specifications, reviews, and the staged implementation roadmap | Present |
@@ -159,7 +221,7 @@ claim; support is assessed separately.
 | `tests/fixtures/cohort/` | The synthetic cohort, which replays offline to its frozen manifest | Present |
 | `config/corpus/djia-2024q3-2026q2/` | The reviewed event overrides, the frozen event manifest and its evidence record, and the frozen pilot: facts, URLs, hashes, and locators, never source text | Stage 5's frozen event manifest and pilot |
 | `tests/fixtures/events/` | The synthetic event corpus, which replays offline to its frozen event manifest and pilot | Present |
-| `evaluation/djia-2024q3-2026q2/pilot-v1/` | The pilot's split, coverage report, drafting briefs, and signed gold: IDs, offsets, labels, hashes, and the maintainer's words, never release text | Stage 6's frozen split and report, and three signed bundles |
+| `evaluation/djia-2024q3-2026q2/pilot-v1/` | The pilot's split, coverage report, drafting briefs, and signed gold: IDs, offsets, labels, hashes, and the maintainer's words, never release text | Stage 6's frozen split and report, the 28 signed train and dev gold files, and Stage 11's preregistration, train support labels and train calibration |
 | `codebooks/djia-pilot/` | The pilot codebook | Codebook v0, approved in ADR 0003 |
 | `tests/fixtures/gold/` | The curated hard negatives, over Stage 1's fixtures | Present |
 
@@ -185,10 +247,11 @@ The implementation is organized as a staged, evidence-first roadmap of sixteen
 stages. Stages 1–10 are complete, and Stage 10 merged in PR #14.
 
 Stage 11, the feasibility pilot and threshold calibration, is in progress. Its
-plan A is complete, and its plan B has completed steps B1 (baseline models) and
-B2 (method choices and preregistration). Step B3 waits for owner gate O6, which
-needs all 28 train and dev gold files signed and committed. Stages 12–16 remain
-open. The live roadmap remains authoritative.
+plan A is complete. Its plan B has completed steps B1 to B5: the baseline models,
+the preregistration, the train pass, the train labels and the train calibration.
+Step B6, which replays the train events and exposes the dev events, is in progress.
+Stages 12–16 remain open. [Research status](#research-status) summarizes the
+results so far. The live roadmap remains authoritative.
 
 The roadmap was amended on 2026-09-22 by
 [the point-in-time DJIA cohort specification](https://github.com/lowmason/earnings-themes/blob/main/specs/completed/point-in-time-djia-cohort.md).
@@ -259,9 +322,42 @@ discovered from the training partition alone, is approved in
 [ADR 0003](https://github.com/lowmason/earnings-themes/blob/main/docs/adr/0003-adopt-codebook-v0-as-the-pilot-codebook.md). A Claude
 session drafts each bundle's gold under a committed brief, and the maintainer
 verifies every item, reads the release for omissions, and signs; committed
-files hold pointers, labels, and hashes, never release text. Three train
-bundles are signed. The [verification record](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/pilot-v1-gold-set.md)
+files hold pointers, labels, and hashes, never release text. All 28 train and
+dev bundles are signed (2026-10-31). The 7 test bundles wait until Stage 14 freezes
+a configuration. The [verification record](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/pilot-v1-gold-set.md)
 has the details.
+
+**Stage 8: semantic support assessment** is complete (2026-10-05). The actual
+pinned MiniCheck primary smoke passed under process-wide network denial on invented text, the user’s full root default suite
+and both Stage 6 wording gates passed, and the final whole-branch review cleared
+its findings. The [verification record](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/semantic-support.md)
+records the observed checks, runtime identity and limits.
+
+`earnings_themes.support` exposes `Target`, `SupportSources`, `ResolvedInput`,
+`resolve_target`, `assess_target`, `assess_run`, `write_support_run`,
+`read_support_run`, `reverify_support_run`, and the pure `auc_roc` and
+`accepted_claim_precision` metrics with their typed inputs/reports. Callers supply
+saved extraction records, canonical bundles, a frozen approved codebook, explicit
+claim–theme targets, model identities, prompts, ceilings, and a cache. Exact spans
+are reverified before scoring, publication, and downstream consumption. Results
+retain raw per-quote/joint scores, four independent judge trials, usage, and
+`refused`/`incomplete`/`flagged`/`assessed` processing outcomes. An `assessed`
+outcome confers no accepted assignment.
+
+Concrete local scorer adapters live in `earnings_themes.support.nli`, behind the
+optional `support-nli` extra; ordinary imports need no model runtime or weights.
+[ADR 0005](https://github.com/lowmason/earnings-themes/blob/main/docs/adr/0005-adopt-local-minicheck-for-support-signals.md) records the
+pinned MiniCheck primary, explicit DeBERTa alternative, external configuration,
+local-file and rights requirements, and the passed network-denied primary smoke.
+
+Stage 8 did not run the alternative’s real-checkpoint smoke. Stage 11’s step B1
+later loaded both pinned scorers in its fixture-only smoke test, as
+[ADR 0006](https://github.com/lowmason/earnings-themes/blob/main/docs/adr/0006-select-the-pilot-baseline-models.md)
+records. Stage 9 supplies assignment decisions, and Stage 10 composes them in the
+replay application command with coverage mapping. Stage 11’s plan A built the
+expert-label, calibration and fresh-call stability code. Its plan B has since run
+the label and calibration code on the train events. No pilot accuracy or stability
+result exists.
 
 Key planning documents:
 
@@ -281,6 +377,10 @@ Key planning documents:
 - [Pilot codebook, split, and gold-set protocol specification](https://github.com/lowmason/earnings-themes/blob/main/specs/completed/pilot-codebook-split-and-gold-set-protocol.md)
   — Stage 6: the pin, the issuer-and-time split, codebook v0, and the gold-set
   protocol, with Claude-drafted, user-verified gold.
+- [Feasibility pilot and threshold calibration specification](https://github.com/lowmason/earnings-themes/blob/main/specs/feasibility-pilot-and-threshold-calibration.md)
+  — Stage 11: the pilot run, the support labels, the calibration and the V6 gates.
+- [Stage 11 plan B](https://github.com/lowmason/earnings-themes/blob/main/specs/plans/21-feasibility-pilot-and-threshold-calibration-plan-b.md)
+  — the pilot's steps and the maintainer's decision log.
 - [Earnings-theme learning path](https://github.com/lowmason/earnings-themes/blob/main/docs/earnings-themes.md) — the original staged
   learning exercise that motivates the extraction track.
 - [Company-ingestion source note](https://github.com/lowmason/earnings-themes/blob/main/docs/earnings-ingestion.md) — the original
@@ -293,8 +393,9 @@ Key planning documents:
 project rules. Review files and alternative integration specifications under
 `specs/` are exploratory unless a binding document explicitly adopts them.
 
-The final taxonomy, production model, non-exactness acceptance thresholds, and
-historical company universe are deliberately unresolved. They must be selected
+The final taxonomy, production model, and non-exactness acceptance thresholds
+are deliberately unresolved. Stage 4 settled the firm universe as the point-in-time
+DJIA cohort. The open choices must be selected
 through the documented review and measurement processes rather than embedded as
 unstated assumptions.
 
@@ -427,7 +528,7 @@ highlights, one drift non-highlight and six visible canonical fallbacks in the
 pinned available Chrome target. Actual screenshot capture and external HTTPS are
 unverified; the capture command skipped once with its cause unspecified. See
 [the V5 record](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/stage10-browser.md) and
-[completion verification](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/theme-vertical-slice.md). Stage 11 owns first pilot extraction,
+[completion verification](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/theme-vertical-slice.md). Stage 11 owns pilot extraction,
 calibration and fresh-call stability; fixture exactness establishes no model quality.
 
 Completion records: [retired plan 15](https://github.com/lowmason/earnings-themes/blob/main/specs/plans/completed/15-evidence-linked-theme-extraction.md) and [read-only backlog proposal](https://github.com/lowmason/earnings-themes/blob/main/docs/verification/stage10-backlog-triage.md). The observed human root result at `611f84a` is 4241 passed / 9 skipped / 28 deselected with zero failures, collection failures and warnings; both wording gates passed one each. No root exit or elapsed time was supplied.
