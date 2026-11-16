@@ -74,8 +74,7 @@ execution, and its Status line and Decisions (D21-*) are the authority:
   `replay_miss` for exactly those cut claims (PRs #47 to #49). Owner gate O7 stays
   open until its checkpoint.
 
-No pilot metric, report or V6 record exists, and Stage 11 remains unticked. Plan
-21's Status line still says plans 23 and 24 await merge; they merged in PR #41.
+No pilot metric, report or V6 record exists, and Stage 11 remains unticked.
 `docs/verification/pilot-v1-feasibility.md` records the safe evidence through B5 and
 plans 23/24. See `specs/feasibility-pilot-and-threshold-calibration.md` and plan
 20's retired handoff.
