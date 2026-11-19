@@ -1785,8 +1785,9 @@ incomplete classifications of 1,171 (0.8%) in its pass. Dev has 37 of 601 (6.2%)
 
 `train.json` and `dev.json` pin the lockfile SHA-256
 `e2f8ec4d2ba556a51f30d8dcf9a3b122af4aaa5ed87ca4dc030b91e1930ddc16`, which equals
-`software.lock_hash`. `verify_extraction_configuration` requires the stored software
-to equal the configuration's, and a mismatch refuses as `input_changed`. Commit
+`software.lock_hash`. `load_workflow_inputs` reads the lockfile at its pinned path
+through `read_selected` (`theme_config.py:293`), and a SHA-256 that differs from the
+pin refuses as `input_changed`. `make_pass` and `load_pass` both call it. Commit
 `dd3f050` (pytest-xdist, in PR #58 at `535e1e5`, 2026-11-16) changed `pyproject.toml`
 and `uv.lock`. The `uv.lock` of `2ae7079` and of `origin/main` at `5fcc296` hashes to
 `8c7101e0828a098497ec49df78889127235845307106d7139170765f023291c4`. So any pilot
@@ -1794,11 +1795,13 @@ command run on a checkout after PR #58 refuses and writes nothing. The pinned lo
 is in `44d5998` (PR #57, the last first-parent commit before PR #58) and in
 `81d09b9`. This showed only on 2026-11-18, because the earlier pass processes had
 loaded their code before PR #58 landed. With the owner's yes, the agent ran `git
-switch --detach 81d09b9` in the main checkout at 13:23. It stays detached there.
+switch --detach 81d09b9` in the main checkout at 13:23. Later the owner chose the
+local branch `data/dev-labels` at `81d09b9` for that checkout.
 
 This affects every later pilot command: B7's fresh runs and B8. By code reading,
 `labels sample`, `labels view` and `labels check` each call `baseline`, which calls
-`load_pass`, the function that refused. So step 3 needs the pinned lock too. The agent
+`load_pass`, which calls `load_workflow_inputs`, the check that refused. So step 3
+needs the pinned lock too. The agent
 read this and did not run the commands. Re-freezing the configuration with
 the new lock hash would change a hash that the stored extraction and the train
 record bind, so it needs its own decision record. How later steps keep the pin is
