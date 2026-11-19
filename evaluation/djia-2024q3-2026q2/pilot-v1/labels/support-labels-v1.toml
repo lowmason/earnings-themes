@@ -562,3 +562,195 @@ partition = "train"
 claim_support = "supported"
 theme_fit = "fits"
 labelled_on = 2026-11-11
+
+[[labels]]
+target_id = "support-17ad274f7efc73f0620354d212b407bfc9289052b854735a29985d627e7595a3"
+target_input_hash = "18a16e1d37a2f19e2d9a2c5c6de0ca1c05a4483b56aca6b93911ad87f69e3e9d"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-1b1845af67fbacf19a2043d426bfe155fe0abe90820e4a96f2b63baaefd8e3e2"
+target_input_hash = "eb07d9a0074206c24b792c2aa63da2b16aac253c48f8aeee72d74bcf00d25ab5"
+partition = "dev"
+claim_support = "unsupported"
+theme_fit = "fits"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-1cb5f839a78bd93946b5300b63171c7ae249332fa01c7dba94f8390d02470690"
+target_input_hash = "f77f7761d914805fd161889a7649dcd87194a2afc870f523916b6650088ff9f7"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-232e3851be6a394c1bad6e3536e6905a5523c174b24ee333d04f5794b3fcd502"
+target_input_hash = "b0a91f2507a5f2ba235d9e07b9a405e6179c8aa914c8b29b58bdab26e521fd56"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-2e6ebf6716b8086d13448544a65e813b700ad5e05dc9f130b0e989008b756bab"
+target_input_hash = "ebbe29721601f4b6d067bcc83d7fa95f6754024d3df6bd247e7464154f997a58"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-307e3474ca054b4387ea2d8f73c70dba5f605f78c5b50429966ead17f6474cb8"
+target_input_hash = "d45b975d88f1531923b3b244cecc254f8e1d413f841781ac0861f2b0bea23d4c"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-381c2410dc6c7163e5ca6f59942136e5d29e6547e32f4b1bf6610dec4c9f056b"
+target_input_hash = "bb661fa7548c3c4c56871f7e402bf4da7ced0a0f29d09f731bda03bb4ff20338"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-401ae548dc432b42ac637f3f413d70f8c084bb91992a52173680a29a7b8d3d00"
+target_input_hash = "de381e15e91ccd7e16f10c31487a036005cc016f13c66684374e3deaf919ef6a"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-4aed8d6407cdd646ead26f68b04dd3584cc37df5d47790c06e3b4d4ec1a472e2"
+target_input_hash = "9f3b56f94c4befc0673e311b1412d302a0e5145ca74e107b9cad15b44c9b1512"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-4e6f17e3d911983f0a3480e6dad431eed1b950df9229f9083c4fb9d8bc13a49a"
+target_input_hash = "33ae829e253f119aa71ce3ed61a4ed774c3e873251085eaa27804f2ca60e415b"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-5c46376679109d4f8412a2f2d98facfd5415461572e3572f28fdd18f461ea911"
+target_input_hash = "f105239915ee87e849c494fd9f71e805fa61d0defad818becbe8183a10921ada"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-689a5e6be0e46c2eae7d6faba379e653531b702226c584db3b5a79040a0c2bfd"
+target_input_hash = "aa2c01dbdf7e8f4b3cdc4ecefdc2934fb694b87e1f23a8b8a2d8d134e5ffb544"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "unsure"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-694fafe44c6f6a81901bdcd0f88be9e74d0fa4eb1279611c6dcea460c967b171"
+target_input_hash = "2fe7340449b861db75a25494abc782674b72fe7028fb8cf92b7597a4069f494f"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-7477044b4504ea3f1d4e6da2400f31f85d201e08eeca3d8621a7412ac70f7c7a"
+target_input_hash = "b74c9c82ffe9da9bd77e1a1ec91f5d3d60445368ac0b422e7701ed52bbc93408"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-7882efb9fc4570d323cd6a3ea9c6a98b9e1ed53f5af205fd11536f264fa64c63"
+target_input_hash = "2e76e4c10cf9466d5bf040b68524b2463fa5a2f4afa4fd8b6eb210115c262360"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-96b3e264073bbfb1f6b69b479bd0afc8b2aec01bc516c4890ba4a527f6bbe7f1"
+target_input_hash = "ea017e40dda6b7728f5422b2ebf4c06ed09ef480eeb502f623c03352664406a2"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-a594e8739b0cdbf2e41c57baf94738b8f9e12f6afbdbfd3b91b519613f2ce362"
+target_input_hash = "1ecfa69044252b46f23fea0711770b2b83d351ef581d867f2b77adade36b6289"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-aa8ca7f9a34008cb8a84aec67ff1261ccb7e5e29369c902a3c2161d9e97b8773"
+target_input_hash = "13869d5fa3e990950cf7ba79f1457ba32be937d7d513a732186c08a266483c40"
+partition = "dev"
+claim_support = "unsure"
+theme_fit = "fits"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-ab5be7f212949fec760aba591545e86d00c92aecbd8af38c9d0760cdbfd456ba"
+target_input_hash = "b74937531a8b182c4484f2a81159974ff9258e7c2fef8818c315a33404b10203"
+partition = "dev"
+claim_support = "unsure"
+theme_fit = "fits"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-c4aeeece28af392f95d6d0928c85c90aad1590cd76aee4eeae6c82b87d5b852d"
+target_input_hash = "d6c24a680d22c1c1eb465a5e1136608dd72de2eb8166e4a4243f91c3dae5a0ef"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-c7a3366779500eccf52c48a2ce147b063762e27f51ae5bcf609b162b397a830a"
+target_input_hash = "d34a1ddefbc82ff42e068d0f5d2b91ac84a0012aa4367c3633c29b229c720a58"
+partition = "dev"
+claim_support = "unsure"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-d91c759c5a907cc133f266300df22b25ec968b6d5b78b44fa574dafd26539bc3"
+target_input_hash = "c3c8844b6ce510e9ffffd3de747301f4644b98771c503c1569898aa3bf93d16f"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-f2b0d946c9a47e467a1a3b45260472c20c704754764fcc7a724a0dafab980c27"
+target_input_hash = "495cfd88e303a4d68d701cf05dbb8d86c122f673c549c1e73cbbf665ea8b1380"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "fits"
+labelled_on = 2026-11-19
+
+[[labels]]
+target_id = "support-f6e59db04a6421cdf6a57b5d466aa70d61e725dbd33cc4c0464a4718364f3c5f"
+target_input_hash = "19ab75b623260cfc857daec00102b25cc2b4c8c3cd38f7044108a3871f3099b5"
+partition = "dev"
+claim_support = "supported"
+theme_fit = "does_not_fit"
+labelled_on = 2026-11-19
