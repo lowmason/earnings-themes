@@ -1,6 +1,6 @@
 # Pilot v1 feasibility verification
 
-Status on 2026-11-12: B1 evidence is complete and committed (`a91a8e3`), and the
+Status on 2026-11-19: B1 evidence is complete and committed (`a91a8e3`), and the
 preregistration is frozen and committed alone (`53ba190`), with the B2 step 4
 workflow selections recorded (D21-24). On 2026-10-31, O6 was met: all 28 train and
 dev gold files are signed and committed (D21-26). On 2026-11-11, the B3 train pass
@@ -9,7 +9,9 @@ exited with `status partial`, and the owner accepted it as the frozen train base
 committed 70 train support labels that Codex made under the owner's override
 (D21-32); see the section "B4 train labels checkpoint". On 2026-11-12, B5's
 train calibration ended `no_candidate` and was committed alone (`0801704`); see the
-last section. For B1, the fifth fixture pass, `s11-fixture-5`, completed all roles with verified
+section "B5 train calibration checkpoint". On 2026-11-19, B6 steps 1 and 2 finished:
+the train replay, the dev pass and the dev replay each ended `partial`, and both
+replays printed `processed yes`; see the last section. For B1, the fifth fixture pass, `s11-fixture-5`, completed all roles with verified
 Metal all-layer startup evidence and measured both phases; the owner accepted it as
 the 36 GB fit with an explicit swap/pressure limitation (D21-19, in the section
 "Owner fit decision, 2026-10-17"). Earlier sections
@@ -17,7 +19,8 @@ are chronological and state status as of their dates; where a later section clos
 an open item (Metal offload, build/phase evidence, fit), it governs. Whole-system
 Memory Used and the extractor's local token counts remain unavailable. Final
 baseline ceilings are owner-selected below. The only pilot operations recorded are
-B3's input preparation and train pass, B4's train labels and B5's calibration. Stage 11 remains open. This record contains metadata and safe
+B3's input preparation and train pass, B4's train labels, B5's calibration and B6's
+train replay, dev pass and dev replay. Stage 11 remains open. This record contains metadata and safe
 numeric/status evidence only.
 
 ## Code and engineering evidence
@@ -1572,3 +1575,292 @@ deselected, with 1 warning, in 8 min 10 s. The warning is torch's `FutureWarning
 - The agent did not run the root suite, the Stage 6 wording gate, the browser modes
   or any live test. The owner ran the root suite and the wording gate, as "Tests
   run" records.
+
+## B6 train replay and dev pass checkpoint, 2026-11-19
+
+B6 steps 1 and 2 ran on the owner's machine, in the main checkout. For the dev pass,
+the owner let the agent start the judge servers and the pass from the Terminal panel,
+and later the dev replay. Evidence is IDs, hashes, counts, closed codes, file times
+and printed lines only. The agent read no release text, no label, no working file
+and no free-text field. Step 3, the owner's unaided dev labels, has not started. So
+no dev label, dev metric or accuracy figure exists.
+
+Three reads went beyond a printed line, each with the owner's yes. They were the
+closed fields of dev `pass.json` and `run-record.json`, the closed fields of the
+dev support attempts, and closed-code counts over the dev support tables. A value
+printed only if it was a hash, a number or a short lowercase code. While the agent
+diagnosed the refusal on 2026-11-18 (see "The pinned lockfile"), it also printed the
+pointer paths and SHA-256 values in `data/runs/pilot/config/settings.json`, and the
+`lockfile` and `software.lock_hash` keys of `train.json` and `dev.json`. Those files
+hold configuration and no pilot text.
+
+### Results
+
+| Step | Command | Printed line | Wall time |
+| --- | --- | --- | --- |
+| 1 | `pilot21 run --partition train` | `partition train status partial events 20 fresh none processed yes` | 14 h 12 min 59.5 s |
+| 2a | `pilot21 pass --partition dev` (last of three working processes) | `partition dev status partial events 8` | 12 h 8 min 8.0 s |
+| 2b | `pilot21 run --partition dev` | `partition dev status partial events 8 fresh none processed yes` | 10 h 58 min 3.2 s |
+
+Step 1 started on 2026-11-13 at 12:55:11 from `590c2cf`, the merge of plans 23 and
+24 (PR #41). Its first attempt, on 2026-11-12, stopped at 8 h 15 min with nothing
+written (D21-34). Step 2b started on 2026-11-19 at 01:37:27 from `81d09b9`, the merge
+of PR #49. Both replays send no request by design. Before the dev replay, the agent
+checked that nothing listened on ports 8080 to 8082. Neither replay printed
+`processed no`.
+
+The dev replay used 95% of its wall time as CPU time: user 622 min 11 s and system
+5 min 7 s of 658 min 3 s. Its time went to computation, not to waiting.
+
+### Hashes
+
+Both run records carry B5's `calibration_hash`
+`221cc696baf42f16a7a7885358d29fa643c3f129aae33734e58b8a580c8a5394` and
+`configuration_hash`
+`1127f2be93d4173fe75f9960daa4aea9a926576ab0e7f7149a0d0e05053c94d1`. So the
+calibration binds both runs, as the plan expects.
+
+| Record | Field | SHA-256 |
+| --- | --- | --- |
+| Train `run-record.json` | `content_hash` | `0ef1004fb3bdafe93677b3f460ab8cb0ad853f24219c2fc4af8b3b35752bd36f` |
+| Dev `pass.json` | `content_hash` | `cabbae23580495866b5f25798110fbc670e4f2730ac5c4069589c11471ff1369` |
+| Dev `pass.json` | `configuration_hash` | `d88b5c455b3f0afa17798e3d87f100e321873e4f60c3b783457c8a8ba502ce8a` |
+| Dev `pass.json` | `extraction.sha256` | `00629bf3342f8e7e690b52e77c5e6ddb6391befa211fb9039f38785e32b2c663` |
+| Dev `pass.json` | `proposals.sha256` | `a5b3481138b80fbb0c3420ebcb81f66da326b9fb529840cb93e26cac805073de` |
+| Dev `pass.json` | `primary.sha256` | `dc92976e79b7aca8269204a99a64f0189786891d6e7baabe072a34bc4d0a9b88` |
+| Dev `pass.json` | `alternative.sha256` | `08dcf8dd80cca8995c2f0f28a64d1fcf625c965403e966d3c5b44026d6aa0bc6` |
+| Dev `run-record.json` | `content_hash` | `7937d6a7e43ed444c7dcb9516b456e873cbe96b17a3663a41907735565b38838` |
+| Dev `run-record.json` | `coding.sha256` | `da82fb801adabf73dcc3bbaa713ea214c1dca9f74d439ab055e326ae9a0fef21` |
+| Dev `run-record.json` | `pass_record.sha256` | `b9108603af0f326d890d27b64a1078bd90ec7faac0d0771515c2271e215dfa64` |
+
+The pass's `configuration_hash` is the digest of the dev workflow configuration, which
+`load_pass` recomputes. The run record's is B5's frozen baseline configuration. They
+are different records, so they differ. The dev `pass.json` has `mode` `live`,
+`status` `partial` and eight event IDs. The
+two run records have `fresh` `None` and `status` `partial`. The receipt files are
+named `receipt-e521bc3b3d60d82ef4feb925db6be56969c84d7501b36d6dab30b9f53c58ca13.json`
+for train and `receipt-4eef3209258a9684ee4768db3c81a157fb878e2b0ae3eebdf57d1426eeacb2d2.json`
+for dev.
+
+### Where the replay time went
+
+Each time below is the last change of the file or directory, so each interval ends
+when its output was last written.
+
+| Interval, from the start to | Train | Dev |
+| --- | --- | --- |
+| `configuration.json` | 3 h 35 min 29 s | 2 h 47 min 13 s |
+| `support/` | 3 h 33 min 34 s | 2 h 35 min 31 s |
+| `coding/` | 1 h 49 min 25 s | 1 h 19 min 44 s |
+| `analysis/` | 2 h 43 min 14 s | 1 h 46 min 16 s |
+| `run-record.json` | 2 h 31 min 17 s | 2 h 29 min 19 s |
+| Total | 14 h 12 min 59 s | 10 h 58 min 3 s |
+
+Plan 24 projected the train run at 7.19 h (section "Projected train `pilot run`").
+Step 1 took 1.98 times that. The projection's terms do not map one to one onto these
+intervals. Two stand out. The first interval took 3 h 35 min against a load term of
+0.53 h, which that section calls an upper bound measured before plan 23. The last two
+intervals took 5 h 15 min against 2.00 h for the raw-cache sweeps and the decides.
+The cause of the gap is not measured. The real train cache, 7,792 entries and about
+107 GB, replayed with no refusal. That was the real check that the section "What
+this section does not show" asked for. Dev has 601 support targets against train's
+1,170, and it took 77% of train's time. Whether that means a large fixed cost was
+not tested.
+
+### The dev pass
+
+Three processes did the work, and together they ran about 34 h 51 min. Two more
+started on 2026-11-18 and wrote nothing (events 4 and 5).
+
+| Process | Start | End | What happened |
+| --- | --- | --- | --- |
+| 1 | 2026-11-14 10:33 | about 20:46 | Extraction ended 11:38. Classification replies began 11:44:08. Replies stopped from 20:15:59 to 20:40:45. The owner stopped it with Ctrl-C. |
+| 2 | 2026-11-14 20:51 | 2026-11-15 09:21 | Replayed 255 cached replies in 53 min. Classification ended 08:05:40 and `proposals.json` was sealed at 08:21. The judges loaded at 09:08 and the first support entry came at 09:10:23. The owner paused it with 45 support entries cached. |
+| 3 | 2026-11-18 13:28:23 | 2026-11-19 01:36 | Resumed the support phase. `support/` appeared at 01:09:32, `alternative/` at 01:32:18 and `pass.json` at 01:36:28. |
+
+`proposals.json` is 2,075,673 bytes. Process 3 ran in about 12 h 8 min, and the
+support phase in it took about 11 h 41 min.
+
+Events during the pass:
+
+1. **A pause in replies, 2026-11-14.** From 20:15:59 to 20:40:45 no reply arrived
+   (24 min 46 s), with 252 replies cached. In that window Gemma held 6.3 to 8.4 GB
+   in compressed memory (of 9.2 to 11 GB), free RAM was about 86 MB, swap held 4.7
+   to 6.3 GB, memory pressure was at level 2, `mds_stores` used 123% CPU, and short
+   Python jobs of another project used 80 to 90%. The client timeout is 300 s. A
+   timed-out attempt writes no cache file. No claim ended `transport_error`. The
+   owner restarted the pass and Gemma. After the restart, the pass was CPU-bound for
+   53 min (CPU time 52 min 42 s of 53 min 58 s), at about 12 s per cached reply, and
+   its first new request connected at 21:44:20.
+2. **A pause by the owner, 2026-11-15.** The owner needed the Mac for other work.
+   The pass stopped cleanly with Ctrl-C. The support cache held 45 entries, the
+   coding cache 627 files, and `proposals.json` stayed sealed.
+3. **A reboot and an OS update, 2026-11-18.** Before them the Mac had run 28 days,
+   with swap at 28.1 of 29.7 GB and `fseventsd` using 19 GB at about 100% CPU, while
+   nothing of ours ran. The owner stopped the other sessions, rebooted at 12:43 and
+   installed OS 27.2.1. Swap was 0 after the boot.
+4. **A refusal, 2026-11-18 13:20.** The first pass command printed `Refused:
+   configuration: input_changed` after 22 s and wrote nothing. See "The pinned
+   lockfile".
+5. **A prompt that did not receive its answer, 2026-11-18.** The pass waited at the
+   operator checkpoint (`Unload Gemma, load both judges, and confirm support is
+   ready [y/N]`) with 0% CPU and no judge connection. The owner's typed y did not
+   reach it, because the owner could not find the tab. Two Ctrl-Cs sent through the
+   Terminal panel did not stop it, and the cause is not known. The agent ended it
+   with `kill -TERM` at 13:28:13. Nothing was written. The owner then chose to have
+   the agent supply the y. A script checked that no other dev pilot process ran,
+   that nothing listened on port 8080, and that both judges answered `ok` on ports
+   8081 and 8082. Then it fed the y to the new process, which started at 13:28:23.
+   The agent attested to those facts for the owner.
+6. **Memory during the support phase.** Swap rose from 2.6 of 3.0 GB at 13:34 to
+   19.8 of 20.5 GB at 15:51, with the two judges wired at about 21 GB. Paging stayed
+   nearly flat (17 pageouts in 20 s) and the pace did not change.
+7. **A shutdown warning.** At exit, `multiprocessing`'s `resource_tracker` warned
+   about 1 leaked semaphore. The pass had already written `pass.json`.
+
+Judge speed on dev, from the approved helper (medians of first attempts, numbers
+only):
+
+| Model | Dev median | Train-fit | Ratio |
+| --- | --- | --- | --- |
+| Qwen2.5-14B | 15.4 s | 8.8 s | 1.78 |
+| Mistral-Nemo | 13.4 s | 8.0 s | 1.69 |
+| MiniCheck | 5.41 s | 2.45 s | 2.2 |
+
+The pace was about 14 to 15 s per support cache entry. A report from the status
+session on 2026-11-17 found the same ratios (1.76, 1.65 and 5.4 s against 2.45 s).
+It attributes the slowdown to the dev judge prompts, about 2,500 tokens against
+1,600 on train, and to the CPU scorers. The agent did not check that attribution.
+
+### Dev pass counts
+
+These counts come from the dev pass, and each replay follows its pass by construction.
+D21-36's first consequence says the replayed dev run names the cut claims
+`replay_miss`, where the pass proposal names them `requests_exhausted`. The agent did
+not read either run's own tables, so it did not check that.
+
+The dev extraction found 719 claims in 8 documents, with 220, 199, 88, 87, 55, 36, 19
+and 15 claims. D21-12 froze classification at 128 requests per document.
+
+| Item | Count |
+| --- | --- |
+| Classifications | 719: 623 completed and 96 incomplete |
+| Incomplete, by code | `requests_exhausted` 94 and `hierarchy_conflict` 2 |
+| `transport_error` | 0 |
+| Classification attempts | 721: 368 live and ok, 255 cached and ok, 94 `requests_exhausted`, 4 `hierarchy_conflict` |
+| Classification requests and cache hits | 372 requests and 255 cache hits, `cache_mode` `live` |
+| Classification tokens | 2,601,244 prompt, 10,463 completion, 2,611,707 charged, 0 unreported |
+| Proposals | 601 targets, 623 attributes, 131 novelty items |
+| Coding cache | 627 files, which is 255 before the restart and 372 after |
+
+By document (D21-35 and D21-36 ask for the cut by document): the 220-claim document
+has 124 completed, 2 `hierarchy_conflict` and 94 `requests_exhausted`, so 94 of 220
+(42.7%) were cut. The 199-claim document has 199 completed. Each of the other six
+documents has all its claims completed. The cut is 94 of 719 claims (13.1%), all in
+the largest document. D21-35 estimated at least 163 cut claims, and D21-36's second
+consequence said that figure holds only for an uninterrupted pass. The pass did
+restart (event 1), and the ceiling counter restarted with it. The restart began with
+255 cached replies, and the 199-claim document was not cut. D21-31's rule also holds
+for these codes: every one is in the list that D21-35 widened.
+
+The primary support run, from `support/`:
+
+| Item | Count |
+| --- | --- |
+| Targets (outcomes) | 601: 5 `assessed`, 559 `flagged`, 37 `incomplete` |
+| Codes in the `missing` lists of the 37 incomplete | `invalid_references` 28 and `malformed_reply` 13 |
+| Trials | 2,404 (4 per target): 2,357 available, 47 unavailable |
+| Reasons of the 47 unavailable trials | `invalid_references` 33 and `malformed_reply` 14 |
+| Entailment signals | 1,300, all available, 21 of them cached |
+| Judge attempts | 2,499: 2,404 first attempts and 95 second attempts, 28 cached |
+| Attempts with a problem code | `invalid_references` 85 and `malformed_reply` 57 |
+| Attempts with no stored reply (null `raw_ref`) | 0 |
+
+The alternative run has 601 outcomes with the same counts: 5 `assessed`, 559 `flagged`
+and 37 `incomplete`. Train had 64 incomplete support targets of 1,170 (5.5%) and 9
+incomplete classifications of 1,171 (0.8%) in its pass. Dev has 37 of 601 (6.2%) and
+96 of 719 (13.4%). The agent did not compare the two support runs target by target.
+
+### The pinned lockfile
+
+`train.json` and `dev.json` pin the lockfile SHA-256
+`e2f8ec4d2ba556a51f30d8dcf9a3b122af4aaa5ed87ca4dc030b91e1930ddc16`, which equals
+`software.lock_hash`. `verify_extraction_configuration` requires the stored software
+to equal the configuration's, and a mismatch refuses as `input_changed`. Commit
+`dd3f050` (pytest-xdist, in PR #58 at `535e1e5`, 2026-11-16) changed `pyproject.toml`
+and `uv.lock`. The `uv.lock` of `2ae7079` and of `origin/main` at `5fcc296` hashes to
+`8c7101e0828a098497ec49df78889127235845307106d7139170765f023291c4`. So any pilot
+command run on a checkout after PR #58 refuses and writes nothing. The pinned lock
+is in `44d5998` (PR #57, the last first-parent commit before PR #58) and in
+`81d09b9`. This showed only on 2026-11-18, because the earlier pass processes had
+loaded their code before PR #58 landed. With the owner's yes, the agent ran `git
+switch --detach 81d09b9` in the main checkout at 13:23. It stays detached there.
+
+This affects every later pilot command: B7's fresh runs and B8. By code reading,
+`labels sample`, `labels view` and `labels check` each call `baseline`, which calls
+`load_pass`, the function that refused. So step 3 needs the pinned lock too. The agent
+read this and did not run the commands. Re-freezing the configuration with
+the new lock hash would change a hash that the stored extraction and the train
+record bind, so it needs its own decision record. How later steps keep the pin is
+not decided. The owner chose to record this finding here and to propose no deferred
+item.
+
+### Code revisions
+
+Processes 1 and 2 started at `712f7c5`, a docs-only change over `590c2cf`. Between
+2026-11-14 19:49 and 20:26, other work moved the main checkout to `40206fd`,
+`004422b` and `04723a8` and back, while process 1 ran. The cause is not known. A
+`pull --ff-only` moved `main` to `81d09b9` at 2026-11-15 09:04, while process 2
+waited at its prompt. Modules first imported after the owner typed y at about 09:08
+came from `81d09b9`. The agent did not check that those modules matter. Process 3
+and the dev replay ran at `81d09b9`. The records name `b94cfcc` through the dev
+settings (D21-27), not through the checkout.
+
+Gates for D21-35 and D21-36's code, run by the owner at `7dae3a2`, the head of
+PR #48, in a worktree: the root suite gave 5,973 passed, 11 skipped and 28
+deselected in 1,057 s. The wording gate gave 6 passed and 1 skipped. The worktree
+skips 11 tests where the main checkout skips 3. Plan 24's gates at `5804663` are in
+the section above.
+
+### Options the owner ruled out
+
+On 2026-11-17 the owner decided that Stage 11 stays on this Mac, with a reboot first,
+an overnight run and a pause by day. The status session reported these reasons to
+this session for turning down three options:
+
+- A GCP CUDA host. `open_pilot` needs train and dev to share judge identities, the
+  judge files pin device `metal` and the llama.cpp build, and a new host would
+  restart plan B at B1 and detach the 70 train labels, because `target_id` hashes the
+  source run.
+- Hosted Claude or Codex models. R14.1, FP6 and plan 21's ban on hosted calls rule
+  them out, and they would add self-agreement with the Claude-drafted gold and the
+  Codex-made train labels.
+- Parallel dispatch. The spec leaves concurrent workers to Stage 15.
+
+### What this record does not show
+
+- No dev label, support agreement, AUC, prevalence or other metric. Step 3 comes
+  first, and B7 and B8 compute the metrics.
+- The cause of the slow load and analysis stages. Plan 24 measured floors on
+  invented text, and the real timeline above is the only real-size evidence. The agent
+  has no access to the real caches and ran no profile on them.
+- Whether the Ctrl-C failure, the 2026-11-14 pause in replies, or the mid-run
+  change of checkout affected any stored record. The hashes above are the evidence
+  that the run completed, and the agent found no sign of an effect.
+- The agent did not open `dev/run/report`, the label sample or any release text. It
+  did not run the root suite, the wording gate, the browser modes or a live test in
+  this checkpoint.
+
+### Disposition and open items
+
+- B6 steps 1 and 2 are complete. Both replays printed `processed yes`, so no
+  protocol blocker arose under D21-31, D21-35 or D21-36.
+- B6 step 3 is open and the owner's alone: the dev sample, view and labels, with the
+  held-out dev labels committed as `support-labels-v1.toml`. The agent has no part in
+  the answers.
+- On the owner's choice, the main checkout moves from the detached `81d09b9` to a
+  local branch `data/dev-labels` at `81d09b9`. Step 3's labels commands and the
+  commit of `support-labels-v1.toml` then run on the pinned lock, as B5 ran on
+  `data/train-calibration`. B7's three fresh dev runs and B8 also need a checkout
+  with the pinned lock, and how they keep it is not decided.
+- Stage 11 remains unticked. No fresh run, V6 record or report exists.
