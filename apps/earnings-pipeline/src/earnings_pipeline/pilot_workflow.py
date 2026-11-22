@@ -305,6 +305,18 @@ def check_cache_paths(config: WorkflowConfig, fresh: str | None) -> None:
             pilot_path(config, child)
 
 
+def fresh_state_exists(config: WorkflowConfig, directory: Path, fresh: str) -> bool:
+    """D21-38: a fresh run has state once its pass or a ``fresh/<id>`` cache exists."""
+    return directory.exists() or any(
+        (confined_path(config.repo, cache) / "fresh" / fresh).exists()
+        for cache in (
+            config.extraction_cache,
+            config.coding_cache,
+            config.support_cache,
+        )
+    )
+
+
 def make_pass(
     config: WorkflowConfig,
     runtime: WorkflowRuntime,
@@ -315,10 +327,14 @@ def make_pass(
     fresh: str | None,
     support_ready: Callable[[], None],
     now: Callable[[], datetime],
+    resume: bool = False,
 ) -> PassRecord:
     if partition not in (Partition.TRAIN, Partition.DEV) or (
         fresh and partition is not Partition.DEV
     ):
+        raise WorkflowError("malformed_record")
+    # D21-38: only a fresh dev run resumes; the check above refuses fresh off dev.
+    if resume and fresh is None:
         raise WorkflowError("malformed_record")
     directory = confined_path(
         config.repo, directory.relative_to(config.repo).as_posix(), "data/runs/pilot"
@@ -332,18 +348,13 @@ def make_pass(
             config.support_cache,
         ):
             confined_path(config.repo, cache + "/fresh/" + fresh, "data/runs/pilot")
-    if fresh is not None and (
-        directory.exists()
-        or any(
-            (confined_path(config.repo, cache) / "fresh" / fresh).exists()
-            for cache in (
-                config.extraction_cache,
-                config.coding_cache,
-                config.support_cache,
-            )
-        )
-    ):
-        raise WorkflowError("state_run_conflict")
+    if fresh is not None:
+        exists = fresh_state_exists(config, directory, fresh)
+        if exists and not resume:
+            raise WorkflowError("state_run_conflict")
+        # A resume needs state: a typo in the ID never starts a new run (D21-38).
+        if resume and not exists:
+            raise WorkflowError("malformed_record")
     manifest = pilot_path(config, directory / "pass.json")
     if manifest.exists():
         record = read_json(manifest, PassRecord, "pass")

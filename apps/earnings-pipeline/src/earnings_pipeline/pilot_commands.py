@@ -35,6 +35,7 @@ from earnings_pipeline.pilot_reporting import (
 from earnings_pipeline.pilot_workflow import (
     LoadedPass,
     bind_policy,
+    fresh_state_exists,
     load_pass,
     make_pass,
     make_run,
@@ -208,38 +209,65 @@ def run_command(
     partition: PartitionOption = "train",
     fresh: Annotated[str | None, typer.Option("--fresh")] = None,
     models_root: Annotated[Path | None, typer.Option("--models-root")] = None,
+    resume: Annotated[bool, typer.Option("--resume")] = False,
 ) -> None:
     selected = part(partition)
     fresh_id = None if fresh is None else identifier(fresh)
     if fresh_id is not None and (selected is not Partition.DEV or models_root is None):
         raise RecordError("fresh", ("wrong_partition",))
-    current = intake(context, settings, partition)
-    loaded = baseline(current)
-    calibration = artifact(current)
-    # FP12: changed settings or artifact refuse BEFORE a fresh dispatch.
-    bind_policy(current.config, loaded, calibration, replay=True)
-    if fresh_id is not None:
-        runtime = live(current, models_root)
-        record = make_pass(
-            current.config,
-            runtime.workflow,
-            runtime.alternative_scorer,
-            partition=current.partition,
-            directory=current.local / "fresh" / fresh_id / "pass",
-            fresh=fresh_id,
-            support_ready=support_checkpoint,
-            now=utc_now,
+    # D21-38: only a fresh dev run resumes.
+    if resume and fresh_id is None:
+        raise RecordError("fresh", ("wrong_partition",))
+    current: PilotIntake | None = None
+    try:
+        current = intake(context, settings, partition)
+        if (
+            resume
+            and (current.local / "fresh" / fresh_id / "run/run-record.json").exists()
+        ):
+            raise WorkflowError("state_run_conflict")
+        loaded = baseline(current)
+        calibration = artifact(current)
+        # FP12: changed settings or artifact refuse BEFORE a fresh dispatch.
+        bind_policy(current.config, loaded, calibration, replay=True)
+        if fresh_id is not None:
+            runtime = live(current, models_root)
+            record = make_pass(
+                current.config,
+                runtime.workflow,
+                runtime.alternative_scorer,
+                partition=current.partition,
+                directory=current.local / "fresh" / fresh_id / "pass",
+                fresh=fresh_id,
+                support_ready=support_checkpoint,
+                now=utc_now,
+                resume=resume,
+            )
+            loaded = load_pass(current.config, record)
+            checked_pass(current, loaded, fresh=True)
+        directory = (
+            current.local / "fresh" / fresh_id / "run"
+            if fresh_id
+            else current.local / current.partition.value / "run"
         )
-        loaded = load_pass(current.config, record)
-        checked_pass(current, loaded, fresh=True)
-    directory = (
-        current.local / "fresh" / fresh_id / "run"
-        if fresh_id
-        else current.local / current.partition.value / "run"
-    )
-    result = make_run(
-        current.config, loaded, calibration, directory=directory, now=utc_now
-    )
+        result = make_run(
+            current.config, loaded, calibration, directory=directory, now=utc_now
+        )
+    except (KeyboardInterrupt, typer.Abort):
+        if fresh_id is None:
+            raise
+        # D21-38 rule 8: a stop prints one closed line; `typer.confirm` turns SIGINT
+        # into `Abort` at the operator checkpoint.
+        stopped = current is not None and fresh_state_exists(
+            current.config, current.local / "fresh" / fresh_id / "pass", fresh_id
+        )
+        typer.echo(
+            "Stopped: rerun the same command with --resume"
+            if stopped
+            else "Stopped before any state was written: rerun the same command",
+            err=True,
+        )
+        raise typer.Exit(130) from None
     typer.echo(
         f"partition {result.partition.value} status {result.status} events {len(result.event_ids)} fresh {result.fresh or 'none'}"
         f" processed {'yes' if processed(loaded) else 'no'}"
