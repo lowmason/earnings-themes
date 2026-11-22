@@ -475,6 +475,21 @@ def test_a_stop_with_only_a_fresh_cache_prints_the_resume_line(tmp_path, monkeyp
     assert not (current.local / "fresh").exists()
 
 
+def test_the_stop_line_goes_to_stderr_alone(tmp_path, monkeypatch):
+    def make_pass(*args, **kwargs):
+        kwargs["directory"].mkdir(parents=True)
+        raise KeyboardInterrupt()
+
+    stop_case(tmp_path, monkeypatch, make_pass=make_pass)
+    args = ["--partition", "dev", "--fresh", "invented-fresh"]
+    result = CliRunner().invoke(
+        app, fresh_args(tmp_path, *args, "--models-root", str(tmp_path))
+    )
+    assert result.exit_code == 130
+    assert result.stderr.strip().splitlines() == [RESUME_LINE]
+    assert result.stdout == ""
+
+
 @pytest.mark.parametrize("kind", ["interrupt", "abort"])
 def test_a_stop_in_a_run_without_fresh_prints_no_stop_line(tmp_path, monkeypatch, kind):
     """A run without ``--fresh`` keeps the behavior it had before D21-38."""
