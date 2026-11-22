@@ -194,9 +194,11 @@ def test_baseline_loads_with_exact_intake_configuration(tmp_path, monkeypatch):
     assert calls == ["load", "check"]
 
 
-@pytest.mark.parametrize("fresh", [False, True])
+@pytest.mark.parametrize(
+    ("fresh", "resume"), [(False, False), (True, False), (True, True)]
+)
 def test_run_dispatch_binds_before_runtime_and_uses_exact_config(
-    tmp_path, monkeypatch, fresh
+    tmp_path, monkeypatch, fresh, resume
 ):
     from types import SimpleNamespace
 
@@ -238,6 +240,7 @@ def test_run_dispatch_binds_before_runtime_and_uses_exact_config(
         assert kwargs["fresh"] == "invented-fresh"
         assert kwargs["directory"] == current.local / "fresh/invented-fresh/pass"
         assert kwargs["support_ready"] is module.support_checkpoint
+        assert kwargs["resume"] is resume
         calls.append("pass")
         return record
 
@@ -281,6 +284,8 @@ def test_run_dispatch_binds_before_runtime_and_uses_exact_config(
     args += ["--partition", "dev"]
     if fresh:
         args += ["--fresh", "invented-fresh", "--models-root", str(tmp_path)]
+    if resume:
+        args += ["--resume"]
     result = CliRunner().invoke(app, args)
     assert result.exit_code == 0
     assert result.output.strip().splitlines()[-1].endswith("processed yes")
@@ -288,6 +293,127 @@ def test_run_dispatch_binds_before_runtime_and_uses_exact_config(
     assert calls == (
         ["bind", "live", "pass", "load", "check", "run"] if fresh else ["bind", "run"]
     )
+
+
+RESUME_LINE = "Stopped: rerun the same command with --resume"
+NO_STATE_LINE = "Stopped before any state was written: rerun the same command"
+
+
+def fresh_current(tmp_path):
+    from types import SimpleNamespace
+
+    from earnings_themes.split import Partition
+
+    config = SimpleNamespace(
+        repo=tmp_path,
+        extraction_cache="data/runs/pilot/caches/extraction",
+        coding_cache="data/runs/pilot/caches/coding",
+        support_cache="data/runs/pilot/caches/support",
+    )
+    return SimpleNamespace(
+        config=config, local=tmp_path / "data/runs/pilot", partition=Partition.DEV
+    )
+
+
+def fresh_args(tmp_path, *extra):
+    return [
+        "pilot",
+        "--repo",
+        str(tmp_path),
+        "run",
+        "--settings",
+        "invented.json",
+        *extra,
+    ]
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [
+        ("--partition", "dev", "--resume"),
+        ("--partition", "train", "--resume", "--fresh", "invented-fresh"),
+    ],
+    ids=("without_fresh", "train"),
+)
+def test_resume_without_fresh_or_off_dev_refuses_before_intake(
+    tmp_path, monkeypatch, extra
+):
+    module = importlib.import_module("earnings_pipeline.pilot_commands")
+    monkeypatch.setattr(module, "intake", lambda *args: pytest.fail("intake ran"))
+    if "--fresh" in extra:
+        extra = (*extra, "--models-root", str(tmp_path))
+    result = CliRunner().invoke(app, fresh_args(tmp_path, *extra))
+    assert result.exit_code == 1
+    assert result.output.strip().splitlines() == ["Refused: fresh: malformed_record"]
+
+
+def test_resume_over_a_finished_run_refuses_state_run_conflict(tmp_path, monkeypatch):
+    module = importlib.import_module("earnings_pipeline.pilot_commands")
+    current = fresh_current(tmp_path)
+    record = current.local / "fresh/invented-fresh/run/run-record.json"
+    record.parent.mkdir(parents=True)
+    record.write_bytes(b"{}")
+    monkeypatch.setattr(module, "intake", lambda *args: current)
+    for name in ("baseline", "artifact", "bind_policy", "live", "make_pass"):
+        monkeypatch.setattr(
+            module, name, lambda *args, _name=name, **kwargs: pytest.fail(_name)
+        )
+    args = ["--partition", "dev", "--fresh", "invented-fresh", "--resume"]
+    args += ["--models-root", str(tmp_path)]
+    result = CliRunner().invoke(app, fresh_args(tmp_path, *args))
+    assert result.exit_code == 1
+    assert result.output.strip().splitlines() == [
+        "Refused: configuration: state_run_conflict"
+    ]
+
+
+@pytest.mark.parametrize("where", ["make_pass", "checkpoint", "intake"])
+def test_a_stop_prints_one_closed_line_and_exits_130(tmp_path, monkeypatch, where):
+    """D21-38 rule 8: one closed line and status 130, at any point of a fresh run."""
+    from types import SimpleNamespace
+
+    import typer
+
+    module = importlib.import_module("earnings_pipeline.pilot_commands")
+    current = fresh_current(tmp_path)
+
+    def intake(*args):
+        if where == "intake":
+            raise KeyboardInterrupt()
+        return current
+
+    def make_pass(*args, **kwargs):
+        kwargs["directory"].mkdir(parents=True)
+        if where == "checkpoint":
+            kwargs["support_ready"]()
+        raise KeyboardInterrupt()
+
+    def confirm(*args, **kwargs):
+        raise typer.Abort()
+
+    monkeypatch.setattr(module, "intake", intake)
+    monkeypatch.setattr(module, "baseline", lambda selected: object())
+    monkeypatch.setattr(module, "artifact", lambda selected: object())
+    monkeypatch.setattr(module, "bind_policy", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        module,
+        "live",
+        lambda *args: SimpleNamespace(workflow=object(), alternative_scorer=object()),
+    )
+    monkeypatch.setattr(module, "make_pass", make_pass)
+    monkeypatch.setattr(module.typer, "confirm", confirm)
+    args = ["--partition", "dev", "--fresh", "invented-fresh"]
+    args += ["--models-root", str(tmp_path)]
+    result = CliRunner().invoke(app, fresh_args(tmp_path, *args))
+    expected = NO_STATE_LINE if where == "intake" else RESUME_LINE
+    assert result.exit_code == 130
+    assert result.output.strip().splitlines()[-1] == expected
+    assert result.output.count("Stopped") == 1
+    assert "Traceback" not in result.output
+    assert "Aborted" not in result.output
+    if where == "intake":
+        assert "--resume" not in result.output
+        assert not (current.local / "fresh").exists()
 
 
 @pytest.mark.parametrize(

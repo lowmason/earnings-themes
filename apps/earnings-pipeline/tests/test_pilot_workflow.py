@@ -123,7 +123,7 @@ def test_unacknowledged_checkpoint_never_calls_support(tmp_path):
     assert not (tmp_path / "data/runs/pilot/train/pass/support").exists()
 
 
-def test_fresh_directory_is_never_resumed_and_main_caches_survive(tmp_path):
+def test_fresh_directory_without_resume_refuses_and_main_caches_survive(tmp_path):
     from earnings_pipeline.pilot_workflow import make_pass
     from earnings_pipeline.theme_config import WorkflowError
 
@@ -703,3 +703,324 @@ def test_run_readers_accept_the_replayed_cut_run(tmp_path):
     validate_proposal_support(loaded.proposal, primary, loaded.sources)
     policy = bind_policy(config, loaded, artifact, replay=True)
     reverify_coding_run(coding, loaded.sources, primary, policy)
+
+
+class Stop:
+    """Count each scripted dispatch by phase; raise ``KeyboardInterrupt`` on one.
+
+    ``Stop("classify", 2)`` raises on the second classifier dispatch of its process.
+    A raised call returns no reply, so it is not counted as a dispatch.
+    """
+
+    def __init__(self, phase=None, at=1):
+        self.phase, self.at = phase, at
+        self.calls = []
+
+    def wrap(self, phase, reply):
+        def call(request):
+            if phase == self.phase and self.calls.count(phase) + 1 == self.at:
+                self.phase = None
+                raise KeyboardInterrupt()
+            self.calls.append(phase)
+            return reply(request)
+
+        return call
+
+
+def stoppable(config, stop, claims=3):
+    """An invented runtime and alternative scorer whose dispatches ``stop`` counts.
+
+    The alternative scorer has its own identity, so the alternative phase
+    dispatches its own scorer requests, as the pinned alternative does.
+    """
+    from dataclasses import replace
+
+    from earnings_themes.support.scorers import ScriptedScorer
+
+    rt = runtime(config, [], claims)
+    rt.classifier.script = stop.wrap("classify", rt.classifier.script)
+    for judge in rt.judges:
+        judge.script = stop.wrap("judge", judge.script)
+    other = coding_cases.make_support_parts()[0]
+    identity = other.identity.model_copy(
+        update={
+            "runtime": other.identity.runtime.model_copy(
+                update={"model_id": "invented-alternative"}
+            )
+        }
+    )
+    alternative = ScriptedScorer(
+        stop.wrap(
+            "alternative",
+            lambda request: other.score(request).model_copy(
+                update={"identity": identity}
+            ),
+        ),
+        other.count_tokens,
+        identity,
+    )
+    rt = replace(
+        rt,
+        extractor=ScriptedAdapter(
+            stop.wrap("extract", rt.extractor.complete), rt.extractor.identity
+        ),
+        scorer=ScriptedScorer(
+            stop.wrap("score", rt.scorer.score),
+            rt.scorer.count_tokens,
+            rt.scorer.identity,
+        ),
+    )
+    return rt, alternative
+
+
+def fresh_pass(config, tmp_path, fresh, stop, *, resume=False, support_ready=None):
+    from earnings_pipeline.pilot_workflow import make_pass
+
+    rt, alternative = stoppable(config, stop)
+    return make_pass(
+        config,
+        rt,
+        alternative,
+        partition=Partition.DEV,
+        directory=tmp_path / f"data/runs/pilot/dev/fresh/{fresh}/pass",
+        fresh=fresh,
+        support_ready=support_ready or (lambda: None),
+        now=lambda: cases.NOW,
+        resume=resume,
+    )
+
+
+def main_caches(config, tmp_path):
+    return {
+        p.relative_to(tmp_path): p.read_bytes()
+        for kind in (config.extraction_cache, config.coding_cache, config.support_cache)
+        for p in (tmp_path / kind).iterdir()
+        if p.is_file()
+    }
+
+
+def outcome(config, record):
+    """A processed pass's IDs and statuses, then the same rows without their IDs."""
+    from earnings_pipeline.pilot_workflow import load_pass, processed
+
+    loaded = load_pass(config, record)
+    assert processed(loaded)
+    classifications = loaded.proposal.classifications
+    runs = (loaded.primary, loaded.alternative)
+    ids = (
+        tuple((c.classification_id, c.status) for c in classifications),
+        tuple(t.target_id for t in loaded.primary.targets),
+        *(tuple((o.target_id, o.status) for o in run.outcomes) for run in runs),
+    )
+    content = (
+        tuple(
+            (c.doc_id, c.claim_id, c.status, c.reason, c.theme_ids)
+            for c in classifications
+        ),
+        tuple(t.target for t in loaded.primary.targets),
+        *(tuple(o.status for o in run.outcomes) for run in runs),
+    )
+    return ids, content
+
+
+def reference(tmp_path):
+    """An uninterrupted fresh run of the same ID in its own invented repository,
+    and its dispatch counts. Each ID folds in the stability run ID, so only a run
+    of the same ID can show the same IDs."""
+    from collections import Counter
+
+    root = tmp_path / "reference"
+    root.mkdir()
+    config, _ = seed_case(root, seed=True, review=True)
+    stop = Stop()
+    record = fresh_pass(config, root, "s-1", stop)
+    assert record.status == "complete"
+    return outcome(config, record), Counter(stop.calls)
+
+
+def interrupt(config, tmp_path, fresh, stop, *, resume=False):
+    """One process of a fresh run that stops at ``stop``; its dispatch counts."""
+    from collections import Counter
+
+    with pytest.raises(KeyboardInterrupt):
+        fresh_pass(config, tmp_path, fresh, stop, resume=resume)
+    return Counter(stop.calls)
+
+
+STOPS = {
+    "extraction": ("extract", 1),
+    "classification": ("classify", 2),
+    "support": ("score", 2),
+    "alternative": ("alternative", 2),
+}
+
+
+@pytest.mark.parametrize(
+    "stop",
+    [
+        "extraction",
+        "extraction_write",
+        "classification",
+        "after_proposals",
+        "support",
+        "alternative",
+    ],
+)
+def test_resume_matches_an_uninterrupted_run_after_a_stop(tmp_path, monkeypatch, stop):
+    """D21-38: a resumed fresh run equals an uninterrupted one and dispatches only
+    what its first process did not."""
+    from collections import Counter
+
+    from earnings_pipeline.pilot_workflow import load_pass, make_pass
+    from earnings_themes.extraction import store
+
+    config, _ = seed_case(tmp_path, seed=True, review=True)
+    before = main_caches(config, tmp_path)
+    expected, dispatched = reference(tmp_path)
+    first = Stop(*STOPS.get(stop, (None, 1)))
+    if stop == "extraction_write":
+        real = store.os.rename
+        raised = []
+
+        def rename(source, target, *args, **kwargs):
+            if not raised and str(source).rsplit("/", 1)[-1].startswith(".extraction-"):
+                raised.append(source)
+                raise KeyboardInterrupt()
+            return real(source, target, *args, **kwargs)
+
+        monkeypatch.setattr(store.os, "rename", rename)
+    if stop == "after_proposals":
+        rt, alternative = stoppable(config, first)
+
+        def ready():
+            raise KeyboardInterrupt()
+
+        with pytest.raises(KeyboardInterrupt):
+            make_pass(
+                config,
+                rt,
+                alternative,
+                partition=Partition.DEV,
+                directory=tmp_path / "data/runs/pilot/dev/fresh/s-1/pass",
+                fresh="s-1",
+                support_ready=ready,
+                now=lambda: cases.NOW,
+            )
+        calls = Counter(first.calls)
+    else:
+        calls = interrupt(config, tmp_path, "s-1", first)
+    pass_dir = tmp_path / "data/runs/pilot/dev/fresh/s-1/pass"
+    if stop == "extraction_write":
+        assert raised
+        assert not (pass_dir / "extraction").exists()
+        assert not [p for p in pass_dir.iterdir() if p.name.startswith(".")]
+    second = Stop()
+    record = fresh_pass(config, tmp_path, "s-1", second, resume=True)
+    assert record.status == "complete"
+    assert record.mode == "fresh" and record.stability_run_id == "s-1"
+    ids, content = outcome(config, record)
+    assert content == expected[1]
+    if stop == "extraction_write":
+        # D21-38 rule 4: extraction counts restart with each process, so the
+        # resumed extraction counts the stored reply as a cache hit. Every ID that
+        # folds in the extraction record then differs from an uninterrupted run's.
+        extraction = load_pass(config, record).sources.stored_run.record
+        assert (extraction.requests, extraction.cache_hits) == (0, 1)
+    else:
+        assert ids == expected[0]
+    assert calls + Counter(second.calls) == dispatched
+    assert before == main_caches(config, tmp_path)
+
+
+def test_two_stops_then_a_resume_finish_the_run(tmp_path):
+    from collections import Counter
+
+    config, _ = seed_case(tmp_path, seed=True, review=True)
+    before = main_caches(config, tmp_path)
+    expected, dispatched = reference(tmp_path)
+    calls = interrupt(config, tmp_path, "s-1", Stop("classify", 2))
+    calls += interrupt(config, tmp_path, "s-1", Stop("score", 2), resume=True)
+    last = Stop()
+    record = fresh_pass(config, tmp_path, "s-1", last, resume=True)
+    assert record.status == "complete"
+    assert outcome(config, record) == expected
+    assert calls + Counter(last.calls) == dispatched
+    assert before == main_caches(config, tmp_path)
+
+
+def test_resume_with_no_state_refuses_and_dispatches_nothing(tmp_path):
+    """A typo in the ID never starts a new run silently (D21-38)."""
+    from earnings_pipeline.pilot_workflow import fresh_state_exists
+    from earnings_pipeline.theme_config import WorkflowError
+
+    config, _ = seed_case(tmp_path, seed=True, review=True)
+    stop = Stop()
+    directory = tmp_path / "data/runs/pilot/dev/fresh/typo-1/pass"
+    with pytest.raises(WorkflowError, match="malformed_record"):
+        fresh_pass(config, tmp_path, "typo-1", stop, resume=True)
+    assert stop.calls == []
+    assert not fresh_state_exists(config, directory, "typo-1")
+
+
+def test_resume_ignores_debris_from_a_hard_stop(tmp_path):
+    """A hard stop can leave temporary directories and ``.partial`` cache files."""
+    from collections import Counter
+
+    from earnings_pipeline.pilot_workflow import load_pass, make_run
+
+    config, _ = seed_case(tmp_path, seed=True, review=True)
+    before = main_caches(config, tmp_path)
+    expected, dispatched = reference(tmp_path)
+    calls = interrupt(config, tmp_path, "s-1", Stop("score", 2))
+    root = tmp_path / "data/runs/pilot/dev/fresh/s-1"
+    for name in (".extraction-debris", ".support-debris", ".alternative-debris"):
+        (root / "pass" / name).mkdir(parents=True)
+    (root / "run/.coding-debris").mkdir(parents=True)
+    for kind in (config.extraction_cache, config.coding_cache, config.support_cache):
+        (tmp_path / kind / "fresh/s-1" / ("ab" * 32 + ".x.partial")).write_bytes(b"x")
+    last = Stop()
+    record = fresh_pass(config, tmp_path, "s-1", last, resume=True)
+    assert record.status == "complete"
+    assert outcome(config, record) == expected
+    assert calls + Counter(last.calls) == dispatched
+    loaded = load_pass(config, record)
+    run = make_run(
+        config,
+        loaded,
+        bound_artifact(config, loaded),
+        directory=root / "run",
+        now=lambda: cases.NOW,
+    )
+    assert run.fresh == "s-1" and run.status == "complete"
+    assert before == main_caches(config, tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("partition", "fresh"),
+    [(Partition.DEV, None), (Partition.TRAIN, None), (Partition.TRAIN, "s-1")],
+)
+def test_resume_without_fresh_or_off_dev_refuses_malformed_record(
+    tmp_path, partition, fresh
+):
+    from earnings_pipeline.pilot_workflow import make_pass
+    from earnings_pipeline.theme_config import WorkflowError
+
+    config, _ = seed_case(tmp_path, seed=True, review=True)
+    stop = Stop()
+    rt, alternative = stoppable(config, stop)
+    directory = tmp_path / f"data/runs/pilot/{partition.value}/pass"
+    directory.mkdir(parents=True)
+    with pytest.raises(WorkflowError, match="malformed_record"):
+        make_pass(
+            config,
+            rt,
+            alternative,
+            partition=partition,
+            directory=directory,
+            fresh=fresh,
+            support_ready=lambda: None,
+            now=lambda: cases.NOW,
+            resume=True,
+        )
+    assert stop.calls == []
+    assert not (directory / "extraction").exists()
