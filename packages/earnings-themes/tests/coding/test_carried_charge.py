@@ -230,7 +230,9 @@ def test_live_and_replay_hits_stay_cached_and_uncharged(make_job):
     "ceiling,value,reason",
     [
         ("requests_per_document", 1, "requests_exhausted"),
+        ("requests_per_run", 1, "requests_exhausted"),
         ("tokens_per_document", RESERVED, "tokens_exhausted"),
+        ("tokens_per_run", RESERVED, "tokens_exhausted"),
     ],
 )
 def test_a_carried_reply_that_no_longer_fits_a_ceiling_is_cut_not_a_crash(
