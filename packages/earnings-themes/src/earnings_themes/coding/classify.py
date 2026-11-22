@@ -274,19 +274,29 @@ def _attempt(
     try:
         entry = cache.get(request, identity)
         require()
+        # A fresh run's reply, written by an earlier process of the same run, is read
+        # once as a carried reply. The run dispatched it, so it is charged below as
+        # a dispatch (D21-38). Every other hit is served without a charge.
+        carried = False
         if entry is not None:
+            key = coding_key(request, identity)
+            carried = cache.consume_carried(key)
+        if entry is not None and not carried:
             cached = True
             tokens = entry.input_tokens
             raw = entry.reply
-            raw_ref = f"{coding_key(request, identity)}.json"
+            raw_ref = f"{key}.json"
             transport_reason = entry.refusal_reason
         elif cache.mode == "replay":
             raise CodingError("replay_miss")
         else:
-            try:
-                tokens = classifier.count_tokens(request)
-            finally:
-                require()
+            if carried:
+                tokens = entry.input_tokens
+            else:
+                try:
+                    tokens = classifier.count_tokens(request)
+                finally:
+                    require()
             if type(tokens) is not int or tokens < 0:
                 raise CodingError("malformed_record")
             output = request.parameters.max_tokens
@@ -295,7 +305,14 @@ def _attempt(
             require()
             reserved = allowance.reserve(input.doc_id, input.claim_id, tokens, output)
             try:
-                raw = checked(classifier.complete(request), ModelReply)
+                if carried:
+                    # Only a reserved claim holds the stored reply. A cut one keeps
+                    # the row of a dispatch that never began.
+                    raw = entry.reply
+                    raw_ref = f"{key}.json"
+                    transport_reason = entry.refusal_reason
+                else:
+                    raw = checked(classifier.complete(request), ModelReply)
             except CodingTransportError as error:
                 transport_reason = str(error)
                 raw = None if error.reply is None else checked(error.reply, ModelReply)
@@ -307,7 +324,7 @@ def _attempt(
                 allowance.reconcile(
                     input.doc_id, reserved, None if raw is None else raw.usage
                 )
-            if raw is not None:
+            if raw is not None and not carried:
                 # Raw transport evidence remains local even when publication later aborts.
                 raw_ref = cache.put(
                     request,
