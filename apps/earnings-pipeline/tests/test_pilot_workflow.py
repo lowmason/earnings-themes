@@ -1024,3 +1024,28 @@ def test_resume_without_fresh_or_off_dev_refuses_malformed_record(
         )
     assert stop.calls == []
     assert not (directory / "extraction").exists()
+
+
+@pytest.mark.parametrize(
+    "where", ["none", "pass", "extraction_cache", "coding_cache", "support_cache"]
+)
+def test_fresh_state_is_the_pass_or_any_fresh_cache_directory(tmp_path, where):
+    """D21-38 rule 2: state is the pass directory or a ``fresh/<id>`` cache
+    directory; without ``--resume`` any of them still refuses."""
+    from earnings_pipeline.pilot_workflow import fresh_state_exists
+    from earnings_pipeline.theme_config import WorkflowError
+
+    config, _ = seed_case(tmp_path, seed=True, review=True)
+    directory = tmp_path / "data/runs/pilot/dev/fresh/s-1/pass"
+    if where == "pass":
+        directory.mkdir(parents=True)
+    elif where != "none":
+        (tmp_path / getattr(config, where) / "fresh/s-1").mkdir(parents=True)
+    assert fresh_state_exists(config, directory, "s-1") is (where != "none")
+    assert not fresh_state_exists(config, directory.parent.parent / "s-2", "s-2")
+    if where == "none":
+        return
+    stop = Stop()
+    with pytest.raises(WorkflowError, match="state_run_conflict"):
+        fresh_pass(config, tmp_path, "s-1", stop)
+    assert stop.calls == []

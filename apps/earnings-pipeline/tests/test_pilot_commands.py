@@ -416,6 +416,88 @@ def test_a_stop_prints_one_closed_line_and_exits_130(tmp_path, monkeypatch, wher
         assert not (current.local / "fresh").exists()
 
 
+def stop_case(tmp_path, monkeypatch, *, live=None, make_pass=None, make_run=None):
+    """The run command's collaborators, invented; each callback may raise a stop."""
+    from types import SimpleNamespace
+
+    module = importlib.import_module("earnings_pipeline.pilot_commands")
+    current = fresh_current(tmp_path)
+    monkeypatch.setattr(module, "intake", lambda *args: current)
+    monkeypatch.setattr(module, "baseline", lambda selected: object())
+    monkeypatch.setattr(module, "artifact", lambda selected: object())
+    monkeypatch.setattr(module, "bind_policy", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        module,
+        "live",
+        live
+        or (
+            lambda *args: SimpleNamespace(
+                workflow=object(), alternative_scorer=object()
+            )
+        ),
+    )
+    if make_pass is not None:
+        monkeypatch.setattr(module, "make_pass", make_pass)
+    if make_run is not None:
+        monkeypatch.setattr(module, "make_run", make_run)
+    return current
+
+
+def stop(*args, **kwargs):
+    raise KeyboardInterrupt()
+
+
+def test_a_stop_after_intake_before_any_state_prints_the_no_state_line(
+    tmp_path, monkeypatch
+):
+    current = stop_case(tmp_path, monkeypatch, live=stop)
+    args = ["--partition", "dev", "--fresh", "invented-fresh"]
+    result = CliRunner().invoke(
+        app, fresh_args(tmp_path, *args, "--models-root", str(tmp_path))
+    )
+    assert result.exit_code == 130
+    assert result.output.strip().splitlines() == [NO_STATE_LINE]
+    assert not (current.local / "fresh").exists()
+
+
+def test_a_stop_with_only_a_fresh_cache_prints_the_resume_line(tmp_path, monkeypatch):
+    def make_pass(selected, *args, **kwargs):
+        (tmp_path / selected.coding_cache / "fresh/invented-fresh").mkdir(parents=True)
+        raise KeyboardInterrupt()
+
+    current = stop_case(tmp_path, monkeypatch, make_pass=make_pass)
+    args = ["--partition", "dev", "--fresh", "invented-fresh"]
+    result = CliRunner().invoke(
+        app, fresh_args(tmp_path, *args, "--models-root", str(tmp_path))
+    )
+    assert result.exit_code == 130
+    assert result.output.strip().splitlines() == [RESUME_LINE]
+    assert not (current.local / "fresh").exists()
+
+
+@pytest.mark.parametrize("kind", ["interrupt", "abort"])
+def test_a_stop_in_a_run_without_fresh_prints_no_stop_line(tmp_path, monkeypatch, kind):
+    """A run without ``--fresh`` keeps the behavior it had before D21-38."""
+    import typer
+
+    def make_run(*args, **kwargs):
+        raise KeyboardInterrupt() if kind == "interrupt" else typer.Abort()
+
+    stop_case(tmp_path, monkeypatch, make_run=make_run)
+    result = CliRunner().invoke(app, fresh_args(tmp_path, "--partition", "dev"))
+    assert "Stopped" not in result.output
+    if kind == "interrupt":
+        assert result.exit_code == 130
+        assert "Refused" not in result.output
+    else:
+        assert result.exit_code == 1
+        refused = (
+            "Refused: an unforeseen Abort; its message is withheld, since it may"
+            " quote a document (GS13)"
+        )
+        assert result.output.strip().splitlines() == [refused]
+
+
 @pytest.mark.parametrize(
     ("status", "counted", "expected"),
     [("complete", True, "yes"), ("partial", True, "yes"), ("partial", False, "no")],
