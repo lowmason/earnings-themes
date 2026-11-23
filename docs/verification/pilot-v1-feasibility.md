@@ -1873,7 +1873,7 @@ this session for turning down three options:
 B7 needs three counted fresh dev runs. Each takes about 29 to 35 hours (an estimate),
 and the owner can run the Mac only at night. D21-38 (2026-11-22) lets the owner stop a
 fresh run and resume it under the same stability run ID. Plan 27
-(`specs/plans/27-pausable-fresh-dev-runs.md`) holds the code. D21-38 rule 9 says how
+(`specs/plans/completed/27-pausable-fresh-dev-runs.md`) holds the code. D21-38 rule 9 says how
 that code reaches the main checkout.
 
 This section holds the pause procedure, the resume command, the operator rules and the
@@ -2035,6 +2035,26 @@ and 1 skipped.
 This worktree's `uv.lock` is not the pinned lockfile, so these runs do not show that a
 pilot command starts. Plan 27 Task 5 step 4 runs the targeted checks again on
 `data/dev-labels`, with the owner's yes.
+
+### Landing on the main checkout
+
+PR #63 merged plan 27 into `main` at `24d3816` on 2026-11-23. Before the cherry-pick,
+`git diff --stat 81d09b9 952ac45` over plan 27's code and test files was empty. `952ac45`
+is the merge's first parent. With the owner's yes, the agent cherry-picked the 12 code
+and test commits (`cc744fb` to `4220cd2`) onto `data/dev-labels` in the main checkout,
+with no conflicts. The result is `792a419` to `e35a96c`, on top of `6b5d03e`. The docs
+commits stay on `main` only.
+
+- **Code SHA:** `e35a96c`. D21-38 rule 6 compares this SHA across a run's segments.
+- **Identical code:** every code and test file plan 27 changed is byte for byte the
+  same as at the merged head `829980b`.
+- **Pinned lockfile:** `uv.lock` still hashes to
+  `e2f8ec4d2ba556a51f30d8dcf9a3b122af4aaa5ed87ca4dc030b91e1930ddc16`. No `uv.lock` or
+  `pyproject.toml` changed.
+- **Not pushed:** `data/dev-labels` is not pushed.
+
+No run was active. The owner then ran the targeted set of "Tests run" in the main
+checkout at `e35a96c`. It gave 1,025 passed in 105 s.
 
 ### Record of stops and resumes
 
