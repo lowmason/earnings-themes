@@ -1969,6 +1969,13 @@ record stage does not ask the operator checkpoint, because `pass.json` already e
   that an earlier process wrote once, and its attempt row is a dispatched row. So a
   resumed run's coding counters, cut set and coding record totals equal an
   uninterrupted run's.
+- One case breaks that equality (D27-4). A coding request can fail with no model
+  reply, for example on a timeout, and its retry can then succeed. The failed attempt
+  writes nothing to the cache. If the run stops after that and before `proposals.json`
+  is sealed, the resumed process does not see the failed attempt. It reads the stored
+  retry reply as the first attempt. So the resumed record shows one request fewer for
+  that claim, and a document near its ceiling can cut fewer claims. A fix needs a
+  journal, and D21-38 rule 6 has none. The owner chose to record the case instead.
 
 ### Operator rules
 
@@ -1997,13 +2004,21 @@ These rules are not code.
    dev pass, so a restart only lowers their counters. A resume can hide a ceiling hit
    that an uninterrupted run would show, and cannot cause one.
 9. Concurrent workers stay barred (Stage 15).
+10. Before a pause in the classification phase, check the Gemma server log for a
+    request that failed with no reply (a timeout or a dropped connection). Record the
+    count in the `transport errors before the stop` column (D27-4). Write `0` when the
+    log shows none, and `unknown` when no log is kept.
+11. The pause script counts a `.extraction-*`, `.support-*`, `.alternative-*` or
+    `.coding-*` directory as a running write tail only when it is newer than the
+    python process's start time. An older one is debris from an earlier hard stop, and
+    the resume ignores it (D27-4).
 
 ### Record of stops and resumes
 
 One row per stop. No run has stopped yet.
 
-| run ID | stop (UTC) | phase | cause | cache files at resume (extraction / coding / support) | git SHA before / after | resume wall time |
-| --- | --- | --- | --- | --- | --- | --- |
+| run ID | stop (UTC) | resume (UTC) | phase | cause | transport errors before the stop | cache files at resume (extraction / coding / support) | git SHA before / after | resume wall time |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 Claims cut at the request ceiling by document (D21-35), one line per counted run:
 
