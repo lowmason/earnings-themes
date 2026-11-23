@@ -1904,10 +1904,15 @@ directory is published whole by rename. The coding and support writers remove th
 temporary directory on an interrupt. So a stop leaves no half-written phase. A stop
 inside a write tail loses only that tail.
 
-A stop prints one closed line on standard error and exits with status 130:
+After `kill -INT` or Ctrl-C, the command prints one closed line on standard error and
+exits with status 130:
 
 - `Stopped: rerun the same command with --resume` when state exists for the ID.
 - `Stopped before any state was written: rerun the same command` when no state exists.
+
+The code has no handler for `kill -TERM`. A TERM stop, a reboot or an out-of-memory
+kill prints no line. Such a stop may still resume if its stored phases read back
+(D21-38 rule 3).
 
 A stop during intake always prints the second line, because intake has built no
 configuration yet. If earlier state exists, a rerun without `--resume` then prints
@@ -1952,7 +1957,8 @@ record stage does not ask the operator checkpoint, because `pass.json` already e
 - A stop during extraction: the resumed extraction records the run's own earlier
   replies as cache hits. So its record counts (requests and cache hits) differ from an
   uninterrupted run's. Every downstream classification ID and target ID differs too.
-  The content and the statuses are the same.
+  The content and the statuses equal those of an uninterrupted run that got the same
+  replies.
 - The stability figures compare events, themes and evidence units, never those IDs
   (`stability_figures` in `packages/earnings-themes/src/earnings_themes/evaluation/report.py`).
   The differing IDs do not change a figure.
