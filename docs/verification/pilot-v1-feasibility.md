@@ -1971,11 +1971,15 @@ record stage does not ask the operator checkpoint, because `pass.json` already e
   uninterrupted run's.
 - One case breaks that equality (D27-4). A coding request can fail with no model
   reply, for example on a timeout, and its retry can then succeed. The failed attempt
-  writes nothing to the cache. If the run stops after that and before `proposals.json`
-  is sealed, the resumed process does not see the failed attempt. It reads the stored
-  retry reply as the first attempt. So the resumed record shows one request fewer for
-  that claim, and a document near its ceiling can cut fewer claims. A fix needs a
-  journal, and D21-38 rule 6 has none. The owner chose to record the case instead.
+  writes nothing to the cache. The retry request adds a feedback message, so its
+  stored reply has its own cache key. If the run stops after the failure and before
+  `proposals.json` is sealed, the resumed process finds no entry for the first request.
+  It sends that request again, live, and charges one request. The stored retry reply
+  stays unread. If the new request succeeds, the claim shows one request where an
+  uninterrupted run shows two, and a document near its ceiling can cut fewer claims.
+  A stop between the failure and its retry loses the failed attempt in the same way. A
+  fix needs a journal, and D21-38 rule 6 has none. The owner chose to record the case
+  instead.
 
 ### Operator rules
 
