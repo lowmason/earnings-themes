@@ -1280,3 +1280,56 @@ def test_a_damaged_published_coding_run_refuses_storage_corrupt(tmp_path, monkey
         run_again(config, record, artifact, directory)
     assert not (directory / "run-record.json").exists()
     assert coding_files(directory) == damaged
+
+
+def with_other_rows(coding, table):
+    """``coding`` with one row of ``table`` changed and its record untouched.
+
+    The rows are not checked again, so the run has the record of the original and
+    a table that differs, as when the decision code changes between a stop and its
+    resume. ``reverify_coding_run`` judges the published run, never this one.
+    """
+    from dataclasses import replace
+
+    rows = getattr(coding, table)
+    assert rows
+    name = next(k for k, v in rows[0].model_dump().items() if type(v) is str)
+    changed = rows[0].model_copy(update={name: getattr(rows[0], name) + "-invented"})
+    return replace(coding, **{table: (changed, *rows[1:])})
+
+
+@pytest.mark.parametrize(
+    ("table", "decided"),
+    [
+        ("classifications", True),
+        ("attempts", True),
+        ("proposals", True),
+        ("attributes", True),
+        ("decisions", True),
+        ("assignments", True),
+        ("assignment_claims", True),
+        ("novelty", False),
+    ],
+)
+def test_a_published_coding_run_with_other_rows_than_decided_now_refuses_input_changed(
+    tmp_path, monkeypatch, table, decided
+):
+    """The tables are compared apart from the record: with an equal record, one
+    differing row in any table still refuses ``input_changed`` from the run
+    itself, not from ``reverify_coding_run``, which refuses with another prefix."""
+    from earnings_pipeline import pilot_workflow
+    from earnings_pipeline.theme_config import WorkflowError
+
+    config, record, artifact, directory = fresh_run_inputs(tmp_path, decided=decided)
+    stop_after_coding(monkeypatch, config, record, artifact, directory)
+    published = coding_files(directory)
+    real = pilot_workflow.finalize_coding
+    monkeypatch.setattr(
+        pilot_workflow,
+        "finalize_coding",
+        lambda *args: with_other_rows(real(*args), table),
+    )
+    with pytest.raises(WorkflowError, match="input_changed"):
+        run_again(config, record, artifact, directory)
+    assert not (directory / "run-record.json").exists()
+    assert coding_files(directory) == published
