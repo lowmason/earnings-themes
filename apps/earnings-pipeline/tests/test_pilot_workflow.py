@@ -1049,3 +1049,199 @@ def test_fresh_state_is_the_pass_or_any_fresh_cache_directory(tmp_path, where):
     with pytest.raises(WorkflowError, match="state_run_conflict"):
         fresh_pass(config, tmp_path, "s-1", stop)
     assert stop.calls == []
+
+
+def fresh_run_inputs(root, *, none=False):
+    """An invented dev repository at ``root`` with a finished fresh pass ``s-1``.
+
+    Returns its config, the pass record, the bound calibration and the run directory.
+    """
+    from earnings_pipeline.pilot_workflow import load_pass
+
+    config, _ = seed_case(root, seed=True, review=True)
+    record = fresh_pass(config, root, "s-1", Stop())
+    assert record.status == "complete"
+    artifact = bound_artifact(config, load_pass(config, record), none=none)
+    return config, record, artifact, root / "data/runs/pilot/dev/fresh/s-1/run"
+
+
+def run_again(config, record, artifact, directory):
+    """One process of ``make_run``: it loads the pass again, as a new process does."""
+    from earnings_pipeline.pilot_workflow import load_pass, make_run
+
+    return make_run(
+        config,
+        load_pass(config, record),
+        artifact,
+        directory=directory,
+        now=lambda: cases.NOW,
+    )
+
+
+def stop_before_run_record(monkeypatch):
+    """Make the first write of ``run-record.json`` raise ``KeyboardInterrupt``."""
+    from earnings_pipeline import pilot_workflow
+
+    real = pilot_workflow.write_new
+    stopped = []
+
+    def write_new(path, payload):
+        if path.name == "run-record.json" and not stopped:
+            stopped.append(path)
+            raise KeyboardInterrupt()
+        return real(path, payload)
+
+    monkeypatch.setattr(pilot_workflow, "write_new", write_new)
+    return stopped
+
+
+def stop_after_coding(monkeypatch, config, record, artifact, directory):
+    """Stop a run after it published ``run/coding`` and before ``run-record.json``."""
+    stopped = stop_before_run_record(monkeypatch)
+    with pytest.raises(KeyboardInterrupt):
+        run_again(config, record, artifact, directory)
+    assert stopped
+    assert (directory / "coding/run.json").is_file()
+    assert not (directory / "run-record.json").exists()
+
+
+def coding_files(directory):
+    return {p.name: p.read_bytes() for p in (directory / "coding").iterdir()}
+
+
+def test_a_stop_after_coding_is_published_resumes_to_the_same_record(
+    tmp_path, monkeypatch
+):
+    """D21-38: a stop between ``run/coding`` and ``run-record.json`` resumes at the
+    record stage and writes the record of a run that never stopped."""
+    from earnings_pipeline import pilot_workflow
+
+    root = tmp_path / "reference"
+    root.mkdir()
+    expected = run_again(*fresh_run_inputs(root))
+    config, record, artifact, directory = fresh_run_inputs(tmp_path)
+    writes = []
+    real = pilot_workflow.write_coding_run
+    monkeypatch.setattr(
+        pilot_workflow,
+        "write_coding_run",
+        lambda *args, **kwargs: (writes.append(args), real(*args, **kwargs))[1],
+    )
+    stop_after_coding(monkeypatch, config, record, artifact, directory)
+    published = coding_files(directory)
+    assert len(writes) == 1
+    resumed = run_again(config, record, artifact, directory)
+    assert resumed == expected
+    assert (directory / "run-record.json").read_bytes() == (
+        root / "data/runs/pilot/dev/fresh/s-1/run/run-record.json"
+    ).read_bytes()
+    assert len(writes) == 1
+    assert coding_files(directory) == published
+
+
+@pytest.mark.parametrize(
+    ("published_none", "resumed_none"), [(False, True), (True, False)]
+)
+def test_a_published_coding_run_from_another_policy_refuses_input_changed(
+    tmp_path, monkeypatch, published_none, resumed_none
+):
+    from earnings_pipeline.pilot_workflow import load_pass
+    from earnings_pipeline.theme_config import WorkflowError
+
+    config, record, artifact, directory = fresh_run_inputs(
+        tmp_path, none=published_none
+    )
+    other = bound_artifact(config, load_pass(config, record), none=resumed_none)
+    stop_after_coding(monkeypatch, config, record, artifact, directory)
+    published = coding_files(directory)
+    with pytest.raises(WorkflowError, match="input_changed"):
+        run_again(config, record, other, directory)
+    assert not (directory / "run-record.json").exists()
+    assert coding_files(directory) == published
+
+
+def test_the_read_back_path_runs_the_consuming_gate(tmp_path, monkeypatch):
+    """``write_coding_run`` runs ``reverify_coding_run`` before it publishes; a
+    resume over a published ``run/coding`` must run it on what it read back."""
+    from earnings_pipeline import pilot_workflow
+    from earnings_pipeline.pilot_workflow import bind_policy, load_pass
+
+    config, record, artifact, directory = fresh_run_inputs(tmp_path)
+    calls = []
+    real = pilot_workflow.reverify_coding_run
+    monkeypatch.setattr(
+        pilot_workflow,
+        "reverify_coding_run",
+        lambda *args: (calls.append(args), real(*args))[1],
+    )
+    stop_after_coding(monkeypatch, config, record, artifact, directory)
+    assert calls == []
+    run_again(config, record, artifact, directory)
+    assert len(calls) == 1
+    stored, sources, support, policy = calls[0]
+    loaded = load_pass(config, record)
+    assert any(name.endswith(".parquet") for name, _ in stored.record.artifact_hashes)
+    assert sources.provenance_hash == loaded.sources.provenance_hash
+    assert support.record == loaded.primary.record
+    assert (
+        policy.reference
+        == bind_policy(config, loaded, artifact, replay=False).reference
+    )
+
+
+def altered_proposal(proposal, how):
+    """The same proposal run with one part changed, and the run still self-consistent.
+
+    ``finalize_coding`` and ``write_coding_run`` hash and check it as given, so it
+    publishes; only a comparison with the current proposal run can refuse it.
+    """
+    from dataclasses import replace
+
+    from earnings_themes.coding.records import CodingAttributes
+
+    if how == "table":
+        row = proposal.attributes[0].model_copy(
+            update={"attributes": CodingAttributes(topic="invented topic")}
+        )
+        return replace(proposal, attributes=(row, *proposal.attributes[1:]))
+    if how == "started_at":
+        update = {"started_at": proposal.record.started_at.replace(year=2001)}
+    else:
+        hashes = [
+            (name, "f" * 64 if name == proposal.record.artifact_hashes[0][0] else value)
+            for name, value in proposal.record.artifact_hashes
+        ]
+        assert hashes[0][0].startswith("raw/")
+        assert hashes != list(proposal.record.artifact_hashes)
+        update = {"artifact_hashes": tuple(hashes)}
+    return replace(proposal, record=proposal.record.model_copy(update=update))
+
+
+@pytest.mark.parametrize("how", ["table", "started_at", "raw_hash"])
+def test_a_published_coding_run_that_differs_in_any_part_refuses_input_changed(
+    tmp_path, how
+):
+    """The comparison covers each table, the record, and the ``raw/`` hashes the
+    record keeps; only the ``*.parquet`` hashes are left out."""
+    from earnings_pipeline.pilot_workflow import (
+        bind_policy,
+        load_pass,
+        write_coding_run,
+    )
+    from earnings_pipeline.theme_config import WorkflowError
+    from earnings_pipeline.theme_workflow import finalize_coding
+
+    config, record, artifact, directory = fresh_run_inputs(tmp_path)
+    loaded = load_pass(config, record)
+    policy = bind_policy(config, loaded, artifact, replay=False)
+    other = finalize_coding(
+        altered_proposal(loaded.proposal, how), loaded.primary, loaded.sources, policy
+    )
+    write_coding_run(
+        directory / "coding", other, loaded.sources, loaded.primary, policy
+    )
+    published = coding_files(directory)
+    with pytest.raises(WorkflowError, match="input_changed"):
+        run_again(config, record, artifact, directory)
+    assert not (directory / "run-record.json").exists()
+    assert coding_files(directory) == published
