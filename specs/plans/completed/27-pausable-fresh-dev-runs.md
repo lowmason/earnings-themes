@@ -1,6 +1,6 @@
 # Pausable Fresh Dev Runs Implementation Plan
 
-**Status: IN PROGRESS (2026-11-23)** — Tasks 1 to 4 and Task 5 steps 1 and 2 are done via subagent-driven-development, and step 3 opens the PR. Step 4 waits for the owner's yes after the merge. The plan retires in a follow-up PR after step 4.
+**Status: COMPLETE (2026-11-23)** — executed via subagent-driven-development; nothing deferred
 
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -225,15 +225,17 @@ Expected: all pass. State exactly which commands ran.
 - [x] **Step 2: The owner runs the gates** in their own terminal, as for plans 23 and 24: the root suite and the Stage 6 wording gate. Agents do not run them. Record the owner's counts and the commit SHA they ran at.
 > Deviation: the owner ran both gates at `8f55978` in the plan 27 worktree, through this session's shell (`!`), not their own terminal: root suite 6,173 passed and 14 skipped (`-n auto`); wording gate 6 passed and 1 skipped.
 
-- [ ] **Step 3: Open the PR** and follow the pull-request lifecycle rule. The PR holds the plan-only commit, the RED test commits and the implementation commits.
+- [x] **Step 3: Open the PR** and follow the pull-request lifecycle rule. The PR holds the plan-only commit, the RED test commits and the implementation commits.
+> Deviation: PR #62 had already merged the plan-only commit (`952ac45`), so PR #63 held the RED test, implementation and docs commits. It merged at `24d3816` on 2026-11-23.
 
-- [ ] **Step 4: Land on the owner's checkout (the owner's yes first).** Every pilot command refuses off the pinned lock, and `origin/main`'s `uv.lock` is not the pin, so the merge alone gives the owner nothing to run. After the merge:
+- [x] **Step 4: Land on the owner's checkout (the owner's yes first).** Every pilot command refuses off the pinned lock, and `origin/main`'s `uv.lock` is not the pin, so the merge alone gives the owner nothing to run. After the merge:
   1. Check that the files this plan changed did not move on `main` since the base of `data/dev-labels`: `git diff --stat 81d09b9 <the PR's first parent> -- packages/earnings-themes/src/earnings_themes/coding packages/earnings-themes/src/earnings_themes/extraction/cache.py packages/earnings-themes/tests/coding apps/earnings-pipeline/src/earnings_pipeline/pilot_workflow.py apps/earnings-pipeline/src/earnings_pipeline/pilot_commands.py apps/earnings-pipeline/tests/test_pilot_workflow.py apps/earnings-pipeline/tests/test_pilot_commands.py apps/earnings-pipeline/tests/test_pilot_run_bytes.py`. It was empty on 2026-11-22 at `dfc336b`. If it is not empty at the merge, stop and report: the cherry-pick may conflict, and that changes how B7 gets the code.
   2. With the owner's yes, cherry-pick this plan's code and test commits (not the docs commits) onto `data/dev-labels` in the main checkout. Never touch `uv.lock` or `pyproject.toml`. Never `uv sync` or `git switch` while a run is active.
   3. Check that `uv.lock` still hashes to `e2f8ec4d2ba556a51f30d8dcf9a3b122af4aaa5ed87ca4dc030b91e1930ddc16`.
   4. The owner runs the targeted test command of Step 1 in the main checkout on `data/dev-labels`, when no run is active. That checkout's base differs from the one the gates ran on. Record the counts.
   5. Record the merge SHA and the cherry-picked SHA in the verification record. The cherry-picked SHA is the "code SHA" that D21-38 rule 6 compares across a run's segments.
-- [ ] **Step 5:** Follow the plan completion protocol. Note for the next session: B7 may now start. Its first real pause and resume is B7's evidence, timed and recorded (D21-38 rule 7).
+> Deviation: sub-step 1's diff was empty at `952ac45`. The 12 code and test commits became `792a419` to `e35a96c` on `data/dev-labels`, and the owner's run there gave 1,025 passed. The PR that retires this plan records the SHAs, because the lifecycle rule forbids a push to a merged PR's branch.
+- [x] **Step 5:** Follow the plan completion protocol. Note for the next session: B7 may now start. Its first real pause and resume is B7's evidence, timed and recorded (D21-38 rule 7).
 
 ## Self-review
 
