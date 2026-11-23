@@ -4,6 +4,7 @@ import json
 from collections import Counter
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, replace
+from dataclasses import fields as dataclass_fields
 from datetime import datetime
 from pathlib import Path
 
@@ -12,10 +13,11 @@ from earnings_ingestion.fetch.store import write_new
 from earnings_themes.coding import validate_proposal_support
 from earnings_themes.coding.cache import CodingCache
 from earnings_themes.coding.decide import AssignmentPolicy
-from earnings_themes.coding.records import ClassificationRecord
+from earnings_themes.coding.records import ClassificationRecord, CodingRun
 from earnings_themes.coding.run import ProposalRun, propose_run
 from earnings_themes.coding.store import (
     read_coding_run,
+    reverify_coding_run,
     write_coding_run,
 )
 from earnings_themes.evaluation import (
@@ -612,6 +614,24 @@ def _replay_failed(coding, cut: frozenset[tuple[str, str]]) -> bool:
     )
 
 
+def _coding_rows(coding: CodingRun) -> tuple:
+    """A coding run as JSON rows, without the record's ``*.parquet`` hashes.
+
+    A published run's record binds its Parquet files and an in-memory run's cannot;
+    the ``raw/`` hashes stay, because both hold them.
+    """
+    record = coding.record.model_dump(mode="json")
+    record["artifact_hashes"] = [
+        pair for pair in record["artifact_hashes"] if not pair[0].endswith(".parquet")
+    ]
+    tables = (
+        [row.model_dump(mode="json") for row in getattr(coding, field.name)]
+        for field in dataclass_fields(coding)
+        if field.name != "record"
+    )
+    return record, *tables
+
+
 def make_run(
     config: WorkflowConfig,
     loaded: LoadedPass,
@@ -632,7 +652,16 @@ def make_run(
         coding = finalize_coding(
             loaded.proposal, loaded.primary, loaded.sources, policy
         )
-        write_coding_run(coding_dir, coding, loaded.sources, loaded.primary, policy)
+        if coding_dir.exists():
+            # D21-38: a stop after `run/coding` was published and before
+            # `run-record.json`. Read it back, check it equals what is decided
+            # now, and run the consuming gate that `write_coding_run` runs.
+            stored = read_coding_run(coding_dir)
+            if _coding_rows(stored) != _coding_rows(coding):
+                raise WorkflowError("input_changed")
+            reverify_coding_run(stored, loaded.sources, loaded.primary, policy)
+        else:
+            write_coding_run(coding_dir, coding, loaded.sources, loaded.primary, policy)
     else:
         verify_replay_cache(config, loaded)
         fields = config.model_dump(mode="json")
