@@ -1245,3 +1245,18 @@ def test_a_published_coding_run_that_differs_in_any_part_refuses_input_changed(
         run_again(config, record, artifact, directory)
     assert not (directory / "run-record.json").exists()
     assert coding_files(directory) == published
+
+
+def test_a_damaged_published_coding_run_refuses_storage_corrupt(tmp_path, monkeypatch):
+    """A published ``run/coding`` that no longer reads back keeps its own closed
+    reason, and the run neither rewrites it nor writes a record."""
+    from earnings_themes.coding.records import CodingError
+
+    config, record, artifact, directory = fresh_run_inputs(tmp_path)
+    stop_after_coding(monkeypatch, config, record, artifact, directory)
+    (directory / "coding/attempts.parquet").write_bytes(b"INVENTED")
+    damaged = coding_files(directory)
+    with pytest.raises(CodingError, match="storage_corrupt"):
+        run_again(config, record, artifact, directory)
+    assert not (directory / "run-record.json").exists()
+    assert coding_files(directory) == damaged
