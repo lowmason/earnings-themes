@@ -1051,15 +1051,32 @@ def test_fresh_state_is_the_pass_or_any_fresh_cache_directory(tmp_path, where):
     assert stop.calls == []
 
 
-def fresh_run_inputs(root, *, none=False):
+def fresh_run_inputs(root, *, none=False, decided=True):
     """An invented dev repository at ``root`` with a finished fresh pass ``s-1``.
 
     Returns its config, the pass record, the bound calibration and the run directory.
+    With ``decided=False`` the classifier finds no theme, so the run has no decision
+    row and its tables hold nothing that binds the record's own fields.
     """
-    from earnings_pipeline.pilot_workflow import load_pass
+    from earnings_pipeline.pilot_workflow import load_pass, make_pass
 
     config, _ = seed_case(root, seed=True, review=True)
-    record = fresh_pass(config, root, "s-1", Stop())
+    rt, alternative = stoppable(config, Stop())
+    if not decided:
+        model = config.classifier_identity.runtime.model_id
+        rt.classifier.script = lambda request: ModelReply(
+            model=model, text=json.dumps({"theme_ids": [], "attributes": {}})
+        )
+    record = make_pass(
+        config,
+        rt,
+        alternative,
+        partition=Partition.DEV,
+        directory=root / "data/runs/pilot/dev/fresh/s-1/pass",
+        fresh="s-1",
+        support_ready=lambda: None,
+        now=lambda: cases.NOW,
+    )
     assert record.status == "complete"
     artifact = bound_artifact(config, load_pass(config, record), none=none)
     return config, record, artifact, root / "data/runs/pilot/dev/fresh/s-1/run"
@@ -1217,12 +1234,14 @@ def altered_proposal(proposal, how):
     return replace(proposal, record=proposal.record.model_copy(update=update))
 
 
+@pytest.mark.parametrize("decided", [True, False])
 @pytest.mark.parametrize("how", ["table", "started_at", "raw_hash"])
 def test_a_published_coding_run_that_differs_in_any_part_refuses_input_changed(
-    tmp_path, how
+    tmp_path, how, decided
 ):
     """The comparison covers each table, the record, and the ``raw/`` hashes the
-    record keeps; only the ``*.parquet`` hashes are left out."""
+    record keeps; only the ``*.parquet`` hashes are left out. Decision rows bind
+    the record's proposal hash, so a run without them needs the record compared."""
     from earnings_pipeline.pilot_workflow import (
         bind_policy,
         load_pass,
@@ -1231,8 +1250,9 @@ def test_a_published_coding_run_that_differs_in_any_part_refuses_input_changed(
     from earnings_pipeline.theme_config import WorkflowError
     from earnings_pipeline.theme_workflow import finalize_coding
 
-    config, record, artifact, directory = fresh_run_inputs(tmp_path)
+    config, record, artifact, directory = fresh_run_inputs(tmp_path, decided=decided)
     loaded = load_pass(config, record)
+    assert bool(loaded.proposal.proposals) is decided
     policy = bind_policy(config, loaded, artifact, replay=False)
     other = finalize_coding(
         altered_proposal(loaded.proposal, how), loaded.primary, loaded.sources, policy
