@@ -2017,6 +2017,25 @@ These rules are not code.
     python process's start time. An older one is debris from an earlier hard stop, and
     the resume ignores it (D27-4).
 
+### Tests run
+
+At `ba8bf33`, with a clean tree, the agent ran the targeted invented-input checks of
+plan 27 Task 5: `uv run --locked --all-packages pytest packages/earnings-themes/tests/coding
+apps/earnings-pipeline/tests/test_pilot_workflow.py
+apps/earnings-pipeline/tests/test_pilot_commands.py
+apps/earnings-pipeline/tests/test_pilot_run_bytes.py -m "not live and not browser" -q`.
+The result was 1,025 passed. `ruff check .` and `ruff format --check .` were clean.
+Every commit after `ba8bf33` changes only Markdown.
+
+The owner then ran the gates in the plan 27 worktree at `8f55978` with a clean tree, on
+2026-11-23. The root suite (`pytest packages apps tests -m "not live and not browser"
+-n auto`) gave 6,173 passed and 14 skipped in 74 s. The wording gate gave 6 passed
+and 1 skipped.
+
+This worktree's `uv.lock` is not the pinned lockfile, so these runs do not show that a
+pilot command starts. Plan 27 Task 5 step 4 runs the targeted checks again on
+`data/dev-labels`, with the owner's yes.
+
 ### Record of stops and resumes
 
 One row per stop. No run has stopped yet.

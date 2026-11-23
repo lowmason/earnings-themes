@@ -1,5 +1,7 @@
 # Pausable Fresh Dev Runs Implementation Plan
 
+**Status: IN PROGRESS (2026-11-23)** — Tasks 1 to 4 and Task 5 steps 1 and 2 are done via subagent-driven-development, and step 3 opens the PR. Step 4 waits for the owner's yes after the merge. The plan retires in a follow-up PR after step 4.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: implement this plan task-by-task via subagent-driven-development (the default) — or executing-plans when your human partner chose inline execution at the handoff. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Let the owner stop a fresh dev run (`pilot21 run --partition dev --fresh <id>`) and resume it under the same ID with `--resume`, with the coding request ceiling counted as in an uninterrupted run.
@@ -210,7 +212,7 @@ Expected: no findings.
 
 **Files:** none changed. Evidence goes in the verification record's new section.
 
-- [ ] **Step 1: The agent runs the targeted invented-input checks.**
+- [x] **Step 1: The agent runs the targeted invented-input checks.**
 
 ```bash
 uv run --locked --all-packages pytest packages/earnings-themes/tests/coding apps/earnings-pipeline/tests/test_pilot_workflow.py apps/earnings-pipeline/tests/test_pilot_commands.py apps/earnings-pipeline/tests/test_pilot_run_bytes.py -m "not live and not browser" -q
@@ -218,8 +220,10 @@ uv run --locked ruff check . && uv run --locked ruff format --check .
 ```
 
 Expected: all pass. State exactly which commands ran.
+> Deviation: the agent ran it at `ba8bf33` with `-p no:cacheprovider` added: 1,025 passed, Ruff clean. Every later commit changes only Markdown.
 
-- [ ] **Step 2: The owner runs the gates** in their own terminal, as for plans 23 and 24: the root suite and the Stage 6 wording gate. Agents do not run them. Record the owner's counts and the commit SHA they ran at.
+- [x] **Step 2: The owner runs the gates** in their own terminal, as for plans 23 and 24: the root suite and the Stage 6 wording gate. Agents do not run them. Record the owner's counts and the commit SHA they ran at.
+> Deviation: the owner ran both gates at `8f55978` in the plan 27 worktree, through this session's shell (`!`), not their own terminal: root suite 6,173 passed and 14 skipped (`-n auto`); wording gate 6 passed and 1 skipped.
 
 - [ ] **Step 3: Open the PR** and follow the pull-request lifecycle rule. The PR holds the plan-only commit, the RED test commits and the implementation commits.
 
