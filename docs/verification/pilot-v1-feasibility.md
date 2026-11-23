@@ -1867,3 +1867,186 @@ this session for turning down three options:
   `data/train-calibration`. B7's three fresh dev runs and B8 also need a checkout
   with the pinned lock, and how they keep it is not decided.
 - Stage 11 remains unticked. No fresh run, V6 record or report exists.
+
+## Pausing and resuming fresh dev runs (D21-38)
+
+B7 needs three counted fresh dev runs. Each takes about 29 to 35 hours (an estimate),
+and the owner can run the Mac only at night. D21-38 (2026-11-22) lets the owner stop a
+fresh run and resume it under the same stability run ID. Plan 27
+(`specs/plans/27-pausable-fresh-dev-runs.md`) holds the code. D21-38 rule 9 says how
+that code reaches the main checkout.
+
+This section holds the pause procedure, the resume command, the operator rules and the
+empty record. No fresh run has started, so it holds no result.
+
+### Pause procedure
+
+Stop the run in one of two ways. Use one, not both.
+
+- The cleanest pause comes right after `proposals.json` is sealed. At the operator
+  checkpoint, answer `N`. The command prints
+  `Refused: configuration: malformed_record` and exits with status 1. A `Refused:`
+  line normally means a rerun refuses again. This one does not (D27-3). It is the
+  one `Refused:` line that resumes. The sealed `proposals.json` exists, so a rerun
+  with `--resume` reads it.
+- For any other pause, send `kill -INT <python pid>` to the `pilot21 run --fresh`
+  process. Send `kill -TERM` only if INT fails. Never send `kill -9`.
+
+Then do these steps:
+
+1. The owner's pause script refuses to send the stop while a write tail is running.
+   The owner can override it with `--force`. This is an operator rule, not code.
+2. Stop the model servers.
+3. Add a row to the record below.
+
+A stop loses the model call in flight (about 100 s on Gemma, an estimate). Each phase
+directory is published whole by rename. The coding and support writers remove their
+temporary directory on an interrupt. So a stop leaves no half-written phase. A stop
+inside a write tail loses only that tail.
+
+After `kill -INT` or Ctrl-C, the command prints one closed line on standard error and
+exits with status 130:
+
+- `Stopped: rerun the same command with --resume` when state exists for the ID.
+- `Stopped before any state was written: rerun the same command` when no state exists.
+
+The code has no handler for `kill -TERM`. A TERM stop, a reboot or an out-of-memory
+kill prints no line. Such a stop may still resume if its stored phases read back
+(D21-38 rule 3).
+
+A stop during intake always prints the second line, because intake has built no
+configuration yet. If earlier state exists, a rerun without `--resume` then prints
+`Refused: configuration: state_run_conflict`. The operator then adds `--resume`.
+
+### Resume command
+
+Run the same command as the first start, with `--resume` added:
+
+```text
+pilot21 run --settings data/runs/pilot/config/settings.json --partition dev --fresh <id> --models-root "$EARNINGS_MODELS_ROOT" --resume
+```
+
+`--resume` works only with `--fresh` on the dev partition. The code refuses these
+cases:
+
+| Case | Printed line (standard error) |
+| --- | --- |
+| `--resume` without `--fresh`, or off dev | `Refused: fresh: malformed_record`, before intake |
+| `--resume` and no state for the ID (no pass directory and no `fresh/<id>` cache) | `Refused: configuration: malformed_record` |
+| `--resume` over an existing `fresh/<id>/run/run-record.json` | `Refused: configuration: state_run_conflict` |
+| No `--resume` and any state for the ID | `Refused: configuration: state_run_conflict` |
+
+The second case prints the same line as an `N` answer at the checkpoint. They differ
+only in whether state exists. The second case also catches a typo in the ID, so a
+resume never starts a new run.
+
+Every check that runs before a dispatch still runs on a resume: the baseline load, the
+calibration binding (FP12), the pinned lockfile and the configuration hash. A changed
+lockfile or configuration hash refuses with `input_changed`. A resumed run reads only
+its own `fresh/<id>` directories, never a main cache and never another run's. It
+counts as fresh (R12.10).
+
+A stop after `pass.json` and before `run-record.json` resumes at the record stage. The
+code reads back the published `run/coding` and compares it with what `finalize_coding`
+gives now. A difference refuses with `input_changed`. The code then runs the consuming
+gate `reverify_coding_run` and does not write `run/coding` again. A resume at the
+record stage does not ask the operator checkpoint, because `pass.json` already exists.
+
+### What a resume changes in the record
+
+- A stop during extraction: the resumed extraction records the run's own earlier
+  replies as cache hits. So its record counts (requests and cache hits) differ from an
+  uninterrupted run's. Every downstream classification ID and target ID differs too.
+  The content and the statuses equal those of an uninterrupted run that got the same
+  replies.
+- The stability figures compare events, themes and evidence units, never those IDs
+  (`stability_figures` in `packages/earnings-themes/src/earnings_themes/evaluation/report.py`).
+  The differing IDs do not change a figure.
+- A support hit after a resume may be a reply that an earlier process of the run wrote
+  (D21-38 rule 4). The spec's zero-hit statement holds only for a run that never
+  resumed.
+- A resume does not change the coding counters. The coding allowance charges a reply
+  that an earlier process wrote once, and its attempt row is a dispatched row. So a
+  resumed run's coding counters, cut set and coding record totals equal an
+  uninterrupted run's.
+- One case breaks that equality (D27-4). A coding request can fail with no model
+  reply, for example on a timeout, and its retry can then succeed. The failed attempt
+  writes nothing to the cache. The retry request adds a feedback message, so its
+  stored reply has its own cache key. If the run stops after the failure and before
+  `proposals.json` is sealed, the resumed process finds no entry for the first request.
+  It sends that request again, live, and charges one request. The stored retry reply
+  stays unread. If the new request succeeds, the claim shows one request where an
+  uninterrupted run shows two, and a document near its ceiling can cut fewer claims.
+  A stop between the failure and its retry loses the failed attempt in the same way. A
+  fix needs a journal, and D21-38 rule 6 has none. The owner chose to record the case
+  instead.
+
+### Operator rules
+
+These rules are not code.
+
+1. Before a resume, every server that the phase needs must answer. Gemma answers on
+   8080 for extraction and classification. Both judges answer on 8081 and 8082 for
+   support. A classification request with no server answering ends as a
+   `transport_error`, and a run with one is `processed no`.
+2. A resume first replays the run's own cache, at about 12 s per classification reply
+   (B6 event 1, an estimate). So the best pause is just after `proposals.json` is
+   sealed. Time the first resume and record it.
+3. Every resume after `proposals.json` exists and before `pass.json` exists asks the
+   operator checkpoint again. Only the owner answers it.
+4. Any stop whose stored phases read back may resume, whatever the cause: a reboot, an
+   OS update, an out-of-memory kill or an interrupt. The code cannot tell a pause from
+   a crash, so the record names the cause.
+5. A printed `Refused:` line is not a pause, except the `N` answer at the checkpoint.
+   A rerun refuses again.
+6. A run that prints `processed no`, or cannot finish after a resume, never counts.
+   Its ID stays burned. The record lists the discarded ID and its replacement ID.
+7. The git SHA must be equal before and after each stop. The owner's wrapper script
+   checks it. The code checks the lockfile and the configuration hash
+   (`input_changed`).
+8. The extraction and support ceilings restart with each process. Neither binds in the
+   dev pass, so a restart only lowers their counters. A resume can hide a ceiling hit
+   that an uninterrupted run would show, and cannot cause one.
+9. Concurrent workers stay barred (Stage 15).
+10. Before a pause in the classification phase, check the Gemma server log for a
+    request that failed with no reply (a timeout or a dropped connection). Record the
+    count in the `transport errors before the stop` column (D27-4). Write `0` when the
+    log shows none, and `unknown` when no log is kept.
+11. The pause script counts a `.extraction-*`, `.support-*`, `.alternative-*` or
+    `.coding-*` directory as a running write tail only when it is newer than the
+    python process's start time. An older one is debris from an earlier hard stop, and
+    the resume ignores it (D27-4).
+
+### Tests run
+
+At `ba8bf33`, with a clean tree, the agent ran the targeted invented-input checks of
+plan 27 Task 5: `uv run --locked --all-packages pytest packages/earnings-themes/tests/coding
+apps/earnings-pipeline/tests/test_pilot_workflow.py
+apps/earnings-pipeline/tests/test_pilot_commands.py
+apps/earnings-pipeline/tests/test_pilot_run_bytes.py -m "not live and not browser" -q`.
+The result was 1,025 passed. `ruff check .` and `ruff format --check .` were clean.
+Every commit after `ba8bf33` changes only Markdown.
+
+The owner then ran the gates in the plan 27 worktree at `8f55978` with a clean tree, on
+2026-11-23. The root suite (`pytest packages apps tests -m "not live and not browser"
+-n auto`) gave 6,173 passed and 14 skipped in 74 s. The wording gate gave 6 passed
+and 1 skipped.
+
+This worktree's `uv.lock` is not the pinned lockfile, so these runs do not show that a
+pilot command starts. Plan 27 Task 5 step 4 runs the targeted checks again on
+`data/dev-labels`, with the owner's yes.
+
+### Record of stops and resumes
+
+One row per stop. No run has stopped yet.
+
+| run ID | stop (UTC) | resume (UTC) | phase | cause | transport errors before the stop | cache files at resume (extraction / coding / support) | git SHA before / after | resume wall time |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+
+Claims cut at the request ceiling by document (D21-35), one line per counted run:
+
+- No run has finished yet.
+
+Discarded and replacement run IDs:
+
+- None yet.

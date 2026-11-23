@@ -97,6 +97,7 @@ class CodingCache:
             raise CodingError("malformed_record") from None
         self.mode = member.value
         self._stability_run_id = stability_run_id
+        self._seen: set[str] = set()
 
     @property
     def stability_run_id(self) -> str | None:
@@ -155,6 +156,7 @@ class CodingCache:
         identity = checked(identity, JudgeIdentity)
         reply = checked(reply, ModelReply)
         key = coding_key(request, identity)
+        self._seen.add(key)
         entry = checked(
             {
                 "key": key,
@@ -206,6 +208,17 @@ class CodingCache:
         if failure is not None:
             raise failure from None
         return reference
+
+    def consume_carried(self, key: str) -> bool:
+        """True once per key, for a fresh run's reply that an earlier process wrote.
+
+        The caller asks after a cache hit. A reply this instance wrote, or already
+        read, is not carried: it is this process's own dispatch or a duplicate-key
+        hit, and neither is charged again (D21-38). Reads and writes no file."""
+        if self.mode != "fresh" or key in self._seen:
+            return False
+        self._seen.add(key)
+        return True
 
     def artifact_hash(self, reference: str) -> str:
         """Hash bytes only after exact-reference and complete entry validation."""

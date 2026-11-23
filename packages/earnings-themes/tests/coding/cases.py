@@ -175,7 +175,7 @@ def make_proposal_job(sources, policy, identity, root):
             value = queue.popleft()
             if isinstance(value, ModelReply):
                 return value
-            if isinstance(value, Exception):
+            if isinstance(value, BaseException):
                 raise value
             return ModelReply(
                 model=identity.runtime.model_id,
