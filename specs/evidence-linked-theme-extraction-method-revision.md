@@ -4,7 +4,9 @@
 > this spec directly and do not split it into per-subsystem plans.
 
 **Status:** APPROVED (owner, 2026-11-27: "Approve the spec"). Synthesized the same day
-from an external critique. Next: derive-roadmap reconciles it into the live roadmap.
+from an external critique. derive-roadmap reconciled it into the live roadmap the same
+day, as Stages 11.1 to 11.6 and amendments to Stages 11 to 16. The owner approved that
+amendment ("Yes") and the opening of this spec's PR ("Yes").
 
 This specification revises the method of the built theme-extraction system. It does
 four things. It cuts the time of a pass, mainly in the classifier, the judge panel and
