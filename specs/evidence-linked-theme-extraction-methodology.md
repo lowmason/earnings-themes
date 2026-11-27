@@ -204,8 +204,11 @@ it is bound to. The binding decides which method changes would orphan it.
 | Independent dev passes | 8 events | The owner alone, before any draft | Canonical text and unit identity; only their hashes and per-event figures are stored | Yes, on the same condition |
 | Hard negatives | Inside each signed gold file, plus a curated fixture set | Part of the signed gold | Canonical text | Yes, on the same condition |
 | Train support labels (y^σ, y^φ) | 70 targets, 63 usable | A hosted model, from a blinded view, under the owner's override; no human review | The target's identity, which is a digest of the source extraction run, the claim, the theme and their inputs | **No.** A new extractor, classifier, prompt or host changes every target identity |
-| Dev support labels (y^σ, y^φ) | 24 targets (3 per event) | The owner, unaided, never seeing a score or a judge answer | The same target identity | **No**, for the same reason |
+| Dev support labels (y^σ, y^φ) | 24 targets (3 per event), 21 usable | A hosted model drafted them from the blinded view. The owner reviewed and approved every answer. This departs from the planned unaided owner labels. | The same target identity | **No**, for the same reason |
 | Test gold | 7 events | Not yet made | — | — |
+
+No support label is an unaided human answer. The owner's own unaided work is
+the signed gold and the independent dev passes.
 
 So the gold survives any change to C3 to C7. The support labels survive only if
 C3 and C5 stay fixed. A faster extractor or classifier must either keep the
@@ -566,8 +569,10 @@ C6 in full: about 30 h each.
    It also makes each label or calibration step take tens of minutes.
 4. **Support labels bind to run identity.** Any upstream change orphans them
    (see the label table).
-5. **Small, skewed label sets.** 62 of 64 usable train claim labels are
-   "supported". AUC on 2 negatives says nothing. Train labels are model-made.
+5. **Small, skewed, model-drafted label sets.** 62 of 64 usable train claim
+   labels are "supported". AUC on 2 negatives says nothing. All 84 usable
+   support labels were drafted by one hosted model. Only the 21 dev labels had
+   owner review. So no support figure is a judge-to-expert agreement.
 6. **Gold drafted by a frontier model.** Gold was model-drafted, then verified and
    signed by the owner. Dev was first labelled independently by the owner. A
    frontier-model comparison would share the drafter's family. The method
