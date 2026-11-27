@@ -63,12 +63,14 @@ sets G, IP, HN, STr, SDv and TG.
   The judges then ran together, with swap up to 13.2 GiB and pressure 2 (D21-19).
 - D21-33's test T3: under an all-review baseline, support precision is left ungated as
   `undefined_point`, and the report fails its own gates on zero gold-evidence recall.
-- On 2026-10-20, about 9 of 17 train gold drafts lost quotes as `not_narrative`. The
-  Goldman Sachs release for the quarter ending 2024-12-31 (CIK 886982) lost 58 of 76
-  quotes and 8 themes to a two-column layout table. The repository does not record
-  this yet (MR22).
 - The description's scorer formula 2 N_T is loose (critique CP28 ii). A target has one
   joint signal and one signal per quote. This has no consequence for the method.
+
+**A report not checked here.** A gold-drafting session on 2026-10-20 reported that about
+9 of 17 train drafts lost quotes as `not_narrative`. It also reported that the Goldman
+Sachs release for the quarter ending 2024-12-31 (CIK 886982) lost 58 of 76 quotes and
+8 themes to a two-column layout table. The repository does not record this, and this
+synthesis did not check it. MR22 reproduces it as a count.
 
 ## Decisions
 
@@ -125,6 +127,9 @@ guarantee.
 | same | FP22 | Judges run in family batches, not interleaved per target. The 14B cap lifts. | MR6 |
 | `specs/completed/semantic-support-assessment.md` | The four-trial contract and the unanimity outcome | Two trials, one for each family, in random order. A fitted score decides among the targets that are neither refused nor incomplete. | MR6, MR9 |
 | Stage 7 and Stage 8 caches | Keys that embed bundles | Keys bind the same R14.6 components by digest. R14.6 itself does not change. | MR13 |
+| `specs/completed/evidence-selection-and-verification.md` | ES5: `reverify_span` at each later gate | The full span check runs before storage, before support judgment and before export. Other consuming gates check digests. | MR13 |
+| `docs/adr/0006-select-the-pilot-baseline-models.md` | The judge choice | MR6's decision record supersedes it for the judges. Gemma and MiniCheck keep ADR 0006's pins unless MR5 or MR8 changes them. | MR6 |
+| Roadmap Stage 16 | A hosted Claude ceiling measured against G | A Claude-family model is evaluated only against IP and MR10's labels. So the stage's frozen subset is dev events. | MR18 |
 
 ## Requirements
 
@@ -145,6 +150,13 @@ labels and what binds them)*
    The frozen label files are never edited. The mapping must be one-to-one on the
    current train and dev runs.
 4. Every later label, including MR10's, carries both keys.
+5. key_σ carries no theme, so two labels on one claim share a key_σ. Each keeps its own
+   σ answer. If the answers differ, the mapping record states the conflict and does not
+   resolve it.
+6. Identical claim text can recur in other events, for example across quarters. Those
+   claims then share a key_φ, and one φ label applies to all of them. This is intended,
+   because φ is a property of the claim text, the theme and the codebook. MV4 counts
+   these collisions.
 
 (chosen) content keys. (rejected) freezing the old runs as the calibration set: it
 keeps the labels but strands them on obsolete targets. (rejected) labelling again: it
@@ -272,11 +284,14 @@ methodology C6 step 3)*
    events outside the pilot. The plan chooses the frame and records it before drawing.
    The draw is seeded, with known inclusion probabilities.
 3. The calibration targets are disjoint from STr's targets, which fit MR9's score.
-4. A separate score-stratified set of 20–30 targets enriches claim-support negatives
+4. The draw waits until MR3 and MR5 have settled the classifier, and it samples the
+   revised classifier's targets. The guarantee must cover the targets the rule will be
+   applied to (critique Q2), and a classifier change alters Θ_c and so the targets.
+5. A separate score-stratified set of 20–30 targets enriches claim-support negatives
    (critique Q8). Its inclusion probabilities are known and weight its estimates. It
    never enters MR11's calibration set, because sampling by score breaks the random
    sample that a guarantee needs (critique Q2).
-5. The labels are committed alone before any calibration reads them, as IDs, content
+6. The labels are committed alone before any calibration reads them, as IDs, content
    keys, hashes and answers, with no free text (FP17).
 
 **MR11 — An acceptance threshold with a precision guarantee.** *(critique CP9, Q2)*
@@ -290,12 +305,18 @@ methodology C6 step 3)*
    clusters are the exchangeable units.
 3. The owner sets α and δ in preregistration v2 (MR15). Quality thresholds are
    deliberately unresolved in this repository, and no session picks them.
-4. With zero errors, n accepted calibration targets give the one-sided bound δ^{1/n}.
-   A 0.90 bound at δ = 0.1 needs n ≥ 22, and a 0.95 bound needs n ≥ 45. One error
-   roughly doubles n (critique Q2).
-5. If no λ̂ meets the guarantee, nothing is accepted and every target stays in review.
+4. With zero errors, n independent accepted calibration units give the one-sided bound
+   δ^{1/n}. A 0.90 bound at δ = 0.1 needs n ≥ 22, and a 0.95 bound needs n ≥ 45. One
+   error roughly doubles n (critique Q2).
+5. Targets cluster within events, so the plan pre-declares what n counts. It is one of
+   two choices:
+   - events, as in item 2. Then n counts events with an accepted calibration target. The
+     20 train events cannot reach n ≥ 22, so the frame must include events outside the
+     pilot (MR10).
+   - targets, with a stated correction for clustering within events.
+6. If no λ̂ meets the guarantee, nothing is accepted and every target stays in review.
    That is a valid finding.
-6. A cascade that calls judges only where s_P is uncertain is adopted only if MR10's
+7. A cascade that calls judges only where s_P is uncertain is adopted only if MR10's
    negatives show that s_P separates σ. Its band is pre-declared (critique Q1). s_P's
    AUC now rests on 2 negatives and shows nothing.
 
@@ -422,9 +443,11 @@ CP5, CP23, R11.2)*
    leaving one event out at a time. It is labelled illustrative, because G is purposive.
 
 **MR20 — Bounds for missingness.** *(critique CP3)* Beside each π_{k,τ}, the report
-gives the worst-case bounds [n_k / (N_obs + N_miss), (n_k + N_miss) / (N_obs + N_miss)],
-computed from the processing-state table. They make C8's untested assumption 1
-quantitative.
+gives the worst-case bounds [n_k / (N_obs + N_miss), (n_k + N_miss) / (N_obs + N_miss)].
+For theme k and quarter τ, n_k is the count of firms with the theme, N_obs is the count
+of firms with a completed release, and N_miss is the count of cohort firms whose release
+is unavailable, restricted, failed or partial. All three come from the processing-state
+table. The bounds make C8's untested assumption 1 quantitative.
 
 **MR21 — An intensity companion.** *(critique CP6)* For each event and theme, the report
 gives the accepted units for theme k divided by the event's eligible narrative units. It
@@ -488,8 +511,10 @@ run by the owner and reports counts, hashes and timings only.
   family and release date in a decision record, as FP6 did for ADR 0006. A candidate
   grounding checker gets the same check, together with its current standing on
   LLM-AggreFact (critique CP12).
-- **MV4** — All 94 labels map one-to-one under MR1's keys on the current train and dev
-  runs. The frozen label files' hashes are unchanged.
+- **MV4** — Each of the 94 labels resolves, through its (key_σ, key_φ) pair, to exactly
+  one current target on the train and dev runs. The record counts the labels that share
+  a key_σ, any σ conflicts among them, and the key_φ collisions across events. The
+  frozen label files' hashes are unchanged.
 - **MV5** — An analysis of the stored trials, with no model call, compares majority
   vote, mean score and unanimity with y. It also estimates each current family's order
   effect, P(σ = supported | evidence first) − P(σ = supported | claim first).
@@ -553,8 +578,9 @@ run by the owner and reports counts, hashes and timings only.
    prefix across Gemma 4's sliding-window layers. MR3's saving and MR4's ceiling sizing
    depend on it.
 2. **Order constraints.** MR1 lands before any change that alters C5–C7 outputs (MR3,
-   MR5, MR6, MR9). MR12 comes before MR13. MR10's labels come before MR11's
-   calibration. MR15 is frozen before any Stage 14 comparison.
+   MR5, MR6, MR9). MR12 comes before MR13. MR3 and MR5 settle before MR10's draw, and
+   MR10's labels come before MR11's calibration. MR15 is frozen before any Stage 14
+   comparison.
 3. **Stage 11 is in flight.** MR14 and MR17 apply to plan 21's B7 and B8 now, and plan 21
    records them as decisions when it applies them.
 4. **derive-roadmap reconciles this spec into the live roadmap**,
@@ -565,6 +591,11 @@ run by the owner and reports counts, hashes and timings only.
      label mapping by span sets (MR2, MR15, MR24).
    - it amends Stage 15 for the rectifier draw, the bounds and the intensity companion
      (MR19–MR21).
+   - it amends Stage 15's line that stored quotes pass `reverify_span` at the consuming
+     gate, and Stage 10's rerun of the consuming gates before publication. Both follow
+     MR13's three full-check gates and digest checks elsewhere (ES5).
+   - it amends Stage 16, whose frozen subset becomes dev events, evaluated against IP
+     and MR10's labels (MR18).
    This spec is not one stage. derive-roadmap decides its stages, and each stage it routes
    carries the roadmap's stage-spec stamp.
 5. **Repository state.** This spec, the description and the critique sit on branch
