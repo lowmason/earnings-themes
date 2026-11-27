@@ -3,8 +3,8 @@
 > For agentic workers: REQUIRED NEXT SKILL: derive-roadmap — do not plan
 > this spec directly and do not split it into per-subsystem plans.
 
-**Status:** DRAFT, synthesized 2026-11-27 from an external critique. It waits for the
-owner's review.
+**Status:** APPROVED (owner, 2026-11-27: "Approve the spec"). Synthesized the same day
+from an external critique. Next: derive-roadmap reconciles it into the live roadmap.
 
 This specification revises the method of the built theme-extraction system. It does
 four things. It cuts the time of a pass, mainly in the classifier, the judge panel and
