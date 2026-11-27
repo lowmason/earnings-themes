@@ -170,6 +170,7 @@ time. This caps each judge at about 14B parameters.
 | 𝒦, k, α(k) | Codebook, one theme, its parent theme | 22 themes, two levels |
 | f_C | Classifier model | the same model as f_X |
 | Θ_c | Proposed theme set for claim c | subset of 𝒦 |
+| Θ*_c | Latent true theme set for claim c | subset of 𝒦 |
 | t = (c, k) | Support target | — |
 | s_P(t) | Primary entailment score: quoted evidence as premise, claim as hypothesis | [0, 1] |
 | s_A(t) | Alternative entailment score, same premise and hypothesis | [0, 1] |
@@ -198,14 +199,14 @@ time. This caps each judge at about 14B parameters.
 All human labels must be kept. The table states each set, who made it, and what
 it is bound to. The binding decides which method changes would orphan it.
 
-| Label set | Size | Made by | Bound to | Survives a new model or prompt? |
-|---|---|---|---|---|
-| Signed gold G_e (train and dev) | 28 events (20 train, 8 dev) | Drafted by a frontier model in fresh sessions, then verified, read for omissions and signed by the owner | Canonical text x_d, its hash, unit identity, the codebook version | Yes, if canonicalization and the codebook stay fixed |
-| Independent dev passes | 8 events | The owner alone, before any draft | Canonical text and unit identity; only their hashes and per-event figures are stored | Yes, on the same condition |
-| Hard negatives | Inside each signed gold file, plus a curated fixture set | Part of the signed gold | Canonical text | Yes, on the same condition |
-| Train support labels (y^σ, y^φ) | 70 targets, 63 usable | A hosted model, from a blinded view, under the owner's override; no human review | The target's identity, which is a digest of the source extraction run, the claim, the theme and their inputs | **No.** A new extractor, classifier, prompt or host changes every target identity |
-| Dev support labels (y^σ, y^φ) | 24 targets (3 per event), 21 usable | A hosted model drafted them from the blinded view. The owner reviewed and approved every answer. This departs from the planned unaided owner labels. | The same target identity | **No**, for the same reason |
-| Test gold | 7 events | Not yet made | — | — |
+| Label set | Size | Made by | Bound to | Survives a new model or prompt? | Stored |
+|---|---|---|---|---|---|
+| Signed gold G_e (train and dev) | 28 events (20 train, 8 dev) | Drafted by a frontier model in fresh sessions, then verified, read for omissions and signed by the owner | Canonical text x_d, its hash, unit identity, the codebook version | Yes, if canonicalization and the codebook stay fixed | Committed to the public repository |
+| Independent dev passes | 8 events | The owner alone, before any draft | Canonical text and unit identity; only their hashes and per-event figures are stored | Yes, on the same condition | Only on the owner's machine, by design; only hashes and per-event figures are committed |
+| Hard negatives | Inside each signed gold file, plus a curated fixture set | Part of the signed gold | Canonical text | Yes, on the same condition | Committed |
+| Train support labels (y^σ, y^φ) | 70 targets, 63 usable | A hosted model, from a blinded view, under the owner's override; no human review | The target's identity, which is a digest of the source extraction run, the claim, the theme and their inputs | **No.** A new extractor, classifier, prompt or host changes every target identity | Committed |
+| Dev support labels (y^σ, y^φ) | 24 targets (3 per event), 21 usable | A hosted model drafted them from the blinded view. The owner reviewed and approved every answer. This departs from the planned unaided owner labels. | The same target identity | **No**, for the same reason | On a separate data branch, not yet on the main line |
+| Test gold | 7 events | Not yet made | — | — | — |
 
 No support label is an unaided human answer. The owner's own unaided work is
 the signed gold and the independent dev passes.
@@ -231,12 +232,16 @@ $$
 $$
 
 Each ε is the share of calls that needed a second attempt. On train, ε_X = 0,
-ε_C ≈ 0.009 and ε_J ≈ 0.04. N_T ≈ N_C, because nearly every claim gets exactly
-one proposed theme.
+ε_C ≈ 0.009 and ε_J ≈ 0.04. On train, N_C = 1,171 and N_T = 1,170. On dev,
+623 completed claims gave N_T = 601.
 
 ### Observed per-call cost (train pass, 20 documents)
 
-All figures below were observed on the real train pass.
+All figures below were observed on the real train pass. The column "mean wall
+time per call" is phase wall time divided by calls, not an isolated per-call
+time. So it includes any verification and storage work inside the phase. The
+alternative-scorer phase also replayed 4,867 judge entries, so its figure is
+likely inflated by that work.
 
 | Role | Calls | Mean prompt tokens | Mean output tokens | Mean wall time per call | Phase wall time |
 |---|---:|---:|---:|---:|---:|
@@ -249,7 +254,11 @@ Three facts stand out:
 
 - **The classifier dominates inference.** Each call resends the whole frozen
   codebook with the claim. So each call reads about 7,000 prompt tokens to emit
-  about 29. The cost is prompt reading, not generation.
+  about 29. From these counts, prompt reading probably dominates generation.
+  This is an inference from token counts and phase times, not a profile. In each
+  request, the claim-specific text comes before the shared codebook text. So a
+  prefix cache could reuse only the short instruction block. Whether the runtime
+  reused even that was not checked.
 - **The judges are the second cost.** Each target costs four judge calls, and
   most of these trials disagree or object (see C6).
 - **Memory pressure slows every call.** The machine swapped up to 22 GB. One
@@ -318,6 +327,8 @@ The reviewer should judge whether the cost buys anything, and where.
 
 **Problem.** Choose the firms and their quarterly releases without hindsight.
 
+**Data-generating story.** None: a deterministic selection from dated records. The latent quantity is true index membership on each date.
+
 **Procedure.** The cohort is the set of index members on each date, rebuilt from
 dated membership sources and frozen with its own hash before any release is
 fetched. An event is one firm's release for one fiscal quarter. It is eligible
@@ -326,18 +337,25 @@ exhibit that a content check confirms. A 40-event pilot was drawn by a fixed rul
 from frozen metadata before any release text was seen. It was split by issuer and
 time into 20 train, 8 dev, 7 test and 5 excluded events.
 
-**Assumptions.** Membership records are complete. Acceptance time is the right
-availability time. A wrong exhibit choice would put a non-release in the corpus.
+**Assumptions.**
+
+1. Membership records are complete and correctly dated. If not, the cohort includes or omits the wrong firms.
+2. Acceptance time is the right availability time. If not, an event is judged eligible on the wrong date.
+3. The content check picks the true release exhibit. If not, a non-release enters the corpus.
 
 **Evaluation.** Release identification precision and recall against gold. Coverage
 counts by processing state.
 
 **Cost.** Deterministic and fast. It is not a cost driver.
 
+**Open questions.** None known.
+
 ### C2. Canonicalization and structural segmentation
 
 **Problem.** Turn markup into one fixed text with stable offsets and typed
 structure.
+
+**Data-generating story.** None: a deterministic transform of saved bytes.
 
 **Procedure.** A deterministic parser turns markup into text. It normalizes
 Unicode and whitespace once, and hashes the result. It emits typed elements:
@@ -346,15 +364,17 @@ span in x_d. Units are the leaf narrative elements in reading order. Table cells
 are a separate evidence type and are never quotable as prose. Boilerplate is a
 mask over x_d, not a deletion.
 
-**Assumptions.** The parser reads the source faithfully. A fidelity check against
-rendered pages supports this on a fixture sample. The parser chose layout tables
-as non-narrative, so some prose inside layout tables is not quotable. That limits
-recall.
+**Assumptions.**
+
+1. The parser reads the source faithfully. A fidelity check against rendered pages supports this on a fixture sample. If not, quotes are exact copies of misread text.
+2. Layout tables are non-narrative. The parser treats them so, which makes some prose inside layout tables unquotable. If that prose carries claims, recall falls.
 
 **Evaluation.** Element fidelity against hand-marked structure. Byte-identical
 regeneration.
 
 **Cost.** Deterministic, seconds per document.
+
+**Open questions.** None known.
 
 ### C3. Exhaustive pointer extraction
 
@@ -378,10 +398,11 @@ G_e records the human version of this set.
 Each window is one independent call. No window sees another window's output, and
 nothing merges claims across windows. Decoding is greedy (temperature 0).
 
-**Assumptions.** A claim rests on units that fall in one window. A claim that
-spans a window boundary is split or lost. The model's recall within a 4,000
-character window is high. This is assumed, not measured, apart from the gold
-comparison.
+**Assumptions.**
+
+1. A claim rests on units in one window. If not, a claim that spans a window boundary is split or lost.
+2. Recall within a 4,000-character window is high. This is assumed and is measured only through the gold comparison. If not, themes are missed with no signal.
+3. Windows are independent. If a claim repeats across windows, it yields duplicate candidates that later stages assess again.
 
 **Evaluation.** Gold-evidence recall in units, unit-level F1, character-level
 overlap as a secondary figure, and event × theme presence after C5.
@@ -389,9 +410,13 @@ overlap as a secondary figure, and event × theme presence after C5.
 **Cost.** About 5.5 windows per document, about 45 s per window. Not a cost
 driver.
 
+**Open questions.** Q7.
+
 ### C4. Deterministic span verification
 
 **Problem.** Guarantee that every stored quote is the exact source text.
+
+**Data-generating story.** None: a deterministic check.
 
 **Procedure.** A candidate passes only if every cited label opens a quotable line
 of its own window. The quote is then x_d[a_i, b_i) for each cited unit. Before
@@ -404,7 +429,9 @@ $$
 
 A failure rejects the record and keeps the reason. Nothing is repaired.
 
-**Assumptions.** None beyond A1 and A2.
+**Assumptions.**
+
+1. Only A1 and A2. If either fails, see those entries.
 
 **Evaluation.** Exactness is 1.0 over retained quotes by construction. So it is
 reported only with retention, and a run that rejects everything fails.
@@ -412,9 +439,13 @@ reported only with retention, and a run that rejects everything fails.
 **Cost.** The check itself is cheap. Its repetition at every consuming step,
 with keys that embed full bundles, is the term Λ_V.
 
+**Open questions.** Q6.
+
 ### C5. Deductive classification against a fixed codebook
 
 **Problem.** Map each claim to zero or more themes of a fixed codebook.
+
+**Data-generating story.** For each claim c, a latent true theme set Θ*_c ⊆ 𝒦 exists. The gold records the human view of Θ*_c at event level. The classifier's Θ_c is a noisy estimate of Θ*_c.
 
 **Procedure.** For each claim c, call the classifier once. Its prompt holds the
 claim, its quotes, a fixed attribution context, and every theme definition with
@@ -426,9 +457,11 @@ conflict, and is retried once. A per-document ceiling of 128 requests bounds the
 calls. Claims past it are cut and recorded as incomplete. On dev, one 220-claim
 document lost 94 claims to this ceiling.
 
-**Assumptions.** One call per claim, with no shared context between claims of a
-document. The model reads 22 definitions with equal care on every call. Claims
-are independent given the codebook.
+**Assumptions.**
+
+1. One call per claim, with no shared context between claims of a document. If context across claims matters, the classifier misreads claims that depend on nearby text.
+2. The model attends equally to all 22 definitions on every call. If not, themes late in the list or with long rules are under-proposed.
+3. Claims are independent given the codebook. If not, the per-claim cost is spent on near-duplicate decisions.
 
 **Evaluation.** Event × theme micro and macro F1 against gold at the exact level.
 A parent-level roll-up F1 is secondary.
@@ -437,11 +470,15 @@ A parent-level roll-up F1 is secondary.
 train, 33 h for 20 documents. Most of each prompt is the same codebook text on
 every call.
 
+**Open questions.** Q1, Q3.
+
 ### C6. Semantic support assessment
 
 **Problem.** An exact quote need not support its claim. The claim may misread
 negation, period, scope or attribution. The theme may not fit. Decide, for each
 target, whether both hold.
+
+**Data-generating story.** For each target t, two latent binary facts exist: the quotes support the claim, and the claim fits the theme. The joint label y is the human view of both. Each score and each trial is a noisy, possibly biased reading of these facts.
 
 **Procedure.** For each target t = (c, k):
 
@@ -470,10 +507,11 @@ quote's contribution, with no reason code at all. No numeric tolerance or
 majority vote softens it. Scores are kept, but no score can override a
 categorical objection.
 
-**Assumptions.** Judges of about 14B parameters at 4 bits can follow the closed
-reply form and the rubric. The rule's strictness is assumed to buy precision.
-The pilot did not test that assumption. Order swapping is a bias check, not a
-measure of stability.
+**Assumptions.**
+
+1. Judges of about 14B parameters at 4 bits follow the closed reply form and the rubric. If not, trials are unavailable (about 2% here) or answer at random. One family's κ near 0 suggests the second.
+2. Strict unanimity buys precision. The pilot did not test this. If it is false, the rule only removes recall: 1 of 1,170 train targets was clear.
+3. Order swapping measures presentation bias, not stability. If it is read as stability, the method claims robustness it has not measured.
 
 **Evaluation.** Scorer AUC against y^σ. Judge κ and Gwet's AC1 against y, with
 event-clustered 90% bootstrap intervals. On train, the AUC values rest on 2
@@ -487,10 +525,14 @@ references.
 
 **Cost.** 4 N_T judge calls plus 2 N_T scorer calls. About 26 h on train.
 
+**Open questions.** Q1, Q2, Q3.
+
 ### C7. Assignment policy and its calibration
 
 **Problem.** Turn support evidence into accept or review, with a known
 precision, fitted on train labels before dev is seen.
+
+**Data-generating story.** The latent quantity is the joint truth y(t) for each target. The labels are a stratified sample of it.
 
 **Procedure.** The preregistered menu holds one rule family: accept t if O(t) =
 O_clear and s_P(t) ≥ θ, for θ ∈ Γ. On train labels, select
@@ -507,9 +549,10 @@ event, by a fixed seed, never by score.
 The judge floor is reported, not used to decide. A family meets it if the 90%
 lower bound of κ_j is at least κ_0.
 
-**Assumptions.** Enough targets reach O_clear for a cutoff on s_P to matter.
-The pilot shows this fails: with 1 clear target out of 1,170, recall cannot
-exceed 1/41 for any θ.
+**Assumptions.**
+
+1. Enough targets reach O_clear for a cutoff on s_P to matter. The pilot shows this fails: with 1 clear target out of 1,170, recall cannot exceed 1/41 for any θ. Then no policy is selected.
+2. Train labels stand in for expert judgement. They are model-drafted, so the calibration fits a model's view.
 
 **Evaluation.** Held-out precision and recall on dev labels, with event-clustered
 intervals.
@@ -517,10 +560,14 @@ intervals.
 **Cost.** Small in itself. Its run time comes from loading and re-verifying the
 stored pass (Λ_V).
 
+**Open questions.** Q2, Q4.
+
 ### C8. Coverage-aware aggregation
 
 **Problem.** Compute prevalence without treating missing documents as absent
 themes.
+
+**Data-generating story.** Each firm-quarter either does or does not discuss theme k. Observation of that fact depends on acquisition and processing succeeding.
 
 **Procedure.** A processing-state table exists for every expected document before
 any count: expected, unavailable, restricted, acquired, parsed, partial, failed,
@@ -528,16 +575,23 @@ completed, or completed with no theme. The denominator of π_{k,τ} uses only
 completed states. Masked boilerplate spans and duplicate copies of a disclosure
 do not count. Zero accepted assignments is never read as "no themes".
 
-**Assumptions.** Missingness is unrelated to themes. This is not tested.
+**Assumptions.**
+
+1. Missingness is unrelated to themes. This is not tested. If it fails, prevalence is biased toward firms whose releases parse.
+2. Equal issuer weight is the right weight. If the question is economic exposure, another weight is needed.
 
 **Evaluation.** Hand-computed numerators and denominators on fixtures.
 
 **Cost.** Small.
 
+**Open questions.** None known.
+
 ### C9. Evaluation against human gold
 
 **Problem.** Decide whether the system works, with honest uncertainty, on a
 small pilot.
+
+**Data-generating story.** The gold G_e is the reference for Ŷ_e. It is itself a model-drafted, owner-verified reading, so it carries its own error.
 
 **Procedure.** The pilot is a feasibility check, not a validation set. Train
 figures are marked in-sample. Dev is evaluated once with the frozen baseline.
@@ -551,11 +605,16 @@ comparison.
 **Gated metrics.** Release-identification precision and recall; event × theme
 micro and macro F1; unit-level span F1; gold-evidence recall; support precision.
 
-**Assumptions.** The event is the sampling unit. Twenty-eight events are enough
-to expose gross failures, not to estimate rare-theme recall.
+**Assumptions.**
+
+1. The event is the sampling unit. If quotes in an event were treated as independent, intervals would be too narrow.
+2. Twenty-eight events expose gross failures. They cannot estimate rare-theme recall or sector prevalence.
+3. Gold drafted by a frontier model is a fair reference. If the system or a judge shares that model's family, agreement is inflated.
 
 **Cost.** Small, apart from the three fresh stability runs, which repeat C3 to
 C6 in full: about 30 h each.
+
+**Open questions.** Q8.
 
 ## Assumptions and limitations of the whole method
 
